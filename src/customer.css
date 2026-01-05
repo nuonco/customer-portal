@@ -1,0 +1,430 @@
+@import "./base.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CUSTOMER PAGE STYLES
+ * Vanilla Tailwind utilities - no Stratus components
+ * Easy for vendors to customize via theme settings
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * THEME RADIUS SYSTEM
+ * Border radius tokens that respond to vendor theme settings
+ * Values: sharp (0), subtle (4px), rounded (8px), very-rounded (12px)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Default radius - can be overridden by theme */
+  --theme-radius: 8px;
+  --theme-radius-sm: calc(var(--theme-radius) * 0.5);
+  --theme-radius-lg: calc(var(--theme-radius) * 1.5);
+  --theme-radius-xl: calc(var(--theme-radius) * 2);
+  --theme-radius-full: 9999px;
+
+  /* Spacing tokens - comfortable by default */
+  --spacing-card-padding: 24px;
+  --spacing-section-gap: 24px;
+  --spacing-element-gap: 16px;
+  --spacing-input-padding-y: 12px;
+  --spacing-input-padding-x: 16px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * RADIUS PRESETS
+ * Applied to <body> based on vendor theme settings
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.radius-sharp {
+  --theme-radius: 0px;
+}
+
+.radius-subtle {
+  --theme-radius: 4px;
+}
+
+.radius-rounded {
+  --theme-radius: 8px;
+}
+
+.radius-very-rounded {
+  --theme-radius: 12px;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * SPACING DENSITY PRESETS
+ * Applied to <body> based on vendor theme settings
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.density-compact {
+  --spacing-card-padding: 16px;
+  --spacing-section-gap: 16px;
+  --spacing-element-gap: 12px;
+  --spacing-input-padding-y: 8px;
+  --spacing-input-padding-x: 12px;
+}
+
+.density-comfortable {
+  --spacing-card-padding: 24px;
+  --spacing-section-gap: 24px;
+  --spacing-element-gap: 16px;
+  --spacing-input-padding-y: 12px;
+  --spacing-input-padding-x: 16px;
+}
+
+.density-spacious {
+  --spacing-card-padding: 32px;
+  --spacing-section-gap: 32px;
+  --spacing-element-gap: 20px;
+  --spacing-input-padding-y: 14px;
+  --spacing-input-padding-x: 20px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * THEME-AWARE UTILITY CLASSES
+ * Use these for consistent styling across customer pages
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Border radius utilities */
+.rounded-theme {
+  border-radius: var(--theme-radius);
+}
+
+.rounded-theme-sm {
+  border-radius: var(--theme-radius-sm);
+}
+
+.rounded-theme-lg {
+  border-radius: var(--theme-radius-lg);
+}
+
+.rounded-theme-xl {
+  border-radius: var(--theme-radius-xl);
+}
+
+/* Spacing utilities */
+.p-card {
+  padding: var(--spacing-card-padding);
+}
+
+.gap-section {
+  gap: var(--spacing-section-gap);
+}
+
+.gap-element {
+  gap: var(--spacing-element-gap);
+}
+
+.py-input {
+  padding-top: var(--spacing-input-padding-y);
+  padding-bottom: var(--spacing-input-padding-y);
+}
+
+.px-input {
+  padding-left: var(--spacing-input-padding-x);
+  padding-right: var(--spacing-input-padding-x);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CARD SHADOW STYLES
+ * Subtle shadows for clean & minimal aesthetic
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.shadow-card {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 2px 6px rgb(0 0 0 / 0.04);
+}
+
+.shadow-card-hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
+}
+
+/* Card with hover enhancement */
+.card-interactive {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 2px 6px rgb(0 0 0 / 0.04);
+  @apply transition-shadow duration-200;
+}
+
+.card-interactive:hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
+}
+
+/* Dark mode card shadows */
+.dark .shadow-card {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2), 0 2px 6px rgb(0 0 0 / 0.15);
+}
+
+.dark .shadow-card-hover {
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3), 0 2px 4px rgb(0 0 0 / 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * FORM INPUT STYLES
+ * Large, accessible inputs with theme-aware radius
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.input-theme {
+  @apply w-full border border-cool-grey-300 bg-white;
+  @apply dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white;
+  @apply focus:outline-none focus:ring-2;
+  @apply placeholder-cool-grey-400 dark:placeholder-cool-grey-500;
+  @apply transition-colors duration-150;
+  padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
+  border-radius: var(--theme-radius);
+}
+
+.input-theme:focus {
+  --tw-ring-color: var(--theme-primary);
+  border-color: var(--theme-primary);
+}
+
+.input-theme:disabled {
+  @apply bg-cool-grey-100 cursor-not-allowed;
+  @apply dark:bg-dark-grey-700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * BUTTON STYLES
+ * Clean button styles with theme-aware colors and radius
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.btn-theme-primary {
+  @apply inline-flex items-center justify-center font-medium text-white;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply transition-colors duration-150;
+  background-color: var(--theme-primary);
+  padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
+  border-radius: var(--theme-radius);
+}
+
+.btn-theme-primary:hover {
+  background-color: var(--theme-primary-hover);
+}
+
+.btn-theme-primary:focus {
+  --tw-ring-color: var(--theme-primary);
+}
+
+.btn-theme-primary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-theme-secondary {
+  @apply inline-flex items-center justify-center font-medium;
+  @apply bg-cool-grey-100 text-cool-grey-700 hover:bg-cool-grey-200;
+  @apply dark:bg-dark-grey-700 dark:text-cool-grey-300 dark:hover:bg-dark-grey-600;
+  @apply focus:outline-none focus:ring-2 focus:ring-cool-grey-400 focus:ring-offset-2;
+  @apply transition-colors duration-150;
+  padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
+  border-radius: var(--theme-radius);
+}
+
+.btn-theme-secondary:disabled {
+  @apply opacity-50 cursor-not-allowed;
+}
+
+.btn-theme-outline {
+  @apply inline-flex items-center justify-center font-medium;
+  @apply border border-cool-grey-300 bg-transparent text-cool-grey-700;
+  @apply hover:bg-cool-grey-50;
+  @apply dark:border-dark-grey-500 dark:text-cool-grey-300 dark:hover:bg-dark-grey-800;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
+  @apply transition-colors duration-150;
+  padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
+  border-radius: var(--theme-radius);
+}
+
+.btn-theme-outline:focus {
+  --tw-ring-color: var(--theme-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * STATUS BADGE STYLES
+ * Minimal pill-style status indicators
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.badge-success,
+.badge-warning,
+.badge-error,
+.badge-info,
+.badge-neutral {
+  @apply inline-flex items-center px-2.5 py-0.5 text-xs font-medium;
+  border-radius: var(--theme-radius-full);
+}
+
+.badge-success {
+  @apply bg-green-100 text-green-800;
+  @apply dark:bg-green-900/30 dark:text-green-400;
+}
+
+.badge-warning {
+  @apply bg-orange-100 text-orange-800;
+  @apply dark:bg-orange-900/30 dark:text-orange-400;
+}
+
+.badge-error {
+  @apply bg-red-100 text-red-800;
+  @apply dark:bg-red-900/30 dark:text-red-400;
+}
+
+.badge-info {
+  @apply bg-blue-100 text-blue-800;
+  @apply dark:bg-blue-900/30 dark:text-blue-400;
+}
+
+.badge-neutral {
+  @apply bg-cool-grey-100 text-cool-grey-700;
+  @apply dark:bg-dark-grey-700 dark:text-cool-grey-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * ALERT STYLES
+ * Theme-aware alert boxes
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.alert-success,
+.alert-warning,
+.alert-error,
+.alert-info {
+  @apply p-4 border;
+  border-radius: var(--theme-radius);
+}
+
+.alert-success {
+  @apply bg-green-50 border-green-200 text-green-800;
+  @apply dark:bg-green-900/20 dark:border-green-800 dark:text-green-400;
+}
+
+.alert-warning {
+  @apply bg-orange-50 border-orange-200 text-orange-800;
+  @apply dark:bg-orange-900/20 dark:border-orange-800 dark:text-orange-400;
+}
+
+.alert-error {
+  @apply bg-red-50 border-red-200 text-red-800;
+  @apply dark:bg-red-900/20 dark:border-red-800 dark:text-red-400;
+}
+
+.alert-info {
+  @apply bg-blue-50 border-blue-200 text-blue-800;
+  @apply dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TABS / SEGMENTED CONTROL
+ * Pill-style tab navigation
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.tabs-container {
+  @apply inline-flex p-1 bg-cool-grey-100;
+  @apply dark:bg-dark-grey-800;
+  border-radius: var(--theme-radius);
+}
+
+.tab-item {
+  @apply px-4 py-2 text-sm font-medium text-cool-grey-600;
+  @apply hover:text-cool-grey-900;
+  @apply dark:text-cool-grey-400 dark:hover:text-white;
+  @apply transition-colors duration-150;
+  border-radius: var(--theme-radius-sm);
+}
+
+.tab-item.active {
+  @apply bg-white text-cool-grey-900 shadow-sm;
+  @apply dark:bg-dark-grey-700 dark:text-white;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CUSTOMER PAGE LAYOUT
+ * Clean header and content structure
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.customer-header {
+  @apply sticky top-0 bg-white/95 backdrop-blur-sm;
+  @apply dark:bg-dark-grey-900/95;
+  z-index: 40;
+}
+
+.customer-main {
+  @apply max-w-5xl mx-auto px-6 lg:px-8;
+  padding-top: var(--spacing-section-gap);
+  padding-bottom: var(--spacing-section-gap);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CARD COMPONENT
+ * Reusable card with theme-aware styling
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.customer-card {
+  @apply bg-white border border-cool-grey-200;
+  @apply dark:bg-dark-grey-900 dark:border-dark-grey-600;
+  padding: var(--spacing-card-padding);
+  border-radius: var(--theme-radius);
+}
+
+.customer-card.interactive {
+  @apply cursor-pointer transition-shadow duration-200;
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.04), 0 2px 6px rgb(0 0 0 / 0.04);
+}
+
+.dark .customer-card.interactive {
+  box-shadow: 0 1px 3px rgb(0 0 0 / 0.2), 0 2px 6px rgb(0 0 0 / 0.15);
+}
+
+.customer-card.interactive:hover {
+  @apply border-cool-grey-300;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
+}
+
+.dark .customer-card.interactive:hover {
+  @apply border-dark-grey-500;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.3), 0 2px 4px rgb(0 0 0 / 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SECTION HEADERS
+ * Consistent section labeling
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.section-header {
+  @apply flex items-center justify-between;
+  margin-bottom: var(--spacing-element-gap);
+}
+
+.section-title {
+  @apply text-lg font-semibold text-cool-grey-900;
+  @apply dark:text-white;
+}
+
+.section-label {
+  @apply text-xs font-semibold text-cool-grey-500 uppercase tracking-wide;
+  @apply dark:text-cool-grey-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * EMPTY STATE
+ * Consistent empty state styling
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.empty-state {
+  @apply text-center py-12;
+}
+
+.empty-state-icon {
+  @apply mx-auto h-12 w-12 mb-4 flex items-center justify-center;
+  @apply rounded-full bg-cool-grey-100;
+  @apply dark:bg-dark-grey-700;
+}
+
+.empty-state-icon svg {
+  @apply h-6 w-6 text-cool-grey-400;
+  @apply dark:text-cool-grey-500;
+}
+
+.empty-state-title {
+  @apply text-lg font-medium text-cool-grey-900 mb-2;
+  @apply dark:text-white;
+}
+
+.empty-state-description {
+  @apply text-cool-grey-500 mb-6;
+  @apply dark:text-cool-grey-400;
+}

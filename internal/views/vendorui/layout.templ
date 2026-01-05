@@ -1,0 +1,460 @@
+package vendorui
+
+import (
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/components"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/partials"
+)
+
+// LayoutProps contains all data needed for the vendor layout
+type LayoutProps struct {
+	Title       string
+	ActivePage  string // "orgs" | "links" | "apps"
+	User        *models.User
+	CurrentOrg  *models.NuonOrg
+	Orgs        []models.NuonOrg
+	Breadcrumbs []partials.Breadcrumb
+	BasePath    string
+
+	// Entity title bar
+	EntityTitle   string
+	EntityID      string
+	EntityActions []partials.EntityAction
+
+	// Theme colors (computed from theme settings)
+	PrimaryColor       string
+	PrimaryColorDark   string
+	SecondaryColor     string
+	SecondaryColorDark string
+	HeadingFont        string
+	BodyFont           string
+	HeadingFontBase64  string
+	BodyFontBase64     string
+	LogoBase64         string
+}
+
+// Layout renders the vendor layout with sidebar, topbar, and content area
+templ Layout(props LayoutProps) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ props.Title }</title>
+			<!-- Stratus Design System - Vendor CSS -->
+			<link href="/static/css/vendor.css" rel="stylesheet"/>
+			<!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->
+			@darkModeAndSidebarScript()
+			<!-- Inter font (Stratus default) -->
+			<link rel="preconnect" href="https://fonts.googleapis.com"/>
+			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+			<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+			<!-- Custom fonts via @font-face -->
+			if props.HeadingFontBase64 != "" {
+				@customHeadingFont(props.HeadingFontBase64)
+			}
+			if props.BodyFontBase64 != "" {
+				@customBodyFont(props.BodyFontBase64)
+			}
+			<!-- HTMX for dynamic interactions -->
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<!-- Vendor Theme Overrides -->
+			if props.PrimaryColor != "" || props.SecondaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" || props.HeadingFontBase64 != "" || props.BodyFontBase64 != "" {
+				@themeOverrides(props)
+			}
+			@layoutScripts(props.BasePath)
+		</head>
+		<body class="bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white">
+			<div class="flex min-h-screen">
+				<!-- Sidebar -->
+				@partials.Sidebar(partials.SidebarProps{
+					ActivePage: props.ActivePage,
+					CurrentOrg: props.CurrentOrg,
+					Orgs:       props.Orgs,
+					BasePath:   props.BasePath,
+					LogoBase64: props.LogoBase64,
+				})
+				<!-- Main Content Area -->
+				<div class="flex-1 flex flex-col min-h-screen">
+					<!-- Topbar with Breadcrumbs -->
+					@partials.Topbar(partials.TopbarProps{
+						Breadcrumbs: props.Breadcrumbs,
+						User:        props.User,
+						BasePath:    props.BasePath,
+					})
+					<!-- Entity Title Bar (shown on detail pages) -->
+					@partials.TitleBar(partials.TitleBarProps{
+						EntityTitle:   props.EntityTitle,
+						EntityID:      props.EntityID,
+						EntityActions: props.EntityActions,
+					})
+					<!-- Page Content -->
+					<main class="flex-1 p-6 overflow-auto">
+						{ children... }
+					</main>
+				</div>
+			</div>
+			<!-- Toast and Modal components -->
+			@components.Toast()
+			@components.ConfirmModal()
+			@connectOrgModal(props.BasePath)
+			@keyboardShortcutsModal()
+			<!-- Theme Settings Panel - lazy loaded via HTMX -->
+			<div id="settings-panel-container"></div>
+		</body>
+	</html>
+}
+
+templ darkModeAndSidebarScript() {
+	<script>
+		(function() {
+			// Check system preference for dark mode
+			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				document.documentElement.classList.add('dark');
+			}
+			// Listen for system preference changes
+			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+				document.documentElement.classList.toggle('dark', e.matches);
+			});
+
+			// Check sidebar cookie and apply collapsed class to <html>
+			// This prevents the flash where sidebar expands then collapses on page load
+			var cookies = document.cookie.split(';');
+			for (var i = 0; i < cookies.length; i++) {
+				var cookie = cookies[i].trim();
+				if (cookie.startsWith('sidebar_open=0')) {
+					document.documentElement.classList.add('sidebar-collapsed');
+					break;
+				}
+			}
+		})();
+	</script>
+}
+
+templ customHeadingFont(base64URL string) {
+	<style>
+		@font-face {
+			font-family: 'CustomHeading';
+			src: url({ templ.SafeURL(base64URL) }) format('woff2');
+			font-display: swap;
+		}
+	</style>
+}
+
+templ customBodyFont(base64URL string) {
+	<style>
+		@font-face {
+			font-family: 'CustomBody';
+			src: url({ templ.SafeURL(base64URL) }) format('woff2');
+			font-display: swap;
+		}
+	</style>
+}
+
+templ themeOverrides(props LayoutProps) {
+	<style>
+		:root {
+			if props.PrimaryColor != "" {
+				--theme-primary: { props.PrimaryColor };
+				--theme-primary-hover: { props.PrimaryColorDark };
+			}
+			if props.SecondaryColor != "" {
+				--theme-secondary: { props.SecondaryColor };
+				--theme-secondary-hover: { props.SecondaryColorDark };
+			}
+			if props.HeadingFontBase64 != "" {
+				--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;
+			} else if props.HeadingFont != "" {
+				--font-heading: '{ props.HeadingFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
+			}
+			if props.BodyFontBase64 != "" {
+				--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;
+			} else if props.BodyFont != "" {
+				--font-body: '{ props.BodyFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
+			}
+		}
+	</style>
+}
+
+templ layoutScripts(basePath string) {
+	<script>
+		function logout() {
+			document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+			window.location.href = "/login/";
+		}
+
+		// Cookie helpers for sidebar state persistence
+		function getCookie(name) {
+			const value = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+			return value ? value.pop() : null;
+		}
+
+		function setCookie(name, value) {
+			document.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';
+		}
+
+		// Main Sidebar Toggle
+		function toggleMainSidebar() {
+			const sidebar = document.getElementById('main-sidebar');
+			if (sidebar) {
+				const isCollapsed = sidebar.classList.toggle('collapsed');
+				document.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);
+				setCookie('sidebar_open', isCollapsed ? '0' : '1');
+			}
+		}
+
+		// Page Sidebar (Sub-nav) Toggle
+		function togglePageSidebar() {
+			const subnav = document.getElementById('page-sidebar');
+			if (subnav) {
+				const isCollapsed = subnav.classList.toggle('collapsed');
+				setCookie('page_sidebar_open', isCollapsed ? '0' : '1');
+			}
+		}
+
+		// Keyboard Shortcuts Modal
+		function openKeyboardShortcutsModal() {
+			const modal = document.getElementById('keyboard-shortcuts-modal');
+			if (modal) {
+				modal.classList.add('modal-visible');
+			}
+			const userDropdown = document.getElementById('userDropdown');
+			if (userDropdown) {
+				userDropdown.classList.add('hidden');
+			}
+		}
+
+		function closeKeyboardShortcutsModal() {
+			const modal = document.getElementById('keyboard-shortcuts-modal');
+			if (modal) {
+				modal.classList.remove('modal-visible');
+			}
+		}
+
+		// Connect Org Modal
+		function openConnectOrgModal() {
+			const modal = document.getElementById('connect-org-modal');
+			if (modal) {
+				modal.classList.remove('hidden');
+			}
+		}
+
+		function closeConnectOrgModal() {
+			const modal = document.getElementById('connect-org-modal');
+			if (modal) {
+				modal.classList.add('hidden');
+			}
+		}
+
+		// Global Keyboard Shortcuts
+		document.addEventListener('keydown', function(e) {
+			// Alt+S = Toggle main sidebar
+			if (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {
+				toggleMainSidebar();
+				e.preventDefault();
+				return;
+			}
+
+			// Alt+Shift+S = Toggle page sidebar
+			if (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {
+				togglePageSidebar();
+				e.preventDefault();
+				return;
+			}
+
+			// ? = Open keyboard shortcuts modal (when not typing in input)
+			if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+				openKeyboardShortcutsModal();
+				e.preventDefault();
+				return;
+			}
+
+			// Escape = Close any open modal
+			if (e.key === 'Escape') {
+				closeKeyboardShortcutsModal();
+				closeConnectOrgModal();
+			}
+		});
+
+		// Initialize sidebar state from cookies on page load
+		document.addEventListener('DOMContentLoaded', function() {
+			if (document.documentElement.classList.contains('sidebar-collapsed')) {
+				const sidebar = document.getElementById('main-sidebar');
+				if (sidebar) {
+					sidebar.classList.add('collapsed');
+				}
+			}
+			if (getCookie('page_sidebar_open') === '0') {
+				const subnav = document.getElementById('page-sidebar');
+				if (subnav) {
+					subnav.classList.add('collapsed');
+				}
+			}
+		});
+	</script>
+}
+
+templ connectOrgModal(basePath string) {
+	<div id="connect-org-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden" style="z-index: 100;">
+		<div class="flex items-center justify-center min-h-screen p-4">
+			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500">
+				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Organization</h3>
+					<button type="button" onclick="closeConnectOrgModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+				<form id="connect-org-form" class="px-6 py-4 space-y-4">
+					<div>
+						<label for="org-name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							Organization Name
+						</label>
+						<input
+							type="text"
+							id="org-name"
+							name="name"
+							required
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="My Organization"
+						/>
+					</div>
+					<div>
+						<label for="nuon-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							Nuon Org ID
+						</label>
+						<input
+							type="text"
+							id="nuon-org-id"
+							name="org_id"
+							required
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="org_..."
+						/>
+					</div>
+					<div>
+						<label for="api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							API Token
+						</label>
+						<input
+							type="password"
+							id="api-token"
+							name="api_token"
+							required
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="nuon_pat_..."
+						/>
+					</div>
+					<div id="connect-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+				</form>
+				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
+					<button type="button" onclick="closeConnectOrgModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
+						Cancel
+					</button>
+					<button type="button" onclick="submitConnectOrg()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
+						Connect
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Config data for JavaScript -->
+	<div
+		id="connect-org-config"
+		class="hidden"
+		data-base-path={ basePath }
+	></div>
+	@connectOrgScript()
+}
+
+templ connectOrgScript() {
+	<script>
+		async function submitConnectOrg() {
+			const configEl = document.getElementById('connect-org-config');
+			const basePath = configEl.dataset.basePath;
+			const form = document.getElementById('connect-org-form');
+			const errorDiv = document.getElementById('connect-org-error');
+			const formData = new FormData(form);
+
+			errorDiv.classList.add('hidden');
+
+			try {
+				const response = await fetch(basePath + '/orgs/', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+						'Authorization': 'Bearer ' + getCookie('jwt')
+					},
+					body: JSON.stringify({
+						name: formData.get('name'),
+						org_id: formData.get('org_id'),
+						api_token: formData.get('api_token')
+					})
+				});
+
+				if (response.ok) {
+					const data = await response.json();
+					window.location.href = basePath + '/orgs/' + data.id + '/links';
+				} else {
+					const error = await response.json();
+					errorDiv.textContent = error.error || 'Failed to connect organization';
+					errorDiv.classList.remove('hidden');
+				}
+			} catch (err) {
+				errorDiv.textContent = 'Network error. Please try again.';
+				errorDiv.classList.remove('hidden');
+			}
+		}
+	</script>
+}
+
+templ keyboardShortcutsModal() {
+	<div id="keyboard-shortcuts-modal" class="fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200" style="z-index: 100;">
+		<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500">
+			<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
+				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Keyboard Shortcuts</h3>
+				<button type="button" onclick="closeKeyboardShortcutsModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+					</svg>
+				</button>
+			</div>
+			<div class="px-6 py-4 space-y-3">
+				<div class="flex justify-between items-center">
+					<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle main sidebar</span>
+					<div class="flex gap-1">
+						<kbd class="stratus-kbd">Alt</kbd>
+						<kbd class="stratus-kbd">S</kbd>
+					</div>
+				</div>
+				<div class="flex justify-between items-center">
+					<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle page sidebar</span>
+					<div class="flex gap-1">
+						<kbd class="stratus-kbd">Alt</kbd>
+						<kbd class="stratus-kbd">Shift</kbd>
+						<kbd class="stratus-kbd">S</kbd>
+					</div>
+				</div>
+				<div class="flex justify-between items-center">
+					<span class="text-cool-grey-600 dark:text-cool-grey-400">Show keyboard shortcuts</span>
+					<div class="flex gap-1">
+						<kbd class="stratus-kbd">?</kbd>
+					</div>
+				</div>
+				<div class="flex justify-between items-center">
+					<span class="text-cool-grey-600 dark:text-cool-grey-400">Close modal</span>
+					<div class="flex gap-1">
+						<kbd class="stratus-kbd">Esc</kbd>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	<style>
+		#keyboard-shortcuts-modal.modal-visible {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	</style>
+}

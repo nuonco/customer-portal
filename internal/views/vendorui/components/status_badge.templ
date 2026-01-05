@@ -1,0 +1,125 @@
+package components
+
+import "strings"
+
+// StatusBadgeProps for status indicator badges
+type StatusBadgeProps struct {
+	Status    string
+	Variant   string // "install" | "workflow" | "health" | "link"
+	Size      string // "sm" | "md" | "lg"
+	ShowIcon  bool
+	Uppercase bool
+}
+
+// StatusBadge displays status indicators with consistent styling
+templ StatusBadge(props StatusBadgeProps) {
+	<span class={ "inline-flex items-center rounded-full font-medium", badgeSizeClasses(props.Size), badgeColorClasses(props.Status, props.Variant) }>
+		if props.ShowIcon {
+			@statusIcon(props.Status)
+		}
+		if props.Uppercase {
+			{ toUpper(props.Status) }
+		} else {
+			{ props.Status }
+		}
+	</span>
+}
+
+func badgeSizeClasses(size string) string {
+	switch size {
+	case "sm":
+		return "px-2 py-0.5 text-xs"
+	case "lg":
+		return "px-4 py-1.5 text-base"
+	default:
+		return "px-3 py-1 text-sm"
+	}
+}
+
+func badgeColorClasses(status, variant string) string {
+	// Install variant (default)
+	if variant == "" || variant == "install" {
+		switch status {
+		case "active":
+			return "bg-green-100 text-green-800"
+		case "pending":
+			return "bg-orange-100 text-orange-800"
+		case "provisioning":
+			return "bg-blue-100 text-blue-800"
+		case "failed":
+			return "bg-red-100 text-red-800"
+		case "deprovisioning":
+			return "bg-orange-100 text-orange-800"
+		}
+	}
+
+	// Workflow variant
+	if variant == "workflow" {
+		switch status {
+		case "success", "approved", "active", "completed":
+			return "bg-green-100 text-green-800"
+		case "approval-awaiting", "awaiting":
+			return "bg-orange-100 text-orange-800"
+		case "in-progress", "running", "queued":
+			return "bg-blue-100 text-blue-800"
+		case "error", "failed":
+			return "bg-red-100 text-red-800"
+		case "cancelled":
+			return "bg-cool-grey-100 text-cool-grey-800"
+		}
+	}
+
+	// Health variant
+	if variant == "health" {
+		switch status {
+		case "passing", "passed", "healthy":
+			return "bg-green-100 text-green-800"
+		case "pending", "running", "checking":
+			return "bg-blue-100 text-blue-800"
+		case "failing", "failed", "unhealthy":
+			return "bg-red-100 text-red-800"
+		}
+	}
+
+	// Link variant
+	if variant == "link" {
+		switch status {
+		case "pending":
+			return "bg-orange-100 text-orange-800"
+		case "accepted":
+			return "bg-green-100 text-green-800"
+		case "expired":
+			return "bg-cool-grey-100 text-cool-grey-800"
+		}
+	}
+
+	// Default
+	return "bg-cool-grey-100 text-cool-grey-800"
+}
+
+func toUpper(s string) string {
+	return strings.ToUpper(s)
+}
+
+templ statusIcon(status string) {
+	switch status {
+		case "active", "passing", "passed", "success", "approved", "completed", "healthy":
+			// Checkmark icon
+			<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+				<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+			</svg>
+		case "failed", "failing", "error", "unhealthy":
+			// X icon
+			<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+				<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+			</svg>
+		case "pending", "running", "in-progress", "provisioning", "checking":
+			// Spinner
+			<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+		case "approval-awaiting", "awaiting":
+			// Clock icon
+			<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+				<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+			</svg>
+	}
+}

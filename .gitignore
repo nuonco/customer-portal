@@ -1,0 +1,11 @@
+installer.db
+app
+
+# Tailwind standalone CLI binary (platform-specific)
+bin/tailwindcss
+
+# Air live reload temp directory
+tmp/
+
+# Node.js (in case someone runs npm by mistake)
+node_modules/

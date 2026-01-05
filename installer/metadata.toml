@@ -1,0 +1,21 @@
+version = "v2"
+
+name         = "installer-app"
+display_name = "Nuon Installer Portal"
+description  = "Self-service installer portal with vendor and customer interfaces"
+readme       = """
+<iframe
+  id="embed"
+  title="Embed"
+  src="{{.nuon.components.vendor_alb.outputs.url}}"
+>
+</iframe>
+<style>
+.overflow-x-hidden #embed {
+    margin:-3.75rem 0 0 -3rem;
+    width: 60%;
+    height: 100%;
+    position: absolute;
+}
+</style>
+"""

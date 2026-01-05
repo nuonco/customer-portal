@@ -1,0 +1,220 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
+)
+
+// InstallsPageProps for the installs list page
+type InstallsPageProps struct {
+	customerui.LayoutProps
+	Pagination customerui.InstallPaginationData
+}
+
+// InstallsPage renders the customer installs page with tab-based pagination
+templ InstallsPage(props InstallsPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		if props.Pagination.TotalCount > 0 || props.Pagination.CurrentTab != "" {
+			<!-- Tab Interface -->
+			<div class="mb-6">
+				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<nav class="-mb-px flex space-x-8">
+						@installTab("needs-attention", "Needs Attention", props.Pagination.CurrentTab, props.Pagination.NeedsAttentionCount, props.PrimaryColor)
+						@installTab("updating", "Updating", props.Pagination.CurrentTab, props.Pagination.UpdatingCount, props.PrimaryColor)
+						@installTab("healthy", "Healthy", props.Pagination.CurrentTab, props.Pagination.HealthyCount, props.PrimaryColor)
+					</nav>
+				</div>
+			</div>
+			if len(props.Pagination.Installs) > 0 {
+				<!-- Tab Content Description -->
+				<div class="mb-4">
+					if props.Pagination.CurrentTab == "healthy" {
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs are running smoothly with all health checks passing.</p>
+					} else if props.Pagination.CurrentTab == "updating" {
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs have updates in progress that don't require your approval.</p>
+					} else {
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs have pending approvals or health check issues requiring your attention.</p>
+					}
+				</div>
+				<div class="flex justify-between items-center mb-4">
+					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
+						{ fmt.Sprintf("%d-%d of %d", props.Pagination.ShowingFrom, props.Pagination.ShowingTo, props.Pagination.TotalCount) }
+					</span>
+				</div>
+				<!-- Install Cards -->
+				<div class="space-y-3">
+					for _, install := range props.Pagination.Installs {
+						@installCard(install, props.BasePath, props.SecondaryColor)
+					}
+				</div>
+				<!-- Pagination Controls -->
+				if props.Pagination.TotalPages > 1 {
+					@components.Pagination(components.PaginationProps{
+						CurrentPage:  props.Pagination.CurrentPage,
+						TotalPages:   props.Pagination.TotalPages,
+						HasPrevious:  props.Pagination.HasPrevious,
+						HasNext:      props.Pagination.HasNext,
+						PreviousPage: props.Pagination.PreviousPage,
+						NextPage:     props.Pagination.NextPage,
+						BaseURL:      fmt.Sprintf("?tab=%s&page=", props.Pagination.CurrentTab),
+					})
+				}
+			} else {
+				<!-- Empty State for Current Tab -->
+				if props.Pagination.CurrentTab == "healthy" {
+					@components.EmptyState(components.EmptyStateProps{
+						Title:   "No Healthy Installs",
+						Message: "All your installs currently need attention or are being updated.",
+						Icon:    "check-circle",
+					})
+				} else if props.Pagination.CurrentTab == "updating" {
+					@components.EmptyState(components.EmptyStateProps{
+						Title:   "No Updates In Progress",
+						Message: "There are no installs currently being updated.",
+						Icon:    "refresh",
+					})
+				} else {
+					@components.EmptyState(components.EmptyStateProps{
+						Title:   "No Installs Needing Attention",
+						Message: "All your installs are running smoothly with passing health checks!",
+						Icon:    "check-circle",
+					})
+				}
+			}
+		} else {
+			<!-- No Installs At All -->
+			@components.EmptyState(components.EmptyStateProps{
+				Title:   "No Installs Yet",
+				Message: "Your installations will appear here once you've used an install link.",
+				Icon:    "inbox",
+			})
+		}
+	}
+}
+
+templ installTab(tabID, label, currentTab string, count int64, primaryColor string) {
+	{{
+		isActive := currentTab == tabID || (tabID == "needs-attention" && currentTab == "")
+
+		// Determine tab colors
+		borderClass := "border-transparent"
+		textClass := "text-cool-grey-500 hover:text-cool-grey-700 dark:hover:text-cool-grey-300 hover:border-cool-grey-300 dark:hover:border-dark-grey-500"
+
+		if isActive {
+			switch tabID {
+			case "needs-attention":
+				borderClass = "border-orange-500"
+				textClass = "text-orange-600"
+			case "updating":
+				if primaryColor != "" {
+					borderClass = "border-theme-primary"
+					textClass = "text-theme-primary"
+				} else {
+					borderClass = "border-primary-600"
+					textClass = "text-primary-600"
+				}
+			case "healthy":
+				borderClass = "border-green-500"
+				textClass = "text-green-600"
+			}
+		}
+
+		// Badge colors
+		badgeBgClass := "bg-cool-grey-100 dark:bg-dark-grey-700"
+		badgeTextClass := "text-cool-grey-900 dark:text-cool-grey-300"
+
+		if count > 0 {
+			switch tabID {
+			case "needs-attention":
+				badgeBgClass = "bg-orange-100 dark:bg-orange-900/30"
+				badgeTextClass = "text-orange-800 dark:text-orange-300"
+			case "updating":
+				badgeBgClass = "bg-blue-100 dark:bg-blue-900/30"
+				badgeTextClass = "text-blue-800 dark:text-blue-300"
+			case "healthy":
+				badgeBgClass = "bg-green-100 dark:bg-green-900/30"
+				badgeTextClass = "text-green-800 dark:text-green-300"
+			}
+		}
+	}}
+	<a
+		href={ templ.SafeURL("?tab=" + tabID) }
+		class={ "whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm", borderClass, textClass }
+	>
+		{ label }
+		<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
+			{ fmt.Sprintf("%d", count) }
+		</span>
+	</a>
+}
+
+templ installCard(install customerui.InstallWithApprovalStatus, basePath, secondaryColor string) {
+	<div class="bg-white dark:bg-dark-grey-900 border border-cool-grey-200 dark:border-dark-grey-600 p-4 hover:shadow-md transition-shadow rounded-lg">
+		<div class="flex items-center justify-between">
+			<div class="flex-1">
+				<div class="flex items-center space-x-3">
+					<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">{ install.Name }</h3>
+					@components.StatusBadge(components.StatusBadgeProps{
+						Status:  string(install.Status),
+						Variant: "install",
+						Size:    "sm",
+					})
+				</div>
+				<div class="mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400 space-x-4">
+					<span>App: { install.InstallLink.AppName }</span>
+					if install.Region != "" {
+						<span>Region: { install.Region }</span>
+					}
+					<span>Created: { install.CreatedAt.Format("Jan 2, 2006") }</span>
+				</div>
+				<!-- Health Check Indicators -->
+				<div class="mt-2 flex items-center space-x-2 text-xs">
+					if install.HasHealthChecks {
+						if install.HealthChecksPassed > 0 {
+							<span class="inline-flex items-center px-2 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+								<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
+								</svg>
+								{ fmt.Sprintf("%d passed", install.HealthChecksPassed) }
+							</span>
+						}
+						if install.HealthChecksPending > 0 {
+							<span class="inline-flex items-center px-2 py-0.5 rounded bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-400">
+								<svg class="w-3 h-3 mr-1 animate-spin" fill="none" viewBox="0 0 24 24">
+									<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+									<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+								</svg>
+								{ fmt.Sprintf("%d pending", install.HealthChecksPending) }
+							</span>
+						}
+						if install.HealthChecksFailed > 0 {
+							<span class="inline-flex items-center px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+								<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+								</svg>
+								{ fmt.Sprintf("%d failed", install.HealthChecksFailed) }
+							</span>
+						}
+					} else {
+						<span class="text-cool-grey-400 dark:text-cool-grey-500 italic">No health checks</span>
+					}
+				</div>
+			</div>
+			<div class="ml-4">
+				<a
+					href={ templ.SafeURL(basePath + "/installs/" + install.ID) }
+					class={ "inline-flex items-center px-3 py-2 text-sm font-medium hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 rounded-lg",
+						templ.KV("text-theme-secondary hover:text-theme-secondary-hover", secondaryColor != ""),
+						templ.KV("text-primary-600 hover:text-primary-800", secondaryColor == "") }
+				>
+					View Details
+					<svg class="ml-1 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+					</svg>
+				</a>
+			</div>
+		</div>
+	</div>
+}

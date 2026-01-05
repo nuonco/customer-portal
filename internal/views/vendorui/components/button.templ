@@ -1,0 +1,188 @@
+package components
+
+// ButtonProps for button/link component
+type ButtonProps struct {
+	Text    string
+	Variant string // "primary" | "secondary" | "danger" | "success"
+	Size    string // "sm" | "md" | "lg"
+	Type    string // "button" | "submit"
+
+	// Link mode
+	Href string
+
+	// State
+	Disabled       bool
+	DisabledReason string
+
+	// Events
+	OnClick string
+
+	// HTMX
+	HxPost      string
+	HxGet       string
+	HxDelete    string
+	HxPut       string
+	HxTarget    string
+	HxSwap      string
+	HxConfirm   string
+	HxVals      string
+	HxIndicator string
+	ShowSpinner bool
+
+	// Styling
+	Class        string
+	PrimaryColor string // Theme color override
+	ID           string
+}
+
+// Button renders a button or link with consistent styling
+templ Button(props ButtonProps) {
+	if props.Href != "" {
+		@buttonLink(props)
+	} else if props.Disabled && props.DisabledReason != "" {
+		@disabledButtonWithTooltip(props)
+	} else {
+		@buttonElement(props)
+	}
+}
+
+templ buttonLink(props ButtonProps) {
+	<a
+		href={ templ.SafeURL(props.Href) }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.OnClick != "" {
+			onclick={ templ.ComponentScript{Call: props.OnClick} }
+		}
+		class={ "inline-flex items-center justify-center rounded-md font-medium transition", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, false), props.Class }
+	>
+		{ props.Text }
+	</a>
+}
+
+templ disabledButtonWithTooltip(props ButtonProps) {
+	<div class="relative group inline-block">
+		<button
+			type={ buttonType(props.Type) }
+			disabled
+			class={ "inline-flex items-center justify-center rounded-md font-medium", sizeClasses(props.Size), disabledClasses(), props.Class }
+		>
+			{ props.Text }
+		</button>
+		<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-cool-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+			{ props.DisabledReason }
+		</div>
+	</div>
+}
+
+templ buttonElement(props ButtonProps) {
+	<button
+		type={ buttonType(props.Type) }
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		if props.Disabled {
+			disabled
+		}
+		if props.OnClick != "" {
+			onclick={ templ.ComponentScript{Call: props.OnClick} }
+		}
+		if props.HxPost != "" {
+			hx-post={ props.HxPost }
+		}
+		if props.HxGet != "" {
+			hx-get={ props.HxGet }
+		}
+		if props.HxDelete != "" {
+			hx-delete={ props.HxDelete }
+		}
+		if props.HxPut != "" {
+			hx-put={ props.HxPut }
+		}
+		if hasHtmx(props) && props.HxTarget != "" {
+			hx-target={ props.HxTarget }
+		}
+		if hasHtmx(props) {
+			hx-swap={ hxSwapValue(props.HxSwap) }
+			hx-indicator={ hxIndicatorValue(props.HxIndicator) }
+		}
+		if props.HxConfirm != "" {
+			hx-confirm={ props.HxConfirm }
+		}
+		if props.HxVals != "" {
+			hx-vals={ props.HxVals }
+		}
+		class={ "inline-flex items-center justify-center rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, props.Disabled), props.Class }
+	>
+		if hasHtmx(props) && props.ShowSpinner {
+			<span class="htmx-indicator mr-2">
+				<svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			</span>
+		}
+		{ props.Text }
+	</button>
+}
+
+func buttonType(t string) string {
+	if t == "" {
+		return "button"
+	}
+	return t
+}
+
+func sizeClasses(size string) string {
+	switch size {
+	case "sm":
+		return "px-3 py-1.5 text-xs"
+	case "lg":
+		return "px-6 py-3 text-base"
+	default:
+		return "px-4 py-2 text-sm"
+	}
+}
+
+func variantClasses(variant, primaryColor string, disabled bool) string {
+	if disabled {
+		return disabledClasses()
+	}
+
+	switch variant {
+	case "secondary":
+		return "bg-white dark:bg-dark-grey-800 text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 focus:ring-2 focus:ring-primary-400"
+	case "danger":
+		return "bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-400"
+	case "success":
+		return "bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-400"
+	default: // primary
+		if primaryColor != "" {
+			return "bg-theme-primary text-white hover:bg-theme-primary-hover"
+		}
+		return "bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-400"
+	}
+}
+
+func disabledClasses() string {
+	return "bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 cursor-not-allowed"
+}
+
+func hasHtmx(props ButtonProps) bool {
+	return props.HxPost != "" || props.HxGet != "" || props.HxDelete != "" || props.HxPut != ""
+}
+
+func hxSwapValue(v string) string {
+	if v == "" {
+		return "outerHTML"
+	}
+	return v
+}
+
+func hxIndicatorValue(v string) string {
+	if v == "" {
+		return "this"
+	}
+	return v
+}

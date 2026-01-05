@@ -1,0 +1,36 @@
+{{/*
+  Customer Header - Clean & Minimal Design
+  A simple, unobtrusive header with logo, title, and user info.
+*/}}
+<header class="customer-header">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 h-14 flex items-center justify-between">
+    <!-- Logo + Title -->
+    <div class="flex items-center gap-3">
+      {{if and .LogoBase64 (ne (printf "%s" .LogoBase64) "")}}
+        {{$logoURL := printf "%s" .LogoBase64 | safeURL}}
+        {{if and $logoURL (ne (print $logoURL) "")}}
+        <img src="{{$logoURL}}" alt="Logo" class="h-8 w-auto max-w-[120px] object-contain" />
+        {{end}}
+      {{end}}
+      <span class="text-lg font-semibold text-cool-grey-900 dark:text-white font-heading">{{.title}}</span>
+    </div>
+
+    <!-- User Section -->
+    {{if .user}}
+    <div class="flex items-center gap-4">
+      <!-- User Avatar -->
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium text-white" style="background-color: var(--theme-primary);">
+          {{slice .user.Email 0 1 | upper}}
+        </div>
+        <span class="text-sm text-cool-grey-700 dark:text-cool-grey-300 hidden sm:inline">{{.user.Email}}</span>
+      </div>
+
+      <!-- Sign Out Button -->
+      <button onclick="logout()" class="text-sm text-cool-grey-600 hover:text-cool-grey-900 dark:text-cool-grey-400 dark:hover:text-white transition-colors">
+        Sign out
+      </button>
+    </div>
+    {{end}}
+  </div>
+</header>

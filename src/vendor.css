@@ -1,0 +1,828 @@
+@import "./base.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * STRATUS DESIGN SYSTEM COMPONENTS
+ * Vendor-only styles - not used in customer pages
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TABLE COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/common/Table.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-table-container {
+  @apply rounded-lg border border-cool-grey-300 overflow-hidden;
+  @apply dark:border-dark-grey-500;
+}
+
+.stratus-table {
+  @apply min-w-full text-sm;
+}
+
+.stratus-table th {
+  @apply py-3 px-4 text-left bg-cool-grey-100 font-normal;
+  @apply dark:bg-dark-grey-800 dark:text-cool-grey-300;
+}
+
+.stratus-table th:first-child {
+  @apply rounded-tl-lg;
+}
+
+.stratus-table th:last-child {
+  @apply rounded-tr-lg;
+}
+
+.stratus-table tbody {
+  @apply bg-white;
+  @apply dark:bg-dark-grey-900;
+}
+
+.stratus-table tbody tr {
+  @apply hover:bg-cool-grey-50;
+  @apply dark:hover:bg-dark-grey-800;
+}
+
+.stratus-table td {
+  @apply py-3 px-4 border-t border-cool-grey-200;
+  @apply dark:border-dark-grey-600 dark:text-cool-grey-300;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SIDEBAR COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/navigation/MainNav.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-sidebar {
+  @apply w-[17.5rem] border-r flex flex-col;
+  @apply transition-[width] duration-200 ease-in-out;
+  /* Light mode - gradient background */
+  background: linear-gradient(172deg, #FFF 0%, #FAFAFA 99.36%), #FFF;
+  border-color: #dee3e7;
+}
+
+.dark .stratus-sidebar {
+  /* Dark mode - matches dashboard gradient */
+  background: linear-gradient(172deg, #0D0416 0%, #050109 99.36%), #141217;
+  border-color: #27252a;
+}
+
+/* Sidebar collapsed state */
+.stratus-sidebar.collapsed {
+  @apply w-[4.5rem];
+}
+
+/* Collapsed state via <html> class - applied before body renders to prevent flash */
+html.sidebar-collapsed .stratus-sidebar {
+  @apply w-[4.5rem];
+}
+
+html.sidebar-collapsed .stratus-sidebar .sidebar-text {
+  @apply opacity-0 w-0 overflow-hidden whitespace-nowrap;
+}
+
+.stratus-sidebar.collapsed .sidebar-text {
+  @apply opacity-0 w-0 overflow-hidden whitespace-nowrap;
+  transition: opacity 150ms ease-in-out, width 150ms ease-in-out;
+}
+
+.stratus-sidebar.collapsed .stratus-org-switcher {
+  @apply justify-center px-2;
+}
+
+.stratus-sidebar.collapsed .stratus-org-switcher .sidebar-text {
+  @apply hidden;
+}
+
+.stratus-sidebar.collapsed .stratus-org-switcher svg:last-child {
+  @apply hidden;
+}
+
+.stratus-sidebar.collapsed .stratus-sidebar-label {
+  @apply hidden;
+}
+
+.stratus-sidebar.collapsed .stratus-sidebar-link {
+  @apply justify-center px-2;
+}
+
+.stratus-sidebar.collapsed .stratus-sidebar-link .sidebar-text {
+  @apply hidden;
+}
+
+.stratus-sidebar-header {
+  @apply h-16 px-4 flex items-center justify-between;
+  /* No border - matches dashboard */
+}
+
+/* Logo link and variants */
+.stratus-logo-link {
+  @apply flex items-center hover:opacity-80 transition-opacity;
+}
+
+.stratus-logo {
+  @apply transition-transform duration-150 ease-in-out;
+}
+
+.stratus-logo-light {
+  @apply block dark:hidden;
+}
+
+.stratus-logo-dark {
+  @apply hidden dark:block;
+}
+
+/* Collapsed state - icon shifts right for centering */
+.stratus-sidebar.collapsed .stratus-logo-icon {
+  @apply translate-x-[0.55rem];
+  transition: transform 150ms ease-in-out;
+}
+
+/* Sidebar content wrapper */
+.stratus-sidebar-content {
+  @apply p-4 flex flex-col gap-4 flex-auto;
+}
+
+/* Sidebar toggle button */
+.stratus-sidebar-toggle {
+  @apply p-1.5 rounded-md text-cool-grey-500 hover:bg-cool-grey-100 hover:text-cool-grey-700 transition-colors;
+  @apply dark:text-cool-grey-400 dark:hover:bg-dark-grey-700 dark:hover:text-cool-grey-200;
+}
+
+.stratus-sidebar-toggle svg {
+  @apply w-5 h-5;
+}
+
+.stratus-sidebar-logo {
+  @apply h-8 w-auto;
+}
+
+.stratus-sidebar-title {
+  @apply ml-3 font-semibold text-cool-grey-900 truncate;
+  @apply dark:text-white;
+}
+
+.stratus-sidebar-nav {
+  @apply flex flex-col gap-1;
+}
+
+.stratus-sidebar-section {
+  @apply flex flex-col gap-1;
+}
+
+.stratus-sidebar-label {
+  @apply px-2 text-xs tracking-[-0.2px];
+  line-height: 17px;
+  @apply text-cool-grey-600 dark:text-white/70;
+}
+
+.stratus-sidebar-link {
+  @apply flex items-center gap-4 py-2.5 px-3 rounded-md transition-colors w-full;
+  @apply text-[14px] h-[36px] leading-[21px] tracking-[-0.2px];
+  @apply text-cool-grey-800 hover:bg-black/5;
+  @apply dark:text-cool-grey-400 dark:hover:bg-white/10;
+}
+
+.stratus-sidebar-link.active {
+  @apply bg-primary-200 text-primary-800;
+  @apply dark:bg-primary-600/25 dark:text-primary-400;
+}
+
+.stratus-sidebar-link svg {
+  @apply w-4 h-4 flex-shrink-0;
+}
+
+.stratus-sidebar-divider {
+  @apply border-t border-cool-grey-200/50;
+  @apply dark:border-white/10;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TOPBAR COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/navigation/Breadcrumb.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-topbar {
+  @apply h-14 px-6 border-b border-cool-grey-200 flex items-center justify-between bg-white;
+  @apply dark:bg-dark-grey-900 dark:border-dark-grey-500;
+}
+
+.stratus-breadcrumb {
+  @apply flex items-center gap-2 text-sm;
+}
+
+.stratus-breadcrumb-link {
+  @apply text-cool-grey-600 hover:text-primary-700 transition-colors;
+  @apply dark:text-cool-grey-400 dark:hover:text-primary-400;
+}
+
+.stratus-breadcrumb-current {
+  @apply text-cool-grey-900 font-medium;
+  @apply dark:text-white;
+}
+
+.stratus-breadcrumb-separator {
+  @apply text-cool-grey-400;
+  @apply dark:text-cool-grey-500;
+}
+
+.stratus-user-menu {
+  @apply flex items-center gap-3 text-sm text-cool-grey-700;
+  @apply dark:text-cool-grey-300;
+}
+
+.stratus-user-menu-button {
+  @apply flex items-center gap-2 px-3 py-2 rounded-md hover:bg-cool-grey-100 transition-colors;
+  @apply dark:hover:bg-dark-grey-700;
+}
+
+.stratus-user-dropdown {
+  @apply absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-cool-grey-200 py-1 z-50;
+  @apply dark:bg-dark-grey-800 dark:border-dark-grey-500;
+}
+
+.stratus-user-dropdown-item {
+  @apply block w-full text-left px-4 py-2 text-sm text-cool-grey-700 hover:bg-cool-grey-100;
+  @apply dark:text-cool-grey-300 dark:hover:bg-dark-grey-700;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * ORG SWITCHER COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/orgs/OrgSwitcher.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-org-switcher {
+  @apply w-full flex items-center gap-4 px-4 py-1.5 rounded-md text-sm;
+  @apply bg-transparent hover:bg-black/5 transition-colors;
+  @apply border cursor-pointer;
+  @apply border-cool-grey-200/50 dark:border-white/10;
+  @apply dark:hover:bg-white/10;
+}
+
+.stratus-org-avatar {
+  @apply w-10 h-10 rounded-lg bg-primary-600 text-white flex items-center justify-center;
+  @apply text-sm font-semibold uppercase flex-shrink-0;
+}
+
+/* Status indicator for org switcher */
+.stratus-status {
+  @apply flex items-center gap-1.5 text-xs font-semibold;
+  line-height: 17px;
+  letter-spacing: -0.2px;
+}
+
+.stratus-status-dot {
+  @apply w-1.5 h-1.5 rounded-full flex-shrink-0;
+}
+
+.stratus-status-dot.success {
+  @apply bg-green-600 dark:bg-green-500;
+}
+
+.stratus-org-avatar-sm {
+  @apply w-6 h-6 rounded bg-primary-100 text-primary-700 flex items-center justify-center;
+  @apply text-xs font-semibold uppercase flex-shrink-0;
+  @apply dark:bg-primary-900 dark:text-primary-300;
+}
+
+.stratus-org-dropdown {
+  @apply absolute left-0 right-0 top-full mt-1 bg-white rounded-md shadow-lg border border-cool-grey-200;
+  @apply max-h-64 overflow-y-auto z-50;
+  @apply dark:bg-dark-grey-800 dark:border-dark-grey-500;
+}
+
+.stratus-org-item {
+  @apply flex items-center gap-3 px-3 py-2 text-sm text-cool-grey-700;
+  @apply hover:bg-cool-grey-50 transition-colors cursor-pointer;
+  @apply dark:text-cool-grey-300 dark:hover:bg-dark-grey-700;
+}
+
+.stratus-org-item.active {
+  @apply bg-primary-50 text-primary-800;
+  @apply dark:bg-primary-900 dark:text-primary-200;
+}
+
+.stratus-search-input {
+  @apply w-full px-3 py-2 text-sm border-b border-cool-grey-200 bg-white;
+  @apply focus:outline-none focus:ring-0 focus:border-primary-300;
+  @apply placeholder-cool-grey-400;
+  @apply dark:bg-dark-grey-800 dark:border-dark-grey-500 dark:text-white dark:placeholder-cool-grey-500;
+}
+
+.stratus-sidebar-link-disabled {
+  @apply opacity-50 cursor-not-allowed pointer-events-none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PROFILE DROPDOWN COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/users/UserDropdown.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Profile Button - matches dashboard-ui UserDropdown/UserProfile */
+.stratus-profile-button {
+  @apply flex items-center gap-4 px-2 py-1.5 rounded-md text-left cursor-pointer min-w-40;
+  @apply border border-cool-grey-200 dark:border-dark-grey-600;
+  @apply hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors;
+}
+
+/* Avatar - matches dashboard-ui Avatar md size (32x32, rounded-md, gray bg) */
+.stratus-profile-avatar {
+  @apply w-8 h-8 rounded-md flex-shrink-0 overflow-hidden;
+  @apply flex items-center justify-center text-base font-semibold uppercase;
+  @apply bg-cool-grey-200 text-cool-grey-600;
+  @apply dark:bg-dark-grey-300 dark:text-white/50;
+}
+
+/* Profile text container - matches dashboard-ui UserProfile */
+.stratus-profile-text {
+  @apply flex flex-col gap-0.5 w-full overflow-hidden;
+}
+
+/* Profile text - name: Text variant="body" weight="strong" + !leading-none */
+.stratus-profile-name {
+  @apply text-sm font-semibold leading-none truncate;
+  letter-spacing: -0.2px;
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+/* Profile text - email: Text variant="label" */
+.stratus-profile-email {
+  @apply truncate;
+  font-size: 11px;
+  line-height: 14px;
+  letter-spacing: -0.2px;
+  @apply text-cool-grey-500 dark:text-cool-grey-400;
+}
+
+.stratus-profile-menu {
+  @apply absolute right-0 mt-2 w-56 bg-white rounded-md shadow-lg border border-cool-grey-200;
+  @apply py-1 z-50;
+  @apply dark:bg-dark-grey-800 dark:border-dark-grey-500;
+}
+
+.stratus-menu-label {
+  @apply px-3 py-2 text-xs font-semibold text-cool-grey-500 uppercase tracking-wide;
+  @apply dark:text-cool-grey-400;
+}
+
+.stratus-menu-item {
+  @apply w-full flex items-center gap-3 px-3 py-2 text-sm text-cool-grey-700;
+  @apply hover:bg-cool-grey-50 transition-colors cursor-pointer text-left;
+  @apply dark:text-cool-grey-300 dark:hover:bg-dark-grey-700;
+}
+
+.stratus-menu-item svg {
+  @apply w-5 h-5 flex-shrink-0;
+}
+
+.stratus-menu-item.danger {
+  @apply text-red-600 hover:bg-red-50;
+  @apply dark:text-red-400 dark:hover:bg-red-900/30;
+}
+
+/* Dashboard-style menu item with icon on right */
+.stratus-menu-item-dashboard {
+  @apply w-full flex items-center justify-between px-3 py-2 text-sm text-cool-grey-700;
+  @apply hover:bg-cool-grey-50 transition-colors cursor-pointer text-left;
+  @apply dark:text-cool-grey-300 dark:hover:bg-dark-grey-700;
+}
+
+.stratus-menu-item-dashboard .stratus-menu-icon {
+  @apply w-5 h-5 flex-shrink-0;
+  /* Icon inherits color from parent text */
+}
+
+.stratus-menu-item-dashboard.logout {
+  @apply text-red-600;
+  @apply dark:text-red-400;
+}
+
+.stratus-menu-item-dashboard.logout .stratus-menu-icon {
+  @apply text-red-500;
+  @apply dark:text-red-400;
+}
+
+.stratus-menu-divider {
+  @apply my-1 border-t border-cool-grey-200;
+  @apply dark:border-dark-grey-500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PANEL COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/surfaces/Panel.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-panel {
+  @apply fixed inset-0 z-50;
+}
+
+.stratus-panel-overlay {
+  @apply absolute inset-0 bg-black/2;
+  backdrop-filter: blur(2px);
+}
+
+.stratus-panel-container {
+  @apply absolute right-0 top-0 h-full bg-white border-l border-cool-grey-200 shadow-2xl;
+  @apply flex flex-col;
+  @apply w-full md:w-3/4 lg:w-2/3 xl:max-w-4xl;
+  transition: width var(--duration-fastest) var(--ease-cubic);
+  @apply dark:bg-dark-grey-900 dark:border-dark-grey-500;
+}
+
+.stratus-panel-header {
+  @apply flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 flex-shrink-0;
+  @apply dark:border-dark-grey-500;
+}
+
+.stratus-panel-title {
+  @apply flex items-center gap-3 text-lg font-semibold text-cool-grey-900;
+  @apply dark:text-white;
+}
+
+.stratus-panel-title svg {
+  @apply w-6 h-6 text-cool-grey-600;
+  @apply dark:text-cool-grey-400;
+}
+
+/* Panel action buttons (expand, close) */
+.stratus-panel-action {
+  @apply p-2 rounded-md hover:bg-cool-grey-100 transition-colors text-cool-grey-500 hover:text-cool-grey-700;
+  @apply dark:hover:bg-dark-grey-700 dark:text-cool-grey-400 dark:hover:text-cool-grey-200;
+}
+
+.stratus-panel-action svg {
+  @apply w-5 h-5;
+}
+
+.stratus-panel-content {
+  @apply flex-1 overflow-y-auto p-6;
+}
+
+/* Panel hidden state - explicit initial hidden state prevents flash on page load */
+.stratus-panel.panel-hidden {
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.stratus-panel.panel-hidden .stratus-panel-overlay {
+  opacity: 0;
+}
+
+.stratus-panel.panel-hidden .stratus-panel-container {
+  opacity: 0;
+  transform: translateX(5rem);
+}
+
+/* Panel visible state - animates from hidden to visible */
+.stratus-panel.panel-visible {
+  visibility: visible;
+}
+
+.stratus-panel.panel-visible .stratus-panel-overlay {
+  animation: panel-enter-overlay var(--duration-fastest) var(--ease-cubic) forwards;
+}
+
+.stratus-panel.panel-visible .stratus-panel-container {
+  animation: panel-enter-right var(--duration-fastest) var(--ease-cubic) forwards;
+}
+
+/* Panel enter/exit keyframes */
+@keyframes panel-enter-overlay {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes panel-exit-overlay {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@keyframes panel-enter-right {
+  0% {
+    opacity: 0;
+    transform: translateX(5rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes panel-exit-right {
+  0% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(5rem);
+  }
+}
+
+
+/* Full-width panel state */
+.stratus-panel.panel-full .stratus-panel-container {
+  @apply w-full max-w-none;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MODAL COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/surfaces/Modal.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Modal wrapper - covers entire screen */
+.stratus-modal-wrapper {
+  @apply fixed inset-0 z-50 flex items-center justify-center;
+  @apply opacity-0 pointer-events-none;
+  transition: opacity var(--duration-fastest) var(--ease-cubic);
+}
+
+.stratus-modal-wrapper.modal-visible {
+  @apply opacity-100 pointer-events-auto;
+}
+
+/* Overlay backdrop */
+.stratus-modal-overlay {
+  @apply absolute inset-0 bg-black/20;
+  backdrop-filter: blur(2px);
+}
+
+/* Modal container */
+.stratus-modal {
+  @apply relative bg-white rounded-lg shadow-xl;
+  @apply flex flex-col max-h-[90vh] w-full max-w-xl mx-4;
+  @apply transform translate-y-4 opacity-0;
+  transition: transform var(--duration-fastest) var(--ease-cubic),
+              opacity var(--duration-fastest) var(--ease-cubic);
+  @apply dark:bg-dark-grey-800;
+}
+
+.stratus-modal-wrapper.modal-visible .stratus-modal {
+  @apply translate-y-0 opacity-100;
+}
+
+/* Modal header */
+.stratus-modal-header {
+  @apply flex items-center justify-between px-6 py-4;
+  @apply border-b border-cool-grey-200 flex-shrink-0;
+  @apply dark:border-dark-grey-500;
+}
+
+.stratus-modal-title {
+  @apply flex items-center gap-3 text-lg font-semibold text-cool-grey-900;
+  @apply dark:text-white;
+}
+
+.stratus-modal-title svg {
+  @apply w-6 h-6 text-cool-grey-600;
+  @apply dark:text-cool-grey-400;
+}
+
+.stratus-modal-close {
+  @apply p-2 rounded-md hover:bg-cool-grey-100 transition-colors;
+  @apply text-cool-grey-500 hover:text-cool-grey-700;
+  @apply dark:hover:bg-dark-grey-700 dark:text-cool-grey-400 dark:hover:text-cool-grey-200;
+}
+
+.stratus-modal-close svg {
+  @apply w-5 h-5;
+}
+
+/* Modal content */
+.stratus-modal-content {
+  @apply flex-1 overflow-y-auto px-6 py-5;
+}
+
+/* Modal footer */
+.stratus-modal-footer {
+  @apply flex items-center justify-end gap-3 px-6 py-4;
+  @apply border-t border-cool-grey-200 flex-shrink-0;
+  @apply dark:border-dark-grey-500;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SUB-NAV COMPONENT - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/navigation/SubNav.tsx
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-subnav {
+  @apply w-56 flex-shrink-0 border-r relative;
+  @apply transition-[width] duration-150 ease-in-out;
+  /* Transparent - inherits page background */
+  border-color: var(--border-color);
+}
+
+/* Sub-nav collapsed state */
+.stratus-subnav.collapsed {
+  @apply w-[4.5rem];
+}
+
+.stratus-subnav.collapsed .subnav-text {
+  @apply opacity-0 w-0 overflow-hidden whitespace-nowrap;
+  transition: opacity 150ms ease-in-out, width 150ms ease-in-out;
+}
+
+.stratus-subnav.collapsed .subnav-header {
+  @apply hidden;
+}
+
+.stratus-subnav.collapsed .stratus-subnav-link {
+  @apply justify-center px-2;
+}
+
+.stratus-subnav-link {
+  @apply flex items-center gap-4 px-3 py-2.5 rounded-md transition-colors w-full;
+  @apply text-sm h-9;
+  @apply text-cool-grey-800 hover:bg-black/5;
+  @apply dark:text-cool-grey-400 dark:hover:bg-white/10;
+}
+
+.stratus-subnav-link.active {
+  @apply bg-primary-200 text-primary-800;
+  @apply dark:bg-primary-600/25 dark:text-primary-400;
+}
+
+.stratus-subnav-link svg {
+  @apply w-5 h-5 flex-shrink-0;
+  /* Icon inherits color from parent text */
+}
+
+.stratus-subnav-link.active svg {
+  @apply text-primary-800 dark:text-primary-400;
+}
+
+/* Sub-nav handle element */
+.stratus-subnav-handle {
+  @apply hidden md:flex absolute right-[-1rem] w-4 h-full cursor-pointer;
+  @apply border-l border-transparent transition-[border-color] duration-150 ease-in-out;
+}
+
+.stratus-subnav-handle:hover {
+  @apply border-primary-600;
+}
+
+.stratus-subnav-handle-button {
+  @apply absolute left-[-0.875rem] top-1/2 -translate-y-1/2;
+  @apply opacity-0 p-1 rounded-lg shadow-md border border-cool-grey-200 bg-white;
+  @apply transition-opacity duration-150 ease-in-out cursor-pointer;
+  @apply dark:bg-dark-grey-300 dark:border-dark-grey-500;
+}
+
+.stratus-subnav-handle-button svg {
+  @apply w-4 h-4 text-cool-grey-600;
+  @apply dark:text-cool-grey-300;
+}
+
+.stratus-subnav-handle:hover .stratus-subnav-handle-button {
+  @apply opacity-100;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TOOLTIP COMPONENT - Stratus Design System
+ * For keyboard shortcut hints
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-tooltip-container {
+  @apply relative;
+}
+
+.stratus-tooltip {
+  @apply absolute z-50 flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap;
+  @apply bg-cool-grey-900 text-white rounded-md shadow-lg;
+  @apply opacity-0 pointer-events-none transition-opacity duration-150;
+  @apply dark:bg-dark-grey-200;
+}
+
+.stratus-tooltip-container:hover .stratus-tooltip {
+  @apply opacity-100;
+}
+
+/* Tooltip positions */
+.stratus-tooltip-bottom {
+  @apply top-full left-1/2 -translate-x-1/2 mt-2;
+}
+
+.stratus-tooltip-left {
+  @apply right-full top-1/2 -translate-y-1/2 mr-2;
+}
+
+.stratus-tooltip-right {
+  @apply left-full top-1/2 -translate-y-1/2 ml-2;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * KEYBOARD KEY (KBD) COMPONENT - Stratus Design System
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Standard kbd for modals */
+.stratus-kbd {
+  @apply px-1.5 py-0.5 text-xs font-mono bg-cool-grey-100 text-cool-grey-700 rounded border border-cool-grey-300;
+  @apply dark:bg-dark-grey-700 dark:text-cool-grey-300 dark:border-dark-grey-500;
+}
+
+/* Small kbd for tooltips (inverted colors) */
+.stratus-kbd-sm {
+  @apply px-1 py-0.5 text-[10px] font-mono bg-cool-grey-700 text-cool-grey-200 rounded;
+  @apply dark:bg-dark-grey-400 dark:text-cool-grey-100;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PAGE LAYOUT COMPONENTS - Stratus Design System
+ * Replicates styling from /services/dashboard-ui/src/components/layout/
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Page Header - Container for title and actions */
+.stratus-page-header {
+  @apply flex flex-wrap gap-3 shrink-0 items-start justify-between p-4 md:p-6 md:min-h-28 w-full;
+}
+
+/* Page Heading Group - Title + Subtitle */
+.stratus-heading-group {
+  @apply flex flex-col gap-0.5;
+}
+
+.stratus-page-title {
+  @apply text-lg font-bold tracking-[-0.2px];
+  line-height: 27px;
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+.stratus-page-subtitle {
+  @apply text-xs tracking-[-0.2px];
+  line-height: 17px;
+  @apply text-cool-grey-600 dark:text-white/70;
+}
+
+/* Page Section - Content container */
+.stratus-page-section {
+  @apply p-4 md:p-6 w-full flex flex-col gap-4 md:gap-6;
+}
+
+.stratus-page-section.scrollable {
+  @apply h-full overflow-y-auto overflow-x-hidden;
+}
+
+/* Page Content - Flexible content area */
+.stratus-page-content {
+  @apply flex-1 flex flex-col;
+}
+
+/* Card - Content container with border */
+.stratus-card {
+  @apply flex flex-col gap-6 p-6 border rounded-md shadow-sm;
+  @apply bg-white dark:bg-dark-grey-900;
+  border-color: var(--border-color);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TITLE BAR COMPONENT - Stratus Design System
+ * Entity title bar shown on detail pages (below topbar, above content)
+ * Shows entity name, ID with copy button, and optional action links
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.stratus-title-bar {
+  @apply flex items-start justify-between px-6 py-4 border-b bg-white flex-shrink-0;
+  border-color: var(--border-color);
+  @apply dark:bg-dark-grey-900;
+}
+
+.stratus-title-bar-left {
+  @apply flex flex-col gap-1;
+}
+
+.stratus-entity-name {
+  @apply text-xl font-semibold tracking-[-0.2px];
+  line-height: 30px;
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+.stratus-entity-id {
+  @apply flex items-center gap-2;
+}
+
+.stratus-copy-button {
+  @apply p-1 rounded hover:bg-cool-grey-100 transition-colors text-cool-grey-400;
+  @apply dark:hover:bg-dark-grey-700 dark:text-cool-grey-500;
+}
+
+.stratus-copy-button:hover {
+  @apply text-cool-grey-600;
+  @apply dark:text-cool-grey-300;
+}
+
+.stratus-copy-confirmation {
+  @apply text-xs text-green-600 dark:text-green-400;
+}
+
+.stratus-title-bar-right {
+  @apply flex items-center gap-4;
+}
+
+.stratus-title-bar-action {
+  @apply text-sm flex items-center gap-1.5 transition-colors;
+  @apply text-primary-600 hover:text-primary-700;
+  @apply dark:text-primary-400 dark:hover:text-primary-300;
+}
+
+.stratus-title-bar-action:hover {
+  @apply underline;
+}

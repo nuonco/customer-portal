@@ -1,0 +1,298 @@
+package pages
+
+import (
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
+)
+
+// InstallDetailPageProps for the install detail page
+type InstallDetailPageProps struct {
+	customerui.LayoutProps
+	Install             *models.Install
+	RecentWorkflows     []customerui.WorkflowData
+	HealthCheckStatuses []customerui.HealthCheckStatusData
+	OverallHealthStatus string
+	HasHealthChecks     bool
+}
+
+// InstallDetailPage renders the customer install detail page
+templ InstallDetailPage(props InstallDetailPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		<!-- Back Link -->
+		<div class="mb-6">
+			<a
+				href={ templ.SafeURL(props.BasePath + "/installs") }
+				class={ templ.KV("text-theme-secondary hover:text-theme-secondary-hover", props.SecondaryColor != ""),
+					templ.KV("text-primary-600 hover:text-primary-800", props.SecondaryColor == "") }
+			>
+				← Back to My Installs
+			</a>
+		</div>
+		<!-- Main Card -->
+		<div class="bg-white dark:bg-dark-grey-900 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+			<!-- Status indicator -->
+			<div class="flex items-center justify-end mb-4">
+				<div class="flex items-center space-x-3">
+					@components.StatusBadge(components.StatusBadgeProps{
+						Status:   string(props.Install.Status),
+						Variant:  "install",
+						ShowIcon: true,
+					})
+					if props.Install.Status == "provisioning" {
+						<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">Provisioning...</span>
+					}
+				</div>
+			</div>
+			<!-- Status alerts -->
+			if props.Install.Status == "provisioning" {
+				@components.Alert(components.AlertProps{
+					Type:    "info",
+					Message: "Installation in progress (typically 5-10 minutes).",
+					Class:   "mb-4",
+				})
+			} else if props.Install.Status == "active" {
+				@components.Alert(components.AlertProps{
+					Type:    "success",
+					Message: "Installation active and ready to use!",
+					Class:   "mb-4",
+				})
+			} else if props.Install.Status == "failed" {
+				@components.Alert(components.AlertProps{
+					Type:    "error",
+					Message: "Installation failed. Contact support for assistance.",
+					Class:   "mb-4",
+				})
+			}
+			<!-- Health Status Section -->
+			@components.HealthStatus(components.HealthStatusProps{
+				InstallID:           props.Install.ID,
+				HasHealthChecks:     props.HasHealthChecks,
+				HealthCheckStatuses: props.HealthCheckStatuses,
+				OverallHealthStatus: props.OverallHealthStatus,
+				BasePath:            props.BasePath,
+			})
+			<div class="space-y-4">
+				<!-- Installation details -->
+				<div>
+					<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-sm dark:text-cool-grey-300" style="border-radius: var(--theme-radius)">
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+							<div>
+								<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">App:</span>
+								<span class="ml-1">{ props.Install.InstallLink.AppName }</span>
+							</div>
+							if props.Install.Region != "" {
+								<div>
+									<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Region:</span>
+									<span class="ml-1">{ props.Install.Region }</span>
+								</div>
+							}
+							<div class="sm:col-span-2">
+								<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Created:</span>
+								<span class="ml-1">{ props.Install.CreatedAt.Format("Jan 2, 2006 at 3:04 PM") }</span>
+							</div>
+							<div class="sm:col-span-2 pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
+								<span class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400">ID:</span>
+								<span class="ml-1 text-xs font-mono text-cool-grey-600 dark:text-cool-grey-400">{ props.Install.NuonInstallID }</span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Access Information (for active installs) -->
+				if props.Install.Status == "active" {
+					<div>
+						<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Access Information</h3>
+						<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-4 mt-2" style="border-radius: var(--theme-radius)">
+							<p class="text-sm text-cool-grey-800 dark:text-cool-grey-300 mb-2">
+								Your application is now running. Access details will be provided here once available.
+							</p>
+							<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400">
+								Note: In a production implementation, this would show endpoints, credentials, and other access information retrieved from the Nuon API.
+							</p>
+						</div>
+					</div>
+				}
+				<!-- Actions Section -->
+				<div>
+					<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Actions</h3>
+					<div class="flex space-x-3 mt-2">
+						if props.Install.Status != "deprovisioning" {
+							<button
+								type="button"
+								onclick="confirmDeprovision()"
+								class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700"
+								style="border-radius: var(--theme-radius)"
+							>
+								Deprovision
+							</button>
+							<button
+								type="button"
+								onclick="forgetInstall()"
+								class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600"
+								style="border-radius: var(--theme-radius)"
+							>
+								Forget
+							</button>
+						}
+					</div>
+				</div>
+			</div>
+		</div>
+		<!-- Latest Updates -->
+		<div class="mt-6">
+			<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4">Latest Updates</h3>
+			if len(props.RecentWorkflows) > 0 {
+				for _, workflow := range props.RecentWorkflows {
+					@components.WorkflowCard(components.WorkflowCardProps{
+						Workflow:     workflow,
+						InstallID:    props.Install.ID,
+						BasePath:     props.BasePath,
+						PrimaryColor: props.PrimaryColor,
+					})
+				}
+			} else {
+				@components.EmptyState(components.EmptyStateProps{
+					Title:   "No Active Updates",
+					Message: "There are no active updates at this time.",
+					Icon:    "inbox",
+					Compact: true,
+					Class:   "bg-cool-grey-50 dark:bg-dark-grey-800",
+				})
+			}
+			<div class="mt-4 text-center">
+				<a
+					href={ templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/workflows") }
+					class={ "inline-block text-white px-4 py-2 text-sm",
+						templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
+						templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "") }
+					style="border-radius: var(--theme-radius)"
+				>
+					View Update History
+				</a>
+			</div>
+		</div>
+		<!-- JavaScript for actions -->
+		@installDetailScripts(props.BasePath, props.Install.ID, props.Install.Name)
+	}
+}
+
+templ installDetailScripts(basePath, installID, installName string) {
+	<script>
+		// Deprovision install with custom modal confirmation
+		async function confirmDeprovision() {
+			const confirmed = await showConfirmModal({
+				title: 'Deprovision Installation?',
+				message: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',
+				variant: 'danger',
+				confirmText: 'Deprovision',
+				cancelText: 'Cancel'
+			});
+
+			if (!confirmed) {
+				return;
+			}
+
+			try {
+				const response = await fetch('{ basePath }/installs/{ installID }/', {
+					method: 'DELETE'
+				});
+
+				if (response.ok) {
+					showToast('Deprovision initiated. Refreshing...', 'success');
+					setTimeout(() => window.location.reload(), 1500);
+				} else {
+					showToast('Failed to deprovision installation', 'error');
+				}
+			} catch (error) {
+				showToast('Network error. Please try again.', 'error');
+			}
+		}
+
+		// Forget install uses custom modals for better UX
+		async function forgetInstall() {
+			// Strong warning about proper usage - using modal instead of confirm()
+			const confirmed = await showConfirmModal({
+				title: 'Important Warning',
+				message: 'Only use "Forget" after you have successfully deprovisioned the install and removed the CloudFormation stack.\n\n"Forget" only removes this install from your list - it does NOT deprovision any infrastructure.\n\nAre you sure you want to forget this installation?',
+				variant: 'warning',
+				confirmText: 'Continue',
+				cancelText: 'Cancel'
+			});
+
+			if (!confirmed) {
+				return;
+			}
+
+			// Require install name confirmation - using prompt modal
+			const installName = '{ installName }';
+			const confirmName = await showPromptModal({
+				title: 'Confirm Action',
+				message: `To confirm, please type the install name: ${installName}`,
+				placeholder: 'Enter install name',
+				expectedValue: installName,
+				validationMessage: 'Install name does not match. Please try again.',
+				confirmText: 'Forget Install',
+				variant: 'danger'
+			});
+
+			if (confirmName === null) {
+				return;
+			}
+
+			try {
+				const response = await fetch(`{ basePath }/installs/{ installID }/forget`, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					}
+				});
+
+				if (response.ok) {
+					showToast('Install forgotten successfully. Redirecting...', 'success');
+					setTimeout(() => {
+						window.location.href = '{ basePath }/installs';
+					}, 1500);
+				} else {
+					const data = await response.json();
+					showToast(data.error || 'Failed to forget installation', 'error');
+				}
+			} catch (error) {
+				showToast('Network error. Please try again.', 'error');
+			}
+		}
+
+		// Workflow action confirmations
+		async function confirmApproveAll(button) {
+			const confirmed = await showConfirmModal({
+				title: 'Approve All Steps?',
+				message: 'Are you sure you want to approve ALL steps in this update? This will automatically approve the current step and all future steps.',
+				variant: 'primary',
+				confirmText: 'Approve All',
+				cancelText: 'Cancel'
+			});
+
+			if (confirmed) {
+				htmx.trigger(button, 'confirmed');
+			}
+		}
+
+		async function confirmCancelWorkflow(button) {
+			const confirmed = await showConfirmModal({
+				title: 'Cancel Update?',
+				message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
+				variant: 'danger',
+				confirmText: 'Cancel Update',
+				cancelText: 'Keep Running'
+			});
+
+			if (confirmed) {
+				htmx.trigger(button, 'confirmed');
+			}
+		}
+
+		// Handle HTMX response errors (for workflow actions)
+		document.body.addEventListener('htmx:responseError', function(evt) {
+			showToast('An error occurred. Please try again.', 'error');
+		});
+	</script>
+}

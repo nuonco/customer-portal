@@ -1,0 +1,127 @@
+{{/*
+  Action Button Component - renders buttons or links with HTMX support and loading states
+  Customer version - vanilla Tailwind with theme radius
+
+  Parameters:
+  - text (required): Button text
+  - variant (optional): Button variant - "primary", "secondary", "danger", "success" (default: "primary")
+  - size (optional): Button size - "sm", "md", "lg" (default: "md")
+
+  HTMX Parameters:
+  - hxPost (optional): HTMX hx-post URL
+  - hxGet (optional): HTMX hx-get URL
+  - hxDelete (optional): HTMX hx-delete URL
+  - hxPut (optional): HTMX hx-put URL
+  - hxTarget (optional): HTMX target selector
+  - hxSwap (optional): HTMX swap method (default: "outerHTML")
+  - hxConfirm (optional): Confirmation dialog text
+  - hxVals (optional): JSON values string for HTMX
+  - hxIndicator (optional): HTMX loading indicator selector (default: "this")
+
+  Other Parameters:
+  - type (optional): Button type - "button", "submit" (default: "button")
+  - id (optional): HTML id attribute
+  - href (optional): If provided, renders as an <a> tag instead of <button>
+  - disabled (optional): Whether button is disabled (default: false)
+  - disabledReason (optional): Tooltip text when disabled
+  - showSpinner (optional): Show loading spinner during HTMX request (default: true)
+  - onclick (optional): JavaScript onclick handler
+  - class (optional): Additional CSS classes
+  - PrimaryColor (optional): Theme color for primary variant (vendor override)
+*/}}
+
+{{/* Set defaults */}}
+{{$variant := default .variant "primary"}}
+{{$size := default .size "md"}}
+{{$type := default .type "button"}}
+{{$showSpinner := true}}
+{{if hasKey . "showSpinner"}}{{$showSpinner = .showSpinner}}{{end}}
+
+{{/* Size classes */}}
+{{$sizeClasses := "px-4 py-2 text-sm"}}
+{{if eq $size "sm"}}
+  {{$sizeClasses = "px-3 py-1.5 text-xs"}}
+{{else if eq $size "lg"}}
+  {{$sizeClasses = "px-6 py-3 text-base"}}
+{{end}}
+
+{{/* Variant classes */}}
+{{$variantClasses := ""}}
+{{$disabledClasses := "bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 cursor-not-allowed"}}
+
+{{if eq $variant "primary"}}
+  {{if .PrimaryColor}}
+    {{$variantClasses = "bg-theme-primary text-white hover:bg-theme-primary-hover"}}
+  {{else}}
+    {{$variantClasses = "bg-primary-600 text-white hover:bg-primary-700 focus:ring-2 focus:ring-primary-400"}}
+  {{end}}
+{{else if eq $variant "secondary"}}
+  {{$variantClasses = "bg-white dark:bg-dark-grey-800 text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 focus:ring-2 focus:ring-primary-400"}}
+{{else if eq $variant "danger"}}
+  {{$variantClasses = "bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-400"}}
+{{else if eq $variant "success"}}
+  {{$variantClasses = "bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-400"}}
+{{end}}
+
+{{/* Check if HTMX is being used */}}
+{{$hasHtmx := or .hxPost .hxGet .hxDelete .hxPut}}
+{{$hxIndicator := default .hxIndicator "this"}}
+{{$hxSwap := default .hxSwap "outerHTML"}}
+
+{{/* Render as link if href is provided */}}
+{{if .href}}
+<a
+  href="{{.href}}"
+  {{if .id}}id="{{.id}}"{{end}}
+  {{if .onclick}}onclick="{{.onclick}}"{{end}}
+  class="inline-flex items-center justify-center {{$sizeClasses}} font-medium transition {{$variantClasses}} {{.class}}"
+  style="border-radius: var(--theme-radius)"
+>
+  {{.text}}
+</a>
+{{else if and .disabled .disabledReason}}
+{{/* Render disabled button with tooltip wrapper if needed */}}
+<div class="relative group inline-block">
+  <button
+    type="{{$type}}"
+    disabled
+    class="inline-flex items-center justify-center {{$sizeClasses}} font-medium {{$disabledClasses}} {{.class}}"
+    style="border-radius: var(--theme-radius)"
+  >
+    {{.text}}
+  </button>
+  <div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-cool-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
+    {{.disabledReason}}
+  </div>
+</div>
+{{else}}
+<button
+  type="{{$type}}"
+  {{if .id}}id="{{.id}}"{{end}}
+  {{if .disabled}}disabled{{end}}
+  {{if .onclick}}onclick="{{.onclick}}"{{end}}
+  {{/* HTMX attributes */}}
+  {{if .hxPost}}hx-post="{{.hxPost}}"{{end}}
+  {{if .hxGet}}hx-get="{{.hxGet}}"{{end}}
+  {{if .hxDelete}}hx-delete="{{.hxDelete}}"{{end}}
+  {{if .hxPut}}hx-put="{{.hxPut}}"{{end}}
+  {{if and $hasHtmx .hxTarget}}hx-target="{{.hxTarget}}"{{end}}
+  {{if $hasHtmx}}hx-swap="{{$hxSwap}}"{{end}}
+  {{if $hasHtmx}}hx-indicator="{{$hxIndicator}}"{{end}}
+  {{if .hxConfirm}}hx-confirm="{{.hxConfirm}}"{{end}}
+  {{if .hxVals}}hx-vals='{{.hxVals}}'{{end}}
+  class="inline-flex items-center justify-center {{$sizeClasses}} font-medium transition {{if .disabled}}{{$disabledClasses}}{{else}}{{$variantClasses}}{{end}} disabled:opacity-50 disabled:cursor-not-allowed {{.class}}"
+  style="border-radius: var(--theme-radius)"
+>
+  {{/* Loading spinner (shown during HTMX request) */}}
+  {{if and $hasHtmx $showSpinner}}
+  <span class="htmx-indicator mr-2">
+    <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+    </svg>
+  </span>
+  {{end}}
+  {{.text}}
+</button>
+{{end}}

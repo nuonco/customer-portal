@@ -1,0 +1,64 @@
+{{/*
+  Confirmation Input Component - "type X to confirm" pattern for dangerous actions
+
+  Parameters:
+  - id (required): Input id
+  - targetValue (required): The value user must type to enable the button
+  - buttonId (required): The id of the button to enable/disable
+  - label (optional): Label text (default: "Type [targetValue] to confirm:")
+  - placeholder (optional): Input placeholder text
+  - caseSensitive (optional): Whether match is case-sensitive (default: false)
+  - class (optional): Additional CSS classes
+
+  Usage:
+  {{template "vendor/partials/confirmation_input.html" (dict
+      "id" "disconnectConfirm"
+      "targetValue" "DISCONNECT"
+      "buttonId" "disconnectBtn"
+      "placeholder" "Type DISCONNECT"
+  )}}
+
+  Note: This component includes the JavaScript event listener to enable/disable
+  the target button based on input matching.
+*/}}
+
+{{/* Set defaults */}}
+{{$label := .label}}
+{{if not $label}}{{$label = printf "Type \"%s\" to confirm:" .targetValue}}{{end}}
+{{$caseSensitive := .caseSensitive}}
+
+{{/* Stratus Design System */}}
+<div class="{{.class}}">
+  <label for="{{.id}}" class="block text-sm font-medium text-cool-grey-700 mb-2">
+    {{$label}}
+  </label>
+  <input
+    type="text"
+    id="{{.id}}"
+    {{if .placeholder}}placeholder="{{.placeholder}}"{{end}}
+    class="w-full px-3 py-2 border border-cool-grey-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+    autocomplete="off"
+  />
+</div>
+
+<script>
+(function() {
+  const input = document.getElementById('{{.id}}');
+  const button = document.getElementById('{{.buttonId}}');
+  const targetValue = '{{.targetValue}}';
+  const caseSensitive = {{if $caseSensitive}}true{{else}}false{{end}};
+
+  if (input && button) {
+    input.addEventListener('input', function(e) {
+      const inputValue = caseSensitive ? e.target.value.trim() : e.target.value.trim().toUpperCase();
+      const compareValue = caseSensitive ? targetValue : targetValue.toUpperCase();
+
+      if (inputValue === compareValue) {
+        button.disabled = false;
+      } else {
+        button.disabled = true;
+      }
+    });
+  }
+})();
+</script>

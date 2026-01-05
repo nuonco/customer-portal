@@ -1,0 +1,233 @@
+{{/*
+  Confirmation Modal Component - replaces browser confirm() and prompt() dialogs
+
+  This partial provides JavaScript functions for showing confirmation and input modals.
+  Include it once per page that needs modal dialogs.
+
+  Usage:
+  {{template "vendor/partials/confirm_modal.html" .}}
+
+  Then in JavaScript:
+
+  // Simple confirmation (replaces confirm())
+  const confirmed = await showConfirmModal({
+      title: "Delete Item?",
+      message: "Are you sure you want to delete this item?"
+  });
+  if (confirmed) { ... }
+
+  // Warning dialog with custom buttons
+  const confirmed = await showConfirmModal({
+      title: "Warning",
+      message: "This action cannot be undone.",
+      variant: "danger",
+      confirmText: "Delete",
+      cancelText: "Keep"
+  });
+
+  // Input prompt (replaces prompt())
+  const value = await showPromptModal({
+      title: "Confirm Action",
+      message: "Please type the name to confirm:",
+      placeholder: "Enter name",
+      expectedValue: "my-item",  // Optional: validation requirement
+      validationMessage: "Name does not match"  // Shown if validation fails
+  });
+  if (value !== null) { ... }
+*/}}
+
+{{/* Stratus Design System */}}
+<!-- Confirmation Modal Container -->
+<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden" style="z-index: 100;">
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md transform transition-all border border-cool-grey-300 dark:border-dark-grey-500">
+            <!-- Modal Header -->
+            <div id="confirm-modal-header" class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+                <h3 id="confirm-modal-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="px-6 py-4">
+                <p id="confirm-modal-message" class="text-cool-grey-600 dark:text-cool-grey-400"></p>
+
+                <!-- Input Field (hidden by default, shown for prompt modals) -->
+                <div id="confirm-modal-input-container" class="hidden mt-4">
+                    <input
+                        type="text"
+                        id="confirm-modal-input"
+                        class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    />
+                    <p id="confirm-modal-validation" class="hidden mt-2 text-sm text-red-600 dark:text-red-400"></p>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
+                <button
+                    type="button"
+                    id="confirm-modal-cancel"
+                    class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-cool-grey-500"
+                >
+                    Cancel
+                </button>
+                <button
+                    type="button"
+                    id="confirm-modal-confirm"
+                    class="px-4 py-2 text-sm font-medium text-white rounded-md focus:ring-2"
+                >
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal state management
+let confirmModalResolve = null;
+let confirmModalOptions = null;
+
+// Show confirmation modal (replaces confirm())
+// Returns Promise<boolean>
+function showConfirmModal(options) {
+    return new Promise((resolve) => {
+        confirmModalResolve = resolve;
+        confirmModalOptions = {
+            title: options.title || 'Confirm',
+            message: options.message || 'Are you sure?',
+            confirmText: options.confirmText || 'Confirm',
+            cancelText: options.cancelText || 'Cancel',
+            variant: options.variant || 'primary', // primary, danger, warning
+            isPrompt: false
+        };
+
+        renderConfirmModal();
+        document.getElementById('confirm-modal').classList.remove('hidden');
+    });
+}
+
+// Show prompt modal (replaces prompt())
+// Returns Promise<string | null>
+function showPromptModal(options) {
+    return new Promise((resolve) => {
+        confirmModalResolve = resolve;
+        confirmModalOptions = {
+            title: options.title || 'Enter Value',
+            message: options.message || '',
+            confirmText: options.confirmText || 'Confirm',
+            cancelText: options.cancelText || 'Cancel',
+            variant: options.variant || 'primary',
+            isPrompt: true,
+            placeholder: options.placeholder || '',
+            expectedValue: options.expectedValue || null,
+            validationMessage: options.validationMessage || 'Invalid input'
+        };
+
+        renderConfirmModal();
+
+        const inputContainer = document.getElementById('confirm-modal-input-container');
+        const input = document.getElementById('confirm-modal-input');
+        inputContainer.classList.remove('hidden');
+        input.placeholder = confirmModalOptions.placeholder;
+        input.value = '';
+
+        document.getElementById('confirm-modal').classList.remove('hidden');
+        input.focus();
+    });
+}
+
+function renderConfirmModal() {
+    const modal = document.getElementById('confirm-modal');
+    const title = document.getElementById('confirm-modal-title');
+    const message = document.getElementById('confirm-modal-message');
+    const confirmBtn = document.getElementById('confirm-modal-confirm');
+    const cancelBtn = document.getElementById('confirm-modal-cancel');
+    const inputContainer = document.getElementById('confirm-modal-input-container');
+    const validation = document.getElementById('confirm-modal-validation');
+
+    title.textContent = confirmModalOptions.title;
+    message.textContent = confirmModalOptions.message;
+    confirmBtn.textContent = confirmModalOptions.confirmText;
+    cancelBtn.textContent = confirmModalOptions.cancelText;
+
+    // Reset input container
+    inputContainer.classList.add('hidden');
+    validation.classList.add('hidden');
+
+    // Set button variant styling - Stratus Design System
+    // Note: warning uses orange instead of yellow in Stratus
+    confirmBtn.className = 'px-4 py-2 text-sm font-medium text-white rounded-md focus:ring-2';
+    switch (confirmModalOptions.variant) {
+        case 'danger':
+            confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500');
+            break;
+        case 'warning':
+            confirmBtn.classList.add('bg-orange-600', 'hover:bg-orange-700', 'focus:ring-orange-500');
+            break;
+        default:
+            confirmBtn.classList.add('bg-primary-600', 'hover:bg-primary-700', 'focus:ring-primary-500');
+    }
+}
+
+function closeConfirmModal(result) {
+    const modal = document.getElementById('confirm-modal');
+    const validation = document.getElementById('confirm-modal-validation');
+
+    // For prompt modals, validate input if expectedValue is set
+    if (confirmModalOptions.isPrompt && result !== null) {
+        const input = document.getElementById('confirm-modal-input');
+        const value = input.value;
+
+        if (confirmModalOptions.expectedValue && value !== confirmModalOptions.expectedValue) {
+            validation.textContent = confirmModalOptions.validationMessage;
+            validation.classList.remove('hidden');
+            input.focus();
+            return; // Don't close modal
+        }
+
+        modal.classList.add('hidden');
+        if (confirmModalResolve) {
+            confirmModalResolve(value);
+            confirmModalResolve = null;
+        }
+        return;
+    }
+
+    modal.classList.add('hidden');
+    if (confirmModalResolve) {
+        confirmModalResolve(result);
+        confirmModalResolve = null;
+    }
+}
+
+// Event listeners for modal buttons
+document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
+    closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
+});
+
+document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
+    closeConfirmModal(confirmModalOptions.isPrompt ? 'confirm' : true);
+});
+
+// Handle Enter key in input field
+document.getElementById('confirm-modal-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        closeConfirmModal('confirm');
+    }
+});
+
+// Close on Escape key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
+        closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
+    }
+});
+
+// Close on backdrop click
+document.getElementById('confirm-modal').addEventListener('click', (e) => {
+    if (e.target.id === 'confirm-modal') {
+        closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
+    }
+});
+</script>

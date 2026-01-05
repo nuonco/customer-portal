@@ -1,0 +1,89 @@
+#:schema https://api.nuon.co/v1/general/config-schema?source=inputs
+
+[[group]]
+name         = "dns"
+description  = "DNS Configuration"
+display_name = "DNS Settings"
+
+[[group]]
+name         = "database"
+description  = "Database Configuration"
+display_name = "Database Settings"
+
+[[group]]
+name         = "application"
+description  = "Application Configuration"
+display_name = "Application Settings"
+
+# DNS Configuration
+[[input]]
+name         = "domain"
+description  = "Root domain for the installation (e.g., nuon.run)"
+default      = "nuon.run"
+display_name = "Domain"
+group        = "dns"
+
+[[input]]
+name         = "vendor_subdomain"
+description  = "Subdomain for vendor portal"
+default      = "vendor"
+display_name = "Vendor Subdomain"
+group        = "dns"
+
+[[input]]
+name         = "customer_subdomain"
+description  = "Subdomain for customer portal"
+default      = "customer"
+display_name = "Customer Subdomain"
+group        = "dns"
+
+# Database Configuration
+[[input]]
+name         = "db_instance_class"
+description  = "RDS instance class for PostgreSQL"
+default      = "db.t3.micro"
+display_name = "Database Instance Type"
+group        = "database"
+
+[[input]]
+name         = "db_allocated_storage"
+description  = "Allocated storage for RDS in gigabytes"
+default      = "20"
+display_name = "Database Storage (GB)"
+group        = "database"
+
+[[input]]
+name         = "db_name"
+description  = "Name of the PostgreSQL database"
+default      = "installer"
+display_name = "Database Name"
+group        = "database"
+
+[[input]]
+name         = "db_username"
+description  = "Master username for RDS"
+default      = "installer_admin"
+display_name = "Database Username"
+group        = "database"
+
+[[input]]
+name         = "db_password"
+description  = "Master password for RDS (min 8 characters)"
+sensitive    = true
+display_name = "Database Password"
+group        = "database"
+
+# Application Configuration
+[[input]]
+name         = "jwt_secret"
+description  = "Secret key for JWT token signing (min 32 characters)"
+sensitive    = true
+display_name = "JWT Secret"
+group        = "application"
+
+[[input]]
+name         = "desired_count"
+description  = "Number of ECS tasks to run"
+default      = "2"
+display_name = "Desired Task Count"
+group        = "application"

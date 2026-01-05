@@ -1,0 +1,67 @@
+{{/*
+  Card Component - generic content container with consistent styling
+  Updated for Stratus Design System
+
+  Parameters:
+  - title (optional): Card heading text
+  - subtitle (optional): Secondary text below title
+  - id (optional): HTML id attribute
+  - shadow (optional): Shadow size - "none", "sm", "md", "lg" (default: "sm")
+  - padding (optional): Padding size - "0", "4", "6", "8" (default: "6")
+  - border (optional): Show border (default: true for Stratus style)
+  - hover (optional): Show hover effect (default: false)
+  - headerClass (optional): Additional classes for header section
+  - bodyClass (optional): Additional classes for body section
+  - class (optional): Additional CSS classes for card container
+
+  Note: Card content should be placed AFTER calling this template using {{end}}
+  For complex layouts, use this as a wrapper with custom content inside.
+
+  Usage:
+  <div class="...">
+    {{template "vendor/partials/card.html" (dict "title" "Settings" "subtitle" "Configure your preferences")}}
+    <!-- Your card content here -->
+  </div>
+*/}}
+
+{{/* Set defaults - Stratus cards use subtle shadow and border by default */}}
+{{$shadow := default .shadow "sm"}}
+{{$padding := default .padding "6"}}
+{{$border := true}}
+{{if hasKey . "border"}}{{$border = .border}}{{end}}
+
+{{/* Shadow classes */}}
+{{$shadowClass := "shadow-sm"}}
+{{if eq $shadow "none"}}
+  {{$shadowClass = ""}}
+{{else if eq $shadow "md"}}
+  {{$shadowClass = "shadow-md"}}
+{{else if eq $shadow "lg"}}
+  {{$shadowClass = "shadow-lg"}}
+{{end}}
+
+{{/* Padding classes */}}
+{{$paddingClass := "p-6"}}
+{{if eq $padding "0"}}
+  {{$paddingClass = "p-0"}}
+{{else if eq $padding "4"}}
+  {{$paddingClass = "p-4"}}
+{{else if eq $padding "8"}}
+  {{$paddingClass = "p-8"}}
+{{end}}
+
+<div
+  {{if .id}}id="{{.id}}"{{end}}
+  class="bg-white dark:bg-dark-grey-900 rounded-md {{$shadowClass}} {{$paddingClass}} {{if $border}}border border-cool-grey-300 dark:border-dark-grey-500{{end}} {{if .hover}}hover:shadow-md transition-shadow{{end}} {{.class}}"
+>
+  {{/* Header section (title/subtitle) */}}
+  {{if or .title .subtitle}}
+  <div class="{{if $padding}}mb-4{{end}} {{.headerClass}}">
+    {{if .title}}
+    <h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">{{.title}}</h3>
+    {{end}}
+    {{if .subtitle}}
+    <p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 {{if .title}}mt-1{{end}}">{{.subtitle}}</p>
+    {{end}}
+  </div>
+  {{end}}

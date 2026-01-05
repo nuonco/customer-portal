@@ -1,0 +1,364 @@
+@import "tailwindcss";
+
+/* Enable dark mode variant based on .dark class on html element */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  /* ═══════════════════════════════════════════════════════════════════════════
+   * DESIGN TOKENS
+   * Shared color palette and design system tokens
+   * ═══════════════════════════════════════════════════════════════════════════ */
+
+  /* Base colors */
+  --color-white: #FFFFFF;
+  --color-black: #000000;
+
+  /* Border colors */
+  --border-color-light: #dee3e7;
+  --border-color-dark: #27252a;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * PRIMARY - Purple (Stratus brand color)
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-primary-50: #FCFAFF;
+  --color-primary-100: #F6F0FF;
+  --color-primary-200: #F2E5FF;
+  --color-primary-300: #E5D0FB;
+  --color-primary-400: #C494F4;
+  --color-primary-500: #AD71EA;
+  --color-primary-600: #8040BF;
+  --color-primary-700: #7339AC;
+  --color-primary-800: #662F9D;
+  --color-primary-900: #4C2277;
+  --color-primary-950: #2E0E4E;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * BLUE - Info, Links
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-blue-50: #FAFBFF;
+  --color-blue-100: #EDF2FF;
+  --color-blue-200: #E5EEFF;
+  --color-blue-300: #CDDDFF;
+  --color-blue-400: #8DB0FB;
+  --color-blue-500: #6792F4;
+  --color-blue-600: #3062D4;
+  --color-blue-700: #2759CD;
+  --color-blue-800: #1E50C0;
+  --color-blue-900: #113997;
+  --color-blue-950: #05205E;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * GREEN - Success
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-green-50: #F4FBF7;
+  --color-green-100: #E6F9EF;
+  --color-green-200: #D8F8E7;
+  --color-green-300: #C6F1DA;
+  --color-green-400: #75CC9E;
+  --color-green-500: #4AA578;
+  --color-green-600: #1D7C4D;
+  --color-green-700: #1E714A;
+  --color-green-800: #196742;
+  --color-green-900: #0E4E30;
+  --color-green-950: #062D1B;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * ORANGE - Warning
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-orange-50: #FFF5EB;
+  --color-orange-100: #FFF0E0;
+  --color-orange-200: #FFE8D1;
+  --color-orange-300: #FFD4A8;
+  --color-orange-400: #FEB872;
+  --color-orange-500: #F6A351;
+  --color-orange-600: #F59638;
+  --color-orange-700: #B4610E;
+  --color-orange-800: #A05C1C;
+  --color-orange-900: #7A4510;
+  --color-orange-950: #482909;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * RED - Error, Danger
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-red-50: #FEF2F2;
+  --color-red-100: #FEE2E2;
+  --color-red-200: #FECACA;
+  --color-red-300: #FCA5A5;
+  --color-red-400: #F87171;
+  --color-red-500: #EF4444;
+  --color-red-600: #DC2626;
+  --color-red-700: #B91C1C;
+  --color-red-800: #991B1B;
+  --color-red-900: #7F1D1D;
+  --color-red-950: #450A0A;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * COOL GREY - Light mode neutrals
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-cool-grey-50: #FAFAFA;
+  --color-cool-grey-100: #F0F3F5;
+  --color-cool-grey-200: #EAEDF0;
+  --color-cool-grey-300: #DEE3E7;
+  --color-cool-grey-400: #CFD6DD;
+  --color-cool-grey-500: #9EA8B3;
+  --color-cool-grey-600: #555F6D;
+  --color-cool-grey-700: #4A545E;
+  --color-cool-grey-800: #3A424A;
+  --color-cool-grey-900: #272E35;
+  --color-cool-grey-950: #1B242C;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * DARK GREY - Dark mode neutrals
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --color-dark-grey-50: #3E3D41;
+  --color-dark-grey-100: #3A383C;
+  --color-dark-grey-200: #353337;
+  --color-dark-grey-300: #302E33;
+  --color-dark-grey-400: #2C2A2E;
+  --color-dark-grey-500: #27252A;
+  --color-dark-grey-600: #222025;
+  --color-dark-grey-700: #1D1B20;
+  --color-dark-grey-800: #19171C;
+  --color-dark-grey-900: #141217;
+  --color-dark-grey-950: #121212;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * TYPOGRAPHY TOKENS
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --font-weight-normal: 400;
+  --font-weight-strong: 500;
+  --font-weight-stronger: 600;
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * ANIMATION TOKENS
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --ease-cubic: cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fastest: 150ms;
+  --duration-fast: 250ms;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SEMANTIC VARIABLES
+ * These provide the base theme and can be overridden by vendor customization
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  /* Background and foreground */
+  --background: var(--color-white);
+  --background-neutral: var(--color-cool-grey-100);
+  --foreground: var(--color-dark-grey-900);
+  --border-color: var(--border-color-light);
+
+  /* ─────────────────────────────────────────────────────────────────────────────
+   * VENDOR-CUSTOMIZABLE THEME TOKENS
+   * These default to Stratus colors but can be overridden per-vendor
+   * ───────────────────────────────────────────────────────────────────────────── */
+  --theme-primary: var(--color-primary-600);
+  --theme-primary-hover: var(--color-primary-700);
+  --theme-primary-light: var(--color-primary-50);
+  --theme-secondary: var(--color-blue-600);
+  --theme-secondary-hover: var(--color-blue-700);
+
+  /* Font families - can be overridden by vendor theme */
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DARK MODE
+ * Automatically applied when .dark class is on html element
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.dark {
+  --background: var(--color-dark-grey-900);
+  --background-neutral: var(--color-dark-grey-800);
+  --foreground: var(--color-white);
+  --border-color: var(--border-color-dark);
+}
+
+/* Also support system preference directly */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: var(--color-dark-grey-900);
+    --background-neutral: var(--color-dark-grey-800);
+    --foreground: var(--color-white);
+    --border-color: var(--border-color-dark);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * VENDOR THEME OVERRIDE CLASSES
+ * Use these classes when you want vendor-customizable colors
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Primary color utilities */
+.bg-theme-primary { background-color: var(--theme-primary) !important; }
+.bg-theme-primary-hover:hover { background-color: var(--theme-primary-hover) !important; }
+.text-theme-primary { color: var(--theme-primary) !important; }
+.border-theme-primary { border-color: var(--theme-primary) !important; }
+.ring-theme-primary { --tw-ring-color: var(--theme-primary) !important; }
+.focus\:ring-theme-primary:focus { --tw-ring-color: var(--theme-primary) !important; }
+.focus\:border-theme-primary:focus { border-color: var(--theme-primary) !important; }
+
+/* Secondary color utilities */
+.bg-theme-secondary { background-color: var(--theme-secondary) !important; }
+.text-theme-secondary { color: var(--theme-secondary) !important; }
+.text-theme-secondary-hover:hover { color: var(--theme-secondary-hover) !important; }
+.border-theme-secondary { border-color: var(--theme-secondary) !important; }
+
+/* Light primary for backgrounds */
+.bg-theme-primary-light { background-color: var(--theme-primary-light) !important; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * BASE STYLES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}
+
+/* Border color normalization */
+hr,
+:where([class*="divide"] > :not(:last-child)),
+[class*="border"] {
+  border-color: var(--border-color);
+}
+
+.border-transparent {
+  border-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HTMX LOADING STATES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.htmx-indicator {
+  display: none;
+}
+
+.htmx-request .htmx-indicator {
+  display: inline-block;
+}
+
+.htmx-request.htmx-indicator {
+  display: inline-block;
+}
+
+button.htmx-request {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * UTILITY CLASSES
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.disable-ligatures {
+  font-variant-ligatures: no-contextual !important;
+}
+
+/* Font weight utilities using design tokens */
+.font-normal { font-weight: var(--font-weight-normal); }
+.font-strong { font-weight: var(--font-weight-strong); }
+.font-stronger { font-weight: var(--font-weight-stronger); }
+
+/* Font family utilities */
+.font-body { font-family: var(--font-body); }
+.font-heading { font-family: var(--font-heading); }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * ANIMATIONS
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.fade-enter {
+  animation: enter-fade var(--duration-fastest) var(--ease-cubic) forwards;
+}
+
+.fade-exit {
+  animation: exit-fade var(--duration-fastest) var(--ease-cubic) forwards;
+}
+
+@keyframes enter-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes exit-fade {
+  0% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.slide-in {
+  animation: enter-slide-in var(--duration-fastest) var(--ease-cubic) forwards;
+}
+
+@keyframes enter-slide-in {
+  from {
+    transform: translateX(-0.15rem);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * FOCUS RING STYLES
+ * Consistent focus states matching Stratus patterns
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.focus-ring {
+  outline: none;
+}
+
+.focus-ring:focus {
+  box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--theme-primary);
+}
+
+.focus-ring:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-white), 0 0 0 4px var(--theme-primary);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SCROLLBAR STYLING
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Webkit browsers */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-cool-grey-100);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-cool-grey-400);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cool-grey-500);
+}
+
+/* Dark mode scrollbar styles */
+.dark ::-webkit-scrollbar-track {
+  background: var(--color-dark-grey-700);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--color-dark-grey-500);
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: var(--color-dark-grey-400);
+}

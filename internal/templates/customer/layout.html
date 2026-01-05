@@ -1,0 +1,173 @@
+{{/*
+  Customer Layout Template - Clean & Minimal Design
+  Provides the header + content + footer structure for customer pages.
+
+  Required context:
+  - .title: page title
+  - .user: user object (optional, for logged-in pages)
+  - .BasePath: base path for links (e.g., "/customer")
+  - Optional theme variables: .PrimaryColor, .SecondaryColor, .LogoBase64, etc.
+  - .RadiusClass: CSS class for border radius (e.g., "radius-rounded")
+  - .DensityClass: CSS class for spacing density (e.g., "density-comfortable")
+  - .contentTemplate: name of the content template to render
+*/}}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.title}}</title>
+
+    <!-- Customer CSS - Vanilla Tailwind (no Stratus components) -->
+    <link href="/static/css/customer.css" rel="stylesheet" />
+
+    <!-- Dark mode detection - runs before page renders to prevent flash -->
+    <script>
+      (function() {
+        // Check system preference
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+          document.documentElement.classList.add('dark');
+        }
+        // Listen for system preference changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+          document.documentElement.classList.toggle('dark', e.matches);
+        });
+      })();
+    </script>
+
+    <!-- Inter font (default) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    {{/* Custom fonts via @font-face */}}
+    {{if .HeadingFontBase64}}
+    <style>
+      @font-face {
+        font-family: 'CustomHeading';
+        src: url({{.HeadingFontBase64 | safeURL}}) format('woff2');
+        font-display: swap;
+      }
+    </style>
+    {{end}}
+    {{if .BodyFontBase64}}
+    <style>
+      @font-face {
+        font-family: 'CustomBody';
+        src: url({{.BodyFontBase64 | safeURL}}) format('woff2');
+        font-display: swap;
+      }
+    </style>
+    {{end}}
+
+    {{/* Additional Google Fonts for custom font names (if different from Inter) */}}
+    {{if or (and .HeadingFont (not .HeadingFontBase64)) (and .BodyFont (not .BodyFontBase64))}}
+    {{$needHeadingGoogle := and .HeadingFont (not .HeadingFontBase64)}}
+    {{$needBodyGoogle := and .BodyFont (not .BodyFontBase64)}}
+    {{if and $needHeadingGoogle $needBodyGoogle (ne .HeadingFont .BodyFont)}}
+    <link href="https://fonts.googleapis.com/css2?family={{.HeadingFont | urlquery}}:wght@500;600;700&family={{.BodyFont | urlquery}}:wght@400;500;600&display=swap" rel="stylesheet">
+    {{else if $needHeadingGoogle}}
+    <link href="https://fonts.googleapis.com/css2?family={{.HeadingFont | urlquery}}:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{else if $needBodyGoogle}}
+    <link href="https://fonts.googleapis.com/css2?family={{.BodyFont | urlquery}}:wght@400;500;600;700&display=swap" rel="stylesheet">
+    {{end}}
+    {{end}}
+
+    <!-- HTMX for dynamic interactions -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+    {{/* Theme Overrides */}}
+    {{if or .PrimaryColor .SecondaryColor .HeadingFont .BodyFont .HeadingFontBase64 .BodyFontBase64}}
+    <style>
+      :root {
+        {{if .PrimaryColor}}
+        --theme-primary: {{.PrimaryColor}};
+        --theme-primary-hover: {{.PrimaryColorDark}};
+        {{end}}
+        {{if .SecondaryColor}}
+        --theme-secondary: {{.SecondaryColor}};
+        --theme-secondary-hover: {{.SecondaryColorDark}};
+        {{end}}
+        {{if .HeadingFontBase64}}
+        --font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        {{else if .HeadingFont}}
+        --font-heading: '{{.HeadingFont}}', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        {{end}}
+        {{if .BodyFontBase64}}
+        --font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        {{else if .BodyFont}}
+        --font-body: '{{.BodyFont}}', 'Inter', ui-sans-serif, system-ui, sans-serif;
+        {{end}}
+      }
+    </style>
+    {{end}}
+
+    <script>
+      function logout() {
+        document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+        window.location.href = "{{.BasePath}}/login/";
+      }
+    </script>
+  </head>
+  <body class="bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white {{.RadiusClass}} {{.DensityClass}}">
+    {{/* Header */}}
+    {{template "customer/partials/header.html" .}}
+
+    {{/* Main Content */}}
+    <main class="customer-main">
+      {{/*
+        Go templates don't support dynamic template names, so we use conditionals.
+        Each page passes its unique contentTemplate name and we match it here.
+      */}}
+      {{if eq .contentTemplate "login_content"}}
+        {{template "login_content" .}}
+      {{else if eq .contentTemplate "installs_content"}}
+        {{template "installs_content" .}}
+      {{else if eq .contentTemplate "install_detail_content"}}
+        {{template "install_detail_content" .}}
+      {{else if eq .contentTemplate "install_link_content"}}
+        {{template "install_link_content" .}}
+      {{else if eq .contentTemplate "workflows_content"}}
+        {{template "workflows_content" .}}
+      {{else if eq .contentTemplate "error_content"}}
+        {{template "error_content" .}}
+      {{else}}
+        {{block "content" .}}{{end}}
+      {{end}}
+    </main>
+
+    {{/* Footer */}}
+    {{template "customer/partials/footer.html" .}}
+
+    {{/* Toast notifications */}}
+    {{template "customer/partials/toast.html" .}}
+
+    {{/* Confirmation modal */}}
+    {{template "customer/partials/confirm_modal.html" .}}
+
+    <script>
+      // Helper function to get cookie value
+      function getCookie(name) {
+        const value = `; ${document.cookie}`;
+        const parts = value.split(`; ${name}=`);
+        if (parts.length === 2) return parts.pop().split(";").shift();
+        return null;
+      }
+
+      // Add JWT token to requests if available
+      const token = getCookie("jwt");
+
+      if (token) {
+        // Set default Authorization header for fetch requests
+        const originalFetch = window.fetch;
+        window.fetch = function (url, options = {}) {
+          if (!options.headers) {
+            options.headers = {};
+          }
+          options.headers["Authorization"] = "Bearer " + token;
+          return originalFetch(url, options);
+        };
+      }
+    </script>
+  </body>
+</html>

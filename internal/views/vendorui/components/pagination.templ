@@ -1,0 +1,78 @@
+package components
+
+import "fmt"
+
+// PaginationProps for pagination component
+type PaginationProps struct {
+	CurrentPage  int
+	TotalPages   int
+	HasPrevious  bool
+	HasNext      bool
+	PreviousPage int
+	NextPage     int
+	BaseURL      string // e.g., "?tab=healthy&page="
+	ShowInfo     bool   // Show "Page X of Y" text (default: true)
+	ShowCounts   bool   // Show item counts
+	ShowingFrom  int    // First item number being shown
+	ShowingTo    int    // Last item number being shown
+	TotalCount   int    // Total item count
+	Class        string // Additional CSS classes
+}
+
+// Pagination renders page navigation controls
+templ Pagination(props PaginationProps) {
+	<div class={ "flex justify-between items-center mt-6", props.Class }>
+		<!-- Previous button -->
+		<div>
+			if props.HasPrevious {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s%d", props.BaseURL, props.PreviousPage)) }
+					class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+				>
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+					</svg>
+					Previous
+				</a>
+			} else {
+				<span class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-400 bg-cool-grey-100 dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md cursor-not-allowed">
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+					</svg>
+					Previous
+				</span>
+			}
+		</div>
+		<!-- Page info -->
+		if props.ShowInfo {
+			<div class="text-sm text-cool-grey-700 dark:text-cool-grey-300">
+				if props.ShowCounts && props.ShowingFrom > 0 && props.ShowingTo > 0 && props.TotalCount > 0 {
+					Showing <span class="font-medium">{ fmt.Sprint(props.ShowingFrom) }</span> to <span class="font-medium">{ fmt.Sprint(props.ShowingTo) }</span> of <span class="font-medium">{ fmt.Sprint(props.TotalCount) }</span> results
+				} else {
+					Page <span class="font-medium">{ fmt.Sprint(props.CurrentPage) }</span> of <span class="font-medium">{ fmt.Sprint(props.TotalPages) }</span>
+				}
+			</div>
+		}
+		<!-- Next button -->
+		<div>
+			if props.HasNext {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s%d", props.BaseURL, props.NextPage)) }
+					class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+				>
+					Next
+					<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+					</svg>
+				</a>
+			} else {
+				<span class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-400 bg-cool-grey-100 dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md cursor-not-allowed">
+					Next
+					<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+					</svg>
+				</span>
+			}
+		</div>
+	</div>
+}

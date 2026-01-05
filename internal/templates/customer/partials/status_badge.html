@@ -1,0 +1,99 @@
+{{/*
+  Status Badge Component - displays status indicators with consistent styling
+  Customer version - vanilla Tailwind with dark mode support
+
+  Parameters:
+  - status (required): The status string to display
+  - variant (optional): The context variant - "install", "workflow", "health", "link" (default: "install")
+  - size (optional): Badge size - "sm", "md", "lg" (default: "md")
+  - showIcon (optional): Whether to show status icon (default: false)
+
+  Usage:
+  {{template "customer/partials/status_badge.html" (dict "status" .Status "variant" "install")}}
+*/}}
+
+{{/* Determine size classes */}}
+{{$sizeClasses := "px-3 py-1 text-sm"}}
+{{if eq .size "sm"}}
+  {{$sizeClasses = "px-2 py-0.5 text-xs"}}
+{{else if eq .size "lg"}}
+  {{$sizeClasses = "px-4 py-1.5 text-base"}}
+{{end}}
+
+{{/* Determine color classes based on variant and status */}}
+{{$colorClasses := "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-800 dark:text-cool-grey-200"}}
+
+{{/* Install variant statuses */}}
+{{if or (not .variant) (eq .variant "install")}}
+  {{if eq .status "active"}}
+    {{$colorClasses = "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"}}
+  {{else if eq .status "pending"}}
+    {{$colorClasses = "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"}}
+  {{else if eq .status "provisioning"}}
+    {{$colorClasses = "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"}}
+  {{else if eq .status "failed"}}
+    {{$colorClasses = "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"}}
+  {{else if eq .status "deprovisioning"}}
+    {{$colorClasses = "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"}}
+  {{end}}
+{{end}}
+
+{{/* Workflow variant statuses */}}
+{{if eq .variant "workflow"}}
+  {{if or (eq .status "success") (eq .status "approved") (eq .status "active") (eq .status "completed")}}
+    {{$colorClasses = "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"}}
+  {{else if or (eq .status "approval-awaiting") (eq .status "awaiting")}}
+    {{$colorClasses = "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"}}
+  {{else if or (eq .status "in-progress") (eq .status "running") (eq .status "queued")}}
+    {{$colorClasses = "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"}}
+  {{else if or (eq .status "error") (eq .status "failed")}}
+    {{$colorClasses = "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"}}
+  {{else if eq .status "cancelled"}}
+    {{$colorClasses = "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-800 dark:text-cool-grey-200"}}
+  {{end}}
+{{end}}
+
+{{/* Health variant statuses */}}
+{{if eq .variant "health"}}
+  {{if or (eq .status "passing") (eq .status "passed") (eq .status "healthy")}}
+    {{$colorClasses = "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"}}
+  {{else if or (eq .status "pending") (eq .status "running") (eq .status "checking")}}
+    {{$colorClasses = "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"}}
+  {{else if or (eq .status "failing") (eq .status "failed") (eq .status "unhealthy")}}
+    {{$colorClasses = "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"}}
+  {{end}}
+{{end}}
+
+{{/* Link variant statuses */}}
+{{if eq .variant "link"}}
+  {{if eq .status "pending"}}
+    {{$colorClasses = "bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300"}}
+  {{else if eq .status "accepted"}}
+    {{$colorClasses = "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"}}
+  {{else if eq .status "expired"}}
+    {{$colorClasses = "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-800 dark:text-cool-grey-200"}}
+  {{end}}
+{{end}}
+
+{{/* Render the badge */}}
+<span class="inline-flex items-center {{$sizeClasses}} rounded-full font-medium {{$colorClasses}}">
+  {{/* Optional icon based on status */}}
+  {{if .showIcon}}
+    {{if or (eq .status "active") (eq .status "passing") (eq .status "passed") (eq .status "success") (eq .status "approved") (eq .status "completed") (eq .status "healthy")}}
+      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+      </svg>
+    {{else if or (eq .status "failed") (eq .status "failing") (eq .status "error") (eq .status "unhealthy")}}
+      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+      </svg>
+    {{else if or (eq .status "pending") (eq .status "running") (eq .status "in-progress") (eq .status "provisioning") (eq .status "checking")}}
+      <div class="animate-spin rounded-full h-3 w-3 border-b-2 border-current mr-1"></div>
+    {{else if or (eq .status "approval-awaiting") (eq .status "awaiting")}}
+      <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+      </svg>
+    {{end}}
+  {{end}}
+  {{.status}}
+</span>

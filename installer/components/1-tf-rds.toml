@@ -1,0 +1,19 @@
+#:schema https://api.nuon.co/v1/general/config-schema?source=terraform
+name              = "rds"
+type              = "terraform_module"
+terraform_version = "1.13.5"
+
+[connected_repo]
+repo      = "powertoolsdev/mono"
+directory = "exp/installer/app/installer/src/rds"
+branch = "ja/installer-v2"
+
+[vars]
+region            = "{{.nuon.install_stack.outputs.region}}"
+vpc_id            = "{{.nuon.install_stack.outputs.vpc_id}}"
+nuon_id           = "{{.nuon.install.id}}"
+db_name           = "{{.nuon.inputs.inputs.db_name}}"
+db_username       = "{{.nuon.inputs.inputs.db_username}}"
+db_password       = "{{.nuon.inputs.inputs.db_password}}"
+db_instance_class = "{{.nuon.inputs.inputs.db_instance_class}}"
+allocated_storage = "{{.nuon.inputs.inputs.db_allocated_storage}}"

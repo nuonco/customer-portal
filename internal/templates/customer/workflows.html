@@ -1,0 +1,205 @@
+{{template "customer/layout.html" .}}
+
+{{define "workflows_content"}}
+    <div class="mb-6">
+        {{if .install}}
+            {{if .install.InstallLink}}
+                <a href="{{$.BasePath}}/installs/{{.install.ID}}" class="{{if $.SecondaryColor}}text-theme-secondary hover:text-theme-secondary-hover{{else}}text-primary-600 hover:text-primary-800{{end}}">← Back to {{.install.InstallLink.AppName}}</a>
+            {{else}}
+                <a href="{{$.BasePath}}/installs/{{.install.ID}}" class="{{if $.SecondaryColor}}text-theme-secondary hover:text-theme-secondary-hover{{else}}text-primary-600 hover:text-primary-800{{end}}">← Back to Install</a>
+            {{end}}
+        {{else}}
+            <a href="{{$.BasePath}}/installs/" class="{{if $.SecondaryColor}}text-theme-secondary hover:text-theme-secondary-hover{{else}}text-primary-600 hover:text-primary-800{{end}}">← Back to My Installs</a>
+        {{end}}
+    </div>
+
+    <div class="mb-8">
+        {{if .install}}
+            {{if .install.InstallLink}}
+                <p class="text-cool-grey-600 dark:text-cool-grey-400">Deployment and update history for {{.install.InstallLink.AppName}}</p>
+            {{else}}
+                <p class="text-cool-grey-600 dark:text-cool-grey-400">Deployment and update history</p>
+            {{end}}
+        {{else}}
+            <p class="text-cool-grey-600 dark:text-cool-grey-400">Deployment and update history</p>
+        {{end}}
+    </div>
+
+    {{if .cloudFormationLink}}
+    <div class="mb-6 bg-white dark:bg-dark-grey-900 p-4 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <!-- AWS CloudFormation Icon -->
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-600" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/>
+                </svg>
+                <span class="font-medium text-cool-grey-800 dark:text-cool-grey-200">CloudFormation Stack</span>
+            </div>
+            <button id="cfCopyBtn" onclick="copyCloudFormationLink()"
+                    class="{{if .PrimaryColor}}bg-theme-primary hover:bg-theme-primary-hover{{else}}bg-primary-600 hover:bg-primary-700{{end}} text-white px-4 py-2 text-sm flex items-center space-x-2"
+                    style="border-radius: var(--theme-radius)">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span id="cfCopyText">Copy Link</span>
+            </button>
+        </div>
+        <div class="mt-2">
+            <code class="text-xs text-cool-grey-600 dark:text-cool-grey-400 break-all">{{.cloudFormationLink}}</code>
+        </div>
+    </div>
+    {{end}}
+
+    {{if .workflowGroups}}
+        {{range .workflowGroups}}
+        <div class="mb-8">
+            <h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4">
+                {{.DisplayDate}}
+            </h3>
+
+            <div class="space-y-4">
+                {{range .Workflows}}
+                {{/* Use the workflow card partial for each workflow */}}
+                {{template "customer/partials/workflow_card.html" (dict
+                    "id" .id
+                    "name" .name
+                    "status" .status
+                    "status_class" .status_class
+                    "created_at" .created_at
+                    "finished_at" .finished_at
+                    "can_approve" .can_approve
+                    "can_approve_all" .can_approve_all
+                    "can_cancel" .can_cancel
+                    "approval_step" .approval_step
+                    "approve_disabled_reason" .approve_disabled_reason
+                    "approve_all_disabled_reason" .approve_all_disabled_reason
+                    "cancel_disabled_reason" .cancel_disabled_reason
+                    "install_id" $.install.ID
+                    "PrimaryColor" $.PrimaryColor
+                    "BasePath" $.BasePath)}}
+                {{end}}
+            </div>
+        </div>
+        {{end}}
+
+        <!-- Pagination -->
+        <div class="flex justify-center space-x-4 mt-8">
+            {{if .hasPrev}}
+            <a href="?offset={{.prevOffset}}"
+               class="{{if .PrimaryColor}}bg-theme-primary hover:bg-theme-primary-hover{{else}}bg-primary-600 hover:bg-primary-700{{end}} text-white px-4 py-2"
+               style="border-radius: var(--theme-radius)">
+                Previous
+            </a>
+            {{end}}
+
+            {{if .hasNext}}
+            <a href="?offset={{.nextOffset}}"
+               class="{{if .PrimaryColor}}bg-theme-primary hover:bg-theme-primary-hover{{else}}bg-primary-600 hover:bg-primary-700{{end}} text-white px-4 py-2"
+               style="border-radius: var(--theme-radius)">
+                Next
+            </a>
+            {{end}}
+        </div>
+
+    {{else}}
+    {{template "customer/partials/empty_state.html" (dict
+        "title" "No Updates Yet"
+        "message" "Update history will appear here as your application is deployed and updated."
+        "icon" "refresh"
+    )}}
+    {{end}}
+
+<script>
+// Copy CloudFormation link to clipboard
+function copyCloudFormationLink() {
+    const link = '{{.cloudFormationLink}}';
+    const button = document.getElementById('cfCopyBtn');
+    const buttonText = document.getElementById('cfCopyText');
+    const originalText = buttonText.textContent;
+
+    navigator.clipboard.writeText(link).then(() => {
+        // Show success feedback
+        buttonText.textContent = 'Copied!';
+        button.classList.remove('bg-primary-600', 'hover:bg-primary-700', 'bg-theme-primary', 'hover:bg-theme-primary-hover');
+        button.classList.add('bg-green-600', 'hover:bg-green-700');
+
+        // Reset button after 2 seconds
+        setTimeout(() => {
+            buttonText.textContent = originalText;
+            button.classList.remove('bg-green-600', 'hover:bg-green-700');
+            {{if .PrimaryColor}}
+            button.classList.add('bg-theme-primary', 'hover:bg-theme-primary-hover');
+            {{else}}
+            button.classList.add('bg-primary-600', 'hover:bg-primary-700');
+            {{end}}
+        }, 2000);
+
+        showToast('CloudFormation link copied to clipboard!', 'success');
+    }).catch(err => {
+        console.error('Failed to copy:', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = link;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            document.execCommand('copy');
+            buttonText.textContent = 'Copied!';
+            showToast('CloudFormation link copied to clipboard!', 'success');
+            setTimeout(() => {
+                buttonText.textContent = originalText;
+            }, 2000);
+        } catch (err) {
+            showToast('Failed to copy link. Please copy manually.', 'error');
+        }
+
+        document.body.removeChild(textArea);
+    });
+}
+
+// Workflow action confirmations
+async function confirmApproveAll(button) {
+    const confirmed = await showConfirmModal({
+        title: 'Approve All Steps?',
+        message: 'Are you sure you want to approve ALL steps in this update? This will automatically approve the current step and all future steps.',
+        variant: 'primary',
+        confirmText: 'Approve All',
+        cancelText: 'Cancel'
+    });
+
+    if (confirmed) {
+        htmx.trigger(button, 'confirmed');
+    }
+}
+
+async function confirmCancelWorkflow(button) {
+    const confirmed = await showConfirmModal({
+        title: 'Cancel Update?',
+        message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
+        variant: 'danger',
+        confirmText: 'Cancel Update',
+        cancelText: 'Keep Running'
+    });
+
+    if (confirmed) {
+        htmx.trigger(button, 'confirmed');
+    }
+}
+
+// Handle HTMX response errors
+document.body.addEventListener('htmx:responseError', function(evt) {
+    showToast('An error occurred. Please try again.', 'error');
+});
+
+// Auto-refresh for in-progress updates
+{{if .hasInProgressWorkflows}}
+setTimeout(() => {
+    window.location.reload();
+}, 30000); // Refresh every 30 seconds if there are in-progress updates
+{{end}}
+</script>
+{{end}}

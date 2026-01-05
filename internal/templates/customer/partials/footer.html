@@ -1,0 +1,15 @@
+{{/*
+  Customer Footer - Support contact link
+*/}}
+{{if .SupportContact}}
+<footer class="mt-8 py-4">
+  <div class="max-w-5xl mx-auto px-6 lg:px-8 text-center text-sm text-cool-grey-600 dark:text-cool-grey-400">
+    Need help? Contact
+    {{if contains .SupportContact "@"}}
+    <a href="mailto:{{.SupportContact}}" class="{{if .SecondaryColor}}text-theme-secondary hover:text-theme-secondary-hover{{else}}text-primary-600 hover:text-primary-800{{end}}">{{.SupportContact}}</a>
+    {{else}}
+    <a href="{{.SupportContact}}" target="_blank" class="{{if .SecondaryColor}}text-theme-secondary hover:text-theme-secondary-hover{{else}}text-primary-600 hover:text-primary-800{{end}}">support</a>
+    {{end}}
+  </div>
+</footer>
+{{end}}

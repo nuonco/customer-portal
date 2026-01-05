@@ -1,0 +1,94 @@
+{{/*
+  Alert Component - displays notification/message boxes with consistent styling
+  Updated for Stratus Design System
+
+  Parameters:
+  - type (required): Alert type - "error", "success", "warning", "info"
+  - message (required): Main message content
+  - title (optional): Bold title text before message
+  - id (optional): HTML id attribute for HTMX targeting
+  - hidden (optional): Start hidden (default: false)
+  - dismissible (optional): Show close button (default: false)
+  - spinner (optional): Show loading spinner (default: false)
+  - class (optional): Additional CSS classes
+
+  Usage:
+  {{template "vendor/partials/alert.html" (dict "type" "error" "message" "Something went wrong")}}
+  {{template "vendor/partials/alert.html" (dict "type" "success" "title" "Success!" "message" "Operation completed" "id" "successMsg" "hidden" true)}}
+*/}}
+
+{{/* Determine color classes based on type - Stratus semantic colors with dark mode */}}
+{{$colorClasses := "bg-cool-grey-50 dark:bg-dark-grey-800 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-800 dark:text-cool-grey-200"}}
+{{$iconColor := "text-cool-grey-400"}}
+
+{{if eq .type "error"}}
+  {{$colorClasses = "bg-red-50 dark:bg-red-900/30 border-red-300 dark:border-red-800 text-red-800 dark:text-red-300"}}
+  {{$iconColor = "text-red-500 dark:text-red-400"}}
+{{else if eq .type "success"}}
+  {{$colorClasses = "bg-green-50 dark:bg-green-900/30 border-green-400 dark:border-green-800 text-green-800 dark:text-green-300"}}
+  {{$iconColor = "text-green-500 dark:text-green-400"}}
+{{else if eq .type "warning"}}
+  {{/* Stratus uses orange for warnings */}}
+  {{$colorClasses = "bg-orange-50 dark:bg-orange-900/30 border-orange-200 dark:border-orange-800 text-orange-800 dark:text-orange-300"}}
+  {{$iconColor = "text-orange-600 dark:text-orange-400"}}
+{{else if eq .type "info"}}
+  {{$colorClasses = "bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800 text-blue-800 dark:text-blue-300"}}
+  {{$iconColor = "text-blue-500 dark:text-blue-400"}}
+{{end}}
+
+<div
+  {{if .id}}id="{{.id}}"{{end}}
+  class="p-4 border rounded-md {{$colorClasses}} {{if .hidden}}hidden{{end}} {{.class}}"
+  {{if .dismissible}}x-data="{ show: true }" x-show="show"{{end}}
+>
+  <div class="flex items-start">
+    {{/* Icon based on type */}}
+    <div class="flex-shrink-0">
+      {{if .spinner}}
+        <svg class="animate-spin h-5 w-5 {{$iconColor}}" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+      {{else if eq .type "error"}}
+        <svg class="h-5 w-5 {{$iconColor}}" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+      {{else if eq .type "success"}}
+        <svg class="h-5 w-5 {{$iconColor}}" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+      {{else if eq .type "warning"}}
+        <svg class="h-5 w-5 {{$iconColor}}" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+      {{else if eq .type "info"}}
+        <svg class="h-5 w-5 {{$iconColor}}" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+        </svg>
+      {{end}}
+    </div>
+
+    {{/* Message content */}}
+    <div class="ml-3 flex-1">
+      <p class="text-sm">
+        {{if .title}}<strong>{{.title}}</strong> {{end}}{{.message}}
+      </p>
+    </div>
+
+    {{/* Dismiss button */}}
+    {{if .dismissible}}
+    <div class="ml-4 flex-shrink-0">
+      <button
+        type="button"
+        @click="show = false"
+        class="inline-flex rounded-md p-1.5 focus:outline-none focus:ring-2 focus:ring-offset-2 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+      >
+        <span class="sr-only">Dismiss</span>
+        <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+    {{end}}
+  </div>
+</div>
