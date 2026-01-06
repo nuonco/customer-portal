@@ -1,0 +1,31 @@
+---
+use_root_domain: false
+subdomain: customers
+region: us-west-2
+pool: nuon
+rds:
+  engine: postgres
+  engine_version: "15.12"
+  family: "postgres15"
+  parameters:
+    - name: max_connections
+      value: 200
+      apply_method: pending-reboot
+    - name: tcp_keepalives_idle
+      value: 10
+    - name: tcp_keepalives_count
+      value: 3
+  major_engine_version: "15"
+  instance_class: "db.t4g.small"
+  allocated_storage: "20"
+  db_name: customer_dashboard
+  port: 5432
+  username: nuonadmin
+  multi_az: false
+  backup_retention_period: 1
+  skip_final_snapshot: true
+  deletion_protection: true
+  storage_encrypted: true
+  enabled_cloudwatch_logs_exports:
+    - postgresql
+    - upgrade

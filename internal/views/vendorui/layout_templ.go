@@ -5,13 +5,12 @@ package vendorui
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/components"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/partials"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
 // LayoutProps contains all data needed for the vendor layout

@@ -14,14 +14,14 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/middleware"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/shortid"
-	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui"
-	vendorpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/pages"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/partials"
-	"github.com/powertoolsdev/mono/exp/installer/app/pkg/nuon"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 // DefaultPrimaryColor is the default blue color (Tailwind blue-600)

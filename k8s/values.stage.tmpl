@@ -1,0 +1,21 @@
+---
+environment: stage
+
+env:
+  NUON_API_URL: "https://api.stage.nuon.co"
+  CUSTOMER_BASE_URL: "https://customers.stage.nuon.co"
+  WORKOS_REDIRECT_URI: "https://customers.stage.nuon.co/admin/callback"
+  
+  # Secrets - TODO: move to AWS Secrets Manager
+  JWT_SECRET: "stage-jwt-secret-change-me-in-production"
+  WORKOS_API_KEY: "sk_test_placeholder"
+  WORKOS_CLIENT_ID: "client_placeholder"
+
+app:
+  alb:
+    public_domain: $TFO_PUBLIC_DOMAIN
+    public_domain_certificate: $TFO_CERTIFICATE_ARN
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: $TFO_EKS_ROLE_ARN

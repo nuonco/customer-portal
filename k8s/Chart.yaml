@@ -1,0 +1,9 @@
+---
+apiVersion: v2
+name: customer-dashboard
+description: A helm chart for deploying the customer-dashboard service.
+type: application
+version: v0.0.1
+appVersion: "0.0.1"
+
+dependencies: []

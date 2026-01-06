@@ -5,15 +5,14 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"fmt"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
 )
 
 // WorkflowGroup represents a group of workflows for a specific date

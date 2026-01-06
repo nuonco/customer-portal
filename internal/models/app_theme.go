@@ -3,7 +3,7 @@ package models
 import (
 	"time"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/shortid"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
 	"gorm.io/gorm"
 )
 

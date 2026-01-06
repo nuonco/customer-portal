@@ -5,10 +5,12 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
+import (
+	"fmt"
 
-import "fmt"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+)
 
 // AppSubnavProps for the app sub-navigation sidebar
 type AppSubnavProps struct {

@@ -9,8 +9,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/shortid"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
 )
 
 type LoginCredentials struct {

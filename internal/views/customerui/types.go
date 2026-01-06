@@ -3,7 +3,7 @@ package customerui
 import (
 	"time"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // InstallWithApprovalStatus extends Install with approval and health check info

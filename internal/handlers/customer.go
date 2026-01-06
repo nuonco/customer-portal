@@ -10,12 +10,12 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/background"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
-	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
-	"github.com/powertoolsdev/mono/exp/installer/app/pkg/nuon"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 // buildCustomerLayoutProps builds the layout props for customer pages

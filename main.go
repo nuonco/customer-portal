@@ -9,10 +9,10 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/background"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/handlers"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/middleware"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 func main() {

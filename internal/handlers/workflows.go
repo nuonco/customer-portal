@@ -10,12 +10,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/nuon-go/models"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/middleware"
-	localModels "github.com/powertoolsdev/mono/exp/installer/app/internal/models"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
-	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
-	"github.com/powertoolsdev/mono/exp/installer/app/pkg/nuon"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
+	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 // WorkflowsPage renders the workflows history page for a customer install

@@ -1,64 +1,57 @@
-#
-# Build stage
-#
+ARG BUILD_IMAGE=buildimage
+ARG RUNTIME_IMAGE=runtimeimage
 
-FROM debian:bookworm-slim AS builder
+FROM ${BUILD_IMAGE} AS code
 
-# --- Install a clean Go toolchain into /opt/go ---
-ARG GO_VERSION=1.25.5
-ARG GO_TARBALL=go${GO_VERSION}.linux-amd64.tar.gz
-ARG GO_SHA256=9e9b755d63b36acf30c12a9a3fc379243714c1c6d3dd72861da637f336ebb35b
+# Service specific arguments
+ARG SERVICE=customer-dashboard
+ARG PKG_ROOT=github.com/nuonco/mono/services/customer-dashboard
 
-RUN apt-get update && \
-    rm -f /etc/ssl/openssl.cnf || true && \
-    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
-      ca-certificates curl git xz-utils && \
-    rm -rf /var/lib/apt/lists/*
+# Copy service-specific files
+WORKDIR /src/services/${SERVICE}
 
-WORKDIR /app
-RUN curl -fsSLO https://go.dev/dl/${GO_TARBALL} \
- && echo "${GO_SHA256}  ${GO_TARBALL}" | sha256sum -c -
+COPY internal ./internal/
+COPY pkg ./pkg/
+COPY main.go ./
+RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
+    --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+    go generate ./...
 
-RUN mkdir -p /opt && tar -C /opt -xzf ${GO_TARBALL} && mv /opt/go /opt/go${GO_VERSION}
+FROM code AS build
 
-# Go env (avoid any runner overlays)
-ENV GOROOT=/opt/go${GO_VERSION}
-ENV GOPATH=/go
-ENV PATH=$GOROOT/bin:$GOPATH/bin:$PATH
-ENV GOTOOLCHAIN=local
-ENV GOEXPERIMENT=
-ENV GOFLAGS=
-ENV GOPROXY=https://proxy.golang.org,direct
-ENV GOMODCACHE=/go/pkg/mod
+RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
+    --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+    CGO_ENABLED=0 GOOS=linux go build -o /bin/service
 
-# Copy go mod files
-COPY go.mod go.sum ./
-RUN go mod download
+FROM code AS test
+RUN --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+    go test -v ./...
 
-# Copy source code
-COPY . .
+FROM code AS lint
 
-# Build the application
-RUN CGO_ENABLED=0 GOOS=linux go build -o installer-app .
+COPY .golangci.yml .
 
-#
-# Runtime stage
-#
+RUN --mount=type=cache,target=/root/.cache/golangci-lint,id=golint-customer-dashboard \
+    golangci-lint run -c .golangci.yml -v
 
-FROM alpine:3.19
+# Use the provided runtime image
+FROM ${RUNTIME_IMAGE} AS final
 
 WORKDIR /app
 
-# Install ca-certificates for HTTPS calls to Nuon API
-RUN apk add --no-cache ca-certificates tzdata
+ENV PATH=/go/bin:/usr/local/go/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/root/.local/bin
 
-# Copy binary and assets
-COPY --from=builder /app/installer-app .
-COPY --from=builder /app/internal/templates ./internal/templates
-COPY --from=builder /app/static ./static
+# expected as --build-args flags
+ARG VERSION
+ARG GIT_REF
+ENV VERSION=$VERSION
+ENV DD_VERSION=$VERSION
+ENV GIT_REF=$GIT_REF
 
-# Expose ports for vendor (8080) and customer (8081) portals
-EXPOSE 8080 8081
+# Copy static assets
+COPY static /app/static
+COPY --from=build /bin/service /bin/service
 
-# Run the application
-CMD ["./installer-app"]
+EXPOSE 8080
+
+ENTRYPOINT ["/bin/service"]

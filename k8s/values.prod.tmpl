@@ -1,0 +1,16 @@
+---
+environment: prod
+
+env:
+  NUON_API_URL: "https://api.nuon.co"
+  CUSTOMER_BASE_URL: "https://customers.nuon.co"
+  WORKOS_REDIRECT_URI: "https://customers.nuon.co/admin/callback"
+
+app:
+  alb:
+    public_domain: $TFO_PUBLIC_DOMAIN
+    public_domain_certificate: $TFO_CERTIFICATE_ARN
+
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: $TFO_EKS_ROLE_ARN

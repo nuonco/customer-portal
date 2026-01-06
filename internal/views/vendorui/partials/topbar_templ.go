@@ -5,13 +5,12 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"strings"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // TopbarProps for the topbar with breadcrumbs

@@ -52,21 +52,20 @@ The app must fulfill the following user stories.
 
 1. **Build and run the application:**
    ```bash
-   go mod tidy
-   VENDOR_PORT=8080 CUSTOMER_PORT=8081 go run main.go
+   go run ./services/customer-dashboard
    ```
 
 2. **Access the application:**
-   - **Vendor UI**: http://localhost:8080
-   - **Customer UI**: http://localhost:8081
+   - **Vendor UI**: http://localhost:8080/admin/
+   - **Customer UI**: http://localhost:8080/
 
-3. **Vendor Flow** (port 8080):
-   - Enter an email address to create/login as a vendor
+3. **Vendor Flow** (`/admin/*`):
+   - Login via WorkOS AuthKit
    - Connect a Nuon organization (provide org ID and API token)
    - Create install links for your apps
-   - Share the install URLs with customers (links point to customer port)
+   - Share the install URLs with customers
 
-4. **Customer Flow** (port 8081):
+4. **Customer Flow** (`/*`):
    - Click an install link provided by a vendor
    - Enter your email address to create an account
    - Create an installation
@@ -97,26 +96,28 @@ The app must fulfill the following user stories.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VENDOR_PORT` | `8080` | Port for the vendor UI |
-| `CUSTOMER_PORT` | `8081` | Port for the customer UI |
-| `CUSTOMER_BASE_URL` | `http://localhost:$CUSTOMER_PORT` | Base URL for install links (override for production) |
+| `PORT` | `8080` | Server port |
+| `CUSTOMER_BASE_URL` | `http://localhost:8080` | Base URL for install links (override for production) |
 | `JWT_SECRET` | `your-secret-key` | JWT signing secret (required for production) |
+| `NUON_API_URL` | `https://api.nuon.co` | Nuon API URL |
+| `WORKOS_API_KEY` | - | WorkOS API key for vendor auth |
+| `WORKOS_CLIENT_ID` | - | WorkOS client ID |
+| `WORKOS_REDIRECT_URI` | `http://localhost:8080/admin/callback` | WorkOS OAuth callback URL |
+| `DATABASE_URL` | - | PostgreSQL connection string |
 
 ## API Endpoints
 
-### Vendor Server (VENDOR_PORT)
-- `GET /` - Redirects to login
-- `GET /login` - Vendor login/signup page
-- `POST /login` - Vendor authentication (auto-creates accounts)
-- `GET /orgs` - Organization management
-- `POST /orgs` - Connect new organization
-- `GET /orgs/:org_id` - Organization details
-- `DELETE /orgs/:org_id` - Delete organization
-- `POST /orgs/:org_id/links` - Create install link
-- `GET /orgs/:org_id/links/:link_id` - Link details
-- `DELETE /orgs/:org_id/links/:link_id` - Delete link
+### Vendor Routes (`/admin/*`)
+- `GET /admin/` - Redirects to login
+- `GET /admin/login/` - Vendor login page (WorkOS AuthKit)
+- `GET /admin/callback` - OAuth callback from WorkOS
+- `GET /admin/orgs/` - Organization management
+- `POST /admin/orgs/` - Connect new organization
+- `GET /admin/orgs/:org_id/links` - Organization install links
+- `POST /admin/orgs/:org_id/links` - Create install link
+- `DELETE /admin/orgs/:org_id/links/:link_id` - Delete link
 
-### Customer Server (CUSTOMER_PORT)
+### Customer Routes (`/*`)
 - `GET /` - Redirects to login
 - `GET /login` - Customer login page (no signup)
 - `POST /login` - Customer authentication (existing accounts only)

@@ -1,0 +1,61 @@
+---
+env:
+  PORT: !!string 8080
+  GIN_MODE: "release"
+
+  DB_HOST: $TFO_DB_INSTANCE_HOST
+  DB_NAME: $TFO_DB_INSTANCE_NAME
+  DB_USER: $TFO_DB_INSTANCE_USERNAME
+  DB_PORT: !!string 5432
+  DB_SSL_MODE: "verify-full"
+  DB_REGION: "us-west-2"
+  DB_USE_IAM: "true"
+
+  NUON_API_URL: "https://api.nuon.co"
+
+envSecrets:
+  - name: "JWT_SECRET"
+    valueFrom:
+      name: customer-dashboard-jwt-secret
+      key: jwt_secret
+  - name: "WORKOS_API_KEY"
+    valueFrom:
+      name: customer-dashboard-workos
+      key: workos_api_key
+  - name: "WORKOS_CLIENT_ID"
+    valueFrom:
+      name: customer-dashboard-workos
+      key: workos_client_id
+
+image:
+  repository: ""
+  tag: ""
+
+namespace: "customer-dashboard"
+
+serviceAccount:
+  name: customer-dashboard
+  annotations: {}
+
+app:
+  port: 8080
+  liveness_probe: /health
+  readiness_probe: /ready
+
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 128Mi
+
+  alb:
+    public_domain: $TFO_PUBLIC_DOMAIN
+    public_domain_certificate: $TFO_CERTIFICATE_ARN
+
+  autoscaling:
+    minReplicas: 2
+    maxReplicas: 5
+    targetCPUUtilizationPercentage: 50
+    targetMemoryUtilizationPercentage: 50

@@ -8,7 +8,7 @@ import (
 	"github.com/workos/workos-go/v4/pkg/usermanagement"
 	"gorm.io/gorm"
 
-	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // AuthResult contains the user and session info from WorkOS authentication
