@@ -1,0 +1,239 @@
+package partials
+
+import (
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+)
+
+// ProfilePanelProps for the profile edit panel
+type ProfilePanelProps struct {
+	User     *models.User
+	BasePath string
+}
+
+// ProfilePanel renders the profile settings slide-in panel
+templ ProfilePanel(props ProfilePanelProps) {
+	<div id="profile-panel" class="stratus-panel panel-hidden" data-base-path={ props.BasePath }>
+		<!-- Overlay - click to close -->
+		<div class="stratus-panel-overlay" onclick="closeProfilePanel()"></div>
+		<!-- Panel Container - narrower for simple form -->
+		<div class="stratus-panel-container" style="max-width: 28rem;">
+			<!-- Header -->
+			<div class="stratus-panel-header">
+				<div class="stratus-panel-title">
+					@profileUserIcon()
+					<span>Profile Settings</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<!-- Expand/Collapse button -->
+					<button type="button" onclick="toggleProfilePanelSize()" class="stratus-panel-action" id="profilePanelExpandBtn" title="Expand to full screen">
+						@profileExpandIcon()
+						@profileCollapseIcon()
+					</button>
+					<!-- Close button - ArrowLineRight icon -->
+					<button type="button" onclick="closeProfilePanel()" class="stratus-panel-action" title="Close panel">
+						@profileArrowRightIcon()
+					</button>
+				</div>
+			</div>
+			<!-- Content -->
+			<div class="stratus-panel-content">
+				<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
+					Update your profile information. Your display name will be shown in the header.
+				</p>
+				<form id="profileForm" class="space-y-6">
+					<!-- Display Name -->
+					<div>
+						<label for="profileName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">
+							Display Name
+						</label>
+						<input
+							type="text"
+							id="profileName"
+							name="name"
+							value={ props.User.Name }
+							placeholder="Enter your name"
+							class="w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-cool-grey-400 dark:placeholder-cool-grey-500"
+						/>
+						<p class="mt-1.5 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+							This name will be shown in the header and to other team members.
+						</p>
+					</div>
+					<!-- Email (read-only) -->
+					<div>
+						<label for="profileEmail" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">
+							Email
+						</label>
+						<input
+							type="email"
+							id="profileEmail"
+							value={ props.User.Email }
+							disabled
+							class="w-full px-3 py-2 text-sm border border-cool-grey-200 dark:border-dark-grey-600 rounded-md bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-500 dark:text-cool-grey-400 cursor-not-allowed"
+						/>
+						<p class="mt-1.5 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+							Email address cannot be changed.
+						</p>
+					</div>
+					<!-- Actions -->
+					<div class="flex justify-end gap-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+						<button
+							type="button"
+							onclick="closeProfilePanel()"
+							class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							type="submit"
+							id="profileSaveBtn"
+							class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<span id="profileSaveBtnText">Save Changes</span>
+							<svg id="profileSaveSpinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	@profilePanelScript()
+}
+
+templ profilePanelScript() {
+	<script>
+		(function() {
+			const basePath = document.getElementById('profile-panel').dataset.basePath;
+
+			function openProfilePanel() {
+				const panel = document.getElementById('profile-panel');
+				panel.classList.remove('panel-hidden');
+				panel.classList.add('panel-visible');
+				document.body.classList.add('overflow-hidden');
+				const userDropdown = document.getElementById('userDropdown');
+				if (userDropdown) userDropdown.classList.add('hidden');
+			}
+
+			function closeProfilePanel() {
+				const panel = document.getElementById('profile-panel');
+				panel.classList.remove('panel-visible', 'panel-full');
+				panel.classList.add('panel-hidden');
+				document.body.classList.remove('overflow-hidden');
+				document.getElementById('profileExpandIcon')?.classList.remove('hidden');
+				document.getElementById('profileCollapseIcon')?.classList.add('hidden');
+				document.getElementById('profilePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');
+				setTimeout(function() {
+					document.getElementById('settings-panel-container').innerHTML = '';
+				}, 300);
+			}
+
+			function toggleProfilePanelSize() {
+				const panel = document.getElementById('profile-panel');
+				const container = panel.querySelector('.stratus-panel-container');
+				const expandIcon = document.getElementById('profileExpandIcon');
+				const collapseIcon = document.getElementById('profileCollapseIcon');
+				const expandBtn = document.getElementById('profilePanelExpandBtn');
+
+				if (panel.classList.contains('panel-full')) {
+					panel.classList.remove('panel-full');
+					container.style.maxWidth = '28rem';
+					expandIcon.classList.remove('hidden');
+					collapseIcon.classList.add('hidden');
+					expandBtn.setAttribute('title', 'Expand to full screen');
+				} else {
+					panel.classList.add('panel-full');
+					container.style.maxWidth = 'none';
+					expandIcon.classList.add('hidden');
+					collapseIcon.classList.remove('hidden');
+					expandBtn.setAttribute('title', 'Resize to default size');
+				}
+			}
+
+			window.openProfilePanel = openProfilePanel;
+			window.closeProfilePanel = closeProfilePanel;
+			window.toggleProfilePanelSize = toggleProfilePanelSize;
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape') {
+					const panel = document.getElementById('profile-panel');
+					if (panel && panel.classList.contains('panel-visible')) {
+						closeProfilePanel();
+					}
+				}
+			});
+
+			document.getElementById('profileForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				const saveBtn = document.getElementById('profileSaveBtn');
+				const saveBtnText = document.getElementById('profileSaveBtnText');
+				const saveSpinner = document.getElementById('profileSaveSpinner');
+				const nameInput = document.getElementById('profileName');
+
+				saveBtn.disabled = true;
+				saveBtnText.textContent = 'Saving...';
+				saveSpinner.classList.remove('hidden');
+
+				try {
+					const response = await fetch(basePath + '/profile', {
+						method: 'PUT',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						body: JSON.stringify({
+							name: nameInput.value
+						})
+					});
+
+					const data = await response.json();
+
+					if (response.ok) {
+						showToast('Profile updated successfully', 'success');
+						closeProfilePanel();
+						setTimeout(function() {
+							window.location.reload();
+						}, 500);
+					} else {
+						showToast(data.error || 'Failed to update profile', 'error');
+						saveBtn.disabled = false;
+						saveBtnText.textContent = 'Save Changes';
+						saveSpinner.classList.add('hidden');
+					}
+				} catch (error) {
+					showToast('Network error. Please try again.', 'error');
+					saveBtn.disabled = false;
+					saveBtnText.textContent = 'Save Changes';
+					saveSpinner.classList.add('hidden');
+				}
+			});
+
+			openProfilePanel();
+		})();
+	</script>
+}
+
+templ profileUserIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"></path>
+	</svg>
+}
+
+templ profileExpandIcon() {
+	<svg id="profileExpandIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path>
+	</svg>
+}
+
+templ profileCollapseIcon() {
+	<svg id="profileCollapseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
+	</svg>
+}
+
+templ profileArrowRightIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z"></path>
+	</svg>
+}

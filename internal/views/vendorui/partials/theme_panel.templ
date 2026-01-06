@@ -1,0 +1,680 @@
+package partials
+
+import (
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+)
+
+// ThemePanelProps for the theme settings panel
+type ThemePanelProps struct {
+	Theme    *models.AppTheme
+	BasePath string
+}
+
+// ThemePanel renders the theme settings slide-in panel
+templ ThemePanel(props ThemePanelProps) {
+	<div
+		id="settings-panel"
+		class="stratus-panel panel-hidden"
+		data-base-path={ props.BasePath }
+		data-logo-base64={ props.Theme.LogoBase64 }
+		data-heading-font={ props.Theme.HeadingFont }
+		data-body-font={ props.Theme.BodyFont }
+	>
+		<!-- Overlay - click to close -->
+		<div class="stratus-panel-overlay" onclick="closeSettingsPanel()"></div>
+		<!-- Panel Container -->
+		<div class="stratus-panel-container">
+			<!-- Header -->
+			<div class="stratus-panel-header">
+				<div class="stratus-panel-title">
+					@themeGearIcon()
+					<span>Theme Settings</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<!-- Expand/Collapse button -->
+					<button type="button" onclick="togglePanelSize()" class="stratus-panel-action" id="panelExpandBtn" title="Expand to full screen">
+						@themeExpandIcon()
+						@themeCollapseIcon()
+					</button>
+					<!-- Close button - ArrowLineRight icon -->
+					<button type="button" onclick="closeSettingsPanel()" class="stratus-panel-action" title="Close panel">
+						@themeArrowRightIcon()
+					</button>
+				</div>
+			</div>
+			<!-- Scrollable Content -->
+			<div class="stratus-panel-content">
+				<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">Customize the appearance of the customer portal. These settings apply globally to all customers.</p>
+				<div class="space-y-6">
+					<!-- Live Preview -->
+					@themeLivePreview(props.Theme)
+					<!-- Branding & Colors Row -->
+					<div class="flex gap-6">
+						@themeBrandingSection(props.Theme)
+						@themeColorsSection(props.Theme)
+					</div>
+					<!-- Typography Section -->
+					@themeTypographySection(props.Theme)
+					<!-- Customer Page Style Section -->
+					@themePageStyleSection(props.Theme)
+					<!-- Support Section -->
+					@themeSupportSection(props.Theme)
+					<!-- Save Button -->
+					<div class="flex space-x-3">
+						<button type="button" id="panelSaveButton" onclick="panelSaveSettings()" class="flex-1 inline-flex items-center justify-center px-5 py-2.5 text-sm rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700">
+							Save Changes
+						</button>
+					</div>
+					<!-- Status Messages -->
+					<div id="panelSuccessMessage" class="hidden p-3 bg-green-100 border border-green-400 text-green-700 rounded-lg text-sm">
+						Settings saved successfully!
+					</div>
+					<div id="panelErrorMessage" class="hidden p-3 bg-red-100 border border-red-400 text-red-700 rounded-lg text-sm"></div>
+				</div>
+			</div>
+		</div>
+	</div>
+	@themePanelScript()
+}
+
+templ themeLivePreview(theme *models.AppTheme) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-3 text-cool-grey-800 dark:text-white">Live Preview</h3>
+		<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4">This is how your customer portal will appear.</p>
+		<!-- Preview Container -->
+		<div id="panelPreviewContainer" class="border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden bg-white dark:bg-dark-grey-700">
+			<!-- Preview Header -->
+			<nav id="panelPreviewHeader" class="text-white p-3" style={ "background-color: " + getPrimaryColorOrDefault(theme.PrimaryColor) }>
+				<div class="flex justify-between items-center">
+					<div class="flex items-center space-x-2">
+						if theme.LogoBase64 != "" {
+							<img id="panelPreviewLogo" src={ theme.LogoBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain"/>
+						} else {
+							<img id="panelPreviewLogo" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden"/>
+						}
+						<span id="panelPreviewTitle" class="text-base font-bold" style={ getFontStyle(theme.HeadingFont) }>My Installs</span>
+					</div>
+					<span class="text-xs opacity-75" style={ getFontStyle(theme.BodyFont) }>user@example.com</span>
+				</div>
+			</nav>
+			<!-- Preview Content -->
+			<div class="p-3 bg-cool-grey-50 dark:bg-dark-grey-800">
+				<div class="bg-white dark:bg-dark-grey-700 p-3 rounded shadow-sm">
+					<h4 id="panelPreviewHeading" class="font-semibold text-cool-grey-900 dark:text-white text-sm mb-1" style={ getFontStyle(theme.HeadingFont) }>Sample Install</h4>
+					<p id="panelPreviewBody" class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-2" style={ getFontStyle(theme.BodyFont) }>This is how content will appear.</p>
+					<a id="panelPreviewLink" href="#" class="text-xs hover:underline" style={ "color: " + getSecondaryColorOrDefault(theme.SecondaryColor) + "; " + getFontStyle(theme.BodyFont) }>View details →</a>
+				</div>
+			</div>
+			<!-- Preview Footer -->
+			<div
+				id="panelPreviewFooter"
+				class={ "p-2 bg-cool-grey-100 dark:bg-dark-grey-600 border-t border-cool-grey-200 dark:border-dark-grey-500 text-center text-xs text-cool-grey-600 dark:text-cool-grey-300", templ.KV("hidden", theme.SupportContact == "") }
+				style={ getFontStyle(theme.BodyFont) }
+			>
+				Need help? Contact <a id="panelPreviewSupportLink" href="#" class="hover:underline" style={ "color: " + getSecondaryColorOrDefault(theme.SecondaryColor) }>support</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ themeBrandingSection(theme *models.AppTheme) {
+	<div class="flex-1 bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Branding</h3>
+		<!-- Logo Upload -->
+		<div>
+			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Logo</label>
+			<div class="flex items-center space-x-4">
+				<div class="flex-shrink-0">
+					if theme.LogoBase64 != "" {
+						<img id="panelLogoPreview" src={ theme.LogoBase64 } alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700"/>
+					} else {
+						<img id="panelLogoPreview" src="" alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden"/>
+					}
+					<div id="panelLogoPlaceholder" class={ "h-12 w-20 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.LogoBase64 != "") }>
+						<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs">No logo</span>
+					</div>
+				</div>
+				<div class="flex-1">
+					<input
+						type="file"
+						id="panelLogoUpload"
+						accept="image/png,image/jpeg,image/svg+xml,image/gif"
+						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+					/>
+				</div>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB.</p>
+			<button type="button" id="panelRemoveLogo" onclick="panelRemoveLogo()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoBase64 == "") }>
+				Remove logo
+			</button>
+		</div>
+	</div>
+}
+
+templ themeColorsSection(theme *models.AppTheme) {
+	<div class="flex-1 bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Colors</h3>
+		<!-- Primary Color -->
+		<div class="mb-5">
+			<label for="panelPrimaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Primary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="panelPrimaryColor"
+					value={ getPrimaryColorOrDefault(theme.PrimaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="panelPrimaryColorText"
+					value={ getPrimaryColorOrDefault(theme.PrimaryColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#8040BF"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons.</p>
+		</div>
+		<!-- Secondary Color -->
+		<div>
+			<label for="panelSecondaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="panelSecondaryColor"
+					value={ getSecondaryColorOrDefault(theme.SecondaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="panelSecondaryColorText"
+					value={ getSecondaryColorOrDefault(theme.SecondaryColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#8040BF"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements.</p>
+		</div>
+	</div>
+}
+
+templ themeTypographySection(theme *models.AppTheme) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Typography</h3>
+		<div class="flex gap-6">
+			<!-- Heading Font -->
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Heading Font</label>
+				<select id="panelHeadingFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+					<option value="">System Default</option>
+					<optgroup label="Modern Sans-Serif">
+						<option value="Inter" selected?={ theme.HeadingFont == "Inter" }>Inter</option>
+						<option value="DM Sans" selected?={ theme.HeadingFont == "DM Sans" }>DM Sans</option>
+						<option value="Plus Jakarta Sans" selected?={ theme.HeadingFont == "Plus Jakarta Sans" }>Plus Jakarta Sans</option>
+						<option value="Outfit" selected?={ theme.HeadingFont == "Outfit" }>Outfit</option>
+						<option value="Figtree" selected?={ theme.HeadingFont == "Figtree" }>Figtree</option>
+						<option value="Manrope" selected?={ theme.HeadingFont == "Manrope" }>Manrope</option>
+					</optgroup>
+					<optgroup label="Classic Sans-Serif">
+						<option value="Roboto" selected?={ theme.HeadingFont == "Roboto" }>Roboto</option>
+						<option value="Open Sans" selected?={ theme.HeadingFont == "Open Sans" }>Open Sans</option>
+						<option value="Lato" selected?={ theme.HeadingFont == "Lato" }>Lato</option>
+						<option value="Montserrat" selected?={ theme.HeadingFont == "Montserrat" }>Montserrat</option>
+					</optgroup>
+					<optgroup label="Friendly & Rounded">
+						<option value="Poppins" selected?={ theme.HeadingFont == "Poppins" }>Poppins</option>
+						<option value="Nunito" selected?={ theme.HeadingFont == "Nunito" }>Nunito</option>
+						<option value="Quicksand" selected?={ theme.HeadingFont == "Quicksand" }>Quicksand</option>
+					</optgroup>
+				</select>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for titles and headings.</p>
+			</div>
+			<!-- Body Font -->
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Body Font</label>
+				<select id="panelBodyFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+					<option value="">System Default</option>
+					<optgroup label="Modern Sans-Serif">
+						<option value="Inter" selected?={ theme.BodyFont == "Inter" }>Inter</option>
+						<option value="DM Sans" selected?={ theme.BodyFont == "DM Sans" }>DM Sans</option>
+						<option value="Plus Jakarta Sans" selected?={ theme.BodyFont == "Plus Jakarta Sans" }>Plus Jakarta Sans</option>
+						<option value="Outfit" selected?={ theme.BodyFont == "Outfit" }>Outfit</option>
+						<option value="Figtree" selected?={ theme.BodyFont == "Figtree" }>Figtree</option>
+						<option value="Manrope" selected?={ theme.BodyFont == "Manrope" }>Manrope</option>
+					</optgroup>
+					<optgroup label="Classic Sans-Serif">
+						<option value="Roboto" selected?={ theme.BodyFont == "Roboto" }>Roboto</option>
+						<option value="Open Sans" selected?={ theme.BodyFont == "Open Sans" }>Open Sans</option>
+						<option value="Lato" selected?={ theme.BodyFont == "Lato" }>Lato</option>
+						<option value="Montserrat" selected?={ theme.BodyFont == "Montserrat" }>Montserrat</option>
+					</optgroup>
+					<optgroup label="Friendly & Rounded">
+						<option value="Poppins" selected?={ theme.BodyFont == "Poppins" }>Poppins</option>
+						<option value="Nunito" selected?={ theme.BodyFont == "Nunito" }>Nunito</option>
+						<option value="Quicksand" selected?={ theme.BodyFont == "Quicksand" }>Quicksand</option>
+					</optgroup>
+				</select>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for paragraphs and body text.</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ themePageStyleSection(theme *models.AppTheme) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Customer Page Style</h3>
+		<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the appearance of customer-facing pages.</p>
+		<div class="flex gap-6">
+			<!-- Corner Style -->
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Corner Style</label>
+				<div class="grid grid-cols-4 gap-2">
+					@radiusOption("sharp", "Sharp", "0", theme.BorderRadius == "sharp")
+					@radiusOption("subtle", "Subtle", "4px", theme.BorderRadius == "subtle")
+					@radiusOption("rounded", "Rounded", "8px", theme.BorderRadius == "rounded" || theme.BorderRadius == "")
+					@radiusOption("very-rounded", "Very Rounded", "12px", theme.BorderRadius == "very-rounded")
+				</div>
+			</div>
+			<!-- Spacing Density -->
+			<div class="flex-1">
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Spacing Density</label>
+				<div class="space-y-2">
+					@densityOption("compact", "Compact", "Tighter spacing for data-dense views", theme.SpacingDensity == "compact")
+					@densityOption("comfortable", "Comfortable", "Balanced spacing (recommended)", theme.SpacingDensity == "comfortable" || theme.SpacingDensity == "")
+					@densityOption("spacious", "Spacious", "More breathing room for a minimal feel", theme.SpacingDensity == "spacious")
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ radiusOption(value, label, radius string, checked bool) {
+	<label class="cursor-pointer">
+		<input type="radio" name="borderRadius" value={ value } class="sr-only" checked?={ checked }/>
+		<div class="border-2 p-3 text-center transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "radius-" + value + "-option" }>
+			<div class="w-8 h-8 mx-auto mb-1 border-2 border-cool-grey-400 dark:border-cool-grey-500" style={ "border-radius: " + radius + ";" }></div>
+			<span class="text-xs text-cool-grey-600 dark:text-cool-grey-400">{ label }</span>
+		</div>
+	</label>
+}
+
+templ densityOption(value, label, description string, checked bool) {
+	<label class="flex items-start gap-3 p-3 border-2 cursor-pointer transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "density-" + value + "-option" }>
+		<input type="radio" name="spacingDensity" value={ value } class="mt-0.5" checked?={ checked }/>
+		<div>
+			<span class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ label }</span>
+			<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400">{ description }</p>
+		</div>
+	</label>
+}
+
+templ themeSupportSection(theme *models.AppTheme) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Support</h3>
+		<div>
+			<label for="panelSupportContact" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Support Contact</label>
+			<input
+				type="text"
+				id="panelSupportContact"
+				value={ theme.SupportContact }
+				placeholder="support@yourcompany.com or https://support.yourcompany.com"
+				class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+			/>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Email address or URL shown to customers for help.</p>
+		</div>
+	</div>
+}
+
+func getPrimaryColorOrDefault(color string) string {
+	if color == "" {
+		return "#8040BF"
+	}
+	return color
+}
+
+func getSecondaryColorOrDefault(color string) string {
+	if color == "" {
+		return "#8040BF"
+	}
+	return color
+}
+
+func getFontStyle(font string) string {
+	if font == "" {
+		return ""
+	}
+	return "font-family: '" + font + "', ui-sans-serif, system-ui, sans-serif;"
+}
+
+templ themePanelScript() {
+	<script>
+		(function() {
+			const panel = document.getElementById('settings-panel');
+			const basePath = panel.dataset.basePath;
+			window._panelLogoBase64 = panel.dataset.logoBase64 || '';
+			window._panelLoadedFonts = window._panelLoadedFonts || new Set();
+
+			function openSettingsPanel() {
+				panel.classList.remove('panel-hidden');
+				panel.classList.add('panel-visible');
+				document.body.classList.add('overflow-hidden');
+				const userDropdown = document.getElementById('userDropdown');
+				if (userDropdown) userDropdown.classList.add('hidden');
+			}
+
+			function closeSettingsPanel() {
+				panel.classList.remove('panel-visible', 'panel-full');
+				panel.classList.add('panel-hidden');
+				document.body.classList.remove('overflow-hidden');
+				document.getElementById('expandIcon')?.classList.remove('hidden');
+				document.getElementById('collapseIcon')?.classList.add('hidden');
+				document.getElementById('panelExpandBtn')?.setAttribute('title', 'Expand to full screen');
+			}
+
+			function togglePanelSize() {
+				const expandIcon = document.getElementById('expandIcon');
+				const collapseIcon = document.getElementById('collapseIcon');
+				const expandBtn = document.getElementById('panelExpandBtn');
+
+				if (panel.classList.contains('panel-full')) {
+					panel.classList.remove('panel-full');
+					expandIcon.classList.remove('hidden');
+					collapseIcon.classList.add('hidden');
+					expandBtn.setAttribute('title', 'Expand to full screen');
+				} else {
+					panel.classList.add('panel-full');
+					expandIcon.classList.add('hidden');
+					collapseIcon.classList.remove('hidden');
+					expandBtn.setAttribute('title', 'Resize to default size');
+				}
+			}
+
+			function panelLoadGoogleFont(fontFamily) {
+				if (!fontFamily || window._panelLoadedFonts.has(fontFamily)) return;
+				const link = document.createElement("link");
+				link.rel = "stylesheet";
+				link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}:wght@400;500;600;700&display=swap`;
+				document.head.appendChild(link);
+				window._panelLoadedFonts.add(fontFamily);
+			}
+
+			function panelUpdatePreview() {
+				const primaryColor = document.getElementById("panelPrimaryColor").value;
+				const secondaryColor = document.getElementById("panelSecondaryColor").value;
+				const supportContact = document.getElementById("panelSupportContact").value;
+				const headingFont = document.getElementById("panelHeadingFont").value;
+				const bodyFont = document.getElementById("panelBodyFont").value;
+
+				document.getElementById("panelPreviewHeader").style.backgroundColor = primaryColor;
+
+				const previewLogo = document.getElementById("panelPreviewLogo");
+				if (window._panelLogoBase64 && window._panelLogoBase64 !== "REMOVE") {
+					previewLogo.src = window._panelLogoBase64;
+					previewLogo.classList.remove("hidden");
+				} else {
+					previewLogo.classList.add("hidden");
+				}
+
+				document.getElementById("panelPreviewLink").style.color = secondaryColor;
+				document.getElementById("panelPreviewSupportLink").style.color = secondaryColor;
+
+				const previewFooter = document.getElementById("panelPreviewFooter");
+				previewFooter.classList.toggle("hidden", !supportContact);
+
+				const headingFontStyle = headingFont
+					? `'${headingFont}', ui-sans-serif, system-ui, sans-serif`
+					: "ui-sans-serif, system-ui, sans-serif";
+				document.getElementById("panelPreviewTitle").style.fontFamily = headingFontStyle;
+				document.getElementById("panelPreviewHeading").style.fontFamily = headingFontStyle;
+
+				const bodyFontStyle = bodyFont
+					? `'${bodyFont}', ui-sans-serif, system-ui, sans-serif`
+					: "ui-sans-serif, system-ui, sans-serif";
+				document.getElementById("panelPreviewBody").style.fontFamily = bodyFontStyle;
+				document.getElementById("panelPreviewLink").style.fontFamily = bodyFontStyle;
+				document.getElementById("panelPreviewFooter").style.fontFamily = bodyFontStyle;
+			}
+
+			function panelRemoveLogo() {
+				window._panelLogoBase64 = "REMOVE";
+				document.getElementById("panelLogoPreview").classList.add("hidden");
+				document.getElementById("panelLogoPlaceholder").classList.remove("hidden");
+				document.getElementById("panelLogoUpload").value = "";
+				document.getElementById("panelRemoveLogo").classList.add("hidden");
+				panelUpdatePreview();
+			}
+
+			function getCookie(name) {
+				const value = `; ${document.cookie}`;
+				const parts = value.split(`; ${name}=`);
+				if (parts.length === 2) return parts.pop().split(";").shift();
+				return null;
+			}
+
+			async function panelSaveSettings() {
+				const saveButton = document.getElementById("panelSaveButton");
+				const successMessage = document.getElementById("panelSuccessMessage");
+				const errorMessage = document.getElementById("panelErrorMessage");
+
+				saveButton.textContent = "Saving...";
+				saveButton.disabled = true;
+				successMessage.classList.add("hidden");
+				errorMessage.classList.add("hidden");
+
+				const formData = {
+					primary_color: document.getElementById("panelPrimaryColor").value,
+					secondary_color: document.getElementById("panelSecondaryColor").value,
+					support_contact: document.getElementById("panelSupportContact").value,
+					heading_font: document.getElementById("panelHeadingFont").value,
+					body_font: document.getElementById("panelBodyFont").value,
+					border_radius: document.querySelector('input[name="borderRadius"]:checked')?.value || "rounded",
+					spacing_density: document.querySelector('input[name="spacingDensity"]:checked')?.value || "comfortable",
+				};
+
+				const originalLogo = panel.dataset.logoBase64 || '';
+				if (window._panelLogoBase64 && window._panelLogoBase64 !== originalLogo) {
+					formData.logo_base64 = window._panelLogoBase64;
+				}
+
+				try {
+					const token = getCookie("jwt");
+					const response = await fetch(`${basePath}/settings`, {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json",
+							Authorization: "Bearer " + token,
+						},
+						body: JSON.stringify(formData),
+					});
+
+					const data = await response.json();
+
+					if (response.ok) {
+						successMessage.classList.remove("hidden");
+						showToast("Theme settings saved!", "success");
+						setTimeout(() => {
+							successMessage.classList.add("hidden");
+							closeSettingsPanel();
+							window.location.reload();
+						}, 1500);
+					} else {
+						errorMessage.textContent = data.error || "Failed to save settings";
+						errorMessage.classList.remove("hidden");
+					}
+				} catch (error) {
+					errorMessage.textContent = "Network error. Please try again.";
+					errorMessage.classList.remove("hidden");
+				}
+
+				saveButton.textContent = "Save Changes";
+				saveButton.disabled = false;
+			}
+
+			window.openSettingsPanel = openSettingsPanel;
+			window.closeSettingsPanel = closeSettingsPanel;
+			window.togglePanelSize = togglePanelSize;
+			window.panelRemoveLogo = panelRemoveLogo;
+			window.panelSaveSettings = panelSaveSettings;
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape') {
+					if (panel && panel.classList.contains('panel-visible')) {
+						closeSettingsPanel();
+					}
+				}
+			});
+
+			document.getElementById("panelPrimaryColor")?.addEventListener("input", (e) => {
+				document.getElementById("panelPrimaryColorText").value = e.target.value.toUpperCase();
+				panelUpdatePreview();
+			});
+
+			document.getElementById("panelPrimaryColorText")?.addEventListener("input", (e) => {
+				const value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("panelPrimaryColor").value = value;
+					panelUpdatePreview();
+				}
+			});
+
+			document.getElementById("panelSecondaryColor")?.addEventListener("input", (e) => {
+				document.getElementById("panelSecondaryColorText").value = e.target.value.toUpperCase();
+				panelUpdatePreview();
+			});
+
+			document.getElementById("panelSecondaryColorText")?.addEventListener("input", (e) => {
+				const value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("panelSecondaryColor").value = value;
+					panelUpdatePreview();
+				}
+			});
+
+			document.getElementById("panelSupportContact")?.addEventListener("input", panelUpdatePreview);
+
+			document.getElementById("panelHeadingFont")?.addEventListener("change", (e) => {
+				panelLoadGoogleFont(e.target.value);
+				panelUpdatePreview();
+			});
+
+			document.getElementById("panelBodyFont")?.addEventListener("change", (e) => {
+				panelLoadGoogleFont(e.target.value);
+				panelUpdatePreview();
+			});
+
+			// Load initial fonts
+			const headingFont = panel.dataset.headingFont;
+			const bodyFont = panel.dataset.bodyFont;
+			if (headingFont) panelLoadGoogleFont(headingFont);
+			if (bodyFont) panelLoadGoogleFont(bodyFont);
+
+			// Border radius radio button styling
+			function updateRadiusSelection() {
+				const options = ['sharp', 'subtle', 'rounded', 'very-rounded'];
+				options.forEach(opt => {
+					const el = document.getElementById(`radius-${opt}-option`);
+					const input = document.querySelector(`input[name="borderRadius"][value="${opt}"]`);
+					if (el && input) {
+						if (input.checked) {
+							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
+						} else {
+							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
+						}
+					}
+				});
+			}
+
+			// Spacing density radio button styling
+			function updateDensitySelection() {
+				const options = ['compact', 'comfortable', 'spacious'];
+				options.forEach(opt => {
+					const el = document.getElementById(`density-${opt}-option`);
+					const input = document.querySelector(`input[name="spacingDensity"][value="${opt}"]`);
+					if (el && input) {
+						if (input.checked) {
+							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
+						} else {
+							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
+						}
+					}
+				});
+			}
+
+			document.querySelectorAll('input[name="borderRadius"]').forEach(input => {
+				input.addEventListener('change', updateRadiusSelection);
+			});
+
+			document.querySelectorAll('input[name="spacingDensity"]').forEach(input => {
+				input.addEventListener('change', updateDensitySelection);
+			});
+
+			updateRadiusSelection();
+			updateDensitySelection();
+
+			// Logo upload handler
+			document.getElementById("panelLogoUpload")?.addEventListener("change", async (e) => {
+				const file = e.target.files[0];
+				if (!file) return;
+
+				if (file.size > 500 * 1024) {
+					showToast("Logo file must be under 500KB", "error");
+					e.target.value = "";
+					return;
+				}
+
+				const validTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/gif"];
+				if (!validTypes.includes(file.type)) {
+					showToast("Please upload a PNG, JPG, SVG, or GIF image", "error");
+					e.target.value = "";
+					return;
+				}
+
+				const reader = new FileReader();
+				reader.onload = () => {
+					window._panelLogoBase64 = reader.result;
+					const preview = document.getElementById("panelLogoPreview");
+					const placeholder = document.getElementById("panelLogoPlaceholder");
+					const removeBtn = document.getElementById("panelRemoveLogo");
+
+					preview.src = window._panelLogoBase64;
+					preview.classList.remove("hidden");
+					placeholder.classList.add("hidden");
+					removeBtn.classList.remove("hidden");
+					panelUpdatePreview();
+				};
+				reader.readAsDataURL(file);
+			});
+
+			openSettingsPanel();
+		})();
+	</script>
+}
+
+templ themeGearIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74L100.45,215.8a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69L85.4,46.43a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74L155.55,40.2a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path>
+	</svg>
+}
+
+templ themeExpandIcon() {
+	<svg id="expandIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path>
+	</svg>
+}
+
+templ themeCollapseIcon() {
+	<svg id="collapseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
+	</svg>
+}
+
+templ themeArrowRightIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z"></path>
+	</svg>
+}

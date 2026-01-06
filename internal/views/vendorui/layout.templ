@@ -179,8 +179,8 @@ templ themeOverrides(props LayoutProps) {
 templ layoutScripts(basePath string) {
 	<script>
 		function logout() {
-			document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-			window.location.href = "/login/";
+			// Redirect to server-side logout handler which clears both local JWT and WorkOS session
+			window.location.href = "/admin/logout";
 		}
 
 		// Cookie helpers for sidebar state persistence

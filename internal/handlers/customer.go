@@ -13,6 +13,7 @@ import (
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/background"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
 	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
 	"github.com/powertoolsdev/mono/exp/installer/app/pkg/nuon"
 )
@@ -45,37 +46,44 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 func (h *Handler) InstallLinkPage(c *gin.Context) {
 	sha := c.Query("sha")
 	if sha == "" {
-		c.HTML(http.StatusBadRequest, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Missing or invalid install link",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			Error:       "Missing or invalid install link",
+		}
+		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
 		return
 	}
 
 	var link models.InstallLink
 	if err := h.db.Preload("NuonOrg").Preload("Install").Where("sha = ?", sha).First(&link).Error; err != nil {
-		c.HTML(http.StatusNotFound, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Install link not found or invalid",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			Error:       "Install link not found or invalid",
+		}
+		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
 		return
 	}
 
 	if link.Used {
-		c.HTML(http.StatusBadRequest, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "This install link has already been used",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			Error:       "This install link has already been used",
+		}
+		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
 		return
 	}
 
 	// Get global app theme for customer UI
 	theme, err := models.GetOrCreateAppTheme(h.db)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Failed to load theme settings",
-			"contentTemplate": "error_content",
-		}))
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			Error:       "Failed to load theme settings",
+		}
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -193,10 +201,12 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		query = query.Where("user_id = ?", user.ID)
 	}
 	if err := query.Find(&allInstalls).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "customer/error.html", gin.H{
-			"error":           "Failed to load installs",
-			"contentTemplate": "error_content",
-		})
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			Error:       "Failed to load installs",
+		}
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -367,10 +377,12 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
-		c.HTML(http.StatusNotFound, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Install not found",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			Error:       "Install not found",
+		}
+		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -378,10 +390,12 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 
 	// Load the install link with NuonOrg for display and health checks
 	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Failed to load install details",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := models.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			Error:       "Failed to load install details",
+		}
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -693,24 +707,22 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 		// Wait a moment for the health checks to start, then fetch status
 		// In practice, health checks are async, so we return current status
 		ctx := context.Background()
-		healthCheckStatuses, overallHealthStatus, err := background.CheckInstallHealthStatus(ctx, client, install)
+		bgHealthStatuses, overallHealthStatus, err := background.CheckInstallHealthStatus(ctx, client, install)
 		if err != nil {
 			log.Printf("Failed to fetch health check status after trigger: %v", err)
 		}
 
-		// Get global app theme for styling
-		theme, _ := models.GetOrCreateAppTheme(h.db)
-		primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
-		secondaryColor, _ := GetPrimaryColors(theme.SecondaryColor)
+		// Convert to templ data type
+		healthCheckStatuses := convertHealthCheckStatuses(bgHealthStatuses)
 
-		c.HTML(http.StatusOK, "customer/partials/health_status.html", gin.H{
-			"install_id":          install.ID,
-			"hasHealthChecks":     true,
-			"healthCheckStatuses": healthCheckStatuses,
-			"overallHealthStatus": overallHealthStatus,
-			"PrimaryColor":        primaryColor,
-			"SecondaryColor":      secondaryColor,
-		})
+		props := components.HealthStatusProps{
+			InstallID:           install.ID,
+			HasHealthChecks:     true,
+			HealthCheckStatuses: healthCheckStatuses,
+			OverallHealthStatus: overallHealthStatus,
+			BasePath:            h.basePath,
+		}
+		h.RenderTempl(c, http.StatusOK, components.HealthStatus(props))
 		return
 	}
 

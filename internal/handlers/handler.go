@@ -17,6 +17,7 @@ import (
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/middleware"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/models"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/shortid"
+	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui"
 	vendorpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/pages"
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/vendorui/partials"
@@ -74,9 +75,10 @@ func GetPrimaryColors(primaryColor string) (string, string) {
 type Handler struct {
 	db              *gorm.DB
 	auth            *jwt.GinJWTMiddleware
-	customerBaseURL string // Base URL for customer-facing install links
-	nuonAPIURL      string // Global Nuon API URL for all orgs
-	basePath        string // Base path prefix for routes (e.g., "/admin" or "" for root)
+	workosAuth      *middleware.WorkOSAuth // WorkOS authentication (for vendor login)
+	customerBaseURL string                 // Base URL for customer-facing install links
+	nuonAPIURL      string                 // Global Nuon API URL for all orgs
+	basePath        string                 // Base path prefix for routes (e.g., "/admin" or "" for root)
 }
 
 // PaginationData holds pagination metadata for templates
@@ -104,10 +106,11 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, auth *jwt.GinJWTMiddleware, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandler(db *gorm.DB, auth *jwt.GinJWTMiddleware, workosAuth *middleware.WorkOSAuth, customerBaseURL, nuonAPIURL, basePath string) *Handler {
 	return &Handler{
 		db:              db,
 		auth:            auth,
+		workosAuth:      workosAuth,
 		customerBaseURL: customerBaseURL,
 		nuonAPIURL:      nuonAPIURL,
 		basePath:        basePath,
@@ -246,18 +249,45 @@ func (h *Handler) LoginPage(config LoginPageConfig) gin.HandlerFunc {
 	}
 }
 
+// CustomerLoginPageTempl renders the customer login page using Templ
+func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+
+	props := customerpages.LoginPageProps{
+		Title:       "Customer Login",
+		ButtonText:  "Login",
+		HelpText:    "Don't have an account? Accept an install link from your vendor to get started.",
+		BasePath:    h.basePath,
+		RedirectURL: h.basePath + "/installs",
+		Theme:       theme,
+	}
+
+	h.RenderTempl(c, http.StatusOK, customerpages.LoginPage(props))
+}
+
 // VendorLoginPageTempl renders the vendor login page using Templ
 func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db)
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
+	// Get WorkOS authorization URL
+	authURL := ""
+	if h.workosAuth != nil {
+		var err error
+		authURL, err = h.workosAuth.GetAuthorizationURL()
+		if err != nil {
+			h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate login URL")
+			return
+		}
+	}
+
 	props := vendorpages.LoginPageProps{
 		Title:              "Vendor Login",
 		ButtonText:         "Login / Sign Up",
 		HelpText:           "",
 		BasePath:           h.basePath,
-		RedirectURL:        h.basePath + "/orgs",
+		AuthURL:            authURL,
 		PrimaryColor:       primaryColor,
 		PrimaryColorDark:   primaryColorDark,
 		SecondaryColor:     secondaryColor,
@@ -272,6 +302,70 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, vendorpages.LoginPage(props))
 }
 
+// WorkOSCallback handles the OAuth callback from WorkOS AuthKit
+func (h *Handler) WorkOSCallback(c *gin.Context) {
+	code := c.Query("code")
+	if code == "" {
+		h.RenderErrorPage(c, http.StatusBadRequest, "Missing authorization code")
+		return
+	}
+
+	if h.workosAuth == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "WorkOS authentication not configured")
+		return
+	}
+
+	// Exchange code for user and session info
+	authResult, err := h.workosAuth.AuthenticateWithCode(c.Request.Context(), code)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusUnauthorized, fmt.Sprintf("Authentication failed: %v", err))
+		return
+	}
+
+	// Generate JWT token using the existing auth middleware
+	token, _, err := h.auth.TokenGenerator(authResult.User)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate session token")
+		return
+	}
+
+	// Set the JWT cookie (same as existing login flow)
+	maxAge := int(h.auth.Timeout.Seconds())
+	c.SetCookie("jwt", token, maxAge, "/", "", false, true)
+
+	// Store WorkOS session ID for logout (if available)
+	if authResult.SessionID != "" {
+		c.SetCookie("workos_session", authResult.SessionID, maxAge, "/", "", false, true)
+	}
+
+	// Redirect to the orgs page
+	c.Redirect(http.StatusFound, h.basePath+"/orgs")
+}
+
+// VendorLogout handles logout for vendor users
+func (h *Handler) VendorLogout(c *gin.Context) {
+	// Clear the JWT cookie
+	c.SetCookie("jwt", "", -1, "/", "", false, true)
+
+	// Get WorkOS session ID from cookie
+	sessionID, _ := c.Cookie("workos_session")
+
+	// Clear the WorkOS session cookie
+	c.SetCookie("workos_session", "", -1, "/", "", false, true)
+
+	// If we have a WorkOS session ID and WorkOS is configured, redirect to WorkOS logout
+	if sessionID != "" && h.workosAuth != nil {
+		logoutURL, err := h.workosAuth.GetLogoutURL(sessionID)
+		if err == nil && logoutURL != "" {
+			c.Redirect(http.StatusFound, logoutURL)
+			return
+		}
+	}
+
+	// Fallback: redirect to login page
+	c.Redirect(http.StatusFound, h.basePath+"/login/")
+}
+
 // OrgsPage renders the orgs page for vendors using Templ
 // If user has orgs, redirects to first org's links page
 // Otherwise shows the connect org form
@@ -280,10 +374,7 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 
 	var orgs []models.NuonOrg
 	if err := h.db.Where("user_id = ?", user.ID).Find(&orgs).Error; err != nil {
-		// TODO: Use templ error page once migrated
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Failed to load organizations",
-		}))
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load organizations")
 		return
 	}
 
@@ -422,18 +513,13 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 	orgID := c.Param("org_id")
 
 	if !shortid.IsValid(orgID) {
-		// TODO: Use templ error page once migrated
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Invalid organization ID",
-		}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	var org models.NuonOrg
 	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
-		c.HTML(http.StatusNotFound, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Organization not found",
-		}))
+		h.RenderErrorPage(c, http.StatusNotFound, "Organization not found")
 		return
 	}
 
@@ -477,18 +563,13 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 	orgID := c.Param("org_id")
 
 	if !shortid.IsValid(orgID) {
-		// TODO: Use templ error page once migrated
-		c.HTML(http.StatusBadRequest, "vendor/error.html", gin.H{
-			"error": "Invalid organization ID",
-		})
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	var org models.NuonOrg
 	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
-		c.HTML(http.StatusNotFound, "vendor/error.html", gin.H{
-			"error": "Organization not found",
-		})
+		h.RenderErrorPage(c, http.StatusNotFound, "Organization not found")
 		return
 	}
 
@@ -510,24 +591,18 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 	// Get total count for pagination (filtered by current tab)
 	var totalCount int64
 	if err := baseQuery.Model(&models.InstallLink{}).Count(&totalCount).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", gin.H{
-			"error": "Failed to count install links",
-		})
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to count install links")
 		return
 	}
 
 	// Get separate counts for each tab (for tab headers)
 	var availableCount, usedCount int64
 	if err := h.db.Model(&models.InstallLink{}).Where("org_id = ? AND user_id = ? AND used = ?", orgID, user.ID, false).Count(&availableCount).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", gin.H{
-			"error": "Failed to count available install links",
-		})
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to count available install links")
 		return
 	}
 	if err := h.db.Model(&models.InstallLink{}).Where("org_id = ? AND user_id = ? AND used = ?", orgID, user.ID, true).Count(&usedCount).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", gin.H{
-			"error": "Failed to count used install links",
-		})
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to count used install links")
 		return
 	}
 
@@ -545,9 +620,7 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 		Offset(offset).
 		Limit(linksPerPage).
 		Find(&links).Error; err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", gin.H{
-			"error": "Failed to load install links",
-		})
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load install links")
 		return
 	}
 
@@ -789,19 +862,18 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 	linkID := c.Param("link_id")
 
 	if !shortid.IsValid(orgID) {
-		// TODO: Use templ error page once migrated
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Invalid organization ID"}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	if !shortid.IsValid(linkID) {
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Invalid link ID"}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid link ID")
 		return
 	}
 
 	var link models.InstallLink
 	if err := h.db.Preload("Install").Preload("NuonOrg").Where("id = ? AND org_id = ? AND user_id = ?", linkID, orgID, user.ID).First(&link).Error; err != nil {
-		c.HTML(http.StatusNotFound, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Install link not found"}))
+		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
@@ -860,18 +932,18 @@ func (h *Handler) InstallLinkStatus(c *gin.Context) {
 	linkID := c.Param("link_id")
 
 	if !shortid.IsValid(orgID) {
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Invalid organization ID"}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	if !shortid.IsValid(linkID) {
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Invalid link ID"}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid link ID")
 		return
 	}
 
 	var link models.InstallLink
 	if err := h.db.Preload("Install").Preload("NuonOrg").Where("id = ? AND org_id = ? AND user_id = ?", linkID, orgID, user.ID).First(&link).Error; err != nil {
-		c.HTML(http.StatusNotFound, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{"error": "Install link not found"}))
+		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
@@ -1214,9 +1286,12 @@ func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "vendor/partials/theme_panel.html", h.MergeData(h.BaseData(), gin.H{
-		"theme": theme,
-	}))
+	props := partials.ThemePanelProps{
+		Theme:    theme,
+		BasePath: h.basePath,
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.ThemePanel(props))
 }
 
 // UpdateThemeSettings handles PUT request to update global theme settings
@@ -1331,9 +1406,12 @@ func (h *Handler) ProfilePanelContent(c *gin.Context) {
 		return
 	}
 
-	c.HTML(http.StatusOK, "vendor/partials/profile_panel.html", h.MergeData(h.BaseData(), gin.H{
-		"user": dbUser,
-	}))
+	props := partials.ProfilePanelProps{
+		User:     &dbUser,
+		BasePath: h.basePath,
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.ProfilePanel(props))
 }
 
 // UpdateProfile handles PUT request to update user profile (name)
@@ -1415,36 +1493,28 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	orgID := c.Param("org_id")
 
 	if !shortid.IsValid(orgID) {
-		c.HTML(http.StatusBadRequest, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Invalid organization ID",
-		}))
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
 		return
 	}
 
 	// Verify user owns the org
 	var org models.NuonOrg
 	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
-		c.HTML(http.StatusNotFound, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Organization not found",
-		}))
+		h.RenderErrorPage(c, http.StatusNotFound, "Organization not found")
 		return
 	}
 
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": "Failed to initialize Nuon client",
-		}))
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
 		return
 	}
 
 	// Fetch apps from Nuon API
 	apps, err := nuonClient.ListApps(c.Request.Context())
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "vendor/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error": fmt.Sprintf("Failed to fetch apps: %v", err),
-		}))
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch apps: %v", err))
 		return
 	}
 

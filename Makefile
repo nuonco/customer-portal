@@ -29,7 +29,7 @@ endif
 TAILWIND_BINARY := tailwindcss-$(OS)-$(ARCH)
 TAILWIND_URL := https://github.com/tailwindlabs/tailwindcss/releases/download/$(TAILWIND_VERSION)/$(TAILWIND_BINARY)
 
-.PHONY: setup setup-tailwind setup-air setup-templ css css-vendor css-customer css-watch dev run clean help generate _tailwind-watch _air-dev _templ-watch
+.PHONY: setup setup-tailwind setup-air setup-templ css css-vendor css-customer dev run clean help generate
 
 help:
 	@echo "Available targets:"
@@ -38,8 +38,7 @@ help:
 	@echo "  css          - Build all production CSS (minified)"
 	@echo "  css-vendor   - Build vendor CSS only"
 	@echo "  css-customer - Build customer CSS only"
-	@echo "  css-watch    - Watch and rebuild CSS on changes"
-	@echo "  dev          - Run with live reload (Air + Tailwind + Templ watch)"
+	@echo "  dev          - Run with live reload (Air)"
 	@echo "  run          - Run Go server only (no live reload)"
 	@echo "  clean        - Remove generated files"
 
@@ -83,34 +82,13 @@ css-customer: bin/tailwindcss
 run: generate
 	go run main.go
 
-# Internal targets for parallel dev
-_tailwind-watch-vendor: bin/tailwindcss
-	./bin/tailwindcss -i ./src/vendor.css -o ./static/css/vendor.css --watch
-
-_tailwind-watch-customer: bin/tailwindcss
-	./bin/tailwindcss -i ./src/customer.css -o ./static/css/customer.css --watch
-
-_air-dev:
-	air
-
-_templ-watch:
-	templ generate --watch --proxy="http://localhost:8080" --open-browser=false ./internal/views/...
-
 # Development with live reload
-# Runs 3 processes in parallel:
-# 1. Air (rebuilds Go on changes, runs on port 8080)
-# 2. Tailwind vendor CSS watch
-# 3. Tailwind customer CSS watch
-#
 # Access via: http://localhost:3000
 dev: bin/tailwindcss
 	@echo "Starting development server with live reload..."
-	@echo "- Air Go live reload (port 3000 -> 8080)"
-	@echo "- Tailwind CSS watch (vendor + customer)"
-	@echo ""
 	@echo "Access: http://localhost:3000"
 	@echo "Press Ctrl+C to stop"
-	@$(MAKE) -j3 _tailwind-watch-vendor _tailwind-watch-customer _air-dev
+	air
 
 clean:
 	rm -f static/css/vendor.css static/css/customer.css

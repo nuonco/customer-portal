@@ -6,7 +6,7 @@ tmp_dir = "tmp"
 
 [build]
 # Build command - run templ generate before go build
-cmd = "templ generate ./internal/views/... && go build -o ./tmp/main ."
+cmd = "./scripts/build.sh"
 # Binary to run
 bin = "./tmp/main"
 # Watch these file extensions (including .templ for incremental migration)

@@ -2,11 +2,11 @@ package pages
 
 // LoginPageProps for the vendor login page
 type LoginPageProps struct {
-	Title       string
-	ButtonText  string
-	HelpText    string
-	BasePath    string
-	RedirectURL string
+	Title      string
+	ButtonText string
+	HelpText   string
+	BasePath   string
+	AuthURL    string // WorkOS AuthKit authorization URL
 
 	// Theme
 	PrimaryColor       string
@@ -48,42 +48,19 @@ templ LoginPage(props LoginPageProps) {
 			<main class="container mx-auto p-4">
 				<div class="max-w-md mx-auto bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10">
 					<h2 class="text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white">{ props.Title }</h2>
-					<form id="loginForm" class="space-y-4">
-						<div>
-							<label for="email" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
-								Email
-							</label>
-							<input
-								type="email"
-								id="email"
-								name="email"
-								required
-								class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								placeholder="Enter your email"
-							/>
-						</div>
-						<button
-							type="submit"
-							class="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
-						>
-							{ props.ButtonText }
-						</button>
-					</form>
+					<a
+						href={ templ.SafeURL(props.AuthURL) }
+						class="w-full block text-center bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+					>
+						{ props.ButtonText }
+					</a>
 					if props.HelpText != "" {
 						<p class="mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center">
 							{ props.HelpText }
 						</p>
 					}
-					<div
-						id="error"
-						class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded hidden"
-					></div>
 				</div>
 			</main>
-			<!-- Config data for JavaScript -->
-			<div id="login-config" class="hidden" data-login-url={ props.BasePath + "/login/" } data-redirect-url={ props.RedirectURL }></div>
-			@loginScript()
-			@footerScript()
 		</body>
 	</html>
 }
@@ -155,66 +132,3 @@ func buildThemeCSS(props LoginPageProps) string {
 	return css
 }
 
-templ loginScript() {
-	<script>
-		(function() {
-			var config = document.getElementById("login-config");
-			var loginURL = config.dataset.loginUrl;
-			var redirectTo = config.dataset.redirectUrl;
-
-			document.getElementById("loginForm").addEventListener("submit", async function(e) {
-				e.preventDefault();
-
-				var email = document.getElementById("email").value;
-				var errorDiv = document.getElementById("error");
-
-				try {
-					var response = await fetch(loginURL, {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json"
-						},
-						body: JSON.stringify({ email: email })
-					});
-
-					var data = await response.json();
-
-					if (response.ok) {
-						document.cookie = "jwt=" + encodeURIComponent(data.token) + "; path=/";
-						window.location.href = redirectTo;
-					} else {
-						errorDiv.textContent = data.message || "Login failed";
-						errorDiv.classList.remove("hidden");
-					}
-				} catch (error) {
-					errorDiv.textContent = "Network error. Please try again.";
-					errorDiv.classList.remove("hidden");
-				}
-			});
-		})();
-	</script>
-}
-
-templ footerScript() {
-	<script>
-		function getCookie(name) {
-			const value = `; ${document.cookie}`;
-			const parts = value.split(`; ${name}=`);
-			if (parts.length === 2) return parts.pop().split(";").shift();
-			return null;
-		}
-
-		const token = getCookie("jwt");
-
-		if (token) {
-			const originalFetch = window.fetch;
-			window.fetch = function (url, options = {}) {
-				if (!options.headers) {
-					options.headers = {};
-				}
-				options.headers["Authorization"] = "Bearer " + token;
-				return originalFetch(url, options);
-			};
-		}
-	</script>
-}

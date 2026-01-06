@@ -12,6 +12,9 @@ import (
 
 	"github.com/powertoolsdev/mono/exp/installer/app/internal/middleware"
 	localModels "github.com/powertoolsdev/mono/exp/installer/app/internal/models"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui"
+	"github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/components"
+	customerpages "github.com/powertoolsdev/mono/exp/installer/app/internal/views/customerui/pages"
 	"github.com/powertoolsdev/mono/exp/installer/app/pkg/nuon"
 )
 
@@ -28,10 +31,12 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	installInterface, exists := c.Get("install")
 	if !exists {
 		fmt.Printf("ERROR: Install not found in context\n")
-		c.HTML(http.StatusNotFound, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           "Install not found",
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := localModels.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			Error:       "Install not found",
+		}
+		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -50,10 +55,12 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	// Fetch workflow data using helper function
 	processedWorkflows, hasMoreFromAPI, err := h.fetchWorkflowData(c, install, offset, limit)
 	if err != nil {
-		c.HTML(http.StatusInternalServerError, "customer/error.html", h.MergeData(h.BaseData(), gin.H{
-			"error":           err.Error(),
-			"contentTemplate": "error_content",
-		}))
+		theme, _ := localModels.GetOrCreateAppTheme(h.db)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			Error:       err.Error(),
+		}
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
 		return
 	}
 
@@ -84,40 +91,25 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 		fmt.Printf("No CloudFormation link found\n")
 	}
 
-	// Group workflows by date and sort in descending order
-	orderedWorkflowGroups := groupAndSortWorkflowsByDate(processedWorkflows)
+	// Group workflows by date and sort in descending order - convert to templ types
+	orderedWorkflowGroups := groupAndSortWorkflowsByDateTempl(processedWorkflows)
 
 	// Get global app theme for customer UI
 	theme, _ := localModels.GetOrCreateAppTheme(h.db)
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
-	c.HTML(http.StatusOK, "customer/workflows.html", h.MergeData(h.BaseData(), gin.H{
-		"title":              "Workflow History - " + install.InstallLink.AppName,
-		"user":               user,
-		"install":            install,
-		"workflowGroups":     orderedWorkflowGroups,
-		"cloudFormationLink": cloudFormationLink,
-		"currentOffset":      offset,
-		"limit":              limit,
-		"hasNext":            hasMoreFromAPI, // Use proper pagination info from API
-		"hasPrev":            offset > 0,
-		"nextOffset":         offset + limit,
-		"prevOffset":         max(0, offset-limit),
-		"PrimaryColor":       primaryColor,
-		"PrimaryColorDark":   primaryColorDark,
-		"SecondaryColor":     secondaryColor,
-		"SecondaryColorDark": secondaryColorDark,
-		"LogoBase64":         theme.LogoBase64,
-		"SupportContact":     theme.SupportContact,
-		"HeadingFont":        theme.HeadingFont,
-		"BodyFont":           theme.BodyFont,
-		"HeadingFontBase64":  theme.HeadingFontBase64,
-		"BodyFontBase64":     theme.BodyFontBase64,
-		"RadiusClass":        theme.GetRadiusClass(),
-		"DensityClass":       theme.GetDensityClass(),
-		"contentTemplate":    "workflows_content",
-	}))
+	props := customerpages.WorkflowsPageProps{
+		LayoutProps:        h.buildCustomerLayoutProps("Workflow History - "+install.InstallLink.AppName, user, theme),
+		Install:            install,
+		WorkflowGroups:     orderedWorkflowGroups,
+		CloudFormationLink: cloudFormationLink,
+		CurrentOffset:      offset,
+		Limit:              limit,
+		HasNext:            hasMoreFromAPI,
+		HasPrev:            offset > 0,
+		NextOffset:         offset + limit,
+		PrevOffset:         max(0, offset-limit),
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.WorkflowsPage(props))
 }
 
 // ApproveWorkflowStep handles workflow step approval
@@ -511,6 +503,83 @@ type WorkflowGroup struct {
 	Workflows   []gin.H `json:"workflows"`
 }
 
+// groupAndSortWorkflowsByDateTempl groups workflows by date and returns them in descending order for templ
+func groupAndSortWorkflowsByDateTempl(workflows []gin.H) []customerpages.WorkflowGroup {
+	// First, group workflows by date
+	grouped := make(map[string][]customerui.WorkflowData)
+
+	for _, workflow := range workflows {
+		var dateKey string
+		if createdAt, ok := workflow["created_at"].(time.Time); ok && !createdAt.IsZero() {
+			dateKey = createdAt.Format("2006-01-02")
+		}
+		if dateKey != "" {
+			// Convert gin.H to WorkflowData
+			wfData := ginHToWorkflowData(workflow)
+			grouped[dateKey] = append(grouped[dateKey], wfData)
+		}
+	}
+
+	// Extract and sort dates in descending order (newest first)
+	var dates []string
+	for date := range grouped {
+		dates = append(dates, date)
+	}
+	for i := 0; i < len(dates); i++ {
+		for j := i + 1; j < len(dates); j++ {
+			if dates[i] < dates[j] {
+				dates[i], dates[j] = dates[j], dates[i]
+			}
+		}
+	}
+
+	// Build ordered workflow groups
+	var orderedGroups []customerpages.WorkflowGroup
+	for _, date := range dates {
+		orderedGroups = append(orderedGroups, customerpages.WorkflowGroup{
+			Date:        date,
+			DisplayDate: formatDateForDisplay(date),
+			Workflows:   grouped[date],
+		})
+	}
+
+	return orderedGroups
+}
+
+// ginHToWorkflowData converts gin.H workflow data to customerui.WorkflowData
+func ginHToWorkflowData(wf gin.H) customerui.WorkflowData {
+	data := customerui.WorkflowData{
+		ID:                       getString(wf, "id"),
+		Name:                     getString(wf, "name"),
+		Status:                   getString(wf, "status"),
+		StatusClass:              getString(wf, "status_class"),
+		CanApprove:               getBool(wf, "can_approve"),
+		CanApproveAll:            getBool(wf, "can_approve_all"),
+		CanCancel:                getBool(wf, "can_cancel"),
+		ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
+		ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
+		CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
+	}
+
+	// Handle time fields
+	if t, ok := wf["created_at"].(time.Time); ok {
+		data.CreatedAt = t
+	}
+	if t, ok := wf["finished_at"].(time.Time); ok {
+		data.FinishedAt = t
+	}
+
+	// Handle approval step
+	if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
+		data.ApprovalStep = &customerui.ApprovalStepData{
+			StepID:     getString(step, "step_id"),
+			ApprovalID: getString(step, "approval_id"),
+		}
+	}
+
+	return data
+}
+
 // groupAndSortWorkflowsByDate groups workflows by date and returns them in descending order
 func groupAndSortWorkflowsByDate(workflows []gin.H) []WorkflowGroup {
 	// First, group workflows by date
@@ -764,34 +833,41 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 	workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
 	if err != nil {
 		fmt.Printf("Failed to fetch workflow %s for partial render: %v\n", workflowID, err)
-		c.HTML(http.StatusInternalServerError, "customer/partials/workflow_card.html", h.MergeData(h.BaseData(), gin.H{
-			"id":                          workflowID,
-			"name":                        "Error",
-			"status":                      "error",
-			"status_class":                "bg-red-100 text-red-800",
-			"install_id":                  install.ID,
-			"approve_disabled_reason":     "Error loading workflow",
-			"approve_all_disabled_reason": "Error loading workflow",
-			"cancel_disabled_reason":      "Error loading workflow",
-		}))
+		// Render error state workflow card
+		errorProps := components.WorkflowCardProps{
+			Workflow: customerui.WorkflowData{
+				ID:                       workflowID,
+				Name:                     "Error",
+				Status:                   "error",
+				StatusClass:              "bg-red-100 text-red-800",
+				ApproveDisabledReason:    "Error loading workflow",
+				ApproveAllDisabledReason: "Error loading workflow",
+				CancelDisabledReason:     "Error loading workflow",
+			},
+			InstallID: install.ID,
+			BasePath:  h.basePath,
+		}
+		h.RenderTempl(c, http.StatusInternalServerError, components.WorkflowCard(errorProps))
 		return
 	}
 
 	// Process the workflow for customer display
 	processed := processWorkflowForCustomer(workflow)
 
-	// Add install_id and BasePath for URL generation in the partial
-	processed["install_id"] = install.ID
-	processed["BasePath"] = h.basePath
-
 	// Get global app theme for styling
 	theme, _ := localModels.GetOrCreateAppTheme(h.db)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
-	if primaryColor != "" {
-		processed["PrimaryColor"] = primaryColor
-	}
 
-	c.HTML(http.StatusOK, "customer/partials/workflow_card.html", processed)
+	// Convert gin.H to WorkflowData
+	wfData := ginHToWorkflowData(processed)
+
+	props := components.WorkflowCardProps{
+		Workflow:     wfData,
+		InstallID:    install.ID,
+		BasePath:     h.basePath,
+		PrimaryColor: primaryColor,
+	}
+	h.RenderTempl(c, http.StatusOK, components.WorkflowCard(props))
 }
 
 // fetchRecentWorkflows fetches the most recent customer-visible workflow for embedded display.
