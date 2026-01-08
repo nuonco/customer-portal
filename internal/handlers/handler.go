@@ -3,6 +3,7 @@ package handlers
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math"
 	"net/http"
@@ -14,6 +15,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
@@ -75,10 +77,10 @@ func GetPrimaryColors(primaryColor string) (string, string) {
 type Handler struct {
 	db              *gorm.DB
 	auth            *jwt.GinJWTMiddleware
-	workosAuth      *middleware.WorkOSAuth // WorkOS authentication (for vendor login)
-	customerBaseURL string                 // Base URL for customer-facing install links
-	nuonAPIURL      string                 // Global Nuon API URL for all orgs
-	basePath        string                 // Base path prefix for routes (e.g., "/admin" or "" for root)
+	authProvider    auth.AuthProvider // Authentication provider (OIDC, SAML)
+	customerBaseURL string            // Base URL for customer-facing install links
+	nuonAPIURL      string            // Global Nuon API URL for all orgs
+	basePath        string            // Base path prefix for routes (e.g., "/admin" or "" for root)
 }
 
 // PaginationData holds pagination metadata for templates
@@ -106,11 +108,11 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, auth *jwt.GinJWTMiddleware, workosAuth *middleware.WorkOSAuth, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath string) *Handler {
 	return &Handler{
 		db:              db,
-		auth:            auth,
-		workosAuth:      workosAuth,
+		auth:            jwtAuth,
+		authProvider:    authProvider,
 		customerBaseURL: customerBaseURL,
 		nuonAPIURL:      nuonAPIURL,
 		basePath:        basePath,
@@ -271,16 +273,35 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
-	// Get WorkOS authorization URL
+	// Determine auth mode and get auth URL
 	authURL := ""
-	if h.workosAuth != nil {
-		var err error
-		authURL, err = h.workosAuth.GetAuthorizationURL()
-		if err != nil {
-			h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate login URL")
-			return
+	useLocalAuth := false
+
+	if h.authProvider != nil {
+		if h.authProvider.Name() == "local" {
+			// Local password auth - show email/password form
+			useLocalAuth = true
+		} else {
+			// External IdP - generate state for CSRF protection
+			state, err := auth.GenerateState()
+			if err != nil {
+				h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate security token")
+				return
+			}
+
+			// Store state in cookie for validation on callback
+			c.SetCookie("auth_state", state, 600, "/", "", false, true)
+
+			authURL, err = h.authProvider.GetAuthorizationURL(state)
+			if err != nil {
+				h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate login URL")
+				return
+			}
 		}
 	}
+
+	// Check for error message in query params (from failed login/register)
+	errorMsg := c.Query("error")
 
 	props := vendorpages.LoginPageProps{
 		Title:              "Vendor Login",
@@ -288,6 +309,8 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 		HelpText:           "",
 		BasePath:           h.basePath,
 		AuthURL:            authURL,
+		UseLocalAuth:       useLocalAuth,
+		Error:              errorMsg,
 		PrimaryColor:       primaryColor,
 		PrimaryColorDark:   primaryColorDark,
 		SecondaryColor:     secondaryColor,
@@ -302,21 +325,45 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, vendorpages.LoginPage(props))
 }
 
-// WorkOSCallback handles the OAuth callback from WorkOS AuthKit
-func (h *Handler) WorkOSCallback(c *gin.Context) {
-	code := c.Query("code")
-	if code == "" {
-		h.RenderErrorPage(c, http.StatusBadRequest, "Missing authorization code")
+// AuthCallback handles the authentication callback from OIDC or SAML providers
+func (h *Handler) AuthCallback(c *gin.Context) {
+	if h.authProvider == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Authentication not configured")
 		return
 	}
 
-	if h.workosAuth == nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "WorkOS authentication not configured")
+	// Validate state parameter (CSRF protection)
+	expectedState, _ := c.Cookie("auth_state")
+	receivedState := c.Query("state")
+	if receivedState == "" {
+		// SAML uses RelayState
+		receivedState = c.PostForm("RelayState")
+	}
+
+	if expectedState != "" && !auth.ValidateState(expectedState, receivedState) {
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid state parameter")
 		return
 	}
 
-	// Exchange code for user and session info
-	authResult, err := h.workosAuth.AuthenticateWithCode(c.Request.Context(), code)
+	// Clear state cookie
+	c.SetCookie("auth_state", "", -1, "/", "", false, true)
+
+	// Build callback request (supports both OIDC and SAML)
+	req := auth.CallbackRequest{
+		Code:         c.Query("code"),
+		State:        receivedState,
+		SAMLResponse: c.PostForm("SAMLResponse"),
+		RelayState:   c.PostForm("RelayState"),
+	}
+
+	// Validate we have either code (OIDC) or SAMLResponse (SAML)
+	if req.Code == "" && req.SAMLResponse == "" {
+		h.RenderErrorPage(c, http.StatusBadRequest, "Missing authentication response")
+		return
+	}
+
+	// Handle the callback
+	authResult, err := h.authProvider.HandleCallback(c.Request.Context(), req)
 	if err != nil {
 		h.RenderErrorPage(c, http.StatusUnauthorized, fmt.Sprintf("Authentication failed: %v", err))
 		return
@@ -329,13 +376,13 @@ func (h *Handler) WorkOSCallback(c *gin.Context) {
 		return
 	}
 
-	// Set the JWT cookie (same as existing login flow)
+	// Set the JWT cookie
 	maxAge := int(h.auth.Timeout.Seconds())
 	c.SetCookie("jwt", token, maxAge, "/", "", false, true)
 
-	// Store WorkOS session ID for logout (if available)
+	// Store session ID for logout (if available)
 	if authResult.SessionID != "" {
-		c.SetCookie("workos_session", authResult.SessionID, maxAge, "/", "", false, true)
+		c.SetCookie("auth_session", authResult.SessionID, maxAge, "/", "", false, true)
 	}
 
 	// Redirect to the orgs page
@@ -347,15 +394,15 @@ func (h *Handler) VendorLogout(c *gin.Context) {
 	// Clear the JWT cookie
 	c.SetCookie("jwt", "", -1, "/", "", false, true)
 
-	// Get WorkOS session ID from cookie
-	sessionID, _ := c.Cookie("workos_session")
+	// Get session ID from cookie
+	sessionID, _ := c.Cookie("auth_session")
 
-	// Clear the WorkOS session cookie
-	c.SetCookie("workos_session", "", -1, "/", "", false, true)
+	// Clear the session cookie
+	c.SetCookie("auth_session", "", -1, "/", "", false, true)
 
-	// If we have a WorkOS session ID and WorkOS is configured, redirect to WorkOS logout
-	if sessionID != "" && h.workosAuth != nil {
-		logoutURL, err := h.workosAuth.GetLogoutURL(sessionID)
+	// If provider supports logout, redirect to IdP logout endpoint
+	if h.authProvider != nil && h.authProvider.SupportsLogout() {
+		logoutURL, err := h.authProvider.GetLogoutURL(sessionID)
 		if err == nil && logoutURL != "" {
 			c.Redirect(http.StatusFound, logoutURL)
 			return
@@ -364,6 +411,118 @@ func (h *Handler) VendorLogout(c *gin.Context) {
 
 	// Fallback: redirect to login page
 	c.Redirect(http.StatusFound, h.basePath+"/login/")
+}
+
+// LocalLogin handles POST /admin/login/ for email/password authentication
+func (h *Handler) LocalLogin(c *gin.Context) {
+	localProvider, ok := h.authProvider.(*auth.LocalProvider)
+	if !ok {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Local authentication not configured")
+		return
+	}
+
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+
+	authResult, err := localProvider.Login(email, password)
+	if err != nil {
+		// Redirect back to login with error
+		c.Redirect(http.StatusFound, h.basePath+"/login/?error="+err.Error())
+		return
+	}
+
+	// Generate JWT token
+	token, _, err := h.auth.TokenGenerator(authResult.User)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate session token")
+		return
+	}
+
+	// Set the JWT cookie
+	maxAge := int(h.auth.Timeout.Seconds())
+	c.SetCookie("jwt", token, maxAge, "/", "", false, true)
+
+	// Store session ID for logout
+	if authResult.SessionID != "" {
+		c.SetCookie("auth_session", authResult.SessionID, maxAge, "/", "", false, true)
+	}
+
+	// Redirect to the orgs page
+	c.Redirect(http.StatusFound, h.basePath+"/orgs")
+}
+
+// VendorRegisterPageTempl renders the vendor registration page using Templ
+func (h *Handler) VendorRegisterPageTempl(c *gin.Context) {
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
+
+	// Check for error message in query params
+	errorMsg := c.Query("error")
+
+	props := vendorpages.RegisterPageProps{
+		Title:              "Create Account",
+		ButtonText:         "Sign Up",
+		BasePath:           h.basePath,
+		Error:              errorMsg,
+		PrimaryColor:       primaryColor,
+		PrimaryColorDark:   primaryColorDark,
+		SecondaryColor:     secondaryColor,
+		SecondaryColorDark: secondaryColorDark,
+		HeadingFont:        theme.HeadingFont,
+		BodyFont:           theme.BodyFont,
+		HeadingFontBase64:  theme.HeadingFontBase64,
+		BodyFontBase64:     theme.BodyFontBase64,
+		LogoBase64:         theme.LogoBase64,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.RegisterPage(props))
+}
+
+// LocalRegister handles POST /admin/register for new user registration
+func (h *Handler) LocalRegister(c *gin.Context) {
+	localProvider, ok := h.authProvider.(*auth.LocalProvider)
+	if !ok {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Local authentication not configured")
+		return
+	}
+
+	name := c.PostForm("name")
+	email := c.PostForm("email")
+	password := c.PostForm("password")
+	confirmPassword := c.PostForm("confirm_password")
+
+	// Validate password confirmation
+	if password != confirmPassword {
+		c.Redirect(http.StatusFound, h.basePath+"/register?error=Passwords do not match")
+		return
+	}
+
+	authResult, err := localProvider.Register(email, password, name)
+	if err != nil {
+		// Redirect back to register with error
+		c.Redirect(http.StatusFound, h.basePath+"/register?error="+err.Error())
+		return
+	}
+
+	// Generate JWT token
+	token, _, err := h.auth.TokenGenerator(authResult.User)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate session token")
+		return
+	}
+
+	// Set the JWT cookie
+	maxAge := int(h.auth.Timeout.Seconds())
+	c.SetCookie("jwt", token, maxAge, "/", "", false, true)
+
+	// Store session ID for logout
+	if authResult.SessionID != "" {
+		c.SetCookie("auth_session", authResult.SessionID, maxAge, "/", "", false, true)
+	}
+
+	// Redirect to the orgs page
+	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
 // OrgsPage renders the orgs page for vendors using Templ
@@ -701,7 +860,9 @@ func generateSHA() (string, error) {
 	return hex.EncodeToString(bytes), nil
 }
 
-// CreateInstallLink handles creating a new install (with sharable link)
+// CreateInstallLink handles creating a new install link
+// Vendor provides vendor-facing inputs which are stored for later use when customer accepts
+// The Install is created when customer accepts the link (not here)
 func (h *Handler) CreateInstallLink(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	orgID := c.Param("org_id")
@@ -719,83 +880,15 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 	}
 
 	var req struct {
-		AppID                string            `json:"app_id" binding:"required"`
-		AppName              string            `json:"app_name" binding:"required"`
-		Name                 string            `json:"name,omitempty"`                    // Custom install name
-		Region               string            `json:"region,omitempty"`                  // AWS region
-		Location             string            `json:"location,omitempty"`                // Azure location
-		Inputs               map[string]string `json:"inputs,omitempty"`                  // Custom input values
-		HealthCheckActionIDs []string          `json:"health_check_action_ids,omitempty"` // Health check action IDs
+		AppID   string            `json:"app_id" binding:"required"`
+		AppName string            `json:"app_name" binding:"required"`
+		Inputs  map[string]string `json:"inputs"` // Vendor-facing inputs (stored for later)
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	// Determine the platform and region/location
-	region := req.Region
-	location := req.Location
-
-	// Set default region if not provided
-	if region == "" && location == "" {
-		region = "us-east-1" // Default to AWS us-east-1
-	}
-
-	// Initialize Nuon client with the org's API token and global URL
-	fmt.Printf("Creating install link for AppID: %s, AppName: %s, Region: %s\n", req.AppID, req.AppName, region)
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		fmt.Printf("Failed to initialize Nuon client: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to initialize Nuon client: %v", err)})
-		return
-	}
-
-	// Get app input configuration to handle required inputs
-	fmt.Printf("Fetching app input config for app %s\n", req.AppID)
-	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), req.AppID)
-	if err != nil {
-		fmt.Printf("Warning: Failed to get app input config: %v (proceeding without inputs)\n", err)
-		inputConfig = nil // Proceed without inputs if config fetch fails
-	}
-
-	// Merge user inputs with required input defaults
-	inputs := make(map[string]string)
-
-	// Start with user-provided inputs
-	for key, value := range req.Inputs {
-		inputs[key] = value
-		fmt.Printf("User provided input: %s = %s\n", key, value)
-	}
-
-	// Add required input defaults if not provided by user
-	if inputConfig != nil {
-		fmt.Printf("Input config type: %T\n", inputConfig)
-		fmt.Printf("Input config value: %+v\n", inputConfig)
-
-		// For now, set hardcoded defaults for known required inputs
-		if req.AppName == "retool" && inputs["required_type"] == "" {
-			inputs["required_type"] = "app"
-			fmt.Printf("Set default required input for retool: required_type = app\n")
-		}
-	}
-
-	// Determine install name (use provided name or generate one)
-	installName := req.Name
-	if installName == "" {
-		installName = nuon.GenerateInstallName(req.AppName)
-	}
-
-	// Create the install via Nuon API immediately with custom configuration
-	fmt.Printf("Calling Nuon API to create install for app %s (%s) with name='%s', region='%s', location='%s', inputs=%d\n",
-		req.AppName, req.AppID, installName, region, location, len(inputs))
-	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), req.AppID, req.AppName, installName, region, location, inputs)
-	if err != nil {
-		fmt.Printf("Nuon API error: %v\n", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
-		return
-	}
-	fmt.Printf("Successfully created install with ID: %s\n", nuonInstall.ID)
 
 	// Generate unique SHA for the link
 	sha, err := generateSHA()
@@ -804,7 +897,7 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Create install link
+	// Create install link with vendor inputs stored
 	link := models.InstallLink{
 		UserID:  user.ID,
 		OrgID:   orgID,
@@ -812,6 +905,14 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 		AppName: req.AppName,
 		SHA:     sha,
 		Used:    false,
+	}
+
+	// Store vendor inputs for later use when customer accepts
+	if req.Inputs != nil && len(req.Inputs) > 0 {
+		if err := link.SetVendorInputs(req.Inputs); err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store vendor inputs"})
+			return
+		}
 	}
 
 	// Auto-apply health checks from app config (if configured)
@@ -823,35 +924,18 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 			link.SetHealthCheckActionIDs(healthCheckIDs)
 			fmt.Printf("Auto-applied %d health checks from app config for app %s\n", len(healthCheckIDs), req.AppID)
 		}
-	} else if len(req.HealthCheckActionIDs) > 0 {
-		// Fallback to request-provided IDs (for backward compatibility)
-		link.SetHealthCheckActionIDs(req.HealthCheckActionIDs)
 	}
 
 	if err := h.db.Create(&link).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create install"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create install link"})
 		return
 	}
 
-	// Create the install record with vendor as initial owner
-	install := models.Install{
-		UserID:            user.ID, // Vendor initially owns the install
-		CreatedByVendorID: user.ID, // Track who created it
-		InstallLinkID:     link.ID,
-		NuonInstallID:     nuonInstall.ID,
-		Name:              installName,                  // Store the human-readable install name
-		Status:            models.StatusPendingCustomer, // Waiting for customer to accept
-		Region:            region,
-	}
-
-	if err := h.db.Create(&install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store install locally"})
-		return
-	}
+	// Note: Install is NOT created here - it will be created when customer accepts the link
+	// This allows customer to provide required customer inputs and choose region/location
 
 	c.JSON(http.StatusCreated, gin.H{
-		"link":    link,
-		"install": install,
+		"link": link,
 	})
 }
 
@@ -1001,6 +1085,10 @@ func (h *Handler) GetOrgApps(c *gin.Context) {
 }
 
 // GetAppInputConfig fetches app input configuration for dynamic form rendering
+// Accepts optional ?filter=vendor|customer query parameter to filter inputs:
+// - filter=vendor: returns inputs where user_configurable != true
+// - filter=customer: returns inputs where user_configurable == true
+// - no filter: returns all inputs (backward compatibility)
 func (h *Handler) GetAppInputConfig(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	orgID := c.Param("org_id")
@@ -1010,6 +1098,9 @@ func (h *Handler) GetAppInputConfig(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
 		return
 	}
+
+	// Get optional filter parameter
+	filterParam := c.Query("filter")
 
 	// Verify user owns the org
 	var org models.NuonOrg
@@ -1037,6 +1128,22 @@ func (h *Handler) GetAppInputConfig(c *gin.Context) {
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch app input config: %v", err)})
 		return
+	}
+
+	// Apply filtering if requested
+	// Convert typed struct to map for filtering (filterInputConfig expects map[string]interface{})
+	if filterParam == "vendor" || filterParam == "customer" {
+		jsonBytes, err := json.Marshal(inputConfig)
+		if err == nil {
+			var configMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				if filterParam == "vendor" {
+					inputConfig = filterInputConfig(configMap, FilterTypeVendor)
+				} else {
+					inputConfig = filterInputConfig(configMap, FilterTypeCustomer)
+				}
+			}
+		}
 	}
 
 	// Extract platform from app runner config
@@ -1605,11 +1712,184 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppsPage(props))
 }
 
-// AppDetailRedirect redirects app detail to health-checks page
+// AppDetailRedirect redirects app detail to inputs page
 func (h *Handler) AppDetailRedirect(c *gin.Context) {
 	orgID := c.Param("org_id")
 	appID := c.Param("app_id")
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps/%s/health-checks", h.basePath, orgID, appID))
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", h.basePath, orgID, appID))
+}
+
+// AppInputsPage displays the input configuration for an app with vendor/customer tabs
+func (h *Handler) AppInputsPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+	orgID := c.Param("org_id")
+	appID := c.Param("app_id")
+
+	if !shortid.IsValid(orgID) {
+		h.RenderErrorPage(c, http.StatusBadRequest, "Invalid organization ID")
+		return
+	}
+
+	// Verify user owns the org
+	var org models.NuonOrg
+	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
+		h.RenderErrorPage(c, http.StatusNotFound, "Organization not found")
+		return
+	}
+
+	// Initialize Nuon client
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
+		return
+	}
+
+	// Fetch app details from Nuon API
+	app, err := nuonClient.GetApp(c.Request.Context(), appID)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch app: %v", err))
+		return
+	}
+
+	// Fetch app input config from Nuon API
+	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), appID)
+	if err != nil {
+		// Input config may not exist, that's okay - we'll show empty tables
+		inputConfig = nil
+	}
+
+	// Parse inputs into vendor and customer categories
+	var vendorInputs, customerInputs []vendorpages.AppInputInfo
+
+	if inputConfig != nil {
+		// Convert the typed struct to JSON then back to map for flexible field access
+		// This handles the case where user_configurable might exist in the API response
+		// but not in the SDK struct
+		jsonBytes, err := json.Marshal(inputConfig)
+		if err == nil {
+			var configMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				if inputGroups, ok := configMap["input_groups"].([]interface{}); ok {
+					for _, group := range inputGroups {
+						if groupMap, ok := group.(map[string]interface{}); ok {
+							groupName, _ := groupMap["name"].(string)
+							groupDisplayName, _ := groupMap["display_name"].(string)
+							if groupDisplayName == "" {
+								groupDisplayName = groupName
+							}
+
+							if appInputs, ok := groupMap["app_inputs"].([]interface{}); ok {
+								for _, input := range appInputs {
+									if inputMap, ok := input.(map[string]interface{}); ok {
+										inputInfo := vendorpages.AppInputInfo{
+											Name:        getMapString(inputMap, "name"),
+											DisplayName: getMapString(inputMap, "display_name"),
+											Description: getMapString(inputMap, "description"),
+											Type:        getMapString(inputMap, "type"),
+											Required:    getMapBool(inputMap, "required"),
+											Sensitive:   getMapBool(inputMap, "sensitive"),
+											Default:     getStringFromAny(inputMap["default"]),
+											Group:       groupDisplayName,
+											Source:      getMapString(inputMap, "source"),
+										}
+
+										if inputInfo.DisplayName == "" {
+											inputInfo.DisplayName = inputInfo.Name
+										}
+										if inputInfo.Type == "" {
+											inputInfo.Type = "string"
+										}
+
+										// Categorize by source field
+										// Note: if source is not in the API response or is "vendor",
+										// inputs will be treated as vendor inputs (the default)
+										if inputInfo.Source == "customer" {
+											customerInputs = append(customerInputs, inputInfo)
+										} else {
+											vendorInputs = append(vendorInputs, inputInfo)
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Fetch all orgs for sidebar dropdown
+	var allOrgs []models.NuonOrg
+	h.db.Where("user_id = ?", user.ID).Find(&allOrgs)
+
+	// Load theme
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+
+	// Get active tab from query param (default to vendor)
+	activeTab := c.DefaultQuery("tab", "vendor")
+
+	props := vendorpages.AppInputsPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:      app.Name + " - Inputs",
+			ActivePage: "apps",
+			User:       user,
+			CurrentOrg: &org,
+			Orgs:       allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{
+				{Text: org.Name, Path: fmt.Sprintf("%s/orgs/%s", h.basePath, org.ID), Active: false},
+				{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false},
+				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
+				{Text: "Inputs", Path: "", Active: true},
+			},
+			BasePath:         h.basePath,
+			PrimaryColor:     primaryColor,
+			PrimaryColorDark: primaryColorDark,
+		},
+		Org: org,
+		App: vendorpages.AppInfo{
+			ID:   app.ID,
+			Name: app.Name,
+		},
+		VendorInputs:   vendorInputs,
+		CustomerInputs: customerInputs,
+		ActiveTab:      activeTab,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.AppInputsPage(props))
+}
+
+// getMapString safely gets a string from a map[string]interface{}
+func getMapString(m map[string]interface{}, key string) string {
+	if v, ok := m[key].(string); ok {
+		return v
+	}
+	return ""
+}
+
+// getMapBool safely gets a bool from a map[string]interface{}
+func getMapBool(m map[string]interface{}, key string) bool {
+	if v, ok := m[key].(bool); ok {
+		return v
+	}
+	return false
+}
+
+// getStringFromAny converts various types to string
+func getStringFromAny(v interface{}) string {
+	if v == nil {
+		return ""
+	}
+	switch val := v.(type) {
+	case string:
+		return val
+	case float64:
+		return fmt.Sprintf("%v", val)
+	case bool:
+		return fmt.Sprintf("%v", val)
+	default:
+		return fmt.Sprintf("%v", val)
+	}
 }
 
 // AppHealthChecksPage displays the health check configuration for an app

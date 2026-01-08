@@ -373,3 +373,25 @@ func (c *Client) GetInstallActionRuns(ctx context.Context, installID, actionWork
 	}
 	return result, nil
 }
+
+// GetInstallCurrentInputs retrieves the current input values for an install
+func (c *Client) GetInstallCurrentInputs(ctx context.Context, installID string) (*models.AppInstallInputs, error) {
+	inputs, err := c.client.GetInstallCurrentInputs(ctx, installID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get install inputs: %w", err)
+	}
+	return inputs, nil
+}
+
+// UpdateInstallInputs updates the inputs for an install
+// Returns the workflowID for the triggered workflow
+func (c *Client) UpdateInstallInputs(ctx context.Context, installID string, inputs map[string]string) (string, error) {
+	req := &models.ServiceUpdateInstallInputsRequest{
+		Inputs: inputs,
+	}
+	_, workflowID, err := c.client.UpdateInstallInputs(ctx, installID, req)
+	if err != nil {
+		return "", fmt.Errorf("failed to update install inputs: %w", err)
+	}
+	return workflowID, nil
+}

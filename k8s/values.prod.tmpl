@@ -4,7 +4,16 @@ environment: prod
 env:
   NUON_API_URL: "https://api.nuon.co"
   CUSTOMER_BASE_URL: "https://customers.nuon.co"
-  WORKOS_REDIRECT_URI: "https://customers.nuon.co/admin/callback"
+
+  # Auth configuration (OIDC) - AUTH_CLIENT_SECRET comes from envSecrets
+  AUTH_PROVIDER: "oidc"
+  AUTH_CLIENT_ID: "255165381344-nh1do91renuunj5j9obtn02o5310aj32.apps.googleusercontent.com"
+  AUTH_OIDC_ISSUER_URL: "https://accounts.google.com"
+  AUTH_REDIRECT_URI: "https://customers.nuon.co/admin/callback"
+
+  # Secrets - TODO: move to AWS Secrets Manager
+  JWT_SECRET: "prod-jwt-secret-change-me-in-production"
+  AUTH_CLIENT_SECRET: "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"
 
 app:
   alb:

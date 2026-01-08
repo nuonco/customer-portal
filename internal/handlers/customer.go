@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"math"
@@ -17,6 +18,88 @@ import (
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
+
+// FilterType represents the type of input filtering to apply
+type FilterType string
+
+const (
+	FilterTypeVendor   FilterType = "vendor"
+	FilterTypeCustomer FilterType = "customer"
+)
+
+// filterInputConfig filters the input config based on source field
+// Vendor sees inputs where source == "vendor" (or not set for backward compatibility)
+// Customer sees inputs where source == "customer"
+func filterInputConfig(inputConfig interface{}, filterType FilterType) interface{} {
+	if inputConfig == nil {
+		return nil
+	}
+
+	// The input config is a map with input_groups
+	configMap, ok := inputConfig.(map[string]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	var filteredGroups []interface{}
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		var filteredInputs []interface{}
+		for _, input := range appInputs {
+			inputMap, ok := input.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			// Check source field (values: "vendor" or "customer")
+			source, _ := inputMap["source"].(string)
+
+			if filterType == FilterTypeCustomer {
+				// Customer sees only source="customer"
+				if source == "customer" {
+					filteredInputs = append(filteredInputs, input)
+				}
+			} else {
+				// Vendor sees source="vendor" or not set (backward compatibility)
+				if source == "vendor" || source == "" {
+					filteredInputs = append(filteredInputs, input)
+				}
+			}
+		}
+
+		// Only include groups that have inputs after filtering
+		if len(filteredInputs) > 0 {
+			filteredGroup := make(map[string]interface{})
+			for k, v := range groupMap {
+				filteredGroup[k] = v
+			}
+			filteredGroup["app_inputs"] = filteredInputs
+			filteredGroups = append(filteredGroups, filteredGroup)
+		}
+	}
+
+	// Return the filtered config
+	result := make(map[string]interface{})
+	for k, v := range configMap {
+		result[k] = v
+	}
+	result["input_groups"] = filteredGroups
+	return result
+}
 
 // buildCustomerLayoutProps builds the layout props for customer pages
 func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme) customerui.LayoutProps {
@@ -42,6 +125,84 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 	}
 }
 
+// GetInstallLinkAppConfig returns the app configuration for a customer install link
+// This allows the customer-facing page to fetch input config without authentication
+// Accepts optional ?filter=vendor|customer query parameter to filter inputs:
+// - filter=vendor: returns inputs where user_configurable != true
+// - filter=customer: returns inputs where user_configurable == true
+// - no filter: returns all inputs (backward compatibility)
+func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
+	sha := c.Param("sha")
+	if sha == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing SHA parameter"})
+		return
+	}
+
+	// Get optional filter parameter
+	filterParam := c.Query("filter")
+
+	// Find install link with org
+	var link models.InstallLink
+	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Install link not found"})
+		return
+	}
+
+	if link.Used {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Install link already used"})
+		return
+	}
+
+	// Create Nuon client using org credentials
+	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize client"})
+		return
+	}
+
+	// Fetch app details to get platform
+	app, err := nuonClient.GetApp(c.Request.Context(), link.AppID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch app details"})
+		return
+	}
+
+	// Extract platform from app runner config
+	var platform string
+	if app.RunnerConfig != nil {
+		platform = string(app.RunnerConfig.AppRunnerType)
+	}
+
+	// Fetch app input config
+	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), link.AppID)
+	if err != nil {
+		// Input config may not exist, that's okay
+		inputConfig = nil
+	}
+
+	// Apply filtering if requested
+	// Convert typed struct to map for filtering (filterInputConfig expects map[string]interface{})
+	if filterParam == "vendor" || filterParam == "customer" {
+		jsonBytes, err := json.Marshal(inputConfig)
+		if err == nil {
+			var configMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				if filterParam == "vendor" {
+					inputConfig = filterInputConfig(configMap, FilterTypeVendor)
+				} else {
+					inputConfig = filterInputConfig(configMap, FilterTypeCustomer)
+				}
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"platform":     platform,
+		"input_config": inputConfig,
+		"app_name":     link.AppName,
+	})
+}
+
 // InstallLinkPage renders the install link acceptance page
 func (h *Handler) InstallLinkPage(c *gin.Context) {
 	sha := c.Query("sha")
@@ -56,7 +217,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	var link models.InstallLink
-	if err := h.db.Preload("NuonOrg").Preload("Install").Where("sha = ?", sha).First(&link).Error; err != nil {
+	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
@@ -94,12 +255,16 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallLinkPage(props))
 }
 
-// AcceptInstallLink handles the install link acceptance and ownership transfer
+// AcceptInstallLink handles the install link acceptance
+// Creates the Install via Nuon API with merged vendor + customer inputs
 func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	var req struct {
-		SHA   string `json:"sha" binding:"required"`
-		Email string `json:"email" binding:"required"`
-		Name  string `json:"name"`
+		SHA      string            `json:"sha" binding:"required"`
+		Email    string            `json:"email" binding:"required"`
+		Name     string            `json:"name"`
+		Region   string            `json:"region"`   // AWS region (customer chooses)
+		Location string            `json:"location"` // Azure location (customer chooses)
+		Inputs   map[string]string `json:"inputs"`   // Customer-facing inputs
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -107,9 +272,9 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Find the install link with its associated install
+	// Find the install link
 	var link models.InstallLink
-	if err := h.db.Preload("NuonOrg").Preload("Install").Where("sha = ?", req.SHA).First(&link).Error; err != nil {
+	if err := h.db.Preload("NuonOrg").Where("sha = ?", req.SHA).First(&link).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Install link not found"})
 		return
 	}
@@ -119,15 +284,11 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Check that the install exists and is in pending_customer state
-	if link.Install == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "No install associated with this link"})
-		return
-	}
-
-	if link.Install.Status != models.StatusPendingCustomer {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Install is not in pending customer state"})
-		return
+	// Validate region or location is provided
+	region := req.Region
+	location := req.Location
+	if region == "" && location == "" {
+		region = "us-east-1" // Default to AWS us-east-1
 	}
 
 	// Create customer account
@@ -150,13 +311,52 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		}
 	}
 
-	// Transfer install ownership to customer
-	install := link.Install
-	install.UserID = customer.ID          // Transfer ownership to customer
-	install.Status = models.StatusPending // Update status to normal pending
+	// Get vendor inputs from link
+	vendorInputs, err := link.GetVendorInputs()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read vendor inputs"})
+		return
+	}
 
-	if err := h.db.Save(install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to transfer install ownership"})
+	// Merge vendor and customer inputs (customer inputs take precedence if overlap)
+	mergedInputs := make(map[string]string)
+	for k, v := range vendorInputs {
+		mergedInputs[k] = v
+	}
+	for k, v := range req.Inputs {
+		mergedInputs[k] = v
+	}
+
+	// Initialize Nuon client with the org's credentials
+	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to initialize Nuon client: %v", err)})
+		return
+	}
+
+	// Generate install name
+	installName := nuon.GenerateInstallName(link.AppName)
+
+	// Create the install via Nuon API with merged inputs
+	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, mergedInputs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
+		return
+	}
+
+	// Create local Install record with customer as owner
+	install := &models.Install{
+		UserID:            customer.ID, // Customer owns the install
+		CreatedByVendorID: link.UserID, // Track original vendor
+		InstallLinkID:     link.ID,
+		NuonInstallID:     nuonInstall.ID,
+		Name:              installName,
+		Status:            models.StatusPending,
+		Region:            region,
+	}
+
+	if err := h.db.Create(install).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store install locally"})
 		return
 	}
 
@@ -175,7 +375,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"message": "Install ownership transferred successfully",
+		"message": "Install accepted successfully",
 		"token":   token,
 		"install": install,
 	})
@@ -618,6 +818,155 @@ func (h *Handler) ForgetInstall(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Install forgotten successfully",
+	})
+}
+
+// GetInstallInputs returns the current inputs and input config for an install
+func (h *Handler) GetInstallInputs(c *gin.Context) {
+	// Get install from middleware (RequireInstallOwnership sets this)
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Install not found"})
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	// Load install link to get org info and app ID
+	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
+		return
+	}
+
+	// Handle NuonOrg loading with fallback strategies (nested preload sometimes fails)
+	if install.InstallLink.NuonOrg.ID == "" {
+		var installLinkWithOrg models.InstallLink
+		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
+			if installLinkWithOrg.NuonOrg.ID != "" {
+				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
+			}
+		}
+
+		// If still not loaded, try manual loading
+		if install.InstallLink.NuonOrg.ID == "" {
+			var nuonOrg models.NuonOrg
+			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load organization"})
+				return
+			}
+			install.InstallLink.NuonOrg = nuonOrg
+		}
+	}
+
+	// Create Nuon client using org credentials
+	org := install.InstallLink.NuonOrg
+	if org.APIToken == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
+		return
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		return
+	}
+
+	// Fetch current inputs from Nuon API
+	currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch install inputs: %v", err)})
+		return
+	}
+
+	// Fetch app input config for field definitions
+	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
+	if err != nil {
+		// Input config may not exist, that's okay - return empty
+		inputConfig = nil
+	}
+
+	// Build inputs map from current inputs
+	inputs := make(map[string]string)
+	if currentInputs != nil && currentInputs.Values != nil {
+		inputs = currentInputs.Values
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"inputs":       inputs,
+		"input_config": inputConfig,
+	})
+}
+
+// UpdateInstallInputs handles updating inputs for an install via Nuon API
+func (h *Handler) UpdateInstallInputs(c *gin.Context) {
+	// Get install from middleware (RequireInstallOwnership sets this)
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Install not found"})
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	var req struct {
+		Inputs map[string]string `json:"inputs" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Load install link to get org info
+	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
+		return
+	}
+
+	// Handle NuonOrg loading with fallback strategies (nested preload sometimes fails)
+	if install.InstallLink.NuonOrg.ID == "" {
+		var installLinkWithOrg models.InstallLink
+		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
+			if installLinkWithOrg.NuonOrg.ID != "" {
+				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
+			}
+		}
+
+		// If still not loaded, try manual loading
+		if install.InstallLink.NuonOrg.ID == "" {
+			var nuonOrg models.NuonOrg
+			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load organization"})
+				return
+			}
+			install.InstallLink.NuonOrg = nuonOrg
+		}
+	}
+
+	// Create Nuon client using org credentials
+	org := install.InstallLink.NuonOrg
+	if org.APIToken == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
+		return
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		return
+	}
+
+	// Update inputs via Nuon API
+	workflowID, err := nuonClient.UpdateInstallInputs(c.Request.Context(), install.NuonInstallID, req.Inputs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update inputs: %v", err)})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":     true,
+		"workflow_id": workflowID,
+		"message":     "Inputs updated successfully. A new workflow has been triggered.",
 	})
 }
 

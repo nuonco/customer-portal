@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -69,21 +70,28 @@ func main() {
 		customerBaseURL = "http://localhost:" + port
 	}
 
-	// WorkOS configuration for vendor authentication
-	workosAPIKey := os.Getenv("WORKOS_API_KEY")
-	workosClientID := os.Getenv("WORKOS_CLIENT_ID")
-	workosRedirectURI := os.Getenv("WORKOS_REDIRECT_URI")
-	if workosRedirectURI == "" {
-		workosRedirectURI = "http://localhost:" + port + "/admin/callback"
+	// Load auth provider configuration from environment
+	authConfig := auth.LoadConfigFromEnv()
+
+	// Set default redirect URI if not specified
+	if authConfig.RedirectURI == "" {
+		authConfig.RedirectURI = "http://localhost:" + port + "/admin/callback"
 	}
 
-	// Initialize WorkOS auth (optional - only if credentials provided)
-	var workosAuth *middleware.WorkOSAuth
-	if workosAPIKey != "" && workosClientID != "" {
-		workosAuth = middleware.NewWorkOSAuth(workosAPIKey, workosClientID, workosRedirectURI, db)
-		log.Printf("WorkOS authentication enabled")
+	// Initialize auth provider
+	var authProvider auth.AuthProvider
+	if authConfig.IsConfigured() {
+		// External IdP configured (OIDC or SAML)
+		var err error
+		authProvider, err = auth.NewProvider(authConfig, db)
+		if err != nil {
+			log.Fatalf("Failed to initialize auth provider: %v", err)
+		}
+		log.Printf("Authentication provider enabled: %s", authProvider.Name())
 	} else {
-		log.Printf("WorkOS authentication disabled (WORKOS_API_KEY and WORKOS_CLIENT_ID not set)")
+		// No external IdP configured - fall back to local password authentication
+		authProvider = auth.NewFallbackLocalProvider(db)
+		log.Printf("Local password authentication enabled (no IdP configured)")
 	}
 
 	// Create single router with shared middleware
@@ -110,7 +118,7 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, workosAuth, customerBaseURL, nuonAPIURL)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL)
 
 	// Set up customer routes at root level (no prefix)
 	setupCustomerRoutes(router.Group(""), db, customerAuth, nuonAPIURL)
@@ -129,26 +137,37 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddleware, workosAuth *middleware.WorkOSAuth, customerBaseURL, nuonAPIURL string) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, auth, workosAuth, customerBaseURL, nuonAPIURL, "/admin")
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin")
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
 		c.Redirect(302, "/admin/login")
 	})
 
-	// Public routes - vendor login (WorkOS AuthKit)
+	// Public routes - vendor login
 	rg.GET("/login/", h.VendorLoginPageTempl)
-	rg.GET("/callback", h.WorkOSCallback) // OAuth callback from WorkOS
-	rg.GET("/logout", h.VendorLogout)     // Logout handler (clears JWT + WorkOS session)
+	rg.GET("/logout", h.VendorLogout) // Logout handler
+
+	// Auth routes depend on provider type
+	if authProvider != nil && authProvider.Name() == "local" {
+		// Local password auth routes
+		rg.POST("/login/", h.LocalLogin)
+		rg.GET("/register", h.VendorRegisterPageTempl)
+		rg.POST("/register", h.LocalRegister)
+	} else {
+		// IdP callback routes (OIDC/SAML)
+		rg.GET("/callback", h.AuthCallback)  // OIDC callback (GET with code)
+		rg.POST("/callback", h.AuthCallback) // SAML callback (POST with SAMLResponse)
+	}
 
 	// JWT refresh endpoint
-	rg.POST("/refresh_token", auth.RefreshHandler)
+	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
 
 	// Global theme settings (any vendor can edit)
 	settings := rg.Group("/settings")
-	settings.Use(auth.MiddlewareFunc())
+	settings.Use(jwtAuth.MiddlewareFunc())
 	settings.Use(middleware.RequireRole(models.RoleVendor))
 	{
 		settings.GET("/", h.ThemeSettingsPage)
@@ -158,7 +177,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddlew
 
 	// Profile settings (user can edit their own profile)
 	profile := rg.Group("/profile")
-	profile.Use(auth.MiddlewareFunc())
+	profile.Use(jwtAuth.MiddlewareFunc())
 	profile.Use(middleware.RequireRole(models.RoleVendor))
 	{
 		profile.GET("/panel", h.ProfilePanelContent)
@@ -167,7 +186,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddlew
 
 	// Protected vendor routes
 	orgs := rg.Group("/orgs")
-	orgs.Use(auth.MiddlewareFunc())
+	orgs.Use(jwtAuth.MiddlewareFunc())
 	orgs.Use(middleware.RequireRole(models.RoleVendor))
 	{
 		orgs.GET("/", h.OrgsPage)
@@ -177,9 +196,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddlew
 		orgs.PUT("/:org_id", h.UpdateOrg)
 		orgs.DELETE("/:org_id", h.DeleteOrg)
 
-		// Apps - health check configuration pages
+		// Apps - configuration pages
 		orgs.GET("/:org_id/apps", h.AppsPage)                                    // Apps list page (HTML)
-		orgs.GET("/:org_id/apps/:app_id", h.AppDetailRedirect)                   // Redirect to health-checks
+		orgs.GET("/:org_id/apps/:app_id", h.AppDetailRedirect)                   // Redirect to inputs
+		orgs.GET("/:org_id/apps/:app_id/inputs", h.AppInputsPage)                // Inputs config page
 		orgs.GET("/:org_id/apps/:app_id/health-checks", h.AppHealthChecksPage)   // Health checks config page
 		orgs.PUT("/:org_id/apps/:app_id/health-checks", h.UpdateAppHealthChecks) // Update health checks
 
@@ -196,7 +216,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddlew
 
 	// Debug endpoint for troubleshooting
 	debug := rg.Group("/debug")
-	debug.Use(auth.MiddlewareFunc())
+	debug.Use(jwtAuth.MiddlewareFunc())
 	{
 		debug.GET("/user-orgs", h.DebugUserOrgs)
 	}
@@ -206,7 +226,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddlew
 func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddleware, nuonAPIURL string) {
 	// Initialize handlers (customer doesn't generate install links, so base URL not needed)
 	// Empty basePath since customer routes are at root level
-	// nil for workosAuth since customers don't use WorkOS
+	// nil for authProvider since customers don't use IdP authentication
 	h := handlers.NewHandler(db, auth, nil, "", nuonAPIURL, "")
 
 	// Public routes - customer login (no signup)
@@ -221,6 +241,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddl
 	{
 		installLinks.GET("/", h.InstallLinkPage)
 		installLinks.POST("/", h.AcceptInstallLink)
+		installLinks.GET("/:sha/app-config", h.GetInstallLinkAppConfig)
 	}
 
 	// JWT refresh endpoint
@@ -242,6 +263,10 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddl
 			installOwnership.DELETE("/", h.DeleteInstall)                      // Customer can delete (deprovision) their install
 			installOwnership.POST("/forget", h.ForgetInstall)                  // Customer can forget (remove from DB) their install
 			installOwnership.POST("/health-checks/run", h.TriggerHealthChecks) // Customer can manually trigger health checks
+
+			// Input management
+			installOwnership.GET("/inputs", h.GetInstallInputs)    // Customer can view current inputs
+			installOwnership.PUT("/inputs", h.UpdateInstallInputs) // Customer can update inputs
 
 			// Workflow history and actions
 			installOwnership.GET("/workflows", h.WorkflowsPage)

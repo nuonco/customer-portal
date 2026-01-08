@@ -229,17 +229,37 @@ func InstallDetailPage(props InstallDetailPageProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Actions Section --><div><h3 class=\"text-lg text-cool-grey-700 dark:text-cool-grey-300\">Actions</h3><div class=\"flex space-x-3 mt-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Actions Section --><div><h3 class=\"text-lg text-cool-grey-700 dark:text-cool-grey-300\">Actions</h3><div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if props.Install.Status != "deprovisioning" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<button type=\"button\" onclick=\"confirmDeprovision()\" class=\"inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700\" style=\"border-radius: var(--theme-radius)\">Deprovision</button> <button type=\"button\" onclick=\"forgetInstall()\" class=\"inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600\" style=\"border-radius: var(--theme-radius)\">Forget</button>")
+				var templ_7745c5c3_Var10 = []any{"inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white",
+					templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
+					templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "")}
+				templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<button type=\"button\" onclick=\"openEditInputsModal()\" class=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var11 string
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 1, Col: 0}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" style=\"border-radius: var(--theme-radius)\">Edit Inputs</button> <button type=\"button\" onclick=\"confirmDeprovision()\" class=\"inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700\" style=\"border-radius: var(--theme-radius)\">Deprovision</button> <button type=\"button\" onclick=\"forgetInstall()\" class=\"inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600\" style=\"border-radius: var(--theme-radius)\">Forget</button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div></div><!-- Latest Updates --> <div class=\"mt-6\"><h3 class=\"text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4\">Latest Updates</h3>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div></div></div><!-- Latest Updates --> <div class=\"mt-6\"><h3 class=\"text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4\">Latest Updates</h3>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -267,48 +287,95 @@ func InstallDetailPage(props InstallDetailPageProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"mt-4 text-center\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"mt-4 text-center\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 = []any{"inline-block text-white px-4 py-2 text-sm",
+			var templ_7745c5c3_Var12 = []any{"inline-block text-white px-4 py-2 text-sm",
 				templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
 				templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var11 templ.SafeURL
-			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/workflows"))
+			var templ_7745c5c3_Var13 templ.SafeURL
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/workflows"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 164, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 174, Col: 90}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var14 string
+			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var12).String())
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" style=\"border-radius: var(--theme-radius)\">View Update History</a></div></div><!-- JavaScript for actions --> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" style=\"border-radius: var(--theme-radius)\">View Update History</a></div></div><!-- Edit Inputs Modal --> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = installDetailScripts(props.BasePath, props.Install.ID, props.Install.Name).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = editInputsModal().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " <!-- Config data for JavaScript --> <div id=\"install-detail-config\" class=\"hidden\" data-base-path=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var15 string
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 190, Col: 34}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" data-install-id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 191, Col: 37}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" data-install-name=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var17 string
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/install_detail.templ`, Line: 192, Col: 41}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\"></div><!-- JavaScript for actions --> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = installDetailScripts().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -322,7 +389,7 @@ func InstallDetailPage(props InstallDetailPageProps) templ.Component {
 	})
 }
 
-func installDetailScripts(basePath, installID, installName string) templ.Component {
+func installDetailScripts() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -338,12 +405,41 @@ func installDetailScripts(basePath, installID, installName string) templ.Compone
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var18 == nil {
+			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\n\t\t// Deprovision install with custom modal confirmation\n\t\tasync function confirmDeprovision() {\n\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Deprovision Installation?',\n\t\t\t\tmessage: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',\n\t\t\t\tvariant: 'danger',\n\t\t\t\tconfirmText: 'Deprovision',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (!confirmed) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch('{ basePath }/installs/{ installID }/', {\n\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Deprovision initiated. Refreshing...', 'success');\n\t\t\t\t\tsetTimeout(() => window.location.reload(), 1500);\n\t\t\t\t} else {\n\t\t\t\t\tshowToast('Failed to deprovision installation', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\t// Forget install uses custom modals for better UX\n\t\tasync function forgetInstall() {\n\t\t\t// Strong warning about proper usage - using modal instead of confirm()\n\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Important Warning',\n\t\t\t\tmessage: 'Only use \"Forget\" after you have successfully deprovisioned the install and removed the CloudFormation stack.\\n\\n\"Forget\" only removes this install from your list - it does NOT deprovision any infrastructure.\\n\\nAre you sure you want to forget this installation?',\n\t\t\t\tvariant: 'warning',\n\t\t\t\tconfirmText: 'Continue',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (!confirmed) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Require install name confirmation - using prompt modal\n\t\t\tconst installName = '{ installName }';\n\t\t\tconst confirmName = await showPromptModal({\n\t\t\t\ttitle: 'Confirm Action',\n\t\t\t\tmessage: `To confirm, please type the install name: ${installName}`,\n\t\t\t\tplaceholder: 'Enter install name',\n\t\t\t\texpectedValue: installName,\n\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\tconfirmText: 'Forget Install',\n\t\t\t\tvariant: 'danger'\n\t\t\t});\n\n\t\t\tif (confirmName === null) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(`{ basePath }/installs/{ installID }/forget`, {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Install forgotten successfully. Redirecting...', 'success');\n\t\t\t\t\tsetTimeout(() => {\n\t\t\t\t\t\twindow.location.href = '{ basePath }/installs';\n\t\t\t\t\t}, 1500);\n\t\t\t\t} else {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\tshowToast(data.error || 'Failed to forget installation', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\t// Workflow action confirmations\n\t\tasync function confirmApproveAll(button) {\n\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Approve All Steps?',\n\t\t\t\tmessage: 'Are you sure you want to approve ALL steps in this update? This will automatically approve the current step and all future steps.',\n\t\t\t\tvariant: 'primary',\n\t\t\t\tconfirmText: 'Approve All',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (confirmed) {\n\t\t\t\thtmx.trigger(button, 'confirmed');\n\t\t\t}\n\t\t}\n\n\t\tasync function confirmCancelWorkflow(button) {\n\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Cancel Update?',\n\t\t\t\tmessage: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',\n\t\t\t\tvariant: 'danger',\n\t\t\t\tconfirmText: 'Cancel Update',\n\t\t\t\tcancelText: 'Keep Running'\n\t\t\t});\n\n\t\t\tif (confirmed) {\n\t\t\t\thtmx.trigger(button, 'confirmed');\n\t\t\t}\n\t\t}\n\n\t\t// Handle HTMX response errors (for workflow actions)\n\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\tshowToast('An error occurred. Please try again.', 'error');\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<script>\n\t\t(function() {\n\t\t\t// Get config from data attributes\n\t\t\tvar configEl = document.getElementById('install-detail-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst installID = configEl.dataset.installId;\n\t\t\tconst installName = configEl.dataset.installName;\n\n\t\t\t// Deprovision install with custom modal confirmation\n\t\t\twindow.confirmDeprovision = async function() {\n\t\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Deprovision Installation?',\n\t\t\t\t\tmessage: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Deprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/installs/${installID}/`, {\n\t\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Deprovision initiated. Refreshing...', 'success');\n\t\t\t\t\t\tsetTimeout(() => window.location.reload(), 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to deprovision installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Forget install uses custom modals for better UX\n\t\t\twindow.forgetInstall = async function() {\n\t\t\t\t// Strong warning about proper usage - using modal instead of confirm()\n\t\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Important Warning',\n\t\t\t\t\tmessage: 'Only use \"Forget\" after you have successfully deprovisioned the install and removed the CloudFormation stack.\\n\\n\"Forget\" only removes this install from your list - it does NOT deprovision any infrastructure.\\n\\nAre you sure you want to forget this installation?',\n\t\t\t\t\tvariant: 'warning',\n\t\t\t\t\tconfirmText: 'Continue',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\t// Require install name confirmation - using prompt modal\n\t\t\t\tconst confirmName = await showPromptModal({\n\t\t\t\t\ttitle: 'Confirm Action',\n\t\t\t\t\tmessage: `To confirm, please type the install name: ${installName}`,\n\t\t\t\t\tplaceholder: 'Enter install name',\n\t\t\t\t\texpectedValue: installName,\n\t\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\t\tconfirmText: 'Forget Install',\n\t\t\t\t\tvariant: 'danger'\n\t\t\t\t});\n\n\t\t\t\tif (confirmName === null) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/installs/${installID}/forget`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Install forgotten successfully. Redirecting...', 'success');\n\t\t\t\t\t\tsetTimeout(() => {\n\t\t\t\t\t\t\twindow.location.href = `${basePath}/installs`;\n\t\t\t\t\t\t}, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\tshowToast(data.error || 'Failed to forget installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Workflow action confirmations\n\t\t\twindow.confirmApproveAll = async function(button) {\n\t\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Approve All Steps?',\n\t\t\t\t\tmessage: 'Are you sure you want to approve ALL steps in this update? This will automatically approve the current step and all future steps.',\n\t\t\t\t\tvariant: 'primary',\n\t\t\t\t\tconfirmText: 'Approve All',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (confirmed) {\n\t\t\t\t\thtmx.trigger(button, 'confirmed');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.confirmCancelWorkflow = async function(button) {\n\t\t\t\tconst confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Cancel Update?',\n\t\t\t\t\tmessage: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Cancel Update',\n\t\t\t\t\tcancelText: 'Keep Running'\n\t\t\t\t});\n\n\t\t\t\tif (confirmed) {\n\t\t\t\t\thtmx.trigger(button, 'confirmed');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Handle HTMX response errors (for workflow actions)\n\t\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t\tshowToast('An error occurred. Please try again.', 'error');\n\t\t\t});\n\n\t\t\t// Edit Inputs Modal functionality\n\t\t\twindow.openEditInputsModal = async function() {\n\t\t\t\tconst modal = document.getElementById('editInputsModal');\n\t\t\t\tconst loading = document.getElementById('editInputsLoading');\n\t\t\t\tconst form = document.getElementById('editInputsForm');\n\t\t\t\tconst fieldsContainer = document.getElementById('editInputsFields');\n\t\t\t\tconst errorDiv = document.getElementById('editInputsError');\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tloading.classList.remove('hidden');\n\t\t\t\tform.classList.add('hidden');\n\t\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/installs/${installID}/inputs`);\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\tthrow new Error(data.error || 'Failed to fetch inputs');\n\t\t\t\t\t}\n\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\trenderEditInputFields(data.input_config, data.inputs);\n\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\tform.classList.remove('hidden');\n\t\t\t\t} catch (error) {\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\terrorDiv.textContent = error.message || 'Failed to load inputs';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeEditInputsModal = function() {\n\t\t\t\tdocument.getElementById('editInputsModal').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsForm').reset();\n\t\t\t\tdocument.getElementById('editInputsError').classList.add('hidden');\n\t\t\t};\n\n\t\t\tfunction renderEditInputFields(inputConfig, currentInputs) {\n\t\t\t\tvar container = document.getElementById('editInputsFields');\n\t\t\t\tcurrentInputs = currentInputs || {};\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tvar groupInputs = group.app_inputs || group.inputs || [];\n\t\t\t\t\tif (groupInputs && groupInputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\thtml += renderEditInputGroup(group, groupInputs, currentInputs);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderEditInputGroup(group, inputs, currentInputs) {\n\t\t\t\tvar html = '<div class=\"mb-6\">';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-4\">';\n\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\tvar currentValue = currentInputs[input.name];\n\t\t\t\t\thtml += renderEditSingleInput(input, currentValue);\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderEditSingleInput(input, currentValue) {\n\t\t\t\tvar inputName = input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\t\t\t\t// Use current value if available, otherwise fall back to default\n\t\t\t\tvar value = (currentValue !== undefined && currentValue !== null) ? currentValue : (input.default || '');\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar isChecked = value === 'true';\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (isChecked) html += ' checked';\n\t\t\t\t\thtml += ' class=\"mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\">';\n\t\t\t\t\thtml += value + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + value + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('editInputsForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tconst errorDiv = document.getElementById('editInputsError');\n\t\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\t\t// Collect input values from all form elements\n\t\t\t\tconst inputs = {};\n\n\t\t\t\t// Handle regular inputs (text, number, password, hidden)\n\t\t\t\tconst formInputs = document.querySelectorAll('#editInputsFields input');\n\t\t\t\tformInputs.forEach(function(input) {\n\t\t\t\t\tif (!input.name) return;\n\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\t// Checkbox: use 'true' if checked, skip (hidden field handles 'false')\n\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\tinputs[input.name] = 'true';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else if (input.type === 'hidden') {\n\t\t\t\t\t\t// Hidden field: only set if not already set by checkbox\n\t\t\t\t\t\tif (inputs[input.name] === undefined) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// Regular input: use value if present\n\t\t\t\t\t\tif (input.value) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Handle textareas (for JSON type inputs)\n\t\t\t\tconst textareas = document.querySelectorAll('#editInputsFields textarea');\n\t\t\t\ttextareas.forEach(function(textarea) {\n\t\t\t\t\tif (textarea.name && textarea.value) {\n\t\t\t\t\t\tinputs[textarea.name] = textarea.value;\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/installs/${installID}/inputs`, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify({ inputs })\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Inputs updated. A workflow has been triggered to apply changes.', 'success');\n\t\t\t\t\t\tcloseEditInputsModal();\n\t\t\t\t\t\tsetTimeout(() => window.location.reload(), 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to update inputs';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func editInputsModal() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div id=\"editInputsModal\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto\" style=\"z-index: 50\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8\"><div class=\"mb-4\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Edit Inputs</h3></div><!-- Loading State --><div id=\"editInputsLoading\" class=\"py-8 text-center\"><div class=\"inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600\"></div><p class=\"mt-2 text-cool-grey-500 dark:text-cool-grey-400\">Loading inputs...</p></div><!-- Form --><form id=\"editInputsForm\" class=\"hidden space-y-4\"><div id=\"editInputsFields\" class=\"space-y-4\"><!-- Input fields will be rendered here by JavaScript --></div><!-- Form Actions --><div class=\"flex space-x-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><button type=\"submit\" class=\"flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium\">Update Inputs</button> <button type=\"button\" onclick=\"closeEditInputsModal()\" class=\"flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-2 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium\">Cancel</button></div></form><!-- Error State --><div id=\"editInputsError\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden\"></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

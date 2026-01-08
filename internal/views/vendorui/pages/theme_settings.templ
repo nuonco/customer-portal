@@ -775,13 +775,12 @@ templ themeSettingsScript() {
 				}
 
 				try {
-					var token = getCookie('jwt');
 					var response = await fetch(basePath + '/settings', {
 						method: 'PUT',
 						headers: {
-							'Content-Type': 'application/json',
-							'Authorization': 'Bearer ' + token
+							'Content-Type': 'application/json'
 						},
+						credentials: 'same-origin',
 						body: JSON.stringify(formData)
 					});
 

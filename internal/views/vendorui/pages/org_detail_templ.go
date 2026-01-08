@@ -184,13 +184,26 @@ func OrgDetailPage(props OrgDetailPageProps) templ.Component {
 						return templ_7745c5c3_Err
 					}
 				}
-			} else {
+			} else if props.Pagination.AvailableCount == 0 && props.Pagination.UsedCount == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, " ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 				templ_7745c5c3_Err = emptyLinksState().Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = emptyTabState(props.Pagination.CurrentTab).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -234,20 +247,20 @@ func tabLink(tab, label string, count int64, currentTab string) templ.Component 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 templ.SafeURL
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("?tab=%s", tab)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 94, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 98, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -260,33 +273,33 @@ func tabLink(tab, label string, count int64, currentTab string) templ.Component 
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 97, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 101, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " <span class=\"ml-2 bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-900 dark:text-cool-grey-200 rounded-full px-2.5 py-0.5 text-xs font-medium\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " <span class=\"ml-2 bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-900 dark:text-cool-grey-200 rounded-full px-2.5 py-0.5 text-xs font-medium\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprint(count))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 99, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 103, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span></a>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</span></a>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -323,25 +336,25 @@ func linksTable(links []models.InstallLink, orgID, basePath string) templ.Compon
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div class=\"stratus-table-container\"><table class=\"stratus-table\"><thead><tr><th>Name</th><th>Status</th><th>App</th><th>Region</th><th>Created</th></tr></thead> <tbody>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"stratus-table-container\"><table class=\"stratus-table\"><thead><tr><th>Name</th><th>Status</th><th>App</th><th>Region</th><th>Created</th></tr></thead> <tbody>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, link := range links {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<tr><td class=\"font-medium\"><a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<tr><td class=\"font-medium\"><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 templ.SafeURL
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/links/%s", basePath, orgID, link.ID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 129, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 133, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" class=\"text-primary-600 hover:text-primary-800\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"text-primary-600 hover:text-primary-800\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -349,7 +362,7 @@ func linksTable(links []models.InstallLink, orgID, basePath string) templ.Compon
 				var templ_7745c5c3_Var14 string
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(link.Install.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 133, Col: 28}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 137, Col: 28}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -359,14 +372,14 @@ func linksTable(links []models.InstallLink, orgID, basePath string) templ.Compon
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(link.AppName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 135, Col: 23}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 139, Col: 23}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</a></td><td>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</a></td><td>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -378,20 +391,20 @@ func linksTable(links []models.InstallLink, orgID, basePath string) templ.Compon
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td><td class=\"text-cool-grey-600 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td class=\"text-cool-grey-600 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(link.AppName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 146, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 150, Col: 75}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td><td class=\"text-cool-grey-600 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</td><td class=\"text-cool-grey-600 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -399,37 +412,37 @@ func linksTable(links []models.InstallLink, orgID, basePath string) templ.Compon
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(link.Install.Region)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 149, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 153, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "—")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "—")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</td><td class=\"text-cool-grey-500 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</td><td class=\"text-cool-grey-500 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var18 string
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(link.CreatedAt.Format("Jan 2, 2006"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 154, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 158, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</tbody></table></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</tbody></table></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -465,7 +478,7 @@ func emptyLinksState() templ.Component {
 			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"p-8 text-center\"><div class=\"mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"p-8 text-center\"><div class=\"mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -473,7 +486,7 @@ func emptyLinksState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Install Links</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 mb-6\">Create your first link to share with customers.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Install Links</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 mb-6\">Create your first link to share with customers.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -485,7 +498,67 @@ func emptyLinksState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func emptyTabState(currentTab string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"p-8 text-center\"><div class=\"mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = linkIcon().Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if currentTab == "used" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Accepted Links</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400\">Links will appear here once customers accept them.</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Pending Links</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 mb-6\">All your links have been accepted by customers.</p>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "Create New Link",
+				Variant: "primary",
+				OnClick: "openCreateInstallModal()",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -509,12 +582,12 @@ func linkIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<svg class=\"h-6 w-6 text-cool-grey-400 dark:text-cool-grey-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<svg class=\"h-6 w-6 text-cool-grey-400 dark:text-cool-grey-500\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -538,38 +611,38 @@ func createInstallModal(basePath, orgID string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div id=\"createInstallModal\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden\" style=\"z-index: 50\"><div class=\"flex items-center justify-center min-h-screen p-4\"><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl max-h-screen overflow-y-auto\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Create Install Link</h3><form id=\"createInstallForm\" class=\"space-y-6\"><!-- Step 1: App Selection --><div class=\"border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4\"><h4 class=\"text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200\">Select Application</h4><div><label for=\"appSelect\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">App</label> <select id=\"appSelect\" required class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"\">Loading apps...</option></select></div></div><!-- Step 2: Install Configuration --><div class=\"border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4\"><h4 class=\"text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200\">Install Configuration</h4><div class=\"grid grid-cols-1 gap-4\"><div><label for=\"installName\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Install Name <span class=\"text-cool-grey-500 dark:text-cool-grey-400\">(optional)</span></label> <input type=\"text\" id=\"installName\" placeholder=\"Leave empty to auto-generate\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">If not provided, a unique name will be generated automatically</p></div></div></div><!-- Step 3: Region Selection --><div id=\"regionSection\" class=\"border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4\"><h4 class=\"text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200\">Deployment Region</h4><div class=\"grid grid-cols-1 gap-4\"><div id=\"platformDisplay\" class=\"mb-2\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\">Platform will be determined by the selected app</p></div><!-- AWS Region Selection --><div id=\"awsRegionSection\" class=\"platform-section hidden\"><label for=\"awsRegion\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">AWS Region</label> <select id=\"awsRegion\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"us-east-1\">US East (N. Virginia) - us-east-1</option> <option value=\"us-east-2\">US East (Ohio) - us-east-2</option> <option value=\"us-west-1\">US West (N. California) - us-west-1</option> <option value=\"us-west-2\">US West (Oregon) - us-west-2</option> <option value=\"eu-west-1\">Europe (Ireland) - eu-west-1</option> <option value=\"eu-central-1\">Europe (Frankfurt) - eu-central-1</option> <option value=\"ap-southeast-1\">Asia Pacific (Singapore) - ap-southeast-1</option> <option value=\"ap-northeast-1\">Asia Pacific (Tokyo) - ap-northeast-1</option></select></div><!-- Azure Location Selection --><div id=\"azureLocationSection\" class=\"platform-section hidden\"><label for=\"azureLocation\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Azure Location</label> <select id=\"azureLocation\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"eastus\">East US</option> <option value=\"eastus2\">East US 2</option> <option value=\"westus2\">West US 2</option> <option value=\"westus3\">West US 3</option> <option value=\"northeurope\">North Europe</option> <option value=\"westeurope\">West Europe</option> <option value=\"southeastasia\">Southeast Asia</option> <option value=\"japaneast\">Japan East</option></select></div></div></div><!-- Step 4: App-specific Inputs --><div id=\"appInputsSection\" class=\"border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4\"><h4 class=\"text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200\">App Configuration</h4><div id=\"appInputsContainer\"><p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Select an app to see required configuration options</p></div></div><!-- Form Actions --><div class=\"flex space-x-3 pt-4\"><button type=\"submit\" class=\"flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium\">Create Link</button> <button type=\"button\" onclick=\"closeCreateInstallModal()\" class=\"flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-3 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium\">Cancel</button></div></form><div id=\"createInstallError\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden\"></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-install-config\" class=\"hidden\" data-base-path=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 310, Col: 27}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" data-org-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div id=\"createInstallModal\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto\" style=\"z-index: 50\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Create Install Link</h3><form id=\"createInstallForm\" class=\"space-y-6\"><!-- App Selection --><div><label for=\"appSelect\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Select Application *</label> <select id=\"appSelect\" required class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"\">Loading apps...</option></select></div><!-- Vendor-facing Inputs (dynamic based on app config) --><div id=\"vendorInputsContainer\"><!-- Will be populated by JavaScript --></div><!-- Loading indicator for input config --><div id=\"inputConfigLoading\" class=\"hidden\"><p class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 italic\">Loading configuration...</p></div><!-- Form Actions --><div class=\"flex space-x-3 pt-4\"><button type=\"submit\" id=\"createLinkSubmitBtn\" class=\"flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium disabled:opacity-50 disabled:cursor-not-allowed\">Create Link</button> <button type=\"button\" onclick=\"closeCreateInstallModal()\" class=\"flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-3 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium\">Cancel</button></div></form><div id=\"createInstallError\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden\"></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-install-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 311, Col: 21}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 272, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" data-org-id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_detail.templ`, Line: 273, Col: 21}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -597,12 +670,12 @@ func createInstallModalScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
+		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var25 == nil {
+			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<script>\n\t\t(function() {\n\t\t\tvar configEl = document.getElementById('create-install-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst orgId = configEl.dataset.orgId;\n\n\t\t\tlet currentAppInputConfig = null;\n\t\t\tlet currentAppPlatform = null;\n\n\t\t\tfunction setPlatformFromApp(platform) {\n\t\t\t\tconst platformDisplay = document.getElementById('platformDisplay');\n\t\t\t\tconst awsSection = document.getElementById('awsRegionSection');\n\t\t\t\tconst azureSection = document.getElementById('azureLocationSection');\n\n\t\t\t\tif (platform === 'aws') {\n\t\t\t\t\tplatformDisplay.innerHTML = '<p class=\"text-sm text-green-600 dark:text-green-400\">Platform: <strong>AWS</strong> (configured by app)</p>';\n\t\t\t\t\tawsSection.classList.remove('hidden');\n\t\t\t\t\tazureSection.classList.add('hidden');\n\t\t\t\t} else if (platform === 'azure') {\n\t\t\t\t\tplatformDisplay.innerHTML = '<p class=\"text-sm text-green-600 dark:text-green-400\">Platform: <strong>Azure</strong> (configured by app)</p>';\n\t\t\t\t\tawsSection.classList.add('hidden');\n\t\t\t\t\tazureSection.classList.remove('hidden');\n\t\t\t\t} else {\n\t\t\t\t\tplatformDisplay.innerHTML = '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\">Platform will be determined by the selected app</p>';\n\t\t\t\t\tawsSection.classList.add('hidden');\n\t\t\t\t\tazureSection.classList.add('hidden');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tasync function loadAppInputs(appId, appName) {\n\t\t\t\tconst container = document.getElementById('appInputsContainer');\n\n\t\t\t\tif (!appId) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Select an app to see required configuration options</p>';\n\t\t\t\t\tsetPlatformFromApp(null);\n\t\t\t\t\tcurrentAppInputConfig = null;\n\t\t\t\t\tcurrentAppPlatform = null;\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tcontainer.innerHTML = '<p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Loading app configuration...</p>';\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/apps-api/${appId}/input-config`);\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\tcurrentAppInputConfig = data.input_config;\n\t\t\t\t\t\tcurrentAppPlatform = data.platform;\n\t\t\t\t\t\tsetPlatformFromApp(currentAppPlatform);\n\t\t\t\t\t\trenderAppInputFields(currentAppInputConfig, appName);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-yellow-600 dark:text-yellow-400 text-sm\">No additional configuration required</p>';\n\t\t\t\t\t\tsetPlatformFromApp(null);\n\t\t\t\t\t\tcurrentAppInputConfig = null;\n\t\t\t\t\t\tcurrentAppPlatform = null;\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.error('Failed to load app inputs:', error);\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-yellow-600 dark:text-yellow-400 text-sm\">Could not load app configuration, proceeding without custom inputs</p>';\n\t\t\t\t\tsetPlatformFromApp(null);\n\t\t\t\t\tcurrentAppInputConfig = null;\n\t\t\t\t\tcurrentAppPlatform = null;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderAppInputFields(inputConfig, appName) {\n\t\t\t\tconst container = document.getElementById('appInputsContainer');\n\n\t\t\t\tif (!inputConfig) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required</p>';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tlet html = '';\n\n\t\t\t\tif (inputConfig.input_groups && Array.isArray(inputConfig.input_groups)) {\n\t\t\t\t\tlet hasVendorInputs = false;\n\n\t\t\t\t\tinputConfig.input_groups.forEach(group => {\n\t\t\t\t\t\tif (group.app_inputs && Array.isArray(group.app_inputs)) {\n\t\t\t\t\t\t\tconst vendorInputs = group.app_inputs.filter(input =>\n\t\t\t\t\t\t\t\t!input.source || input.source === 'vendor'\n\t\t\t\t\t\t\t);\n\n\t\t\t\t\t\t\tif (vendorInputs.length > 0) {\n\t\t\t\t\t\t\t\thasVendorInputs = true;\n\t\t\t\t\t\t\t\thtml += renderInputGroup(group, vendorInputs);\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\n\t\t\t\t\tif (!hasVendorInputs) {\n\t\t\t\t\t\thtml = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No vendor configuration required</p>';\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\thtml = '<p class=\"text-yellow-600 dark:text-yellow-400 text-sm\">App configuration format not recognized, proceeding without inputs</p>';\n\t\t\t\t}\n\n\t\t\t\tcontainer.innerHTML = html;\n\t\t\t}\n\n\t\t\tfunction renderInputGroup(group, inputs) {\n\t\t\t\tvar html = '<div class=\"mb-6\">';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-4\">';\n\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\thtml += renderSingleInput(input);\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderSingleInput(input) {\n\t\t\t\tvar inputName = 'inputs:' + input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (input.default === 'true') html += ' checked';\n\t\t\t\t\thtml += ' class=\"mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\">';\n\t\t\t\t\thtml += (input.default || '') + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction collectFormData() {\n\t\t\t\tconst selectedAppValue = document.getElementById(\"appSelect\").value;\n\t\t\t\tif (!selectedAppValue) {\n\t\t\t\t\tthrow new Error(\"Please select an app\");\n\t\t\t\t}\n\n\t\t\t\tconst selectedApp = JSON.parse(selectedAppValue);\n\t\t\t\tconst installName = document.getElementById(\"installName\").value.trim();\n\n\t\t\t\tconst platform = currentAppPlatform;\n\t\t\t\tif (!platform) {\n\t\t\t\t\tthrow new Error(\"App platform not determined. Please select an app first.\");\n\t\t\t\t}\n\n\t\t\t\tlet region = '';\n\t\t\t\tlet location = '';\n\n\t\t\t\tif (platform === 'aws') {\n\t\t\t\t\tregion = document.getElementById(\"awsRegion\").value;\n\t\t\t\t\tif (!region) {\n\t\t\t\t\t\tthrow new Error(\"Please select an AWS region\");\n\t\t\t\t\t}\n\t\t\t\t} else if (platform === 'azure') {\n\t\t\t\t\tlocation = document.getElementById(\"azureLocation\").value;\n\t\t\t\t\tif (!location) {\n\t\t\t\t\t\tthrow new Error(\"Please select an Azure location\");\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tconst inputs = {};\n\t\t\t\tconst appInputs = document.querySelectorAll('#appInputsContainer input[name^=\"inputs:\"], #appInputsContainer select[name^=\"inputs:\"], #appInputsContainer textarea[name^=\"inputs:\"]');\n\t\t\t\tappInputs.forEach(input => {\n\t\t\t\t\tif (input.name && input.name.startsWith('inputs:')) {\n\t\t\t\t\t\tconst fieldName = input.name.substring(7);\n\t\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\t\tinputs[fieldName] = input.value === 'true' ? 'true' : input.value;\n\t\t\t\t\t\t\t} else if (!inputs.hasOwnProperty(fieldName)) {\n\t\t\t\t\t\t\t\tinputs[fieldName] = 'false';\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t} else if (input.type !== 'hidden' && input.value) {\n\t\t\t\t\t\t\tinputs[fieldName] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\treturn {\n\t\t\t\t\tapp_name: selectedApp.name,\n\t\t\t\t\tapp_id: selectedApp.id,\n\t\t\t\t\tname: installName || '',\n\t\t\t\t\tregion: region,\n\t\t\t\t\tlocation: location,\n\t\t\t\t\tinputs: inputs\n\t\t\t\t};\n\t\t\t}\n\n\t\t\twindow.openCreateInstallModal = async function() {\n\t\t\t\tconst modal = document.getElementById(\"createInstallModal\");\n\t\t\t\tconst appSelect = document.getElementById(\"appSelect\");\n\n\t\t\t\tmodal.classList.remove(\"hidden\");\n\t\t\t\tappSelect.innerHTML = '<option value=\"\">Loading apps...</option>';\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/apps-api`);\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst apps = await response.json();\n\t\t\t\t\t\tappSelect.innerHTML = '<option value=\"\">Select an app...</option>';\n\n\t\t\t\t\t\tif (apps && apps.length > 0) {\n\t\t\t\t\t\t\tapps.forEach((app) => {\n\t\t\t\t\t\t\t\tconst option = document.createElement(\"option\");\n\t\t\t\t\t\t\t\toption.value = JSON.stringify({ id: app.id, name: app.name });\n\t\t\t\t\t\t\t\toption.textContent = app.name;\n\t\t\t\t\t\t\t\tappSelect.appendChild(option);\n\t\t\t\t\t\t\t});\n\n\t\t\t\t\t\t\tappSelect.addEventListener('change', function() {\n\t\t\t\t\t\t\t\tif (this.value) {\n\t\t\t\t\t\t\t\t\tconst selectedApp = JSON.parse(this.value);\n\t\t\t\t\t\t\t\t\tloadAppInputs(selectedApp.id, selectedApp.name);\n\t\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\t\tloadAppInputs(null, null);\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tappSelect.innerHTML = '<option value=\"\">No apps found</option>';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst errorText = await response.text();\n\t\t\t\t\t\ttry {\n\t\t\t\t\t\t\tconst errorJson = JSON.parse(errorText);\n\t\t\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">Error: ${errorJson.error || 'Failed to load apps'}</option>`;\n\t\t\t\t\t\t} catch (e) {\n\t\t\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">HTTP ${response.status}: ${response.statusText}</option>`;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">Network error: ${error.message}</option>`;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeCreateInstallModal = function() {\n\t\t\t\tdocument.getElementById(\"createInstallModal\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"createInstallForm\").reset();\n\t\t\t\tdocument.getElementById(\"createInstallError\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById('appInputsContainer').innerHTML = '<p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Select an app to see required configuration options</p>';\n\t\t\t\tcurrentAppInputConfig = null;\n\t\t\t};\n\n\t\t\tdocument.getElementById(\"createInstallForm\").addEventListener(\"submit\", async (e) => {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tconst errorDiv = document.getElementById(\"createInstallError\");\n\t\t\t\terrorDiv.classList.add(\"hidden\");\n\n\t\t\t\ttry {\n\t\t\t\t\tconst formData = collectFormData();\n\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/links`, {\n\t\t\t\t\t\tmethod: \"POST\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\",\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify(formData),\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst linkId = data.link.id;\n\t\t\t\t\t\twindow.location.href = `${basePath}/orgs/${orgId}/links/${linkId}`;\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || \"Failed to create install\";\n\t\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || \"Please check your inputs and try again.\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<script>\n\t\t(function() {\n\t\t\tvar configEl = document.getElementById('create-install-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst orgId = configEl.dataset.orgId;\n\t\t\tlet currentPlatform = null;\n\t\t\tlet currentInputConfig = null;\n\n\t\t\twindow.openCreateInstallModal = async function() {\n\t\t\t\tconst modal = document.getElementById(\"createInstallModal\");\n\t\t\t\tconst appSelect = document.getElementById(\"appSelect\");\n\n\t\t\t\tmodal.classList.remove(\"hidden\");\n\t\t\t\tappSelect.innerHTML = '<option value=\"\">Loading apps...</option>';\n\t\t\t\tclearInputs();\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/apps-api`);\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst apps = await response.json();\n\t\t\t\t\t\tappSelect.innerHTML = '<option value=\"\">Select an app...</option>';\n\n\t\t\t\t\t\tif (apps && apps.length > 0) {\n\t\t\t\t\t\t\tapps.forEach((app) => {\n\t\t\t\t\t\t\t\tconst option = document.createElement(\"option\");\n\t\t\t\t\t\t\t\toption.value = JSON.stringify({ id: app.id, name: app.name });\n\t\t\t\t\t\t\t\toption.textContent = app.name;\n\t\t\t\t\t\t\t\tappSelect.appendChild(option);\n\t\t\t\t\t\t\t});\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tappSelect.innerHTML = '<option value=\"\">No apps found</option>';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst errorText = await response.text();\n\t\t\t\t\t\ttry {\n\t\t\t\t\t\t\tconst errorJson = JSON.parse(errorText);\n\t\t\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">Error: ${errorJson.error || 'Failed to load apps'}</option>`;\n\t\t\t\t\t\t} catch (e) {\n\t\t\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">HTTP ${response.status}: ${response.statusText}</option>`;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tappSelect.innerHTML = `<option value=\"\">Network error: ${error.message}</option>`;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeCreateInstallModal = function() {\n\t\t\t\tdocument.getElementById(\"createInstallModal\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"createInstallForm\").reset();\n\t\t\t\tdocument.getElementById(\"createInstallError\").classList.add(\"hidden\");\n\t\t\t\tclearInputs();\n\t\t\t};\n\n\t\t\tfunction clearInputs() {\n\t\t\t\tdocument.getElementById(\"vendorInputsContainer\").innerHTML = '';\n\t\t\t\tdocument.getElementById(\"inputConfigLoading\").classList.add(\"hidden\");\n\t\t\t\tcurrentPlatform = null;\n\t\t\t\tcurrentInputConfig = null;\n\t\t\t}\n\n\t\t\t// When app is selected, fetch input config\n\t\t\tdocument.getElementById(\"appSelect\").addEventListener(\"change\", async function() {\n\t\t\t\tconst selectedValue = this.value;\n\t\t\t\tclearInputs();\n\n\t\t\t\tif (!selectedValue) return;\n\n\t\t\t\tconst selectedApp = JSON.parse(selectedValue);\n\t\t\t\tconst loadingEl = document.getElementById(\"inputConfigLoading\");\n\t\t\t\tloadingEl.classList.remove(\"hidden\");\n\n\t\t\t\ttry {\n\t\t\t\t\t// Fetch input config with vendor filter\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/apps-api/${selectedApp.id}/input-config?filter=vendor`);\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\tcurrentPlatform = data.platform;\n\t\t\t\t\t\tcurrentInputConfig = data.input_config;\n\n\t\t\t\t\t\t// Render vendor input fields\n\t\t\t\t\t\trenderVendorInputs(currentInputConfig);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconsole.error(\"Failed to fetch input config\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.error(\"Error fetching input config:\", error);\n\t\t\t\t} finally {\n\t\t\t\t\tloadingEl.classList.add(\"hidden\");\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tfunction renderVendorInputs(inputConfig) {\n\t\t\t\tconst container = document.getElementById(\"vendorInputsContainer\");\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups || inputConfig.input_groups.length === 0) {\n\t\t\t\t\tcontainer.innerHTML = '';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tlet html = '<div class=\"border-t border-cool-grey-200 dark:border-dark-grey-600 pt-4 mt-2\">' +\n\t\t\t\t\t'<h4 class=\"text-sm font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-3\">Vendor Configuration<\\/h4>';\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tif (group.app_inputs && group.app_inputs.length > 0) {\n\t\t\t\t\t\thtml += renderInputGroup(group);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\tcontainer.innerHTML = html;\n\t\t\t}\n\n\t\t\tfunction renderInputGroup(group) {\n\t\t\t\tlet html = '<div class=\"mb-4\">';\n\t\t\t\thtml += '<h5 class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-3\">';\n\n\t\t\t\tconst inputs = group.app_inputs || [];\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\thtml += renderSingleInput(input);\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderSingleInput(input) {\n\t\t\t\tconst inputName = 'vendor_input:' + input.name;\n\t\t\t\tconst isRequired = input.required ? ' *' : '';\n\t\t\t\tconst requiredAttr = input.required ? ' required' : '';\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tlet html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"vendor_' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (input.default === 'true') html += ' checked';\n\t\t\t\t\thtml += ' class=\"mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"vendor_' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tlet html = '<div>';\n\t\t\t\t\thtml += '<label for=\"vendor_' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"vendor_' + input.name + '\" name=\"' + inputName + '\" rows=\"3\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\">';\n\t\t\t\t\thtml += (input.default || '') + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tlet inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tlet html = '<div>';\n\t\t\t\thtml += '<label for=\"vendor_' + input.name + '\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"vendor_' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById(\"createInstallForm\").addEventListener(\"submit\", async (e) => {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tconst errorDiv = document.getElementById(\"createInstallError\");\n\t\t\t\terrorDiv.classList.add(\"hidden\");\n\n\t\t\t\tconst selectedAppValue = document.getElementById(\"appSelect\").value;\n\t\t\t\tif (!selectedAppValue) {\n\t\t\t\t\terrorDiv.textContent = \"Please select an app\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tconst selectedApp = JSON.parse(selectedAppValue);\n\n\t\t\t\t// Collect vendor inputs\n\t\t\t\tconst inputs = {};\n\t\t\t\tconst form = document.getElementById(\"createInstallForm\");\n\t\t\t\tconst formData = new FormData(form);\n\n\t\t\t\tfor (const [key, value] of formData.entries()) {\n\t\t\t\t\tif (key.startsWith('vendor_input:')) {\n\t\t\t\t\t\tconst inputName = key.replace('vendor_input:', '');\n\t\t\t\t\t\tinputs[inputName] = value;\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tconst submitBtn = document.getElementById(\"createLinkSubmitBtn\");\n\t\t\t\t\tsubmitBtn.disabled = true;\n\t\t\t\t\tsubmitBtn.textContent = \"Creating...\";\n\n\t\t\t\t\tconst response = await fetch(`${basePath}/orgs/${orgId}/links`, {\n\t\t\t\t\t\tmethod: \"POST\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\",\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tapp_id: selectedApp.id,\n\t\t\t\t\t\t\tapp_name: selectedApp.name,\n\t\t\t\t\t\t\tinputs: inputs\n\t\t\t\t\t\t}),\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tconst linkId = data.link.id;\n\t\t\t\t\t\twindow.location.href = `${basePath}/orgs/${orgId}/links/${linkId}`;\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || \"Failed to create install link\";\n\t\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\t\tsubmitBtn.disabled = false;\n\t\t\t\t\t\tsubmitBtn.textContent = \"Create Link\";\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || \"Please check your inputs and try again.\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\tconst submitBtn = document.getElementById(\"createLinkSubmitBtn\");\n\t\t\t\t\tsubmitBtn.disabled = false;\n\t\t\t\t\tsubmitBtn.textContent = \"Create Link\";\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

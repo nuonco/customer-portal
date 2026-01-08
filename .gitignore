@@ -9,3 +9,5 @@ tmp/
 
 # Node.js (in case someone runs npm by mistake)
 node_modules/
+
+.env.*

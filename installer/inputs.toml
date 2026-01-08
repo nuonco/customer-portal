@@ -15,6 +15,11 @@ name         = "application"
 description  = "Application Configuration"
 display_name = "Application Settings"
 
+[[group]]
+name         = "authentication"
+description  = "Authentication Provider Configuration"
+display_name = "Authentication Settings"
+
 # DNS Configuration
 [[input]]
 name         = "domain"
@@ -87,3 +92,31 @@ description  = "Number of ECS tasks to run"
 default      = "2"
 display_name = "Desired Task Count"
 group        = "application"
+
+# Authentication Configuration
+[[input]]
+name         = "auth_provider"
+description  = "Authentication provider type (oidc or saml)"
+default      = "oidc"
+display_name = "Auth Provider"
+group        = "authentication"
+
+[[input]]
+name         = "auth_client_id"
+description  = "OAuth/OIDC Client ID from your identity provider"
+sensitive    = true
+display_name = "Client ID"
+group        = "authentication"
+
+[[input]]
+name         = "auth_client_secret"
+description  = "OAuth/OIDC Client Secret from your identity provider"
+sensitive    = true
+display_name = "Client Secret"
+group        = "authentication"
+
+[[input]]
+name         = "auth_issuer_url"
+description  = "OIDC Issuer URL (e.g., https://accounts.google.com)"
+display_name = "Issuer URL"
+group        = "authentication"

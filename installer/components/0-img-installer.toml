@@ -5,5 +5,5 @@ dockerfile = "Dockerfile"
 
 [connected_repo]
 directory = "exp/installer/app"
-repo      = "powertoolsdev/mono"
+repo      = "nuonco/mono"
 branch    = "ja/installer-v2"

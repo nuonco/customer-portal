@@ -65,6 +65,40 @@ templ Layout(props LayoutProps) {
 				{ children... }
 			</main>
 			@customerFooter(props)
+			<!-- Preview Button -->
+			<div class="fixed bottom-4 right-4 z-50">
+				<button
+					onclick="openPreviewModal()"
+					class="bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-md shadow-lg hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 transition"
+				>
+					Preview
+				</button>
+			</div>
+			<!-- Preview Modal -->
+			<div id="preview-modal" class="fixed inset-0 bg-black/50 hidden overflow-y-auto" style="z-index: 100;">
+				<div class="flex items-center justify-center min-h-full p-4">
+					<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-700 my-8">
+						<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700 flex justify-between items-center">
+							<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Preview Release</h3>
+							<button type="button" onclick="closePreviewModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+								</svg>
+							</button>
+						</div>
+						<div class="px-6 py-4">
+							<p class="text-cool-grey-600 dark:text-cool-grey-400">
+								This application is currently in preview and under active development. Features may change and some functionality may be incomplete.
+							</p>
+						</div>
+						<div class="px-6 py-4 bg-cool-grey-100 dark:bg-dark-grey-800 rounded-b-lg flex justify-end">
+							<button type="button" onclick="closePreviewModal()" class="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:opacity-90 rounded-md focus:ring-2 focus:ring-primary-500">
+								Got it
+							</button>
+						</div>
+					</div>
+				</div>
+			</div>
 			@customerToast()
 			@customerConfirmModal()
 			@customerPromptModal()
@@ -153,6 +187,14 @@ templ logoutScript() {
 			document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
 			window.location.href = basePath + "/login/";
 		}
+
+		// Preview Modal
+		function openPreviewModal() {
+			document.getElementById('preview-modal').classList.remove('hidden');
+		}
+		function closePreviewModal() {
+			document.getElementById('preview-modal').classList.add('hidden');
+		}
 	</script>
 }
 
@@ -231,9 +273,9 @@ templ customerToast() {
 }
 
 templ customerConfirmModal() {
-	<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden z-50">
-		<div class="flex items-center justify-center min-h-screen p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6">
+	<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="confirm-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
 				<div class="flex justify-end space-x-3">
@@ -270,9 +312,9 @@ templ customerConfirmModal() {
 }
 
 templ customerPromptModal() {
-	<div id="prompt-modal" class="fixed inset-0 bg-black/50 hidden z-50">
-		<div class="flex items-center justify-center min-h-screen p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6">
+	<div id="prompt-modal" class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="prompt-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="prompt-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-4"></p>
 				<input
@@ -341,25 +383,17 @@ templ customerPromptModal() {
 templ customerAuthScript() {
 	<script>
 		(function() {
-			function getCookie(name) {
-				var value = '; ' + document.cookie;
-				var parts = value.split('; ' + name + '=');
-				if (parts.length === 2) return parts.pop().split(';').shift();
-				return null;
-			}
-
-			var token = getCookie('jwt');
-			if (token) {
-				var originalFetch = window.fetch;
-				window.fetch = function(url, options) {
-					options = options || {};
-					if (!options.headers) {
-						options.headers = {};
-					}
-					options.headers['Authorization'] = 'Bearer ' + token;
-					return originalFetch(url, options);
-				};
-			}
+			// Intercept fetch to ensure credentials are always sent with same-origin requests
+			// This allows the browser to automatically send the httpOnly JWT cookie
+			var originalFetch = window.fetch;
+			window.fetch = function(url, options) {
+				options = options || {};
+				// Default to same-origin credentials if not explicitly set
+				if (!options.credentials) {
+					options.credentials = 'same-origin';
+				}
+				return originalFetch(url, options);
+			};
 		})();
 	</script>
 }

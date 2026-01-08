@@ -7,8 +7,12 @@
     'Noto Color Emoji';
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     monospace;
+    --color-amber-100: oklch(96.2% 0.059 95.617);
+    --color-amber-400: oklch(82.8% 0.189 84.429);
     --color-amber-500: oklch(76.9% 0.188 70.08);
     --color-amber-600: oklch(66.6% 0.179 58.318);
+    --color-amber-700: oklch(55.5% 0.163 48.998);
+    --color-amber-900: oklch(41.4% 0.112 45.904);
     --color-yellow-100: oklch(97.3% 0.071 103.193);
     --color-yellow-200: oklch(94.5% 0.129 101.54);
     --color-yellow-300: oklch(90.5% 0.182 98.111);
@@ -311,6 +315,9 @@
   .mx-auto {
     margin-inline: auto;
   }
+  .my-8 {
+    margin-block: calc(var(--spacing) * 8);
+  }
   .mt-0\.5 {
     margin-top: calc(var(--spacing) * 0.5);
   }
@@ -452,11 +459,14 @@
   .h-full {
     height: 100%;
   }
-  .max-h-screen {
-    max-height: 100vh;
+  .h-screen {
+    height: 100vh;
   }
   .min-h-\[60vh\] {
     min-height: 60vh;
+  }
+  .min-h-full {
+    min-height: 100%;
   }
   .min-h-screen {
     min-height: 100vh;
@@ -816,11 +826,17 @@
   .border-primary-200 {
     border-color: #F2E5FF;
   }
+  .border-primary-500 {
+    border-color: #AD71EA;
+  }
   .border-primary-600 {
     border-color: #8040BF;
   }
   .border-red-200 {
     border-color: #FECACA;
+  }
+  .border-red-300 {
+    border-color: #FCA5A5;
   }
   .border-red-400 {
     border-color: #F87171;
@@ -830,6 +846,9 @@
   }
   .border-yellow-200 {
     border-color: var(--color-yellow-200);
+  }
+  .bg-amber-100 {
+    background-color: var(--color-amber-100);
   }
   .bg-amber-500 {
     background-color: var(--color-amber-500);
@@ -1080,6 +1099,9 @@
   .whitespace-nowrap {
     white-space: nowrap;
   }
+  .text-amber-700 {
+    color: var(--color-amber-700);
+  }
   .text-blue-500 {
     color: #6792F4;
   }
@@ -1154,9 +1176,6 @@
   }
   .text-white {
     color: #FFFFFF;
-  }
-  .text-yellow-600 {
-    color: var(--color-yellow-600);
   }
   .text-yellow-800 {
     color: var(--color-yellow-800);
@@ -1416,6 +1435,13 @@
       }
     }
   }
+  .hover\:text-primary-700 {
+    &:hover {
+      @media (hover: hover) {
+        color: #7339AC;
+      }
+    }
+  }
   .hover\:text-primary-800 {
     &:hover {
       @media (hover: hover) {
@@ -1441,6 +1467,13 @@
     &:hover {
       @media (hover: hover) {
         text-decoration-line: underline;
+      }
+    }
+  }
+  .hover\:opacity-90 {
+    &:hover {
+      @media (hover: hover) {
+        opacity: 90%;
       }
     }
   }
@@ -1482,6 +1515,11 @@
     &:focus {
       --tw-ring-shadow: var(--tw-ring-inset,) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);
       box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+    }
+  }
+  .focus\:ring-amber-400 {
+    &:focus {
+      --tw-ring-color: var(--color-amber-400);
     }
   }
   .focus\:ring-cool-grey-400 {
@@ -1693,6 +1731,11 @@
       border-color: #662F9D;
     }
   }
+  .dark\:border-red-700 {
+    &:where(.dark, .dark *) {
+      border-color: #B91C1C;
+    }
+  }
   .dark\:border-red-800 {
     &:where(.dark, .dark *) {
       border-color: #991B1B;
@@ -1701,6 +1744,14 @@
   .dark\:border-yellow-800 {
     &:where(.dark, .dark *) {
       border-color: var(--color-yellow-800);
+    }
+  }
+  .dark\:bg-amber-900\/30 {
+    &:where(.dark, .dark *) {
+      background-color: color-mix(in srgb, oklch(41.4% 0.112 45.904) 30%, transparent);
+      @supports (color: color-mix(in lab, red, red)) {
+        background-color: color-mix(in oklab, var(--color-amber-900) 30%, transparent);
+      }
     }
   }
   .dark\:bg-blue-900\/30 {
@@ -1786,6 +1837,11 @@
       }
     }
   }
+  .dark\:text-amber-400 {
+    &:where(.dark, .dark *) {
+      color: var(--color-amber-400);
+    }
+  }
   .dark\:text-blue-300 {
     &:where(.dark, .dark *) {
       color: #CDDDFF;
@@ -1869,11 +1925,6 @@
   .dark\:text-yellow-300 {
     &:where(.dark, .dark *) {
       color: var(--color-yellow-300);
-    }
-  }
-  .dark\:text-yellow-400 {
-    &:where(.dark, .dark *) {
-      color: var(--color-yellow-400);
     }
   }
   .dark\:placeholder-cool-grey-500 {

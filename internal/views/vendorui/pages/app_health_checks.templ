@@ -34,7 +34,7 @@ type AppInfo struct {
 // AppHealthChecksPage renders the app health checks configuration page
 templ AppHealthChecksPage(props AppHealthChecksPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6">
+		<div class="flex h-full -m-6 overflow-hidden">
 			@partials.AppSubnav(partials.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,
@@ -235,13 +235,12 @@ templ appHealthChecksScript() {
 					setLoading(true);
 
 					try {
-						var token = getCookie('jwt');
 						var response = await fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/health-checks', {
 							method: 'PUT',
 							headers: {
-								'Content-Type': 'application/json',
-								'Authorization': 'Bearer ' + token
+								'Content-Type': 'application/json'
 							},
+							credentials: 'same-origin',
 							body: JSON.stringify({
 								health_check_action_ids: selectedIDs
 							})

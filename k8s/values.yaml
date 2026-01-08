@@ -18,14 +18,11 @@ envSecrets:
     valueFrom:
       name: customer-dashboard-jwt-secret
       key: jwt_secret
-  - name: "WORKOS_API_KEY"
+  - name: "AUTH_CLIENT_SECRET"
     valueFrom:
-      name: customer-dashboard-workos
-      key: workos_api_key
-  - name: "WORKOS_CLIENT_ID"
-    valueFrom:
-      name: customer-dashboard-workos
-      key: workos_client_id
+      name: customer-dashboard-auth
+      key: auth_client_secret
+  # Other auth vars (AUTH_PROVIDER, AUTH_CLIENT_ID, etc.) are set in environment-specific templates
 
 image:
   repository: ""

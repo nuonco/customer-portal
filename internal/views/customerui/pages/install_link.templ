@@ -14,44 +14,55 @@ type InstallLinkPageProps struct {
 // InstallLinkPage renders the install link acceptance page
 templ InstallLinkPage(props InstallLinkPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="max-w-lg mx-auto mt-10">
-			<div class="bg-white dark:bg-dark-grey-900 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 text-center rounded-lg">
-				<div class="mb-6">
+		<div class="max-w-2xl mx-auto mt-10">
+			<div class="bg-white dark:bg-dark-grey-900 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+				<div class="mb-6 text-center">
 					<h3 class="text-xl text-cool-grey-800 dark:text-cool-grey-200">{ props.Link.AppName }</h3>
 					<p class="text-cool-grey-600 dark:text-cool-grey-400">provided by { props.Link.NuonOrg.Name }</p>
 				</div>
-				<p class="text-cool-grey-700 dark:text-cool-grey-300 mb-6">
-					You've been invited to install this application. Please provide your email to create an account and proceed with the installation.
+				<p class="text-cool-grey-700 dark:text-cool-grey-300 mb-6 text-center">
+					You've been invited to install this application. Please provide your details below.
 				</p>
-				<form id="installForm" class="space-y-4">
+				<form id="installForm" class="space-y-6">
 					<input type="hidden" id="sha" value={ props.Link.SHA }/>
-					<div>
-						<label for="email" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Email Address</label>
-						<input
-							type="email"
-							id="email"
-							required
-							class={ "w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white focus:outline-none focus:ring-2 focus:border-primary-600 rounded-lg",
-								templ.KV("focus:ring-theme-primary", props.PrimaryColor != ""),
-								templ.KV("focus:ring-primary-400", props.PrimaryColor == "") }
-							placeholder="Enter your email"
-						/>
+					<!-- Account Info -->
+					<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
+						<div>
+							<label for="email" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Email Address *</label>
+							<input
+								type="email"
+								id="email"
+								required
+								class={ "w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white focus:outline-none focus:ring-2 focus:border-primary-600 rounded-lg",
+									templ.KV("focus:ring-theme-primary", props.PrimaryColor != ""),
+									templ.KV("focus:ring-primary-400", props.PrimaryColor == "") }
+								placeholder="Enter your email"
+							/>
+						</div>
 					</div>
-					<div class="bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 p-3 rounded-lg">
-						<p class="text-sm text-cool-grey-800 dark:text-cool-grey-200">
-							<strong>Deployment Region:</strong> { props.Link.Install.Region }
-						</p>
-						<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mt-1">
-							This region was pre-configured by the vendor when creating the install link.
-						</p>
+					<!-- Region Selection (populated by JS based on platform) -->
+					<div id="regionSection" class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
+						<div id="regionContainer">
+							<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading regions...</p>
+						</div>
 					</div>
+					<!-- App Inputs (populated by JS - customer-facing inputs only) -->
+					<div id="appInputsSection" class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Configuration</h4>
+						<div id="appInputsContainer">
+							<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading configuration options...</p>
+						</div>
+					</div>
+					<!-- Submit -->
 					<button
 						type="submit"
 						class={ "w-full text-white py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-400 font-semibold rounded-lg",
 							templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
 							templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "") }
 					>
-						Create Install
+						Accept Install
 					</button>
 				</form>
 				<div id="error" class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden rounded-lg"></div>
@@ -68,70 +79,245 @@ templ InstallLinkPage(props InstallLinkPageProps) {
 			</div>
 		</div>
 		<!-- Config data for JavaScript -->
-		<div id="install-link-config" class="hidden" data-base-path={ props.BasePath }></div>
+		<div id="install-link-config" class="hidden" data-base-path={ props.BasePath } data-sha={ props.Link.SHA }></div>
 		@installLinkScript()
 	}
 }
 
 templ installLinkScript() {
 	<script>
-		document.getElementById('installForm').addEventListener('submit', async function(e) {
-			e.preventDefault();
-
+		(function() {
 			var config = document.getElementById('install-link-config');
 			var basePath = config.dataset.basePath;
+			var sha = config.dataset.sha;
+			var currentAppConfig = null;
 
-			var formData = {
-				sha: document.getElementById('sha').value,
-				email: document.getElementById('email').value
-			};
+			// Fetch app config on page load (customer-facing inputs only)
+			async function loadAppConfig() {
+				try {
+					// Fetch with filter=customer to get only customer-facing inputs
+					var response = await fetch(basePath + '/install-link/' + sha + '/app-config?filter=customer');
+					if (response.ok) {
+						currentAppConfig = await response.json();
+						renderRegionSelector(currentAppConfig.platform);
+						renderInputFields(currentAppConfig.input_config);
+					} else {
+						document.getElementById('appInputsContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Failed to load configuration</p>';
+						document.getElementById('regionContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Failed to load regions</p>';
+					}
+				} catch (error) {
+					document.getElementById('appInputsContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Error loading configuration</p>';
+					document.getElementById('regionContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Error loading regions</p>';
+				}
+			}
 
-			var errorDiv = document.getElementById('error');
-			var successDiv = document.getElementById('success');
-			var submitButton = e.target.querySelector('button[type="submit"]');
+			function renderRegionSelector(platform) {
+				var container = document.getElementById('regionContainer');
+				var html = '';
 
-			// Hide previous messages
-			errorDiv.classList.add('hidden');
-			successDiv.classList.add('hidden');
+				if (platform === 'azure_aks') {
+					html = '<label for="azureLocation" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Azure Location *<\/label>' +
+						'<select id="azureLocation" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+							'<option value="eastus">East US<\/option>' +
+							'<option value="eastus2">East US 2<\/option>' +
+							'<option value="westus">West US<\/option>' +
+							'<option value="westus2">West US 2<\/option>' +
+							'<option value="westeurope">West Europe<\/option>' +
+							'<option value="northeurope">North Europe<\/option>' +
+						'<\/select>';
+				} else {
+					// Default to AWS
+					html = '<label for="awsRegion" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">AWS Region *<\/label>' +
+						'<select id="awsRegion" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+							'<option value="us-east-1">US East (N. Virginia) - us-east-1<\/option>' +
+							'<option value="us-east-2">US East (Ohio) - us-east-2<\/option>' +
+							'<option value="us-west-1">US West (N. California) - us-west-1<\/option>' +
+							'<option value="us-west-2">US West (Oregon) - us-west-2<\/option>' +
+							'<option value="eu-west-1">Europe (Ireland) - eu-west-1<\/option>' +
+							'<option value="eu-central-1">Europe (Frankfurt) - eu-central-1<\/option>' +
+							'<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1<\/option>' +
+							'<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1<\/option>' +
+						'<\/select>';
+				}
 
-			// Show loading state
-			submitButton.textContent = 'Creating Install...';
-			submitButton.disabled = true;
+				container.innerHTML = html;
+			}
 
-			try {
-				var response = await fetch(basePath + '/install-link', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-					body: JSON.stringify(formData)
+			function renderInputFields(inputConfig) {
+				var container = document.getElementById('appInputsContainer');
+
+				if (!inputConfig || !inputConfig.input_groups) {
+					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
+					return;
+				}
+
+				var html = '';
+				var hasInputs = false;
+
+				inputConfig.input_groups.forEach(function(group) {
+					if (group.app_inputs && group.app_inputs.length > 0) {
+						hasInputs = true;
+						html += renderInputGroup(group, group.app_inputs);
+					}
 				});
 
-				var data = await response.json();
-
-				if (response.ok) {
-					// Store the JWT token as a cookie (replaces any existing session)
-					document.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24); // 24 hours
-
-					successDiv.innerHTML = '<p class="font-semibold">Installation created successfully!</p><p class="text-sm mt-2">You will be redirected to your dashboard in 3 seconds...</p>';
-					successDiv.classList.remove('hidden');
-
-					// Redirect after 3 seconds
-					setTimeout(function() {
-						window.location.href = basePath + '/installs';
-					}, 3000);
+				if (!hasInputs) {
+					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
 				} else {
-					errorDiv.textContent = data.error || 'Failed to create installation';
-					errorDiv.classList.remove('hidden');
+					container.innerHTML = html;
 				}
-			} catch (error) {
-				errorDiv.textContent = 'Network error. Please try again.';
-				errorDiv.classList.remove('hidden');
-			} finally {
-				// Reset button
-				submitButton.textContent = 'Create Install';
-				submitButton.disabled = false;
 			}
-		});
+
+			function renderInputGroup(group, inputs) {
+				var html = '<div class="mb-6">';
+				html += '<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
+				if (group.description) {
+					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">' + group.description + '<\/p>';
+				}
+				html += '<div class="space-y-4">';
+
+				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
+				inputs.forEach(function(input) {
+					html += renderSingleInput(input);
+				});
+
+				html += '<\/div><\/div>';
+				return html;
+			}
+
+			function renderSingleInput(input) {
+				var inputName = 'inputs:' + input.name;
+				var isRequired = input.required ? ' *' : '';
+				var requiredAttr = input.required ? ' required' : '';
+
+				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
+					var html = '<div class="flex items-start space-x-3">';
+					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
+					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
+					if (input.default === 'true') html += ' checked';
+					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+					html += '<div class="flex-1">';
+					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					if (input.description) {
+						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					}
+					html += '<\/div><\/div>';
+					return html;
+				}
+
+				if (input.type === 'json') {
+					var html = '<div>';
+					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
+					html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+					html += (input.default || '') + '<\/textarea>';
+					if (input.description) {
+						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					}
+					html += '<\/div>';
+					return html;
+				}
+
+				var inputType = 'text';
+				if (input.type === 'number') {
+					inputType = 'number';
+				} else if (input.sensitive) {
+					inputType = 'password';
+				}
+
+				var html = '<div>';
+				html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
+				if (inputType === 'password') html += ' autocomplete="off"';
+				html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+				if (input.description) {
+					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+				}
+				html += '<\/div>';
+				return html;
+			}
+
+			// Form submission
+			document.getElementById('installForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				var errorDiv = document.getElementById('error');
+				var successDiv = document.getElementById('success');
+				var submitButton = e.target.querySelector('button[type="submit"]');
+
+				errorDiv.classList.add('hidden');
+				successDiv.classList.add('hidden');
+				submitButton.textContent = 'Accepting Install...';
+				submitButton.disabled = true;
+
+				// Get region/location
+				var region = '';
+				var location = '';
+				var awsRegionEl = document.getElementById('awsRegion');
+				var azureLocationEl = document.getElementById('azureLocation');
+
+				if (awsRegionEl) {
+					region = awsRegionEl.value;
+				}
+				if (azureLocationEl) {
+					location = azureLocationEl.value;
+				}
+
+				// Collect form data
+				var formData = {
+					sha: document.getElementById('sha').value,
+					email: document.getElementById('email').value,
+					region: region,
+					location: location,
+					inputs: {}
+				};
+
+				// Collect customer input fields
+				var inputFields = document.querySelectorAll('#appInputsContainer input[name^="inputs:"], #appInputsContainer select[name^="inputs:"], #appInputsContainer textarea[name^="inputs:"]');
+				inputFields.forEach(function(input) {
+					var fieldName = input.name.substring(7); // Remove "inputs:" prefix
+					if (input.type === 'checkbox') {
+						if (input.checked) {
+							formData.inputs[fieldName] = input.value === 'true' ? 'true' : input.value;
+						} else if (!formData.inputs.hasOwnProperty(fieldName)) {
+							formData.inputs[fieldName] = 'false';
+						}
+					} else if (input.type !== 'hidden' && input.value) {
+						formData.inputs[fieldName] = input.value;
+					}
+				});
+
+				try {
+					var response = await fetch(basePath + '/install-link', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(formData)
+					});
+
+					var data = await response.json();
+
+					if (response.ok) {
+						document.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24);
+						successDiv.innerHTML = '<p class="font-semibold">Installation accepted successfully!<\/p><p class="text-sm mt-2">Redirecting to your install...<\/p>';
+						successDiv.classList.remove('hidden');
+						setTimeout(function() {
+							window.location.href = basePath + '/installs/' + data.install.id;
+						}, 2000);
+					} else {
+						errorDiv.textContent = data.error || 'Failed to accept installation';
+						errorDiv.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorDiv.textContent = 'Network error. Please try again.';
+					errorDiv.classList.remove('hidden');
+				} finally {
+					submitButton.textContent = 'Accept Install';
+					submitButton.disabled = false;
+				}
+			});
+
+			// Load config on page load
+			loadAppConfig();
+		})();
 	</script>
 }

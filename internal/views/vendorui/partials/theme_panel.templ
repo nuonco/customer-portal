@@ -478,13 +478,12 @@ templ themePanelScript() {
 				}
 
 				try {
-					const token = getCookie("jwt");
 					const response = await fetch(`${basePath}/settings`, {
 						method: "PUT",
 						headers: {
 							"Content-Type": "application/json",
-							Authorization: "Bearer " + token,
 						},
+						credentials: "same-origin",
 						body: JSON.stringify(formData),
 					});
 

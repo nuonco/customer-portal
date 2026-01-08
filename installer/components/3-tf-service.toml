@@ -4,7 +4,7 @@ type              = "terraform_module"
 terraform_version = "1.13.5"
 
 [connected_repo]
-repo      = "powertoolsdev/mono"
+repo      = "nuonco/mono"
 directory = "exp/installer/app/installer/src/service"
 branch    = "ja/installer-v2"
 
@@ -23,3 +23,10 @@ customer_security_group_id = "{{.nuon.components.customer_alb.outputs.security_g
 jwt_secret                 = "{{.nuon.inputs.inputs.jwt_secret}}"
 database_url               = "postgres://{{.nuon.inputs.inputs.db_username}}:{{.nuon.inputs.inputs.db_password}}@{{.nuon.components.rds.outputs.endpoint}}/{{.nuon.inputs.inputs.db_name}}?sslmode=require"
 customer_base_url          = "https://{{.nuon.inputs.inputs.customer_subdomain}}.{{.nuon.install.sandbox.outputs.nuon_dns.public_domain.name}}"
+
+# Authentication configuration
+auth_provider              = "{{.nuon.inputs.inputs.auth_provider}}"
+auth_client_id             = "{{.nuon.inputs.inputs.auth_client_id}}"
+auth_client_secret         = "{{.nuon.inputs.inputs.auth_client_secret}}"
+auth_issuer_url            = "{{.nuon.inputs.inputs.auth_issuer_url}}"
+auth_redirect_uri          = "https://{{.nuon.inputs.inputs.vendor_subdomain}}.{{.nuon.install.sandbox.outputs.nuon_dns.public_domain.name}}/admin/callback"

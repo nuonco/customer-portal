@@ -32,9 +32,9 @@ package components
 //   if (value !== null) { ... }
 templ ConfirmModal() {
 	<!-- Confirmation Modal Container -->
-	<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden" style="z-index: 100;">
-		<div class="flex items-center justify-center min-h-screen p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md transform transition-all border border-cool-grey-300 dark:border-dark-grey-500">
+	<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md transform transition-all border border-cool-grey-300 dark:border-dark-grey-500 my-8">
 				<!-- Modal Header -->
 				<div id="confirm-modal-header" class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
 					<h3 id="confirm-modal-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>

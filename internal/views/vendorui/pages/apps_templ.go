@@ -124,7 +124,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) templ.Com
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/health-checks'", basePath, orgID, app.ID)})
+		templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/inputs'", basePath, orgID, app.ID)})
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -132,7 +132,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) templ.Com
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/health-checks'", basePath, orgID, app.ID)}
+		var templ_7745c5c3_Var4 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/inputs'", basePath, orgID, app.ID)}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var4.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -192,9 +192,9 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) templ.Com
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 templ.SafeURL
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/health-checks", basePath, orgID, app.ID)))
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 93, Col: 98}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 93, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {

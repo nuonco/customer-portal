@@ -4,12 +4,16 @@ environment: stage
 env:
   NUON_API_URL: "https://api.stage.nuon.co"
   CUSTOMER_BASE_URL: "https://customers.stage.nuon.co"
-  WORKOS_REDIRECT_URI: "https://customers.stage.nuon.co/admin/callback"
-  
+
+  # Auth configuration (OIDC) - AUTH_CLIENT_SECRET comes from envSecrets
+  AUTH_PROVIDER: "oidc"
+  AUTH_CLIENT_ID: "457475541946-uar9phtln2tsth04t64kdscetel2l2cs.apps.googleusercontent.com"
+  AUTH_OIDC_ISSUER_URL: "https://accounts.google.com"
+  AUTH_REDIRECT_URI: "https://customers.stage.nuon.co/admin/callback"
+
   # Secrets - TODO: move to AWS Secrets Manager
   JWT_SECRET: "stage-jwt-secret-change-me-in-production"
-  WORKOS_API_KEY: "sk_test_placeholder"
-  WORKOS_CLIENT_ID: "client_placeholder"
+  AUTH_CLIENT_SECRET: "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"
 
 app:
   alb:

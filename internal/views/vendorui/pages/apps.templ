@@ -69,7 +69,7 @@ templ AppsPage(props AppsPageProps) {
 templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) {
 	<tr
 		class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 cursor-pointer"
-		onclick={ templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/health-checks'", basePath, orgID, app.ID)} }
+		onclick={ templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/inputs'", basePath, orgID, app.ID)} }
 	>
 		<td class="px-6 py-4 whitespace-nowrap">
 			<div class="flex items-center">
@@ -90,7 +90,7 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) {
 		</td>
 		<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
 			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/health-checks", basePath, orgID, app.ID)) }
+				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
 				class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
 			>
 				Configure &rarr;

@@ -89,11 +89,11 @@ templ OrgSettingsPage(props OrgSettingsPageProps) {
 templ disconnectModal(orgName, basePath, orgID string) {
 	<div
 		id="disconnectModal"
-		class="fixed inset-0 bg-dark-grey-900/50 hidden"
+		class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
 		style="z-index: 60"
 	>
-		<div class="flex items-center justify-center min-h-screen">
-			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-96">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-96 my-8">
 				<h3 class="text-lg font-semibold mb-4 text-red-600">Disconnect Organization</h3>
 				<div class="mb-4">
 					<p class="text-cool-grey-700 dark:text-cool-grey-300 mb-2">
@@ -193,13 +193,12 @@ templ orgSettingsScript() {
 				}
 
 				try {
-					var token = getCookie('jwt');
 					var response = await fetch(basePath + '/orgs/' + orgId, {
 						method: 'PUT',
 						headers: {
-							'Content-Type': 'application/json',
-							'Authorization': 'Bearer ' + token
+							'Content-Type': 'application/json'
 						},
+						credentials: 'same-origin',
 						body: JSON.stringify(formData)
 					});
 
@@ -260,17 +259,12 @@ templ orgSettingsScript() {
 				confirmButton.disabled = true;
 
 				try {
-					var token = getCookie('jwt');
-					if (!token) {
-						throw new Error('Authentication token not found. Please refresh the page and try again.');
-					}
-
 					var response = await fetch(basePath + '/orgs/' + orgId, {
 						method: 'DELETE',
 						headers: {
-							'Content-Type': 'application/json',
-							'Authorization': 'Bearer ' + token
-						}
+							'Content-Type': 'application/json'
+						},
+						credentials: 'same-origin'
 					});
 
 					var data;

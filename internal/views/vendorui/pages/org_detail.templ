@@ -81,8 +81,12 @@ templ OrgDetailPage(props OrgDetailPageProps) {
 						ShowInfo:     true,
 					})
 				}
-			} else {
+			} else if props.Pagination.AvailableCount == 0 && props.Pagination.UsedCount == 0 {
+				// No links at all - show create first link
 				@emptyLinksState()
+			} else {
+				// Links exist in other tab but not this one
+				@emptyTabState(props.Pagination.CurrentTab)
 			}
 		</div>
 		@createInstallModal(props.BasePath, props.Org.ID)
@@ -181,6 +185,26 @@ templ emptyLinksState() {
 	</div>
 }
 
+templ emptyTabState(currentTab string) {
+	<div class="p-8 text-center">
+		<div class="mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
+			@linkIcon()
+		</div>
+		if currentTab == "used" {
+			<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Accepted Links</h3>
+			<p class="text-cool-grey-500 dark:text-cool-grey-400">Links will appear here once customers accept them.</p>
+		} else {
+			<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Pending Links</h3>
+			<p class="text-cool-grey-500 dark:text-cool-grey-400 mb-6">All your links have been accepted by customers.</p>
+			@components.Button(components.ButtonProps{
+				Text:    "Create New Link",
+				Variant: "primary",
+				OnClick: "openCreateInstallModal()",
+			})
+		}
+	</div>
+}
+
 templ linkIcon() {
 	<svg class="h-6 w-6 text-cool-grey-400 dark:text-cool-grey-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 		<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
@@ -190,100 +214,38 @@ templ linkIcon() {
 templ createInstallModal(basePath, orgID string) {
 	<div
 		id="createInstallModal"
-		class="fixed inset-0 bg-dark-grey-900/50 hidden"
+		class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
 		style="z-index: 50"
 	>
-		<div class="flex items-center justify-center min-h-screen p-4">
-			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl max-h-screen overflow-y-auto">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
 				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Create Install Link</h3>
 				<form id="createInstallForm" class="space-y-6">
-					<!-- Step 1: App Selection -->
-					<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
-						<h4 class="text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200">Select Application</h4>
-						<div>
-							<label for="appSelect" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">App</label>
-							<select
-								id="appSelect"
-								required
-								class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-							>
-								<option value="">Loading apps...</option>
-							</select>
-						</div>
+					<!-- App Selection -->
+					<div>
+						<label for="appSelect" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Select Application *</label>
+						<select
+							id="appSelect"
+							required
+							class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+						>
+							<option value="">Loading apps...</option>
+						</select>
 					</div>
-					<!-- Step 2: Install Configuration -->
-					<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
-						<h4 class="text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200">Install Configuration</h4>
-						<div class="grid grid-cols-1 gap-4">
-							<div>
-								<label for="installName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-									Install Name <span class="text-cool-grey-500 dark:text-cool-grey-400">(optional)</span>
-								</label>
-								<input
-									type="text"
-									id="installName"
-									placeholder="Leave empty to auto-generate"
-									class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								/>
-								<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">If not provided, a unique name will be generated automatically</p>
-							</div>
-						</div>
+					<!-- Vendor-facing Inputs (dynamic based on app config) -->
+					<div id="vendorInputsContainer">
+						<!-- Will be populated by JavaScript -->
 					</div>
-					<!-- Step 3: Region Selection -->
-					<div id="regionSection" class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
-						<h4 class="text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
-						<div class="grid grid-cols-1 gap-4">
-							<div id="platformDisplay" class="mb-2">
-								<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400">Platform will be determined by the selected app</p>
-							</div>
-							<!-- AWS Region Selection -->
-							<div id="awsRegionSection" class="platform-section hidden">
-								<label for="awsRegion" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">AWS Region</label>
-								<select
-									id="awsRegion"
-									class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								>
-									<option value="us-east-1">US East (N. Virginia) - us-east-1</option>
-									<option value="us-east-2">US East (Ohio) - us-east-2</option>
-									<option value="us-west-1">US West (N. California) - us-west-1</option>
-									<option value="us-west-2">US West (Oregon) - us-west-2</option>
-									<option value="eu-west-1">Europe (Ireland) - eu-west-1</option>
-									<option value="eu-central-1">Europe (Frankfurt) - eu-central-1</option>
-									<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</option>
-									<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</option>
-								</select>
-							</div>
-							<!-- Azure Location Selection -->
-							<div id="azureLocationSection" class="platform-section hidden">
-								<label for="azureLocation" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Azure Location</label>
-								<select
-									id="azureLocation"
-									class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								>
-									<option value="eastus">East US</option>
-									<option value="eastus2">East US 2</option>
-									<option value="westus2">West US 2</option>
-									<option value="westus3">West US 3</option>
-									<option value="northeurope">North Europe</option>
-									<option value="westeurope">West Europe</option>
-									<option value="southeastasia">Southeast Asia</option>
-									<option value="japaneast">Japan East</option>
-								</select>
-							</div>
-						</div>
-					</div>
-					<!-- Step 4: App-specific Inputs -->
-					<div id="appInputsSection" class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4">
-						<h4 class="text-md font-semibold mb-2 text-cool-grey-800 dark:text-cool-grey-200">App Configuration</h4>
-						<div id="appInputsContainer">
-							<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Select an app to see required configuration options</p>
-						</div>
+					<!-- Loading indicator for input config -->
+					<div id="inputConfigLoading" class="hidden">
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Loading configuration...</p>
 					</div>
 					<!-- Form Actions -->
 					<div class="flex space-x-3 pt-4">
 						<button
 							type="submit"
-							class="flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium"
+							id="createLinkSubmitBtn"
+							class="flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
 						>
 							Create Link
 						</button>
@@ -319,227 +281,8 @@ templ createInstallModalScript() {
 			var configEl = document.getElementById('create-install-config');
 			const basePath = configEl.dataset.basePath;
 			const orgId = configEl.dataset.orgId;
-
-			let currentAppInputConfig = null;
-			let currentAppPlatform = null;
-
-			function setPlatformFromApp(platform) {
-				const platformDisplay = document.getElementById('platformDisplay');
-				const awsSection = document.getElementById('awsRegionSection');
-				const azureSection = document.getElementById('azureLocationSection');
-
-				if (platform === 'aws') {
-					platformDisplay.innerHTML = '<p class="text-sm text-green-600 dark:text-green-400">Platform: <strong>AWS</strong> (configured by app)</p>';
-					awsSection.classList.remove('hidden');
-					azureSection.classList.add('hidden');
-				} else if (platform === 'azure') {
-					platformDisplay.innerHTML = '<p class="text-sm text-green-600 dark:text-green-400">Platform: <strong>Azure</strong> (configured by app)</p>';
-					awsSection.classList.add('hidden');
-					azureSection.classList.remove('hidden');
-				} else {
-					platformDisplay.innerHTML = '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400">Platform will be determined by the selected app</p>';
-					awsSection.classList.add('hidden');
-					azureSection.classList.add('hidden');
-				}
-			}
-
-			async function loadAppInputs(appId, appName) {
-				const container = document.getElementById('appInputsContainer');
-
-				if (!appId) {
-					container.innerHTML = '<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Select an app to see required configuration options</p>';
-					setPlatformFromApp(null);
-					currentAppInputConfig = null;
-					currentAppPlatform = null;
-					return;
-				}
-
-				container.innerHTML = '<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading app configuration...</p>';
-
-				try {
-					const response = await fetch(`${basePath}/orgs/${orgId}/apps-api/${appId}/input-config`);
-
-					if (response.ok) {
-						const data = await response.json();
-						currentAppInputConfig = data.input_config;
-						currentAppPlatform = data.platform;
-						setPlatformFromApp(currentAppPlatform);
-						renderAppInputFields(currentAppInputConfig, appName);
-					} else {
-						container.innerHTML = '<p class="text-yellow-600 dark:text-yellow-400 text-sm">No additional configuration required</p>';
-						setPlatformFromApp(null);
-						currentAppInputConfig = null;
-						currentAppPlatform = null;
-					}
-				} catch (error) {
-					console.error('Failed to load app inputs:', error);
-					container.innerHTML = '<p class="text-yellow-600 dark:text-yellow-400 text-sm">Could not load app configuration, proceeding without custom inputs</p>';
-					setPlatformFromApp(null);
-					currentAppInputConfig = null;
-					currentAppPlatform = null;
-				}
-			}
-
-			function renderAppInputFields(inputConfig, appName) {
-				const container = document.getElementById('appInputsContainer');
-
-				if (!inputConfig) {
-					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required</p>';
-					return;
-				}
-
-				let html = '';
-
-				if (inputConfig.input_groups && Array.isArray(inputConfig.input_groups)) {
-					let hasVendorInputs = false;
-
-					inputConfig.input_groups.forEach(group => {
-						if (group.app_inputs && Array.isArray(group.app_inputs)) {
-							const vendorInputs = group.app_inputs.filter(input =>
-								!input.source || input.source === 'vendor'
-							);
-
-							if (vendorInputs.length > 0) {
-								hasVendorInputs = true;
-								html += renderInputGroup(group, vendorInputs);
-							}
-						}
-					});
-
-					if (!hasVendorInputs) {
-						html = '<p class="text-green-600 dark:text-green-400 text-sm">No vendor configuration required</p>';
-					}
-				} else {
-					html = '<p class="text-yellow-600 dark:text-yellow-400 text-sm">App configuration format not recognized, proceeding without inputs</p>';
-				}
-
-				container.innerHTML = html;
-			}
-
-			function renderInputGroup(group, inputs) {
-				var html = '<div class="mb-6">';
-				html += '<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
-				if (group.description) {
-					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">' + group.description + '<\/p>';
-				}
-				html += '<div class="space-y-4">';
-
-				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
-				inputs.forEach(function(input) {
-					html += renderSingleInput(input);
-				});
-
-				html += '<\/div><\/div>';
-				return html;
-			}
-
-			function renderSingleInput(input) {
-				var inputName = 'inputs:' + input.name;
-				var isRequired = input.required ? ' *' : '';
-				var requiredAttr = input.required ? ' required' : '';
-
-				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
-					var html = '<div class="flex items-start space-x-3">';
-					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
-					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
-					if (input.default === 'true') html += ' checked';
-					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
-					html += '<div class="flex-1">';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
-					}
-					html += '<\/div><\/div>';
-					return html;
-				}
-
-				if (input.type === 'json') {
-					var html = '<div>';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
-					html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
-					html += (input.default || '') + '<\/textarea>';
-					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
-					}
-					html += '<\/div>';
-					return html;
-				}
-
-				var inputType = 'text';
-				if (input.type === 'number') {
-					inputType = 'number';
-				} else if (input.sensitive) {
-					inputType = 'password';
-				}
-
-				var html = '<div>';
-				html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
-				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
-				if (inputType === 'password') html += ' autocomplete="off"';
-				html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
-				if (input.description) {
-					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
-				}
-				html += '<\/div>';
-				return html;
-			}
-
-			function collectFormData() {
-				const selectedAppValue = document.getElementById("appSelect").value;
-				if (!selectedAppValue) {
-					throw new Error("Please select an app");
-				}
-
-				const selectedApp = JSON.parse(selectedAppValue);
-				const installName = document.getElementById("installName").value.trim();
-
-				const platform = currentAppPlatform;
-				if (!platform) {
-					throw new Error("App platform not determined. Please select an app first.");
-				}
-
-				let region = '';
-				let location = '';
-
-				if (platform === 'aws') {
-					region = document.getElementById("awsRegion").value;
-					if (!region) {
-						throw new Error("Please select an AWS region");
-					}
-				} else if (platform === 'azure') {
-					location = document.getElementById("azureLocation").value;
-					if (!location) {
-						throw new Error("Please select an Azure location");
-					}
-				}
-
-				const inputs = {};
-				const appInputs = document.querySelectorAll('#appInputsContainer input[name^="inputs:"], #appInputsContainer select[name^="inputs:"], #appInputsContainer textarea[name^="inputs:"]');
-				appInputs.forEach(input => {
-					if (input.name && input.name.startsWith('inputs:')) {
-						const fieldName = input.name.substring(7);
-						if (input.type === 'checkbox') {
-							if (input.checked) {
-								inputs[fieldName] = input.value === 'true' ? 'true' : input.value;
-							} else if (!inputs.hasOwnProperty(fieldName)) {
-								inputs[fieldName] = 'false';
-							}
-						} else if (input.type !== 'hidden' && input.value) {
-							inputs[fieldName] = input.value;
-						}
-					}
-				});
-
-				return {
-					app_name: selectedApp.name,
-					app_id: selectedApp.id,
-					name: installName || '',
-					region: region,
-					location: location,
-					inputs: inputs
-				};
-			}
+			let currentPlatform = null;
+			let currentInputConfig = null;
 
 			window.openCreateInstallModal = async function() {
 				const modal = document.getElementById("createInstallModal");
@@ -547,6 +290,7 @@ templ createInstallModalScript() {
 
 				modal.classList.remove("hidden");
 				appSelect.innerHTML = '<option value="">Loading apps...</option>';
+				clearInputs();
 
 				try {
 					const response = await fetch(`${basePath}/orgs/${orgId}/apps-api`);
@@ -561,15 +305,6 @@ templ createInstallModalScript() {
 								option.value = JSON.stringify({ id: app.id, name: app.name });
 								option.textContent = app.name;
 								appSelect.appendChild(option);
-							});
-
-							appSelect.addEventListener('change', function() {
-								if (this.value) {
-									const selectedApp = JSON.parse(this.value);
-									loadAppInputs(selectedApp.id, selectedApp.name);
-								} else {
-									loadAppInputs(null, null);
-								}
 							});
 						} else {
 							appSelect.innerHTML = '<option value="">No apps found</option>';
@@ -592,9 +327,138 @@ templ createInstallModalScript() {
 				document.getElementById("createInstallModal").classList.add("hidden");
 				document.getElementById("createInstallForm").reset();
 				document.getElementById("createInstallError").classList.add("hidden");
-				document.getElementById('appInputsContainer').innerHTML = '<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Select an app to see required configuration options</p>';
-				currentAppInputConfig = null;
+				clearInputs();
 			};
+
+			function clearInputs() {
+				document.getElementById("vendorInputsContainer").innerHTML = '';
+				document.getElementById("inputConfigLoading").classList.add("hidden");
+				currentPlatform = null;
+				currentInputConfig = null;
+			}
+
+			// When app is selected, fetch input config
+			document.getElementById("appSelect").addEventListener("change", async function() {
+				const selectedValue = this.value;
+				clearInputs();
+
+				if (!selectedValue) return;
+
+				const selectedApp = JSON.parse(selectedValue);
+				const loadingEl = document.getElementById("inputConfigLoading");
+				loadingEl.classList.remove("hidden");
+
+				try {
+					// Fetch input config with vendor filter
+					const response = await fetch(`${basePath}/orgs/${orgId}/apps-api/${selectedApp.id}/input-config?filter=vendor`);
+
+					if (response.ok) {
+						const data = await response.json();
+						currentPlatform = data.platform;
+						currentInputConfig = data.input_config;
+
+						// Render vendor input fields
+						renderVendorInputs(currentInputConfig);
+					} else {
+						console.error("Failed to fetch input config");
+					}
+				} catch (error) {
+					console.error("Error fetching input config:", error);
+				} finally {
+					loadingEl.classList.add("hidden");
+				}
+			});
+
+			function renderVendorInputs(inputConfig) {
+				const container = document.getElementById("vendorInputsContainer");
+
+				if (!inputConfig || !inputConfig.input_groups || inputConfig.input_groups.length === 0) {
+					container.innerHTML = '';
+					return;
+				}
+
+				let html = '<div class="border-t border-cool-grey-200 dark:border-dark-grey-600 pt-4 mt-2">' +
+					'<h4 class="text-sm font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-3">Vendor Configuration<\/h4>';
+
+				inputConfig.input_groups.forEach(function(group) {
+					if (group.app_inputs && group.app_inputs.length > 0) {
+						html += renderInputGroup(group);
+					}
+				});
+
+				html += '<\/div>';
+				container.innerHTML = html;
+			}
+
+			function renderInputGroup(group) {
+				let html = '<div class="mb-4">';
+				html += '<h5 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
+				if (group.description) {
+					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3">' + group.description + '<\/p>';
+				}
+				html += '<div class="space-y-3">';
+
+				const inputs = group.app_inputs || [];
+				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
+				inputs.forEach(function(input) {
+					html += renderSingleInput(input);
+				});
+
+				html += '<\/div><\/div>';
+				return html;
+			}
+
+			function renderSingleInput(input) {
+				const inputName = 'vendor_input:' + input.name;
+				const isRequired = input.required ? ' *' : '';
+				const requiredAttr = input.required ? ' required' : '';
+
+				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
+					let html = '<div class="flex items-start space-x-3">';
+					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
+					html += '<input type="checkbox" id="vendor_' + input.name + '" name="' + inputName + '" value="true"';
+					if (input.default === 'true') html += ' checked';
+					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+					html += '<div class="flex-1">';
+					html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					if (input.description) {
+						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					}
+					html += '<\/div><\/div>';
+					return html;
+				}
+
+				if (input.type === 'json') {
+					let html = '<div>';
+					html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<textarea id="vendor_' + input.name + '" name="' + inputName + '" rows="3" placeholder="' + (input.default || '') + '"' + requiredAttr;
+					html += ' class="block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+					html += (input.default || '') + '<\/textarea>';
+					if (input.description) {
+						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					}
+					html += '<\/div>';
+					return html;
+				}
+
+				let inputType = 'text';
+				if (input.type === 'number') {
+					inputType = 'number';
+				} else if (input.sensitive) {
+					inputType = 'password';
+				}
+
+				let html = '<div>';
+				html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+				html += '<input type="' + inputType + '" id="vendor_' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
+				if (inputType === 'password') html += ' autocomplete="off"';
+				html += ' class="block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+				if (input.description) {
+					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+				}
+				html += '<\/div>';
+				return html;
+			}
 
 			document.getElementById("createInstallForm").addEventListener("submit", async (e) => {
 				e.preventDefault();
@@ -602,15 +466,42 @@ templ createInstallModalScript() {
 				const errorDiv = document.getElementById("createInstallError");
 				errorDiv.classList.add("hidden");
 
+				const selectedAppValue = document.getElementById("appSelect").value;
+				if (!selectedAppValue) {
+					errorDiv.textContent = "Please select an app";
+					errorDiv.classList.remove("hidden");
+					return;
+				}
+
+				const selectedApp = JSON.parse(selectedAppValue);
+
+				// Collect vendor inputs
+				const inputs = {};
+				const form = document.getElementById("createInstallForm");
+				const formData = new FormData(form);
+
+				for (const [key, value] of formData.entries()) {
+					if (key.startsWith('vendor_input:')) {
+						const inputName = key.replace('vendor_input:', '');
+						inputs[inputName] = value;
+					}
+				}
+
 				try {
-					const formData = collectFormData();
+					const submitBtn = document.getElementById("createLinkSubmitBtn");
+					submitBtn.disabled = true;
+					submitBtn.textContent = "Creating...";
 
 					const response = await fetch(`${basePath}/orgs/${orgId}/links`, {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
 						},
-						body: JSON.stringify(formData),
+						body: JSON.stringify({
+							app_id: selectedApp.id,
+							app_name: selectedApp.name,
+							inputs: inputs
+						}),
 					});
 
 					const data = await response.json();
@@ -619,12 +510,17 @@ templ createInstallModalScript() {
 						const linkId = data.link.id;
 						window.location.href = `${basePath}/orgs/${orgId}/links/${linkId}`;
 					} else {
-						errorDiv.textContent = data.error || "Failed to create install";
+						errorDiv.textContent = data.error || "Failed to create install link";
 						errorDiv.classList.remove("hidden");
+						submitBtn.disabled = false;
+						submitBtn.textContent = "Create Link";
 					}
 				} catch (error) {
 					errorDiv.textContent = error.message || "Please check your inputs and try again.";
 					errorDiv.classList.remove("hidden");
+					const submitBtn = document.getElementById("createLinkSubmitBtn");
+					submitBtn.disabled = false;
+					submitBtn.textContent = "Create Link";
 				}
 			});
 		})();

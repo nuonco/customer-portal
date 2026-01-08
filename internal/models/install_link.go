@@ -1,6 +1,7 @@
 package models
 
 import (
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -16,7 +17,8 @@ type InstallLink struct {
 	AppName              string         `gorm:"not null" json:"app_name"`
 	SHA                  string         `gorm:"uniqueIndex;not null" json:"sha"`
 	Used                 bool           `gorm:"default:false" json:"used"`
-	HealthCheckActionIDs string         `json:"health_check_action_ids"` // Comma-separated action workflow IDs
+	HealthCheckActionIDs string         `json:"health_check_action_ids"`        // Comma-separated action workflow IDs
+	VendorInputs         string         `gorm:"type:text" json:"vendor_inputs"` // JSON-encoded map[string]string
 	CreatedAt            time.Time      `json:"created_at"`
 	UpdatedAt            time.Time      `json:"updated_at"`
 	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
@@ -86,4 +88,30 @@ func (il *InstallLink) GetHealthCheckIDPairs() []HealthCheckIDPair {
 		}
 	}
 	return pairs
+}
+
+// SetVendorInputs stores vendor inputs as JSON
+func (il *InstallLink) SetVendorInputs(inputs map[string]string) error {
+	if inputs == nil || len(inputs) == 0 {
+		il.VendorInputs = ""
+		return nil
+	}
+	data, err := json.Marshal(inputs)
+	if err != nil {
+		return err
+	}
+	il.VendorInputs = string(data)
+	return nil
+}
+
+// GetVendorInputs retrieves vendor inputs from JSON
+func (il *InstallLink) GetVendorInputs() (map[string]string, error) {
+	if il.VendorInputs == "" {
+		return make(map[string]string), nil
+	}
+	var inputs map[string]string
+	if err := json.Unmarshal([]byte(il.VendorInputs), &inputs); err != nil {
+		return nil, err
+	}
+	return inputs, nil
 }
