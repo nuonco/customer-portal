@@ -11,10 +11,6 @@ env:
   AUTH_OIDC_ISSUER_URL: "https://accounts.google.com"
   AUTH_REDIRECT_URI: "https://customers.nuon.co/admin/callback"
 
-  # Secrets - TODO: move to AWS Secrets Manager
-  JWT_SECRET: "prod-jwt-secret-change-me-in-production"
-  AUTH_CLIENT_SECRET: "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"
-
 app:
   alb:
     public_domain: $TFO_PUBLIC_DOMAIN

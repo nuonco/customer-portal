@@ -1,0 +1,91 @@
+---
+type: service
+
+base_images:
+  - src: Dockerfile.build
+    name: BUILD_IMAGE
+    tag: buildimage
+  - src: Dockerfile.runtime
+    name: RUNTIME_IMAGE
+    tag: runtimeimage
+
+sources:
+  - src: go.mod
+  - src: go.sum
+  - src: tools.go
+  - src: images/go-base/Dockerfile.build
+    dst: Dockerfile.build
+  - src: images/go-base/Dockerfile-awsauth-cacert.runtime
+    dst: Dockerfile.runtime
+  - src: .golangci.yml
+
+tests:
+  - name: lint
+    docker_target: lint
+
+color: green
+
+health_checks:
+  - http://localhost:8080/health
+
+env:
+  PORT: 8080
+  GIN_MODE: debug
+
+  # Database config for local PostgreSQL
+  DATABASE_URL: postgres://customer_dashboard:password@localhost:5432/customer_dashboard?sslmode=disable
+
+  # Nuon API
+  NUON_API_URL: http://localhost:8081
+
+  # Customer base URL for install links
+  CUSTOMER_BASE_URL: http://localhost:8080
+
+  # Auth config for OIDC (using stage credentials for local dev)
+  AUTH_PROVIDER: oidc
+  AUTH_CLIENT_ID: "457475541946-uar9phtln2tsth04t64kdscetel2l2cs.apps.googleusercontent.com"
+  AUTH_OIDC_ISSUER_URL: "https://accounts.google.com"
+  AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
+  AUTH_CLIENT_SECRET: "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"
+
+  # JWT secret for local dev
+  # For local OIDC dev, use ~/.nuonctl-env.yml instead of secrets
+  # stage google auth provider supports http://localhost:8080
+  JWT_SECRET: local-dev-secret-change-in-production
+  AUTH_CLIENT_SECRET: auth-client-secret
+
+  SERVICE_TYPE: app
+  SERVICE_DEPLOYMENT: customer-dashboard
+  DISABLE_METRICS: true
+
+
+watch_ignore:
+  - '\/static/'
+  - '\/node_modules/'
+  - '\/tmp/'
+  - '_templ\.go$'
+
+local_startup_cmds:
+  - nuonctl scripts exec customer-dashboard-setup
+
+local_build_cmds:
+
+local_cmds:
+  - air
+
+disable_watch: true
+
+docker_cmds:
+  - cmd: ""
+    ports:
+      - 8080
+
+namespace: customer-dashboard
+
+docker_env:
+  DATABASE_URL: postgres://customer_dashboard:password@host.nuon.dev:5432/customer_dashboard?sslmode=disable
+  NUON_API_URL: http://host.nuon.dev:8081
+  CUSTOMER_BASE_URL: http://localhost:8080
+  AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
+  SERVICE_TYPE: app
+  SERVICE_DEPLOYMENT: customer-dashboard
