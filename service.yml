@@ -48,11 +48,6 @@ env:
   AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
   AUTH_CLIENT_SECRET: "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"
 
-  # JWT secret for local dev
-  # For local OIDC dev, use ~/.nuonctl-env.yml instead of secrets
-  # stage google auth provider supports http://localhost:8080
-  JWT_SECRET: local-dev-secret-change-in-production
-  AUTH_CLIENT_SECRET: auth-client-secret
 
   SERVICE_TYPE: app
   SERVICE_DEPLOYMENT: customer-dashboard
@@ -69,11 +64,13 @@ local_startup_cmds:
   - nuonctl scripts exec customer-dashboard-setup
 
 local_build_cmds:
+  - ./bin/tailwindcss -i ./src/vendor.css -o ./static/css/vendor.css
+  - ./bin/tailwindcss -i ./src/customer.css -o ./static/css/customer.css
+  - ./bin/templ generate .
+  - go run golang.org/x/tools/cmd/goimports@latest -w ./internal/views/
 
 local_cmds:
-  - air
-
-disable_watch: true
+  - go run .
 
 docker_cmds:
   - cmd: ""
