@@ -50,3 +50,7 @@ func NewThemeID() string {
 func NewHealthCheckConfigID() string {
 	return New("ihc")
 }
+
+func NewCustomerAuthConfigID() string {
+	return New("cac")
+}

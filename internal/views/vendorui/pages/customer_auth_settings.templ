@@ -1,0 +1,414 @@
+package pages
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+)
+
+// CustomerAuthSettingsPageProps for the customer auth settings page
+type CustomerAuthSettingsPageProps struct {
+	vendorui.LayoutProps
+	Config     *models.CustomerAuthConfig
+	TestResult string // "success", "error", or empty
+	TestError  string
+}
+
+// CustomerAuthSettingsPage renders the customer authentication settings page
+templ CustomerAuthSettingsPage(props CustomerAuthSettingsPageProps) {
+	@vendorui.Layout(props.LayoutProps) {
+		<div class="max-w-4xl mx-auto">
+			<h2 class="text-2xl font-semibold text-cool-grey-900 dark:text-white mb-2">Customer Authentication</h2>
+			<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
+				Configure how your customers authenticate when accepting install links and managing their installations.
+			</p>
+			<div class="space-y-6">
+				@enableToggleSection(props.Config)
+				@oidcConfigSection(props.Config)
+				@customerAuthSaveSection(props.PrimaryColor)
+				@fallbackInfoSection()
+			</div>
+		</div>
+		<!-- Config data for JavaScript -->
+		<div
+			id="customer-auth-config"
+			class="hidden"
+			data-base-path={ props.BasePath }
+			data-enabled={ customerAuthBoolToString(props.Config.Enabled) }
+			data-has-secret={ customerAuthBoolToString(props.Config.HasClientSecret()) }
+		></div>
+		@customerAuthSettingsScript()
+	}
+}
+
+func customerAuthBoolToString(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
+}
+
+templ enableToggleSection(config *models.CustomerAuthConfig) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<div class="flex items-center justify-between">
+			<div>
+				<h3 class="text-lg font-semibold text-cool-grey-800 dark:text-white">OIDC Authentication</h3>
+				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1">
+					Enable single sign-on for customers using an OIDC provider (Google, Okta, Auth0, etc.)
+				</p>
+			</div>
+			<label class="relative inline-flex items-center cursor-pointer">
+				<input
+					type="checkbox"
+					id="oidcEnabled"
+					class="sr-only peer"
+					if config.Enabled {
+						checked
+					}
+				/>
+				<div class="w-11 h-6 bg-cool-grey-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-dark-grey-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600"></div>
+			</label>
+		</div>
+		<div id="enabledStatus" class="mt-3">
+			if config.Enabled {
+				<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+					<svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+						<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+					</svg>
+					OIDC Enabled
+				</span>
+			} else {
+				<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300">
+					Using email/password authentication
+				</span>
+			}
+		</div>
+	</div>
+}
+
+templ oidcConfigSection(config *models.CustomerAuthConfig) {
+	<div id="oidcConfigSection" class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">OIDC Configuration</h3>
+		<div class="space-y-4">
+			<!-- Provider Name -->
+			<div>
+				<label for="providerName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Provider
+				</label>
+				<select
+					id="providerName"
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+				>
+					<option value="" if config.ProviderName == "" { selected }>Select a provider...</option>
+					<option value="Google" if config.ProviderName == "Google" { selected }>Google</option>
+					<option value="Okta" if config.ProviderName == "Okta" { selected }>Okta</option>
+					<option value="Auth0" if config.ProviderName == "Auth0" { selected }>Auth0</option>
+					<option value="Azure AD" if config.ProviderName == "Azure AD" { selected }>Azure AD</option>
+					<option value="Custom" if config.ProviderName == "Custom" { selected }>Custom OIDC</option>
+				</select>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					The identity provider your customers will use to sign in.
+				</p>
+			</div>
+			<!-- Issuer URL -->
+			<div>
+				<label for="issuerUrl" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Issuer URL <span class="text-red-500">*</span>
+				</label>
+				<input
+					type="url"
+					id="issuerUrl"
+					value={ config.IssuerURL }
+					placeholder="https://accounts.google.com"
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					The OIDC issuer URL (discovery endpoint). For Google: https://accounts.google.com
+				</p>
+			</div>
+			<!-- Client ID -->
+			<div>
+				<label for="clientId" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Client ID <span class="text-red-500">*</span>
+				</label>
+				<input
+					type="text"
+					id="clientId"
+					value={ config.ClientID }
+					placeholder="your-client-id.apps.googleusercontent.com"
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					The OAuth client ID from your identity provider.
+				</p>
+			</div>
+			<!-- Client Secret -->
+			<div>
+				<label for="clientSecret" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Client Secret <span class="text-red-500">*</span>
+				</label>
+				<div class="relative">
+					<input
+						type="password"
+						id="clientSecret"
+						placeholder={ getSecretPlaceholder(config.HasClientSecret()) }
+						class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 pr-10"
+					/>
+					<button
+						type="button"
+						onclick="toggleSecretVisibility()"
+						class="absolute inset-y-0 right-0 pr-3 flex items-center text-cool-grey-400 hover:text-cool-grey-600"
+					>
+						<svg id="eyeIcon" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+						</svg>
+					</button>
+				</div>
+				if config.HasClientSecret() {
+					<p class="mt-1 text-xs text-green-600 dark:text-green-400">
+						<svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+						</svg>
+						Secret is configured. Leave blank to keep existing secret.
+					</p>
+				} else {
+					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+						The OAuth client secret from your identity provider.
+					</p>
+				}
+			</div>
+			<!-- Scopes -->
+			<div>
+				<label for="scopes" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Scopes
+				</label>
+				<input
+					type="text"
+					id="scopes"
+					value={ getScopesValue(config.Scopes) }
+					placeholder="openid,profile,email"
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					Comma-separated OAuth scopes. Default: openid,profile,email
+				</p>
+			</div>
+			<!-- Test Connection Button -->
+			<div class="pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+				<button
+					type="button"
+					id="testConnectionBtn"
+					onclick="testConnection()"
+					class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-primary-500"
+				>
+					<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+					</svg>
+					Test Connection
+				</button>
+				<div id="testResult" class="mt-3 hidden"></div>
+			</div>
+		</div>
+	</div>
+}
+
+func getSecretPlaceholder(hasSecret bool) string {
+	if hasSecret {
+		return "••••••••••••••••"
+	}
+	return "Enter client secret"
+}
+
+func getScopesValue(scopes string) string {
+	if scopes == "" {
+		return "openid,profile,email"
+	}
+	return scopes
+}
+
+templ customerAuthSaveSection(primaryColor string) {
+	<div class="flex flex-col space-y-3">
+		<button
+			type="button"
+			id="saveButton"
+			onclick="saveSettings()"
+			class={ "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white",
+				templ.KV("bg-theme-primary hover:bg-theme-primary-hover", primaryColor != ""),
+				templ.KV("bg-primary-600 hover:bg-primary-700", primaryColor == "") }
+			if primaryColor != "" {
+				style={ "background-color: " + primaryColor }
+			}
+		>
+			Save Changes
+		</button>
+		<div id="successMessage" class="hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg">
+			<div class="flex items-center">
+				<svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+					<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+				</svg>
+				Settings saved successfully!
+			</div>
+		</div>
+		<div id="errorMessage" class="hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg"></div>
+	</div>
+}
+
+templ fallbackInfoSection() {
+	<div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+		<div class="flex">
+			<svg class="w-5 h-5 text-blue-500 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+				<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+			</svg>
+			<div>
+				<h4 class="text-sm font-medium text-blue-800 dark:text-blue-300">Email/Password Fallback</h4>
+				<p class="mt-1 text-sm text-blue-700 dark:text-blue-400">
+					When OIDC is disabled or not configured, customers will use email and password authentication.
+					They can register when accepting an install link and then log in with their credentials.
+				</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ customerAuthSettingsScript() {
+	<script>
+		(function() {
+			var config = document.getElementById('customer-auth-config');
+			var basePath = config.dataset.basePath;
+
+			// Toggle enable/disable
+			document.getElementById('oidcEnabled').addEventListener('change', function(e) {
+				updateEnabledStatus(e.target.checked);
+			});
+
+			function updateEnabledStatus(enabled) {
+				var statusDiv = document.getElementById('enabledStatus');
+				if (enabled) {
+					statusDiv.innerHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"><svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>OIDC Enabled</span>';
+				} else {
+					statusDiv.innerHTML = '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300">Using email/password authentication</span>';
+				}
+			}
+
+			// Toggle password visibility
+			window.toggleSecretVisibility = function() {
+				var input = document.getElementById('clientSecret');
+				var icon = document.getElementById('eyeIcon');
+				if (input.type === 'password') {
+					input.type = 'text';
+					icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"></path>';
+				} else {
+					input.type = 'password';
+					icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>';
+				}
+			};
+
+			// Test connection
+			window.testConnection = async function() {
+				var btn = document.getElementById('testConnectionBtn');
+				var resultDiv = document.getElementById('testResult');
+
+				btn.disabled = true;
+				btn.innerHTML = '<svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Testing...';
+
+				// First save the current settings
+				var formData = getFormData();
+
+				try {
+					// Save settings first
+					var saveResponse = await fetch(basePath + '/settings/customer-auth', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify(formData)
+					});
+
+					if (!saveResponse.ok) {
+						throw new Error('Failed to save settings before testing');
+					}
+
+					// Then test the connection
+					var response = await fetch(basePath + '/settings/customer-auth/test', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin'
+					});
+
+					var data = await response.json();
+
+					resultDiv.classList.remove('hidden');
+					if (response.ok) {
+						resultDiv.innerHTML = '<div class="p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-md flex items-center"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Connection successful! OIDC provider is reachable.</div>';
+					} else {
+						resultDiv.innerHTML = '<div class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md flex items-start"><svg class="w-5 h-5 mr-2 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg><div><strong>Connection failed</strong><br/>' + (data.error || 'Unknown error') + '</div></div>';
+					}
+				} catch (error) {
+					resultDiv.classList.remove('hidden');
+					resultDiv.innerHTML = '<div class="p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md">Network error: ' + error.message + '</div>';
+				}
+
+				btn.disabled = false;
+				btn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Connection';
+			};
+
+			function getFormData() {
+				return {
+					enabled: document.getElementById('oidcEnabled').checked,
+					provider_name: document.getElementById('providerName').value,
+					issuer_url: document.getElementById('issuerUrl').value,
+					client_id: document.getElementById('clientId').value,
+					client_secret: document.getElementById('clientSecret').value,
+					scopes: document.getElementById('scopes').value
+				};
+			}
+
+			// Save settings
+			window.saveSettings = async function() {
+				var saveButton = document.getElementById('saveButton');
+				var successMessage = document.getElementById('successMessage');
+				var errorMessage = document.getElementById('errorMessage');
+
+				saveButton.textContent = 'Saving...';
+				saveButton.disabled = true;
+				successMessage.classList.add('hidden');
+				errorMessage.classList.add('hidden');
+
+				var formData = getFormData();
+
+				try {
+					var response = await fetch(basePath + '/settings/customer-auth', {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify(formData)
+					});
+
+					var data = await response.json();
+
+					if (response.ok) {
+						successMessage.classList.remove('hidden');
+						setTimeout(function() { successMessage.classList.add('hidden'); }, 3000);
+
+						// Update the "has secret" indicator if secret was changed
+						if (formData.client_secret) {
+							var secretHelp = document.querySelector('#clientSecret').parentElement.nextElementSibling;
+							if (secretHelp) {
+								secretHelp.innerHTML = '<svg class="w-3 h-3 inline mr-1" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path></svg>Secret is configured. Leave blank to keep existing secret.';
+								secretHelp.className = 'mt-1 text-xs text-green-600 dark:text-green-400';
+							}
+						}
+					} else {
+						errorMessage.innerHTML = '<div class="flex items-center"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>' + (data.error || 'Failed to save settings') + '</div>';
+						errorMessage.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMessage.innerHTML = '<div class="flex items-center"><svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path></svg>Network error. Please try again.</div>';
+					errorMessage.classList.remove('hidden');
+				}
+
+				saveButton.textContent = 'Save Changes';
+				saveButton.disabled = false;
+			};
+		})();
+	</script>
+}

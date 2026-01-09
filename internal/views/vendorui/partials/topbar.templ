@@ -87,6 +87,18 @@ templ Topbar(props TopbarProps) {
 						<span>Theme settings</span>
 						@paletteIcon()
 					</button>
+					<!-- Customer Auth Settings Button - lazy loads panel content via HTMX -->
+					<button
+						type="button"
+						hx-get={ props.BasePath + "/settings/customer-auth/panel" }
+						hx-target="#settings-panel-container"
+						hx-trigger="click"
+						hx-swap="innerHTML"
+						class="stratus-menu-item-dashboard"
+					>
+						<span>Customer auth</span>
+						@usersMenuIcon()
+					</button>
 					<hr class="stratus-menu-divider"/>
 					<!-- Account Section Label -->
 					<div class="stratus-menu-label">Account</div>
@@ -184,5 +196,11 @@ templ keyboardIcon() {
 templ signOutIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
 		<path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"></path>
+	</svg>
+}
+
+templ usersMenuIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
+		<path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
 	</svg>
 }

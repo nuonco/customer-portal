@@ -75,12 +75,13 @@ func GetPrimaryColors(primaryColor string) (string, string) {
 }
 
 type Handler struct {
-	db              *gorm.DB
-	auth            *jwt.GinJWTMiddleware
-	authProvider    auth.AuthProvider // Authentication provider (OIDC, SAML)
-	customerBaseURL string            // Base URL for customer-facing install links
-	nuonAPIURL      string            // Global Nuon API URL for all orgs
-	basePath        string            // Base path prefix for routes (e.g., "/admin" or "" for root)
+	db                  *gorm.DB
+	auth                *jwt.GinJWTMiddleware
+	authProvider        auth.AuthProvider                 // Authentication provider (OIDC, SAML) for vendors
+	customerAuthFactory *auth.CustomerAuthProviderFactory // Dynamic auth factory for customers
+	customerBaseURL     string                            // Base URL for customer-facing install links
+	nuonAPIURL          string                            // Global Nuon API URL for all orgs
+	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
 }
 
 // PaginationData holds pagination metadata for templates
@@ -116,6 +117,18 @@ func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.Au
 		customerBaseURL: customerBaseURL,
 		nuonAPIURL:      nuonAPIURL,
 		basePath:        basePath,
+	}
+}
+
+// NewHandlerWithCustomerAuth creates a handler with customer authentication support
+func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+	return &Handler{
+		db:                  db,
+		auth:                jwtAuth,
+		customerAuthFactory: customerAuthFactory,
+		customerBaseURL:     customerBaseURL,
+		nuonAPIURL:          nuonAPIURL,
+		basePath:            basePath,
 	}
 }
 
@@ -252,19 +265,233 @@ func (h *Handler) LoginPage(config LoginPageConfig) gin.HandlerFunc {
 }
 
 // CustomerLoginPageTempl renders the customer login page using Templ
+// Shows OIDC button if configured, otherwise shows email/password form
 func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db)
+
+	// Check for error message in query params
+	errorMsg := c.Query("error")
+
+	// Get redirect URL from query params, default to /installs
+	redirectURL := c.Query("redirect")
+	if redirectURL == "" {
+		redirectURL = h.basePath + "/installs"
+	}
 
 	props := customerpages.LoginPageProps{
 		Title:       "Customer Login",
 		ButtonText:  "Login",
-		HelpText:    "Don't have an account? Accept an install link from your vendor to get started.",
+		HelpText:    "",
 		BasePath:    h.basePath,
-		RedirectURL: h.basePath + "/installs",
+		RedirectURL: redirectURL,
 		Theme:       theme,
+		Error:       errorMsg,
+	}
+
+	// Check if OIDC is enabled via the customer auth factory
+	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
+		// OIDC is configured - show OIDC button
+		state, err := auth.GenerateState()
+		if err != nil {
+			props.Error = "Failed to generate security token"
+			h.RenderTempl(c, http.StatusInternalServerError, customerpages.LoginPage(props))
+			return
+		}
+
+		// Store state in cookie for validation on callback
+		c.SetCookie("auth_state", state, 600, "/", "", false, true)
+
+		authURL, err := h.customerAuthFactory.GetAuthURL(state)
+		if err != nil {
+			props.Error = "Failed to generate login URL"
+			h.RenderTempl(c, http.StatusInternalServerError, customerpages.LoginPage(props))
+			return
+		}
+
+		config, _ := h.customerAuthFactory.GetConfig()
+		props.UseOIDC = true
+		props.AuthURL = authURL
+		if config != nil {
+			props.ProviderName = config.ProviderName
+		}
+		if props.ProviderName == "" {
+			props.ProviderName = "SSO"
+		}
+	} else {
+		// Local auth - show email/password form
+		props.HelpText = "Don't have an account? Accept an install link from your vendor to get started."
 	}
 
 	h.RenderTempl(c, http.StatusOK, customerpages.LoginPage(props))
+}
+
+// CustomerLocalLogin handles email/password login for customers
+func (h *Handler) CustomerLocalLogin(c *gin.Context) {
+	var req struct {
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid email or password"})
+		return
+	}
+
+	// Check if OIDC is enabled - if so, local login is disabled
+	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
+		c.JSON(http.StatusForbidden, gin.H{"message": "Local login is disabled. Please use SSO."})
+		return
+	}
+
+	// Get the local provider
+	localProvider := h.customerAuthFactory.GetLocalProvider()
+	if localProvider == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Authentication not available"})
+		return
+	}
+
+	// Authenticate the user
+	result, err := localProvider.Login(req.Email, req.Password)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
+		return
+	}
+
+	// Generate JWT token
+	token, _, err := h.auth.TokenGenerator(result.User)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"token": token,
+		"user":  result.User,
+	})
+}
+
+// CustomerOIDCCallback handles the OIDC callback for customer authentication
+func (h *Handler) CustomerOIDCCallback(c *gin.Context) {
+	// Verify OIDC is enabled
+	if h.customerAuthFactory == nil || !h.customerAuthFactory.IsOIDCEnabled() {
+		c.Redirect(http.StatusFound, "/login?error=OIDC+is+not+enabled")
+		return
+	}
+
+	// Get the authorization code
+	code := c.Query("code")
+	if code == "" {
+		c.Redirect(http.StatusFound, "/login?error=Missing+authorization+code")
+		return
+	}
+
+	// Validate state
+	state := c.Query("state")
+	storedState, err := c.Cookie("auth_state")
+	if err != nil || state != storedState {
+		c.Redirect(http.StatusFound, "/login?error=Invalid+state+parameter")
+		return
+	}
+
+	// Clear the state cookie
+	c.SetCookie("auth_state", "", -1, "/", "", false, true)
+
+	// Handle the callback
+	result, err := h.customerAuthFactory.HandleCallback(c.Request.Context(), auth.CallbackRequest{
+		Code:  code,
+		State: state,
+	})
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login?error=Authentication+failed")
+		return
+	}
+
+	// Generate JWT token
+	token, _, err := h.auth.TokenGenerator(result.User)
+	if err != nil {
+		c.Redirect(http.StatusFound, "/login?error=Failed+to+generate+token")
+		return
+	}
+
+	// Set the JWT cookie
+	c.SetCookie("jwt", token, 86400, "/", "", false, true)
+
+	// Redirect to installs page
+	c.Redirect(http.StatusFound, "/installs")
+}
+
+// CustomerRegisterPage renders the customer registration page
+func (h *Handler) CustomerRegisterPage(c *gin.Context) {
+	// If OIDC is enabled, redirect to login (no local registration)
+	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
+		redirect := c.Query("redirect")
+		if redirect != "" {
+			c.Redirect(http.StatusFound, "/login?redirect="+redirect)
+		} else {
+			c.Redirect(http.StatusFound, "/login")
+		}
+		return
+	}
+
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	errorMsg := c.Query("error")
+	redirectURL := c.Query("redirect")
+
+	props := customerpages.RegisterPageProps{
+		Title:       "Create Account",
+		BasePath:    h.basePath,
+		RedirectURL: redirectURL,
+		Theme:       theme,
+		Error:       errorMsg,
+	}
+
+	h.RenderTempl(c, http.StatusOK, customerpages.RegisterPage(props))
+}
+
+// CustomerRegister handles customer registration
+func (h *Handler) CustomerRegister(c *gin.Context) {
+	// If OIDC is enabled, registration is disabled
+	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
+		c.JSON(http.StatusForbidden, gin.H{"message": "Registration is disabled. Please use SSO."})
+		return
+	}
+
+	var req struct {
+		Name     string `json:"name" binding:"required"`
+		Email    string `json:"email" binding:"required,email"`
+		Password string `json:"password" binding:"required,min=8"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input: " + err.Error()})
+		return
+	}
+
+	// Get the local provider
+	localProvider := h.customerAuthFactory.GetLocalProvider()
+	if localProvider == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Registration not available"})
+		return
+	}
+
+	// Register the user
+	result, err := localProvider.RegisterWithRole(req.Email, req.Password, req.Name, models.RoleCustomer)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+		return
+	}
+
+	// Generate JWT token
+	token, _, err := h.auth.TokenGenerator(result.User)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate token"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"token": token,
+		"user":  result.User,
+	})
 }
 
 // VendorLoginPageTempl renders the vendor login page using Templ
@@ -2074,5 +2301,164 @@ func (h *Handler) UpdateAppHealthChecks(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"config":  healthConfig,
+	})
+}
+
+// CustomerAuthSettingsPage renders the customer authentication settings page
+func (h *Handler) CustomerAuthSettingsPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+
+	// Get or create the customer auth config
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load customer auth settings")
+		return
+	}
+
+	// Fetch all orgs for sidebar dropdown
+	var allOrgs []models.NuonOrg
+	h.db.Where("user_id = ?", user.ID).Find(&allOrgs)
+
+	// Load theme for styling
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+
+	props := vendorpages.CustomerAuthSettingsPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:      "Customer Authentication - Settings",
+			ActivePage: "customer-auth",
+			User:       user,
+			Orgs:       allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{
+				{Text: "Customer Auth", Path: h.basePath + "/settings/customer-auth", Active: true},
+			},
+			BasePath:         h.basePath,
+			PrimaryColor:     primaryColor,
+			PrimaryColorDark: primaryColorDark,
+		},
+		Config: config,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerAuthSettingsPage(props))
+}
+
+// CustomerAuthSettingsPanelContent returns just the panel HTML for HTMX lazy loading
+func (h *Handler) CustomerAuthSettingsPanelContent(c *gin.Context) {
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load customer auth settings")
+		return
+	}
+
+	props := partials.CustomerAuthPanelProps{
+		Config:   config,
+		BasePath: h.basePath,
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.CustomerAuthPanel(props))
+}
+
+// UpdateCustomerAuthSettings handles PUT request to update customer auth settings
+func (h *Handler) UpdateCustomerAuthSettings(c *gin.Context) {
+	var req struct {
+		Enabled      bool   `json:"enabled"`
+		ProviderName string `json:"provider_name"`
+		ClientID     string `json:"client_id"`
+		ClientSecret string `json:"client_secret"`
+		IssuerURL    string `json:"issuer_url"`
+		Scopes       string `json:"scopes"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Get or create the customer auth config
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer auth settings"})
+		return
+	}
+
+	// Update fields
+	config.Enabled = req.Enabled
+	config.ProviderName = req.ProviderName
+	config.ClientID = req.ClientID
+	config.IssuerURL = req.IssuerURL
+
+	// Only update client secret if provided (not empty)
+	// This allows keeping the existing secret when not changing it
+	if req.ClientSecret != "" {
+		config.ClientSecret = req.ClientSecret
+	}
+
+	// Update scopes, using default if empty
+	if req.Scopes != "" {
+		config.Scopes = req.Scopes
+	} else {
+		config.Scopes = models.DefaultScopes
+	}
+
+	if err := h.db.Save(config).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer auth settings"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"config": gin.H{
+			"id":                config.ID,
+			"enabled":           config.Enabled,
+			"provider_name":     config.ProviderName,
+			"client_id":         config.ClientID,
+			"issuer_url":        config.IssuerURL,
+			"scopes":            config.Scopes,
+			"has_client_secret": config.HasClientSecret(),
+		},
+	})
+}
+
+// TestCustomerAuthConnection tests the OIDC connection with current settings
+func (h *Handler) TestCustomerAuthConnection(c *gin.Context) {
+	// Get the current config
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer auth settings"})
+		return
+	}
+
+	// Check if config is complete enough to test
+	if !config.IsConfigured() {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"success": false,
+			"error":   "OIDC is not fully configured. Please provide Client ID, Client Secret, and Issuer URL.",
+		})
+		return
+	}
+
+	// Try to create an OIDC provider to test the connection
+	// This will perform OIDC discovery and validate the configuration
+	providerConfig := auth.ProviderConfig{
+		Type:         auth.ProviderTypeOIDC,
+		ClientID:     config.ClientID,
+		ClientSecret: config.ClientSecret,
+		IssuerURL:    config.IssuerURL,
+		RedirectURI:  h.customerBaseURL + "/callback",
+		Scopes:       config.GetScopes(),
+	}
+
+	_, err = auth.NewOIDCProvider(providerConfig, h.db)
+	if err != nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"error":   fmt.Sprintf("Failed to connect to OIDC provider: %v", err),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"message": "Successfully connected to OIDC provider",
 	})
 }

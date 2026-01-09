@@ -7,8 +7,10 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"net/url"
 	"time"
 
+	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
@@ -203,6 +205,41 @@ func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
 	})
 }
 
+// tryGetLoggedInUser attempts to extract a logged-in user from JWT cookie
+// Returns nil if no valid JWT is present or if parsing fails
+func (h *Handler) tryGetLoggedInUser(c *gin.Context) *models.User {
+	// Try to parse token from the request (cookie, header, or query)
+	token, err := h.auth.ParseToken(c)
+	if err != nil || token == nil || !token.Valid {
+		return nil
+	}
+
+	// Extract claims from the token
+	claims := jwt.ExtractClaimsFromToken(token)
+	if claims == nil {
+		return nil
+	}
+
+	// Validate required claims exist
+	userID, ok := claims["user_id"].(string)
+	if !ok || userID == "" {
+		return nil
+	}
+
+	email, ok := claims["email"].(string)
+	if !ok || email == "" {
+		return nil
+	}
+
+	// Look up the user in the database to ensure they still exist
+	var user models.User
+	if err := h.db.Where("id = ?", userID).First(&user).Error; err != nil {
+		return nil
+	}
+
+	return &user
+}
+
 // InstallLinkPage renders the install link acceptance page
 func (h *Handler) InstallLinkPage(c *gin.Context) {
 	sha := c.Query("sha")
@@ -248,20 +285,36 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 		return
 	}
 
+	// REQUIRE authentication - redirect to login if not logged in
+	loggedInUser := h.tryGetLoggedInUser(c)
+	if loggedInUser == nil {
+		// Build redirect URL to return to this install link after login
+		redirectURL := url.QueryEscape(h.basePath + "/install-link?sha=" + sha)
+		c.Redirect(http.StatusFound, h.basePath+"/login?redirect="+redirectURL)
+		return
+	}
+
 	props := customerpages.InstallLinkPageProps{
-		LayoutProps: h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme),
-		Link:        &link,
+		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme),
+		Link:         &link,
+		LoggedInUser: loggedInUser,
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallLinkPage(props))
 }
 
 // AcceptInstallLink handles the install link acceptance
 // Creates the Install via Nuon API with merged vendor + customer inputs
+// Requires authentication - user must be logged in
 func (h *Handler) AcceptInstallLink(c *gin.Context) {
+	// REQUIRE authentication - user must be logged in first
+	customer := h.tryGetLoggedInUser(c)
+	if customer == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please log in first"})
+		return
+	}
+
 	var req struct {
 		SHA      string            `json:"sha" binding:"required"`
-		Email    string            `json:"email" binding:"required"`
-		Name     string            `json:"name"`
 		Region   string            `json:"region"`   // AWS region (customer chooses)
 		Location string            `json:"location"` // Azure location (customer chooses)
 		Inputs   map[string]string `json:"inputs"`   // Customer-facing inputs
@@ -289,26 +342,6 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	location := req.Location
 	if region == "" && location == "" {
 		region = "us-east-1" // Default to AWS us-east-1
-	}
-
-	// Create customer account
-	customer := models.User{
-		Name:  req.Name,
-		Email: req.Email,
-		Role:  models.RoleCustomer,
-	}
-
-	// Check if customer already exists
-	var existingCustomer models.User
-	if err := h.db.Where("email = ?", req.Email).First(&existingCustomer).Error; err == nil {
-		// Customer exists, use existing account
-		customer = existingCustomer
-	} else {
-		// Create new customer
-		if err := h.db.Create(&customer).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create customer account"})
-			return
-		}
 	}
 
 	// Get vendor inputs from link
@@ -367,8 +400,8 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Generate JWT token for the customer
-	token, _, err := h.auth.TokenGenerator(&customer)
+	// Generate JWT token for the customer (customer is already *models.User)
+	token, _, err := h.auth.TokenGenerator(customer)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
 		return

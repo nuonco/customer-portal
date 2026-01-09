@@ -80,8 +80,13 @@ func (p *LocalProvider) Login(email, password string) (*AuthResult, error) {
 	}, nil
 }
 
-// Register creates a new user with email and password
+// Register creates a new user with email and password (defaults to vendor role)
 func (p *LocalProvider) Register(email, password, name string) (*AuthResult, error) {
+	return p.RegisterWithRole(email, password, name, models.RoleVendor)
+}
+
+// RegisterWithRole creates a new user with email, password, and specified role
+func (p *LocalProvider) RegisterWithRole(email, password, name string, role models.UserRole) (*AuthResult, error) {
 	email = strings.TrimSpace(strings.ToLower(email))
 	name = strings.TrimSpace(name)
 
@@ -107,7 +112,7 @@ func (p *LocalProvider) Register(email, password, name string) (*AuthResult, err
 	user := models.User{
 		Email: email,
 		Name:  name,
-		Role:  models.RoleVendor,
+		Role:  role,
 	}
 
 	if err := user.SetPassword(password); err != nil {

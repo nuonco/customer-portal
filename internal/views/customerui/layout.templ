@@ -199,44 +199,37 @@ templ logoutScript() {
 }
 
 templ customerHeader(props LayoutProps) {
-	<header class="bg-theme-primary text-white shadow-md">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-			<div class="flex items-center justify-between h-16">
-				<div class="flex items-center space-x-4">
-					if props.LogoBase64 != "" {
-						<img src={ props.LogoBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>
-					}
-					<span class="font-heading text-xl font-semibold">My Installs</span>
-				</div>
+	<header class="max-w-5xl mx-auto px-6 lg:px-8 pt-6">
+		<div class="flex items-center justify-between">
+			<!-- Left side: Logo + Email -->
+			<div class="flex items-center gap-4">
+				if props.LogoBase64 != "" {
+					<img src={ props.LogoBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>
+				}
 				if props.User != nil {
-					<div class="flex items-center space-x-4">
-						<span class="text-sm opacity-90 font-body">{ props.User.Email }</span>
-						<button onclick="logout()" class="text-sm opacity-75 hover:opacity-100 transition-opacity font-body">
-							Logout
-						</button>
-					</div>
+					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">{ props.User.Email }</span>
 				}
 			</div>
+			<!-- Right side: Logout -->
+			if props.User != nil {
+				<button onclick="logout()" class="text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white transition-colors font-body">
+					Logout
+				</button>
+			}
 		</div>
 	</header>
 }
 
 templ customerFooter(props LayoutProps) {
-	<footer class="bg-cool-grey-100 dark:bg-dark-grey-900 border-t border-cool-grey-200 dark:border-dark-grey-700 py-6 mt-auto">
-		<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-			<div class="flex flex-col sm:flex-row items-center justify-between gap-4">
-				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">
-					Powered by Nuon
-				</p>
-				if props.SupportContact != "" {
-					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">
-						Need help?{" "}
-						<a href={ templ.SafeURL(getSupportHref(props.SupportContact)) } class="text-theme-secondary hover:underline">
-							Contact Support
-						</a>
-					</p>
-				}
-			</div>
+	<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
+		<div class="text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body">
+			Powered by Nuon
+			if props.SupportContact != "" {
+				{" "}·{" "}
+				<a href={ templ.SafeURL(getSupportHref(props.SupportContact)) } class="hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors">
+					Contact Support
+				</a>
+			}
 		</div>
 	</footer>
 }

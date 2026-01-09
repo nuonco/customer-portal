@@ -120,8 +120,12 @@ func main() {
 	// Set up vendor routes under /admin prefix
 	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL)
 
+	// Create customer auth factory for dynamic OIDC/local auth
+	customerAuthFactory := auth.NewCustomerAuthProviderFactory(db, customerBaseURL)
+	log.Printf("Customer authentication: %s", getCustomerAuthMode(customerAuthFactory))
+
 	// Set up customer routes at root level (no prefix)
-	setupCustomerRoutes(router.Group(""), db, customerAuth, nuonAPIURL)
+	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL)
 
 	// Start background health check runner (needs Nuon API URL for status checks)
 	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL)
@@ -173,6 +177,12 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		settings.GET("/", h.ThemeSettingsPage)
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
 		settings.PUT("/", h.UpdateThemeSettings)
+
+		// Customer auth settings
+		settings.GET("/customer-auth", h.CustomerAuthSettingsPage)
+		settings.GET("/customer-auth/panel", h.CustomerAuthSettingsPanelContent)
+		settings.PUT("/customer-auth", h.UpdateCustomerAuthSettings)
+		settings.POST("/customer-auth/test", h.TestCustomerAuthConnection)
 	}
 
 	// Profile settings (user can edit their own profile)
@@ -223,18 +233,22 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 }
 
 // setupCustomerRoutes configures customer-facing routes on the given router group
-func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddleware, nuonAPIURL string) {
-	// Initialize handlers (customer doesn't generate install links, so base URL not needed)
-	// Empty basePath since customer routes are at root level
-	// nil for authProvider since customers don't use IdP authentication
-	h := handlers.NewHandler(db, auth, nil, "", nuonAPIURL, "")
+func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string) {
+	// Initialize handlers with customer auth factory for dynamic OIDC/local auth
+	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "")
 
-	// Public routes - customer login (no signup)
-	login := rg.Group("/login")
-	{
-		login.GET("/", h.CustomerLoginPageTempl)
-		login.POST("/", auth.LoginHandler)
-	}
+	// Public routes - customer login (dynamic based on config)
+	rg.GET("/login", h.CustomerLoginPageTempl)
+	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
+	rg.POST("/login", h.CustomerLocalLogin)     // Local email/password login
+	rg.POST("/login/", h.CustomerLocalLogin)
+
+	// OIDC callback (when OIDC is enabled)
+	rg.GET("/callback", h.CustomerOIDCCallback)
+
+	// Registration (only when OIDC is disabled)
+	rg.GET("/register", h.CustomerRegisterPage)
+	rg.POST("/register", h.CustomerRegister)
 
 	// Install link acceptance (customer signup flow)
 	installLinks := rg.Group("/install-link")
@@ -245,11 +259,11 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddl
 	}
 
 	// JWT refresh endpoint
-	rg.POST("/refresh_token", auth.RefreshHandler)
+	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
 
 	// Protected customer routes
 	installs := rg.Group("/installs")
-	installs.Use(auth.MiddlewareFunc())
+	installs.Use(jwtAuth.MiddlewareFunc())
 	installs.Use(middleware.RequireRole(models.RoleCustomer))
 	{
 		installs.GET("/", h.InstallsPage)
@@ -275,4 +289,16 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, auth *jwt.GinJWTMiddl
 			installOwnership.POST("/workflows/:workflow_id/cancel", h.CancelWorkflow)
 		}
 	}
+}
+
+// getCustomerAuthMode returns a description of the current customer auth configuration
+func getCustomerAuthMode(factory *auth.CustomerAuthProviderFactory) string {
+	if factory.IsOIDCEnabled() {
+		config, _ := factory.GetConfig()
+		if config != nil && config.ProviderName != "" {
+			return "OIDC (" + config.ProviderName + ")"
+		}
+		return "OIDC"
+	}
+	return "email/password (configure OIDC in admin settings)"
 }

@@ -447,7 +447,7 @@ func customerHeader(props LayoutProps) templ.Component {
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<header class=\"bg-theme-primary text-white shadow-md\"><div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\"><div class=\"flex items-center justify-between h-16\"><div class=\"flex items-center space-x-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<header class=\"max-w-5xl mx-auto px-6 lg:px-8 pt-6\"><div class=\"flex items-center justify-between\"><!-- Left side: Logo + Email --><div class=\"flex items-center gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -459,7 +459,7 @@ func customerHeader(props LayoutProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 207, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 207, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -470,30 +470,36 @@ func customerHeader(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<span class=\"font-heading text-xl font-semibold\">My Installs</span></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
 		if props.User != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"flex items-center space-x-4\"><span class=\"text-sm opacity-90 font-body\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<span class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 213, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 210, Col: 98}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</span> <button onclick=\"logout()\" class=\"text-sm opacity-75 hover:opacity-100 transition-opacity font-body\">Logout</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div></header>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</div><!-- Right side: Logout -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.User != nil {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<button onclick=\"logout()\" class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white transition-colors font-body\">Logout</button>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</div></header>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -522,43 +528,52 @@ func customerFooter(props LayoutProps) templ.Component {
 			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<footer class=\"bg-cool-grey-100 dark:bg-dark-grey-900 border-t border-cool-grey-200 dark:border-dark-grey-700 py-6 mt-auto\"><div class=\"max-w-7xl mx-auto px-4 sm:px-6 lg:px-8\"><div class=\"flex flex-col sm:flex-row items-center justify-between gap-4\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body\">Powered by Nuon</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<footer class=\"max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto\"><div class=\"text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body\">Powered by Nuon ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.SupportContact != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body\">Need help?")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 233, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 228, Col: 8}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " <a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "·")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var20 templ.SafeURL
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(getSupportHref(props.SupportContact)))
+			var templ_7745c5c3_Var20 string
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 234, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 228, Col: 15}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" class=\"text-theme-secondary hover:underline\">Contact Support</a></p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, " <a href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var21 templ.SafeURL
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(getSupportHref(props.SupportContact)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 229, Col: 65}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" class=\"hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors\">Contact Support</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -589,12 +604,12 @@ func customerToast() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div id=\"toast-container\" class=\"fixed bottom-4 right-4 z-50 space-y-2\"></div><script>\n\t\twindow.showToast = function(message, type) {\n\t\t\ttype = type || 'info';\n\t\t\tvar container = document.getElementById('toast-container');\n\t\t\tvar toast = document.createElement('div');\n\t\t\tvar bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';\n\t\t\ttoast.className = bgColor + ' text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0';\n\t\t\ttoast.textContent = message;\n\t\t\tcontainer.appendChild(toast);\n\t\t\tsetTimeout(function() {\n\t\t\t\ttoast.classList.remove('translate-x-full', 'opacity-0');\n\t\t\t}, 10);\n\t\t\tsetTimeout(function() {\n\t\t\t\ttoast.classList.add('translate-x-full', 'opacity-0');\n\t\t\t\tsetTimeout(function() {\n\t\t\t\t\ttoast.remove();\n\t\t\t\t}, 300);\n\t\t\t}, 3000);\n\t\t};\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div id=\"toast-container\" class=\"fixed bottom-4 right-4 z-50 space-y-2\"></div><script>\n\t\twindow.showToast = function(message, type) {\n\t\t\ttype = type || 'info';\n\t\t\tvar container = document.getElementById('toast-container');\n\t\t\tvar toast = document.createElement('div');\n\t\t\tvar bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';\n\t\t\ttoast.className = bgColor + ' text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0';\n\t\t\ttoast.textContent = message;\n\t\t\tcontainer.appendChild(toast);\n\t\t\tsetTimeout(function() {\n\t\t\t\ttoast.classList.remove('translate-x-full', 'opacity-0');\n\t\t\t}, 10);\n\t\t\tsetTimeout(function() {\n\t\t\t\ttoast.classList.add('translate-x-full', 'opacity-0');\n\t\t\t\tsetTimeout(function() {\n\t\t\t\t\ttoast.remove();\n\t\t\t\t}, 300);\n\t\t\t}, 3000);\n\t\t};\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -618,12 +633,12 @@ func customerConfirmModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var22 == nil {
-			templ_7745c5c3_Var22 = templ.NopComponent
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div id=\"confirm-modal\" class=\"fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8\"><h3 id=\"confirm-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"confirm-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-6\"></p><div class=\"flex justify-end space-x-3\"><button id=\"confirm-cancel\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg\">Cancel</button> <button id=\"confirm-ok\" class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg\">Confirm</button></div></div></div></div><script>\n\t\twindow.showConfirmModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tdocument.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('confirm-ok').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(true);\n\t\t\t\t};\n\t\t\t\tdocument.getElementById('confirm-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(false);\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div id=\"confirm-modal\" class=\"fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8\"><h3 id=\"confirm-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"confirm-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-6\"></p><div class=\"flex justify-end space-x-3\"><button id=\"confirm-cancel\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg\">Cancel</button> <button id=\"confirm-ok\" class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg\">Confirm</button></div></div></div></div><script>\n\t\twindow.showConfirmModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tdocument.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('confirm-ok').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(true);\n\t\t\t\t};\n\t\t\t\tdocument.getElementById('confirm-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(false);\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -647,12 +662,12 @@ func customerPromptModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var23 == nil {
-			templ_7745c5c3_Var23 = templ.NopComponent
+		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var24 == nil {
+			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div id=\"prompt-modal\" class=\"fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8\"><h3 id=\"prompt-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"prompt-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-4\"></p><input type=\"text\" id=\"prompt-input\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-2\" placeholder=\"\"><p id=\"prompt-error\" class=\"text-red-600 dark:text-red-400 text-sm mb-4 hidden\"></p><div class=\"flex justify-end space-x-3\"><button id=\"prompt-cancel\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg\">Cancel</button> <button id=\"prompt-ok\" class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg\">Confirm</button></div></div></div></div><script>\n\t\twindow.showPromptModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('prompt-modal');\n\t\t\t\tvar input = document.getElementById('prompt-input');\n\t\t\t\tvar errorEl = document.getElementById('prompt-error');\n\n\t\t\t\tdocument.getElementById('prompt-title').textContent = options.title || 'Enter Value';\n\t\t\t\tdocument.getElementById('prompt-message').textContent = options.message || '';\n\t\t\t\tinput.placeholder = options.placeholder || '';\n\t\t\t\tinput.value = '';\n\t\t\t\terrorEl.classList.add('hidden');\n\t\t\t\tdocument.getElementById('prompt-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('prompt-cancel').textContent = options.cancelText || 'Cancel';\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tinput.focus();\n\n\t\t\t\tdocument.getElementById('prompt-ok').onclick = function() {\n\t\t\t\t\tvar value = input.value.trim();\n\t\t\t\t\tif (options.expectedValue && value !== options.expectedValue) {\n\t\t\t\t\t\terrorEl.textContent = options.validationMessage || 'Value does not match';\n\t\t\t\t\t\terrorEl.classList.remove('hidden');\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(value);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('prompt-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(null);\n\t\t\t\t};\n\n\t\t\t\t// Allow Enter key to submit\n\t\t\t\tinput.onkeydown = function(e) {\n\t\t\t\t\tif (e.key === 'Enter') {\n\t\t\t\t\t\tdocument.getElementById('prompt-ok').click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div id=\"prompt-modal\" class=\"fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8\"><h3 id=\"prompt-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"prompt-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-4\"></p><input type=\"text\" id=\"prompt-input\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-2\" placeholder=\"\"><p id=\"prompt-error\" class=\"text-red-600 dark:text-red-400 text-sm mb-4 hidden\"></p><div class=\"flex justify-end space-x-3\"><button id=\"prompt-cancel\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg\">Cancel</button> <button id=\"prompt-ok\" class=\"px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg\">Confirm</button></div></div></div></div><script>\n\t\twindow.showPromptModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('prompt-modal');\n\t\t\t\tvar input = document.getElementById('prompt-input');\n\t\t\t\tvar errorEl = document.getElementById('prompt-error');\n\n\t\t\t\tdocument.getElementById('prompt-title').textContent = options.title || 'Enter Value';\n\t\t\t\tdocument.getElementById('prompt-message').textContent = options.message || '';\n\t\t\t\tinput.placeholder = options.placeholder || '';\n\t\t\t\tinput.value = '';\n\t\t\t\terrorEl.classList.add('hidden');\n\t\t\t\tdocument.getElementById('prompt-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('prompt-cancel').textContent = options.cancelText || 'Cancel';\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tinput.focus();\n\n\t\t\t\tdocument.getElementById('prompt-ok').onclick = function() {\n\t\t\t\t\tvar value = input.value.trim();\n\t\t\t\t\tif (options.expectedValue && value !== options.expectedValue) {\n\t\t\t\t\t\terrorEl.textContent = options.validationMessage || 'Value does not match';\n\t\t\t\t\t\terrorEl.classList.remove('hidden');\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(value);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('prompt-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(null);\n\t\t\t\t};\n\n\t\t\t\t// Allow Enter key to submit\n\t\t\t\tinput.onkeydown = function(e) {\n\t\t\t\t\tif (e.key === 'Enter') {\n\t\t\t\t\t\tdocument.getElementById('prompt-ok').click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -676,12 +691,12 @@ func customerAuthScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
+		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var25 == nil {
+			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<script>\n\t\t(function() {\n\t\t\t// Intercept fetch to ensure credentials are always sent with same-origin requests\n\t\t\t// This allows the browser to automatically send the httpOnly JWT cookie\n\t\t\tvar originalFetch = window.fetch;\n\t\t\twindow.fetch = function(url, options) {\n\t\t\t\toptions = options || {};\n\t\t\t\t// Default to same-origin credentials if not explicitly set\n\t\t\t\tif (!options.credentials) {\n\t\t\t\t\toptions.credentials = 'same-origin';\n\t\t\t\t}\n\t\t\t\treturn originalFetch(url, options);\n\t\t\t};\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<script>\n\t\t(function() {\n\t\t\t// Intercept fetch to ensure credentials are always sent with same-origin requests\n\t\t\t// This allows the browser to automatically send the httpOnly JWT cookie\n\t\t\tvar originalFetch = window.fetch;\n\t\t\twindow.fetch = function(url, options) {\n\t\t\t\toptions = options || {};\n\t\t\t\t// Default to same-origin credentials if not explicitly set\n\t\t\t\tif (!options.credentials) {\n\t\t\t\t\toptions.credentials = 'same-origin';\n\t\t\t\t}\n\t\t\t\treturn originalFetch(url, options);\n\t\t\t};\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
