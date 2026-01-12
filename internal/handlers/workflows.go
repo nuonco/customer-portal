@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
@@ -82,6 +84,62 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 				if stack.Versions[0].QuickLinkURL != "" {
 					cloudFormationLink = stack.Versions[0].QuickLinkURL
 					fmt.Printf("Found CloudFormation link from stack: %s\n", cloudFormationLink)
+				}
+			}
+		}
+
+		// Append customer inputs to CloudFormation URL if available
+		if cloudFormationLink != "" {
+			fmt.Printf("DEBUG: CloudFormation link found, attempting to append customer inputs\n")
+			fmt.Printf("DEBUG: AppID=%s, InstallID=%s\n", install.InstallLink.AppID, install.NuonInstallID)
+
+			// Fetch app input config to identify customer input names
+			inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
+			if err != nil {
+				fmt.Printf("DEBUG: Error fetching app input config: %v\n", err)
+			} else if inputConfig == nil {
+				fmt.Printf("DEBUG: App input config is nil\n")
+			} else {
+				fmt.Printf("DEBUG: Got app input config (type %T): %+v\n", inputConfig, inputConfig)
+
+				// Convert typed struct to map for processing (same pattern as customer.go)
+				var configMap map[string]interface{}
+				jsonBytes, err := json.Marshal(inputConfig)
+				if err != nil {
+					fmt.Printf("DEBUG: Error marshaling input config: %v\n", err)
+				} else if err := json.Unmarshal(jsonBytes, &configMap); err != nil {
+					fmt.Printf("DEBUG: Error unmarshaling input config to map: %v\n", err)
+				} else {
+					fmt.Printf("DEBUG: Converted input config to map: %+v\n", configMap)
+
+					// Extract customer input mappings from config (inputName -> CF param name)
+					inputMappings := extractCustomerInputMappings(configMap)
+					fmt.Printf("DEBUG: Customer input mappings found: %v\n", inputMappings)
+
+					if len(inputMappings) > 0 {
+						// Get current install inputs from Nuon API
+						currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
+						if err != nil {
+							fmt.Printf("DEBUG: Error fetching install inputs: %v\n", err)
+						} else if currentInputs == nil {
+							fmt.Printf("DEBUG: Current inputs is nil\n")
+						} else {
+							fmt.Printf("DEBUG: Current inputs values: %+v\n", currentInputs.Values)
+							if currentInputs.Values != nil {
+								// Append customer inputs as CloudFormation parameters
+								cloudFormationLink = appendInputsToCloudFormationURL(
+									cloudFormationLink,
+									currentInputs.Values,
+									inputMappings,
+								)
+								fmt.Printf("DEBUG: CloudFormation link with customer inputs: %s\n", cloudFormationLink)
+							} else {
+								fmt.Printf("DEBUG: Current inputs Values is nil\n")
+							}
+						}
+					} else {
+						fmt.Printf("DEBUG: No customer input names found in config\n")
+					}
 				}
 			}
 		}
@@ -957,4 +1015,97 @@ func (h *Handler) fetchRecentWorkflows(c *gin.Context, install *localModels.Inst
 
 	processed := processWorkflowForCustomer(mostRecentWorkflow)
 	return []gin.H{processed}, nil
+}
+
+// extractCustomerInputMappings extracts input name -> CloudFormation parameter name mappings
+// for inputs where source == "customer". The CF param name is in "cloudformation_stack_parameter_name".
+// Returns a map of inputName -> cfParamName
+func extractCustomerInputMappings(inputConfig interface{}) map[string]string {
+	mappings := make(map[string]string)
+	if inputConfig == nil {
+		return mappings
+	}
+
+	// Input config structure: { input_groups: [ { app_inputs: [ { name: "", source: "", cloudformation_stack_parameter_name: "" } ] } ] }
+	configMap, ok := inputConfig.(map[string]interface{})
+	if !ok {
+		return mappings
+	}
+
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return mappings
+	}
+
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		for _, input := range appInputs {
+			inputMap, ok := input.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			source, _ := inputMap["source"].(string)
+			name, _ := inputMap["name"].(string)
+			cfParamName, _ := inputMap["cloudformation_stack_parameter_name"].(string)
+
+			if source == "customer" && name != "" {
+				// Use CF param name if available, otherwise fall back to input name
+				if cfParamName != "" {
+					mappings[name] = cfParamName
+				} else {
+					mappings[name] = name
+				}
+				fmt.Printf("DEBUG: Input mapping: %s -> %s\n", name, mappings[name])
+			}
+		}
+	}
+
+	return mappings
+}
+
+// appendInputsToCloudFormationURL appends customer inputs as CloudFormation parameters to the URL
+// inputMappings maps inputName -> CloudFormation parameter name
+func appendInputsToCloudFormationURL(cfURL string, inputs map[string]string, inputMappings map[string]string) string {
+	if len(inputMappings) == 0 {
+		return cfURL
+	}
+
+	// CloudFormation quick create URLs have format:
+	// https://console.aws.amazon.com/cloudformation/home#/stacks/quickcreate?templateUrl=...
+	// Note: The # fragment means we need to handle query params after the fragment
+
+	var params []string
+	for inputName, cfParamName := range inputMappings {
+		value := inputs[inputName]
+		if value != "" {
+			// CloudFormation parameters are prefixed with "param_"
+			param := fmt.Sprintf("param_%s=%s",
+				url.QueryEscape(cfParamName),
+				url.QueryEscape(value))
+			params = append(params, param)
+			fmt.Printf("DEBUG: Adding CF param: %s (from input %s = %s)\n", param, inputName, value)
+		}
+	}
+
+	if len(params) == 0 {
+		return cfURL
+	}
+
+	// Determine separator (? or &) based on existing URL structure
+	separator := "&"
+	if !strings.Contains(cfURL, "?") {
+		separator = "?"
+	}
+
+	return cfURL + separator + strings.Join(params, "&")
 }

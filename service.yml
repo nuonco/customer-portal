@@ -48,11 +48,11 @@ env:
   AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
   AUTH_CLIENT_SECRET: "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"
 
-
   SERVICE_TYPE: app
   SERVICE_DEPLOYMENT: customer-dashboard
   DISABLE_METRICS: true
 
+disable_watch: true
 
 watch_ignore:
   - '\/static/'
@@ -64,12 +64,9 @@ local_startup_cmds:
   - nuonctl scripts exec customer-dashboard-setup
 
 local_build_cmds:
-  - ./bin/tailwindcss -i ./src/vendor.css -o ./static/css/vendor.css
-  - ./bin/tailwindcss -i ./src/customer.css -o ./static/css/customer.css
-  - ./bin/templ generate .
 
 local_cmds:
-  - go run .
+  - air
 
 docker_cmds:
   - cmd: ""

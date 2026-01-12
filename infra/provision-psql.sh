@@ -51,4 +51,36 @@ ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON TABLES TO customer_dashbo
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT ALL ON SEQUENCES TO customer_dashboard;
 EOF
 
-echo "provisioning complete - customer_dashboard user created with full permissions"
+echo "transferring ownership of existing tables to customer_dashboard..."
+cat <<EOF | PGPASSWORD="$ADMIN_PW" psql \
+    -h "$DB_ADDR" \
+    -p "$DB_PORT" \
+    -U "$ADMIN_USER" \
+    -d "customer_dashboard" \
+    --no-psqlrc \
+    -f -
+
+-- Transfer ownership of all tables in public schema to customer_dashboard
+DO \$\$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public') LOOP
+        EXECUTE 'ALTER TABLE public.' || quote_ident(r.tablename) || ' OWNER TO customer_dashboard';
+    END LOOP;
+END
+\$\$;
+
+-- Transfer ownership of all sequences in public schema to customer_dashboard
+DO \$\$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN (SELECT sequencename FROM pg_sequences WHERE schemaname = 'public') LOOP
+        EXECUTE 'ALTER SEQUENCE public.' || quote_ident(r.sequencename) || ' OWNER TO customer_dashboard';
+    END LOOP;
+END
+\$\$;
+EOF
+
+echo "provisioning complete - customer_dashboard user created with full permissions and ownership"
