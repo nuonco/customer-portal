@@ -187,29 +187,34 @@ templ customBodyFont(base64URL string) {
 	</style>
 }
 
+func buildVendorThemeCSS(props LayoutProps) string {
+	css := ""
+	if props.PrimaryColor != "" {
+		css += "--theme-primary: " + props.PrimaryColor + ";"
+		css += "--theme-primary-hover: " + props.PrimaryColorDark + ";"
+	}
+	if props.SecondaryColor != "" {
+		css += "--theme-secondary: " + props.SecondaryColor + ";"
+		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
+	}
+	if props.HeadingFontBase64 != "" {
+		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.HeadingFont != "" {
+		css += "--font-heading: '" + props.HeadingFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	if props.BodyFontBase64 != "" {
+		css += "--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.BodyFont != "" {
+		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	if css == "" {
+		return ""
+	}
+	return "<style>:root{" + css + "}</style>"
+}
+
 templ themeOverrides(props LayoutProps) {
-	<style>
-		:root {
-			if props.PrimaryColor != "" {
-				--theme-primary: { props.PrimaryColor };
-				--theme-primary-hover: { props.PrimaryColorDark };
-			}
-			if props.SecondaryColor != "" {
-				--theme-secondary: { props.SecondaryColor };
-				--theme-secondary-hover: { props.SecondaryColorDark };
-			}
-			if props.HeadingFontBase64 != "" {
-				--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;
-			} else if props.HeadingFont != "" {
-				--font-heading: '{ props.HeadingFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
-			}
-			if props.BodyFontBase64 != "" {
-				--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;
-			} else if props.BodyFont != "" {
-				--font-body: '{ props.BodyFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
-			}
-		}
-	</style>
+	@templ.Raw(buildVendorThemeCSS(props))
 }
 
 templ layoutScripts(basePath string) {

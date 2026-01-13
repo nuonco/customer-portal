@@ -19,8 +19,8 @@ type InstallDetailPageProps struct {
 // InstallDetailPage renders the customer install detail page
 templ InstallDetailPage(props InstallDetailPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<!-- Back Link -->
-		<div class="mb-6">
+		<!-- Header: Back Link + Actions Dropdown -->
+		<div class="mb-6 flex items-center justify-between">
 			<a
 				href={ templ.SafeURL(props.BasePath + "/installs") }
 				class={ templ.KV("text-theme-secondary hover:text-theme-secondary-hover", props.SecondaryColor != ""),
@@ -28,129 +28,93 @@ templ InstallDetailPage(props InstallDetailPageProps) {
 			>
 				← Back to My Installs
 			</a>
+			if props.Install.Status != "deprovisioning" {
+				<!-- Actions Dropdown -->
+				<div class="relative" id="actionsDropdown">
+					<button
+						type="button"
+						onclick="toggleActionsDropdown()"
+						class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						style="border-radius: var(--theme-radius)"
+					>
+						Actions
+						<svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+						</svg>
+					</button>
+					<div
+						id="actionsDropdownMenu"
+						class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 shadow-lg z-10"
+						style="border-radius: var(--theme-radius)"
+					>
+						<button
+							type="button"
+							onclick="openEditInputsModal(); toggleActionsDropdown();"
+							class="block w-full text-left px-4 py-2 text-sm text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						>
+							Edit Inputs
+						</button>
+						<button
+							type="button"
+							onclick="confirmDeprovision(); toggleActionsDropdown();"
+							class="block w-full text-left px-4 py-2 text-sm text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						>
+							Deprovision
+						</button>
+						<button
+							type="button"
+							onclick="forgetInstall(); toggleActionsDropdown();"
+							class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						>
+							Forget
+						</button>
+					</div>
+				</div>
+			}
 		</div>
 		<!-- Main Card -->
-		<div class="bg-white dark:bg-dark-grey-900 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
-			<!-- Status indicator -->
-			<div class="flex items-center justify-end mb-4">
-				<div class="flex items-center space-x-3">
-					@components.StatusBadge(components.StatusBadgeProps{
-						Status:   string(props.Install.Status),
-						Variant:  "install",
-						ShowIcon: true,
-					})
-					if props.Install.Status == "provisioning" {
-						<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">Provisioning...</span>
-					}
-				</div>
-			</div>
-			<!-- Status alerts -->
-			if props.Install.Status == "provisioning" {
-				@components.Alert(components.AlertProps{
-					Type:    "info",
-					Message: "Installation in progress (typically 5-10 minutes).",
-					Class:   "mb-4",
-				})
-			} else if props.Install.Status == "active" {
-				@components.Alert(components.AlertProps{
-					Type:    "success",
-					Message: "Installation active and ready to use!",
-					Class:   "mb-4",
-				})
-			} else if props.Install.Status == "failed" {
-				@components.Alert(components.AlertProps{
-					Type:    "error",
-					Message: "Installation failed. Contact support for assistance.",
-					Class:   "mb-4",
-				})
-			}
-			<!-- Health Status Section -->
-			@components.HealthStatus(components.HealthStatusProps{
-				InstallID:           props.Install.ID,
-				HasHealthChecks:     props.HasHealthChecks,
-				HealthCheckStatuses: props.HealthCheckStatuses,
-				OverallHealthStatus: props.OverallHealthStatus,
-				BasePath:            props.BasePath,
-			})
-			<div class="space-y-4">
-				<!-- Installation details -->
-				<div>
-					<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-sm dark:text-cool-grey-300" style="border-radius: var(--theme-radius)">
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+		<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+			<!-- Two-column layout: Install Details + Health Status -->
+			<div class="flex flex-col md:flex-row gap-6 mb-6">
+				<!-- Left: Install Details -->
+				<div class="md:w-1/2">
+					<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Install Details</h3>
+					<div class="space-y-2 text-sm">
+						<div>
+							<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">App:</span>
+							<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.InstallLink.AppName }</span>
+						</div>
+						if props.Install.Region != "" {
 							<div>
-								<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">App:</span>
-								<span class="ml-1">{ props.Install.InstallLink.AppName }</span>
+								<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Region:</span>
+								<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.Region }</span>
 							</div>
-							if props.Install.Region != "" {
-								<div>
-									<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Region:</span>
-									<span class="ml-1">{ props.Install.Region }</span>
-								</div>
-							}
-							<div class="sm:col-span-2">
-								<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Created:</span>
-								<span class="ml-1">{ props.Install.CreatedAt.Format("Jan 2, 2006 at 3:04 PM") }</span>
-							</div>
-							<div class="sm:col-span-2 pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
-								<span class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400">ID:</span>
-								<span class="ml-1 text-xs font-mono text-cool-grey-600 dark:text-cool-grey-400">{ props.Install.NuonInstallID }</span>
-							</div>
+						}
+						<div>
+							<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Created:</span>
+							<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.CreatedAt.Format("Jan 2, 2006 at 3:04 PM") }</span>
+						</div>
+						<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
+							<span class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400">ID:</span>
+							<span class="ml-1 text-xs font-mono text-cool-grey-600 dark:text-cool-grey-400">{ props.Install.NuonInstallID }</span>
 						</div>
 					</div>
 				</div>
-				<!-- Access Information (for active installs) -->
-				if props.Install.Status == "active" {
-					<div>
-						<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Access Information</h3>
-						<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-4 mt-2" style="border-radius: var(--theme-radius)">
-							<p class="text-sm text-cool-grey-800 dark:text-cool-grey-300 mb-2">
-								Your application is now running. Access details will be provided here once available.
-							</p>
-							<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400">
-								Note: In a production implementation, this would show endpoints, credentials, and other access information retrieved from the Nuon API.
-							</p>
-						</div>
-					</div>
-				}
-				<!-- Actions Section -->
-				<div>
-					<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Actions</h3>
-                    <div>
-						if props.Install.Status != "deprovisioning" {
-							<button
-								type="button"
-								onclick="openEditInputsModal()"
-								class={ "inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white",
-									templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
-									templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "") }
-								style="border-radius: var(--theme-radius)"
-							>
-								Edit Inputs
-							</button>
-							<button
-								type="button"
-								onclick="confirmDeprovision()"
-								class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700"
-								style="border-radius: var(--theme-radius)"
-							>
-								Deprovision
-							</button>
-							<button
-								type="button"
-								onclick="forgetInstall()"
-								class="inline-flex items-center justify-center px-4 py-2 text-sm font-medium text-white bg-amber-500 hover:bg-amber-600"
-								style="border-radius: var(--theme-radius)"
-							>
-								Forget
-							</button>
-						}
-					</div>
+				<!-- Right: Health Status -->
+				<div class="md:w-1/2">
+					@components.HealthStatus(components.HealthStatusProps{
+						InstallID:           props.Install.ID,
+						HasHealthChecks:     props.HasHealthChecks,
+						HealthCheckStatuses: props.HealthCheckStatuses,
+						OverallHealthStatus: props.OverallHealthStatus,
+						BasePath:            props.BasePath,
+					})
 				</div>
 			</div>
 		</div>
 		<!-- Latest Updates -->
 		<div class="mt-6">
-			<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4">Latest Updates</h3>
+			<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4">Latest Update</h3>
 			if len(props.RecentWorkflows) > 0 {
 				for _, workflow := range props.RecentWorkflows {
 					@components.WorkflowCard(components.WorkflowCardProps{
@@ -172,9 +136,7 @@ templ InstallDetailPage(props InstallDetailPageProps) {
 			<div class="mt-4 text-center">
 				<a
 					href={ templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/workflows") }
-					class={ "inline-block text-white px-4 py-2 text-sm",
-						templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
-						templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "") }
+					class="inline-block text-white px-4 py-2 text-sm bg-theme-primary hover:bg-theme-primary-hover"
 					style="border-radius: var(--theme-radius)"
 				>
 					View Update History
@@ -204,6 +166,23 @@ templ installDetailScripts() {
 			const basePath = configEl.dataset.basePath;
 			const installID = configEl.dataset.installId;
 			const installName = configEl.dataset.installName;
+
+			// Actions dropdown toggle
+			window.toggleActionsDropdown = function() {
+				const menu = document.getElementById('actionsDropdownMenu');
+				if (menu) {
+					menu.classList.toggle('hidden');
+				}
+			};
+
+			// Close dropdown when clicking outside
+			document.addEventListener('click', function(event) {
+				const dropdown = document.getElementById('actionsDropdown');
+				const menu = document.getElementById('actionsDropdownMenu');
+				if (dropdown && menu && !dropdown.contains(event.target)) {
+					menu.classList.add('hidden');
+				}
+			});
 
 			// Deprovision install with custom modal confirmation
 			window.confirmDeprovision = async function() {
@@ -290,10 +269,10 @@ templ installDetailScripts() {
 			// Workflow action confirmations
 			window.confirmApproveAll = async function(button) {
 				const confirmed = await showConfirmModal({
-					title: 'Approve All Steps?',
-					message: 'Are you sure you want to approve ALL steps in this update? This will automatically approve the current step and all future steps.',
+					title: 'Approve Update?',
+					message: 'Are you sure you want to approve this update? This will automatically approve all steps.',
 					variant: 'primary',
-					confirmText: 'Approve All',
+					confirmText: 'Approve',
 					cancelText: 'Cancel'
 				});
 
@@ -532,7 +511,7 @@ templ editInputsModal() {
 		style="z-index: 50"
 	>
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
+			<div class="bg-white dark:bg-dark-grey-800 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
 				<div class="mb-4">
 					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Edit Inputs</h3>
 				</div>
@@ -550,7 +529,7 @@ templ editInputsModal() {
 					<div class="flex space-x-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
 						<button
 							type="submit"
-							class="flex-1 bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium"
+							class="flex-1 bg-theme-primary text-white py-2 px-4 rounded-md hover:bg-theme-primary-hover focus:ring-2 focus:ring-primary-400 font-medium"
 						>
 							Update Inputs
 						</button>

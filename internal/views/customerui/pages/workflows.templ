@@ -46,17 +46,17 @@ templ WorkflowsPage(props WorkflowsPageProps) {
 			</div>
 			<!-- CloudFormation Link if available -->
 			if props.CloudFormationLink != "" {
-				<div class="mb-6 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800" style="border-radius: var(--theme-radius)">
+				<div class="mb-6 p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
 					<div class="flex items-center justify-between">
 						<div>
-							<h3 class="text-sm font-medium text-blue-800 dark:text-blue-300">AWS CloudFormation</h3>
-							<p class="text-sm text-blue-600 dark:text-blue-400 mt-1">View and manage your infrastructure in AWS Console</p>
+							<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
+							<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">View and manage your infrastructure in AWS Console</p>
 						</div>
 						<a
 							href={ templ.SafeURL(props.CloudFormationLink) }
 							target="_blank"
 							rel="noopener noreferrer"
-							class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+							class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
 							style="border-radius: var(--theme-radius)"
 						>
 							Open in AWS

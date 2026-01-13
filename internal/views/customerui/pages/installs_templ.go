@@ -367,7 +367,7 @@ func installCard(install customerui.InstallWithApprovalStatus, basePath, seconda
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"bg-white dark:bg-dark-grey-900 border border-cool-grey-200 dark:border-dark-grey-600 p-4 hover:shadow-md transition-shadow rounded-lg\"><div class=\"flex items-center justify-between\"><div class=\"flex-1\"><div class=\"flex items-center space-x-3\"><h3 class=\"text-lg font-medium text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 p-4 hover:shadow-md transition-shadow rounded-lg\"><div class=\"flex items-center justify-between\"><div class=\"flex-1\"><div class=\"flex items-center space-x-3\"><h3 class=\"text-lg font-medium text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

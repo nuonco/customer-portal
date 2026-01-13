@@ -43,7 +43,7 @@ func Pagination(props PaginationProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav class=\"flex items-center justify-between mt-6 px-4 py-3 bg-white dark:bg-dark-grey-900 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg\"><div class=\"flex-1 flex justify-between sm:hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<nav class=\"flex items-center justify-between mt-6 px-4 py-3 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg\"><div class=\"flex-1 flex justify-between sm:hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

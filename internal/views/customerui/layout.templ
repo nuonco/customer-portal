@@ -77,7 +77,7 @@ templ Layout(props LayoutProps) {
 			<!-- Preview Modal -->
 			<div id="preview-modal" class="fixed inset-0 bg-black/50 hidden overflow-y-auto" style="z-index: 100;">
 				<div class="flex items-center justify-center min-h-full p-4">
-					<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-700 my-8">
+					<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-700 my-8">
 						<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700 flex justify-between items-center">
 							<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Preview Release</h3>
 							<button type="button" onclick="closePreviewModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
@@ -152,31 +152,34 @@ templ googleFontsLink(headingFont, bodyFont, headingFontBase64, bodyFontBase64 s
 	}
 }
 
-templ themeStyles(props LayoutProps) {
-	if props.PrimaryColor != "" || props.SecondaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" || props.HeadingFontBase64 != "" || props.BodyFontBase64 != "" {
-		<style>
-			:root {
-				if props.PrimaryColor != "" {
-					--theme-primary: { props.PrimaryColor };
-					--theme-primary-hover: { props.PrimaryColorDark };
-				}
-				if props.SecondaryColor != "" {
-					--theme-secondary: { props.SecondaryColor };
-					--theme-secondary-hover: { props.SecondaryColorDark };
-				}
-				if props.HeadingFontBase64 != "" {
-					--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;
-				} else if props.HeadingFont != "" {
-					--font-heading: '{ props.HeadingFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
-				}
-				if props.BodyFontBase64 != "" {
-					--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;
-				} else if props.BodyFont != "" {
-					--font-body: '{ props.BodyFont }', 'Inter', ui-sans-serif, system-ui, sans-serif;
-				}
-			}
-		</style>
+func buildThemeCSS(props LayoutProps) string {
+	css := ""
+	if props.PrimaryColor != "" {
+		css += "--theme-primary: " + props.PrimaryColor + ";"
+		css += "--theme-primary-hover: " + props.PrimaryColorDark + ";"
 	}
+	if props.SecondaryColor != "" {
+		css += "--theme-secondary: " + props.SecondaryColor + ";"
+		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
+	}
+	if props.HeadingFontBase64 != "" {
+		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.HeadingFont != "" {
+		css += "--font-heading: '" + props.HeadingFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	if props.BodyFontBase64 != "" {
+		css += "--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.BodyFont != "" {
+		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	if css == "" {
+		return ""
+	}
+	return "<style>:root{" + css + "}</style>"
+}
+
+templ themeStyles(props LayoutProps) {
+	@templ.Raw(buildThemeCSS(props))
 }
 
 templ logoutScript() {
@@ -268,14 +271,14 @@ templ customerToast() {
 templ customerConfirmModal() {
 	<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto">
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+			<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="confirm-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
 				<div class="flex justify-end space-x-3">
 					<button id="confirm-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">
 						Cancel
 					</button>
-					<button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">
+					<button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">
 						Confirm
 					</button>
 				</div>
@@ -307,7 +310,7 @@ templ customerConfirmModal() {
 templ customerPromptModal() {
 	<div id="prompt-modal" class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto">
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+			<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="prompt-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="prompt-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-4"></p>
 				<input
@@ -321,7 +324,7 @@ templ customerPromptModal() {
 					<button id="prompt-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">
 						Cancel
 					</button>
-					<button id="prompt-ok" class="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg">
+					<button id="prompt-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">
 						Confirm
 					</button>
 				</div>

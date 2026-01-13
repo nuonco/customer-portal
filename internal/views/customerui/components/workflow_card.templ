@@ -14,7 +14,7 @@ type WorkflowCardProps struct {
 
 // WorkflowCard renders a single workflow with status and action buttons
 templ WorkflowCard(props WorkflowCardProps) {
-	<div id={ "workflow-" + props.Workflow.ID } class="bg-white dark:bg-dark-grey-900 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+	<div id={ "workflow-" + props.Workflow.ID } class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
 		<div class="flex justify-between items-start">
 			<div class="flex-grow">
 				<div class="flex items-center space-x-3 mb-2">
@@ -33,47 +33,12 @@ templ WorkflowCard(props WorkflowCardProps) {
 				<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">Update ID: { props.Workflow.ID }</p>
 			</div>
 			<div class="flex space-x-3 ml-4">
-				@approveButton(props)
 				@approveAllButton(props)
 				@cancelButton(props)
 			</div>
 		</div>
 		@workflowStatusMessage(props.Workflow.Status)
 	</div>
-}
-
-templ approveButton(props WorkflowCardProps) {
-	if props.Workflow.CanApprove {
-		if props.Workflow.ApprovalStep != nil {
-			<button
-				hx-post={ props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.Workflow.ID + "/approve" }
-				hx-target={ "#workflow-" + props.Workflow.ID }
-				hx-swap="outerHTML"
-				hx-vals={ `{"step_id":"` + props.Workflow.ApprovalStep.StepID + `","approval_id":"` + props.Workflow.ApprovalStep.ApprovalID + `"}` }
-				hx-indicator="this"
-				class="bg-green-600 text-white px-4 py-2 hover:bg-green-700 text-sm"
-				style="border-radius: var(--theme-radius)"
-			>
-				<span class="htmx-indicator">
-					@spinnerIcon()
-				</span>
-				Approve
-			</button>
-		}
-	} else {
-		<div class="relative group">
-			<button
-				disabled
-				class="bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed"
-				style="border-radius: var(--theme-radius)"
-			>
-				Approve
-			</button>
-			<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
-				{ props.Workflow.ApproveDisabledReason }
-			</div>
-		</div>
-	}
 }
 
 templ approveAllButton(props WorkflowCardProps) {
@@ -85,15 +50,13 @@ templ approveAllButton(props WorkflowCardProps) {
 			hx-trigger="confirmed"
 			hx-indicator="this"
 			onclick="confirmApproveAll(this)"
-			class={ "text-white px-4 py-2 text-sm",
-				templ.KV("bg-theme-primary hover:bg-theme-primary-hover", props.PrimaryColor != ""),
-				templ.KV("bg-primary-600 hover:bg-primary-700", props.PrimaryColor == "") }
+			class="text-white px-4 py-2 text-sm bg-theme-primary hover:bg-theme-primary-hover"
 			style="border-radius: var(--theme-radius)"
 		>
 			<span class="htmx-indicator">
 				@spinnerIcon()
 			</span>
-			Approve All
+			Approve
 		</button>
 	} else {
 		<div class="relative group">
@@ -102,7 +65,7 @@ templ approveAllButton(props WorkflowCardProps) {
 				class="bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed"
 				style="border-radius: var(--theme-radius)"
 			>
-				Approve All
+				Approve
 			</button>
 			<div class="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10">
 				{ props.Workflow.ApproveAllDisabledReason }
@@ -120,7 +83,7 @@ templ cancelButton(props WorkflowCardProps) {
 			hx-trigger="confirmed"
 			hx-indicator="this"
 			onclick="confirmCancelWorkflow(this)"
-			class="bg-red-600 text-white px-4 py-2 hover:bg-red-700 text-sm"
+			class="bg-theme-secondary text-white px-4 py-2 hover:bg-theme-secondary-hover text-sm"
 			style="border-radius: var(--theme-radius)"
 		>
 			<span class="htmx-indicator">

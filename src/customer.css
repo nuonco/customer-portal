@@ -355,7 +355,7 @@
 
 .customer-card {
   @apply bg-white border border-cool-grey-200;
-  @apply dark:bg-dark-grey-900 dark:border-dark-grey-600;
+  @apply dark:bg-dark-grey-800 dark:border-dark-grey-600;
   padding: var(--spacing-card-padding);
   border-radius: var(--theme-radius);
 }
@@ -427,4 +427,35 @@
 .empty-state-description {
   @apply text-cool-grey-500 mb-6;
   @apply dark:text-cool-grey-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * COLLAPSIBLE INPUT GROUPS
+ * Smooth expand/collapse animations for input group cards on install link page
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.input-group-card {
+  @apply overflow-hidden;
+  border-radius: var(--theme-radius);
+}
+
+.input-group-header {
+  @apply select-none;
+}
+
+.input-group-header:focus-visible {
+  @apply outline-none ring-2 ring-inset;
+  --tw-ring-color: var(--theme-primary);
+}
+
+.input-group-content {
+  transition: max-height 0.3s ease-out, opacity 0.2s ease-out;
+}
+
+.input-group-chevron {
+  transition: transform 0.2s ease-out;
+}
+
+.input-group-chevron.rotate-180 {
+  transform: rotate(180deg);
 }

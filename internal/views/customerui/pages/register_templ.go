@@ -112,7 +112,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto bg-white dark:bg-dark-grey-900 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10\" style=\"border-radius: var(--theme-radius)\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10\" style=\"border-radius: var(--theme-radius)\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

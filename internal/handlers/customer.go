@@ -389,9 +389,10 @@ func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"platform":     platform,
-		"input_config": inputConfig,
-		"app_name":     link.AppName,
+		"platform":         platform,
+		"input_config":     inputConfig,
+		"app_name":         link.AppName,
+		"collapsed_groups": localConfig.GetCollapsedGroups(),
 	})
 }
 

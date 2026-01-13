@@ -18,6 +18,7 @@ type AppInputConfig struct {
 	CustomerInputNames string         `gorm:"type:text" json:"customer_input_names,omitempty"` // JSON array of input names that are customer-facing
 	GroupOrder         string         `gorm:"type:text" json:"group_order,omitempty"`          // JSON array of group names in display order
 	InputOrder         string         `gorm:"type:text" json:"input_order,omitempty"`          // JSON object: {"group_name": ["input1", "input2"]}
+	CollapsedGroups    string         `gorm:"type:text" json:"collapsed_groups,omitempty"`     // JSON array of group names that are collapsed by default
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
@@ -125,4 +126,41 @@ func (aic *AppInputConfig) SetInputOrder(order map[string][]string) error {
 	}
 	aic.InputOrder = string(data)
 	return nil
+}
+
+// GetCollapsedGroups returns the collapsed group names as a slice
+func (aic *AppInputConfig) GetCollapsedGroups() []string {
+	if aic.CollapsedGroups == "" {
+		return []string{}
+	}
+	var names []string
+	if err := json.Unmarshal([]byte(aic.CollapsedGroups), &names); err != nil {
+		return []string{}
+	}
+	return names
+}
+
+// SetCollapsedGroups stores the collapsed group names as JSON
+func (aic *AppInputConfig) SetCollapsedGroups(names []string) error {
+	if names == nil || len(names) == 0 {
+		aic.CollapsedGroups = ""
+		return nil
+	}
+	data, err := json.Marshal(names)
+	if err != nil {
+		return err
+	}
+	aic.CollapsedGroups = string(data)
+	return nil
+}
+
+// IsGroupCollapsed checks if the given group name is collapsed by default
+func (aic *AppInputConfig) IsGroupCollapsed(groupName string) bool {
+	names := aic.GetCollapsedGroups()
+	for _, n := range names {
+		if n == groupName {
+			return true
+		}
+	}
+	return false
 }

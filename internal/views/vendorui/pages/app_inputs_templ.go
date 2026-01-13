@@ -29,9 +29,10 @@ type AppInputInfo struct {
 
 // AppInputGroup represents a group of inputs
 type AppInputGroup struct {
-	Name        string
-	DisplayName string
-	Inputs      []AppInputInfo
+	Name             string
+	DisplayName      string
+	Inputs           []AppInputInfo
+	CollapsedDefault bool // Whether this group is collapsed by default on customer page
 }
 
 // AppInputsPageProps for the app inputs page
@@ -167,142 +168,150 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 83, Col: 94}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 84, Col: 94}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><table class=\"w-full\" style=\"table-layout: fixed;\"><colgroup><col style=\"width: 24px;\"> <col style=\"width: 170px;\"> <col style=\"width: 170px;\"> <col> <col style=\"width: 100px;\"> <col style=\"width: 50px;\"> <col style=\"width: 70px;\"> <col style=\"width: 140px;\"></colgroup><!-- Group Header --><thead><tr class=\"bg-cool-grey-100 dark:bg-dark-grey-800 group-drag-handle cursor-grab active:cursor-grabbing\"><th scope=\"col\" class=\"px-1 py-2\"><svg class=\"h-4 w-4 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></th><th scope=\"col\" colspan=\"7\" class=\"px-2 py-2 text-left\"><h3 class=\"text-sm font-semibold text-cool-grey-900 dark:text-white\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><table class=\"w-full\" style=\"table-layout: fixed;\"><colgroup><col style=\"width: 24px;\"> <col style=\"width: 170px;\"> <col style=\"width: 170px;\"> <col> <col style=\"width: 100px;\"> <col style=\"width: 50px;\"> <col style=\"width: 70px;\"> <col style=\"width: 140px;\"></colgroup><!-- Group Header --><thead><tr class=\"bg-cool-grey-100 dark:bg-dark-grey-800 group-drag-handle cursor-grab active:cursor-grabbing\"><th scope=\"col\" class=\"px-1 py-2\"><svg class=\"h-4 w-4 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></th><th scope=\"col\" colspan=\"5\" class=\"px-2 py-2 text-left\"><h3 class=\"text-sm font-semibold text-cool-grey-900 dark:text-white\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(group.DisplayName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 110, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 111, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</h3></th></tr><tr class=\"bg-cool-grey-50 dark:bg-dark-grey-800/50\"><th scope=\"col\" class=\"px-1 py-1.5\"></th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Display Name</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Description</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Default</th><th scope=\"col\" class=\"px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Req</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Type</th><th scope=\"col\" class=\"px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">User-Facing</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700 sortable-inputs\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</h3></th><th scope=\"col\" colspan=\"2\" class=\"px-2 py-2 text-right\"><label class=\"inline-flex items-center gap-2 cursor-pointer\" onclick=\"event.stopPropagation();\"><span class=\"text-xs font-normal text-cool-grey-600 dark:text-cool-grey-400\">Collapsed by Default</span><div class=\"relative\"><input type=\"checkbox\" class=\"sr-only peer collapsed-by-default-checkbox\" data-group-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 121, Col: 40}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if group.CollapsedDefault {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " checked")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "><div class=\"w-8 h-4 bg-cool-grey-200 dark:bg-dark-grey-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600\"></div></div></label></th></tr><tr class=\"bg-cool-grey-50 dark:bg-dark-grey-800/50\"><th scope=\"col\" class=\"px-1 py-1.5\"></th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Display Name</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Description</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Default</th><th scope=\"col\" class=\"px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Req</th><th scope=\"col\" class=\"px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Type</th><th scope=\"col\" class=\"px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">User-Facing</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700 sortable-inputs\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, input := range group.Inputs {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<tr class=\"hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors sortable-input\" data-input-name=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var6 string
-					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 141, Col: 131}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"><td class=\"px-1 py-1.5 input-drag-handle cursor-grab active:cursor-grabbing\"><svg class=\"h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></td><td class=\"px-2 py-1.5\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white truncate block\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<tr class=\"hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors sortable-input\" data-input-name=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var7 string
-					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(input.DisplayName)
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 154, Col: 30}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 158, Col: 131}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></td><td class=\"px-2 py-1.5\"><span class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate block\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\"><td class=\"px-1 py-1.5 input-drag-handle cursor-grab active:cursor-grabbing\"><svg class=\"h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></td><td class=\"px-2 py-1.5\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white truncate block\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var8 string
-					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(input.DisplayName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 159, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 171, Col: 30}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></td><td class=\"px-2 py-1.5\"><span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 truncate block\" title=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></td><td class=\"px-2 py-1.5\"><span class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate block\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var9 string
-					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(input.Description)
+					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 163, Col: 115}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 176, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</span></td><td class=\"px-2 py-1.5\"><span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 truncate block\" title=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(input.Description)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 164, Col: 30}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 180, Col: 115}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></td><td class=\"px-2 py-1.5\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var11 string
+					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(input.Description)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 181, Col: 30}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span></td><td class=\"px-2 py-1.5\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if input.Default != "" {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<code class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 truncate block\" title=\"")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						var templ_7745c5c3_Var11 string
-						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(input.Default)
-						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 169, Col: 112}
-						}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<code class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 truncate block\" title=\"")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 						var templ_7745c5c3_Var12 string
-						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(truncateDefault(input.Default))
+						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(input.Default)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 170, Col: 44}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 186, Col: 112}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</code>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-					} else {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500 text-xs\">-</span>")
+						var templ_7745c5c3_Var13 string
+						templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(truncateDefault(input.Default))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 187, Col: 44}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"px-2 py-1.5 text-center\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if input.Required {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<svg class=\"h-4 w-4 text-green-500 mx-auto\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\"></path></svg>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</code>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
@@ -312,103 +321,118 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</td><td class=\"px-2 py-1.5\"><div class=\"flex items-center gap-1\"><span class=\"text-xs text-cool-grey-700 dark:text-cool-grey-300\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</td><td class=\"px-2 py-1.5 text-center\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var13 string
-					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(input.Type)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 188, Col: 24}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</span> ")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if input.Sensitive {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<span class=\"text-amber-500\" title=\"sensitive\">*</span>")
+					if input.Required {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<svg class=\"h-4 w-4 text-green-500 mx-auto\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M5 13l4 4L19 7\"></path></svg>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					} else {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500 text-xs\">-</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></td><td class=\"px-2 py-1.5 text-center\"><label class=\"relative inline-flex items-center cursor-pointer\"><input type=\"checkbox\" class=\"sr-only peer customer-facing-checkbox\" data-input-name=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td class=\"px-2 py-1.5\"><div class=\"flex items-center gap-1\"><span class=\"text-xs text-cool-grey-700 dark:text-cool-grey-300\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var14 string
-					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
+					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(input.Type)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 200, Col: 40}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 205, Col: 24}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</span> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					if input.CustomerFacing {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " checked")
+					if input.Sensitive {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<span class=\"text-amber-500\" title=\"sensitive\">*</span>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "><div class=\"w-8 h-4 bg-cool-grey-200 dark:bg-dark-grey-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600\"></div></label></td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></td><td class=\"px-2 py-1.5 text-center\"><label class=\"relative inline-flex items-center cursor-pointer\"><input type=\"checkbox\" class=\"sr-only peer customer-facing-checkbox\" data-input-name=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var15 string
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 217, Col: 40}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					if input.CustomerFacing {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " checked")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "><div class=\"w-8 h-4 bg-cool-grey-200 dark:bg-dark-grey-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600\"></div></label></td></tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</tbody></table></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</tbody></table></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<!-- Save Button --><div class=\"flex justify-end\"><button id=\"saveConfigBtn\" onclick=\"saveCustomerInputConfig()\" class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveConfigText\">Save Configuration</span> <svg id=\"saveConfigSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></div><!-- Hidden element with data attributes for JavaScript --><div id=\"inputConfigData\" class=\"hidden\" data-org-id=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 231, Col: 61}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" data-app-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<!-- Save Button --><div class=\"flex justify-end\"><button id=\"saveConfigBtn\" onclick=\"saveCustomerInputConfig()\" class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveConfigText\">Save Configuration</span> <svg id=\"saveConfigSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></div><!-- Hidden element with data attributes for JavaScript --><div id=\"inputConfigData\" class=\"hidden\" data-org-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(appID)
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 231, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" data-app-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(appID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 231, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" data-base-path=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 111}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -439,12 +463,12 @@ func emptyInputsState() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"stratus-card overflow-hidden !p-0\"><div class=\"py-16 text-center\"><div class=\"flex justify-center mb-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"stratus-card overflow-hidden !p-0\"><div class=\"py-16 text-center\"><div class=\"flex justify-center mb-6\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -452,7 +476,7 @@ func emptyInputsState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\">No inputs configured</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 mb-4\">This app has no inputs configured yet.<br>Add inputs to your app configuration to get started.</p><a href=\"https://docs.nuon.co/quickstart/configuration\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline font-medium\">Learn more about inputs <svg class=\"ml-1.5 h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\"></path></svg></a></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</div><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\">No inputs configured</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 mb-4\">This app has no inputs configured yet.<br>Add inputs to your app configuration to get started.</p><a href=\"https://docs.nuon.co/quickstart/configuration\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline font-medium\">Learn more about inputs <svg class=\"ml-1.5 h-4 w-4\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"2\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\"></path></svg></a></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -476,12 +500,12 @@ func emptyInputsIllustration() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<svg width=\"154\" height=\"94\" viewBox=\"0 0 154 94\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"opacity: 0.9;\"><rect x=\"2\" y=\"1\" width=\"150\" height=\"90\" rx=\"10\" fill=\"#F6F0FF\"></rect> <rect x=\"2.5\" y=\"1.5\" width=\"149\" height=\"89\" rx=\"9.5\" stroke=\"#C4B5D9\" stroke-opacity=\"0.5\"></rect> <line x1=\"2\" y1=\"22\" x2=\"152\" y2=\"22\" stroke=\"#E5E7EB\" stroke-width=\"0.5\"></line> <line x1=\"2\" y1=\"46\" x2=\"152\" y2=\"46\" stroke=\"#A855F7\" stroke-opacity=\"0.6\"></line> <line x1=\"2\" y1=\"70\" x2=\"152\" y2=\"70\" stroke=\"#E5E7EB\" stroke-width=\"0.5\"></line> <rect x=\"20\" y=\"32\" width=\"40\" height=\"6\" rx=\"2\" fill=\"#EDE9FE\"></rect> <rect x=\"20\" y=\"56\" width=\"50\" height=\"6\" rx=\"2\" fill=\"#EDE9FE\"></rect> <rect x=\"80\" y=\"32\" width=\"25\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"80\" y=\"56\" width=\"30\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"120\" y=\"32\" width=\"15\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"120\" y=\"56\" width=\"15\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<svg width=\"154\" height=\"94\" viewBox=\"0 0 154 94\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" style=\"opacity: 0.9;\"><rect x=\"2\" y=\"1\" width=\"150\" height=\"90\" rx=\"10\" fill=\"#F6F0FF\"></rect> <rect x=\"2.5\" y=\"1.5\" width=\"149\" height=\"89\" rx=\"9.5\" stroke=\"#C4B5D9\" stroke-opacity=\"0.5\"></rect> <line x1=\"2\" y1=\"22\" x2=\"152\" y2=\"22\" stroke=\"#E5E7EB\" stroke-width=\"0.5\"></line> <line x1=\"2\" y1=\"46\" x2=\"152\" y2=\"46\" stroke=\"#A855F7\" stroke-opacity=\"0.6\"></line> <line x1=\"2\" y1=\"70\" x2=\"152\" y2=\"70\" stroke=\"#E5E7EB\" stroke-width=\"0.5\"></line> <rect x=\"20\" y=\"32\" width=\"40\" height=\"6\" rx=\"2\" fill=\"#EDE9FE\"></rect> <rect x=\"20\" y=\"56\" width=\"50\" height=\"6\" rx=\"2\" fill=\"#EDE9FE\"></rect> <rect x=\"80\" y=\"32\" width=\"25\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"80\" y=\"56\" width=\"30\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"120\" y=\"32\" width=\"15\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect> <rect x=\"120\" y=\"56\" width=\"15\" height=\"6\" rx=\"2\" fill=\"#D4D4D8\"></rect></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -505,12 +529,12 @@ func appInputsScript(orgID string, appID string, basePath string) templ.Componen
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255); /* primary-100 equivalent */\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247); /* primary-500 ring */\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3); /* primary-900/30 */\n\t\t}\n\t</style><script>\n\t\tfunction getConfigData() {\n\t\t\tvar configEl = document.getElementById('inputConfigData');\n\t\t\treturn {\n\t\t\t\torgID: configEl ? configEl.dataset.orgId : '',\n\t\t\t\tappID: configEl ? configEl.dataset.appId : '',\n\t\t\t\tbasePath: configEl ? configEl.dataset.basePath : ''\n\t\t\t};\n\t\t}\n\n\t\t// Initialize SortableJS for groups and inputs\n\t\tfunction initSortable() {\n\t\t\t// Make groups sortable\n\t\t\tvar groupsContainer = document.getElementById('inputGroupsContainer');\n\t\t\tif (groupsContainer && typeof Sortable !== 'undefined') {\n\t\t\t\tnew Sortable(groupsContainer, {\n\t\t\t\t\tanimation: 150,\n\t\t\t\t\thandle: '.group-drag-handle',\n\t\t\t\t\tdraggable: '.sortable-group',\n\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t});\n\n\t\t\t\t// Make inputs within each group sortable\n\t\t\t\tdocument.querySelectorAll('.sortable-inputs').forEach(function(tbody) {\n\t\t\t\t\tnew Sortable(tbody, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.input-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-input',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t}\n\t\t}\n\n\t\t// Collect current group order from DOM\n\t\tfunction getGroupOrder() {\n\t\t\tvar order = [];\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\torder.push(group.dataset.groupName);\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect current input order per group from DOM\n\t\tfunction getInputOrder() {\n\t\t\tvar order = {};\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\tvar groupName = group.dataset.groupName;\n\t\t\t\tvar inputs = [];\n\t\t\t\tgroup.querySelectorAll('.sortable-input').forEach(function(input) {\n\t\t\t\t\tinputs.push(input.dataset.inputName);\n\t\t\t\t});\n\t\t\t\torder[groupName] = inputs;\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\tfunction saveCustomerInputConfig() {\n\t\t\tvar config = getConfigData();\n\t\t\tvar btn = document.getElementById('saveConfigBtn');\n\t\t\tvar text = document.getElementById('saveConfigText');\n\t\t\tvar spinner = document.getElementById('saveConfigSpinner');\n\n\t\t\t// Disable button and show spinner\n\t\t\tbtn.disabled = true;\n\t\t\ttext.textContent = 'Saving...';\n\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t// Collect all checked input names\n\t\t\tvar customerInputNames = [];\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcustomerInputNames.push(checkbox.dataset.inputName);\n\t\t\t});\n\n\t\t\t// Collect ordering\n\t\t\tvar groupOrder = getGroupOrder();\n\t\t\tvar inputOrder = getInputOrder();\n\n\t\t\t// Make API call\n\t\t\tvar url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';\n\t\t\tfetch(url, {\n\t\t\t\tmethod: 'PUT',\n\t\t\t\theaders: {\n\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t},\n\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\tcustomer_input_names: customerInputNames,\n\t\t\t\t\tgroup_order: groupOrder,\n\t\t\t\t\tinput_order: inputOrder\n\t\t\t\t})\n\t\t\t})\n\t\t\t.then(function(response) {\n\t\t\t\tif (!response.ok) {\n\t\t\t\t\tthrow new Error('Failed to save configuration');\n\t\t\t\t}\n\t\t\t\treturn response.json();\n\t\t\t})\n\t\t\t.then(function(data) {\n\t\t\t\tshowToast('Configuration saved successfully', 'success');\n\t\t\t})\n\t\t\t.catch(function(error) {\n\t\t\t\tshowToast('Failed to save configuration: ' + error.message, 'error');\n\t\t\t})\n\t\t\t.finally(function() {\n\t\t\t\t// Re-enable button\n\t\t\t\tbtn.disabled = false;\n\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\tspinner.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Initialize on page load\n\t\tdocument.addEventListener('DOMContentLoaded', initSortable);\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255); /* primary-100 equivalent */\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247); /* primary-500 ring */\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3); /* primary-900/30 */\n\t\t}\n\t</style><script>\n\t\tfunction getConfigData() {\n\t\t\tvar configEl = document.getElementById('inputConfigData');\n\t\t\treturn {\n\t\t\t\torgID: configEl ? configEl.dataset.orgId : '',\n\t\t\t\tappID: configEl ? configEl.dataset.appId : '',\n\t\t\t\tbasePath: configEl ? configEl.dataset.basePath : ''\n\t\t\t};\n\t\t}\n\n\t\t// Initialize SortableJS for groups and inputs\n\t\tfunction initSortable() {\n\t\t\t// Make groups sortable\n\t\t\tvar groupsContainer = document.getElementById('inputGroupsContainer');\n\t\t\tif (groupsContainer && typeof Sortable !== 'undefined') {\n\t\t\t\tnew Sortable(groupsContainer, {\n\t\t\t\t\tanimation: 150,\n\t\t\t\t\thandle: '.group-drag-handle',\n\t\t\t\t\tdraggable: '.sortable-group',\n\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t});\n\n\t\t\t\t// Make inputs within each group sortable\n\t\t\t\tdocument.querySelectorAll('.sortable-inputs').forEach(function(tbody) {\n\t\t\t\t\tnew Sortable(tbody, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.input-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-input',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t}\n\t\t}\n\n\t\t// Collect current group order from DOM\n\t\tfunction getGroupOrder() {\n\t\t\tvar order = [];\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\torder.push(group.dataset.groupName);\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect current input order per group from DOM\n\t\tfunction getInputOrder() {\n\t\t\tvar order = {};\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\tvar groupName = group.dataset.groupName;\n\t\t\t\tvar inputs = [];\n\t\t\t\tgroup.querySelectorAll('.sortable-input').forEach(function(input) {\n\t\t\t\t\tinputs.push(input.dataset.inputName);\n\t\t\t\t});\n\t\t\t\torder[groupName] = inputs;\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect groups that are collapsed by default\n\t\tfunction getCollapsedGroups() {\n\t\t\tvar collapsed = [];\n\t\t\tdocument.querySelectorAll('.collapsed-by-default-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcollapsed.push(checkbox.dataset.groupName);\n\t\t\t});\n\t\t\treturn collapsed;\n\t\t}\n\n\t\tfunction saveCustomerInputConfig() {\n\t\t\tvar config = getConfigData();\n\t\t\tvar btn = document.getElementById('saveConfigBtn');\n\t\t\tvar text = document.getElementById('saveConfigText');\n\t\t\tvar spinner = document.getElementById('saveConfigSpinner');\n\n\t\t\t// Disable button and show spinner\n\t\t\tbtn.disabled = true;\n\t\t\ttext.textContent = 'Saving...';\n\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t// Collect all checked input names\n\t\t\tvar customerInputNames = [];\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcustomerInputNames.push(checkbox.dataset.inputName);\n\t\t\t});\n\n\t\t\t// Collect ordering\n\t\t\tvar groupOrder = getGroupOrder();\n\t\t\tvar inputOrder = getInputOrder();\n\n\t\t\t// Collect collapsed groups\n\t\t\tvar collapsedGroups = getCollapsedGroups();\n\n\t\t\t// Make API call\n\t\t\tvar url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';\n\t\t\tfetch(url, {\n\t\t\t\tmethod: 'PUT',\n\t\t\t\theaders: {\n\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t},\n\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\tcustomer_input_names: customerInputNames,\n\t\t\t\t\tgroup_order: groupOrder,\n\t\t\t\t\tinput_order: inputOrder,\n\t\t\t\t\tcollapsed_groups: collapsedGroups\n\t\t\t\t})\n\t\t\t})\n\t\t\t.then(function(response) {\n\t\t\t\tif (!response.ok) {\n\t\t\t\t\tthrow new Error('Failed to save configuration');\n\t\t\t\t}\n\t\t\t\treturn response.json();\n\t\t\t})\n\t\t\t.then(function(data) {\n\t\t\t\tshowToast('Configuration saved successfully', 'success');\n\t\t\t})\n\t\t\t.catch(function(error) {\n\t\t\t\tshowToast('Failed to save configuration: ' + error.message, 'error');\n\t\t\t})\n\t\t\t.finally(function() {\n\t\t\t\t// Re-enable button\n\t\t\t\tbtn.disabled = false;\n\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\tspinner.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Initialize on page load\n\t\tdocument.addEventListener('DOMContentLoaded', initSortable);\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

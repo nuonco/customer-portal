@@ -2011,6 +2011,13 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 		customerInputSet[name] = true
 	}
 
+	// Create a set for collapsed groups
+	collapsedGroups := localConfig.GetCollapsedGroups()
+	collapsedGroupSet := make(map[string]bool)
+	for _, name := range collapsedGroups {
+		collapsedGroupSet[name] = true
+	}
+
 	// Parse inputs into grouped structure
 	var inputGroups []vendorpages.AppInputGroup
 
@@ -2032,9 +2039,10 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 							}
 
 							inputGroup := vendorpages.AppInputGroup{
-								Name:        groupName,
-								DisplayName: groupDisplayName,
-								Inputs:      []vendorpages.AppInputInfo{},
+								Name:             groupName,
+								DisplayName:      groupDisplayName,
+								Inputs:           []vendorpages.AppInputInfo{},
+								CollapsedDefault: collapsedGroupSet[groupName],
 							}
 
 							if appInputs, ok := groupMap["app_inputs"].([]interface{}); ok {
@@ -2373,6 +2381,15 @@ func (h *Handler) UpdateAppHealthChecks(c *gin.Context) {
 		return
 	}
 
+	// Retroactively update all existing InstallLinks for this app
+	healthCheckIDsStr := strings.Join(req.HealthCheckActionIDs, ",")
+	if err := h.db.Model(&models.InstallLink{}).
+		Where("app_id = ?", appID).
+		Update("health_check_action_ids", healthCheckIDsStr).Error; err != nil {
+		// Log warning but don't fail - the config was saved successfully
+		fmt.Printf("Warning: Failed to update existing install links with health checks: %v\n", err)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"config":  healthConfig,
@@ -2566,6 +2583,7 @@ func (h *Handler) GetAppCustomerInputConfig(c *gin.Context) {
 				"customer_input_names": []string{},
 				"group_order":          []string{},
 				"input_order":          map[string][]string{},
+				"collapsed_groups":     []string{},
 			})
 			return
 		}
@@ -2577,6 +2595,7 @@ func (h *Handler) GetAppCustomerInputConfig(c *gin.Context) {
 		"customer_input_names": config.GetCustomerInputNames(),
 		"group_order":          config.GetGroupOrder(),
 		"input_order":          config.GetInputOrder(),
+		"collapsed_groups":     config.GetCollapsedGroups(),
 	})
 }
 
@@ -2603,6 +2622,7 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		CustomerInputNames []string            `json:"customer_input_names"`
 		GroupOrder         []string            `json:"group_order"`
 		InputOrder         map[string][]string `json:"input_order"`
+		CollapsedGroups    []string            `json:"collapsed_groups"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
@@ -2643,6 +2663,12 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		return
 	}
 
+	// Update collapsed groups
+	if err := config.SetCollapsedGroups(req.CollapsedGroups); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set collapsed groups"})
+		return
+	}
+
 	// Save the config
 	if result.Error == gorm.ErrRecordNotFound {
 		if err := h.db.Create(&config).Error; err != nil {
@@ -2660,5 +2686,6 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		"customer_input_names": config.GetCustomerInputNames(),
 		"group_order":          config.GetGroupOrder(),
 		"input_order":          config.GetInputOrder(),
+		"collapsed_groups":     config.GetCollapsedGroups(),
 	})
 }

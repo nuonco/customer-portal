@@ -21,9 +21,10 @@ type AppInputInfo struct {
 
 // AppInputGroup represents a group of inputs
 type AppInputGroup struct {
-	Name        string
-	DisplayName string
-	Inputs      []AppInputInfo
+	Name             string
+	DisplayName      string
+	Inputs           []AppInputInfo
+	CollapsedDefault bool // Whether this group is collapsed by default on customer page
 }
 
 // AppInputsPageProps for the app inputs page
@@ -105,10 +106,26 @@ templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID stri
 										<circle cx="15" cy="18" r="1.5"></circle>
 									</svg>
 								</th>
-								<th scope="col" colspan="7" class="px-2 py-2 text-left">
+								<th scope="col" colspan="5" class="px-2 py-2 text-left">
 									<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white">
 										{ group.DisplayName }
 									</h3>
+								</th>
+								<th scope="col" colspan="2" class="px-2 py-2 text-right">
+									<label class="inline-flex items-center gap-2 cursor-pointer" onclick="event.stopPropagation();">
+										<span class="text-xs font-normal text-cool-grey-600 dark:text-cool-grey-400">Collapsed by Default</span>
+										<div class="relative">
+											<input
+												type="checkbox"
+												class="sr-only peer collapsed-by-default-checkbox"
+												data-group-name={ group.Name }
+												if group.CollapsedDefault {
+													checked
+												}
+											/>
+											<div class="w-8 h-4 bg-cool-grey-200 dark:bg-dark-grey-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600"></div>
+										</div>
+									</label>
 								</th>
 							</tr>
 							<tr class="bg-cool-grey-50 dark:bg-dark-grey-800/50">
@@ -354,6 +371,15 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 			return order;
 		}
 
+		// Collect groups that are collapsed by default
+		function getCollapsedGroups() {
+			var collapsed = [];
+			document.querySelectorAll('.collapsed-by-default-checkbox:checked').forEach(function(checkbox) {
+				collapsed.push(checkbox.dataset.groupName);
+			});
+			return collapsed;
+		}
+
 		function saveCustomerInputConfig() {
 			var config = getConfigData();
 			var btn = document.getElementById('saveConfigBtn');
@@ -375,6 +401,9 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 			var groupOrder = getGroupOrder();
 			var inputOrder = getInputOrder();
 
+			// Collect collapsed groups
+			var collapsedGroups = getCollapsedGroups();
+
 			// Make API call
 			var url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';
 			fetch(url, {
@@ -385,7 +414,8 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 				body: JSON.stringify({
 					customer_input_names: customerInputNames,
 					group_order: groupOrder,
-					input_order: inputOrder
+					input_order: inputOrder,
+					collapsed_groups: collapsedGroups
 				})
 			})
 			.then(function(response) {

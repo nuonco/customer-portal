@@ -1,8 +1,6 @@
 package components
 
 import (
-	"fmt"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 )
 
@@ -15,29 +13,21 @@ type HealthStatusProps struct {
 	BasePath            string
 }
 
-// HealthStatus renders the health check status section with run button
+// HealthStatus renders the health check status section with colored chips
 templ HealthStatus(props HealthStatusProps) {
 	<div id="health-status">
 		if props.HasHealthChecks {
-			<div class="mb-4">
-				<div class="flex items-center justify-between mb-2">
-					<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Health Status</h3>
-					@healthStatusBadge(props.OverallHealthStatus)
-				</div>
+			<div>
+				<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Health</h3>
 				if len(props.HealthCheckStatuses) > 0 {
-					<details class="bg-cool-grey-50 dark:bg-dark-grey-800" style="border-radius: var(--theme-radius)">
-						<summary class="px-3 py-2 cursor-pointer text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" style="border-radius: var(--theme-radius)">
-							View health check details ({ fmt.Sprintf("%d", len(props.HealthCheckStatuses)) } check{ pluralize(len(props.HealthCheckStatuses)) })
-						</summary>
-						<div class="px-3 pb-3 space-y-2">
-							for _, hc := range props.HealthCheckStatuses {
-								@healthCheckItem(hc)
-							}
-						</div>
-					</details>
+					<div class="space-y-1 mb-3">
+						for _, hc := range props.HealthCheckStatuses {
+							@healthCheckChip(hc)
+						}
+					</div>
 				}
 				<!-- Run Health Checks Button with HTMX -->
-				<div class="mt-3">
+				<div>
 					<button
 						hx-post={ props.BasePath + "/installs/" + props.InstallID + "/health-checks/run" }
 						hx-target="#health-status"
@@ -60,77 +50,32 @@ templ HealthStatus(props HealthStatusProps) {
 				</div>
 			</div>
 		} else {
-			<div class="mb-4">
-				<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300">Health Status</h3>
-				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mt-2">No health checks configured for this application.</p>
+			<div>
+				<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Health</h3>
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No health checks configured for this application.</p>
 			</div>
 		}
 	</div>
 }
 
-func pluralize(count int) string {
-	if count != 1 {
-		return "s"
-	}
-	return ""
-}
-
-templ healthStatusBadge(status string) {
-	if status == "passing" {
-		<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-			<svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-				<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-			</svg>
-			Passing
-		</span>
-	} else if status == "pending" {
-		<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300">
-			<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-blue-800 dark:border-blue-300 mr-2"></div>
-			Pending
-		</span>
-	} else if status == "failing" {
-		<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-			<svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-				<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-			</svg>
-			Failing
-		</span>
-	} else {
-		<span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-800 dark:text-cool-grey-300">
-			<svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-				<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-			</svg>
-			Pending
-		</span>
-	}
-}
-
-templ healthCheckItem(hc customerui.HealthCheckStatusData) {
-	<div class="flex items-center justify-between py-2 border-b border-cool-grey-200 dark:border-dark-grey-600 last:border-0">
-		<div class="flex items-center">
-			if hc.Status == "Passing" {
-				<svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-				</svg>
-			} else if hc.Status == "Pending" {
-				<div class="animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600 mr-2"></div>
-			} else if hc.Status == "Failing" {
-				<svg class="w-5 h-5 text-red-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-				</svg>
-			} else {
-				<svg class="w-5 h-5 text-cool-grey-400 dark:text-cool-grey-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
-					<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
-				</svg>
+// healthCheckChip renders a single health check as a colored chip
+templ healthCheckChip(hc customerui.HealthCheckStatusData) {
+	<div class="flex items-center py-1">
+		<span
+			class={
+				"w-2.5 h-2.5 rounded-full mr-2",
+				templ.KV("bg-green-500", hc.Status == "Passing"),
+				templ.KV("bg-yellow-500", hc.Status == "Pending"),
+				templ.KV("bg-red-500", hc.Status == "Failing"),
+				templ.KV("bg-cool-grey-400", hc.Status != "Passing" && hc.Status != "Pending" && hc.Status != "Failing"),
 			}
-			<span class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
-				if hc.ActionName != "" {
-					{ hc.ActionName }
-				} else {
-					Health Check
-				}
-			</span>
-		</div>
-		<span class={ "px-2 py-0.5 text-xs rounded", hc.StatusClass }>{ hc.Status }</span>
+		></span>
+		<span class="text-sm text-cool-grey-700 dark:text-cool-grey-300">
+			if hc.ActionName != "" {
+				{ hc.ActionName }
+			} else {
+				Health Check
+			}
+		</span>
 	</div>
 }

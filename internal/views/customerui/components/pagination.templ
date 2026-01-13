@@ -15,7 +15,7 @@ type PaginationProps struct {
 
 // Pagination renders pagination controls
 templ Pagination(props PaginationProps) {
-	<nav class="flex items-center justify-between mt-6 px-4 py-3 bg-white dark:bg-dark-grey-900 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg">
+	<nav class="flex items-center justify-between mt-6 px-4 py-3 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg">
 		<div class="flex-1 flex justify-between sm:hidden">
 			if props.HasPrevious {
 				<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.PreviousPage)) } class="relative inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700">
