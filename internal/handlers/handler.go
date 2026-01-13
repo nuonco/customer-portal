@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -1366,6 +1367,20 @@ func (h *Handler) GetAppInputConfig(c *gin.Context) {
 			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
 				if filterParam == "vendor" {
 					inputConfig = filterInputConfig(configMap, FilterTypeVendor)
+
+					// Also exclude inputs marked as customer-facing in local config
+					var localConfig models.AppInputConfig
+					h.db.Where("org_id = ? AND app_id = ?", orgID, appIDParam).First(&localConfig)
+					customerInputNames := localConfig.GetCustomerInputNames()
+					if len(customerInputNames) > 0 {
+						jsonBytes, err := json.Marshal(inputConfig)
+						if err == nil {
+							var configMap map[string]interface{}
+							if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+								inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeVendor)
+							}
+						}
+					}
 				} else {
 					inputConfig = filterInputConfig(configMap, FilterTypeCustomer)
 				}
@@ -1985,8 +2000,19 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 		inputConfig = nil
 	}
 
-	// Parse inputs into vendor and customer categories
-	var vendorInputs, customerInputs []vendorpages.AppInputInfo
+	// Fetch local customer input config
+	var localConfig models.AppInputConfig
+	h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+	customerInputNames := localConfig.GetCustomerInputNames()
+
+	// Create a set for fast lookup
+	customerInputSet := make(map[string]bool)
+	for _, name := range customerInputNames {
+		customerInputSet[name] = true
+	}
+
+	// Parse inputs into grouped structure
+	var inputGroups []vendorpages.AppInputGroup
 
 	if inputConfig != nil {
 		// Convert the typed struct to JSON then back to map for flexible field access
@@ -1996,8 +2022,8 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 		if err == nil {
 			var configMap map[string]interface{}
 			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
-				if inputGroups, ok := configMap["input_groups"].([]interface{}); ok {
-					for _, group := range inputGroups {
+				if apiGroups, ok := configMap["input_groups"].([]interface{}); ok {
+					for _, group := range apiGroups {
 						if groupMap, ok := group.(map[string]interface{}); ok {
 							groupName, _ := groupMap["name"].(string)
 							groupDisplayName, _ := groupMap["display_name"].(string)
@@ -2005,19 +2031,26 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 								groupDisplayName = groupName
 							}
 
+							inputGroup := vendorpages.AppInputGroup{
+								Name:        groupName,
+								DisplayName: groupDisplayName,
+								Inputs:      []vendorpages.AppInputInfo{},
+							}
+
 							if appInputs, ok := groupMap["app_inputs"].([]interface{}); ok {
 								for _, input := range appInputs {
 									if inputMap, ok := input.(map[string]interface{}); ok {
+										inputName := getMapString(inputMap, "name")
 										inputInfo := vendorpages.AppInputInfo{
-											Name:        getMapString(inputMap, "name"),
-											DisplayName: getMapString(inputMap, "display_name"),
-											Description: getMapString(inputMap, "description"),
-											Type:        getMapString(inputMap, "type"),
-											Required:    getMapBool(inputMap, "required"),
-											Sensitive:   getMapBool(inputMap, "sensitive"),
-											Default:     getStringFromAny(inputMap["default"]),
-											Group:       groupDisplayName,
-											Source:      getMapString(inputMap, "source"),
+											Name:           inputName,
+											DisplayName:    getMapString(inputMap, "display_name"),
+											Description:    getMapString(inputMap, "description"),
+											Type:           getMapString(inputMap, "type"),
+											Required:       getMapBool(inputMap, "required"),
+											Sensitive:      getMapBool(inputMap, "sensitive"),
+											Default:        getStringFromAny(inputMap["default"]),
+											Source:         getMapString(inputMap, "source"),
+											CustomerFacing: customerInputSet[inputName],
 										}
 
 										if inputInfo.DisplayName == "" {
@@ -2027,21 +2060,67 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 											inputInfo.Type = "string"
 										}
 
-										// Categorize by source field
-										// Note: if source is not in the API response or is "vendor",
-										// inputs will be treated as vendor inputs (the default)
-										if inputInfo.Source == "customer" {
-											customerInputs = append(customerInputs, inputInfo)
-										} else {
-											vendorInputs = append(vendorInputs, inputInfo)
-										}
+										inputGroup.Inputs = append(inputGroup.Inputs, inputInfo)
 									}
 								}
 							}
+
+							inputGroups = append(inputGroups, inputGroup)
 						}
 					}
 				}
 			}
+		}
+	}
+
+	// Apply saved ordering
+	groupOrder := localConfig.GetGroupOrder()
+	inputOrder := localConfig.GetInputOrder()
+
+	// Sort groups if ordering is saved
+	if len(groupOrder) > 0 {
+		groupOrderMap := make(map[string]int)
+		for i, name := range groupOrder {
+			groupOrderMap[name] = i
+		}
+		sort.SliceStable(inputGroups, func(i, j int) bool {
+			orderI, okI := groupOrderMap[inputGroups[i].Name]
+			orderJ, okJ := groupOrderMap[inputGroups[j].Name]
+			if !okI && !okJ {
+				return false // Keep original order for unordered items
+			}
+			if !okI {
+				return false // Unordered items go after ordered ones
+			}
+			if !okJ {
+				return true // Ordered items go before unordered ones
+			}
+			return orderI < orderJ
+		})
+	}
+
+	// Sort inputs within each group if ordering is saved
+	for i := range inputGroups {
+		groupName := inputGroups[i].Name
+		if order, ok := inputOrder[groupName]; ok && len(order) > 0 {
+			inputOrderMap := make(map[string]int)
+			for j, name := range order {
+				inputOrderMap[name] = j
+			}
+			sort.SliceStable(inputGroups[i].Inputs, func(a, b int) bool {
+				orderA, okA := inputOrderMap[inputGroups[i].Inputs[a].Name]
+				orderB, okB := inputOrderMap[inputGroups[i].Inputs[b].Name]
+				if !okA && !okB {
+					return false
+				}
+				if !okA {
+					return false
+				}
+				if !okB {
+					return true
+				}
+				return orderA < orderB
+			})
 		}
 	}
 
@@ -2052,9 +2131,6 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Load theme
 	theme, _ := models.GetOrCreateAppTheme(h.db)
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
-	// Get active tab from query param (default to vendor)
-	activeTab := c.DefaultQuery("tab", "vendor")
 
 	props := vendorpages.AppInputsPageProps{
 		LayoutProps: vendorui.LayoutProps{
@@ -2073,14 +2149,13 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
 		},
-		Org: org,
+		Org:   org,
+		AppID: appID,
 		App: vendorpages.AppInfo{
 			ID:   app.ID,
 			Name: app.Name,
 		},
-		VendorInputs:   vendorInputs,
-		CustomerInputs: customerInputs,
-		ActiveTab:      activeTab,
+		InputGroups: inputGroups,
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppInputsPage(props))
@@ -2460,5 +2535,130 @@ func (h *Handler) TestCustomerAuthConnection(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,
 		"message": "Successfully connected to OIDC provider",
+	})
+}
+
+// GetAppCustomerInputConfig returns the local customer-facing input configuration for an app
+func (h *Handler) GetAppCustomerInputConfig(c *gin.Context) {
+	user := middleware.GetCurrentUser(c)
+	orgID := c.Param("org_id")
+	appID := c.Param("app_id")
+
+	if !shortid.IsValid(orgID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		return
+	}
+
+	// Verify user owns the org
+	var org models.NuonOrg
+	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
+		return
+	}
+
+	// Fetch or create the AppInputConfig
+	var config models.AppInputConfig
+	result := h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&config)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Return empty config if none exists
+			c.JSON(http.StatusOK, gin.H{
+				"customer_input_names": []string{},
+				"group_order":          []string{},
+				"input_order":          map[string][]string{},
+			})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch input config"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"customer_input_names": config.GetCustomerInputNames(),
+		"group_order":          config.GetGroupOrder(),
+		"input_order":          config.GetInputOrder(),
+	})
+}
+
+// UpdateAppCustomerInputConfig updates the local customer-facing input configuration for an app
+func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
+	user := middleware.GetCurrentUser(c)
+	orgID := c.Param("org_id")
+	appID := c.Param("app_id")
+
+	if !shortid.IsValid(orgID) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid organization ID"})
+		return
+	}
+
+	// Verify user owns the org
+	var org models.NuonOrg
+	if err := h.db.Where("id = ? AND user_id = ?", orgID, user.ID).First(&org).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
+		return
+	}
+
+	// Parse request body
+	var req struct {
+		CustomerInputNames []string            `json:"customer_input_names"`
+		GroupOrder         []string            `json:"group_order"`
+		InputOrder         map[string][]string `json:"input_order"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	// Find or create the AppInputConfig
+	var config models.AppInputConfig
+	result := h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&config)
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			// Create new config
+			config = models.AppInputConfig{
+				OrgID: orgID,
+				AppID: appID,
+			}
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch input config"})
+			return
+		}
+	}
+
+	// Update customer input names
+	if err := config.SetCustomerInputNames(req.CustomerInputNames); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set customer input names"})
+		return
+	}
+
+	// Update group order
+	if err := config.SetGroupOrder(req.GroupOrder); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set group order"})
+		return
+	}
+
+	// Update input order
+	if err := config.SetInputOrder(req.InputOrder); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set input order"})
+		return
+	}
+
+	// Save the config
+	if result.Error == gorm.ErrRecordNotFound {
+		if err := h.db.Create(&config).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create input config"})
+			return
+		}
+	} else {
+		if err := h.db.Save(&config).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update input config"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"customer_input_names": config.GetCustomerInputNames(),
+		"group_order":          config.GetGroupOrder(),
+		"input_order":          config.GetInputOrder(),
 	})
 }

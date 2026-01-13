@@ -58,6 +58,8 @@ templ Layout(props LayoutProps) {
 			}
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<!-- SortableJS for drag-and-drop -->
+			<script src="/static/js/sortable.min.js"></script>
 			<!-- Vendor Theme Overrides -->
 			if props.PrimaryColor != "" || props.SecondaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" || props.HeadingFontBase64 != "" || props.BodyFontBase64 != "" {
 				@themeOverrides(props)

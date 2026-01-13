@@ -54,3 +54,7 @@ func NewHealthCheckConfigID() string {
 func NewCustomerAuthConfigID() string {
 	return New("cac")
 }
+
+func NewAppInputConfigID() string {
+	return New("aic")
+}

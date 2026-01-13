@@ -408,8 +408,8 @@ templ installDetailScripts() {
 				var inputName = input.name;
 				var isRequired = input.required ? ' *' : '';
 				var requiredAttr = input.required ? ' required' : '';
-				// Use current value if available, otherwise fall back to default
-				var value = (currentValue !== undefined && currentValue !== null) ? currentValue : (input.default || '');
+				// Use current value if available and non-empty, otherwise fall back to default
+				var value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');
 
 				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
 					var isChecked = value === 'true';

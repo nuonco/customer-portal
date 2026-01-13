@@ -8,6 +8,7 @@ import (
 	"math"
 	"net/http"
 	"net/url"
+	"sort"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -103,6 +104,185 @@ func filterInputConfig(inputConfig interface{}, filterType FilterType) interface
 	return result
 }
 
+// filterInputConfigByLocalConfig filters the input config using the local customer input names
+// For customer filtering: only include inputs that are in customerInputNames
+// For vendor filtering: only include inputs that are NOT in customerInputNames
+func filterInputConfigByLocalConfig(inputConfig interface{}, customerInputNames []string, filterType FilterType) interface{} {
+	if inputConfig == nil {
+		return nil
+	}
+
+	// Create a set for fast lookup
+	customerInputSet := make(map[string]bool)
+	for _, name := range customerInputNames {
+		customerInputSet[name] = true
+	}
+
+	// The input config is a map with input_groups
+	configMap, ok := inputConfig.(map[string]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	var filteredGroups []interface{}
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		var filteredInputs []interface{}
+		for _, input := range appInputs {
+			inputMap, ok := input.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			// Get input name
+			inputName, _ := inputMap["name"].(string)
+			isCustomerFacing := customerInputSet[inputName]
+
+			if filterType == FilterTypeCustomer {
+				// Customer sees only inputs in customerInputNames
+				if isCustomerFacing {
+					filteredInputs = append(filteredInputs, input)
+				}
+			} else {
+				// Vendor sees inputs NOT in customerInputNames
+				if !isCustomerFacing {
+					filteredInputs = append(filteredInputs, input)
+				}
+			}
+		}
+
+		// Only include groups that have inputs after filtering
+		if len(filteredInputs) > 0 {
+			filteredGroup := make(map[string]interface{})
+			for k, v := range groupMap {
+				filteredGroup[k] = v
+			}
+			filteredGroup["app_inputs"] = filteredInputs
+			filteredGroups = append(filteredGroups, filteredGroup)
+		}
+	}
+
+	// Return the filtered config
+	result := make(map[string]interface{})
+	for k, v := range configMap {
+		result[k] = v
+	}
+	result["input_groups"] = filteredGroups
+	return result
+}
+
+// applyInputOrdering sorts input groups and inputs within them based on saved ordering
+func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder map[string][]string) interface{} {
+	if inputConfig == nil {
+		return nil
+	}
+
+	// If no ordering is specified, return as-is
+	if len(groupOrder) == 0 && len(inputOrder) == 0 {
+		return inputConfig
+	}
+
+	configMap, ok := inputConfig.(map[string]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return inputConfig
+	}
+
+	// Sort groups if ordering is specified
+	if len(groupOrder) > 0 {
+		groupOrderMap := make(map[string]int)
+		for i, name := range groupOrder {
+			groupOrderMap[name] = i
+		}
+		sort.SliceStable(inputGroups, func(i, j int) bool {
+			groupI, _ := inputGroups[i].(map[string]interface{})
+			groupJ, _ := inputGroups[j].(map[string]interface{})
+			nameI, _ := groupI["name"].(string)
+			nameJ, _ := groupJ["name"].(string)
+			orderI, okI := groupOrderMap[nameI]
+			orderJ, okJ := groupOrderMap[nameJ]
+			if !okI && !okJ {
+				return false
+			}
+			if !okI {
+				return false
+			}
+			if !okJ {
+				return true
+			}
+			return orderI < orderJ
+		})
+	}
+
+	// Sort inputs within each group if ordering is specified
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		groupName, _ := groupMap["name"].(string)
+		order, hasOrder := inputOrder[groupName]
+		if !hasOrder || len(order) == 0 {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		inputOrderMap := make(map[string]int)
+		for i, name := range order {
+			inputOrderMap[name] = i
+		}
+		sort.SliceStable(appInputs, func(a, b int) bool {
+			inputA, _ := appInputs[a].(map[string]interface{})
+			inputB, _ := appInputs[b].(map[string]interface{})
+			nameA, _ := inputA["name"].(string)
+			nameB, _ := inputB["name"].(string)
+			orderA, okA := inputOrderMap[nameA]
+			orderB, okB := inputOrderMap[nameB]
+			if !okA && !okB {
+				return false
+			}
+			if !okA {
+				return false
+			}
+			if !okB {
+				return true
+			}
+			return orderA < orderB
+		})
+		groupMap["app_inputs"] = appInputs
+	}
+
+	// Return with sorted groups
+	result := make(map[string]interface{})
+	for k, v := range configMap {
+		result[k] = v
+	}
+	result["input_groups"] = inputGroups
+	return result
+}
+
 // buildCustomerLayoutProps builds the layout props for customer pages
 func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme) customerui.LayoutProps {
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
@@ -182,18 +362,28 @@ func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
 		inputConfig = nil
 	}
 
+	// Fetch local customer input config for this app
+	var localConfig models.AppInputConfig
+	h.db.Where("org_id = ? AND app_id = ?", link.OrgID, link.AppID).First(&localConfig)
+	customerInputNames := localConfig.GetCustomerInputNames()
+	groupOrder := localConfig.GetGroupOrder()
+	inputOrder := localConfig.GetInputOrder()
+
 	// Apply filtering if requested
-	// Convert typed struct to map for filtering (filterInputConfig expects map[string]interface{})
+	// Convert typed struct to map for filtering
 	if filterParam == "vendor" || filterParam == "customer" {
 		jsonBytes, err := json.Marshal(inputConfig)
 		if err == nil {
 			var configMap map[string]interface{}
 			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				// Use local config for filtering
 				if filterParam == "vendor" {
-					inputConfig = filterInputConfig(configMap, FilterTypeVendor)
+					inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeVendor)
 				} else {
-					inputConfig = filterInputConfig(configMap, FilterTypeCustomer)
+					inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeCustomer)
 				}
+				// Apply ordering
+				inputConfig = applyInputOrdering(inputConfig, groupOrder, inputOrder)
 			}
 		}
 	}
@@ -910,7 +1100,6 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch install inputs: %v", err)})
 		return
 	}
-
 	// Fetch app input config for field definitions
 	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
 	if err != nil {
@@ -918,10 +1107,34 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 		inputConfig = nil
 	}
 
+	// Fetch local customer input config for this app
+	var localConfig models.AppInputConfig
+	h.db.Where("org_id = ? AND app_id = ?", install.InstallLink.OrgID, install.InstallLink.AppID).First(&localConfig)
+	customerInputNames := localConfig.GetCustomerInputNames()
+	groupOrder := localConfig.GetGroupOrder()
+	inputOrder := localConfig.GetInputOrder()
+
+	// Filter input config to only show customer-facing inputs and apply ordering
+	if inputConfig != nil && len(customerInputNames) > 0 {
+		jsonBytes, err := json.Marshal(inputConfig)
+		if err == nil {
+			var configMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeCustomer)
+				inputConfig = applyInputOrdering(inputConfig, groupOrder, inputOrder)
+			}
+		}
+	}
+
 	// Build inputs map from current inputs
+	// Use RedactedValues if Values is empty (RedactedValues contains all input values)
 	inputs := make(map[string]string)
-	if currentInputs != nil && currentInputs.Values != nil {
-		inputs = currentInputs.Values
+	if currentInputs != nil {
+		if len(currentInputs.Values) > 0 {
+			inputs = currentInputs.Values
+		} else if len(currentInputs.RedactedValues) > 0 {
+			inputs = currentInputs.RedactedValues
+		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{

@@ -86,6 +86,7 @@ func InitDB() (*gorm.DB, error) {
 		&AppTheme{},
 		&AppHealthCheckConfig{},
 		&CustomerAuthConfig{},
+		&AppInputConfig{},
 	)
 	if err != nil {
 		return nil, err

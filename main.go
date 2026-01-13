@@ -218,6 +218,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		orgs.GET("/:org_id/apps-api/:app_id/input-config", h.GetAppInputConfig)
 		orgs.GET("/:org_id/apps-api/:app_id/actions", h.GetAppActions)
 
+		// Local customer-facing input configuration
+		orgs.GET("/:org_id/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
+		orgs.PUT("/:org_id/apps-api/:app_id/customer-input-config", h.UpdateAppCustomerInputConfig)
+
 		orgs.POST("/:org_id/links", h.CreateInstallLink)
 		orgs.GET("/:org_id/links/:link_id", h.InstallLinkDetail)
 		orgs.GET("/:org_id/links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint

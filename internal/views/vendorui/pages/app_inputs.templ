@@ -1,8 +1,6 @@
 package pages
 
 import (
-	"fmt"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -10,25 +8,41 @@ import (
 
 // AppInputInfo represents an input field for display
 type AppInputInfo struct {
+	Name           string
+	DisplayName    string
+	Description    string
+	Type           string
+	Required       bool
+	Sensitive      bool
+	Default        string
+	Source         string // "vendor" or "customer" from Nuon API
+	CustomerFacing bool   // Local config: whether this input is customer-facing
+}
+
+// AppInputGroup represents a group of inputs
+type AppInputGroup struct {
 	Name        string
 	DisplayName string
-	Description string
-	Type        string
-	Required    bool
-	Sensitive   bool
-	Default     string
-	Group       string
-	Source      string // "vendor" or "customer"
+	Inputs      []AppInputInfo
 }
 
 // AppInputsPageProps for the app inputs page
 type AppInputsPageProps struct {
 	vendorui.LayoutProps
-	Org           models.NuonOrg
-	App           AppInfo
-	VendorInputs  []AppInputInfo
-	CustomerInputs []AppInputInfo
-	ActiveTab     string // "vendor" or "customer"
+	Org         models.NuonOrg
+	AppID       string // Nuon app ID for API calls
+	App         AppInfo
+	InputGroups []AppInputGroup
+}
+
+// hasInputs checks if there are any inputs across all groups
+func hasInputs(groups []AppInputGroup) bool {
+	for _, g := range groups {
+		if len(g.Inputs) > 0 {
+			return true
+		}
+	}
+	return false
 }
 
 // AppInputsPage renders the app inputs configuration page
@@ -44,152 +58,177 @@ templ AppInputsPage(props AppInputsPageProps) {
 			<div class="stratus-page-content overflow-auto">
 				<div class="px-4 pt-4 md:px-6 md:pt-6">
 					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
-						View the input configuration for this app. Vendor inputs are set when creating install links,
-						while customer inputs are set by the customer when accepting a link.
+						Configure which inputs are customer-facing. Customer-facing inputs will be shown on the
+						install form when customers accept an install link.
 					</p>
-					<!-- Tabs -->
-					<div class="border-b border-cool-grey-200 dark:border-dark-grey-700">
-						<nav class="-mb-px flex space-x-8">
-							<button
-								id="vendorTab"
-								onclick="switchTab('vendor')"
-								class={ "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
-									templ.KV("border-primary-500 text-primary-600 dark:text-primary-400", props.ActiveTab == "vendor" || props.ActiveTab == ""),
-									templ.KV("border-transparent text-cool-grey-500 hover:text-cool-grey-700 hover:border-cool-grey-300 dark:text-cool-grey-400 dark:hover:text-cool-grey-300", props.ActiveTab != "vendor" && props.ActiveTab != "") }
-							>
-								Vendor Inputs
-								<span class="ml-2 py-0.5 px-2 rounded-full text-xs bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-400">
-									{ intToStr(len(props.VendorInputs)) }
-								</span>
-							</button>
-							<button
-								id="customerTab"
-								onclick="switchTab('customer')"
-								class={ "py-2 px-1 border-b-2 font-medium text-sm transition-colors",
-									templ.KV("border-primary-500 text-primary-600 dark:text-primary-400", props.ActiveTab == "customer"),
-									templ.KV("border-transparent text-cool-grey-500 hover:text-cool-grey-700 hover:border-cool-grey-300 dark:text-cool-grey-400 dark:hover:text-cool-grey-300", props.ActiveTab != "customer") }
-							>
-								Customer Inputs
-								<span class="ml-2 py-0.5 px-2 rounded-full text-xs bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-400">
-									{ intToStr(len(props.CustomerInputs)) }
-								</span>
-							</button>
-						</nav>
-					</div>
 				</div>
-				<!-- Tab Content -->
+				<!-- Content -->
 				<section class="stratus-page-section">
-					<!-- Vendor Inputs Table -->
-					<div id="vendorPanel" class={ templ.KV("hidden", props.ActiveTab == "customer") }>
-						if len(props.VendorInputs) > 0 {
-							@inputsTable(props.VendorInputs, "vendor")
-						} else {
-							@emptyInputsState("vendor")
-						}
-					</div>
-					<!-- Customer Inputs Table -->
-					<div id="customerPanel" class={ templ.KV("hidden", props.ActiveTab != "customer") }>
-						if len(props.CustomerInputs) > 0 {
-							@inputsTable(props.CustomerInputs, "customer")
-						} else {
-							@emptyInputsState("customer")
-						}
-					</div>
+					if hasInputs(props.InputGroups) {
+						@inputGroupsWithCheckboxes(props.InputGroups, props.Org.ID, props.AppID, props.BasePath)
+					} else {
+						@emptyInputsState()
+					}
 				</section>
 			</div>
 		</div>
-		@appInputsScript()
+		@appInputsScript(props.Org.ID, props.AppID, props.BasePath)
 	}
 }
 
-func intToStr(n int) string {
-	return fmt.Sprintf("%d", n)
-}
-
-templ inputsTable(inputs []AppInputInfo, inputType string) {
-	<div class="stratus-card overflow-hidden !p-0">
-		<table class="min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
-			<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
-				<tr>
-					<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Name
-					</th>
-					<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Type
-					</th>
-					<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Required
-					</th>
-					<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Default
-					</th>
-					<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Group
-					</th>
-				</tr>
-			</thead>
-			<tbody class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
-				for _, input := range inputs {
-					<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors">
-						<td class="px-4 py-3">
-							<div class="flex flex-col">
-								<span class="text-sm font-medium text-cool-grey-900 dark:text-white">
-									{ input.DisplayName }
-								</span>
-								<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">
-									{ input.Name }
-								</span>
-								if input.Description != "" {
-									<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">
-										{ input.Description }
-									</span>
-								}
-							</div>
-						</td>
-						<td class="px-4 py-3">
-							<div class="flex items-center gap-2">
-								<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-700 dark:text-cool-grey-300">
-									{ input.Type }
-								</span>
-								if input.Sensitive {
-									<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-										sensitive
-									</span>
-								}
-							</div>
-						</td>
-						<td class="px-4 py-3">
-							if input.Required {
-								<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400">
-									required
-								</span>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500 text-sm">-</span>
+templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID string, basePath string) {
+	<div id="inputGroupsContainer" class="space-y-6">
+		for _, group := range groups {
+			if len(group.Inputs) > 0 {
+				<div class="stratus-card overflow-hidden !p-0 sortable-group" data-group-name={ group.Name }>
+					<table class="w-full" style="table-layout: fixed;">
+						<colgroup>
+							<col style="width: 24px;"/>
+							<col style="width: 170px;"/>
+							<col style="width: 170px;"/>
+							<col/>
+							<col style="width: 100px;"/>
+							<col style="width: 50px;"/>
+							<col style="width: 70px;"/>
+							<col style="width: 140px;"/>
+						</colgroup>
+						<!-- Group Header -->
+						<thead>
+							<tr class="bg-cool-grey-100 dark:bg-dark-grey-800 group-drag-handle cursor-grab active:cursor-grabbing">
+								<th scope="col" class="px-1 py-2">
+									<svg class="h-4 w-4 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+										<circle cx="9" cy="6" r="1.5"></circle>
+										<circle cx="15" cy="6" r="1.5"></circle>
+										<circle cx="9" cy="12" r="1.5"></circle>
+										<circle cx="15" cy="12" r="1.5"></circle>
+										<circle cx="9" cy="18" r="1.5"></circle>
+										<circle cx="15" cy="18" r="1.5"></circle>
+									</svg>
+								</th>
+								<th scope="col" colspan="7" class="px-2 py-2 text-left">
+									<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white">
+										{ group.DisplayName }
+									</h3>
+								</th>
+							</tr>
+							<tr class="bg-cool-grey-50 dark:bg-dark-grey-800/50">
+								<th scope="col" class="px-1 py-1.5"></th>
+								<th scope="col" class="px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Display Name
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Name
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Description
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Default
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Req
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									Type
+								</th>
+								<th scope="col" class="px-2 py-1.5 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+									User-Facing
+								</th>
+							</tr>
+						</thead>
+						<tbody class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700 sortable-inputs">
+							for _, input := range group.Inputs {
+								<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors sortable-input" data-input-name={ input.Name }>
+									<td class="px-1 py-1.5 input-drag-handle cursor-grab active:cursor-grabbing">
+										<svg class="h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+											<circle cx="9" cy="6" r="1.5"></circle>
+											<circle cx="15" cy="6" r="1.5"></circle>
+											<circle cx="9" cy="12" r="1.5"></circle>
+											<circle cx="15" cy="12" r="1.5"></circle>
+											<circle cx="9" cy="18" r="1.5"></circle>
+											<circle cx="15" cy="18" r="1.5"></circle>
+										</svg>
+									</td>
+									<td class="px-2 py-1.5">
+										<span class="text-sm font-medium text-cool-grey-900 dark:text-white truncate block">
+											{ input.DisplayName }
+										</span>
+									</td>
+									<td class="px-2 py-1.5">
+										<span class="text-xs text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate block">
+											{ input.Name }
+										</span>
+									</td>
+									<td class="px-2 py-1.5">
+										<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 truncate block" title={ input.Description }>
+											{ input.Description }
+										</span>
+									</td>
+									<td class="px-2 py-1.5">
+										if input.Default != "" {
+											<code class="text-xs text-cool-grey-600 dark:text-cool-grey-400 truncate block" title={ input.Default }>
+												{ truncateDefault(input.Default) }
+											</code>
+										} else {
+											<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs">-</span>
+										}
+									</td>
+									<td class="px-2 py-1.5 text-center">
+										if input.Required {
+											<svg class="h-4 w-4 text-green-500 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+												<path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path>
+											</svg>
+										} else {
+											<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs">-</span>
+										}
+									</td>
+									<td class="px-2 py-1.5">
+										<div class="flex items-center gap-1">
+											<span class="text-xs text-cool-grey-700 dark:text-cool-grey-300">
+												{ input.Type }
+											</span>
+											if input.Sensitive {
+												<span class="text-amber-500" title="sensitive">*</span>
+											}
+										</div>
+									</td>
+									<td class="px-2 py-1.5 text-center">
+										<label class="relative inline-flex items-center cursor-pointer">
+											<input
+												type="checkbox"
+												class="sr-only peer customer-facing-checkbox"
+												data-input-name={ input.Name }
+												if input.CustomerFacing {
+													checked
+												}
+											/>
+											<div class="w-8 h-4 bg-cool-grey-200 dark:bg-dark-grey-700 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer peer-checked:after:translate-x-[16px] peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600"></div>
+										</label>
+									</td>
+								</tr>
 							}
-						</td>
-						<td class="px-4 py-3">
-							if input.Default != "" {
-								<code class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 px-2 py-0.5 rounded text-cool-grey-700 dark:text-cool-grey-300">
-									{ truncateDefault(input.Default) }
-								</code>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500 text-sm">-</span>
-							}
-						</td>
-						<td class="px-4 py-3">
-							if input.Group != "" {
-								<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
-									{ input.Group }
-								</span>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500 text-sm">-</span>
-							}
-						</td>
-					</tr>
-				}
-			</tbody>
-		</table>
+						</tbody>
+					</table>
+				</div>
+			}
+		}
+		<!-- Save Button -->
+		<div class="flex justify-end">
+			<button
+				id="saveConfigBtn"
+				onclick="saveCustomerInputConfig()"
+				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+			>
+				<span id="saveConfigText">Save Configuration</span>
+				<svg id="saveConfigSpinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			</button>
+		</div>
 	</div>
+	<!-- Hidden element with data attributes for JavaScript -->
+	<div id="inputConfigData" class="hidden" data-org-id={ orgID } data-app-id={ appID } data-base-path={ basePath }></div>
 }
 
 func truncateDefault(s string) string {
@@ -199,65 +238,31 @@ func truncateDefault(s string) string {
 	return s
 }
 
-templ emptyInputsState(inputType string) {
+templ emptyInputsState() {
 	<div class="stratus-card overflow-hidden !p-0">
-		<table class="min-w-full">
-			<thead class="bg-cool-grey-50 dark:bg-dark-grey-800 border-b border-cool-grey-200 dark:border-dark-grey-700">
-				<tr>
-					<th class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Name
-					</th>
-					<th class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Type
-					</th>
-					<th class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Required
-					</th>
-					<th class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Default
-					</th>
-					<th class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-						Group
-					</th>
-				</tr>
-			</thead>
-			<tbody>
-				<tr>
-					<td colspan="5" class="py-16 text-center">
-						<div class="flex justify-center mb-6">
-							@emptyInputsIllustration()
-						</div>
-						<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2">
-							if inputType == "vendor" {
-								No vendor inputs configured
-							} else {
-								No customer inputs configured
-							}
-						</h3>
-						<p class="text-cool-grey-500 dark:text-cool-grey-400 mb-4">
-							if inputType == "vendor" {
-								Vendor inputs are set when creating install links.<br/>
-								Add inputs with <code class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 px-1 rounded">source = "vendor"</code> to your app config.
-							} else {
-								Customer inputs are set by the customer when accepting a link.<br/>
-								Add inputs with <code class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 px-1 rounded">source = "customer"</code> to your app config.
-							}
-						</p>
-						<a
-							href="https://docs.nuon.co/quickstart/configuration"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline font-medium"
-						>
-							Learn more about inputs
-							<svg class="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-								<path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-							</svg>
-						</a>
-					</td>
-				</tr>
-			</tbody>
-		</table>
+		<div class="py-16 text-center">
+			<div class="flex justify-center mb-6">
+				@emptyInputsIllustration()
+			</div>
+			<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2">
+				No inputs configured
+			</h3>
+			<p class="text-cool-grey-500 dark:text-cool-grey-400 mb-4">
+				This app has no inputs configured yet.<br/>
+				Add inputs to your app configuration to get started.
+			</p>
+			<a
+				href="https://docs.nuon.co/quickstart/configuration"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:underline font-medium"
+			>
+				Learn more about inputs
+				<svg class="ml-1.5 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+					<path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+				</svg>
+			</a>
+		</div>
 	</div>
 }
 
@@ -277,29 +282,133 @@ templ emptyInputsIllustration() {
 	</svg>
 }
 
-templ appInputsScript() {
+templ appInputsScript(orgID string, appID string, basePath string) {
+	<style>
+		.sortable-ghost {
+			opacity: 0.5;
+		}
+		.sortable-chosen {
+			background-color: rgb(243 232 255); /* primary-100 equivalent */
+			box-shadow: 0 0 0 2px rgb(168 85 247); /* primary-500 ring */
+		}
+		.dark .sortable-chosen {
+			background-color: rgb(88 28 135 / 0.3); /* primary-900/30 */
+		}
+	</style>
 	<script>
-		function switchTab(tab) {
-			var vendorTab = document.getElementById('vendorTab');
-			var customerTab = document.getElementById('customerTab');
-			var vendorPanel = document.getElementById('vendorPanel');
-			var customerPanel = document.getElementById('customerPanel');
+		function getConfigData() {
+			var configEl = document.getElementById('inputConfigData');
+			return {
+				orgID: configEl ? configEl.dataset.orgId : '',
+				appID: configEl ? configEl.dataset.appId : '',
+				basePath: configEl ? configEl.dataset.basePath : ''
+			};
+		}
 
-			// Active tab styles
-			var activeClasses = 'border-primary-500 text-primary-600 dark:text-primary-400';
-			var inactiveClasses = 'border-transparent text-cool-grey-500 hover:text-cool-grey-700 hover:border-cool-grey-300 dark:text-cool-grey-400 dark:hover:text-cool-grey-300';
+		// Initialize SortableJS for groups and inputs
+		function initSortable() {
+			// Make groups sortable
+			var groupsContainer = document.getElementById('inputGroupsContainer');
+			if (groupsContainer && typeof Sortable !== 'undefined') {
+				new Sortable(groupsContainer, {
+					animation: 150,
+					handle: '.group-drag-handle',
+					draggable: '.sortable-group',
+					ghostClass: 'sortable-ghost',
+					chosenClass: 'sortable-chosen'
+				});
 
-			if (tab === 'vendor') {
-				vendorTab.className = 'py-2 px-1 border-b-2 font-medium text-sm transition-colors ' + activeClasses;
-				customerTab.className = 'py-2 px-1 border-b-2 font-medium text-sm transition-colors ' + inactiveClasses;
-				vendorPanel.classList.remove('hidden');
-				customerPanel.classList.add('hidden');
-			} else {
-				vendorTab.className = 'py-2 px-1 border-b-2 font-medium text-sm transition-colors ' + inactiveClasses;
-				customerTab.className = 'py-2 px-1 border-b-2 font-medium text-sm transition-colors ' + activeClasses;
-				vendorPanel.classList.add('hidden');
-				customerPanel.classList.remove('hidden');
+				// Make inputs within each group sortable
+				document.querySelectorAll('.sortable-inputs').forEach(function(tbody) {
+					new Sortable(tbody, {
+						animation: 150,
+						handle: '.input-drag-handle',
+						draggable: '.sortable-input',
+						ghostClass: 'sortable-ghost',
+						chosenClass: 'sortable-chosen'
+					});
+				});
 			}
 		}
+
+		// Collect current group order from DOM
+		function getGroupOrder() {
+			var order = [];
+			document.querySelectorAll('.sortable-group').forEach(function(group) {
+				order.push(group.dataset.groupName);
+			});
+			return order;
+		}
+
+		// Collect current input order per group from DOM
+		function getInputOrder() {
+			var order = {};
+			document.querySelectorAll('.sortable-group').forEach(function(group) {
+				var groupName = group.dataset.groupName;
+				var inputs = [];
+				group.querySelectorAll('.sortable-input').forEach(function(input) {
+					inputs.push(input.dataset.inputName);
+				});
+				order[groupName] = inputs;
+			});
+			return order;
+		}
+
+		function saveCustomerInputConfig() {
+			var config = getConfigData();
+			var btn = document.getElementById('saveConfigBtn');
+			var text = document.getElementById('saveConfigText');
+			var spinner = document.getElementById('saveConfigSpinner');
+
+			// Disable button and show spinner
+			btn.disabled = true;
+			text.textContent = 'Saving...';
+			spinner.classList.remove('hidden');
+
+			// Collect all checked input names
+			var customerInputNames = [];
+			document.querySelectorAll('.customer-facing-checkbox:checked').forEach(function(checkbox) {
+				customerInputNames.push(checkbox.dataset.inputName);
+			});
+
+			// Collect ordering
+			var groupOrder = getGroupOrder();
+			var inputOrder = getInputOrder();
+
+			// Make API call
+			var url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';
+			fetch(url, {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					customer_input_names: customerInputNames,
+					group_order: groupOrder,
+					input_order: inputOrder
+				})
+			})
+			.then(function(response) {
+				if (!response.ok) {
+					throw new Error('Failed to save configuration');
+				}
+				return response.json();
+			})
+			.then(function(data) {
+				showToast('Configuration saved successfully', 'success');
+			})
+			.catch(function(error) {
+				showToast('Failed to save configuration: ' + error.message, 'error');
+			})
+			.finally(function() {
+				// Re-enable button
+				btn.disabled = false;
+				text.textContent = 'Save Configuration';
+				spinner.classList.add('hidden');
+			});
+		}
+
+		// Initialize on page load
+		document.addEventListener('DOMContentLoaded', initSortable);
 	</script>
 }
