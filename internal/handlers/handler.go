@@ -16,6 +16,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -548,6 +549,7 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
 		LogoBase64:         theme.LogoBase64,
+		CSSPath:            assets.VendorCSSPath(),
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.LoginPage(props))
@@ -702,6 +704,7 @@ func (h *Handler) VendorRegisterPageTempl(c *gin.Context) {
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
 		LogoBase64:         theme.LogoBase64,
+		CSSPath:            assets.VendorCSSPath(),
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.RegisterPage(props))
@@ -795,6 +798,7 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
 			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
 		},
 		Orgs: orgs,
 	}
@@ -937,6 +941,7 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
 			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org: org,
 	}
@@ -1056,6 +1061,7 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
 			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:   org,
 		Links: links,
@@ -1228,6 +1234,7 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
 			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
 		},
 		Link:       &link,
 		InstallURL: installURL,
@@ -1620,6 +1627,7 @@ func (h *Handler) ThemeSettingsPage(c *gin.Context) {
 			BasePath:         h.basePath,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Theme: theme,
 	}
@@ -1946,6 +1954,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
 			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:  org,
 		Apps: templApps,
@@ -2156,6 +2165,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 			BasePath:         h.basePath,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:   org,
 		AppID: appID,
@@ -2307,6 +2317,7 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 			BasePath:         h.basePath,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org: org,
 		App: vendorpages.AppInfo{
@@ -2427,6 +2438,7 @@ func (h *Handler) CustomerAuthSettingsPage(c *gin.Context) {
 			BasePath:         h.basePath,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Config: config,
 	}

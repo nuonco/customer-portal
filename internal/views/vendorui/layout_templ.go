@@ -39,6 +39,9 @@ type LayoutProps struct {
 	HeadingFontBase64  string
 	BodyFontBase64     string
 	LogoBase64         string
+
+	// Asset paths (cache-busted)
+	CSSPath string
 }
 
 // Layout renders the vendor layout with sidebar, topbar, and content area
@@ -70,13 +73,26 @@ func Layout(props LayoutProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 43, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 46, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><!-- Stratus Design System - Vendor CSS --><link href=\"/static/css/vendor.css\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><!-- Stratus Design System - Vendor CSS --><link href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 templ.SafeURL
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 48, Col: 29}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -84,7 +100,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Inter font (Stratus default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom fonts via @font-face -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Inter font (Stratus default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom fonts via @font-face -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -100,7 +116,7 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Vendor Theme Overrides -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Vendor Theme Overrides -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -114,7 +130,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -128,7 +144,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Main Content Area --><div class=\"flex-1 flex flex-col h-full overflow-hidden\"><!-- Topbar with Breadcrumbs -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Main Content Area --><div class=\"flex-1 flex flex-col h-full overflow-hidden\"><!-- Topbar with Breadcrumbs -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -140,7 +156,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Entity Title Bar (shown on detail pages) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Entity Title Bar (shown on detail pages) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -152,7 +168,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Page Content --><main class=\"flex-1 p-6 overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Page Content --><main class=\"flex-1 p-6 overflow-y-auto\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -160,7 +176,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</main></div></div><!-- Preview Button --><div class=\"fixed bottom-4 right-4 z-50\"><button onclick=\"openPreviewModal()\" class=\"bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-md shadow-lg hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 transition\">Preview</button></div><!-- Preview Modal --><div id=\"preview-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Preview Release</h3><button type=\"button\" onclick=\"closePreviewModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">This application is currently in preview and under active development. Features may change and some functionality may be incomplete.</p></div><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end\"><button type=\"button\" onclick=\"closePreviewModal()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Got it</button></div></div></div></div><!-- Toast and Modal components -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</main></div></div><!-- Preview Button --><div class=\"fixed bottom-4 right-4 z-50\"><button onclick=\"openPreviewModal()\" class=\"bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-md shadow-lg hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 transition\">Preview</button></div><!-- Preview Modal --><div id=\"preview-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Preview Release</h3><button type=\"button\" onclick=\"closePreviewModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">This application is currently in preview and under active development. Features may change and some functionality may be incomplete.</p></div><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end\"><button type=\"button\" onclick=\"closePreviewModal()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Got it</button></div></div></div></div><!-- Toast and Modal components -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -180,7 +196,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Theme Settings Panel - lazy loaded via HTMX --><div id=\"settings-panel-container\"></div></body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- Theme Settings Panel - lazy loaded via HTMX --><div id=\"settings-panel-container\"></div></body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -204,12 +220,12 @@ func darkModeAndSidebarScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var4 == nil {
+			templ_7745c5c3_Var4 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookie and apply collapsed class to <html>\n\t\t\t// This prevents the flash where sidebar expands then collapses on page load\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookie and apply collapsed class to <html>\n\t\t\t// This prevents the flash where sidebar expands then collapses on page load\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -233,12 +249,12 @@ func customHeadingFont(base64URL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomHeading';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomHeading';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -262,12 +278,12 @@ func customBodyFont(base64URL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomBody';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomBody';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -317,9 +333,9 @@ func themeOverrides(props LayoutProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templ.Raw(buildVendorThemeCSS(props)).Render(ctx, templ_7745c5c3_Buffer)
@@ -346,12 +362,12 @@ func layoutScripts(basePath string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Preview Modal\n\t\tfunction openPreviewModal() {\n\t\t\tdocument.getElementById('preview-modal').classList.remove('hidden');\n\t\t}\n\t\tfunction closePreviewModal() {\n\t\t\tdocument.getElementById('preview-modal').classList.add('hidden');\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseConnectOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Preview Modal\n\t\tfunction openPreviewModal() {\n\t\t\tdocument.getElementById('preview-modal').classList.remove('hidden');\n\t\t}\n\t\tfunction closePreviewModal() {\n\t\t\tdocument.getElementById('preview-modal').classList.add('hidden');\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseConnectOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -375,25 +391,25 @@ func connectOrgModal(basePath string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div id=\"connect-org-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Organization</h3><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"connect-org-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"org-name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Organization Name</label> <input type=\"text\" id=\"org-name\" name=\"name\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"My Organization\"></div><div><label for=\"nuon-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID</label> <input type=\"text\" id=\"nuon-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token</label> <input type=\"password\" id=\"api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"></div><div id=\"connect-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitConnectOrg()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"connect-org-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div id=\"connect-org-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Organization</h3><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"connect-org-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"org-name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Organization Name</label> <input type=\"text\" id=\"org-name\" name=\"name\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"My Organization\"></div><div><label for=\"nuon-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID</label> <input type=\"text\" id=\"nuon-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token</label> <input type=\"password\" id=\"api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"></div><div id=\"connect-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitConnectOrg()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"connect-org-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		var templ_7745c5c3_Var10 string
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 415, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 418, Col: 27}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -421,12 +437,12 @@ func connectOrgScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script>\n\t\tasync function submitConnectOrg() {\n\t\t\tconst configEl = document.getElementById('connect-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('connect-org-form');\n\t\t\tconst errorDiv = document.getElementById('connect-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/orgs/', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\tname: formData.get('name'),\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\twindow.location.href = basePath + '/orgs/' + data.org.id + '/links';\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect organization';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<script>\n\t\tasync function submitConnectOrg() {\n\t\t\tconst configEl = document.getElementById('connect-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('connect-org-form');\n\t\t\tconst errorDiv = document.getElementById('connect-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/orgs/', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\tname: formData.get('name'),\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\twindow.location.href = basePath + '/orgs/' + data.org.id + '/links';\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect organization';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -450,12 +466,12 @@ func keyboardShortcutsModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div id=\"keyboard-shortcuts-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200\" style=\"z-index: 100;\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Keyboard Shortcuts</h3><button type=\"button\" onclick=\"closeKeyboardShortcutsModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div></div></div><style>\n\t\t#keyboard-shortcuts-modal.modal-visible {\n\t\t\topacity: 1;\n\t\t\tpointer-events: auto;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div id=\"keyboard-shortcuts-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200\" style=\"z-index: 100;\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Keyboard Shortcuts</h3><button type=\"button\" onclick=\"closeKeyboardShortcutsModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div></div></div><style>\n\t\t#keyboard-shortcuts-modal.modal-visible {\n\t\t\topacity: 1;\n\t\t\tpointer-events: auto;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -17,6 +17,9 @@ type RegisterPageProps struct {
 	HeadingFontBase64  string
 	BodyFontBase64     string
 	LogoBase64         string
+
+	// Asset paths (cache-busted)
+	CSSPath string
 }
 
 // RegisterPage renders the vendor registration page
@@ -27,7 +30,7 @@ templ RegisterPage(props RegisterPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
-			<link href="/static/css/vendor.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			@registerDarkModeScript()
 			@registerFontLinks(props)
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>

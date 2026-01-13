@@ -20,6 +20,9 @@ type LoginPageProps struct {
 	HeadingFontBase64  string
 	BodyFontBase64     string
 	LogoBase64         string
+
+	// Asset paths (cache-busted)
+	CSSPath string
 }
 
 // LoginPage renders the vendor login page
@@ -30,7 +33,7 @@ templ LoginPage(props LoginPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
-			<link href="/static/css/vendor.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			@darkModeScript()
 			@fontLinks(props)
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>

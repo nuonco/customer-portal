@@ -31,6 +31,9 @@ type LayoutProps struct {
 	HeadingFontBase64  string
 	BodyFontBase64     string
 	LogoBase64         string
+
+	// Asset paths (cache-busted)
+	CSSPath string
 }
 
 // Layout renders the vendor layout with sidebar, topbar, and content area
@@ -42,7 +45,7 @@ templ Layout(props LayoutProps) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
 			<!-- Stratus Design System - Vendor CSS -->
-			<link href="/static/css/vendor.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			<!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->
 			@darkModeAndSidebarScript()
 			<!-- Inter font (Stratus default) -->

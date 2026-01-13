@@ -3,12 +3,15 @@ package main
 import (
 	"log"
 	"os"
+	"regexp"
+	"strings"
 	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
@@ -17,6 +20,11 @@ import (
 )
 
 func main() {
+	// Initialize asset manifest for cache-busting
+	if err := assets.Init("./static"); err != nil {
+		log.Printf("Warning: Failed to initialize asset manifest: %v", err)
+	}
+
 	// Initialize database (uses DATABASE_URL env var or local defaults)
 	db, err := models.InitDB()
 	if err != nil {
@@ -96,6 +104,9 @@ func main() {
 
 	// Create single router with shared middleware
 	router := gin.Default()
+
+	// Add cache-control middleware for proper browser caching
+	router.Use(cacheControlMiddleware())
 
 	// Serve static files (shared across both interfaces)
 	router.Static("/static", "./static")
@@ -305,4 +316,32 @@ func getCustomerAuthMode(factory *auth.CustomerAuthProviderFactory) string {
 		return "OIDC"
 	}
 	return "email/password (configure OIDC in admin settings)"
+}
+
+// hashedAssetPattern matches filenames with 8-char hex hash before extension
+// e.g., vendor.a1b2c3d4.css, customer.deadbeef.css
+var hashedAssetPattern = regexp.MustCompile(`\.[a-f0-9]{8}\.(css|js)$`)
+
+// cacheControlMiddleware sets appropriate Cache-Control headers for responses
+func cacheControlMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		path := c.Request.URL.Path
+
+		// Long cache for hashed static assets (immutable)
+		// These files have content hashes in their names, so they can be cached forever
+		if strings.HasPrefix(path, "/static/") && hashedAssetPattern.MatchString(path) {
+			c.Header("Cache-Control", "public, max-age=31536000, immutable")
+			c.Next()
+			return
+		}
+
+		// Process the request first
+		c.Next()
+
+		// For HTML responses, ensure no caching so users always get fresh content
+		contentType := c.Writer.Header().Get("Content-Type")
+		if strings.Contains(contentType, "text/html") {
+			c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		}
+	}
 }

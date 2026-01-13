@@ -14,6 +14,7 @@ import (
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
@@ -304,6 +305,7 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		SupportContact:     theme.SupportContact,
 		RadiusClass:        theme.GetRadiusClass(),
 		DensityClass:       theme.GetDensityClass(),
+		CSSPath:            assets.CustomerCSSPath(),
 	}
 }
 

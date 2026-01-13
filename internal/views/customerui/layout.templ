@@ -25,6 +25,9 @@ type LayoutProps struct {
 	// Style variants
 	RadiusClass  string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"
 	DensityClass string // "density-compact", "density-comfortable", "density-spacious"
+
+	// Asset paths (cache-busted)
+	CSSPath string
 }
 
 // Layout renders the customer layout with header, content area, and footer
@@ -36,7 +39,7 @@ templ Layout(props LayoutProps) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
 			<!-- Customer CSS - Vanilla Tailwind (no Stratus components) -->
-			<link href="/static/css/customer.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			<!-- Dark mode detection -->
 			@customerDarkModeScript()
 			<!-- Inter font (default) -->
