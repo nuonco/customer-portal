@@ -83,3 +83,9 @@ docker_env:
   AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
   SERVICE_TYPE: app
   SERVICE_DEPLOYMENT: customer-dashboard
+
+  AUTH_PROVIDER: oidc
+  AUTH_CLIENT_ID: "457475541946-uar9phtln2tsth04t64kdscetel2l2cs.apps.googleusercontent.com"
+  AUTH_OIDC_ISSUER_URL: "https://accounts.google.com"
+  AUTH_REDIRECT_URI: http://localhost:8080/admin/callback
+  AUTH_CLIENT_SECRET: "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"

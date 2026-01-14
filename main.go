@@ -17,6 +17,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 )
 
 func main() {
@@ -24,6 +25,14 @@ func main() {
 	if err := assets.Init("./static"); err != nil {
 		log.Printf("Warning: Failed to initialize asset manifest: %v", err)
 	}
+
+	// Initialize template renderer (dev mode for hot-reloading in development)
+	devMode := os.Getenv("DEV_MODE") == "true" || os.Getenv("GIN_MODE") != "release"
+	renderer, err := templates.NewRenderer(devMode)
+	if err != nil {
+		log.Fatalf("Failed to initialize template renderer: %v", err)
+	}
+	log.Printf("Template renderer initialized (dev mode: %v)", devMode)
 
 	// Initialize database (uses DATABASE_URL env var or local defaults)
 	db, err := models.InitDB()
@@ -129,14 +138,18 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, renderer)
 
-	// Create customer auth factory for dynamic OIDC/local auth
-	customerAuthFactory := auth.NewCustomerAuthProviderFactory(db, customerBaseURL)
+	// Create customer auth factory with env var OIDC as fallback
+	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
+	customerAuthFactory, err := auth.NewCustomerAuthProviderFactory(db, customerBaseURL, &authConfig)
+	if err != nil {
+		log.Fatalf("Failed to initialize customer authentication: %v", err)
+	}
 	log.Printf("Customer authentication: %s", getCustomerAuthMode(customerAuthFactory))
 
 	// Set up customer routes at root level (no prefix)
-	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL)
+	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, renderer)
 
 	// Start background health check runner (needs Nuon API URL for status checks)
 	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL)
@@ -152,9 +165,9 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string, renderer *templates.Renderer) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin")
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", renderer)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -248,22 +261,19 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 }
 
 // setupCustomerRoutes configures customer-facing routes on the given router group
-func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string) {
-	// Initialize handlers with customer auth factory for dynamic OIDC/local auth
-	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "")
+func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string, renderer *templates.Renderer) {
+	// Initialize handlers with customer auth factory (OIDC only, no local auth)
+	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", renderer)
 
-	// Public routes - customer login (dynamic based on config)
+	// Public routes - customer login (OIDC only)
 	rg.GET("/login", h.CustomerLoginPageTempl)
 	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
-	rg.POST("/login", h.CustomerLocalLogin)     // Local email/password login
-	rg.POST("/login/", h.CustomerLocalLogin)
 
-	// OIDC callback (when OIDC is enabled)
+	// OIDC callback
 	rg.GET("/callback", h.CustomerOIDCCallback)
 
-	// Registration (only when OIDC is disabled)
+	// Registration disabled - redirect to login
 	rg.GET("/register", h.CustomerRegisterPage)
-	rg.POST("/register", h.CustomerRegister)
 
 	// Install link acceptance (customer signup flow)
 	installLinks := rg.Group("/install-link")
@@ -308,14 +318,15 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 // getCustomerAuthMode returns a description of the current customer auth configuration
 func getCustomerAuthMode(factory *auth.CustomerAuthProviderFactory) string {
-	if factory.IsOIDCEnabled() {
+	source := factory.GetOIDCSource()
+	if source == auth.OIDCSourceDatabase {
 		config, _ := factory.GetConfig()
 		if config != nil && config.ProviderName != "" {
-			return "OIDC (" + config.ProviderName + ")"
+			return "OIDC (" + config.ProviderName + ") [database]"
 		}
-		return "OIDC"
+		return "OIDC [database]"
 	}
-	return "email/password (configure OIDC in admin settings)"
+	return "OIDC [environment fallback]"
 }
 
 // hashedAssetPattern matches filenames with 8-char hex hash before extension

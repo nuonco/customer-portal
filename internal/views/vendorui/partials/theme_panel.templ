@@ -59,6 +59,8 @@ templ ThemePanel(props ThemePanelProps) {
 					@themePageStyleSection(props.Theme)
 					<!-- Support Section -->
 					@themeSupportSection(props.Theme)
+					<!-- Customer Login Section -->
+					@themeCustomerLoginSection(props.Theme)
 					<!-- Save Button -->
 					<div class="flex space-x-3">
 						<button type="button" id="panelSaveButton" onclick="panelSaveSettings()" class="flex-1 inline-flex items-center justify-center px-5 py-2.5 text-sm rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700">
@@ -326,6 +328,36 @@ templ themeSupportSection(theme *models.AppTheme) {
 	</div>
 }
 
+templ themeCustomerLoginSection(theme *models.AppTheme) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Customer Login Page</h3>
+		<div class="space-y-4">
+			<div>
+				<label for="panelLoginTitle" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Title</label>
+				<input
+					type="text"
+					id="panelLoginTitle"
+					value={ theme.GetLoginTitle() }
+					placeholder="Customer Dashboard"
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Main heading shown on the customer login page.</p>
+			</div>
+			<div>
+				<label for="panelLoginSubtitle" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Subtitle</label>
+				<input
+					type="text"
+					id="panelLoginSubtitle"
+					value={ theme.GetLoginSubtitle() }
+					placeholder="Manage your customer's install experience."
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Descriptive text shown below the title.</p>
+			</div>
+		</div>
+	</div>
+}
+
 func getPrimaryColorOrDefault(color string) string {
 	if color == "" {
 		return "#8040BF"
@@ -470,6 +502,8 @@ templ themePanelScript() {
 					body_font: document.getElementById("panelBodyFont").value,
 					border_radius: document.querySelector('input[name="borderRadius"]:checked')?.value || "rounded",
 					spacing_density: document.querySelector('input[name="spacingDensity"]:checked')?.value || "comfortable",
+					login_title: document.getElementById("panelLoginTitle").value,
+					login_subtitle: document.getElementById("panelLoginSubtitle").value,
 				};
 
 				const originalLogo = panel.dataset.logoBase64 || '';

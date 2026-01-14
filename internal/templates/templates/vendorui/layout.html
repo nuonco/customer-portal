@@ -1,0 +1,544 @@
+{{ define "vendor-layout" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Title }}</title>
+    <!-- Stratus Design System - Vendor CSS -->
+    <link href="{{ .CSSPath }}" rel="stylesheet">
+    <!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->
+    {{ template "vendor-dark-mode-script" }}
+    <!-- Inter font (Stratus default) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Custom fonts via @font-face -->
+    {{ if and .Theme .Theme.HeadingFontBase64 }}{{ template "custom-heading-font" .Theme }}{{ end }}
+    {{ if and .Theme .Theme.BodyFontBase64 }}{{ template "custom-body-font" .Theme }}{{ end }}
+    <!-- HTMX for dynamic interactions -->
+    <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+    <!-- SortableJS for drag-and-drop -->
+    <script src="/static/js/sortable.min.js"></script>
+    <!-- Vendor Theme Overrides -->
+    {{ if .Theme }}{{ themeCSS .Theme }}{{ end }}
+    {{ template "vendor-layout-scripts" .BasePath }}
+</head>
+<body class="bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        {{ template "vendor-sidebar" . }}
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col h-full overflow-hidden">
+            <!-- Topbar with Breadcrumbs -->
+            {{ template "vendor-topbar" . }}
+            <!-- Entity Title Bar (shown on detail pages) -->
+            {{ template "vendor-title-bar" . }}
+            <!-- Page Content -->
+            <main class="flex-1 p-6 overflow-y-auto">
+                {{ block "content" . }}{{ end }}
+            </main>
+        </div>
+    </div>
+    <!-- Preview Button -->
+    <div class="fixed bottom-4 right-4 z-50">
+        <button
+            onclick="openPreviewModal()"
+            class="bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-md shadow-lg hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 transition"
+        >
+            Preview
+        </button>
+    </div>
+    {{ template "preview-modal" }}
+    {{ template "vendor-toast" }}
+    {{ template "vendor-confirm-modal" }}
+    {{ template "vendor-connect-org-modal" .BasePath }}
+    {{ template "vendor-keyboard-shortcuts-modal" }}
+    <!-- Theme Settings Panel - lazy loaded via HTMX -->
+    <div id="settings-panel-container"></div>
+</body>
+</html>
+{{ end }}
+
+{{ define "vendor-dark-mode-script" }}
+<script>
+    (function() {
+        // Check system preference for dark mode
+        if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        // Listen for system preference changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+            document.documentElement.classList.toggle('dark', e.matches);
+        });
+
+        // Check sidebar cookie and apply collapsed class to <html>
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+            var cookie = cookies[i].trim();
+            if (cookie.startsWith('sidebar_open=0')) {
+                document.documentElement.classList.add('sidebar-collapsed');
+                break;
+            }
+        }
+    })();
+</script>
+{{ end }}
+
+{{ define "vendor-layout-scripts" }}
+<script>
+    function logout() {
+        window.location.href = "/admin/logout";
+    }
+
+    function openPreviewModal() {
+        document.getElementById('preview-modal').classList.remove('hidden');
+    }
+    function closePreviewModal() {
+        document.getElementById('preview-modal').classList.add('hidden');
+    }
+
+    function getCookie(name) {
+        const value = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+        return value ? value.pop() : null;
+    }
+
+    function setCookie(name, value) {
+        document.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';
+    }
+
+    function toggleMainSidebar() {
+        const sidebar = document.getElementById('main-sidebar');
+        if (sidebar) {
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+            document.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);
+            setCookie('sidebar_open', isCollapsed ? '0' : '1');
+        }
+    }
+
+    function togglePageSidebar() {
+        const subnav = document.getElementById('page-sidebar');
+        if (subnav) {
+            const isCollapsed = subnav.classList.toggle('collapsed');
+            setCookie('page_sidebar_open', isCollapsed ? '0' : '1');
+        }
+    }
+
+    function openKeyboardShortcutsModal() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            modal.classList.add('modal-visible');
+        }
+        const userDropdown = document.getElementById('userDropdown');
+        if (userDropdown) {
+            userDropdown.classList.add('hidden');
+        }
+    }
+
+    function closeKeyboardShortcutsModal() {
+        const modal = document.getElementById('keyboard-shortcuts-modal');
+        if (modal) {
+            modal.classList.remove('modal-visible');
+        }
+    }
+
+    function openConnectOrgModal() {
+        const modal = document.getElementById('connect-org-modal');
+        if (modal) {
+            modal.classList.remove('hidden');
+        }
+    }
+
+    function closeConnectOrgModal() {
+        const modal = document.getElementById('connect-org-modal');
+        if (modal) {
+            modal.classList.add('hidden');
+        }
+    }
+
+    // Global Keyboard Shortcuts
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {
+            toggleMainSidebar();
+            e.preventDefault();
+            return;
+        }
+        if (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {
+            togglePageSidebar();
+            e.preventDefault();
+            return;
+        }
+        if (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {
+            openKeyboardShortcutsModal();
+            e.preventDefault();
+            return;
+        }
+        if (e.key === 'Escape') {
+            closeKeyboardShortcutsModal();
+            closeConnectOrgModal();
+        }
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        if (document.documentElement.classList.contains('sidebar-collapsed')) {
+            const sidebar = document.getElementById('main-sidebar');
+            if (sidebar) {
+                sidebar.classList.add('collapsed');
+            }
+        }
+        if (getCookie('page_sidebar_open') === '0') {
+            const subnav = document.getElementById('page-sidebar');
+            if (subnav) {
+                subnav.classList.add('collapsed');
+            }
+        }
+    });
+</script>
+{{ end }}
+
+{{ define "vendor-sidebar" }}
+<aside id="main-sidebar" class="stratus-sidebar">
+    <div class="stratus-sidebar-header">
+        <div class="flex items-center space-x-3">
+            {{ if and .Theme .Theme.LogoBase64 }}
+                <img src="{{ .Theme.LogoBase64 }}" alt="Logo" class="h-8 w-auto max-w-32 object-contain">
+            {{ else }}
+                <div class="flex items-center justify-center w-8 h-8 rounded bg-primary-600 text-white font-bold text-sm">
+                    {{ if .CurrentOrg }}{{ safeSlice .CurrentOrg.Name 0 2 | upper }}{{ else }}N{{ end }}
+                </div>
+            {{ end }}
+            <span class="stratus-sidebar-title">{{ if .CurrentOrg }}{{ .CurrentOrg.Name }}{{ else }}nuon{{ end }}</span>
+        </div>
+        <button onclick="toggleMainSidebar()" class="stratus-sidebar-toggle">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"></path>
+            </svg>
+        </button>
+    </div>
+    <nav class="stratus-sidebar-nav">
+        {{ if .CurrentOrg }}
+            <a href="{{ .BasePath }}/orgs/{{ .CurrentOrg.ID }}/apps" class="stratus-sidebar-link {{ if eq .ActivePage "apps" }}active{{ end }}">
+                <svg class="stratus-sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"></path>
+                </svg>
+                <span>Apps</span>
+            </a>
+            <a href="{{ .BasePath }}/orgs/{{ .CurrentOrg.ID }}/links" class="stratus-sidebar-link {{ if eq .ActivePage "links" }}active{{ end }}">
+                <svg class="stratus-sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                </svg>
+                <span>Links</span>
+            </a>
+        {{ end }}
+    </nav>
+    <div class="stratus-sidebar-footer">
+        <a href="{{ .BasePath }}/docs" target="_blank" class="stratus-sidebar-link">
+            <svg class="stratus-sidebar-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+            </svg>
+            <span>Documentation</span>
+        </a>
+    </div>
+</aside>
+{{ end }}
+
+{{ define "vendor-topbar" }}
+<header class="stratus-topbar">
+    <nav class="stratus-breadcrumbs">
+        {{ range .Breadcrumbs }}
+            {{ if not .Active }}
+                <a href="{{ .Path }}" class="stratus-breadcrumb-link">{{ .Text }}</a>
+                <span class="stratus-breadcrumb-separator">/</span>
+            {{ else }}
+                <span class="stratus-breadcrumb-current">{{ .Text }}</span>
+            {{ end }}
+        {{ end }}
+    </nav>
+    <div class="stratus-topbar-actions">
+        {{ if .User }}
+            <div class="relative">
+                <button
+                    onclick="document.getElementById('userDropdown').classList.toggle('hidden')"
+                    class="stratus-user-button"
+                >
+                    <div class="stratus-user-avatar">{{ safeSlice .User.Name 0 1 | upper }}</div>
+                    <span class="stratus-user-name">{{ .User.Name }}</span>
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                    </svg>
+                </button>
+                <div id="userDropdown" class="stratus-dropdown hidden">
+                    <button
+                        type="button"
+                        hx-get="{{ .BasePath }}/settings/panel"
+                        hx-target="#settings-panel-container"
+                        hx-trigger="click"
+                        hx-swap="innerHTML"
+                        class="stratus-menu-item"
+                    >
+                        <span>Theme settings</span>
+                    </button>
+                    <button
+                        type="button"
+                        hx-get="{{ .BasePath }}/settings/profile/panel"
+                        hx-target="#settings-panel-container"
+                        hx-trigger="click"
+                        hx-swap="innerHTML"
+                        class="stratus-menu-item"
+                    >
+                        <span>Profile</span>
+                    </button>
+                    <hr class="stratus-menu-divider">
+                    <button onclick="openKeyboardShortcutsModal()" class="stratus-menu-item">
+                        <span>Keyboard shortcuts</span>
+                        <kbd class="stratus-kbd">?</kbd>
+                    </button>
+                    <hr class="stratus-menu-divider">
+                    <button onclick="logout()" class="stratus-menu-item text-red-600 dark:text-red-400">
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        {{ end }}
+    </div>
+</header>
+{{ end }}
+
+{{ define "vendor-title-bar" }}
+{{ if .EntityTitle }}
+<div class="stratus-title-bar">
+    <div class="stratus-title-bar-content">
+        <h1 class="stratus-title">{{ .EntityTitle }}</h1>
+        {{ if .EntityID }}
+            <span class="stratus-entity-id">{{ .EntityID }}</span>
+        {{ end }}
+    </div>
+    {{ if .EntityActions }}
+        <div class="stratus-title-bar-actions">
+            {{ range .EntityActions }}
+                {{ template "button" . }}
+            {{ end }}
+        </div>
+    {{ end }}
+</div>
+{{ end }}
+{{ end }}
+
+{{ define "vendor-toast" }}
+<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+<script>
+    window.showToast = function(message, type) {
+        type = type || 'info';
+        var container = document.getElementById('toast-container');
+        var toast = document.createElement('div');
+        var bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+        toast.className = bgColor + ' text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0';
+        toast.textContent = message;
+        container.appendChild(toast);
+        setTimeout(function() {
+            toast.classList.remove('translate-x-full', 'opacity-0');
+        }, 10);
+        setTimeout(function() {
+            toast.classList.add('translate-x-full', 'opacity-0');
+            setTimeout(function() {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    };
+</script>
+{{ end }}
+
+{{ define "vendor-confirm-modal" }}
+<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden z-50 overflow-y-auto">
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl max-w-md w-full p-6 my-8 border border-cool-grey-300 dark:border-dark-grey-500">
+            <h3 id="confirm-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
+            <p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
+            <div class="flex justify-end space-x-3">
+                <button id="confirm-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
+                    Cancel
+                </button>
+                <button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700">
+                    Confirm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    window.showConfirmModal = function(options) {
+        return new Promise(function(resolve) {
+            var modal = document.getElementById('confirm-modal');
+            document.getElementById('confirm-title').textContent = options.title || 'Confirm';
+            document.getElementById('confirm-message').textContent = options.message || 'Are you sure?';
+            document.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';
+            document.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';
+            modal.classList.remove('hidden');
+            document.getElementById('confirm-ok').onclick = function() {
+                modal.classList.add('hidden');
+                resolve(true);
+            };
+            document.getElementById('confirm-cancel').onclick = function() {
+                modal.classList.add('hidden');
+                resolve(false);
+            };
+        });
+    };
+</script>
+{{ end }}
+
+{{ define "vendor-connect-org-modal" }}
+<div id="connect-org-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
+            <div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
+                <h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Organization</h3>
+                <button type="button" onclick="closeConnectOrgModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+            <form id="connect-org-form" class="px-6 py-4 space-y-4">
+                <div>
+                    <label for="org-name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+                        Organization Name
+                    </label>
+                    <input
+                        type="text"
+                        id="org-name"
+                        name="name"
+                        required
+                        class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="My Organization"
+                    >
+                </div>
+                <div>
+                    <label for="nuon-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+                        Nuon Org ID
+                    </label>
+                    <input
+                        type="text"
+                        id="nuon-org-id"
+                        name="org_id"
+                        required
+                        class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="org_..."
+                    >
+                </div>
+                <div>
+                    <label for="api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+                        API Token
+                    </label>
+                    <input
+                        type="password"
+                        id="api-token"
+                        name="api_token"
+                        required
+                        class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                        placeholder="nuon_pat_..."
+                    >
+                </div>
+                <div id="connect-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+            </form>
+            <div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
+                <button type="button" onclick="closeConnectOrgModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
+                    Cancel
+                </button>
+                <button type="button" onclick="submitConnectOrg()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
+                    Connect
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="connect-org-config" class="hidden" data-base-path="{{ . }}"></div>
+<script>
+    async function submitConnectOrg() {
+        const configEl = document.getElementById('connect-org-config');
+        const basePath = configEl.dataset.basePath;
+        const form = document.getElementById('connect-org-form');
+        const errorDiv = document.getElementById('connect-org-error');
+        const formData = new FormData(form);
+
+        errorDiv.classList.add('hidden');
+
+        try {
+            const response = await fetch(basePath + '/orgs/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    name: formData.get('name'),
+                    org_id: formData.get('org_id'),
+                    api_token: formData.get('api_token')
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                window.location.href = basePath + '/orgs/' + data.org.id + '/links';
+            } else {
+                const error = await response.json();
+                errorDiv.textContent = error.error || 'Failed to connect organization';
+                errorDiv.classList.remove('hidden');
+            }
+        } catch (err) {
+            errorDiv.textContent = 'Network error. Please try again.';
+            errorDiv.classList.remove('hidden');
+        }
+    }
+</script>
+{{ end }}
+
+{{ define "vendor-keyboard-shortcuts-modal" }}
+<div id="keyboard-shortcuts-modal" class="fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200" style="z-index: 100;">
+    <div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500">
+        <div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
+            <h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Keyboard Shortcuts</h3>
+            <button type="button" onclick="closeKeyboardShortcutsModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+        </div>
+        <div class="px-6 py-4 space-y-3">
+            <div class="flex justify-between items-center">
+                <span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle main sidebar</span>
+                <div class="flex gap-1">
+                    <kbd class="stratus-kbd">Alt</kbd>
+                    <kbd class="stratus-kbd">S</kbd>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle page sidebar</span>
+                <div class="flex gap-1">
+                    <kbd class="stratus-kbd">Alt</kbd>
+                    <kbd class="stratus-kbd">Shift</kbd>
+                    <kbd class="stratus-kbd">S</kbd>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-cool-grey-600 dark:text-cool-grey-400">Show keyboard shortcuts</span>
+                <div class="flex gap-1">
+                    <kbd class="stratus-kbd">?</kbd>
+                </div>
+            </div>
+            <div class="flex justify-between items-center">
+                <span class="text-cool-grey-600 dark:text-cool-grey-400">Close modal</span>
+                <div class="flex gap-1">
+                    <kbd class="stratus-kbd">Esc</kbd>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<style>
+    #keyboard-shortcuts-modal.modal-visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+</style>
+{{ end }}

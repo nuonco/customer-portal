@@ -4,128 +4,101 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// LoginPageProps for the customer login page
-type LoginPageProps struct {
-	Title        string
-	ButtonText   string
-	HelpText     string
-	BasePath     string
-	RedirectURL  string
-	Theme        *models.AppTheme
-	UseOIDC      bool   // Show OIDC button instead of email/password form
-	AuthURL      string // OIDC authorization URL
-	ProviderName string // e.g., "Google", "Okta"
-	Error        string // Error message to display
+// CustomerLoginPageProps for the themed customer login page
+type CustomerLoginPageProps struct {
+	BasePath   string
+	AuthURL    string
+	Error      string
+	SwitchURL  string
+	SwitchText string
+	Theme      *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
 }
 
-// LoginPage renders the customer login page
-templ LoginPage(props LoginPageProps) {
+// CustomerLoginPage renders the customer login page with vendor theming
+templ CustomerLoginPage(props CustomerLoginPageProps) {
 	<!DOCTYPE html>
 	<html lang="en">
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>{ props.Title }</title>
+			<title>{ getLoginTitle(props.Theme) }</title>
 			<link href="/static/css/customer.css" rel="stylesheet"/>
-			@loginDarkModeScript()
-			@loginFontLinks(props.Theme)
-			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
-			@loginThemeStyles(props.Theme)
+			@customerLoginDarkModeScript()
+			@customerLoginFontLinks(props.Theme)
+			@customerLoginThemeStyles(props.Theme)
 		</head>
-		<body class="bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white">
-			<nav class="bg-theme-primary text-white p-4">
-				<div class="container mx-auto flex justify-between items-center">
-					<div class="flex items-center space-x-3">
+		<body class="bg-cool-grey-50 dark:bg-dark-grey-950">
+			<div class="flex h-screen w-full">
+				<!-- Left Side - Content -->
+				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] bg-cool-grey-50 dark:bg-dark-grey-950 px-8 md:px-20 py-16">
+					<!-- Card -->
+					<div class="bg-white dark:bg-dark-grey-800 border border-cool-grey-500/25 dark:border-dark-grey-500 shadow-sm px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8" style="border-radius: var(--theme-radius)">
+						<!-- Logo -->
 						if props.Theme != nil && props.Theme.LogoBase64 != "" {
-							<img src={ props.Theme.LogoBase64 } alt="Logo" class="h-8 w-auto max-w-xs object-contain"/>
+							<img src={ props.Theme.LogoBase64 } alt="Logo" class="h-10 w-auto max-w-xs object-contain"/>
 						}
-						<h1 class="text-xl font-heading font-semibold">{ props.Title }</h1>
-					</div>
-				</div>
-			</nav>
-			<main class="container mx-auto p-4">
-				<div class="max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10" style="border-radius: var(--theme-radius)">
-					<h2 class="text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white">{ props.Title }</h2>
-					if props.Error != "" {
-						<div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300" style="border-radius: var(--theme-radius)">
-							{ props.Error }
+						<!-- Heading and Subtitle -->
+						<div class="flex flex-col gap-6">
+							<h1 class="text-[34px] leading-10 tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white">
+								{ getLoginTitle(props.Theme) }
+							</h1>
+							<p class="text-lg leading-[27px] tracking-[-0.2px] font-body text-cool-grey-600 dark:text-white/70">
+								{ getLoginSubtitle(props.Theme) }
+							</p>
 						</div>
-					}
-					if props.UseOIDC {
-						<!-- OIDC Login Button -->
+						<!-- Error message -->
+						if props.Error != "" {
+							<div class="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300" style="border-radius: var(--theme-radius)">
+								{ props.Error }
+							</div>
+						}
+						<!-- Sign Up Button (Primary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
-							class="w-full flex items-center justify-center bg-theme-primary hover:bg-theme-primary-hover text-white py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500"
+							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors"
 							style="border-radius: var(--theme-radius)"
 						>
-							@oidcProviderIcon(props.ProviderName)
-							<span>Continue with { props.ProviderName }</span>
+							Sign up
 						</a>
-						if props.HelpText != "" {
-							<p class="mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center">
-								{ props.HelpText }
+						<!-- Divider -->
+						<hr class="border-cool-grey-300 dark:border-dark-grey-500"/>
+						<!-- Already have account section -->
+						<h2 class="text-2xl leading-[30px] tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white">
+							Already have an account?
+						</h2>
+						<!-- Sign In Button (Secondary) -->
+						<a
+							href={ templ.SafeURL(props.AuthURL) }
+							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border bg-white dark:bg-dark-grey-700 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors"
+							style={ "border-radius: var(--theme-radius); border-color: var(--theme-primary); color: var(--theme-primary)" }
+						>
+							Sign in
+						</a>
+						<!-- Switch link to other login page -->
+						if props.SwitchURL != "" && props.SwitchText != "" {
+							<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center font-body">
+								<a href={ templ.SafeURL(props.SwitchURL) } class="hover:underline" style="color: var(--theme-primary)">
+									{ props.SwitchText }
+								</a>
 							</p>
 						}
-					} else {
-						<!-- Email/Password Login Form -->
-						<form id="loginForm" class="space-y-4">
-							<div>
-								<label for="email" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
-									Email
-								</label>
-								<input
-									type="email"
-									id="email"
-									name="email"
-									required
-									class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-									style="border-radius: var(--theme-radius)"
-									placeholder="Enter your email"
-								/>
-							</div>
-							<div>
-								<label for="password" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
-									Password
-								</label>
-								<input
-									type="password"
-									id="password"
-									name="password"
-									required
-									class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-									style="border-radius: var(--theme-radius)"
-									placeholder="Enter your password"
-								/>
-							</div>
-							<button
-								type="submit"
-								class="w-full bg-theme-primary hover:bg-theme-primary-hover text-white py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500"
-								style="border-radius: var(--theme-radius)"
-							>
-								{ props.ButtonText }
-							</button>
-						</form>
-						if props.HelpText != "" {
-							<p class="mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center">
-								{ props.HelpText }
-							</p>
-						}
-						<p class="mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center">
-							Don't have an account?
-							if props.RedirectURL != "" {
-								<a href={ templ.SafeURL(props.BasePath + "/register?redirect=" + props.RedirectURL) } class="text-primary-600 hover:text-primary-700 dark:text-primary-400">Sign up</a>
-							} else {
-								<a href={ templ.SafeURL(props.BasePath + "/register") } class="text-primary-600 hover:text-primary-700 dark:text-primary-400">Sign up</a>
-							}
-						</p>
-					}
-					<div
-						id="error"
-						class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden"
-						style="border-radius: var(--theme-radius)"
-					></div>
+					</div>
 				</div>
-			</main>
+				<!-- Right Side - Themed Background -->
+				<div class="hidden lg:flex relative flex-1 overflow-hidden bg-theme-primary">
+					<!-- Decorative pattern overlay -->
+					<div class="absolute inset-0 opacity-10">
+						<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+							<defs>
+								<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+									<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+								</pattern>
+							</defs>
+							<rect width="100" height="100" fill="url(#grid)"/>
+						</svg>
+					</div>
+				</div>
+			</div>
 			<!-- Preview Button -->
 			<div class="fixed bottom-4 right-4 z-50">
 				<button
@@ -168,14 +141,11 @@ templ LoginPage(props LoginPageProps) {
 					document.getElementById('preview-modal').classList.add('hidden');
 				}
 			</script>
-			<!-- Config data for JavaScript -->
-			<div id="login-config" class="hidden" data-login-url={ props.BasePath + "/login/" } data-redirect-url={ props.RedirectURL }></div>
-			@customerLoginScript()
 		</body>
 	</html>
 }
 
-templ loginDarkModeScript() {
+templ customerLoginDarkModeScript() {
 	<script>
 		(function() {
 			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -188,7 +158,7 @@ templ loginDarkModeScript() {
 	</script>
 }
 
-templ loginFontLinks(theme *models.AppTheme) {
+templ customerLoginFontLinks(theme *models.AppTheme) {
 	<link rel="preconnect" href="https://fonts.googleapis.com"/>
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
@@ -210,109 +180,85 @@ templ loginFontLinks(theme *models.AppTheme) {
 			}
 		</style>
 	}
+	if theme != nil && theme.HeadingFont != "" && theme.HeadingFontBase64 == "" {
+		<link href={ "https://fonts.googleapis.com/css2?family=" + theme.HeadingFont + ":wght@400;500;600;700&display=swap" } rel="stylesheet"/>
+	}
+	if theme != nil && theme.BodyFont != "" && theme.BodyFontBase64 == "" && theme.BodyFont != theme.HeadingFont {
+		<link href={ "https://fonts.googleapis.com/css2?family=" + theme.BodyFont + ":wght@400;500;600&display=swap" } rel="stylesheet"/>
+	}
 }
 
-templ loginThemeStyles(theme *models.AppTheme) {
-	if theme != nil {
-		@templ.Raw(buildCustomerLoginThemeCSS(theme))
-	}
+templ customerLoginThemeStyles(theme *models.AppTheme) {
+	@templ.Raw(buildCustomerLoginThemeCSS(theme))
 }
 
 func buildCustomerLoginThemeCSS(theme *models.AppTheme) string {
-	if theme == nil {
-		return ""
-	}
 	css := "<style>:root {"
-	if theme.PrimaryColor != "" {
+
+	// Primary color (default to blue if not set)
+	if theme != nil && theme.PrimaryColor != "" {
 		css += "--theme-primary: " + theme.PrimaryColor + ";"
-		// Darken for hover (simple approximation)
 		css += "--theme-primary-hover: " + theme.PrimaryColor + ";"
+	} else {
+		css += "--theme-primary: #2563EB;"
+		css += "--theme-primary-hover: #1D4ED8;"
 	}
-	if theme.SecondaryColor != "" {
+
+	// Secondary color
+	if theme != nil && theme.SecondaryColor != "" {
 		css += "--theme-secondary: " + theme.SecondaryColor + ";"
 	}
-	if theme.HeadingFontBase64 != "" {
+
+	// Heading font
+	if theme != nil && theme.HeadingFontBase64 != "" {
 		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	} else if theme.HeadingFont != "" {
+	} else if theme != nil && theme.HeadingFont != "" {
 		css += "--font-heading: '" + theme.HeadingFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else {
+		css += "--font-heading: 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	}
-	if theme.BodyFontBase64 != "" {
+
+	// Body font
+	if theme != nil && theme.BodyFontBase64 != "" {
 		css += "--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	} else if theme.BodyFont != "" {
+	} else if theme != nil && theme.BodyFont != "" {
 		css += "--font-body: '" + theme.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else {
+		css += "--font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	}
+
 	// Border radius
-	switch theme.BorderRadius {
-	case "sharp":
-		css += "--theme-radius: 0;"
-	case "subtle":
-		css += "--theme-radius: 4px;"
-	case "very-rounded":
-		css += "--theme-radius: 12px;"
-	default:
+	if theme != nil {
+		switch theme.BorderRadius {
+		case "sharp":
+			css += "--theme-radius: 0;"
+		case "subtle":
+			css += "--theme-radius: 4px;"
+		case "very-rounded":
+			css += "--theme-radius: 12px;"
+		default:
+			css += "--theme-radius: 8px;"
+		}
+	} else {
 		css += "--theme-radius: 8px;"
 	}
+
 	css += "}</style>"
 	return css
 }
 
-templ oidcProviderIcon(providerName string) {
-	if providerName == "Google" {
-		<svg class="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="currentColor">
-			<path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"></path>
-			<path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"></path>
-			<path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"></path>
-			<path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"></path>
-		</svg>
-	} else {
-		<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"></path>
-		</svg>
+// getLoginTitle returns the login title from theme or the default
+func getLoginTitle(theme *models.AppTheme) string {
+	if theme != nil {
+		return theme.GetLoginTitle()
 	}
+	return models.DefaultLoginTitle
 }
 
-templ customerLoginScript() {
-	<script>
-		(function() {
-			var config = document.getElementById("login-config");
-			var loginURL = config.dataset.loginUrl;
-			var redirectTo = config.dataset.redirectUrl;
-
-			var loginForm = document.getElementById("loginForm");
-			if (loginForm) {
-				loginForm.addEventListener("submit", async function(e) {
-					e.preventDefault();
-
-					var email = document.getElementById("email").value;
-					var passwordEl = document.getElementById("password");
-					var password = passwordEl ? passwordEl.value : "";
-					var errorDiv = document.getElementById("error");
-
-					try {
-						var response = await fetch(loginURL, {
-							method: "POST",
-							headers: {
-								"Content-Type": "application/json"
-							},
-							body: JSON.stringify({ email: email, password: password })
-						});
-
-						var data = await response.json();
-
-						if (response.ok) {
-							document.cookie = "jwt=" + encodeURIComponent(data.token) + "; path=/";
-							// Redirect to provided URL or default to /installs
-							window.location.href = redirectTo || "/installs";
-						} else {
-							errorDiv.textContent = data.message || "Login failed";
-							errorDiv.classList.remove("hidden");
-						}
-					} catch (error) {
-						errorDiv.textContent = "Network error. Please try again.";
-						errorDiv.classList.remove("hidden");
-					}
-				});
-			}
-		})();
-	</script>
+// getLoginSubtitle returns the login subtitle from theme or the default
+func getLoginSubtitle(theme *models.AppTheme) string {
+	if theme != nil {
+		return theme.GetLoginSubtitle()
+	}
+	return models.DefaultLoginSubtitle
 }

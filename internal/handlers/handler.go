@@ -21,7 +21,9 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	sharedpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/shared/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -84,6 +86,7 @@ type Handler struct {
 	customerBaseURL     string                            // Base URL for customer-facing install links
 	nuonAPIURL          string                            // Global Nuon API URL for all orgs
 	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
+	renderer            *templates.Renderer               // Go template renderer
 }
 
 // PaginationData holds pagination metadata for templates
@@ -111,7 +114,7 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath string, renderer *templates.Renderer) *Handler {
 	return &Handler{
 		db:              db,
 		auth:            jwtAuth,
@@ -119,11 +122,12 @@ func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.Au
 		customerBaseURL: customerBaseURL,
 		nuonAPIURL:      nuonAPIURL,
 		basePath:        basePath,
+		renderer:        renderer,
 	}
 }
 
 // NewHandlerWithCustomerAuth creates a handler with customer authentication support
-func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath string, renderer *templates.Renderer) *Handler {
 	return &Handler{
 		db:                  db,
 		auth:                jwtAuth,
@@ -131,6 +135,7 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 		customerBaseURL:     customerBaseURL,
 		nuonAPIURL:          nuonAPIURL,
 		basePath:            basePath,
+		renderer:            renderer,
 	}
 }
 
@@ -158,6 +163,54 @@ func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
 	}
 
 	h.RenderTempl(c, status, vendorpages.ErrorPage(props))
+}
+
+// Render renders a Go template page to the response using the template renderer
+func (h *Handler) Render(c *gin.Context, status int, templateName string, data interface{}) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Status(status)
+	if err := h.renderer.Render(c.Writer, templateName, data); err != nil {
+		c.String(http.StatusInternalServerError, "Render error: %v", err)
+	}
+}
+
+// RenderPartial renders a partial Go template (for HTMX responses)
+func (h *Handler) RenderPartial(c *gin.Context, status int, partialName string, data interface{}) {
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Status(status)
+	if err := h.renderer.RenderPartial(c.Writer, partialName, data); err != nil {
+		c.String(http.StatusInternalServerError, "Render error: %v", err)
+	}
+}
+
+// RenderError renders an error page using Go templates
+func (h *Handler) RenderError(c *gin.Context, status int, errorMsg string) {
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	data := templates.ErrorPageData{
+		Error:    errorMsg,
+		BasePath: h.basePath,
+		Theme:    templates.NewThemeData(theme),
+		CSSPath:  assets.VendorCSSPath(),
+	}
+	h.Render(c, status, "vendorui/pages/error", data)
+}
+
+// RenderCustomerError renders a customer-facing error page using Go templates
+func (h *Handler) RenderCustomerError(c *gin.Context, status int, errorMsg string) {
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	data := templates.ErrorPageData{
+		Error:    errorMsg,
+		BasePath: h.basePath,
+		Theme:    templates.NewThemeData(theme),
+		CSSPath:  assets.CustomerCSSPath(),
+	}
+	h.Render(c, status, "customerui/pages/error", data)
+}
+
+// GetThemeData returns template ThemeData from the database
+func (h *Handler) GetThemeData() *templates.ThemeData {
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+	return templates.NewThemeData(theme)
 }
 
 // BaseData returns a gin.H map with common template data including BasePath
@@ -266,120 +319,53 @@ func (h *Handler) LoginPage(config LoginPageConfig) gin.HandlerFunc {
 	}
 }
 
-// CustomerLoginPageTempl renders the customer login page using Templ
-// Shows OIDC button if configured, otherwise shows email/password form
+// CustomerLoginPageTempl renders the customer login page with vendor theming
 func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
-	theme, _ := models.GetOrCreateAppTheme(h.db)
-
 	// Check for error message in query params
 	errorMsg := c.Query("error")
 
-	// Get redirect URL from query params, default to /installs
-	redirectURL := c.Query("redirect")
-	if redirectURL == "" {
-		redirectURL = h.basePath + "/installs"
+	// Get vendor theme for customer-facing pages
+	theme, _ := models.GetOrCreateAppTheme(h.db)
+
+	props := customerpages.CustomerLoginPageProps{
+		BasePath:   h.basePath,
+		Error:      errorMsg,
+		SwitchURL:  "/admin/login/",
+		SwitchText: "Looking for vendor login?",
+		Theme:      theme,
 	}
 
-	props := customerpages.LoginPageProps{
-		Title:       "Customer Login",
-		ButtonText:  "Login",
-		HelpText:    "",
-		BasePath:    h.basePath,
-		RedirectURL: redirectURL,
-		Theme:       theme,
-		Error:       errorMsg,
+	// Generate OIDC authorization URL
+	state, err := auth.GenerateState()
+	if err != nil {
+		props.Error = "Failed to generate security token"
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.CustomerLoginPage(props))
+		return
 	}
 
-	// Check if OIDC is enabled via the customer auth factory
-	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
-		// OIDC is configured - show OIDC button
-		state, err := auth.GenerateState()
-		if err != nil {
-			props.Error = "Failed to generate security token"
-			h.RenderTempl(c, http.StatusInternalServerError, customerpages.LoginPage(props))
-			return
-		}
+	// Store state in cookie for validation on callback
+	c.SetCookie("auth_state", state, 600, "/", "", false, true)
 
-		// Store state in cookie for validation on callback
-		c.SetCookie("auth_state", state, 600, "/", "", false, true)
-
-		authURL, err := h.customerAuthFactory.GetAuthURL(state)
-		if err != nil {
-			props.Error = "Failed to generate login URL"
-			h.RenderTempl(c, http.StatusInternalServerError, customerpages.LoginPage(props))
-			return
-		}
-
-		config, _ := h.customerAuthFactory.GetConfig()
-		props.UseOIDC = true
-		props.AuthURL = authURL
-		if config != nil {
-			props.ProviderName = config.ProviderName
-		}
-		if props.ProviderName == "" {
-			props.ProviderName = "SSO"
-		}
-	} else {
-		// Local auth - show email/password form
-		props.HelpText = "Don't have an account? Accept an install link from your vendor to get started."
+	authURL, err := h.customerAuthFactory.GetAuthURL(state)
+	if err != nil {
+		props.Error = "Failed to generate login URL"
+		h.RenderTempl(c, http.StatusInternalServerError, customerpages.CustomerLoginPage(props))
+		return
 	}
 
-	h.RenderTempl(c, http.StatusOK, customerpages.LoginPage(props))
+	props.AuthURL = authURL
+
+	h.RenderTempl(c, http.StatusOK, customerpages.CustomerLoginPage(props))
 }
 
-// CustomerLocalLogin handles email/password login for customers
+// CustomerLocalLogin is disabled - local email/password login is not supported for customers.
+// Customers must use OIDC authentication.
 func (h *Handler) CustomerLocalLogin(c *gin.Context) {
-	var req struct {
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid email or password"})
-		return
-	}
-
-	// Check if OIDC is enabled - if so, local login is disabled
-	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
-		c.JSON(http.StatusForbidden, gin.H{"message": "Local login is disabled. Please use SSO."})
-		return
-	}
-
-	// Get the local provider
-	localProvider := h.customerAuthFactory.GetLocalProvider()
-	if localProvider == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Authentication not available"})
-		return
-	}
-
-	// Authenticate the user
-	result, err := localProvider.Login(req.Email, req.Password)
-	if err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"message": "Invalid email or password"})
-		return
-	}
-
-	// Generate JWT token
-	token, _, err := h.auth.TokenGenerator(result.User)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate token"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"token": token,
-		"user":  result.User,
-	})
+	c.JSON(http.StatusMethodNotAllowed, gin.H{"message": "Local login is not supported. Please use SSO."})
 }
 
 // CustomerOIDCCallback handles the OIDC callback for customer authentication
 func (h *Handler) CustomerOIDCCallback(c *gin.Context) {
-	// Verify OIDC is enabled
-	if h.customerAuthFactory == nil || !h.customerAuthFactory.IsOIDCEnabled() {
-		c.Redirect(http.StatusFound, "/login?error=OIDC+is+not+enabled")
-		return
-	}
-
 	// Get the authorization code
 	code := c.Query("code")
 	if code == "" {
@@ -422,137 +408,70 @@ func (h *Handler) CustomerOIDCCallback(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/installs")
 }
 
-// CustomerRegisterPage renders the customer registration page
+// CustomerRegisterPage redirects to login - registration is not available for customers.
+// Customer accounts are created via OIDC authentication.
 func (h *Handler) CustomerRegisterPage(c *gin.Context) {
-	// If OIDC is enabled, redirect to login (no local registration)
-	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
-		redirect := c.Query("redirect")
-		if redirect != "" {
-			c.Redirect(http.StatusFound, "/login?redirect="+redirect)
-		} else {
-			c.Redirect(http.StatusFound, "/login")
-		}
-		return
+	redirect := c.Query("redirect")
+	if redirect != "" {
+		c.Redirect(http.StatusFound, "/login?redirect="+redirect)
+	} else {
+		c.Redirect(http.StatusFound, "/login")
 	}
-
-	theme, _ := models.GetOrCreateAppTheme(h.db)
-	errorMsg := c.Query("error")
-	redirectURL := c.Query("redirect")
-
-	props := customerpages.RegisterPageProps{
-		Title:       "Create Account",
-		BasePath:    h.basePath,
-		RedirectURL: redirectURL,
-		Theme:       theme,
-		Error:       errorMsg,
-	}
-
-	h.RenderTempl(c, http.StatusOK, customerpages.RegisterPage(props))
 }
 
-// CustomerRegister handles customer registration
+// CustomerRegister is disabled - registration is not available for customers.
+// Customer accounts are created via OIDC authentication.
 func (h *Handler) CustomerRegister(c *gin.Context) {
-	// If OIDC is enabled, registration is disabled
-	if h.customerAuthFactory != nil && h.customerAuthFactory.IsOIDCEnabled() {
-		c.JSON(http.StatusForbidden, gin.H{"message": "Registration is disabled. Please use SSO."})
-		return
-	}
-
-	var req struct {
-		Name     string `json:"name" binding:"required"`
-		Email    string `json:"email" binding:"required,email"`
-		Password string `json:"password" binding:"required,min=8"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid input: " + err.Error()})
-		return
-	}
-
-	// Get the local provider
-	localProvider := h.customerAuthFactory.GetLocalProvider()
-	if localProvider == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Registration not available"})
-		return
-	}
-
-	// Register the user
-	result, err := localProvider.RegisterWithRole(req.Email, req.Password, req.Name, models.RoleCustomer)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
-		return
-	}
-
-	// Generate JWT token
-	token, _, err := h.auth.TokenGenerator(result.User)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "Failed to generate token"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{
-		"token": token,
-		"user":  result.User,
-	})
+	c.JSON(http.StatusForbidden, gin.H{"message": "Registration is not available. Please use SSO."})
 }
 
-// VendorLoginPageTempl renders the vendor login page using Templ
+// VendorLoginPageTempl renders the vendor login page using the shared login component
 func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
-	theme, _ := models.GetOrCreateAppTheme(h.db)
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
-	// Determine auth mode and get auth URL
-	authURL := ""
-	useLocalAuth := false
-
-	if h.authProvider != nil {
-		if h.authProvider.Name() == "local" {
-			// Local password auth - show email/password form
-			useLocalAuth = true
-		} else {
-			// External IdP - generate state for CSRF protection
-			state, err := auth.GenerateState()
-			if err != nil {
-				h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate security token")
-				return
-			}
-
-			// Store state in cookie for validation on callback
-			c.SetCookie("auth_state", state, 600, "/", "", false, true)
-
-			authURL, err = h.authProvider.GetAuthorizationURL(state)
-			if err != nil {
-				h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to generate login URL")
-				return
-			}
-		}
-	}
-
 	// Check for error message in query params (from failed login/register)
 	errorMsg := c.Query("error")
 
-	props := vendorpages.LoginPageProps{
-		Title:              "Vendor Login",
-		ButtonText:         "Login / Sign Up",
-		HelpText:           "",
-		BasePath:           h.basePath,
-		AuthURL:            authURL,
-		UseLocalAuth:       useLocalAuth,
-		Error:              errorMsg,
-		PrimaryColor:       primaryColor,
-		PrimaryColorDark:   primaryColorDark,
-		SecondaryColor:     secondaryColor,
-		SecondaryColorDark: secondaryColorDark,
-		HeadingFont:        theme.HeadingFont,
-		BodyFont:           theme.BodyFont,
-		HeadingFontBase64:  theme.HeadingFontBase64,
-		BodyFontBase64:     theme.BodyFontBase64,
-		LogoBase64:         theme.LogoBase64,
-		CSSPath:            assets.VendorCSSPath(),
+	props := sharedpages.LoginPageProps{
+		Title:      "Customer Dashboard",
+		BasePath:   h.basePath,
+		Error:      errorMsg,
+		SwitchURL:  "/login",
+		SwitchText: "Looking for customer login?",
 	}
 
-	h.RenderTempl(c, http.StatusOK, vendorpages.LoginPage(props))
+	// Check if we have an auth provider configured
+	if h.authProvider == nil {
+		props.Error = "Authentication not configured"
+		h.RenderTempl(c, http.StatusInternalServerError, sharedpages.LoginPage(props))
+		return
+	}
+
+	// Local auth is no longer supported - require OIDC
+	if h.authProvider.Name() == "local" {
+		props.Error = "OIDC authentication required. Please configure AUTH_* environment variables."
+		h.RenderTempl(c, http.StatusInternalServerError, sharedpages.LoginPage(props))
+		return
+	}
+
+	// Generate state for CSRF protection
+	state, err := auth.GenerateState()
+	if err != nil {
+		props.Error = "Failed to generate security token"
+		h.RenderTempl(c, http.StatusInternalServerError, sharedpages.LoginPage(props))
+		return
+	}
+
+	// Store state in cookie for validation on callback
+	c.SetCookie("auth_state", state, 600, "/", "", false, true)
+
+	authURL, err := h.authProvider.GetAuthorizationURL(state)
+	if err != nil {
+		props.Error = "Failed to generate login URL"
+		h.RenderTempl(c, http.StatusInternalServerError, sharedpages.LoginPage(props))
+		return
+	}
+
+	props.AuthURL = authURL
+	h.RenderTempl(c, http.StatusOK, sharedpages.LoginPage(props))
 }
 
 // AuthCallback handles the authentication callback from OIDC or SAML providers
@@ -1664,6 +1583,8 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		BodyFontBase64    string `json:"body_font_base64"`
 		BorderRadius      string `json:"border_radius"`
 		SpacingDensity    string `json:"spacing_density"`
+		LoginTitle        string `json:"login_title"`
+		LoginSubtitle     string `json:"login_subtitle"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1743,6 +1664,10 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 			theme.SpacingDensity = req.SpacingDensity
 		}
 	}
+
+	// Update login page text - allow setting to empty to use defaults
+	theme.LoginTitle = req.LoginTitle
+	theme.LoginSubtitle = req.LoginSubtitle
 
 	if err := h.db.Save(theme).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save theme settings"})

@@ -1,0 +1,452 @@
+{{ template "vendor-layout" . }}
+
+{{ define "content" }}
+<div class="max-w-4xl mx-auto">
+    <div class="flex justify-end mb-6">
+        {{ template "button" (dict "Text" "Create Link" "Variant" "primary" "OnClick" "openCreateInstallModal()") }}
+    </div>
+    <!-- Tab Interface -->
+    <div class="mb-6">
+        <div class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+            <nav class="-mb-px flex space-x-8">
+                {{ template "org-tab-link" (dict "Tab" "available" "Label" "Pending" "Count" .Pagination.AvailableCount "CurrentTab" .Pagination.CurrentTab) }}
+                {{ template "org-tab-link" (dict "Tab" "used" "Label" "Accepted" "Count" .Pagination.UsedCount "CurrentTab" .Pagination.CurrentTab) }}
+            </nav>
+        </div>
+    </div>
+    <!-- Tab Content -->
+    <div class="mb-4">
+        {{ if eq .Pagination.CurrentTab "used" }}
+            <h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Accepted Install Links</h3>
+            <p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These links have been accepted and are now owned by customers.</p>
+        {{ else }}
+            <h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Pending Install Links</h3>
+            <p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">Share these links with customers to create their installs.</p>
+        {{ end }}
+    </div>
+    {{ if .Links }}
+        <div class="flex justify-between items-center mb-4">
+            <span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
+                {{ .Pagination.ShowingFrom }}-{{ .Pagination.ShowingTo }} of {{ .Pagination.TotalCount }}
+            </span>
+        </div>
+        {{ template "links-table" (dict "Links" .Links "OrgID" .Org.ID "BasePath" .BasePath) }}
+        {{ if gt .Pagination.TotalPages 1 }}
+            {{ template "pagination" (dict "CurrentPage" .Pagination.CurrentPage "TotalPages" .Pagination.TotalPages "HasPrevious" .Pagination.HasPrevious "HasNext" .Pagination.HasNext "PreviousPage" .Pagination.PreviousPage "NextPage" .Pagination.NextPage "BaseURL" (printf "?tab=%s&page=" .Pagination.CurrentTab)) }}
+        {{ end }}
+    {{ else if and (eq .Pagination.AvailableCount 0) (eq .Pagination.UsedCount 0) }}
+        {{ template "empty-links-state" }}
+    {{ else }}
+        {{ template "empty-tab-state" .Pagination.CurrentTab }}
+    {{ end }}
+</div>
+{{ template "create-install-modal" (dict "BasePath" .BasePath "OrgID" .Org.ID) }}
+{{ end }}
+
+{{ define "org-tab-link" }}
+{{ $isActive := or (eq .Tab .CurrentTab) (and (eq .CurrentTab "") (eq .Tab "available")) }}
+<a
+    href="?tab={{ .Tab }}"
+    class="{{ classes "whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm" (ternary $isActive "border-primary-600 text-primary-600" "border-transparent text-cool-grey-500 dark:text-cool-grey-400 hover:text-cool-grey-700 dark:hover:text-cool-grey-300 hover:border-cool-grey-300 dark:hover:border-dark-grey-500") }}"
+>
+    {{ .Label }}
+    <span class="ml-2 bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-900 dark:text-cool-grey-200 rounded-full px-2.5 py-0.5 text-xs font-medium">
+        {{ .Count }}
+    </span>
+</a>
+{{ end }}
+
+{{ define "links-table" }}
+<div class="stratus-table-container">
+    <table class="stratus-table">
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Status</th>
+                <th>App</th>
+                <th>Region</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{ range .Links }}
+                <tr>
+                    <td class="font-medium">
+                        <a
+                            href="{{ $.BasePath }}/orgs/{{ $.OrgID }}/links/{{ .ID }}"
+                            class="text-primary-600 hover:text-primary-800"
+                        >
+                            {{ if .Install }}
+                                {{ .Install.Name }}
+                            {{ else }}
+                                {{ .AppName }}
+                            {{ end }}
+                        </a>
+                    </td>
+                    <td>
+                        {{ template "status-badge" (dict "Status" (ternary .Used "accepted" "pending") "Size" "sm") }}
+                    </td>
+                    <td class="text-cool-grey-600 dark:text-cool-grey-400">{{ .AppName }}</td>
+                    <td class="text-cool-grey-600 dark:text-cool-grey-400">
+                        {{ if and .Install .Install.Region }}
+                            {{ .Install.Region }}
+                        {{ else }}
+                            —
+                        {{ end }}
+                    </td>
+                    <td class="text-cool-grey-500 dark:text-cool-grey-400">{{ formatDate .CreatedAt "Jan 2, 2006" }}</td>
+                </tr>
+            {{ end }}
+        </tbody>
+    </table>
+</div>
+{{ end }}
+
+{{ define "empty-links-state" }}
+<div class="p-8 text-center">
+    <div class="mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
+        {{ template "link-icon" }}
+    </div>
+    <h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Install Links</h3>
+    <p class="text-cool-grey-500 dark:text-cool-grey-400 mb-6">Create your first link to share with customers.</p>
+    {{ template "button" (dict "Text" "Create Your First Link" "Variant" "primary" "OnClick" "openCreateInstallModal()") }}
+</div>
+{{ end }}
+
+{{ define "empty-tab-state" }}
+<div class="p-8 text-center">
+    <div class="mx-auto flex items-center justify-center h-12 w-12 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
+        {{ template "link-icon" }}
+    </div>
+    {{ if eq . "used" }}
+        <h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Accepted Links</h3>
+        <p class="text-cool-grey-500 dark:text-cool-grey-400">Links will appear here once customers accept them.</p>
+    {{ else }}
+        <h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Pending Links</h3>
+        <p class="text-cool-grey-500 dark:text-cool-grey-400 mb-6">All your links have been accepted by customers.</p>
+        {{ template "button" (dict "Text" "Create New Link" "Variant" "primary" "OnClick" "openCreateInstallModal()") }}
+    {{ end }}
+</div>
+{{ end }}
+
+{{ define "link-icon" }}
+<svg class="h-6 w-6 text-cool-grey-400 dark:text-cool-grey-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+</svg>
+{{ end }}
+
+{{ define "create-install-modal" }}
+<div
+    id="createInstallModal"
+    class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
+    style="z-index: 50"
+>
+    <div class="flex items-center justify-center min-h-full p-4">
+        <div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
+            <h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Create Install Link</h3>
+            <form id="createInstallForm" class="space-y-6">
+                <!-- App Selection -->
+                <div>
+                    <label for="appSelect" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Select Application *</label>
+                    <select
+                        id="appSelect"
+                        required
+                        class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+                    >
+                        <option value="">Loading apps...</option>
+                    </select>
+                </div>
+                <!-- Vendor-facing Inputs (dynamic based on app config) -->
+                <div id="vendorInputsContainer">
+                    <!-- Will be populated by JavaScript -->
+                </div>
+                <!-- Loading indicator for input config -->
+                <div id="inputConfigLoading" class="hidden">
+                    <p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Loading configuration...</p>
+                </div>
+                <!-- Form Actions -->
+                <div class="flex space-x-3 pt-4">
+                    <button
+                        type="submit"
+                        id="createLinkSubmitBtn"
+                        class="flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        Create Link
+                    </button>
+                    <button
+                        type="button"
+                        onclick="closeCreateInstallModal()"
+                        class="flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-3 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium"
+                    >
+                        Cancel
+                    </button>
+                </div>
+            </form>
+            <div
+                id="createInstallError"
+                class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden"
+            ></div>
+        </div>
+    </div>
+</div>
+<!-- Config data for JavaScript -->
+<div
+    id="create-install-config"
+    class="hidden"
+    data-base-path="{{ .BasePath }}"
+    data-org-id="{{ .OrgID }}"
+></div>
+{{ template "create-install-modal-script" }}
+{{ end }}
+
+{{ define "create-install-modal-script" }}
+<script>
+    (function() {
+        var configEl = document.getElementById('create-install-config');
+        const basePath = configEl.dataset.basePath;
+        const orgId = configEl.dataset.orgId;
+        let currentPlatform = null;
+        let currentInputConfig = null;
+
+        window.openCreateInstallModal = async function() {
+            const modal = document.getElementById("createInstallModal");
+            const appSelect = document.getElementById("appSelect");
+
+            modal.classList.remove("hidden");
+            appSelect.innerHTML = '<option value="">Loading apps...</option>';
+            clearInputs();
+
+            try {
+                const response = await fetch(`${basePath}/orgs/${orgId}/apps-api`);
+
+                if (response.ok) {
+                    const apps = await response.json();
+                    appSelect.innerHTML = '<option value="">Select an app...</option>';
+
+                    if (apps && apps.length > 0) {
+                        apps.forEach((app) => {
+                            const option = document.createElement("option");
+                            option.value = JSON.stringify({ id: app.id, name: app.name });
+                            option.textContent = app.name;
+                            appSelect.appendChild(option);
+                        });
+                    } else {
+                        appSelect.innerHTML = '<option value="">No apps found</option>';
+                    }
+                } else {
+                    const errorText = await response.text();
+                    try {
+                        const errorJson = JSON.parse(errorText);
+                        appSelect.innerHTML = `<option value="">Error: ${errorJson.error || 'Failed to load apps'}</option>`;
+                    } catch (e) {
+                        appSelect.innerHTML = `<option value="">HTTP ${response.status}: ${response.statusText}</option>`;
+                    }
+                }
+            } catch (error) {
+                appSelect.innerHTML = `<option value="">Network error: ${error.message}</option>`;
+            }
+        };
+
+        window.closeCreateInstallModal = function() {
+            document.getElementById("createInstallModal").classList.add("hidden");
+            document.getElementById("createInstallForm").reset();
+            document.getElementById("createInstallError").classList.add("hidden");
+            clearInputs();
+        };
+
+        function clearInputs() {
+            document.getElementById("vendorInputsContainer").innerHTML = '';
+            document.getElementById("inputConfigLoading").classList.add("hidden");
+            currentPlatform = null;
+            currentInputConfig = null;
+        }
+
+        // When app is selected, fetch input config
+        document.getElementById("appSelect").addEventListener("change", async function() {
+            const selectedValue = this.value;
+            clearInputs();
+
+            if (!selectedValue) return;
+
+            const selectedApp = JSON.parse(selectedValue);
+            const loadingEl = document.getElementById("inputConfigLoading");
+            loadingEl.classList.remove("hidden");
+
+            try {
+                // Fetch input config with vendor filter
+                const response = await fetch(`${basePath}/orgs/${orgId}/apps-api/${selectedApp.id}/input-config?filter=vendor`);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    currentPlatform = data.platform;
+                    currentInputConfig = data.input_config;
+
+                    // Render vendor input fields
+                    renderVendorInputs(currentInputConfig);
+                } else {
+                    console.error("Failed to fetch input config");
+                }
+            } catch (error) {
+                console.error("Error fetching input config:", error);
+            } finally {
+                loadingEl.classList.add("hidden");
+            }
+        });
+
+        function renderVendorInputs(inputConfig) {
+            const container = document.getElementById("vendorInputsContainer");
+
+            if (!inputConfig || !inputConfig.input_groups || inputConfig.input_groups.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<div class="border-t border-cool-grey-200 dark:border-dark-grey-600 pt-4 mt-2">' +
+                '<h4 class="text-sm font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-3">Vendor Configuration<\/h4>';
+
+            inputConfig.input_groups.forEach(function(group) {
+                if (group.app_inputs && group.app_inputs.length > 0) {
+                    html += renderInputGroup(group);
+                }
+            });
+
+            html += '<\/div>';
+            container.innerHTML = html;
+        }
+
+        function renderInputGroup(group) {
+            let html = '<div class="mb-4">';
+            html += '<h5 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
+            if (group.description) {
+                html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3">' + group.description + '<\/p>';
+            }
+            html += '<div class="space-y-3">';
+
+            const inputs = group.app_inputs || [];
+            inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
+            inputs.forEach(function(input) {
+                html += renderSingleInput(input);
+            });
+
+            html += '<\/div><\/div>';
+            return html;
+        }
+
+        function renderSingleInput(input) {
+            const inputName = 'vendor_input:' + input.name;
+            const isRequired = input.required ? ' *' : '';
+            const requiredAttr = input.required ? ' required' : '';
+
+            if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
+                let html = '<div class="flex items-start space-x-3">';
+                html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
+                html += '<input type="checkbox" id="vendor_' + input.name + '" name="' + inputName + '" value="true"';
+                if (input.default === 'true') html += ' checked';
+                html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+                html += '<div class="flex-1">';
+                html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+                if (input.description) {
+                    html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+                }
+                html += '<\/div><\/div>';
+                return html;
+            }
+
+            if (input.type === 'json') {
+                let html = '<div>';
+                html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+                html += '<textarea id="vendor_' + input.name + '" name="' + inputName + '" rows="3" placeholder="' + (input.default || '') + '"' + requiredAttr;
+                html += ' class="block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+                html += (input.default || '') + '<\/textarea>';
+                if (input.description) {
+                    html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+                }
+                html += '<\/div>';
+                return html;
+            }
+
+            let inputType = 'text';
+            if (input.type === 'number') {
+                inputType = 'number';
+            } else if (input.sensitive) {
+                inputType = 'password';
+            }
+
+            let html = '<div>';
+            html += '<label for="vendor_' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+            html += '<input type="' + inputType + '" id="vendor_' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
+            if (inputType === 'password') html += ' autocomplete="off"';
+            html += ' class="block w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+            if (input.description) {
+                html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+            }
+            html += '<\/div>';
+            return html;
+        }
+
+        document.getElementById("createInstallForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const errorDiv = document.getElementById("createInstallError");
+            errorDiv.classList.add("hidden");
+
+            const selectedAppValue = document.getElementById("appSelect").value;
+            if (!selectedAppValue) {
+                errorDiv.textContent = "Please select an app";
+                errorDiv.classList.remove("hidden");
+                return;
+            }
+
+            const selectedApp = JSON.parse(selectedAppValue);
+
+            // Collect vendor inputs
+            const inputs = {};
+            const form = document.getElementById("createInstallForm");
+            const formData = new FormData(form);
+
+            for (const [key, value] of formData.entries()) {
+                if (key.startsWith('vendor_input:')) {
+                    const inputName = key.replace('vendor_input:', '');
+                    inputs[inputName] = value;
+                }
+            }
+
+            try {
+                const submitBtn = document.getElementById("createLinkSubmitBtn");
+                submitBtn.disabled = true;
+                submitBtn.textContent = "Creating...";
+
+                const response = await fetch(`${basePath}/orgs/${orgId}/links`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                    },
+                    body: JSON.stringify({
+                        app_id: selectedApp.id,
+                        app_name: selectedApp.name,
+                        inputs: inputs
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const linkId = data.link.id;
+                    window.location.href = `${basePath}/orgs/${orgId}/links/${linkId}`;
+                } else {
+                    errorDiv.textContent = data.error || "Failed to create install link";
+                    errorDiv.classList.remove("hidden");
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = "Create Link";
+                }
+            } catch (error) {
+                errorDiv.textContent = error.message || "Please check your inputs and try again.";
+                errorDiv.classList.remove("hidden");
+                const submitBtn = document.getElementById("createLinkSubmitBtn");
+                submitBtn.disabled = false;
+                submitBtn.textContent = "Create Link";
+            }
+        });
+    })();
+</script>
+{{ end }}

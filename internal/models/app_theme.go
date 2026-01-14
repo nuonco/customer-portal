@@ -21,6 +21,8 @@ type AppTheme struct {
 	BodyFontBase64    string    `json:"body_font_base64"`      // Custom font data URI (empty = use Google Font)
 	BorderRadius      string    `json:"border_radius"`         // Customer page corner style: sharp, subtle, rounded, very-rounded
 	SpacingDensity    string    `json:"spacing_density"`       // Customer page spacing: compact, comfortable, spacious
+	LoginTitle        string    `json:"login_title"`           // Customer login page title (default: "Customer Dashboard")
+	LoginSubtitle     string    `json:"login_subtitle"`        // Customer login page subtitle (default: "Manage your customer's install experience.")
 	CreatedAt         time.Time `json:"created_at"`
 	UpdatedAt         time.Time `json:"updated_at"`
 }
@@ -39,6 +41,12 @@ const DefaultPrimaryColor = "#2563EB"
 const (
 	DefaultBorderRadius   = "rounded"     // rounded corners (8px)
 	DefaultSpacingDensity = "comfortable" // balanced spacing
+)
+
+// Default customer login page text
+const (
+	DefaultLoginTitle    = "Customer Dashboard"
+	DefaultLoginSubtitle = "Manage your customer's install experience."
 )
 
 // ValidBorderRadiusValues are the allowed values for BorderRadius
@@ -81,6 +89,22 @@ func (t *AppTheme) GetDensityClass() string {
 		return "density-" + DefaultSpacingDensity
 	}
 	return "density-" + t.SpacingDensity
+}
+
+// GetLoginTitle returns the customer login page title, or the default if not set
+func (t *AppTheme) GetLoginTitle() string {
+	if t.LoginTitle == "" {
+		return DefaultLoginTitle
+	}
+	return t.LoginTitle
+}
+
+// GetLoginSubtitle returns the customer login page subtitle, or the default if not set
+func (t *AppTheme) GetLoginSubtitle() string {
+	if t.LoginSubtitle == "" {
+		return DefaultLoginSubtitle
+	}
+	return t.LoginSubtitle
 }
 
 // GetOrCreateAppTheme returns the singleton AppTheme record, creating it with defaults if it doesn't exist.

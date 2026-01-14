@@ -1,0 +1,203 @@
+{{ template "vendor-layout" . }}
+
+{{ define "content" }}
+<div class="max-w-2xl mx-auto">
+    <!-- Install Information Card -->
+    <div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 mb-6">
+        <h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white mb-4">Install Information</h2>
+        <div class="space-y-4">
+            <div>
+                <h3 class="text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300">Application</h3>
+                <p class="text-xl text-cool-grey-900 dark:text-white">{{ .Link.AppName }}</p>
+                <p class="text-cool-grey-600 dark:text-cool-grey-400">App ID: {{ .Link.AppID }}</p>
+            </div>
+            <div>
+                <h3 class="text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300">Created</h3>
+                <p class="text-cool-grey-900 dark:text-cool-grey-200">{{ formatDate .Link.CreatedAt "January 2, 2006 at 3:04 PM" }}</p>
+            </div>
+            <div class="pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+                {{ template "button" (dict "Text" "Delete Install" "Variant" "danger" "OnClick" "deleteLink()") }}
+                <p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-2">
+                    This will permanently remove the install and cannot be undone.
+                </p>
+            </div>
+        </div>
+    </div>
+    <!-- Link Management Card with HTMX polling -->
+    <div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+        <h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white mb-4">Link Management</h2>
+        <div class="space-y-4">
+            {{ template "link-status" (dict "Link" .Link "InstallURL" .InstallURL "PrimaryColor" .Theme.PrimaryColor "BasePath" .BasePath) }}
+        </div>
+    </div>
+</div>
+<!-- Config data for JavaScript -->
+<div
+    id="link-detail-config"
+    class="hidden"
+    data-base-path="{{ .BasePath }}"
+    data-org-id="{{ .Link.OrgID }}"
+    data-link-id="{{ .Link.ID }}"
+    data-link-used="{{ boolToString .Link.Used }}"
+></div>
+{{ template "link-detail-script" }}
+{{ end }}
+
+{{ define "link-status" }}
+<div
+    id="link-status"
+    hx-get="{{ .BasePath }}/orgs/{{ .Link.OrgID }}/links/{{ .Link.ID }}/status"
+    hx-trigger="every 5s"
+    hx-swap="outerHTML"
+    data-link-used="{{ boolToString .Link.Used }}"
+>
+    {{ if .Link.Used }}
+        <!-- Link has been accepted -->
+        <div class="p-4 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div>
+                    <p class="text-sm font-medium text-green-800 dark:text-green-300">
+                        Link Accepted
+                    </p>
+                    <p class="text-sm text-green-700 dark:text-green-400 mt-1">
+                        This install link has been accepted by a customer.
+                    </p>
+                    {{ if .Link.Install }}
+                        <p class="text-sm text-green-700 dark:text-green-400 mt-2">
+                            <strong>Install Name:</strong> {{ .Link.Install.Name }}
+                        </p>
+                        {{ if .Link.Install.Region }}
+                            <p class="text-sm text-green-700 dark:text-green-400">
+                                <strong>Region:</strong> {{ .Link.Install.Region }}
+                            </p>
+                        {{ end }}
+                    {{ end }}
+                </div>
+            </div>
+        </div>
+    {{ else }}
+        <!-- Link is pending acceptance -->
+        <div class="space-y-4">
+            <div class="p-4 rounded-lg bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800">
+                <div class="flex items-start space-x-3">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-sm font-medium text-yellow-800 dark:text-yellow-300">
+                            Awaiting Acceptance
+                        </p>
+                        <p class="text-sm text-yellow-700 dark:text-yellow-400 mt-1">
+                            Share this link with your customer to allow them to accept the install.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">
+                    Install URL
+                </label>
+                <div class="flex items-center space-x-2">
+                    <input
+                        type="text"
+                        readonly
+                        id="installUrl"
+                        value="{{ .InstallURL }}"
+                        class="flex-1 px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md bg-cool-grey-50 dark:bg-dark-grey-700"
+                    >
+                    <button
+                        type="button"
+                        onclick="copyToClipboard()"
+                        class="px-4 py-2 text-sm font-medium text-white rounded-md {{ if .PrimaryColor }}bg-[{{ .PrimaryColor }}] hover:bg-[{{ darkenColor .PrimaryColor 0.8 }}]{{ else }}bg-primary-600 hover:bg-primary-700{{ end }}"
+                    >
+                        Copy
+                    </button>
+                </div>
+            </div>
+        </div>
+    {{ end }}
+</div>
+{{ end }}
+
+{{ define "link-detail-script" }}
+<script>
+    (function() {
+        var config = document.getElementById('link-detail-config');
+        var basePath = config.dataset.basePath;
+        var orgId = config.dataset.orgId;
+        var linkId = config.dataset.linkId;
+        var previousUsedState = config.dataset.linkUsed === 'true';
+
+        document.body.addEventListener('htmx:afterSwap', function(evt) {
+            if (evt.detail.target.id === 'link-status') {
+                var linkStatusEl = evt.detail.target;
+                var currentUsed = linkStatusEl.dataset.linkUsed === 'true';
+
+                if (!previousUsedState && currentUsed) {
+                    showToast('Install link has been accepted by a customer!', 'success');
+                }
+
+                previousUsedState = currentUsed;
+            }
+        });
+
+        window.copyToClipboard = function() {
+            var urlEl = document.getElementById('installUrl');
+            if (!urlEl) {
+                showToast('Install URL not available - link may have been accepted', 'error');
+                return;
+            }
+            var url = urlEl.value;
+            navigator.clipboard.writeText(url).then(function() {
+                showToast('Install link copied to clipboard!', 'success');
+            }).catch(function() {
+                var textarea = document.createElement('textarea');
+                textarea.value = url;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                showToast('Install link copied to clipboard!', 'success');
+            });
+        };
+
+        window.deleteLink = async function() {
+            var confirmed = await showConfirmModal({
+                title: 'Delete Install Link?',
+                message: 'Are you sure you want to delete this install link? This action cannot be undone.',
+                variant: 'danger',
+                confirmText: 'Delete',
+                cancelText: 'Cancel'
+            });
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                var response = await fetch(basePath + '/orgs/' + orgId + '/links/' + linkId, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    showToast('Install link deleted successfully', 'success');
+                    setTimeout(function() {
+                        window.location.href = basePath + '/orgs/' + orgId + '/links';
+                    }, 1000);
+                } else {
+                    showToast('Failed to delete install', 'error');
+                }
+            } catch (error) {
+                showToast('Network error. Please try again.', 'error');
+            }
+        };
+    })();
+</script>
+{{ end }}

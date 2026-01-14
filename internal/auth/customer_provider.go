@@ -9,84 +9,135 @@ import (
 	"gorm.io/gorm"
 )
 
+// OIDCSource indicates where the OIDC configuration came from
+type OIDCSource string
+
+const (
+	OIDCSourceDatabase    OIDCSource = "database"
+	OIDCSourceEnvironment OIDCSource = "environment"
+)
+
 // CustomerAuthProviderFactory creates auth providers dynamically based on DB config.
 // It caches the OIDC provider to avoid re-creating it on every request,
 // and invalidates the cache when the config changes.
+// If no DB config is active, it falls back to OIDC configured via environment variables.
 type CustomerAuthProviderFactory struct {
 	db      *gorm.DB
 	baseURL string
 
-	mu            sync.RWMutex
-	cachedOIDC    *OIDCProvider
-	lastConfig    *models.CustomerAuthConfig
-	localProvider *LocalProvider
+	mu              sync.RWMutex
+	cachedOIDC      *OIDCProvider
+	lastConfig      *models.CustomerAuthConfig
+	envOIDCConfig   *ProviderConfig // OIDC config from environment variables (fallback)
+	envOIDCProvider *OIDCProvider   // Cached env var OIDC provider
 }
 
-// NewCustomerAuthProviderFactory creates a new factory for customer auth providers
-func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string) *CustomerAuthProviderFactory {
-	return &CustomerAuthProviderFactory{
-		db:            db,
-		baseURL:       baseURL,
-		localProvider: NewLocalProvider(db),
+// NewCustomerAuthProviderFactory creates a new factory for customer auth providers.
+// envConfig provides fallback OIDC configuration from environment variables.
+// Returns an error if no OIDC source is available (neither DB config nor env vars).
+func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *ProviderConfig) (*CustomerAuthProviderFactory, error) {
+	factory := &CustomerAuthProviderFactory{
+		db:      db,
+		baseURL: baseURL,
 	}
+
+	// Check if env var OIDC is configured as fallback
+	if envConfig != nil && envConfig.Type == ProviderTypeOIDC && envConfig.IsConfigured() {
+		// Create a copy with the customer callback URL
+		customerEnvConfig := *envConfig
+		customerEnvConfig.RedirectURI = baseURL + "/callback"
+		factory.envOIDCConfig = &customerEnvConfig
+	}
+
+	// Validate that at least one OIDC source is available
+	// We check DB config at startup to see if it's configured
+	dbConfig, _ := models.GetOrCreateCustomerAuthConfig(db)
+	if !dbConfig.IsActive() && factory.envOIDCConfig == nil {
+		return nil, fmt.Errorf("customer authentication requires OIDC: configure customer OIDC in settings or set AUTH_* environment variables")
+	}
+
+	return factory, nil
 }
 
 // GetProvider returns the appropriate auth provider based on current config.
-// Returns OIDC provider if enabled and configured, LocalProvider otherwise.
+// Returns DB-configured OIDC provider if active, otherwise falls back to env var OIDC.
 func (f *CustomerAuthProviderFactory) GetProvider() (AuthProvider, error) {
 	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
 	if err != nil {
-		return f.localProvider, nil // Fallback to local on error
+		// On DB error, try env var fallback
+		return f.getEnvOIDCProvider()
 	}
 
-	// If OIDC disabled or not configured, use local
-	if !config.IsActive() {
-		return f.localProvider, nil
+	// If DB OIDC is active, use it
+	if config.IsActive() {
+		f.mu.Lock()
+		defer f.mu.Unlock()
+
+		if f.needsRefresh(config) {
+			provider, err := f.createOIDCProvider(config)
+			if err != nil {
+				// On error, try env var fallback
+				f.mu.Unlock()
+				envProvider, envErr := f.getEnvOIDCProvider()
+				f.mu.Lock()
+				if envErr != nil {
+					return nil, fmt.Errorf("failed to create DB OIDC provider: %w, and no env fallback available", err)
+				}
+				return envProvider, nil
+			}
+			f.cachedOIDC = provider
+			f.lastConfig = config
+		}
+		return f.cachedOIDC, nil
 	}
 
-	// Check if we need to create/recreate the OIDC provider (config changed)
+	// DB OIDC not active, use env var fallback
+	return f.getEnvOIDCProvider()
+}
+
+// getEnvOIDCProvider returns the cached env var OIDC provider, creating it if necessary.
+func (f *CustomerAuthProviderFactory) getEnvOIDCProvider() (*OIDCProvider, error) {
+	if f.envOIDCConfig == nil {
+		return nil, fmt.Errorf("no OIDC configuration available")
+	}
+
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	if f.needsRefresh(config) {
-		provider, err := f.createOIDCProvider(config)
+	if f.envOIDCProvider == nil {
+		provider, err := NewOIDCProvider(*f.envOIDCConfig, f.db)
 		if err != nil {
-			// Log error but fallback to local
-			return f.localProvider, nil
+			return nil, fmt.Errorf("failed to create env OIDC provider: %w", err)
 		}
-		f.cachedOIDC = provider
-		f.lastConfig = config
+		f.envOIDCProvider = provider
 	}
 
-	return f.cachedOIDC, nil
+	return f.envOIDCProvider, nil
 }
 
-// GetLocalProvider returns the local auth provider for email/password auth
-func (f *CustomerAuthProviderFactory) GetLocalProvider() *LocalProvider {
-	return f.localProvider
-}
-
-// IsOIDCEnabled returns whether OIDC is currently enabled and configured
+// IsOIDCEnabled always returns true since OIDC is required for customer auth.
+// The factory validates at construction time that at least one OIDC source is available.
 func (f *CustomerAuthProviderFactory) IsOIDCEnabled() bool {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
-	if err != nil {
-		return false
-	}
-	return config.IsActive()
+	return true
 }
 
-// GetConfig returns the current customer auth config
+// GetOIDCSource returns which OIDC source is currently being used.
+func (f *CustomerAuthProviderFactory) GetOIDCSource() OIDCSource {
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
+	if err == nil && config.IsActive() {
+		return OIDCSourceDatabase
+	}
+	return OIDCSourceEnvironment
+}
+
+// GetConfig returns the current customer auth config from the database.
+// Note: This may return an inactive config; use GetOIDCSource to determine the actual source.
 func (f *CustomerAuthProviderFactory) GetConfig() (*models.CustomerAuthConfig, error) {
 	return models.GetOrCreateCustomerAuthConfig(f.db)
 }
 
 // GetAuthURL generates an OIDC authorization URL with the given state.
-// Returns empty string if OIDC is not enabled.
 func (f *CustomerAuthProviderFactory) GetAuthURL(state string) (string, error) {
-	if !f.IsOIDCEnabled() {
-		return "", nil
-	}
-
 	provider, err := f.GetProvider()
 	if err != nil {
 		return "", err
@@ -98,10 +149,6 @@ func (f *CustomerAuthProviderFactory) GetAuthURL(state string) (string, error) {
 // HandleCallback processes the OIDC callback with customer role.
 // Creates users with RoleCustomer instead of RoleVendor.
 func (f *CustomerAuthProviderFactory) HandleCallback(ctx context.Context, req CallbackRequest) (*AuthResult, error) {
-	if !f.IsOIDCEnabled() {
-		return nil, fmt.Errorf("OIDC is not enabled")
-	}
-
 	provider, err := f.GetProvider()
 	if err != nil {
 		return nil, err
