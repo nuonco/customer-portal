@@ -26,6 +26,18 @@ templ LoginPage(props LoginPageProps) {
 			@fontLinks()
 		</head>
 		<body class="bg-cool-grey-50 dark:bg-dark-grey-950">
+			<!-- Preview Banner -->
+			<div id="preview-banner" class="bg-violet-600 text-white px-4 py-3 text-sm hidden">
+				<div class="max-w-7xl mx-auto flex items-center justify-between">
+					<p>This application is currently in preview. Features may change and some functionality may be incomplete.</p>
+					<button onclick="closePreviewBanner()" class="ml-4 text-white/80 hover:text-white flex-shrink-0">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+			</div>
+			@sharedLoginPreviewBannerScript()
 			<div class="flex h-screen w-full">
 				<!-- Left Side - Content -->
 				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] bg-cool-grey-50 dark:bg-dark-grey-950 px-8 md:px-20 py-16">
@@ -101,48 +113,6 @@ templ LoginPage(props LoginPageProps) {
 					/>
 				</div>
 			</div>
-			<!-- Preview Button -->
-			<div class="fixed bottom-4 right-4 z-50">
-				<button
-					onclick="openPreviewModal()"
-					class="bg-amber-500 text-white text-sm font-medium px-4 py-2 rounded-md shadow-lg hover:bg-amber-600 focus:ring-2 focus:ring-amber-400 transition"
-				>
-					Preview
-				</button>
-			</div>
-			<!-- Preview Modal -->
-			<div id="preview-modal" class="fixed inset-0 bg-black/50 hidden overflow-y-auto" style="z-index: 100;">
-				<div class="flex items-center justify-center min-h-full p-4">
-					<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-700 my-8">
-						<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700 flex justify-between items-center">
-							<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Preview Release</h3>
-							<button type="button" onclick="closePreviewModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
-								<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-								</svg>
-							</button>
-						</div>
-						<div class="px-6 py-4">
-							<p class="text-cool-grey-600 dark:text-cool-grey-400">
-								This application is currently in preview and under active development. Features may change and some functionality may be incomplete.
-							</p>
-						</div>
-						<div class="px-6 py-4 bg-cool-grey-100 dark:bg-dark-grey-800 rounded-b-lg flex justify-end">
-							<button type="button" onclick="closePreviewModal()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md focus:ring-2 focus:ring-primary-500">
-								Got it
-							</button>
-						</div>
-					</div>
-				</div>
-			</div>
-			<script>
-				function openPreviewModal() {
-					document.getElementById('preview-modal').classList.remove('hidden');
-				}
-				function closePreviewModal() {
-					document.getElementById('preview-modal').classList.add('hidden');
-				}
-			</script>
 		</body>
 	</html>
 }
@@ -279,4 +249,20 @@ templ arrowUpRightIcon() {
 		<line x1="7" y1="17" x2="17" y2="7"></line>
 		<polyline points="7 7 17 7 17 17"></polyline>
 	</svg>
+}
+
+templ sharedLoginPreviewBannerScript() {
+	<script>
+		(function() {
+			// Show banner if cookie is not set
+			if (document.cookie.indexOf('preview_banner_dismissed=') === -1) {
+				document.getElementById('preview-banner').classList.remove('hidden');
+			}
+		})();
+
+		function closePreviewBanner() {
+			document.getElementById('preview-banner').classList.add('hidden');
+			document.cookie = 'preview_banner_dismissed=1; path=/; max-age=31536000';
+		}
+	</script>
 }
