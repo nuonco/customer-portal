@@ -14,6 +14,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
@@ -153,8 +154,39 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	orderedWorkflowGroups := groupAndSortWorkflowsByDateTempl(processedWorkflows)
 
 	// Get global app theme for customer UI
-	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	workspaceID := h.getWorkspaceIDForTheme(c)
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, workspaceID)
 
+	// Try template override first
+	workflowsData := make([]templates.WorkflowData, 0, len(processedWorkflows))
+	for _, wf := range processedWorkflows {
+		id, _ := wf["id"].(string)
+		name, _ := wf["name"].(string)
+		status, _ := wf["status"].(string)
+		workflowsData = append(workflowsData, templates.WorkflowData{
+			ID:     id,
+			Type:   name,
+			Status: status,
+		})
+	}
+
+	pageData := templates.WorkflowsPageData{
+		Install: templates.InstallData{
+			ID:      install.ID,
+			Name:    install.Name,
+			Status:  string(install.Status),
+			Region:  install.Region,
+			AppName: install.InstallLink.AppName,
+		},
+		Workflows: workflowsData,
+	}
+
+	ctx := h.buildTemplateContext("Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
+	if h.tryRenderOverride(c, workspaceID, "workflows", ctx) {
+		return
+	}
+
+	// Fall back to default Templ template
 	props := customerpages.WorkflowsPageProps{
 		LayoutProps:        h.buildCustomerLayoutProps("Workflow History - "+install.InstallLink.AppName, user, theme),
 		Install:            install,

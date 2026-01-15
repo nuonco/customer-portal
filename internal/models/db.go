@@ -81,9 +81,9 @@ func InitDB() (*gorm.DB, error) {
 	// Auto-migrate all models (including new workspace models)
 	err = db.AutoMigrate(
 		&User{},
-		&Workspace{},           // NEW
-		&WorkspaceMember{},     // NEW
-		&WorkspaceInvitation{}, // NEW
+		&Workspace{},
+		&WorkspaceMember{},
+		&WorkspaceInvitation{},
 		&NuonOrg{},
 		&InstallLink{},
 		&Install{},
@@ -91,6 +91,10 @@ func InitDB() (*gorm.DB, error) {
 		&AppHealthCheckConfig{},
 		&CustomerAuthConfig{},
 		&AppInputConfig{},
+		// GitHub template customization models
+		&GitHubRepoConfig{},
+		&TemplateOverride{},
+		&AssetOverride{},
 	)
 	if err != nil {
 		return nil, err

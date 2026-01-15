@@ -70,3 +70,15 @@ func NewWorkspaceMemberID() string {
 func NewWorkspaceInvitationID() string {
 	return New("wsi")
 }
+
+func NewGitHubRepoConfigID() string {
+	return New("ghc")
+}
+
+func NewTemplateOverrideID() string {
+	return New("tov")
+}
+
+func NewAssetOverrideID() string {
+	return New("aov")
+}

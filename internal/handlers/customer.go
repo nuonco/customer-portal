@@ -17,6 +17,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
@@ -458,7 +459,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	if link.Used {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, link.WorkspaceID)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "This install link has already been used",
@@ -468,7 +469,9 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	// Use install link's workspace ID (not getWorkspaceIDForTheme which only works for vendor routes)
+	workspaceID := link.WorkspaceID
+	theme, err := models.GetOrCreateAppTheme(h.db, workspaceID)
 	if err != nil {
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
@@ -487,6 +490,26 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 		return
 	}
 
+	// Try template override first
+	vendorInputs, _ := link.GetVendorInputs()
+	vendorInputsInterface := make(map[string]interface{})
+	for k, v := range vendorInputs {
+		vendorInputsInterface[k] = v
+	}
+
+	pageData := templates.InstallLinkPageData{
+		SHA:          sha,
+		AppName:      link.AppName,
+		VendorInputs: vendorInputsInterface,
+		SubmitURL:    h.basePath + "/install-link/",
+	}
+
+	ctx := h.buildTemplateContext("Install "+link.AppName, loggedInUser, theme, pageData)
+	if h.tryRenderOverride(c, workspaceID, "install_link", ctx) {
+		return
+	}
+
+	// Fall back to default Templ template
 	props := customerpages.InstallLinkPageProps{
 		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme),
 		Link:         &link,
@@ -787,8 +810,54 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	// Use workspace ID from first install (all installs for a user typically belong to same workspace)
+	var workspaceID string
+	if len(paginatedInstalls) > 0 {
+		workspaceID = paginatedInstalls[0].Install.WorkspaceID
+	}
+	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
+	// Try template override first
+	installsData := make([]templates.InstallData, 0, len(paginatedInstalls))
+	for _, inst := range paginatedInstalls {
+		installsData = append(installsData, templates.InstallData{
+			ID:                  inst.Install.ID,
+			Name:                inst.Install.Name,
+			Status:              string(inst.Install.Status),
+			Region:              inst.Install.Region,
+			AppName:             inst.Install.InstallLink.AppName,
+			CreatedAt:           inst.Install.CreatedAt.Format("Jan 2, 2006"),
+			HasHealthChecks:     inst.HasHealthChecks,
+			HealthChecksPassed:  inst.HealthChecksPassed,
+			HealthChecksPending: inst.HealthChecksPending,
+			HealthChecksFailed:  inst.HealthChecksFailed,
+			HasPendingApproval:  inst.HasPendingApprovals,
+		})
+	}
+
+	pageData := templates.InstallsPageData{
+		Installs:            installsData,
+		CurrentTab:          currentTab,
+		TotalCount:          totalCount,
+		NeedsAttentionCount: needsAttentionCount,
+		UpdatingCount:       updatingCount,
+		HealthyCount:        healthyCount,
+		CurrentPage:         page,
+		TotalPages:          totalPages,
+		HasPrevious:         page > 1,
+		HasNext:             page < totalPages,
+		PreviousPage:        page - 1,
+		NextPage:            page + 1,
+		ShowingFrom:         showingFrom,
+		ShowingTo:           showingTo,
+	}
+
+	ctx := h.buildTemplateContext("Your Installs", user, theme, pageData)
+	if h.tryRenderOverride(c, workspaceID, "installs", ctx) {
+		return
+	}
+
+	// Fall back to default Templ template
 	props := customerpages.InstallsPageProps{
 		LayoutProps: h.buildCustomerLayoutProps("Your Installs", user, theme),
 		Pagination:  pagination,
@@ -816,7 +885,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 
 	// Load the install link with NuonOrg for display and health checks
 	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, install.WorkspaceID)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Failed to load install details",
@@ -862,8 +931,75 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	// Use install's workspace ID (not getWorkspaceIDForTheme which only works for vendor routes)
+	workspaceID := install.WorkspaceID
+	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
+	// Try template override first
+	workflowsData := make([]templates.WorkflowData, 0, len(recentWorkflows))
+	for _, wf := range recentWorkflows {
+		workflowsData = append(workflowsData, templates.WorkflowData{
+			ID:          wf.ID,
+			Type:        wf.Name,
+			Status:      wf.Status,
+			CreatedAt:   wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
+			CompletedAt: wf.FinishedAt.Format("Jan 2, 2006 3:04 PM"),
+		})
+	}
+
+	healthChecksData := make([]templates.HealthCheckData, 0, len(healthCheckStatuses))
+	for _, hc := range healthCheckStatuses {
+		checkedAt := ""
+		if !hc.LastRunAt.IsZero() {
+			checkedAt = hc.LastRunAt.Format("Jan 2, 2006 3:04 PM")
+		}
+		healthChecksData = append(healthChecksData, templates.HealthCheckData{
+			ID:        hc.ActionID,
+			Name:      hc.ActionName,
+			Status:    hc.Status,
+			Message:   hc.StatusMessage,
+			CheckedAt: checkedAt,
+		})
+	}
+
+	var pendingApproval *templates.WorkflowData
+	for _, wf := range recentWorkflows {
+		if wf.CanApprove || wf.CanApproveAll {
+			pendingApproval = &templates.WorkflowData{
+				ID:        wf.ID,
+				Type:      wf.Name,
+				Status:    wf.Status,
+				CreatedAt: wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
+			}
+			break
+		}
+	}
+
+	pageData := templates.InstallDetailPageData{
+		Install: templates.InstallData{
+			ID:                  install.ID,
+			Name:                install.Name,
+			Status:              string(install.Status),
+			Region:              install.Region,
+			AppName:             install.InstallLink.AppName,
+			CreatedAt:           install.CreatedAt.Format("Jan 2, 2006"),
+			HasHealthChecks:     len(healthCheckIDs) > 0,
+			HealthChecksPassed:  countHealthCheckStatus(healthCheckStatuses, "Passing"),
+			HealthChecksPending: countHealthCheckStatus(healthCheckStatuses, "Pending"),
+			HealthChecksFailed:  countHealthCheckStatus(healthCheckStatuses, "Failing"),
+			HasPendingApproval:  pendingApproval != nil,
+		},
+		Workflows:       workflowsData,
+		HealthChecks:    healthChecksData,
+		PendingApproval: pendingApproval,
+	}
+
+	ctx := h.buildTemplateContext("Install - "+install.Name, user, theme, pageData)
+	if h.tryRenderOverride(c, workspaceID, "install_detail", ctx) {
+		return
+	}
+
+	// Fall back to default Templ template
 	props := customerpages.InstallDetailPageProps{
 		LayoutProps:         h.buildCustomerLayoutProps("Install - "+install.Name, user, theme),
 		Install:             install,
@@ -873,6 +1009,17 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		HasHealthChecks:     len(healthCheckIDs) > 0,
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallDetailPage(props))
+}
+
+// countHealthCheckStatus counts health checks with the given status
+func countHealthCheckStatus(statuses []customerui.HealthCheckStatusData, status string) int {
+	count := 0
+	for _, s := range statuses {
+		if s.Status == status {
+			count++
+		}
+	}
+	return count
 }
 
 // convertWorkflowsToData converts gin.H workflow data to customerui.WorkflowData

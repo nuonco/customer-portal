@@ -216,7 +216,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	settings.Use(middleware.RequireRole(models.RoleVendor))
 	settings.Use(middleware.RequireWorkspaceContext(db))
 	{
-		settings.GET("/", h.ThemeSettingsPage)
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
 		settings.PUT("/", h.UpdateThemeSettings)
 
@@ -225,6 +224,14 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		settings.GET("/customer-auth/panel", h.CustomerAuthSettingsPanelContent)
 		settings.PUT("/customer-auth", h.UpdateCustomerAuthSettings)
 		settings.POST("/customer-auth/test", h.TestCustomerAuthConnection)
+
+		// GitHub template customization settings
+		settings.GET("/github", h.GetGitHubConfig)
+		settings.POST("/github", h.SaveGitHubConfig)
+		settings.POST("/github/sync", h.SyncGitHub)
+		settings.DELETE("/github", h.DeleteGitHubConfig)
+		settings.PUT("/github/templates/:page", h.ToggleTemplateOverride)
+		settings.DELETE("/github/templates/:page", h.DeleteTemplateOverride)
 	}
 
 	// Profile settings (user can edit their own profile)
@@ -308,6 +315,10 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installLinks.POST("/", h.AcceptInstallLink)
 		installLinks.GET("/:sha/app-config", h.GetInstallLinkAppConfig)
 	}
+
+	// Custom asset serving (workspace-specific CSS and images from GitHub sync)
+	rg.GET("/custom/css/:workspace_id", h.ServeCustomCSS)
+	rg.GET("/custom/assets/:workspace_id/*path", h.ServeCustomAsset)
 
 	// JWT refresh endpoint
 	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
