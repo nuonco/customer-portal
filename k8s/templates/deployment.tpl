@@ -16,6 +16,7 @@ spec:
         {{- include "common.selectorLabels" . | nindent 8 }}
         tags.datadoghq.com/service: customer-dashboard
       annotations:
+        rollme: {{ randAlphaNum 5 | quote }}
         ad.datadoghq.com/tags: '{"service_type":"app", "service_deployment":"customer-dashboard"}'
 
     spec:
