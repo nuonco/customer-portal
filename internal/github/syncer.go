@@ -3,12 +3,12 @@ package github
 import (
 	"context"
 	"fmt"
-	"html/template"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	"gorm.io/gorm"
 )
 
@@ -180,9 +180,8 @@ func (s *Syncer) syncTemplate(ctx context.Context, config *models.GitHubRepoConf
 		return fmt.Errorf("failed to fetch content: %w", err)
 	}
 
-	// Validate template syntax
-	_, err = template.New(pageName).Parse(string(content))
-	if err != nil {
+	// Validate template syntax (including component functions like statusBadge, alert, etc.)
+	if err := overrides.ValidateTemplate(pageName, string(content)); err != nil {
 		return fmt.Errorf("invalid template syntax: %w", err)
 	}
 

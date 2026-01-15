@@ -17,9 +17,9 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
@@ -497,7 +497,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 		vendorInputsInterface[k] = v
 	}
 
-	pageData := templates.InstallLinkPageData{
+	pageData := overrides.InstallLinkPageData{
 		SHA:          sha,
 		AppName:      link.AppName,
 		VendorInputs: vendorInputsInterface,
@@ -818,9 +818,9 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
 	// Try template override first
-	installsData := make([]templates.InstallData, 0, len(paginatedInstalls))
+	installsData := make([]overrides.InstallData, 0, len(paginatedInstalls))
 	for _, inst := range paginatedInstalls {
-		installsData = append(installsData, templates.InstallData{
+		installsData = append(installsData, overrides.InstallData{
 			ID:                  inst.Install.ID,
 			Name:                inst.Install.Name,
 			Status:              string(inst.Install.Status),
@@ -835,7 +835,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		})
 	}
 
-	pageData := templates.InstallsPageData{
+	pageData := overrides.InstallsPageData{
 		Installs:            installsData,
 		CurrentTab:          currentTab,
 		TotalCount:          totalCount,
@@ -936,9 +936,9 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
 	// Try template override first
-	workflowsData := make([]templates.WorkflowData, 0, len(recentWorkflows))
+	workflowsData := make([]overrides.WorkflowData, 0, len(recentWorkflows))
 	for _, wf := range recentWorkflows {
-		workflowsData = append(workflowsData, templates.WorkflowData{
+		workflowsData = append(workflowsData, overrides.WorkflowData{
 			ID:          wf.ID,
 			Type:        wf.Name,
 			Status:      wf.Status,
@@ -947,13 +947,13 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		})
 	}
 
-	healthChecksData := make([]templates.HealthCheckData, 0, len(healthCheckStatuses))
+	healthChecksData := make([]overrides.HealthCheckData, 0, len(healthCheckStatuses))
 	for _, hc := range healthCheckStatuses {
 		checkedAt := ""
 		if !hc.LastRunAt.IsZero() {
 			checkedAt = hc.LastRunAt.Format("Jan 2, 2006 3:04 PM")
 		}
-		healthChecksData = append(healthChecksData, templates.HealthCheckData{
+		healthChecksData = append(healthChecksData, overrides.HealthCheckData{
 			ID:        hc.ActionID,
 			Name:      hc.ActionName,
 			Status:    hc.Status,
@@ -962,10 +962,10 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		})
 	}
 
-	var pendingApproval *templates.WorkflowData
+	var pendingApproval *overrides.WorkflowData
 	for _, wf := range recentWorkflows {
 		if wf.CanApprove || wf.CanApproveAll {
-			pendingApproval = &templates.WorkflowData{
+			pendingApproval = &overrides.WorkflowData{
 				ID:        wf.ID,
 				Type:      wf.Name,
 				Status:    wf.Status,
@@ -975,8 +975,8 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		}
 	}
 
-	pageData := templates.InstallDetailPageData{
-		Install: templates.InstallData{
+	pageData := overrides.InstallDetailPageData{
+		Install: overrides.InstallData{
 			ID:                  install.ID,
 			Name:                install.Name,
 			Status:              string(install.Status),

@@ -217,6 +217,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	settings.Use(middleware.RequireWorkspaceContext(db))
 	{
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
+		settings.GET("/customization/panel", h.CustomThemePanelContent)
 		settings.PUT("/", h.UpdateThemeSettings)
 
 		// Customer auth settings

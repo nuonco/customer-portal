@@ -1,4 +1,4 @@
-package templates
+package overrides
 
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"

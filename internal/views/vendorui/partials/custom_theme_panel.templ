@@ -1,0 +1,470 @@
+package partials
+
+import (
+	"fmt"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+// CustomThemePanelProps for the custom theme settings panel
+type CustomThemePanelProps struct {
+	BasePath     string
+	GitHubConfig *models.GitHubRepoConfig
+	Templates    []models.TemplateOverride
+	Assets       []models.AssetOverride
+}
+
+// CustomThemePanel renders the custom theme settings slide-in panel
+templ CustomThemePanel(props CustomThemePanelProps) {
+	<div
+		id="custom-theme-panel"
+		class="stratus-panel panel-hidden"
+		data-base-path={ props.BasePath }
+	>
+		<!-- Overlay - click to close -->
+		<div class="stratus-panel-overlay" onclick="closeCustomThemePanel()"></div>
+		<!-- Panel Container -->
+		<div class="stratus-panel-container">
+			<!-- Header -->
+			<div class="stratus-panel-header">
+				<div class="stratus-panel-title">
+					@customThemeCodeIcon()
+					<span>Custom Theme</span>
+				</div>
+				<div class="flex items-center gap-2">
+					<!-- Expand/Collapse button -->
+					<button type="button" onclick="toggleCustomThemePanelSize()" class="stratus-panel-action" id="customThemePanelExpandBtn" title="Expand to full screen">
+						@customThemeExpandIcon()
+						@customThemeCollapseIcon()
+					</button>
+					<!-- Close button - ArrowLineRight icon -->
+					<button type="button" onclick="closeCustomThemePanel()" class="stratus-panel-action" title="Close panel">
+						@customThemeArrowRightIcon()
+					</button>
+				</div>
+			</div>
+			<!-- Scrollable Content -->
+			<div class="stratus-panel-content">
+				<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">Connect a GitHub repository to customize customer-facing pages with your own HTML templates, CSS, and assets.</p>
+				<div class="space-y-6">
+					<!-- GitHub Template Customization Section -->
+					@customThemeGitHubSection(props.GitHubConfig, props.Templates, props.Assets, props.BasePath)
+				</div>
+			</div>
+		</div>
+	</div>
+	@customThemePanelScript()
+}
+
+templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride, basePath string) {
+	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+		<h3 class="text-base font-semibold mb-2 text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+		<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Connect a GitHub repository containing your custom templates and assets.
+		</p>
+		<!-- GitHub Config Form -->
+		<div id="customThemeGithubConfigForm">
+			<div class="grid grid-cols-3 gap-3 mb-3">
+				<div>
+					<label for="customThemeRepoOwner" class="block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Repository Owner</label>
+					<input
+						type="text"
+						id="customThemeRepoOwner"
+						if config != nil {
+							value={ config.RepoOwner }
+						}
+						placeholder="acme-corp"
+						class="block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+				<div>
+					<label for="customThemeRepoName" class="block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Repository Name</label>
+					<input
+						type="text"
+						id="customThemeRepoName"
+						if config != nil {
+							value={ config.RepoName }
+						}
+						placeholder="customer-theme"
+						class="block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+				<div>
+					<label for="customThemeRepoBranch" class="block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Branch</label>
+					<input
+						type="text"
+						id="customThemeRepoBranch"
+						if config != nil && config.Branch != "" {
+							value={ config.Branch }
+						} else {
+							value="main"
+						}
+						placeholder="main"
+						class="block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+			</div>
+			<div class="mb-3">
+				<label for="customThemeAccessToken" class="block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Personal Access Token</label>
+				<input
+					type="password"
+					id="customThemeAccessToken"
+					placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+					class="block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					GitHub PAT with <code class="bg-cool-grey-200 dark:bg-dark-grey-600 px-1 rounded text-xs">repo</code> read access.
+					if config != nil {
+						Leave empty to keep existing token.
+					}
+				</p>
+			</div>
+			<div class="flex space-x-2">
+				<button
+					type="button"
+					onclick="customThemeSaveGitHubConfig()"
+					class="px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
+				>
+					if config != nil {
+						Update Config
+					} else {
+						Save Config
+					}
+				</button>
+				if config != nil {
+					<button
+						type="button"
+						id="customThemeSyncButton"
+						onclick="customThemeSyncGitHub()"
+						class="px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+					>
+						Sync Now
+					</button>
+					<button
+						type="button"
+						onclick="customThemeRemoveGitHubConfig()"
+						class="px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400"
+					>
+						Remove
+					</button>
+				}
+			</div>
+		</div>
+		<!-- Sync Status (shown when configured) -->
+		if config != nil {
+			<div class="mt-4 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+				<div class="flex items-center justify-between text-xs mb-2">
+					<div>
+						<span class="font-medium text-cool-grey-700 dark:text-cool-grey-300">Status: </span>
+						if config.LastSyncStatus == "success" {
+							<span class="text-green-600 dark:text-green-400">
+								&#10003; Synced
+								if config.LastSyncAt != nil {
+									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
+								}
+							</span>
+						} else if config.LastSyncStatus == "failed" {
+							<span class="text-red-600 dark:text-red-400">
+								&#10007; Failed
+								if config.LastSyncError != "" {
+									- { config.LastSyncError }
+								}
+							</span>
+						} else {
+							<span class="text-cool-grey-500">Not synced</span>
+						}
+					</div>
+					if config.LastSyncSHA != "" {
+						<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono">
+							{ config.LastSyncSHA[:7] }
+						</span>
+					}
+				</div>
+			</div>
+			<!-- Synced Templates -->
+			if len(templates) > 0 {
+				<div class="mt-3">
+					<h4 class="text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Templates</h4>
+					<div class="space-y-1">
+						for _, tmpl := range templates {
+							<div class="flex items-center justify-between py-1.5 px-2 bg-white dark:bg-dark-grey-700 rounded text-xs">
+								<div class="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id={ "custom-theme-tmpl-" + tmpl.PageName }
+										checked?={ tmpl.IsEnabled }
+										data-page-name={ tmpl.PageName }
+										class="custom-theme-template-toggle h-3.5 w-3.5 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-500"
+									/>
+									<label for={ "custom-theme-tmpl-" + tmpl.PageName } class="text-cool-grey-700 dark:text-cool-grey-300">
+										{ tmpl.PageName }.html
+									</label>
+								</div>
+								<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
+									{ tmpl.SourcePath }
+								</span>
+							</div>
+						}
+					</div>
+				</div>
+			}
+			<!-- Synced Assets -->
+			if len(assets) > 0 {
+				<div class="mt-3">
+					<h4 class="text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Assets</h4>
+					<div class="space-y-1 text-xs">
+						for _, asset := range assets {
+							<div class="flex items-center justify-between">
+								<span class="text-cool-grey-600 dark:text-cool-grey-400">
+									&bull; { asset.AssetPath }
+								</span>
+								<span class="text-cool-grey-500 dark:text-cool-grey-400">
+									{ formatCustomThemeAssetSize(len(asset.Content)) }
+								</span>
+							</div>
+						}
+					</div>
+				</div>
+			}
+		}
+		<!-- GitHub status messages -->
+		<div id="customThemeGithubSuccessMessage" class="hidden mt-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-xs"></div>
+		<div id="customThemeGithubErrorMessage" class="hidden mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs"></div>
+	</div>
+}
+
+func formatCustomThemeAssetSize(bytes int) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+}
+
+templ customThemePanelScript() {
+	<script>
+		(function() {
+			const panel = document.getElementById('custom-theme-panel');
+			const basePath = panel.dataset.basePath;
+
+			function openCustomThemePanel() {
+				panel.classList.remove('panel-hidden');
+				panel.classList.add('panel-visible');
+				document.body.classList.add('overflow-hidden');
+				const userDropdown = document.getElementById('userDropdown');
+				if (userDropdown) userDropdown.classList.add('hidden');
+			}
+
+			function closeCustomThemePanel() {
+				panel.classList.remove('panel-visible', 'panel-full');
+				panel.classList.add('panel-hidden');
+				document.body.classList.remove('overflow-hidden');
+				document.getElementById('customThemeExpandIcon')?.classList.remove('hidden');
+				document.getElementById('customThemeCollapseIcon')?.classList.add('hidden');
+				document.getElementById('customThemePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');
+			}
+
+			function toggleCustomThemePanelSize() {
+				const expandIcon = document.getElementById('customThemeExpandIcon');
+				const collapseIcon = document.getElementById('customThemeCollapseIcon');
+				const expandBtn = document.getElementById('customThemePanelExpandBtn');
+
+				if (panel.classList.contains('panel-full')) {
+					panel.classList.remove('panel-full');
+					expandIcon.classList.remove('hidden');
+					collapseIcon.classList.add('hidden');
+					expandBtn.setAttribute('title', 'Expand to full screen');
+				} else {
+					panel.classList.add('panel-full');
+					expandIcon.classList.add('hidden');
+					collapseIcon.classList.remove('hidden');
+					expandBtn.setAttribute('title', 'Resize to default size');
+				}
+			}
+
+			window.openCustomThemePanel = openCustomThemePanel;
+			window.closeCustomThemePanel = closeCustomThemePanel;
+			window.toggleCustomThemePanelSize = toggleCustomThemePanelSize;
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key === 'Escape') {
+					if (panel && panel.classList.contains('panel-visible')) {
+						closeCustomThemePanel();
+					}
+				}
+			});
+
+			// GitHub integration functions
+			window.customThemeSaveGitHubConfig = async function() {
+				const successMsg = document.getElementById('customThemeGithubSuccessMessage');
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				successMsg.classList.add('hidden');
+				errorMsg.classList.add('hidden');
+
+				const repoOwner = document.getElementById('customThemeRepoOwner').value.trim();
+				const repoName = document.getElementById('customThemeRepoName').value.trim();
+				const branch = document.getElementById('customThemeRepoBranch').value.trim() || 'main';
+				const accessToken = document.getElementById('customThemeAccessToken').value;
+
+				if (!repoOwner || !repoName) {
+					errorMsg.textContent = 'Repository owner and name are required.';
+					errorMsg.classList.remove('hidden');
+					return;
+				}
+
+				const payload = {
+					repo_owner: repoOwner,
+					repo_name: repoName,
+					branch: branch
+				};
+				if (accessToken) {
+					payload.access_token = accessToken;
+				}
+
+				try {
+					const response = await fetch(`${basePath}/settings/github`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify(payload)
+					});
+					const data = await response.json();
+					if (response.ok) {
+						successMsg.textContent = data.message || 'GitHub repository configured successfully.';
+						successMsg.classList.remove('hidden');
+						document.getElementById('customThemeAccessToken').value = '';
+						setTimeout(() => { location.reload(); }, 1500);
+					} else {
+						errorMsg.textContent = data.error || 'Failed to save GitHub configuration.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+			};
+
+			window.customThemeSyncGitHub = async function() {
+				const syncButton = document.getElementById('customThemeSyncButton');
+				const successMsg = document.getElementById('customThemeGithubSuccessMessage');
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				successMsg.classList.add('hidden');
+				errorMsg.classList.add('hidden');
+
+				syncButton.textContent = 'Syncing...';
+				syncButton.disabled = true;
+
+				try {
+					const response = await fetch(`${basePath}/settings/github/sync`, {
+						method: 'POST',
+						credentials: 'same-origin'
+					});
+					const data = await response.json();
+					if (response.ok) {
+						let msg = 'Sync completed.';
+						if (data.templates_synced > 0 || data.assets_synced > 0) {
+							msg += ` Synced ${data.templates_synced} template(s) and ${data.assets_synced} asset(s).`;
+						}
+						successMsg.textContent = msg;
+						successMsg.classList.remove('hidden');
+						setTimeout(() => { location.reload(); }, 1500);
+					} else {
+						errorMsg.textContent = data.error || 'Sync failed.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+
+				syncButton.textContent = 'Sync Now';
+				syncButton.disabled = false;
+			};
+
+			window.customThemeToggleTemplate = async function(pageName, enabled) {
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					const response = await fetch(`${basePath}/settings/github/templates/${pageName}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled })
+					});
+					if (!response.ok) {
+						const data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to toggle template.';
+						errorMsg.classList.remove('hidden');
+						const checkbox = document.getElementById('custom-theme-tmpl-' + pageName);
+						if (checkbox) checkbox.checked = !enabled;
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+					const checkbox = document.getElementById('custom-theme-tmpl-' + pageName);
+					if (checkbox) checkbox.checked = !enabled;
+				}
+			};
+
+			window.customThemeRemoveGitHubConfig = async function() {
+				if (!confirm('Remove GitHub integration? This will delete all synced templates and assets.')) {
+					return;
+				}
+
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					const response = await fetch(`${basePath}/settings/github`, {
+						method: 'DELETE',
+						credentials: 'same-origin'
+					});
+					if (response.ok) {
+						location.reload();
+					} else {
+						const data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to remove GitHub integration.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+			};
+
+			// Wire up template toggle checkboxes
+			document.querySelectorAll('.custom-theme-template-toggle').forEach(function(checkbox) {
+				checkbox.addEventListener('change', function(e) {
+					const pageName = e.target.dataset.pageName;
+					const enabled = e.target.checked;
+					window.customThemeToggleTemplate(pageName, enabled);
+				});
+			});
+
+			openCustomThemePanel();
+		})();
+	</script>
+}
+
+templ customThemeCodeIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
+	</svg>
+}
+
+templ customThemeExpandIcon() {
+	<svg id="customThemeExpandIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path>
+	</svg>
+}
+
+templ customThemeCollapseIcon() {
+	<svg id="customThemeCollapseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
+	</svg>
+}
+
+templ customThemeArrowRightIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z"></path>
+	</svg>
+}

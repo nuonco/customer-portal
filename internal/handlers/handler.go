@@ -22,7 +22,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
@@ -86,7 +86,7 @@ type Handler struct {
 	customerBaseURL     string                            // Base URL for customer-facing install links
 	nuonAPIURL          string                            // Global Nuon API URL for all orgs
 	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
-	templateRenderer    *templates.TemplateRenderer       // Template renderer for customer page overrides
+	templateRenderer    *overrides.TemplateRenderer       // Template renderer for customer page overrides
 }
 
 // PaginationData holds pagination metadata for templates
@@ -122,7 +122,7 @@ func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.Au
 		customerBaseURL:  customerBaseURL,
 		nuonAPIURL:       nuonAPIURL,
 		basePath:         basePath,
-		templateRenderer: templates.NewTemplateRenderer(db),
+		templateRenderer: overrides.NewTemplateRenderer(db),
 	}
 }
 
@@ -135,7 +135,7 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 		customerBaseURL:     customerBaseURL,
 		nuonAPIURL:          nuonAPIURL,
 		basePath:            basePath,
-		templateRenderer:    templates.NewTemplateRenderer(db),
+		templateRenderer:    overrides.NewTemplateRenderer(db),
 	}
 }
 
@@ -162,17 +162,17 @@ func (h *Handler) RenderTempl(c *gin.Context, status int, component templ.Compon
 }
 
 // buildTemplateContext creates a TemplateContext for override templates from existing data
-func (h *Handler) buildTemplateContext(title string, user *models.User, theme *models.AppTheme, pageData interface{}) *templates.TemplateContext {
-	ctx := &templates.TemplateContext{
+func (h *Handler) buildTemplateContext(title string, user *models.User, theme *models.AppTheme, pageData interface{}) *overrides.TemplateContext {
+	ctx := &overrides.TemplateContext{
 		Title:    title,
 		BasePath: h.basePath,
 		CSSPath:  assets.CustomerCSSPath(),
-		Theme:    templates.NewThemeData(theme),
+		Theme:    overrides.NewThemeData(theme),
 		PageData: pageData,
 	}
 
 	if user != nil {
-		ctx.User = templates.NewUserData(user)
+		ctx.User = overrides.NewUserData(user)
 	}
 
 	return ctx
@@ -193,7 +193,7 @@ func (h *Handler) getCustomCSSPath(workspaceID string) string {
 
 // tryRenderOverride attempts to render a template override for the given page
 // Returns true if an override was rendered, false if fallback to default template is needed
-func (h *Handler) tryRenderOverride(c *gin.Context, workspaceID, pageName string, ctx *templates.TemplateContext) bool {
+func (h *Handler) tryRenderOverride(c *gin.Context, workspaceID, pageName string, ctx *overrides.TemplateContext) bool {
 	if workspaceID == "" {
 		return false
 	}
@@ -202,6 +202,9 @@ func (h *Handler) tryRenderOverride(c *gin.Context, workspaceID, pageName string
 	ctx.CustomCSSPath = h.getCustomCSSPath(workspaceID)
 
 	result := h.templateRenderer.TryRender(c, workspaceID, pageName, ctx)
+	if result.Error != nil {
+		fmt.Printf("Template override error for workspace %s, page %s: %v\n", workspaceID, pageName, result.Error)
+	}
 	return result.Rendered
 }
 
@@ -305,7 +308,7 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
 	// Try template override first
-	pageData := templates.ErrorPageData{
+	pageData := overrides.ErrorPageData{
 		Title:   title,
 		Message: errorMsg,
 		Code:    status,
@@ -480,7 +483,7 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	props.AuthURL = authURL
 
 	// Try template override first
-	pageData := templates.LoginPageData{
+	pageData := overrides.LoginPageData{
 		AuthURL:    authURL,
 		Error:      errorMsg,
 		SwitchURL:  props.SwitchURL,
@@ -1585,10 +1588,25 @@ func (h *Handler) DeleteOrg(c *gin.Context) {
 
 // ThemeSettingsPanelContent returns just the panel HTML for HTMX lazy loading
 func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
 	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load theme settings")
+		return
+	}
+
+	props := partials.ThemePanelProps{
+		Theme:    theme,
+		BasePath: h.basePath,
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.ThemePanel(props))
+}
+
+// CustomThemePanelContent returns the custom theme panel HTML for HTMX lazy loading
+func (h *Handler) CustomThemePanelContent(c *gin.Context) {
+	workspace := middleware.GetCurrentWorkspace(c)
+	if workspace == nil {
+		c.String(http.StatusBadRequest, "Workspace context not found")
 		return
 	}
 
@@ -1597,15 +1615,14 @@ func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
 	templateOverrides, _ := models.GetAllTemplateOverrides(h.db, workspace.ID)
 	assetOverrides, _ := models.GetAllAssetOverrides(h.db, workspace.ID)
 
-	props := partials.ThemePanelProps{
-		Theme:        theme,
+	props := partials.CustomThemePanelProps{
 		BasePath:     h.basePath,
 		GitHubConfig: gitHubConfig,
 		Templates:    templateOverrides,
 		Assets:       assetOverrides,
 	}
 
-	h.RenderTempl(c, http.StatusOK, partials.ThemePanel(props))
+	h.RenderTempl(c, http.StatusOK, partials.CustomThemePanel(props))
 }
 
 // UpdateThemeSettings handles PUT request to update global theme settings

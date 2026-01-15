@@ -14,9 +14,9 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
@@ -158,20 +158,20 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	theme, _ := localModels.GetOrCreateAppTheme(h.db, workspaceID)
 
 	// Try template override first
-	workflowsData := make([]templates.WorkflowData, 0, len(processedWorkflows))
+	workflowsData := make([]overrides.WorkflowData, 0, len(processedWorkflows))
 	for _, wf := range processedWorkflows {
 		id, _ := wf["id"].(string)
 		name, _ := wf["name"].(string)
 		status, _ := wf["status"].(string)
-		workflowsData = append(workflowsData, templates.WorkflowData{
+		workflowsData = append(workflowsData, overrides.WorkflowData{
 			ID:     id,
 			Type:   name,
 			Status: status,
 		})
 	}
 
-	pageData := templates.WorkflowsPageData{
-		Install: templates.InstallData{
+	pageData := overrides.WorkflowsPageData{
+		Install: overrides.InstallData{
 			ID:      install.ID,
 			Name:    install.Name,
 			Status:  string(install.Status),

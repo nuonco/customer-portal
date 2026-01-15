@@ -146,6 +146,9 @@ func (h *Handler) SyncGitHub(c *gin.Context) {
 		return
 	}
 
+	// Invalidate template cache to pick up new/updated templates
+	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":           "Sync completed",
 		"templates_synced":  result.TemplatesSynced,
@@ -182,6 +185,9 @@ func (h *Handler) DeleteGitHubConfig(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete configuration"})
 		return
 	}
+
+	// Invalidate all cached templates for this workspace
+	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
 
 	c.JSON(http.StatusOK, gin.H{"message": "GitHub integration removed"})
 }
@@ -221,6 +227,9 @@ func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
 		return
 	}
 
+	// Invalidate cache for this specific template
+	h.templateRenderer.InvalidateCache(workspace.ID, pageName)
+
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Template override updated",
 		"page_name":  pageName,
@@ -246,6 +255,9 @@ func (h *Handler) DeleteTemplateOverride(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete override"})
 		return
 	}
+
+	// Invalidate cache for this specific template
+	h.templateRenderer.InvalidateCache(workspace.ID, pageName)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Template override deleted"})
 }

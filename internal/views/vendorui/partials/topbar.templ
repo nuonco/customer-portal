@@ -140,6 +140,18 @@ templ Topbar(props TopbarProps) {
 						<span>Theme settings</span>
 						@paletteIcon()
 					</button>
+					<!-- Custom Theme Button - lazy loads panel content via HTMX -->
+					<button
+						type="button"
+						hx-get={ props.BasePath + "/settings/customization/panel" }
+						hx-target="#settings-panel-container"
+						hx-trigger="click"
+						hx-swap="innerHTML"
+						class="stratus-menu-item-dashboard"
+					>
+						<span>Custom theme</span>
+						@codeIcon()
+					</button>
 					<!-- Customer Auth Settings Button - lazy loads panel content via HTMX -->
 					<button
 						type="button"
@@ -314,5 +326,11 @@ templ plusCircleIcon() {
 templ workspaceIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
 		<path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,0,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"></path>
+	</svg>
+}
+
+templ codeIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
+		<path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
 	</svg>
 }

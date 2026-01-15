@@ -1,4 +1,4 @@
-package templates
+package overrides
 
 import (
 	"bytes"
@@ -172,6 +172,14 @@ func (r *TemplateRenderer) GetCustomCSSPath(workspaceID, basePath string) string
 	return basePath + "/custom/css/" + workspaceID + ".css"
 }
 
+// ValidateTemplate validates a template string to ensure it parses correctly
+// with all available template functions (including component functions).
+// This should be used by the syncer when validating templates from GitHub.
+func ValidateTemplate(name, content string) error {
+	_, err := template.New(name).Funcs(templateFuncs()).Parse(content)
+	return err
+}
+
 // templateFuncs returns template functions available in override templates.
 func templateFuncs() template.FuncMap {
 	return template.FuncMap{
@@ -208,5 +216,31 @@ func templateFuncs() template.FuncMap {
 			}
 			return val
 		},
+
+		// Component functions - render pre-defined Templ components
+		// Usage: {{ statusBadge .Status }} or {{ statusBadge .Status "install" "md" }}
+		"statusBadge": RenderStatusBadge,
+		// Usage: {{ alert "info" "Message" }} or {{ alert "error" .ErrorMessage }}
+		"alert": RenderAlert,
+		// Usage: {{ emptyState "Title" "Message" }} or {{ emptyState "Title" "Message" "icon" }}
+		"emptyState": RenderEmptyState,
+		// Usage: {{ pagination .PageData }} (when PageData has pagination fields)
+		"pagination": RenderPagination,
+		// Helper to create pagination data: {{ pagination (paginationData 1 10 false true 0 2 "?page=") }}
+		"paginationData": MakePaginationData,
+
+		// Layout functions - render standard layout components
+		// Usage: {{ head . }} - renders complete <head> section with CSS, fonts, theme
+		"head": RenderHead,
+		// Usage: <body {{ bodyAttrs . }}> - renders body attributes with theme classes
+		"bodyAttrs": RenderBodyAttrs,
+		// Usage: {{ header . }} - renders header with logo, user, logout
+		"header": RenderHeader,
+		// Usage: {{ footer . }} - renders footer with branding
+		"footer": RenderFooter,
+		// Usage: {{ scripts . }} - renders utility scripts (toast, modals, auth)
+		"scripts": RenderScripts,
+		// Usage: {{ previewBanner }} - renders dismissible preview banner
+		"previewBanner": RenderPreviewBanner,
 	}
 }
