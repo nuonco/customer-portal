@@ -51,7 +51,7 @@ func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *Prov
 
 	// Validate that at least one OIDC source is available
 	// We check DB config at startup to see if it's configured
-	dbConfig, _ := models.GetOrCreateCustomerAuthConfig(db)
+	dbConfig, _ := models.GetOrCreateCustomerAuthConfig(db, "")
 	if !dbConfig.IsActive() && factory.envOIDCConfig == nil {
 		return nil, fmt.Errorf("customer authentication requires OIDC: configure customer OIDC in settings or set AUTH_* environment variables")
 	}
@@ -62,7 +62,7 @@ func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *Prov
 // GetProvider returns the appropriate auth provider based on current config.
 // Returns DB-configured OIDC provider if active, otherwise falls back to env var OIDC.
 func (f *CustomerAuthProviderFactory) GetProvider() (AuthProvider, error) {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db, "")
 	if err != nil {
 		// On DB error, try env var fallback
 		return f.getEnvOIDCProvider()
@@ -123,7 +123,7 @@ func (f *CustomerAuthProviderFactory) IsOIDCEnabled() bool {
 
 // GetOIDCSource returns which OIDC source is currently being used.
 func (f *CustomerAuthProviderFactory) GetOIDCSource() OIDCSource {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db, "")
 	if err == nil && config.IsActive() {
 		return OIDCSourceDatabase
 	}
@@ -133,7 +133,7 @@ func (f *CustomerAuthProviderFactory) GetOIDCSource() OIDCSource {
 // GetConfig returns the current customer auth config from the database.
 // Note: This may return an inactive config; use GetOIDCSource to determine the actual source.
 func (f *CustomerAuthProviderFactory) GetConfig() (*models.CustomerAuthConfig, error) {
-	return models.GetOrCreateCustomerAuthConfig(f.db)
+	return models.GetOrCreateCustomerAuthConfig(f.db, "")
 }
 
 // GetAuthURL generates an OIDC authorization URL with the given state.
@@ -180,7 +180,7 @@ func (f *CustomerAuthProviderFactory) HandleCallback(ctx context.Context, req Ca
 // TestConnection tests if the OIDC provider can be initialized with the current config.
 // Returns nil if successful, or an error describing what went wrong.
 func (f *CustomerAuthProviderFactory) TestConnection(ctx context.Context) error {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db)
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db, "")
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}

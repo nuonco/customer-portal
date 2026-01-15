@@ -17,7 +17,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/templates"
 )
 
 func main() {
@@ -25,14 +24,6 @@ func main() {
 	if err := assets.Init("./static"); err != nil {
 		log.Printf("Warning: Failed to initialize asset manifest: %v", err)
 	}
-
-	// Initialize template renderer (dev mode for hot-reloading in development)
-	devMode := os.Getenv("DEV_MODE") == "true" || os.Getenv("GIN_MODE") != "release"
-	renderer, err := templates.NewRenderer(devMode)
-	if err != nil {
-		log.Fatalf("Failed to initialize template renderer: %v", err)
-	}
-	log.Printf("Template renderer initialized (dev mode: %v)", devMode)
 
 	// Initialize database (uses DATABASE_URL env var or local defaults)
 	db, err := models.InitDB()
@@ -138,7 +129,7 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, renderer)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL)
 
 	// Create customer auth factory with env var OIDC as fallback
 	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
@@ -149,7 +140,7 @@ func main() {
 	log.Printf("Customer authentication: %s", getCustomerAuthMode(customerAuthFactory))
 
 	// Set up customer routes at root level (no prefix)
-	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, renderer)
+	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL)
 
 	// Start background health check runner (needs Nuon API URL for status checks)
 	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL)
@@ -165,9 +156,9 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string, renderer *templates.Renderer) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", renderer)
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin")
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -177,6 +168,9 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	// Public routes - vendor login
 	rg.GET("/login/", h.VendorLoginPageTempl)
 	rg.GET("/logout", h.VendorLogout) // Logout handler
+
+	// Invitation acceptance route (public - redirects to login if not authenticated)
+	rg.GET("/invite", h.AcceptInvitationPage)
 
 	// Auth routes depend on provider type
 	if authProvider != nil && authProvider.Name() == "local" {
@@ -193,10 +187,34 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	// JWT refresh endpoint
 	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
 
-	// Global theme settings (any vendor can edit)
+	// Workspace management routes (no workspace context required)
+	workspaceRoutes := rg.Group("/")
+	workspaceRoutes.Use(jwtAuth.MiddlewareFunc())
+	workspaceRoutes.Use(middleware.RequireRole(models.RoleVendor))
+	{
+		workspaceRoutes.POST("/workspaces", h.CreateWorkspace)
+		workspaceRoutes.GET("/workspaces/select", h.WorkspaceSelectorPage)
+		workspaceRoutes.POST("/workspace/switch", h.SwitchWorkspace)
+	}
+
+	// Workspace management routes (workspace context required)
+	workspaceContextRoutes := rg.Group("/workspace")
+	workspaceContextRoutes.Use(jwtAuth.MiddlewareFunc())
+	workspaceContextRoutes.Use(middleware.RequireRole(models.RoleVendor))
+	workspaceContextRoutes.Use(middleware.RequireWorkspaceContext(db))
+	{
+		workspaceContextRoutes.GET("/settings/panel", h.WorkspaceSettingsPanel)
+		workspaceContextRoutes.PUT("", h.UpdateWorkspace)
+		workspaceContextRoutes.POST("/invitations", h.GenerateInvitation)
+		workspaceContextRoutes.DELETE("/invitations/:id", h.DeleteInvitation)
+		workspaceContextRoutes.DELETE("/members/:user_id", h.RemoveMember)
+	}
+
+	// Global theme settings (workspace-scoped)
 	settings := rg.Group("/settings")
 	settings.Use(jwtAuth.MiddlewareFunc())
 	settings.Use(middleware.RequireRole(models.RoleVendor))
+	settings.Use(middleware.RequireWorkspaceContext(db))
 	{
 		settings.GET("/", h.ThemeSettingsPage)
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
@@ -218,38 +236,46 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		profile.PUT("/", h.UpdateProfile)
 	}
 
-	// Protected vendor routes
+	// Protected vendor routes (require workspace context)
 	orgs := rg.Group("/orgs")
 	orgs.Use(jwtAuth.MiddlewareFunc())
 	orgs.Use(middleware.RequireRole(models.RoleVendor))
+	orgs.Use(middleware.RequireWorkspaceContext(db))
 	{
+		// Workspace-level routes (no specific org)
 		orgs.GET("/", h.OrgsPage)
 		orgs.POST("/", h.CreateOrg)
-		orgs.GET("/:org_id/links", h.OrgDetailPage)
-		orgs.GET("/:org_id/settings", h.OrgSettingsPage)
-		orgs.PUT("/:org_id", h.UpdateOrg)
-		orgs.DELETE("/:org_id", h.DeleteOrg)
 
-		// Apps - configuration pages
-		orgs.GET("/:org_id/apps", h.AppsPage)                                    // Apps list page (HTML)
-		orgs.GET("/:org_id/apps/:app_id", h.AppDetailRedirect)                   // Redirect to inputs
-		orgs.GET("/:org_id/apps/:app_id/inputs", h.AppInputsPage)                // Inputs config page
-		orgs.GET("/:org_id/apps/:app_id/health-checks", h.AppHealthChecksPage)   // Health checks config page
-		orgs.PUT("/:org_id/apps/:app_id/health-checks", h.UpdateAppHealthChecks) // Update health checks
+		// Org-specific routes (require org access)
+		orgRoutes := orgs.Group("/:org_id")
+		orgRoutes.Use(middleware.RequireOrgAccess(db))
+		{
+			orgRoutes.GET("/links", h.OrgDetailPage)
+			orgRoutes.GET("/settings", h.OrgSettingsPage)
+			orgRoutes.PUT("/", h.UpdateOrg)
+			orgRoutes.DELETE("/", h.DeleteOrg)
 
-		// Apps - API endpoints (JSON, used by create link modal)
-		orgs.GET("/:org_id/apps-api", h.GetOrgApps)
-		orgs.GET("/:org_id/apps-api/:app_id/input-config", h.GetAppInputConfig)
-		orgs.GET("/:org_id/apps-api/:app_id/actions", h.GetAppActions)
+			// Apps - configuration pages
+			orgRoutes.GET("/apps", h.AppsPage)                                    // Apps list page (HTML)
+			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)                   // Redirect to inputs
+			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage)                // Inputs config page
+			orgRoutes.GET("/apps/:app_id/health-checks", h.AppHealthChecksPage)   // Health checks config page
+			orgRoutes.PUT("/apps/:app_id/health-checks", h.UpdateAppHealthChecks) // Update health checks
 
-		// Local customer-facing input configuration
-		orgs.GET("/:org_id/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
-		orgs.PUT("/:org_id/apps-api/:app_id/customer-input-config", h.UpdateAppCustomerInputConfig)
+			// Apps - API endpoints (JSON, used by create link modal)
+			orgRoutes.GET("/apps-api", h.GetOrgApps)
+			orgRoutes.GET("/apps-api/:app_id/input-config", h.GetAppInputConfig)
+			orgRoutes.GET("/apps-api/:app_id/actions", h.GetAppActions)
 
-		orgs.POST("/:org_id/links", h.CreateInstallLink)
-		orgs.GET("/:org_id/links/:link_id", h.InstallLinkDetail)
-		orgs.GET("/:org_id/links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
-		orgs.DELETE("/:org_id/links/:link_id", h.DeleteInstallLink)
+			// Local customer-facing input configuration
+			orgRoutes.GET("/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
+			orgRoutes.PUT("/apps-api/:app_id/customer-input-config", h.UpdateAppCustomerInputConfig)
+
+			orgRoutes.POST("/links", h.CreateInstallLink)
+			orgRoutes.GET("/links/:link_id", h.InstallLinkDetail)
+			orgRoutes.GET("/links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
+			orgRoutes.DELETE("/links/:link_id", h.DeleteInstallLink)
+		}
 	}
 
 	// Debug endpoint for troubleshooting
@@ -261,9 +287,9 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 }
 
 // setupCustomerRoutes configures customer-facing routes on the given router group
-func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string, renderer *templates.Renderer) {
+func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string) {
 	// Initialize handlers with customer auth factory (OIDC only, no local auth)
-	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", renderer)
+	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "")
 
 	// Public routes - customer login (OIDC only)
 	rg.GET("/login", h.CustomerLoginPageTempl)

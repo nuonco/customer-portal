@@ -33,7 +33,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	installInterface, exists := c.Get("install")
 	if !exists {
 		fmt.Printf("ERROR: Install not found in context\n")
-		theme, _ := localModels.GetOrCreateAppTheme(h.db)
+		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Install not found",
@@ -57,7 +57,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	// Fetch workflow data using helper function
 	processedWorkflows, hasMoreFromAPI, err := h.fetchWorkflowData(c, install, offset, limit)
 	if err != nil {
-		theme, _ := localModels.GetOrCreateAppTheme(h.db)
+		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       err.Error(),
@@ -153,7 +153,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	orderedWorkflowGroups := groupAndSortWorkflowsByDateTempl(processedWorkflows)
 
 	// Get global app theme for customer UI
-	theme, _ := localModels.GetOrCreateAppTheme(h.db)
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 
 	props := customerpages.WorkflowsPageProps{
 		LayoutProps:        h.buildCustomerLayoutProps("Workflow History - "+install.InstallLink.AppName, user, theme),
@@ -913,7 +913,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 	processed := processWorkflowForCustomer(workflow)
 
 	// Get global app theme for styling
-	theme, _ := localModels.GetOrCreateAppTheme(h.db)
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
 	// Convert gin.H to WorkflowData

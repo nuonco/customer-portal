@@ -437,7 +437,7 @@ func (h *Handler) tryGetLoggedInUser(c *gin.Context) *models.User {
 func (h *Handler) InstallLinkPage(c *gin.Context) {
 	sha := c.Query("sha")
 	if sha == "" {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "Missing or invalid install link",
@@ -448,7 +448,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 
 	var link models.InstallLink
 	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "Install link not found or invalid",
@@ -458,7 +458,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	if link.Used {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "This install link has already been used",
@@ -468,7 +468,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, err := models.GetOrCreateAppTheme(h.db)
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
@@ -627,7 +627,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		query = query.Where("user_id = ?", user.ID)
 	}
 	if err := query.Find(&allInstalls).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Failed to load installs",
@@ -787,7 +787,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, _ := models.GetOrCreateAppTheme(h.db)
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 
 	props := customerpages.InstallsPageProps{
 		LayoutProps: h.buildCustomerLayoutProps("Your Installs", user, theme),
@@ -803,7 +803,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Install not found",
@@ -816,7 +816,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 
 	// Load the install link with NuonOrg for display and health checks
 	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db)
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Failed to load install details",
@@ -862,7 +862,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	theme, _ := models.GetOrCreateAppTheme(h.db)
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 
 	props := customerpages.InstallDetailPageProps{
 		LayoutProps:         h.buildCustomerLayoutProps("Install - "+install.Name, user, theme),

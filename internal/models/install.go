@@ -20,6 +20,7 @@ const (
 
 type Install struct {
 	ID                string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
+	WorkspaceID       string         `gorm:"index" json:"workspace_id"`            // NEW: Vendor workspace that created this (nullable for migration)
 	UserID            string         `gorm:"not null" json:"user_id"`              // Current owner (vendor initially, then customer)
 	CreatedByVendorID string         `gorm:"not null" json:"created_by_vendor_id"` // Original vendor who created the install
 	InstallLinkID     string         `gorm:"not null" json:"install_link_id"`
@@ -32,6 +33,7 @@ type Install struct {
 	DeletedAt         gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
+	Workspace       Workspace   `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
 	User            User        `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	CreatedByVendor User        `gorm:"foreignKey:CreatedByVendorID" json:"created_by_vendor,omitempty"`
 	InstallLink     InstallLink `gorm:"foreignKey:InstallLinkID" json:"install_link,omitempty"`

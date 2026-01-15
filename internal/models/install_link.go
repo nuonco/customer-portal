@@ -11,7 +11,8 @@ import (
 
 type InstallLink struct {
 	ID                   string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	UserID               string         `gorm:"not null" json:"user_id"`
+	WorkspaceID          string         `gorm:"index" json:"workspace_id"`            // NEW: Workspace ownership (nullable for migration)
+	UserID               string         `gorm:"not null" json:"user_id"`              // Kept for audit trail (who created it)
 	OrgID                string         `gorm:"column:org_id;not null" json:"org_id"` // FK to NuonOrg.ID (local database ID)
 	AppID                string         `gorm:"not null" json:"app_id"`
 	AppName              string         `gorm:"not null" json:"app_name"`
@@ -24,9 +25,10 @@ type InstallLink struct {
 	DeletedAt            gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	User    User     `gorm:"foreignKey:UserID" json:"user,omitempty"`
-	NuonOrg NuonOrg  `gorm:"foreignKey:OrgID;references:ID" json:"nuon_org,omitempty"`
-	Install *Install `gorm:"foreignKey:InstallLinkID" json:"install,omitempty"`
+	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
+	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
+	NuonOrg   NuonOrg   `gorm:"foreignKey:OrgID;references:ID" json:"nuon_org,omitempty"`
+	Install   *Install  `gorm:"foreignKey:InstallLinkID" json:"install,omitempty"`
 }
 
 func (il *InstallLink) BeforeCreate(tx *gorm.DB) error {

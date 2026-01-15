@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
@@ -77,9 +78,12 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Auto-migrate all models
+	// Auto-migrate all models (including new workspace models)
 	err = db.AutoMigrate(
 		&User{},
+		&Workspace{},           // NEW
+		&WorkspaceMember{},     // NEW
+		&WorkspaceInvitation{}, // NEW
 		&NuonOrg{},
 		&InstallLink{},
 		&Install{},
@@ -92,6 +96,11 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
+	// Run workspace data migration (idempotent - safe to run multiple times)
+	if err := runWorkspaceMigration(db); err != nil {
+		return nil, fmt.Errorf("workspace migration failed: %w", err)
+	}
+
 	return db, nil
 }
 
@@ -102,4 +111,208 @@ func Ping(db *gorm.DB) error {
 		return err
 	}
 	return sqlDB.Ping()
+}
+
+// runWorkspaceMigration performs the data migration to workspace-scoped resources.
+// This is idempotent - safe to run multiple times.
+func runWorkspaceMigration(db *gorm.DB) error {
+	// Check if migration has already been run by counting workspaces
+	var workspaceCount int64
+	if err := db.Model(&Workspace{}).Count(&workspaceCount).Error; err != nil {
+		return fmt.Errorf("failed to count workspaces: %w", err)
+	}
+
+	// If workspaces already exist, assume migration is complete
+	if workspaceCount > 0 {
+		return nil
+	}
+
+	// Begin transaction for data migration
+	return db.Transaction(func(tx *gorm.DB) error {
+		// Step 1: Create personal workspaces for all vendor users
+		var vendorUsers []User
+		if err := tx.Where("role = ? AND deleted_at IS NULL", RoleVendor).Find(&vendorUsers).Error; err != nil {
+			return fmt.Errorf("failed to fetch vendor users: %w", err)
+		}
+
+		workspaceMap := make(map[string]string) // userID -> workspaceID
+
+		for _, user := range vendorUsers {
+			workspaceName := user.Name
+			if workspaceName == "" {
+				workspaceName = user.Email
+			}
+			workspaceName = workspaceName + "'s Personal Workspace"
+
+			workspace := Workspace{
+				Name:       workspaceName,
+				IsPersonal: true,
+			}
+			if err := tx.Create(&workspace).Error; err != nil {
+				return fmt.Errorf("failed to create workspace for user %s: %w", user.ID, err)
+			}
+
+			workspaceMap[user.ID] = workspace.ID
+
+			// Add user as active member
+			now := time.Now()
+			member := WorkspaceMember{
+				WorkspaceID: workspace.ID,
+				UserID:      user.ID,
+				Status:      MemberStatusActive,
+				JoinedAt:    &now,
+			}
+			if err := tx.Create(&member).Error; err != nil {
+				return fmt.Errorf("failed to create workspace member for user %s: %w", user.ID, err)
+			}
+		}
+
+		// Step 2: Migrate nuon_orgs to personal workspaces
+		if err := tx.Exec(`
+			UPDATE nuon_orgs
+			SET workspace_id = (
+				SELECT w.id FROM workspaces w
+				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
+				WHERE wm.user_id = nuon_orgs.user_id AND w.is_personal = true
+				LIMIT 1
+			)
+			WHERE deleted_at IS NULL AND workspace_id IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate nuon_orgs: %w", err)
+		}
+
+		// Step 3: Migrate install_links to personal workspaces
+		if err := tx.Exec(`
+			UPDATE install_links
+			SET workspace_id = (
+				SELECT w.id FROM workspaces w
+				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
+				WHERE wm.user_id = install_links.user_id AND w.is_personal = true
+				LIMIT 1
+			)
+			WHERE deleted_at IS NULL AND workspace_id IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate install_links: %w", err)
+		}
+
+		// Step 4: Migrate app_input_configs via nuon_org lookup
+		if err := tx.Exec(`
+			UPDATE app_input_configs
+			SET workspace_id = (
+				SELECT workspace_id FROM nuon_orgs
+				WHERE nuon_orgs.id = app_input_configs.org_id
+				LIMIT 1
+			)
+			WHERE deleted_at IS NULL AND workspace_id IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate app_input_configs: %w", err)
+		}
+
+		// Step 5: Migrate installs to vendor workspaces (based on who created them)
+		if err := tx.Exec(`
+			UPDATE installs
+			SET workspace_id = (
+				SELECT w.id FROM workspaces w
+				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
+				WHERE wm.user_id = installs.created_by_vendor_id AND w.is_personal = true
+				LIMIT 1
+			)
+			WHERE deleted_at IS NULL AND workspace_id IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate installs: %w", err)
+		}
+
+		// Step 6: Get existing theme and auth config (if any) for duplication
+		var existingTheme AppTheme
+		hasTheme := tx.First(&existingTheme).Error == nil
+
+		var existingAuthConfig CustomerAuthConfig
+		hasAuthConfig := tx.First(&existingAuthConfig).Error == nil
+
+		// Step 7: Create theme and auth config for each workspace
+		var workspaces []Workspace
+		if err := tx.Find(&workspaces).Error; err != nil {
+			return fmt.Errorf("failed to fetch workspaces: %w", err)
+		}
+
+		for _, workspace := range workspaces {
+			// Create theme for this workspace
+			theme := AppTheme{
+				WorkspaceID:    workspace.ID,
+				PrimaryColor:   DefaultPrimaryColor,
+				SecondaryColor: DefaultPrimaryColor,
+				BorderRadius:   DefaultBorderRadius,
+				SpacingDensity: DefaultSpacingDensity,
+			}
+			if hasTheme {
+				// Copy settings from existing theme
+				theme.PrimaryColor = existingTheme.PrimaryColor
+				theme.SecondaryColor = existingTheme.SecondaryColor
+				theme.LogoBase64 = existingTheme.LogoBase64
+				theme.SupportContact = existingTheme.SupportContact
+				theme.HeadingFont = existingTheme.HeadingFont
+				theme.BodyFont = existingTheme.BodyFont
+				theme.HeadingFontBase64 = existingTheme.HeadingFontBase64
+				theme.BodyFontBase64 = existingTheme.BodyFontBase64
+				theme.BorderRadius = existingTheme.BorderRadius
+				theme.SpacingDensity = existingTheme.SpacingDensity
+				theme.LoginTitle = existingTheme.LoginTitle
+				theme.LoginSubtitle = existingTheme.LoginSubtitle
+			}
+			if err := tx.Create(&theme).Error; err != nil {
+				return fmt.Errorf("failed to create theme for workspace %s: %w", workspace.ID, err)
+			}
+
+			// Create auth config for this workspace
+			authConfig := CustomerAuthConfig{
+				WorkspaceID: workspace.ID,
+				Enabled:     false,
+				Scopes:      DefaultScopes,
+			}
+			if hasAuthConfig {
+				// Copy settings from existing config
+				authConfig.Enabled = existingAuthConfig.Enabled
+				authConfig.ProviderName = existingAuthConfig.ProviderName
+				authConfig.ClientID = existingAuthConfig.ClientID
+				authConfig.ClientSecret = existingAuthConfig.ClientSecret
+				authConfig.IssuerURL = existingAuthConfig.IssuerURL
+				authConfig.Scopes = existingAuthConfig.Scopes
+			}
+			if err := tx.Create(&authConfig).Error; err != nil {
+				return fmt.Errorf("failed to create auth config for workspace %s: %w", workspace.ID, err)
+			}
+		}
+
+		// Step 8: Delete old global theme and auth config (if they exist and have no workspace_id)
+		if hasTheme {
+			if err := tx.Where("workspace_id IS NULL OR workspace_id = ''").Delete(&AppTheme{}).Error; err != nil {
+				return fmt.Errorf("failed to delete old theme: %w", err)
+			}
+		}
+		if hasAuthConfig {
+			if err := tx.Where("workspace_id IS NULL OR workspace_id = ''").Delete(&CustomerAuthConfig{}).Error; err != nil {
+				return fmt.Errorf("failed to delete old auth config: %w", err)
+			}
+		}
+
+		// Step 9: Verify migration - check for orphaned records
+		var orphanedCounts struct {
+			Orgs     int64
+			Links    int64
+			Configs  int64
+			Installs int64
+		}
+
+		tx.Model(&NuonOrg{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Orgs)
+		tx.Model(&InstallLink{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Links)
+		tx.Model(&AppInputConfig{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Configs)
+		tx.Model(&Install{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Installs)
+
+		if orphanedCounts.Orgs > 0 || orphanedCounts.Links > 0 || orphanedCounts.Configs > 0 || orphanedCounts.Installs > 0 {
+			return fmt.Errorf("migration incomplete: found orphaned records (orgs:%d links:%d configs:%d installs:%d)",
+				orphanedCounts.Orgs, orphanedCounts.Links, orphanedCounts.Configs, orphanedCounts.Installs)
+		}
+
+		return nil
+	})
 }

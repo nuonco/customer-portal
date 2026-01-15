@@ -1,0 +1,331 @@
+package pages
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+// WorkspaceSelectProps for the workspace selection page
+type WorkspaceSelectProps struct {
+	Title      string
+	User       *models.User
+	Workspaces []models.Workspace
+	BasePath   string
+
+	// Theme
+	PrimaryColor       string
+	PrimaryColorDark   string
+	SecondaryColor     string
+	SecondaryColorDark string
+	HeadingFont        string
+	BodyFont           string
+	HeadingFontBase64  string
+	BodyFontBase64     string
+	LogoBase64         string
+
+	// Asset paths (cache-busted)
+	CSSPath string
+}
+
+// WorkspaceSelectPage renders the workspace selection page
+templ WorkspaceSelectPage(props WorkspaceSelectProps) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ props.Title }</title>
+			<link href={ props.CSSPath } rel="stylesheet"/>
+			@workspaceSelectDarkModeScript()
+			@workspaceSelectFontLinks(props)
+			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			@workspaceSelectThemeOverrides(props)
+		</head>
+		<body class="bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen">
+			<nav class="bg-theme-primary text-white p-4">
+				<div class="container mx-auto flex justify-between items-center">
+					<div class="flex items-center space-x-3">
+						if props.LogoBase64 != "" {
+							<img src={ props.LogoBase64 } alt="Logo" class="h-8 w-auto max-w-xs object-contain"/>
+						}
+						<h1 class="text-xl font-heading font-strong">{ props.Title }</h1>
+					</div>
+					<div class="flex items-center gap-4">
+						if props.User != nil {
+							<span class="text-sm text-white/80">{ props.User.Email }</span>
+						}
+						<a href={ templ.SafeURL(props.BasePath + "/logout") } class="text-sm text-white/80 hover:text-white">
+							Logout
+						</a>
+					</div>
+				</div>
+			</nav>
+			<main class="container mx-auto p-4">
+				<div class="max-w-2xl mx-auto mt-10">
+					<div class="text-center mb-8">
+						<h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white mb-2">Select a Workspace</h2>
+						<p class="text-cool-grey-600 dark:text-cool-grey-400">
+							Choose a workspace to continue, or create a new one.
+						</p>
+					</div>
+					<!-- Workspace List -->
+					<div class="space-y-3 mb-8">
+						for _, ws := range props.Workspaces {
+							<button
+								onclick="selectWorkspace(this)"
+								data-workspace-id={ ws.ID }
+								class="w-full bg-white dark:bg-dark-grey-900 rounded-lg shadow-sm border border-cool-grey-200 dark:border-dark-grey-600 p-4 hover:border-primary-500 dark:hover:border-primary-400 hover:shadow-md transition-all text-left group"
+							>
+								<div class="flex items-center gap-4">
+									<div class="w-12 h-12 rounded-lg bg-primary-100 dark:bg-primary-900 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-lg">
+										{ getWorkspaceSelectInitials(ws.Name) }
+									</div>
+									<div class="flex-1">
+										<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">
+											{ ws.Name }
+										</h3>
+										if ws.IsPersonal {
+											<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">Personal workspace</p>
+										} else {
+											<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">Team workspace</p>
+										}
+									</div>
+									<div class="text-cool-grey-400 group-hover:text-primary-500">
+										@workspaceSelectArrowIcon()
+									</div>
+								</div>
+							</button>
+						}
+					</div>
+					<!-- Divider -->
+					<div class="relative my-8">
+						<div class="absolute inset-0 flex items-center">
+							<div class="w-full border-t border-cool-grey-300 dark:border-dark-grey-600"></div>
+						</div>
+						<div class="relative flex justify-center text-sm">
+							<span class="px-4 bg-cool-grey-50 dark:bg-dark-grey-950 text-cool-grey-500 dark:text-cool-grey-400">or</span>
+						</div>
+					</div>
+					<!-- Create New Workspace -->
+					<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-sm border border-cool-grey-200 dark:border-dark-grey-600 p-6">
+						<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Create New Workspace</h3>
+						<form id="createWorkspaceForm" class="space-y-4">
+							<div>
+								<label for="workspaceName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+									Workspace Name
+								</label>
+								<input
+									type="text"
+									id="workspaceName"
+									name="name"
+									required
+									class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 dark:bg-dark-grey-800 dark:text-white"
+									placeholder="My New Workspace"
+								/>
+							</div>
+							<div id="createWorkspaceError" class="hidden p-3 bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+							<button
+								type="submit"
+								id="createWorkspaceBtn"
+								class="w-full bg-primary-600 text-white py-2 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								<span id="createWorkspaceBtnText">Create Workspace</span>
+							</button>
+						</form>
+					</div>
+				</div>
+			</main>
+			<!-- Config data for JavaScript -->
+			<div
+				id="workspace-select-config"
+				class="hidden"
+				data-base-path={ props.BasePath }
+			></div>
+			@workspaceSelectScript()
+		</body>
+	</html>
+}
+
+func getWorkspaceSelectInitials(name string) string {
+	if name == "" {
+		return "?"
+	}
+	runes := []rune(name)
+	if len(runes) >= 2 {
+		// Try to get first letter of first and second word
+		words := splitWordsWS(name)
+		if len(words) >= 2 {
+			return string([]rune(words[0])[0:1]) + string([]rune(words[1])[0:1])
+		}
+		return string(runes[0:2])
+	}
+	return string(runes[0:1])
+}
+
+func splitWordsWS(s string) []string {
+	var words []string
+	word := ""
+	for _, r := range s {
+		if r == ' ' || r == '-' || r == '_' {
+			if word != "" {
+				words = append(words, word)
+				word = ""
+			}
+		} else {
+			word += string(r)
+		}
+	}
+	if word != "" {
+		words = append(words, word)
+	}
+	return words
+}
+
+templ workspaceSelectScript() {
+	<script>
+		(function() {
+			const configEl = document.getElementById('workspace-select-config');
+			const basePath = configEl.dataset.basePath;
+
+			window.selectWorkspace = async function(btn) {
+				const workspaceId = btn.dataset.workspaceId;
+				try {
+					const response = await fetch(basePath + '/workspace/switch', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						credentials: 'same-origin',
+						body: JSON.stringify({
+							workspace_id: workspaceId
+						})
+					});
+
+					if (response.ok) {
+						const data = await response.json();
+						window.location.href = data.redirect_to || (basePath + '/orgs/');
+					} else {
+						const error = await response.json();
+						alert(error.error || 'Failed to switch workspace');
+					}
+				} catch (err) {
+					alert('Network error. Please try again.');
+				}
+			};
+
+			document.getElementById('createWorkspaceForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				const btn = document.getElementById('createWorkspaceBtn');
+				const btnText = document.getElementById('createWorkspaceBtnText');
+				const errorDiv = document.getElementById('createWorkspaceError');
+				const nameInput = document.getElementById('workspaceName');
+
+				btn.disabled = true;
+				btnText.textContent = 'Creating...';
+				errorDiv.classList.add('hidden');
+
+				try {
+					const response = await fetch(basePath + '/workspaces', {
+						method: 'POST',
+						headers: {
+							'Content-Type': 'application/json'
+						},
+						credentials: 'same-origin',
+						body: JSON.stringify({
+							name: nameInput.value
+						})
+					});
+
+					if (response.ok) {
+						const data = await response.json();
+						window.location.href = data.redirect_to || (basePath + '/orgs/');
+					} else {
+						const error = await response.json();
+						errorDiv.textContent = error.error || 'Failed to create workspace';
+						errorDiv.classList.remove('hidden');
+						btn.disabled = false;
+						btnText.textContent = 'Create Workspace';
+					}
+				} catch (err) {
+					errorDiv.textContent = 'Network error. Please try again.';
+					errorDiv.classList.remove('hidden');
+					btn.disabled = false;
+					btnText.textContent = 'Create Workspace';
+				}
+			});
+		})();
+	</script>
+}
+
+templ workspaceSelectDarkModeScript() {
+	<script>
+		(function() {
+			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+				document.documentElement.classList.add('dark');
+			}
+			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+				document.documentElement.classList.toggle('dark', e.matches);
+			});
+		})();
+	</script>
+}
+
+templ workspaceSelectFontLinks(props WorkspaceSelectProps) {
+	<link rel="preconnect" href="https://fonts.googleapis.com"/>
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+	if props.HeadingFontBase64 != "" {
+		<style>
+			@font-face {
+				font-family: 'CustomHeading';
+				src: url({ props.HeadingFontBase64 }) format('woff2');
+				font-display: swap;
+			}
+		</style>
+	}
+	if props.BodyFontBase64 != "" {
+		<style>
+			@font-face {
+				font-family: 'CustomBody';
+				src: url({ props.BodyFontBase64 }) format('woff2');
+				font-display: swap;
+			}
+		</style>
+	}
+}
+
+templ workspaceSelectThemeOverrides(props WorkspaceSelectProps) {
+	if props.PrimaryColor != "" || props.SecondaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" {
+		@templ.Raw(buildWorkspaceSelectThemeCSS(props))
+	}
+}
+
+func buildWorkspaceSelectThemeCSS(props WorkspaceSelectProps) string {
+	css := "<style>:root {"
+	if props.PrimaryColor != "" {
+		css += "--theme-primary: " + props.PrimaryColor + ";"
+		css += "--theme-primary-hover: " + props.PrimaryColorDark + ";"
+	}
+	if props.SecondaryColor != "" {
+		css += "--theme-secondary: " + props.SecondaryColor + ";"
+		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
+	}
+	if props.HeadingFontBase64 != "" {
+		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.HeadingFont != "" {
+		css += "--font-heading: '" + props.HeadingFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	if props.BodyFontBase64 != "" {
+		css += "--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	} else if props.BodyFont != "" {
+		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
+	}
+	css += "}</style>"
+	return css
+}
+
+templ workspaceSelectArrowIcon() {
+	<svg class="w-6 h-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"></path>
+	</svg>
+}

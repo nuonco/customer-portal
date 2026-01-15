@@ -16,6 +16,10 @@ type LayoutProps struct {
 	Breadcrumbs []partials.Breadcrumb
 	BasePath    string
 
+	// Workspace context
+	CurrentWorkspace *models.Workspace
+	Workspaces       []models.Workspace
+
 	// Entity title bar
 	EntityTitle   string
 	EntityID      string
@@ -95,9 +99,11 @@ templ Layout(props LayoutProps) {
 				<div class="flex-1 flex flex-col h-full overflow-hidden">
 					<!-- Topbar with Breadcrumbs -->
 					@partials.Topbar(partials.TopbarProps{
-						Breadcrumbs: props.Breadcrumbs,
-						User:        props.User,
-						BasePath:    props.BasePath,
+						Breadcrumbs:      props.Breadcrumbs,
+						User:             props.User,
+						BasePath:         props.BasePath,
+						CurrentWorkspace: props.CurrentWorkspace,
+						Workspaces:       props.Workspaces,
 					})
 					<!-- Entity Title Bar (shown on detail pages) -->
 					@partials.TitleBar(partials.TitleBarProps{
@@ -115,6 +121,7 @@ templ Layout(props LayoutProps) {
 			@components.Toast()
 			@components.ConfirmModal()
 			@connectOrgModal(props.BasePath)
+			@createWorkspaceModal(props.BasePath)
 			@keyboardShortcutsModal()
 			<!-- Theme Settings Panel - lazy loaded via HTMX -->
 			<div id="settings-panel-container"></div>
@@ -284,6 +291,36 @@ templ layoutScripts(basePath string) {
 			}
 		}
 
+		// Create Workspace Modal
+		function openCreateWorkspaceModal() {
+			const modal = document.getElementById('create-workspace-modal');
+			if (modal) {
+				modal.classList.remove('hidden');
+				// Focus on workspace name input
+				const nameInput = document.getElementById('workspace-name');
+				if (nameInput) {
+					nameInput.focus();
+				}
+			}
+			// Close user dropdown if open
+			const userDropdown = document.getElementById('userDropdown');
+			if (userDropdown) {
+				userDropdown.classList.add('hidden');
+			}
+		}
+
+		function closeCreateWorkspaceModal() {
+			const modal = document.getElementById('create-workspace-modal');
+			if (modal) {
+				modal.classList.add('hidden');
+				// Clear form and errors
+				const form = document.getElementById('create-workspace-form');
+				if (form) form.reset();
+				const errorDiv = document.getElementById('create-workspace-error');
+				if (errorDiv) errorDiv.classList.add('hidden');
+			}
+		}
+
 		// Global Keyboard Shortcuts
 		document.addEventListener('keydown', function(e) {
 			// Alt+S = Toggle main sidebar
@@ -311,6 +348,7 @@ templ layoutScripts(basePath string) {
 			if (e.key === 'Escape') {
 				closeKeyboardShortcutsModal();
 				closeConnectOrgModal();
+				closeCreateWorkspaceModal();
 			}
 		});
 
@@ -437,6 +475,97 @@ templ connectOrgScript() {
 				} else {
 					const error = await response.json();
 					errorDiv.textContent = error.error || 'Failed to connect organization';
+					errorDiv.classList.remove('hidden');
+				}
+			} catch (err) {
+				errorDiv.textContent = 'Network error. Please try again.';
+				errorDiv.classList.remove('hidden');
+			}
+		}
+	</script>
+}
+
+templ createWorkspaceModal(basePath string) {
+	<div id="create-workspace-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
+				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Create Workspace</h3>
+					<button type="button" onclick="closeCreateWorkspaceModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+				<form id="create-workspace-form" class="px-6 py-4 space-y-4">
+					<div>
+						<label for="workspace-name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							Workspace Name
+						</label>
+						<input
+							type="text"
+							id="workspace-name"
+							name="name"
+							required
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="My Workspace"
+						/>
+						<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
+							A workspace is a shared environment for your team to manage organizations and settings.
+						</p>
+					</div>
+					<div id="create-workspace-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+				</form>
+				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
+					<button type="button" onclick="closeCreateWorkspaceModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
+						Cancel
+					</button>
+					<button type="button" onclick="submitCreateWorkspace()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
+						Create
+					</button>
+				</div>
+			</div>
+		</div>
+	</div>
+	<!-- Config data for JavaScript -->
+	<div
+		id="create-workspace-config"
+		class="hidden"
+		data-base-path={ basePath }
+	></div>
+	@createWorkspaceScript()
+}
+
+templ createWorkspaceScript() {
+	<script>
+		async function submitCreateWorkspace() {
+			const configEl = document.getElementById('create-workspace-config');
+			const basePath = configEl.dataset.basePath;
+			const form = document.getElementById('create-workspace-form');
+			const errorDiv = document.getElementById('create-workspace-error');
+			const formData = new FormData(form);
+
+			errorDiv.classList.add('hidden');
+
+			try {
+				const response = await fetch(basePath + '/workspaces', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json'
+					},
+					credentials: 'same-origin',
+					body: JSON.stringify({
+						name: formData.get('name')
+					})
+				});
+
+				if (response.ok) {
+					// Workspace created successfully, redirect to orgs page
+					// The new workspace will be automatically set as active
+					window.location.href = basePath + '/orgs/';
+				} else {
+					const error = await response.json();
+					errorDiv.textContent = error.error || 'Failed to create workspace';
 					errorDiv.classList.remove('hidden');
 				}
 			} catch (err) {

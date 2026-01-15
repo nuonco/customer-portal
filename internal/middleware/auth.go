@@ -214,3 +214,191 @@ func getStringClaim(claims jwt.MapClaims, key string) string {
 	}
 	return ""
 }
+
+// RequireWorkspaceContext middleware validates workspace context for vendor users
+// Reads workspace_id from cookie, validates membership, and loads workspace into context
+func RequireWorkspaceContext(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := GetCurrentUser(c)
+
+		// Only apply to vendor users
+		if user.Role != models.RoleVendor {
+			c.Next()
+			return
+		}
+
+		// Get workspace_id from cookie
+		workspaceID, err := c.Cookie("workspace_id")
+		if err != nil || workspaceID == "" {
+			// No workspace cookie - redirect to workspace selector
+			accept := c.GetHeader("Accept")
+			if strings.Contains(accept, "text/html") {
+				c.Redirect(http.StatusFound, "/admin/workspaces/select")
+			} else {
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"error": "No workspace context",
+				})
+			}
+			c.Abort()
+			return
+		}
+
+		// Validate workspace exists
+		var workspace models.Workspace
+		if err := db.Where("id = ? AND deleted_at IS NULL", workspaceID).First(&workspace).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				// Workspace not found - clear cookie and redirect
+				ClearWorkspaceCookie(c)
+				accept := c.GetHeader("Accept")
+				if strings.Contains(accept, "text/html") {
+					c.Redirect(http.StatusFound, "/admin/workspaces/select")
+				} else {
+					c.JSON(http.StatusUnauthorized, gin.H{
+						"error": "Invalid workspace",
+					})
+				}
+				c.Abort()
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to load workspace",
+			})
+			c.Abort()
+			return
+		}
+
+		// Verify user is an active member of this workspace
+		var member models.WorkspaceMember
+		err = db.Where("workspace_id = ? AND user_id = ? AND status = ?",
+			workspaceID, user.ID, models.MemberStatusActive).First(&member).Error
+		if err != nil {
+			if err == gorm.ErrRecordNotFound {
+				// Not a member - clear cookie and show forbidden
+				ClearWorkspaceCookie(c)
+				c.JSON(http.StatusForbidden, gin.H{
+					"error": "Access denied to workspace",
+				})
+				c.Abort()
+				return
+			}
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to verify workspace membership",
+			})
+			c.Abort()
+			return
+		}
+
+		// Store workspace in context for handlers
+		c.Set("workspace", &workspace)
+		c.Next()
+	}
+}
+
+// RequireOrgAccess middleware validates that the org belongs to the current workspace
+// Must be used after RequireWorkspaceContext
+func RequireOrgAccess(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		workspace := GetCurrentWorkspace(c)
+		if workspace == nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Workspace context not found",
+			})
+			c.Abort()
+			return
+		}
+
+		orgID := c.Param("org_id")
+		if orgID == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Org ID is required",
+			})
+			c.Abort()
+			return
+		}
+
+		// Validate org_id format
+		if !shortid.IsValid(orgID) {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error": "Invalid org ID format",
+			})
+			c.Abort()
+			return
+		}
+
+		// Verify org belongs to workspace
+		var org models.NuonOrg
+		err := db.Where("id = ? AND workspace_id = ? AND deleted_at IS NULL", orgID, workspace.ID).First(&org).Error
+		if err != nil {
+			// For HTML requests, redirect to org list instead of showing error
+			accept := c.GetHeader("Accept")
+			if strings.Contains(accept, "text/html") {
+				c.Redirect(http.StatusFound, "/admin/orgs")
+				c.Abort()
+				return
+			}
+			// For API requests, return JSON error
+			if err == gorm.ErrRecordNotFound {
+				// Return 404 (not 403) for security - don't reveal org existence
+				c.JSON(http.StatusNotFound, gin.H{
+					"error": "Organization not found",
+				})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"error": "Failed to load organization",
+				})
+			}
+			c.Abort()
+			return
+		}
+
+		// Store org in context for handlers
+		c.Set("org", &org)
+		c.Next()
+	}
+}
+
+// GetCurrentWorkspace retrieves the workspace from context
+func GetCurrentWorkspace(c *gin.Context) *models.Workspace {
+	if workspace, exists := c.Get("workspace"); exists {
+		if ws, ok := workspace.(*models.Workspace); ok {
+			return ws
+		}
+	}
+	return nil
+}
+
+// GetCurrentOrg retrieves the org from context
+func GetCurrentOrg(c *gin.Context) *models.NuonOrg {
+	if org, exists := c.Get("org"); exists {
+		if o, ok := org.(*models.NuonOrg); ok {
+			return o
+		}
+	}
+	return nil
+}
+
+// SetWorkspaceCookie sets the workspace_id cookie
+func SetWorkspaceCookie(c *gin.Context, workspaceID string) {
+	c.SetCookie(
+		"workspace_id", // name
+		workspaceID,    // value
+		60*60*24*30,    // maxAge (30 days)
+		"/",            // path
+		"",             // domain (empty = current domain)
+		false,          // secure (set to true in production with HTTPS)
+		true,           // httpOnly
+	)
+}
+
+// ClearWorkspaceCookie removes the workspace_id cookie
+func ClearWorkspaceCookie(c *gin.Context) {
+	c.SetCookie(
+		"workspace_id", // name
+		"",             // value (empty)
+		-1,             // maxAge (negative = delete)
+		"/",            // path
+		"",             // domain
+		false,          // secure
+		true,           // httpOnly
+	)
+}
