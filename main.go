@@ -284,6 +284,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/install-links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
 			orgRoutes.DELETE("/install-links/:link_id", h.DeleteInstallLink)
 
+			// Customers - view all customers and their installs
+			orgRoutes.GET("/customers", h.CustomersPage)
+			orgRoutes.GET("/customers/:customer_id", h.CustomerDetailPage)
+
 			// Settings pages (org-scoped to preserve org context in URL)
 			orgSettings := orgRoutes.Group("/settings")
 			{

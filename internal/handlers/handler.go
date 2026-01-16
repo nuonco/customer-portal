@@ -2523,3 +2523,259 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		"collapsed_groups":     config.GetCollapsedGroups(),
 	})
 }
+
+// CustomersPage displays all customers who have installed apps from this org
+func (h *Handler) CustomersPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+
+	// Get org from context (validated by RequireOrgAccess middleware)
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Organization context not found")
+		return
+	}
+
+	// Get workspace from context
+	workspace := middleware.GetCurrentWorkspace(c)
+	if workspace == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace context not found")
+		return
+	}
+
+	// Get search query
+	searchQuery := c.Query("q")
+
+	// Query for customers with their install counts
+	type CustomerResult struct {
+		UserID       string
+		Name         string
+		Email        string
+		InstallCount int64
+	}
+
+	query := h.db.Table("installs").
+		Select("users.id as user_id, users.name, users.email, COUNT(*) as install_count").
+		Joins("JOIN users ON users.id = installs.user_id").
+		Where("installs.workspace_id = ? AND users.role = ?", workspace.ID, models.RoleCustomer).
+		Group("users.id, users.name, users.email").
+		Order("users.name ASC")
+
+	// Apply search filter if provided
+	if searchQuery != "" {
+		searchPattern := "%" + searchQuery + "%"
+		query = query.Where("users.name ILIKE ? OR users.email ILIKE ?", searchPattern, searchPattern)
+	}
+
+	var results []CustomerResult
+	if err := query.Find(&results).Error; err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch customers: %v", err))
+		return
+	}
+
+	// Convert to template type
+	customers := make([]vendorpages.CustomerWithInstallCount, len(results))
+	for i, result := range results {
+		customers[i] = vendorpages.CustomerWithInstallCount{
+			ID:           result.UserID,
+			Name:         result.Name,
+			Email:        result.Email,
+			InstallCount: result.InstallCount,
+		}
+	}
+
+	// Check if this is an HTMX request (search)
+	if c.GetHeader("HX-Request") == "true" {
+		// Render only the table body for HTMX updates
+		h.RenderTempl(c, http.StatusOK, vendorpages.CustomersTableBody(customers, org.ID, h.basePath, searchQuery))
+		return
+	}
+
+	// Fetch all orgs for sidebar dropdown
+	var allOrgs []models.NuonOrg
+	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
+
+	// Fetch user's workspaces for switcher
+	userWorkspaces := h.GetUserWorkspaces(user.ID)
+
+	// Load theme for styling
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
+
+	props := vendorpages.CustomersPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:              org.Name + " - Customers",
+			ActivePage:         "customers",
+			User:               user,
+			CurrentOrg:         org,
+			Orgs:               allOrgs,
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
+			BasePath:           h.basePath,
+			CurrentWorkspace:   workspace,
+			Workspaces:         userWorkspaces,
+			PrimaryColor:       primaryColor,
+			PrimaryColorDark:   primaryColorDark,
+			SecondaryColor:     secondaryColor,
+			SecondaryColorDark: secondaryColorDark,
+			HeadingFont:        theme.HeadingFont,
+			BodyFont:           theme.BodyFont,
+			HeadingFontBase64:  theme.HeadingFontBase64,
+			BodyFontBase64:     theme.BodyFontBase64,
+			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
+		},
+		Org:         *org,
+		Customers:   customers,
+		SearchQuery: searchQuery,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.CustomersPage(props))
+}
+
+// CustomerDetailPage displays details for a specific customer and their installs
+func (h *Handler) CustomerDetailPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+
+	// Get org from context (validated by RequireOrgAccess middleware)
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Organization context not found")
+		return
+	}
+
+	// Get workspace from context
+	workspace := middleware.GetCurrentWorkspace(c)
+	if workspace == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace context not found")
+		return
+	}
+
+	// Get customer ID from URL
+	customerID := c.Param("customer_id")
+
+	// Get customer user
+	var customer models.User
+	if err := h.db.Where("id = ? AND role = ?", customerID, models.RoleCustomer).First(&customer).Error; err != nil {
+		h.RenderErrorPage(c, http.StatusNotFound, "Customer not found")
+		return
+	}
+
+	// Get all installs for this customer in this workspace
+	var installs []models.Install
+	if err := h.db.Where("user_id = ? AND workspace_id = ?", customerID, workspace.ID).
+		Preload("InstallLink").
+		Preload("InstallLink.NuonOrg").
+		Order("created_at DESC").
+		Find(&installs).Error; err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch installs: %v", err))
+		return
+	}
+
+	// Verify customer has installs in this workspace
+	if len(installs) == 0 {
+		h.RenderErrorPage(c, http.StatusNotFound, "Customer has no installs in this organization")
+		return
+	}
+
+	// Initialize Nuon client to fetch app information
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
+		return
+	}
+
+	// Fetch apps from Nuon API to get platform information
+	apps, err := nuonClient.ListApps(c.Request.Context())
+	if err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch apps: %v", err))
+		return
+	}
+
+	// Build platform map for quick lookup
+	platformMap := make(map[string]string)
+	for _, app := range apps {
+		platform := "aws" // default
+		if app.RunnerConfig != nil {
+			runnerType := string(app.RunnerConfig.AppRunnerType)
+			if runnerType == "azure" {
+				platform = "azure"
+			}
+		}
+		platformMap[app.ID] = platform
+	}
+
+	// Convert to template type
+	customerInstalls := make([]vendorpages.CustomerInstall, len(installs))
+	for i, install := range installs {
+		appName := "Unknown App"
+		if install.InstallLink.AppName != "" {
+			appName = install.InstallLink.AppName
+		}
+
+		nuonOrgID := install.InstallLink.NuonOrg.NuonOrgID
+
+		// Get platform from map, default to "aws"
+		platform := "aws"
+		if p, ok := platformMap[install.InstallLink.AppID]; ok {
+			platform = p
+		}
+
+		customerInstalls[i] = vendorpages.CustomerInstall{
+			ID:            install.ID,
+			InstallLinkID: install.InstallLinkID,
+			NuonInstallID: install.NuonInstallID,
+			NuonOrgID:     nuonOrgID,
+			AppID:         install.InstallLink.AppID,
+			Name:          install.Name,
+			AppName:       appName,
+			Platform:      platform,
+			Status:        string(install.Status),
+			Region:        install.Region,
+			CreatedAt:     install.CreatedAt.Format("Jan 2, 2006"),
+		}
+	}
+
+	// Fetch all orgs for sidebar dropdown
+	var allOrgs []models.NuonOrg
+	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
+
+	// Fetch user's workspaces for switcher
+	userWorkspaces := h.GetUserWorkspaces(user.ID)
+
+	// Load theme for styling
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
+
+	props := vendorpages.CustomerDetailPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:      customer.Name + " - Customer Details",
+			ActivePage: "customers",
+			User:       user,
+			CurrentOrg: org,
+			Orgs:       allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{
+				{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: false},
+				{Text: customer.Name, Path: fmt.Sprintf("%s/orgs/%s/customers/%s", h.basePath, org.ID, customer.ID), Active: true},
+			},
+			BasePath:           h.basePath,
+			CurrentWorkspace:   workspace,
+			Workspaces:         userWorkspaces,
+			PrimaryColor:       primaryColor,
+			PrimaryColorDark:   primaryColorDark,
+			SecondaryColor:     secondaryColor,
+			SecondaryColorDark: secondaryColorDark,
+			HeadingFont:        theme.HeadingFont,
+			BodyFont:           theme.BodyFont,
+			HeadingFontBase64:  theme.HeadingFontBase64,
+			BodyFontBase64:     theme.BodyFontBase64,
+			LogoBase64:         theme.LogoBase64,
+			CSSPath:            assets.VendorCSSPath(),
+		},
+		Org:      *org,
+		Customer: &customer,
+		Installs: customerInstalls,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerDetailPage(props))
+}

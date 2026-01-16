@@ -89,6 +89,13 @@ templ Sidebar(props SidebarProps) {
 						@linkIcon()
 						<span class="sidebar-text">Install Links</span>
 					</a>
+					<a
+						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
+						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
+					>
+						@usersIcon()
+						<span class="sidebar-text">Customers</span>
+					</a>
 				} else {
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@cubeIcon()
@@ -97,6 +104,10 @@ templ Sidebar(props SidebarProps) {
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@linkIcon()
 						<span class="sidebar-text">Install Links</span>
+					</span>
+					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+						@usersIcon()
+						<span class="sidebar-text">Customers</span>
 					</span>
 				}
 			</nav>
