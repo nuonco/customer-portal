@@ -9,7 +9,7 @@ import (
 // LayoutProps contains all data needed for the vendor layout
 type LayoutProps struct {
 	Title       string
-	ActivePage  string // "orgs" | "links" | "apps"
+	ActivePage  string // "orgs" | "install-links" | "apps"
 	User        *models.User
 	CurrentOrg  *models.NuonOrg
 	Orgs        []models.NuonOrg
@@ -120,7 +120,6 @@ templ Layout(props LayoutProps) {
 			<!-- Toast and Modal components -->
 			@components.Toast()
 			@components.ConfirmModal()
-			@connectOrgModal(props.BasePath)
 			@createWorkspaceModal(props.BasePath)
 			@keyboardShortcutsModal()
 			<!-- Theme Settings Panel - lazy loaded via HTMX -->
@@ -277,29 +276,14 @@ templ layoutScripts(basePath string) {
 		}
 
 		// Connect Org Modal
-		function openConnectOrgModal() {
-			const modal = document.getElementById('connect-org-modal');
-			if (modal) {
-				modal.classList.remove('hidden');
-			}
-		}
-
-		function closeConnectOrgModal() {
-			const modal = document.getElementById('connect-org-modal');
-			if (modal) {
-				modal.classList.add('hidden');
-			}
-		}
-
-		// Create Workspace Modal
 		function openCreateWorkspaceModal() {
 			const modal = document.getElementById('create-workspace-modal');
 			if (modal) {
 				modal.classList.remove('hidden');
-				// Focus on workspace name input
-				const nameInput = document.getElementById('workspace-name');
-				if (nameInput) {
-					nameInput.focus();
+				// Focus on org ID input
+				const orgIdInput = document.getElementById('workspace-org-id');
+				if (orgIdInput) {
+					orgIdInput.focus();
 				}
 			}
 			// Close user dropdown if open
@@ -347,7 +331,6 @@ templ layoutScripts(basePath string) {
 			// Escape = Close any open modal
 			if (e.key === 'Escape') {
 				closeKeyboardShortcutsModal();
-				closeConnectOrgModal();
 				closeCreateWorkspaceModal();
 			}
 		});
@@ -370,127 +353,12 @@ templ layoutScripts(basePath string) {
 	</script>
 }
 
-templ connectOrgModal(basePath string) {
-	<div id="connect-org-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
-		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
-				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
-					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Organization</h3>
-					<button type="button" onclick="closeConnectOrgModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
-				</div>
-				<form id="connect-org-form" class="px-6 py-4 space-y-4">
-					<div>
-						<label for="org-name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							Organization Name
-						</label>
-						<input
-							type="text"
-							id="org-name"
-							name="name"
-							required
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="My Organization"
-						/>
-					</div>
-					<div>
-						<label for="nuon-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							Nuon Org ID
-						</label>
-						<input
-							type="text"
-							id="nuon-org-id"
-							name="org_id"
-							required
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="org_..."
-						/>
-					</div>
-					<div>
-						<label for="api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							API Token
-						</label>
-						<input
-							type="password"
-							id="api-token"
-							name="api_token"
-							required
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="nuon_pat_..."
-						/>
-					</div>
-					<div id="connect-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
-				</form>
-				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
-					<button type="button" onclick="closeConnectOrgModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
-						Cancel
-					</button>
-					<button type="button" onclick="submitConnectOrg()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
-						Connect
-					</button>
-				</div>
-			</div>
-		</div>
-	</div>
-	<!-- Config data for JavaScript -->
-	<div
-		id="connect-org-config"
-		class="hidden"
-		data-base-path={ basePath }
-	></div>
-	@connectOrgScript()
-}
-
-templ connectOrgScript() {
-	<script>
-		async function submitConnectOrg() {
-			const configEl = document.getElementById('connect-org-config');
-			const basePath = configEl.dataset.basePath;
-			const form = document.getElementById('connect-org-form');
-			const errorDiv = document.getElementById('connect-org-error');
-			const formData = new FormData(form);
-
-			errorDiv.classList.add('hidden');
-
-			try {
-				const response = await fetch(basePath + '/orgs/', {
-					method: 'POST',
-					headers: {
-						'Content-Type': 'application/json'
-					},
-					credentials: 'same-origin',
-					body: JSON.stringify({
-						name: formData.get('name'),
-						org_id: formData.get('org_id'),
-						api_token: formData.get('api_token')
-					})
-				});
-
-				if (response.ok) {
-					const data = await response.json();
-					window.location.href = basePath + '/orgs/' + data.org.id + '/links';
-				} else {
-					const error = await response.json();
-					errorDiv.textContent = error.error || 'Failed to connect organization';
-					errorDiv.classList.remove('hidden');
-				}
-			} catch (err) {
-				errorDiv.textContent = 'Network error. Please try again.';
-				errorDiv.classList.remove('hidden');
-			}
-		}
-	</script>
-}
-
 templ createWorkspaceModal(basePath string) {
 	<div id="create-workspace-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
 		<div class="flex items-center justify-center min-h-full p-4">
 			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
 				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
-					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Create Workspace</h3>
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Org</h3>
 					<button type="button" onclick="closeCreateWorkspaceModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -499,19 +367,32 @@ templ createWorkspaceModal(basePath string) {
 				</div>
 				<form id="create-workspace-form" class="px-6 py-4 space-y-4">
 					<div>
-						<label for="workspace-name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							Workspace Name
+						<label for="workspace-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							Nuon Org ID <span class="text-red-500">*</span>
 						</label>
 						<input
 							type="text"
-							id="workspace-name"
-							name="name"
+							id="workspace-org-id"
+							name="org_id"
 							required
 							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="My Workspace"
+							placeholder="org_..."
+						/>
+					</div>
+					<div>
+						<label for="workspace-api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							API Token <span class="text-red-500">*</span>
+						</label>
+						<input
+							type="password"
+							id="workspace-api-token"
+							name="api_token"
+							required
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="nuon_pat_..."
 						/>
 						<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
-							A workspace is a shared environment for your team to manage organizations and settings.
+							To get a new token, run: <code>nuon orgs api-token -j</code>
 						</p>
 					</div>
 					<div id="create-workspace-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
@@ -521,7 +402,7 @@ templ createWorkspaceModal(basePath string) {
 						Cancel
 					</button>
 					<button type="button" onclick="submitCreateWorkspace()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
-						Create
+						Connect
 					</button>
 				</div>
 			</div>
@@ -555,17 +436,18 @@ templ createWorkspaceScript() {
 					},
 					credentials: 'same-origin',
 					body: JSON.stringify({
-						name: formData.get('name')
+						org_id: formData.get('org_id'),
+						api_token: formData.get('api_token')
 					})
 				});
 
 				if (response.ok) {
-					// Workspace created successfully, redirect to orgs page
-					// The new workspace will be automatically set as active
-					window.location.href = basePath + '/orgs/';
+					const data = await response.json();
+					// Org connected successfully, redirect to the org's links page
+					window.location.href = data.redirect_to || (basePath + '/orgs/');
 				} else {
 					const error = await response.json();
-					errorDiv.textContent = error.error || 'Failed to create workspace';
+					errorDiv.textContent = error.error || 'Failed to connect org';
 					errorDiv.classList.remove('hidden');
 				}
 			} catch (err) {

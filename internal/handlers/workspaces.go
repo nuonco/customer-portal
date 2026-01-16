@@ -16,15 +16,18 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
-// CreateWorkspace creates a new workspace for the current user
+// CreateWorkspace creates a new workspace with a connected Nuon organization.
+// Each workspace requires exactly one Nuon org to be connected at creation time.
 func (h *Handler) CreateWorkspace(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 
 	var req struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description"`
+		Name     string `json:"name"`                         // Optional - defaults to org name
+		OrgID    string `json:"org_id" binding:"required"`    // Nuon platform org ID
+		APIToken string `json:"api_token" binding:"required"` // Nuon API token
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -34,31 +37,117 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 		return
 	}
 
-	// Create workspace
-	workspace := models.Workspace{
-		Name:       req.Name,
-		IsPersonal: false,
-	}
-
-	if err := h.db.Create(&workspace).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create workspace",
+	// Validate API token with Nuon API
+	nuonClient, err := nuon.NewClientWithURL(req.APIToken, req.OrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Failed to initialize Nuon client",
 		})
 		return
 	}
 
-	// Add user as first member
-	now := time.Now()
-	member := models.WorkspaceMember{
-		WorkspaceID: workspace.ID,
-		UserID:      user.ID,
-		Status:      models.MemberStatusActive,
-		JoinedAt:    &now,
+	if err := nuonClient.ValidateOrgAccess(c.Request.Context()); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "Invalid API token or organization access",
+		})
+		return
 	}
 
-	if err := h.db.Create(&member).Error; err != nil {
+	// Fetch org name from Nuon API
+	nuonOrg, err := nuonClient.GetOrg(c.Request.Context())
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to add user to workspace",
+			"error": "Failed to fetch organization details from Nuon API",
+		})
+		return
+	}
+
+	orgName := nuonOrg.Name
+	if orgName == "" {
+		orgName = req.OrgID // Fallback to org ID if name is empty
+	}
+
+	// Check if this Nuon org is already connected to another workspace
+	var existingOrg models.NuonOrg
+	if err := h.db.Where("org_id = ? AND deleted_at IS NULL", req.OrgID).First(&existingOrg).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "This Nuon organization is already connected to another workspace",
+		})
+		return
+	}
+
+	// Use org name for workspace name if not provided
+	workspaceName := req.Name
+	if workspaceName == "" {
+		workspaceName = orgName
+	}
+
+	// Create workspace and org in a transaction
+	var workspace models.Workspace
+	var org models.NuonOrg
+
+	err = h.db.Transaction(func(tx *gorm.DB) error {
+		// Create workspace
+		workspace = models.Workspace{
+			Name:       workspaceName,
+			IsPersonal: false,
+		}
+		if err := tx.Create(&workspace).Error; err != nil {
+			return fmt.Errorf("failed to create workspace: %w", err)
+		}
+
+		// Create connected org
+		org = models.NuonOrg{
+			WorkspaceID: workspace.ID,
+			UserID:      user.ID,
+			NuonOrgID:   req.OrgID,
+			APIToken:    req.APIToken,
+			Name:        orgName,
+		}
+		if err := tx.Create(&org).Error; err != nil {
+			return fmt.Errorf("failed to connect organization: %w", err)
+		}
+
+		// Add user as first member
+		now := time.Now()
+		member := models.WorkspaceMember{
+			WorkspaceID: workspace.ID,
+			UserID:      user.ID,
+			Status:      models.MemberStatusActive,
+			JoinedAt:    &now,
+		}
+		if err := tx.Create(&member).Error; err != nil {
+			return fmt.Errorf("failed to add user to workspace: %w", err)
+		}
+
+		// Create default theme for this workspace
+		theme := models.AppTheme{
+			WorkspaceID:    workspace.ID,
+			PrimaryColor:   models.DefaultPrimaryColor,
+			SecondaryColor: models.DefaultPrimaryColor,
+			BorderRadius:   models.DefaultBorderRadius,
+			SpacingDensity: models.DefaultSpacingDensity,
+		}
+		if err := tx.Create(&theme).Error; err != nil {
+			return fmt.Errorf("failed to create theme: %w", err)
+		}
+
+		// Create default auth config for this workspace
+		authConfig := models.CustomerAuthConfig{
+			WorkspaceID: workspace.ID,
+			Enabled:     false,
+			Scopes:      models.DefaultScopes,
+		}
+		if err := tx.Create(&authConfig).Error; err != nil {
+			return fmt.Errorf("failed to create auth config: %w", err)
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to create workspace: " + err.Error(),
 		})
 		return
 	}
@@ -66,11 +155,12 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 	// Set workspace cookie to the new workspace
 	middleware.SetWorkspaceCookie(c, workspace.ID)
 
-	// Return success with redirect URL
+	// Return success with redirect URL to the org's install links page
 	c.JSON(http.StatusOK, gin.H{
 		"id":          workspace.ID,
 		"name":        workspace.Name,
-		"redirect_to": "/admin/orgs",
+		"org_id":      org.ID,
+		"redirect_to": fmt.Sprintf("/admin/orgs/%s/install-links", org.ID),
 	})
 }
 

@@ -16,24 +16,29 @@ type OrgsPageProps struct {
 // OrgsPage renders the organizations list page
 templ OrgsPage(props OrgsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="max-w-4xl mx-auto">
-			<div class="flex justify-between items-center mb-6">
-				<h2 class="text-2xl font-semibold text-cool-grey-900 dark:text-white">Connected Organizations</h2>
+		<div class="stratus-page-content overflow-auto">
+			<div class="stratus-page-header">
+				<div class="stratus-heading-group">
+					<h1 class="stratus-page-title">Connected Organizations</h1>
+					<p class="stratus-page-subtitle">Manage your connected Nuon organizations.</p>
+				</div>
 				@components.Button(components.ButtonProps{
 					Text:    "Connect Nuon Org",
 					Variant: "primary",
 					OnClick: "openConnectOrgModal()",
 				})
 			</div>
-			if len(props.Orgs) > 0 {
-				<div class="grid gap-4">
-					for _, org := range props.Orgs {
-						@orgCard(org, props.BasePath)
-					}
-				</div>
-			} else {
-				@emptyState(props.BasePath)
-			}
+			<div class="stratus-page-section">
+				if len(props.Orgs) > 0 {
+					<div class="grid gap-4">
+						for _, org := range props.Orgs {
+							@orgCard(org, props.BasePath)
+						}
+					</div>
+				} else {
+					@emptyState(props.BasePath)
+				}
+			</div>
 		</div>
 	}
 }

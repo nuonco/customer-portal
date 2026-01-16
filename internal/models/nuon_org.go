@@ -10,11 +10,15 @@ import (
 // NuonOrg represents a connected Nuon organization.
 // Theme settings have been moved to the global AppTheme model.
 // API URL is now a global env var (NUON_API_URL), not stored per-org.
+//
+// One-to-One Relationship:
+// - Each workspace can have exactly one NuonOrg (enforced by idx_unique_workspace_org)
+// - Each NuonOrgID can only be connected to one workspace (enforced by idx_unique_nuon_org)
 type NuonOrg struct {
 	ID          string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID string         `gorm:"index" json:"workspace_id"`            // NEW: Workspace ownership (nullable for migration)
+	WorkspaceID string         `gorm:"not null;index" json:"workspace_id"`   // Required: Workspace ownership (unique constraint via migration)
 	UserID      string         `gorm:"not null" json:"user_id"`              // Kept for audit trail (who created it)
-	NuonOrgID   string         `gorm:"column:org_id;not null" json:"org_id"` // Nuon API org ID (renamed from OrgID to avoid GORM FK confusion)
+	NuonOrgID   string         `gorm:"column:org_id;not null" json:"org_id"` // Nuon API org ID (unique constraint via migration)
 	APIToken    string         `gorm:"not null" json:"-"`                    // Hidden from JSON
 	Name        string         `gorm:"not null" json:"name"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -22,7 +26,7 @@ type NuonOrg struct {
 	DeletedAt   gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
+	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"`
 	User      User      `gorm:"foreignKey:UserID" json:"user,omitempty"`
 	// NOTE: InstallLinks relationship removed to avoid GORM FK collision with NuonOrgID column
 	// Query install_links separately using: db.Where("org_id = ?", nuonOrg.ID).Find(&installLinks)

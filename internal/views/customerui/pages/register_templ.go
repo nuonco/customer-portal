@@ -19,6 +19,7 @@ type RegisterPageProps struct {
 	RedirectURL string
 	Theme       *models.AppTheme
 	Error       string
+	CSSPath     string
 }
 
 // RegisterPage renders the customer registration page
@@ -50,13 +51,26 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 23, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 24, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link href=\"/static/css/customer.css\" rel=\"stylesheet\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link href=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 templ.SafeURL
+		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 25, Col: 29}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" rel=\"stylesheet\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -68,7 +82,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,159 +90,159 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white\"><nav class=\"bg-theme-primary text-white p-4\"><div class=\"container mx-auto flex justify-between items-center\"><div class=\"flex items-center space-x-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white\"><nav class=\"bg-theme-primary text-white p-4\"><div class=\"container mx-auto flex justify-between items-center\"><div class=\"flex items-center space-x-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.Theme != nil && props.Theme.LogoBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<img src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<img src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoBase64)
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 35, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 36, Col: 40}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-xs object-contain\">")
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-xs object-contain\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<h1 class=\"text-xl font-heading font-semibold\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 37, Col: 66}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10\" style=\"border-radius: var(--theme-radius)\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<h1 class=\"text-xl font-heading font-semibold\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 43, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 38, Col: 66}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10\" style=\"border-radius: var(--theme-radius)\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 44, Col: 101}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.Error != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300\" style=\"border-radius: var(--theme-radius)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300\" style=\"border-radius: var(--theme-radius)\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Error)
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 46, Col: 20}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<form id=\"registerForm\" class=\"space-y-4\"><div><label for=\"name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your name\"></div><div><label for=\"email\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Email</label> <input type=\"email\" id=\"email\" name=\"email\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your email\"></div><div><label for=\"password\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Password</label> <input type=\"password\" id=\"password\" name=\"password\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your password (min 8 characters)\"></div><div><label for=\"confirmPassword\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Confirm Password</label> <input type=\"password\" id=\"confirmPassword\" name=\"confirmPassword\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Confirm your password\"></div><button type=\"submit\" class=\"w-full bg-theme-primary hover:bg-theme-primary-hover text-white py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500\" style=\"border-radius: var(--theme-radius)\">Create Account</button></form><p class=\"mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center\">Already have an account? ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if props.RedirectURL != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<a href=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var7 templ.SafeURL
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login?redirect=" + props.RedirectURL))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 119, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 47, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"text-primary-600 hover:text-primary-700 dark:text-primary-400\">Sign in</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<a href=\"")
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<form id=\"registerForm\" class=\"space-y-4\"><div><label for=\"name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your name\"></div><div><label for=\"email\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Email</label> <input type=\"email\" id=\"email\" name=\"email\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your email\"></div><div><label for=\"password\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Password</label> <input type=\"password\" id=\"password\" name=\"password\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your password (min 8 characters)\"></div><div><label for=\"confirmPassword\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Confirm Password</label> <input type=\"password\" id=\"confirmPassword\" name=\"confirmPassword\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Confirm your password\"></div><button type=\"submit\" class=\"w-full bg-theme-primary hover:bg-theme-primary-hover text-white py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500\" style=\"border-radius: var(--theme-radius)\">Create Account</button></form><p class=\"mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center\">Already have an account? ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if props.RedirectURL != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 templ.SafeURL
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login?redirect=" + props.RedirectURL))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 121, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 120, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"text-primary-600 hover:text-primary-700 dark:text-primary-400\">Sign in</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" class=\"text-primary-600 hover:text-primary-700 dark:text-primary-400\">Sign in</a>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<a href=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 templ.SafeURL
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 122, Col: 57}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" class=\"text-primary-600 hover:text-primary-700 dark:text-primary-400\">Sign in</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</p><div id=\"error\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden\" style=\"border-radius: var(--theme-radius)\"></div></div></main><!-- Config data for JavaScript --><div id=\"register-config\" class=\"hidden\" data-register-url=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/register")
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 132, Col: 92}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" data-login-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</p><div id=\"error\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden\" style=\"border-radius: var(--theme-radius)\"></div></div></main><!-- Config data for JavaScript --><div id=\"register-config\" class=\"hidden\" data-register-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/login")
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/register")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 132, Col: 137}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 133, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" data-redirect-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" data-login-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.RedirectURL)
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/login")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 132, Col: 177}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 133, Col: 137}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" data-redirect-url=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.RedirectURL)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/pages/register.templ`, Line: 133, Col: 177}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -236,7 +250,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -260,12 +274,12 @@ func registerDarkModeScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\n\t\t(function() {\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\n\t\t(function() {\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -289,23 +303,23 @@ func registerFontLinks(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if theme != nil && theme.HeadingFontBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<style>\n\t\t\t@font-face {\n\t\t\t\tfont-family: 'CustomHeading';\n\t\t\t\tsrc: url({ theme.HeadingFontBase64 }) format('woff2');\n\t\t\t\tfont-display: swap;\n\t\t\t}\n\t\t</style>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<style>\n\t\t\t@font-face {\n\t\t\t\tfont-family: 'CustomHeading';\n\t\t\t\tsrc: url({ theme.HeadingFontBase64 }) format('woff2');\n\t\t\t\tfont-display: swap;\n\t\t\t}\n\t\t</style>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if theme != nil && theme.BodyFontBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<style>\n\t\t\t@font-face {\n\t\t\t\tfont-family: 'CustomBody';\n\t\t\t\tsrc: url({ theme.BodyFontBase64 }) format('woff2');\n\t\t\t\tfont-display: swap;\n\t\t\t}\n\t\t</style>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<style>\n\t\t\t@font-face {\n\t\t\t\tfont-family: 'CustomBody';\n\t\t\t\tsrc: url({ theme.BodyFontBase64 }) format('woff2');\n\t\t\t\tfont-display: swap;\n\t\t\t}\n\t\t</style>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -330,9 +344,9 @@ func registerThemeStyles(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var14 == nil {
-			templ_7745c5c3_Var14 = templ.NopComponent
+		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var15 == nil {
+			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if theme != nil {
@@ -397,12 +411,12 @@ func customerRegisterScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var16 == nil {
+			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById(\"register-config\");\n\t\t\tvar registerURL = config.dataset.registerUrl;\n\t\t\tvar loginURL = config.dataset.loginUrl;\n\t\t\tvar redirectTo = config.dataset.redirectUrl;\n\n\t\t\tdocument.getElementById(\"registerForm\").addEventListener(\"submit\", async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar name = document.getElementById(\"name\").value;\n\t\t\t\tvar email = document.getElementById(\"email\").value;\n\t\t\t\tvar password = document.getElementById(\"password\").value;\n\t\t\t\tvar confirmPassword = document.getElementById(\"confirmPassword\").value;\n\t\t\t\tvar errorDiv = document.getElementById(\"error\");\n\n\t\t\t\t// Validate passwords match\n\t\t\t\tif (password !== confirmPassword) {\n\t\t\t\t\terrorDiv.textContent = \"Passwords do not match\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(registerURL, {\n\t\t\t\t\t\tmethod: \"POST\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({ name: name, email: email, password: password })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tdocument.cookie = \"jwt=\" + encodeURIComponent(data.token) + \"; path=/\";\n\t\t\t\t\t\t// Redirect to provided URL or default to /installs\n\t\t\t\t\t\twindow.location.href = redirectTo || \"/installs\";\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.message || \"Registration failed\";\n\t\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = \"Network error. Please try again.\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById(\"register-config\");\n\t\t\tvar registerURL = config.dataset.registerUrl;\n\t\t\tvar loginURL = config.dataset.loginUrl;\n\t\t\tvar redirectTo = config.dataset.redirectUrl;\n\n\t\t\tdocument.getElementById(\"registerForm\").addEventListener(\"submit\", async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar name = document.getElementById(\"name\").value;\n\t\t\t\tvar email = document.getElementById(\"email\").value;\n\t\t\t\tvar password = document.getElementById(\"password\").value;\n\t\t\t\tvar confirmPassword = document.getElementById(\"confirmPassword\").value;\n\t\t\t\tvar errorDiv = document.getElementById(\"error\");\n\n\t\t\t\t// Validate passwords match\n\t\t\t\tif (password !== confirmPassword) {\n\t\t\t\t\terrorDiv.textContent = \"Passwords do not match\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(registerURL, {\n\t\t\t\t\t\tmethod: \"POST\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({ name: name, email: email, password: password })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tdocument.cookie = \"jwt=\" + encodeURIComponent(data.token) + \"; path=/\";\n\t\t\t\t\t\t// Redirect to provided URL or default to /installs\n\t\t\t\t\t\twindow.location.href = redirectTo || \"/installs\";\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.message || \"Registration failed\";\n\t\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = \"Network error. Please try again.\";\n\t\t\t\t\terrorDiv.classList.remove(\"hidden\");\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

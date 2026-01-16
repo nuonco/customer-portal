@@ -105,6 +105,11 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("workspace migration failed: %w", err)
 	}
 
+	// Run one-to-one workspace-org migration (idempotent)
+	if err := runOneToOneMigration(db); err != nil {
+		return nil, fmt.Errorf("one-to-one migration failed: %w", err)
+	}
+
 	return db, nil
 }
 
@@ -315,6 +320,76 @@ func runWorkspaceMigration(db *gorm.DB) error {
 		if orphanedCounts.Orgs > 0 || orphanedCounts.Links > 0 || orphanedCounts.Configs > 0 || orphanedCounts.Installs > 0 {
 			return fmt.Errorf("migration incomplete: found orphaned records (orgs:%d links:%d configs:%d installs:%d)",
 				orphanedCounts.Orgs, orphanedCounts.Links, orphanedCounts.Configs, orphanedCounts.Installs)
+		}
+
+		return nil
+	})
+}
+
+// runOneToOneMigration enforces one-to-one relationship between workspaces and orgs.
+// This is idempotent - safe to run multiple times.
+func runOneToOneMigration(db *gorm.DB) error {
+	// Check if migration has already been run by checking for the unique index
+	var indexExists int
+	db.Raw(`
+		SELECT 1 FROM pg_indexes
+		WHERE indexname = 'idx_unique_workspace_org'
+	`).Scan(&indexExists)
+
+	if indexExists == 1 {
+		// Migration already complete
+		return nil
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		// Step 1: For workspaces with multiple orgs, keep only the oldest one (by created_at)
+		// Soft-delete all other orgs for that workspace
+		if err := tx.Exec(`
+			UPDATE nuon_orgs
+			SET deleted_at = NOW()
+			WHERE deleted_at IS NULL
+			AND id NOT IN (
+				SELECT DISTINCT ON (workspace_id) id
+				FROM nuon_orgs
+				WHERE deleted_at IS NULL AND workspace_id IS NOT NULL AND workspace_id != ''
+				ORDER BY workspace_id, created_at ASC
+			)
+			AND workspace_id IS NOT NULL
+			AND workspace_id != ''
+		`).Error; err != nil {
+			return fmt.Errorf("failed to soft-delete extra orgs: %w", err)
+		}
+
+		// Step 2: Soft-delete workspaces that have no connected orgs
+		if err := tx.Exec(`
+			UPDATE workspaces
+			SET deleted_at = NOW()
+			WHERE deleted_at IS NULL
+			AND id NOT IN (
+				SELECT DISTINCT workspace_id
+				FROM nuon_orgs
+				WHERE deleted_at IS NULL AND workspace_id IS NOT NULL AND workspace_id != ''
+			)
+		`).Error; err != nil {
+			return fmt.Errorf("failed to soft-delete orphaned workspaces: %w", err)
+		}
+
+		// Step 3: Add unique partial index on workspace_id (one org per workspace)
+		if err := tx.Exec(`
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_workspace_org
+			ON nuon_orgs (workspace_id)
+			WHERE deleted_at IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to create workspace unique index: %w", err)
+		}
+
+		// Step 4: Add unique partial index on org_id (one workspace per Nuon org)
+		if err := tx.Exec(`
+			CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nuon_org
+			ON nuon_orgs (org_id)
+			WHERE deleted_at IS NULL
+		`).Error; err != nil {
+			return fmt.Errorf("failed to create nuon_org unique index: %w", err)
 		}
 
 		return nil

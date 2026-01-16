@@ -12,6 +12,7 @@ type CustomerLoginPageProps struct {
 	SwitchURL  string
 	SwitchText string
 	Theme      *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
+	CSSPath    string
 }
 
 // CustomerLoginPage renders the customer login page with vendor theming
@@ -22,7 +23,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ getLoginTitle(props.Theme) }</title>
-			<link href="/static/css/customer.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			@customerLoginDarkModeScript()
 			@customerLoginFontLinks(props.Theme)
 			@customerLoginThemeStyles(props.Theme)

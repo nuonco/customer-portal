@@ -297,6 +297,7 @@ func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
 		Error:        errorMsg,
 		BasePath:     h.basePath,
 		PrimaryColor: primaryColor,
+		CSSPath:      assets.VendorCSSPath(),
 	}
 
 	h.RenderTempl(c, status, vendorpages.ErrorPage(props))
@@ -460,6 +461,7 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 		SwitchURL:  "/admin/login/",
 		SwitchText: "Looking for vendor login?",
 		Theme:      theme,
+		CSSPath:    assets.CustomerCSSPath(),
 	}
 
 	// Generate OIDC authorization URL
@@ -576,6 +578,7 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 		Error:      errorMsg,
 		SwitchURL:  "/login",
 		SwitchText: "Looking for customer login?",
+		CSSPath:    assets.CustomerCSSPath(),
 	}
 
 	// Check if we have an auth provider configured
@@ -815,116 +818,30 @@ func (h *Handler) LocalRegister(c *gin.Context) {
 	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
-// OrgsPage renders the orgs page for vendors using Templ
-// If user has orgs, redirects to first org's links page
-// Otherwise shows the connect org form
+// OrgsPage redirects to the workspace's connected org's links page.
+// Each workspace has exactly one connected org (one-to-one relationship).
 func (h *Handler) OrgsPage(c *gin.Context) {
-	user := h.GetFreshUser(c) // Load from DB for topbar display
 	workspace := middleware.GetCurrentWorkspace(c)
 
-	var orgs []models.NuonOrg
-	if err := h.db.Where("workspace_id = ?", workspace.ID).Find(&orgs).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load organizations")
+	// Load the workspace's org (one-to-one relationship)
+	var org models.NuonOrg
+	if err := h.db.Where("workspace_id = ? AND deleted_at IS NULL", workspace.ID).First(&org).Error; err != nil {
+		// This shouldn't happen with one-to-one - workspace should always have an org
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace has no connected organization. Please contact support.")
 		return
 	}
 
-	// If user has orgs, redirect to first org's links page
-	if len(orgs) > 0 {
-		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/links", h.basePath, orgs[0].ID))
-		return
-	}
-
-	// Show the connect org page (user has no orgs yet)
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
-	// Get workspace data
-	currentWorkspace := middleware.GetCurrentWorkspace(c)
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
-
-	props := vendorpages.OrgsPageProps{
-		LayoutProps: vendorui.LayoutProps{
-			Title:              "Connect Organization",
-			ActivePage:         "orgs",
-			User:               user,
-			CurrentOrg:         nil,
-			Orgs:               orgs,
-			Breadcrumbs:        []partials.Breadcrumb{},
-			BasePath:           h.basePath,
-			CurrentWorkspace:   currentWorkspace,
-			Workspaces:         userWorkspaces,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
-			CSSPath:            assets.VendorCSSPath(),
-		},
-		Orgs: orgs,
-	}
-
-	h.RenderTempl(c, http.StatusOK, vendorpages.OrgsPage(props))
+	// Redirect to the org's install links page
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID))
 }
 
-// CreateOrg handles POST request to create/connect a new org
+// CreateOrg is deprecated - orgs are now created with workspaces (one-to-one relationship).
+// This endpoint returns an error directing users to create a new workspace instead.
 func (h *Handler) CreateOrg(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	workspace := middleware.GetCurrentWorkspace(c)
-
-	var req struct {
-		OrgID    string `json:"org_id" binding:"required"`
-		APIToken string `json:"api_token" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Validate API token with Nuon API using global API URL
-	nuonClient, err := nuon.NewClientWithURL(req.APIToken, req.OrgID, h.nuonAPIURL)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to initialize Nuon client"})
-		return
-	}
-
-	if err := nuonClient.ValidateOrgAccess(c.Request.Context()); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API token or organization access"})
-		return
-	}
-
-	// Fetch org name from Nuon API
-	nuonOrg, err := nuonClient.GetOrg(c.Request.Context())
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch organization details from Nuon API"})
-		return
-	}
-
-	orgName := nuonOrg.Name
-	if orgName == "" {
-		orgName = req.OrgID // Fallback to org ID if name is empty
-	}
-
-	org := models.NuonOrg{
-		WorkspaceID: workspace.ID,
-		UserID:      user.ID,
-		NuonOrgID:   req.OrgID,
-		APIToken:    req.APIToken,
-		Name:        orgName,
-	}
-
-	if err := h.db.Create(&org).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create organization"})
-		return
-	}
-
-	c.JSON(http.StatusCreated, gin.H{"org": org})
+	c.JSON(http.StatusGone, gin.H{
+		"error":     "Creating orgs separately is no longer supported. Each workspace has exactly one connected org.",
+		"migration": "To connect a different Nuon org, create a new workspace with the org credentials.",
+	})
 }
 
 // UpdateOrg handles PUT request to update org settings (name, api_token)
@@ -989,7 +906,7 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 			User:               user,
 			CurrentOrg:         org,
 			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Links", Path: fmt.Sprintf("%s/orgs/%s/links", h.basePath, org.ID), Active: false}, {Text: "Settings", Path: fmt.Sprintf("%s/orgs/%s/settings", h.basePath, org.ID), Active: true}},
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: "Settings", Path: fmt.Sprintf("%s/orgs/%s/settings", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
 			CurrentWorkspace:   workspace,
 			Workspaces:         userWorkspaces,
@@ -1107,11 +1024,11 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 	props := vendorpages.OrgDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
 			Title:              org.Name + " - Install Links",
-			ActivePage:         "links",
+			ActivePage:         "install-links",
 			User:               user,
 			CurrentOrg:         org,
 			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Links", Path: fmt.Sprintf("%s/orgs/%s/links", h.basePath, org.ID), Active: true}},
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
 			CurrentWorkspace:   workspace,
 			Workspaces:         userWorkspaces,
@@ -1267,11 +1184,11 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 	props := vendorpages.LinkDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
 			Title:              "Install - " + link.AppName,
-			ActivePage:         "links",
+			ActivePage:         "install-links",
 			User:               user,
 			CurrentOrg:         org,
 			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Links", Path: fmt.Sprintf("%s/orgs/%s/links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/links/%s", h.basePath, org.ID, linkID), Active: true}},
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
 			BasePath:           h.basePath,
 			CurrentWorkspace:   workspace,
 			Workspaces:         userWorkspaces,
@@ -1332,7 +1249,7 @@ func (h *Handler) InstallLinkStatus(c *gin.Context) {
 	}
 
 	// For full page requests, redirect to the detail page
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/links/%s", h.basePath, org.ID, linkID))
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID))
 }
 
 // GetOrgApps fetches apps for an organization
@@ -1494,96 +1411,13 @@ func (h *Handler) DeleteInstallLink(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Install deleted successfully"})
 }
 
-// DeleteOrg handles deleting an organization and its associated data
+// DeleteOrg is disabled - org deletion is no longer supported.
+// With one-to-one workspace-org relationship, users should delete the workspace instead.
 func (h *Handler) DeleteOrg(c *gin.Context) {
-	// Get org from context (validated by RequireOrgAccess middleware)
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
-		return
-	}
-	orgID := org.ID
-
-	fmt.Printf("DeleteOrg: Request to delete org '%s' (id=%s)\n", org.Name, orgID)
-
-	// Start a database transaction for atomic operations
-	tx := h.db.Begin()
-	defer func() {
-		if r := recover(); r != nil {
-			tx.Rollback()
-		}
-	}()
-
-	// Find all install links associated with this org
-	var links []models.InstallLink
-	if err := tx.Where("org_id = ?", orgID).Find(&links).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query install links"})
-		return
-	}
-
-	// Find all installs associated with these install links
-	var installLinkIDs []string
-	for _, link := range links {
-		installLinkIDs = append(installLinkIDs, link.ID)
-	}
-
-	var installs []models.Install
-	if len(installLinkIDs) > 0 {
-		if err := tx.Where("install_link_id IN ?", installLinkIDs).Find(&installs).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to query installs"})
-			return
-		}
-	}
-
-	// Delete local install records (no API calls - just disconnect from installer app)
-	fmt.Printf("DeleteOrg: Deleting %d local install records\n", len(installs))
-	if len(installs) > 0 {
-		for _, install := range installs {
-			if err := tx.Delete(&install).Error; err != nil {
-				tx.Rollback()
-				c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to delete local install record %s", install.NuonInstallID)})
-				return
-			}
-			fmt.Printf("DeleteOrg: Deleted local install record for %s\n", install.NuonInstallID)
-		}
-	}
-
-	// Delete install links
-	if len(links) > 0 {
-		if err := tx.Where("org_id = ?", orgID).Delete(&models.InstallLink{}).Error; err != nil {
-			tx.Rollback()
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete install links"})
-			return
-		}
-	}
-
-	// Delete the organization
-	if err := tx.Delete(&org).Error; err != nil {
-		tx.Rollback()
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete organization"})
-		return
-	}
-
-	// Commit the transaction
-	if err := tx.Commit().Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit deletion transaction"})
-		return
-	}
-
-	// Return success with summary of what was disconnected
-	fmt.Printf("DeleteOrg: Successfully disconnected organization '%s' (id=%s) - %d links, %d installs\n",
-		org.Name, org.ID, len(links), len(installs))
-
-	response := gin.H{
-		"message":               "Organization disconnected successfully",
-		"org_name":              org.Name,
-		"install_links_removed": len(links),
-		"installs_removed":      len(installs),
-	}
-
-	c.JSON(http.StatusOK, response)
+	c.JSON(http.StatusGone, gin.H{
+		"error":     "Org deletion is no longer supported. Each workspace has exactly one connected org.",
+		"migration": "To remove this org, delete the workspace from workspace settings.",
+	})
 }
 
 // ThemeSettingsPanelContent returns just the panel HTML for HTMX lazy loading
@@ -2382,14 +2216,14 @@ func (h *Handler) UpdateAppHealthChecks(c *gin.Context) {
 	})
 }
 
-// CustomerAuthSettingsPage renders the customer authentication settings page
-func (h *Handler) CustomerAuthSettingsPage(c *gin.Context) {
+// LoginSettingsPage renders the login settings page
+func (h *Handler) LoginSettingsPage(c *gin.Context) {
 	user := h.GetFreshUser(c)
 
 	// Get or create the customer auth config
 	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load customer auth settings")
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load login settings")
 		return
 	}
 
@@ -2398,21 +2232,29 @@ func (h *Handler) CustomerAuthSettingsPage(c *gin.Context) {
 	var allOrgs []models.NuonOrg
 	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
 
+	// Get current org from middleware context (set by RequireOrgAccess)
+	currentOrg := middleware.GetCurrentOrg(c)
+
 	// Fetch user's workspaces for switcher
 	userWorkspaces := h.GetUserWorkspaces(user.ID)
 
-	// Load theme for styling
+	// Load theme for styling and login page settings
 	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 
-	props := vendorpages.CustomerAuthSettingsPageProps{
+	// Build breadcrumb path with org ID
+	portalBasePath := h.basePath + "/orgs/" + currentOrg.ID + "/portal"
+
+	props := vendorpages.LoginSettingsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:      "Customer Authentication - Settings",
-			ActivePage: "customer-auth",
+			Title:      "Login",
+			ActivePage: "portal-login",
 			User:       user,
+			CurrentOrg: currentOrg,
 			Orgs:       allOrgs,
 			Breadcrumbs: []partials.Breadcrumb{
-				{Text: "Customer Auth", Path: h.basePath + "/settings/customer-auth", Active: true},
+				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
+				{Text: "Login", Path: portalBasePath + "/login", Active: true},
 			},
 			BasePath:         h.basePath,
 			CurrentWorkspace: workspace,
@@ -2422,16 +2264,17 @@ func (h *Handler) CustomerAuthSettingsPage(c *gin.Context) {
 			CSSPath:          assets.VendorCSSPath(),
 		},
 		Config: config,
+		Theme:  theme,
 	}
 
-	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerAuthSettingsPage(props))
+	h.RenderTempl(c, http.StatusOK, vendorpages.LoginSettingsPage(props))
 }
 
-// CustomerAuthSettingsPanelContent returns just the panel HTML for HTMX lazy loading
-func (h *Handler) CustomerAuthSettingsPanelContent(c *gin.Context) {
+// LoginSettingsPanelContent returns just the panel HTML for HTMX lazy loading
+func (h *Handler) LoginSettingsPanelContent(c *gin.Context) {
 	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load customer auth settings")
+		c.String(http.StatusInternalServerError, "Failed to load login settings")
 		return
 	}
 
@@ -2443,15 +2286,17 @@ func (h *Handler) CustomerAuthSettingsPanelContent(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, partials.CustomerAuthPanel(props))
 }
 
-// UpdateCustomerAuthSettings handles PUT request to update customer auth settings
-func (h *Handler) UpdateCustomerAuthSettings(c *gin.Context) {
+// UpdateLoginSettings handles PUT request to update login settings
+func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	var req struct {
-		Enabled      bool   `json:"enabled"`
-		ProviderName string `json:"provider_name"`
-		ClientID     string `json:"client_id"`
-		ClientSecret string `json:"client_secret"`
-		IssuerURL    string `json:"issuer_url"`
-		Scopes       string `json:"scopes"`
+		Enabled       bool   `json:"enabled"`
+		ProviderName  string `json:"provider_name"`
+		ClientID      string `json:"client_id"`
+		ClientSecret  string `json:"client_secret"`
+		IssuerURL     string `json:"issuer_url"`
+		Scopes        string `json:"scopes"`
+		LoginTitle    string `json:"login_title"`
+		LoginSubtitle string `json:"login_subtitle"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2462,11 +2307,11 @@ func (h *Handler) UpdateCustomerAuthSettings(c *gin.Context) {
 	// Get or create the customer auth config
 	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer auth settings"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load login settings"})
 		return
 	}
 
-	// Update fields
+	// Update auth fields
 	config.Enabled = req.Enabled
 	config.ProviderName = req.ProviderName
 	config.ClientID = req.ClientID
@@ -2486,8 +2331,16 @@ func (h *Handler) UpdateCustomerAuthSettings(c *gin.Context) {
 	}
 
 	if err := h.db.Save(config).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save customer auth settings"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save login settings"})
 		return
+	}
+
+	// Update login page appearance in theme
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	if err == nil {
+		theme.LoginTitle = req.LoginTitle
+		theme.LoginSubtitle = req.LoginSubtitle
+		h.db.Save(theme)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -2504,12 +2357,12 @@ func (h *Handler) UpdateCustomerAuthSettings(c *gin.Context) {
 	})
 }
 
-// TestCustomerAuthConnection tests the OIDC connection with current settings
-func (h *Handler) TestCustomerAuthConnection(c *gin.Context) {
+// TestLoginConnection tests the OIDC connection with current settings
+func (h *Handler) TestLoginConnection(c *gin.Context) {
 	// Get the current config
 	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load customer auth settings"})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load login settings"})
 		return
 	}
 

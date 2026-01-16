@@ -7,6 +7,7 @@ type VendorLoginPageProps struct {
 	AuthURL      string // OIDC authorization URL
 	ProviderName string // e.g., "Google", "Okta", "SSO" (optional, shows icon if set)
 	Error        string // Error message to display
+	CSSPath      string // Path to CSS file (with cache-busting hash)
 
 	// Switch link to alternate login page
 	SwitchURL  string // URL to other login page
@@ -21,7 +22,7 @@ templ VendorLoginPage(props VendorLoginPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
-			<link href="/static/css/customer.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			@vendorLoginDarkModeScript()
 			@vendorLoginFontLinks()
 		</head>

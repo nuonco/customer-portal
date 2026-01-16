@@ -1,6 +1,8 @@
 package partials
 
 import (
+	"strings"
+
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -53,7 +55,7 @@ templ Sidebar(props SidebarProps) {
 						<div id="org-list" class="py-1">
 							for _, org := range props.Orgs {
 								<a
-									href={ templ.SafeURL(props.BasePath + "/orgs/" + org.ID + "/links") }
+									href={ templ.SafeURL(props.BasePath + "/orgs/" + org.ID + "/install-links") }
 									class={ "stratus-org-item", templ.KV("active", props.CurrentOrg != nil && props.CurrentOrg.ID == org.ID) }
 								>
 									<span class="stratus-org-avatar-sm">{ safeSlice(org.Name, 0, 2) }</span>
@@ -62,10 +64,10 @@ templ Sidebar(props SidebarProps) {
 							}
 						</div>
 					}
-					<div class="border-t border-cool-grey-200">
-						<button type="button" onclick="openConnectOrgModal()" class="stratus-org-item text-primary-600 w-full">
+					<div class="border-t border-cool-grey-200 dark:border-dark-grey-600 mt-1 pt-1">
+						<button type="button" onclick="openCreateWorkspaceModal(); toggleOrgDropdown();" class="stratus-org-item w-full text-left">
 							@plusIcon()
-							<span>Connect Organization</span>
+							<span>Connect Org</span>
 						</button>
 					</div>
 				</div>
@@ -81,11 +83,11 @@ templ Sidebar(props SidebarProps) {
 						<span class="sidebar-text">Apps</span>
 					</a>
 					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/links") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "links") }
+						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
+						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "install-links") }
 					>
 						@linkIcon()
-						<span class="sidebar-text">Links</span>
+						<span class="sidebar-text">Install Links</span>
 					</a>
 				} else {
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
@@ -94,10 +96,42 @@ templ Sidebar(props SidebarProps) {
 					</span>
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@linkIcon()
-						<span class="sidebar-text">Links</span>
+						<span class="sidebar-text">Install Links</span>
 					</span>
 				}
 			</nav>
+			<hr class="stratus-sidebar-divider"/>
+			<!-- Settings Section -->
+			<div class="stratus-sidebar-section">
+				<div class="stratus-sidebar-label">Settings</div>
+				<nav class="stratus-sidebar-nav">
+					if props.CurrentOrg != nil {
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/portal/branding") }
+							class={ "stratus-sidebar-link", templ.KV("active", isPortalPage(props.ActivePage)) }
+						>
+							@paintbrushIcon()
+							<span class="sidebar-text">Customer Portal</span>
+						</a>
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/settings/team") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "settings-team") }
+						>
+							@usersIcon()
+							<span class="sidebar-text">Team</span>
+						</a>
+					} else {
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@paintbrushIcon()
+							<span class="sidebar-text">Customer Portal</span>
+						</span>
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@usersIcon()
+							<span class="sidebar-text">Team</span>
+						</span>
+					}
+				</nav>
+			</div>
 			<hr class="stratus-sidebar-divider"/>
 			<!-- Resources Section -->
 			<div class="stratus-sidebar-section">
@@ -124,6 +158,11 @@ func safeSlice(s string, start, end int) string {
 		return ""
 	}
 	return string(runes[start:end])
+}
+
+// isPortalPage checks if the active page is a Customer Portal page
+func isPortalPage(activePage string) bool {
+	return strings.HasPrefix(activePage, "portal-")
 }
 
 templ sidebarScript() {
@@ -241,5 +280,17 @@ templ paintbrushIcon() {
 templ usersIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
+	</svg>
+}
+
+templ codeIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z"></path>
+	</svg>
+}
+
+templ keyIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176a15.86,15.86,0,0,0-4.69,11.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A80,80,0,0,0,216.57,39.43ZM224,96a63.65,63.65,0,0,1-21.41,47.66L192,129.24V112a8,8,0,0,0-2.34-5.66l-48-48A8,8,0,0,0,136,56H118.76L108.34,45.57A64,64,0,0,1,224,96ZM71.31,216H40V184.69l55.22-55.22,32,32ZM144,80a16,16,0,1,1,16,16A16,16,0,0,1,144,80Z"></path>
 	</svg>
 }

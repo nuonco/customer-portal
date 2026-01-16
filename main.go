@@ -210,21 +210,21 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		workspaceContextRoutes.DELETE("/members/:user_id", h.RemoveMember)
 	}
 
-	// Global theme settings (workspace-scoped)
+	// Settings API endpoints (workspace-scoped, pages are under /orgs/:org_id/settings/)
 	settings := rg.Group("/settings")
 	settings.Use(jwtAuth.MiddlewareFunc())
 	settings.Use(middleware.RequireRole(models.RoleVendor))
 	settings.Use(middleware.RequireWorkspaceContext(db))
 	{
+		// Panel endpoints (for HTMX lazy loading)
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
 		settings.GET("/customization/panel", h.CustomThemePanelContent)
 		settings.PUT("/", h.UpdateThemeSettings)
 
-		// Customer auth settings
-		settings.GET("/customer-auth", h.CustomerAuthSettingsPage)
-		settings.GET("/customer-auth/panel", h.CustomerAuthSettingsPanelContent)
-		settings.PUT("/customer-auth", h.UpdateCustomerAuthSettings)
-		settings.POST("/customer-auth/test", h.TestCustomerAuthConnection)
+		// Login settings API endpoints
+		settings.GET("/login/panel", h.LoginSettingsPanelContent)
+		settings.PUT("/login", h.UpdateLoginSettings)
+		settings.POST("/login/test", h.TestLoginConnection)
 
 		// GitHub template customization settings
 		settings.GET("/github", h.GetGitHubConfig)
@@ -258,7 +258,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		orgRoutes := orgs.Group("/:org_id")
 		orgRoutes.Use(middleware.RequireOrgAccess(db))
 		{
-			orgRoutes.GET("/links", h.OrgDetailPage)
+			orgRoutes.GET("/install-links", h.OrgDetailPage)
 			orgRoutes.GET("/settings", h.OrgSettingsPage)
 			orgRoutes.PUT("/", h.UpdateOrg)
 			orgRoutes.DELETE("/", h.DeleteOrg)
@@ -279,10 +279,24 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
 			orgRoutes.PUT("/apps-api/:app_id/customer-input-config", h.UpdateAppCustomerInputConfig)
 
-			orgRoutes.POST("/links", h.CreateInstallLink)
-			orgRoutes.GET("/links/:link_id", h.InstallLinkDetail)
-			orgRoutes.GET("/links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
-			orgRoutes.DELETE("/links/:link_id", h.DeleteInstallLink)
+			orgRoutes.POST("/install-links", h.CreateInstallLink)
+			orgRoutes.GET("/install-links/:link_id", h.InstallLinkDetail)
+			orgRoutes.GET("/install-links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
+			orgRoutes.DELETE("/install-links/:link_id", h.DeleteInstallLink)
+
+			// Settings pages (org-scoped to preserve org context in URL)
+			orgSettings := orgRoutes.Group("/settings")
+			{
+				orgSettings.GET("/team", h.TeamSettingsPage)
+			}
+
+			// Customer Portal pages (org-scoped)
+			orgPortal := orgRoutes.Group("/portal")
+			{
+				orgPortal.GET("/branding", h.BrandingSettingsPage)
+				orgPortal.GET("/custom-theme", h.CustomThemeSettingsPage)
+				orgPortal.GET("/login", h.LoginSettingsPage)
+			}
 		}
 	}
 

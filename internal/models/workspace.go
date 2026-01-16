@@ -7,7 +7,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// Workspace represents a collaboration namespace for vendor users
+// Workspace represents a collaboration namespace for vendor users.
+// Each workspace is bound to exactly one Nuon organization (one-to-one relationship).
 type Workspace struct {
 	ID         string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
 	Name       string         `gorm:"not null;type:varchar(255)" json:"name"`
@@ -18,7 +19,7 @@ type Workspace struct {
 
 	// Relationships
 	Members         []WorkspaceMember     `gorm:"foreignKey:WorkspaceID" json:"members,omitempty"`
-	NuonOrgs        []NuonOrg             `gorm:"foreignKey:WorkspaceID" json:"nuon_orgs,omitempty"`
+	NuonOrg         *NuonOrg              `gorm:"foreignKey:WorkspaceID" json:"nuon_org,omitempty"` // One-to-one: exactly one org per workspace
 	InstallLinks    []InstallLink         `gorm:"foreignKey:WorkspaceID" json:"install_links,omitempty"`
 	AppInputConfigs []AppInputConfig      `gorm:"foreignKey:WorkspaceID" json:"app_input_configs,omitempty"`
 	Installs        []Install             `gorm:"foreignKey:WorkspaceID" json:"installs,omitempty"`
@@ -42,4 +43,25 @@ func (w *Workspace) IsVendorWorkspace(db *gorm.DB) (bool, error) {
 		Where("workspace_members.workspace_id = ? AND users.role = ?", w.ID, RoleVendor).
 		Count(&count).Error
 	return count > 0, err
+}
+
+// HasOrg returns true if this workspace has a connected Nuon organization
+func (w *Workspace) HasOrg() bool {
+	return w.NuonOrg != nil
+}
+
+// GetOrgID returns the connected org's ID, or empty string if none
+func (w *Workspace) GetOrgID() string {
+	if w.NuonOrg != nil {
+		return w.NuonOrg.ID
+	}
+	return ""
+}
+
+// GetNuonOrgID returns the Nuon platform org ID, or empty string if none
+func (w *Workspace) GetNuonOrgID() string {
+	if w.NuonOrg != nil {
+		return w.NuonOrg.NuonOrgID
+	}
+	return ""
 }

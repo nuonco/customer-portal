@@ -35,59 +35,65 @@ type PaginationData struct {
 // OrgDetailPage renders the org detail page with install links
 templ OrgDetailPage(props OrgDetailPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="max-w-4xl mx-auto">
-			<div class="flex justify-end mb-6">
+		<div class="stratus-page-content overflow-auto">
+			<div class="stratus-page-header">
+				<div class="stratus-heading-group">
+					<h1 class="stratus-page-title">Install Links</h1>
+					<p class="stratus-page-subtitle">Create and manage install links for your customers.</p>
+				</div>
 				@components.Button(components.ButtonProps{
 					Text:    "Create Link",
 					Variant: "primary",
 					OnClick: "openCreateInstallModal()",
 				})
 			</div>
-			<!-- Tab Interface -->
-			<div class="mb-6">
-				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-					<nav class="-mb-px flex space-x-8">
-						@tabLink("available", "Pending", props.Pagination.AvailableCount, props.Pagination.CurrentTab)
-						@tabLink("used", "Accepted", props.Pagination.UsedCount, props.Pagination.CurrentTab)
-					</nav>
+			<div class="stratus-page-section">
+				<!-- Tab Interface -->
+				<div class="mb-6">
+					<div class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+						<nav class="-mb-px flex space-x-8">
+							@tabLink("available", "Pending", props.Pagination.AvailableCount, props.Pagination.CurrentTab)
+							@tabLink("used", "Accepted", props.Pagination.UsedCount, props.Pagination.CurrentTab)
+						</nav>
+					</div>
 				</div>
-			</div>
-			<!-- Tab Content -->
-			<div class="mb-4">
-				if props.Pagination.CurrentTab == "used" {
-					<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Accepted Install Links</h3>
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These links have been accepted and are now owned by customers.</p>
+				<!-- Tab Content -->
+				<div class="mb-4">
+					if props.Pagination.CurrentTab == "used" {
+						<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Accepted Install Links</h3>
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These links have been accepted and are now owned by customers.</p>
+					} else {
+						<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Pending Install Links</h3>
+						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">Share these links with customers to create their installs.</p>
+					}
+				</div>
+				if len(props.Links) > 0 {
+					<div class="flex justify-between items-center mb-4">
+						<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
+							{ fmt.Sprint(props.Pagination.ShowingFrom) }-{ fmt.Sprint(props.Pagination.ShowingTo) } of { fmt.Sprint(props.Pagination.TotalCount) }
+						</span>
+					</div>
+					@linksTable(props.Links, props.Org.ID, props.BasePath)
+					if props.Pagination.TotalPages > 1 {
+						@components.Pagination(components.PaginationProps{
+							CurrentPage:  props.Pagination.CurrentPage,
+							TotalPages:   props.Pagination.TotalPages,
+							HasPrevious:  props.Pagination.HasPrevious,
+							HasNext:      props.Pagination.HasNext,
+							PreviousPage: props.Pagination.PreviousPage,
+							NextPage:     props.Pagination.NextPage,
+							BaseURL:      fmt.Sprintf("?tab=%s&page=", props.Pagination.CurrentTab),
+							ShowInfo:     true,
+						})
+					}
+				} else if props.Pagination.AvailableCount == 0 && props.Pagination.UsedCount == 0 {
+					// No links at all - show create first link
+					@emptyLinksState()
 				} else {
-					<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white">Pending Install Links</h3>
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">Share these links with customers to create their installs.</p>
+					// Links exist in other tab but not this one
+					@emptyTabState(props.Pagination.CurrentTab)
 				}
 			</div>
-			if len(props.Links) > 0 {
-				<div class="flex justify-between items-center mb-4">
-					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
-						{ fmt.Sprint(props.Pagination.ShowingFrom) }-{ fmt.Sprint(props.Pagination.ShowingTo) } of { fmt.Sprint(props.Pagination.TotalCount) }
-					</span>
-				</div>
-				@linksTable(props.Links, props.Org.ID, props.BasePath)
-				if props.Pagination.TotalPages > 1 {
-					@components.Pagination(components.PaginationProps{
-						CurrentPage:  props.Pagination.CurrentPage,
-						TotalPages:   props.Pagination.TotalPages,
-						HasPrevious:  props.Pagination.HasPrevious,
-						HasNext:      props.Pagination.HasNext,
-						PreviousPage: props.Pagination.PreviousPage,
-						NextPage:     props.Pagination.NextPage,
-						BaseURL:      fmt.Sprintf("?tab=%s&page=", props.Pagination.CurrentTab),
-						ShowInfo:     true,
-					})
-				}
-			} else if props.Pagination.AvailableCount == 0 && props.Pagination.UsedCount == 0 {
-				// No links at all - show create first link
-				@emptyLinksState()
-			} else {
-				// Links exist in other tab but not this one
-				@emptyTabState(props.Pagination.CurrentTab)
-			}
 		</div>
 		@createInstallModal(props.BasePath, props.Org.ID)
 	}
@@ -130,7 +136,7 @@ templ linksTable(links []models.InstallLink, orgID, basePath string) {
 					<tr>
 						<td class="font-medium">
 							<a
-								href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/links/%s", basePath, orgID, link.ID)) }
+								href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/install-links/%s", basePath, orgID, link.ID)) }
 								class="text-primary-600 hover:text-primary-800"
 							>
 								if link.Install != nil {
@@ -492,7 +498,7 @@ templ createInstallModalScript() {
 					submitBtn.disabled = true;
 					submitBtn.textContent = "Creating...";
 
-					const response = await fetch(`${basePath}/orgs/${orgId}/links`, {
+					const response = await fetch(`${basePath}/orgs/${orgId}/install-links`, {
 						method: "POST",
 						headers: {
 							"Content-Type": "application/json",
@@ -508,7 +514,7 @@ templ createInstallModalScript() {
 
 					if (response.ok) {
 						const linkId = data.link.id;
-						window.location.href = `${basePath}/orgs/${orgId}/links/${linkId}`;
+						window.location.href = `${basePath}/orgs/${orgId}/install-links/${linkId}`;
 					} else {
 						errorDiv.textContent = data.error || "Failed to create install link";
 						errorDiv.classList.remove("hidden");

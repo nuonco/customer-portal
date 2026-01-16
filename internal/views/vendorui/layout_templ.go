@@ -17,7 +17,7 @@ import (
 // LayoutProps contains all data needed for the vendor layout
 type LayoutProps struct {
 	Title       string
-	ActivePage  string // "orgs" | "links" | "apps"
+	ActivePage  string // "orgs" | "install-links" | "apps"
 	User        *models.User
 	CurrentOrg  *models.NuonOrg
 	Orgs        []models.NuonOrg
@@ -199,10 +199,6 @@ func Layout(props LayoutProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = components.ConfirmModal().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = connectOrgModal(props.BasePath).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -414,82 +410,7 @@ func layoutScripts(basePath string) templ.Component {
 			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeConnectOrgModal() {\n\t\t\tconst modal = document.getElementById('connect-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Create Workspace Modal\n\t\tfunction openCreateWorkspaceModal() {\n\t\t\tconst modal = document.getElementById('create-workspace-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\t// Focus on workspace name input\n\t\t\t\tconst nameInput = document.getElementById('workspace-name');\n\t\t\t\tif (nameInput) {\n\t\t\t\t\tnameInput.focus();\n\t\t\t\t}\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateWorkspaceModal() {\n\t\t\tconst modal = document.getElementById('create-workspace-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t// Clear form and errors\n\t\t\t\tconst form = document.getElementById('create-workspace-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-workspace-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseConnectOrgModal();\n\t\t\t\tcloseCreateWorkspaceModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func connectOrgModal(basePath string) templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div id=\"connect-org-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Organization</h3><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"connect-org-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"org-name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Organization Name</label> <input type=\"text\" id=\"org-name\" name=\"name\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"My Organization\"></div><div><label for=\"nuon-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID</label> <input type=\"text\" id=\"nuon-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token</label> <input type=\"password\" id=\"api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"></div><div id=\"connect-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeConnectOrgModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitConnectOrg()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"connect-org-config\" class=\"hidden\" data-base-path=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 442, Col: 27}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"></div>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = connectOrgScript().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func connectOrgScript() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<script>\n\t\tasync function submitConnectOrg() {\n\t\t\tconst configEl = document.getElementById('connect-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('connect-org-form');\n\t\t\tconst errorDiv = document.getElementById('connect-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/orgs/', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\tname: formData.get('name'),\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\twindow.location.href = basePath + '/orgs/' + data.org.id + '/links';\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect organization';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openCreateWorkspaceModal() {\n\t\t\tconst modal = document.getElementById('create-workspace-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\t// Focus on org ID input\n\t\t\t\tconst orgIdInput = document.getElementById('workspace-org-id');\n\t\t\t\tif (orgIdInput) {\n\t\t\t\t\torgIdInput.focus();\n\t\t\t\t}\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateWorkspaceModal() {\n\t\t\tconst modal = document.getElementById('create-workspace-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t// Clear form and errors\n\t\t\t\tconst form = document.getElementById('create-workspace-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-workspace-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseCreateWorkspaceModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -513,25 +434,25 @@ func createWorkspaceModal(basePath string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div id=\"create-workspace-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Create Workspace</h3><button type=\"button\" onclick=\"closeCreateWorkspaceModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"create-workspace-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"workspace-name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Workspace Name</label> <input type=\"text\" id=\"workspace-name\" name=\"name\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"My Workspace\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">A workspace is a shared environment for your team to manage organizations and settings.</p></div><div id=\"create-workspace-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeCreateWorkspaceModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitCreateWorkspace()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Create</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-workspace-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div id=\"create-workspace-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Org</h3><button type=\"button\" onclick=\"closeCreateWorkspaceModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"create-workspace-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"workspace-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"workspace-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"workspace-api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token <span class=\"text-red-500\">*</span></label> <input type=\"password\" id=\"workspace-api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">To get a new token, run: <code>nuon orgs api-token -j</code></p></div><div id=\"create-workspace-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeCreateWorkspaceModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitCreateWorkspace()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-workspace-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		var templ_7745c5c3_Var11 string
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 534, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 415, Col: 27}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -559,12 +480,12 @@ func createWorkspaceScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\n\t\tasync function submitCreateWorkspace() {\n\t\t\tconst configEl = document.getElementById('create-workspace-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-workspace-form');\n\t\t\tconst errorDiv = document.getElementById('create-workspace-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/workspaces', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\tname: formData.get('name')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\t// Workspace created successfully, redirect to orgs page\n\t\t\t\t\t// The new workspace will be automatically set as active\n\t\t\t\t\twindow.location.href = basePath + '/orgs/';\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to create workspace';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<script>\n\t\tasync function submitCreateWorkspace() {\n\t\t\tconst configEl = document.getElementById('create-workspace-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-workspace-form');\n\t\t\tconst errorDiv = document.getElementById('create-workspace-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/workspaces', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t// Org connected successfully, redirect to the org's links page\n\t\t\t\t\twindow.location.href = data.redirect_to || (basePath + '/orgs/');\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect org';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -588,12 +509,12 @@ func keyboardShortcutsModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div id=\"keyboard-shortcuts-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200\" style=\"z-index: 100;\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Keyboard Shortcuts</h3><button type=\"button\" onclick=\"closeKeyboardShortcutsModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div></div></div><style>\n\t\t#keyboard-shortcuts-modal.modal-visible {\n\t\t\topacity: 1;\n\t\t\tpointer-events: auto;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div id=\"keyboard-shortcuts-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200\" style=\"z-index: 100;\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Keyboard Shortcuts</h3><button type=\"button\" onclick=\"closeKeyboardShortcutsModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div></div></div><style>\n\t\t#keyboard-shortcuts-modal.modal-visible {\n\t\t\topacity: 1;\n\t\t\tpointer-events: auto;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

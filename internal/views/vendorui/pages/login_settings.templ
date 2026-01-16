@@ -3,51 +3,96 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
-// CustomerAuthSettingsPageProps for the customer auth settings page
-type CustomerAuthSettingsPageProps struct {
+// LoginSettingsPageProps for the login settings page
+type LoginSettingsPageProps struct {
 	vendorui.LayoutProps
 	Config     *models.CustomerAuthConfig
+	Theme      *models.AppTheme
 	TestResult string // "success", "error", or empty
 	TestError  string
 }
 
-// CustomerAuthSettingsPage renders the customer authentication settings page
-templ CustomerAuthSettingsPage(props CustomerAuthSettingsPageProps) {
+// LoginSettingsPage renders the login settings page
+templ LoginSettingsPage(props LoginSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="max-w-4xl mx-auto">
-			<h2 class="text-2xl font-semibold text-cool-grey-900 dark:text-white mb-2">Customer Authentication</h2>
-			<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
-				Configure how your customers authenticate when accepting install links and managing their installations.
-			</p>
-			<div class="space-y-6">
-				@enableToggleSection(props.Config)
-				@oidcConfigSection(props.Config)
-				@customerAuthSaveSection(props.PrimaryColor)
-				@fallbackInfoSection()
+		<div class="flex h-full -m-6 overflow-hidden">
+			@partials.PortalSubnav(partials.PortalSubnavProps{
+				OrgID:         props.CurrentOrg.ID,
+				ActiveSubPage: "login",
+				BasePath:      props.BasePath,
+			})
+			<div class="stratus-page-content overflow-auto">
+				<div class="stratus-page-header">
+					<div class="stratus-heading-group">
+						<h1 class="stratus-page-title">Login</h1>
+						<p class="stratus-page-subtitle">Configure the customer login page and authentication settings.</p>
+					</div>
+				</div>
+				<div class="stratus-page-section">
+					<div class="max-w-4xl space-y-6">
+						@loginPageAppearanceSection(props.Theme)
+						@loginEnableToggleSection(props.Config)
+						@loginOidcConfigSection(props.Config)
+						@loginSaveSection(props.PrimaryColor)
+						@loginFallbackInfoSection()
+					</div>
+				</div>
+				<!-- Config data for JavaScript -->
+				<div
+					id="login-settings-config"
+					class="hidden"
+					data-base-path={ props.BasePath }
+					data-enabled={ loginBoolToString(props.Config.Enabled) }
+					data-has-secret={ loginBoolToString(props.Config.HasClientSecret()) }
+				></div>
+				@loginSettingsScript()
 			</div>
 		</div>
-		<!-- Config data for JavaScript -->
-		<div
-			id="customer-auth-config"
-			class="hidden"
-			data-base-path={ props.BasePath }
-			data-enabled={ customerAuthBoolToString(props.Config.Enabled) }
-			data-has-secret={ customerAuthBoolToString(props.Config.HasClientSecret()) }
-		></div>
-		@customerAuthSettingsScript()
 	}
 }
 
-func customerAuthBoolToString(b bool) string {
+func loginBoolToString(b bool) string {
 	if b {
 		return "true"
 	}
 	return "false"
 }
 
-templ enableToggleSection(config *models.CustomerAuthConfig) {
+templ loginPageAppearanceSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Login Page Appearance</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the text displayed on the customer login page.</p>
+		<div class="space-y-4">
+			<div>
+				<label for="loginTitle" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Title</label>
+				<input
+					type="text"
+					id="loginTitle"
+					value={ theme.GetLoginTitle() }
+					placeholder="Customer Dashboard"
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Main heading shown on the customer login page.</p>
+			</div>
+			<div>
+				<label for="loginSubtitle" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Subtitle</label>
+				<input
+					type="text"
+					id="loginSubtitle"
+					value={ theme.GetLoginSubtitle() }
+					placeholder="Manage your customer's install experience."
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Descriptive text shown below the title.</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ loginEnableToggleSection(config *models.CustomerAuthConfig) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<div class="flex items-center justify-between">
 			<div>
@@ -85,7 +130,7 @@ templ enableToggleSection(config *models.CustomerAuthConfig) {
 	</div>
 }
 
-templ oidcConfigSection(config *models.CustomerAuthConfig) {
+templ loginOidcConfigSection(config *models.CustomerAuthConfig) {
 	<div id="oidcConfigSection" class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">OIDC Configuration</h3>
 		<div class="space-y-4">
@@ -150,7 +195,7 @@ templ oidcConfigSection(config *models.CustomerAuthConfig) {
 					<input
 						type="password"
 						id="clientSecret"
-						placeholder={ getSecretPlaceholder(config.HasClientSecret()) }
+						placeholder={ getLoginSecretPlaceholder(config.HasClientSecret()) }
 						class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 pr-10"
 					/>
 					<button
@@ -185,7 +230,7 @@ templ oidcConfigSection(config *models.CustomerAuthConfig) {
 				<input
 					type="text"
 					id="scopes"
-					value={ getScopesValue(config.Scopes) }
+					value={ getLoginScopesValue(config.Scopes) }
 					placeholder="openid,profile,email"
 					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
 				/>
@@ -212,26 +257,26 @@ templ oidcConfigSection(config *models.CustomerAuthConfig) {
 	</div>
 }
 
-func getSecretPlaceholder(hasSecret bool) string {
+func getLoginSecretPlaceholder(hasSecret bool) string {
 	if hasSecret {
 		return "••••••••••••••••"
 	}
 	return "Enter client secret"
 }
 
-func getScopesValue(scopes string) string {
+func getLoginScopesValue(scopes string) string {
 	if scopes == "" {
 		return "openid,profile,email"
 	}
 	return scopes
 }
 
-templ customerAuthSaveSection(primaryColor string) {
+templ loginSaveSection(primaryColor string) {
 	<div class="flex flex-col space-y-3">
 		<button
 			type="button"
 			id="saveButton"
-			onclick="saveSettings()"
+			onclick="saveLoginSettings()"
 			class={ "w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white",
 				templ.KV("bg-theme-primary hover:bg-theme-primary-hover", primaryColor != ""),
 				templ.KV("bg-primary-600 hover:bg-primary-700", primaryColor == "") }
@@ -253,7 +298,7 @@ templ customerAuthSaveSection(primaryColor string) {
 	</div>
 }
 
-templ fallbackInfoSection() {
+templ loginFallbackInfoSection() {
 	<div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
 		<div class="flex">
 			<svg class="w-5 h-5 text-blue-500 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
@@ -270,10 +315,10 @@ templ fallbackInfoSection() {
 	</div>
 }
 
-templ customerAuthSettingsScript() {
+templ loginSettingsScript() {
 	<script>
 		(function() {
-			var config = document.getElementById('customer-auth-config');
+			var config = document.getElementById('login-settings-config');
 			var basePath = config.dataset.basePath;
 
 			// Toggle enable/disable
@@ -316,7 +361,7 @@ templ customerAuthSettingsScript() {
 
 				try {
 					// Save settings first
-					var saveResponse = await fetch(basePath + '/settings/customer-auth', {
+					var saveResponse = await fetch(basePath + '/settings/login', {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -328,7 +373,7 @@ templ customerAuthSettingsScript() {
 					}
 
 					// Then test the connection
-					var response = await fetch(basePath + '/settings/customer-auth/test', {
+					var response = await fetch(basePath + '/settings/login/test', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin'
@@ -358,12 +403,14 @@ templ customerAuthSettingsScript() {
 					issuer_url: document.getElementById('issuerUrl').value,
 					client_id: document.getElementById('clientId').value,
 					client_secret: document.getElementById('clientSecret').value,
-					scopes: document.getElementById('scopes').value
+					scopes: document.getElementById('scopes').value,
+					login_title: document.getElementById('loginTitle').value,
+					login_subtitle: document.getElementById('loginSubtitle').value
 				};
 			}
 
 			// Save settings
-			window.saveSettings = async function() {
+			window.saveLoginSettings = async function() {
 				var saveButton = document.getElementById('saveButton');
 				var successMessage = document.getElementById('successMessage');
 				var errorMessage = document.getElementById('errorMessage');
@@ -376,7 +423,7 @@ templ customerAuthSettingsScript() {
 				var formData = getFormData();
 
 				try {
-					var response = await fetch(basePath + '/settings/customer-auth', {
+					var response = await fetch(basePath + '/settings/login', {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -387,6 +434,7 @@ templ customerAuthSettingsScript() {
 
 					if (response.ok) {
 						successMessage.classList.remove('hidden');
+						showToast('Login settings saved!', 'success');
 						setTimeout(function() { successMessage.classList.add('hidden'); }, 3000);
 
 						// Update the "has secret" indicator if secret was changed

@@ -1,0 +1,591 @@
+package pages
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+)
+
+// BrandingSettingsPageProps for the branding settings page
+type BrandingSettingsPageProps struct {
+	vendorui.LayoutProps
+	Theme *models.AppTheme
+}
+
+// BrandingSettingsPage renders the branding settings page
+templ BrandingSettingsPage(props BrandingSettingsPageProps) {
+	@vendorui.Layout(props.LayoutProps) {
+		<div class="flex h-full -m-6 overflow-hidden">
+			@partials.PortalSubnav(partials.PortalSubnavProps{
+				OrgID:         props.CurrentOrg.ID,
+				ActiveSubPage: "branding",
+				BasePath:      props.BasePath,
+			})
+			<div class="stratus-page-content overflow-auto">
+				<div class="stratus-page-header">
+					<div class="stratus-heading-group">
+						<h1 class="stratus-page-title">Branding</h1>
+						<p class="stratus-page-subtitle">Customize the appearance of the customer portal.</p>
+					</div>
+				</div>
+				<div class="stratus-page-section">
+					<div class="max-w-4xl space-y-6">
+				<!-- Live Preview -->
+				@installerPageLivePreview(props.Theme)
+				<!-- Branding & Colors Row -->
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+					@installerPageBrandingSection(props.Theme)
+					@installerPageColorsSection(props.Theme)
+				</div>
+				<!-- Typography Section -->
+				@installerPageTypographySection(props.Theme)
+				<!-- Customer Page Style Section -->
+				@installerPageStyleSection(props.Theme)
+				<!-- Support Section -->
+				@installerPageSupportSection(props.Theme)
+				<!-- Save Button -->
+				<div class="flex flex-col space-y-3">
+					<button type="button" id="installerSaveButton" onclick="saveInstallerSettings()" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700">
+						Save Changes
+					</button>
+					<!-- Status Messages -->
+					<div id="installerSuccessMessage" class="hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg">
+						Settings saved successfully!
+					</div>
+					<div id="installerErrorMessage" class="hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg"></div>
+					</div>
+					</div>
+				</div>
+				<!-- Config data for JavaScript -->
+				<div
+					id="installer-settings-config"
+					class="hidden"
+					data-base-path={ props.BasePath }
+					data-logo-base64={ props.Theme.LogoBase64 }
+					data-heading-font={ props.Theme.HeadingFont }
+					data-body-font={ props.Theme.BodyFont }
+				></div>
+				@installerPageScript()
+			</div>
+		</div>
+	}
+}
+
+templ installerPageLivePreview(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-3 text-cool-grey-800 dark:text-white">Live Preview</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">This is how your customer portal will appear.</p>
+		<!-- Preview Container -->
+		<div id="installerPreviewContainer" class="border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden bg-white dark:bg-dark-grey-700">
+			<!-- Preview Header -->
+			<nav id="installerPreviewHeader" class="text-white p-3" style={ "background-color: " + getInstallerPagePrimaryColor(theme.PrimaryColor) }>
+				<div class="flex justify-between items-center">
+					<div class="flex items-center space-x-2">
+						if theme.LogoBase64 != "" {
+							<img id="installerPreviewLogo" src={ theme.LogoBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain"/>
+						} else {
+							<img id="installerPreviewLogo" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden"/>
+						}
+						<span id="installerPreviewTitle" class="text-base font-bold" style={ getInstallerPageFontStyle(theme.HeadingFont) }>My Installs</span>
+					</div>
+					<span class="text-xs opacity-75" style={ getInstallerPageFontStyle(theme.BodyFont) }>user@example.com</span>
+				</div>
+			</nav>
+			<!-- Preview Content -->
+			<div class="p-3 bg-cool-grey-50 dark:bg-dark-grey-800">
+				<div class="bg-white dark:bg-dark-grey-700 p-3 rounded shadow-sm">
+					<h4 id="installerPreviewHeading" class="font-semibold text-cool-grey-900 dark:text-white text-sm mb-1" style={ getInstallerPageFontStyle(theme.HeadingFont) }>Sample Install</h4>
+					<p id="installerPreviewBody" class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-2" style={ getInstallerPageFontStyle(theme.BodyFont) }>This is how content will appear.</p>
+					<a id="installerPreviewLink" href="#" class="text-xs hover:underline" style={ "color: " + getInstallerPageSecondaryColor(theme.SecondaryColor) + "; " + getInstallerPageFontStyle(theme.BodyFont) }>View details &rarr;</a>
+				</div>
+			</div>
+			<!-- Preview Footer -->
+			<div
+				id="installerPreviewFooter"
+				class={ "p-2 bg-cool-grey-100 dark:bg-dark-grey-600 border-t border-cool-grey-200 dark:border-dark-grey-500 text-center text-xs text-cool-grey-600 dark:text-cool-grey-300", templ.KV("hidden", theme.SupportContact == "") }
+				style={ getInstallerPageFontStyle(theme.BodyFont) }
+			>
+				Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style={ "color: " + getInstallerPageSecondaryColor(theme.SecondaryColor) }>support</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ installerPageBrandingSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Branding</h3>
+		<!-- Logo Upload -->
+		<div>
+			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Logo</label>
+			<div class="flex items-center space-x-4">
+				<div class="flex-shrink-0">
+					if theme.LogoBase64 != "" {
+						<img id="installerLogoPreview" src={ theme.LogoBase64 } alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700"/>
+					} else {
+						<img id="installerLogoPreview" src="" alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden"/>
+					}
+					<div id="installerLogoPlaceholder" class={ "h-12 w-20 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.LogoBase64 != "") }>
+						<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs">No logo</span>
+					</div>
+				</div>
+				<div class="flex-1">
+					<input
+						type="file"
+						id="installerLogoUpload"
+						accept="image/png,image/jpeg,image/svg+xml,image/gif"
+						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+					/>
+				</div>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB.</p>
+			<button type="button" id="installerRemoveLogo" onclick="installerRemoveLogo()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoBase64 == "") }>
+				Remove logo
+			</button>
+		</div>
+	</div>
+}
+
+templ installerPageColorsSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Colors</h3>
+		<!-- Primary Color -->
+		<div class="mb-5">
+			<label for="installerPrimaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Primary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerPrimaryColor"
+					value={ getInstallerPagePrimaryColor(theme.PrimaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerPrimaryColorText"
+					value={ getInstallerPagePrimaryColor(theme.PrimaryColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#8040BF"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons.</p>
+		</div>
+		<!-- Secondary Color -->
+		<div>
+			<label for="installerSecondaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerSecondaryColor"
+					value={ getInstallerPageSecondaryColor(theme.SecondaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerSecondaryColorText"
+					value={ getInstallerPageSecondaryColor(theme.SecondaryColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#8040BF"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements.</p>
+		</div>
+	</div>
+}
+
+templ installerPageTypographySection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Typography</h3>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<!-- Heading Font -->
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Heading Font</label>
+				<select id="installerHeadingFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+					<option value="">System Default</option>
+					<optgroup label="Modern Sans-Serif">
+						<option value="Inter" selected?={ theme.HeadingFont == "Inter" }>Inter</option>
+						<option value="DM Sans" selected?={ theme.HeadingFont == "DM Sans" }>DM Sans</option>
+						<option value="Plus Jakarta Sans" selected?={ theme.HeadingFont == "Plus Jakarta Sans" }>Plus Jakarta Sans</option>
+						<option value="Outfit" selected?={ theme.HeadingFont == "Outfit" }>Outfit</option>
+						<option value="Figtree" selected?={ theme.HeadingFont == "Figtree" }>Figtree</option>
+						<option value="Manrope" selected?={ theme.HeadingFont == "Manrope" }>Manrope</option>
+					</optgroup>
+					<optgroup label="Classic Sans-Serif">
+						<option value="Roboto" selected?={ theme.HeadingFont == "Roboto" }>Roboto</option>
+						<option value="Open Sans" selected?={ theme.HeadingFont == "Open Sans" }>Open Sans</option>
+						<option value="Lato" selected?={ theme.HeadingFont == "Lato" }>Lato</option>
+						<option value="Montserrat" selected?={ theme.HeadingFont == "Montserrat" }>Montserrat</option>
+					</optgroup>
+					<optgroup label="Friendly & Rounded">
+						<option value="Poppins" selected?={ theme.HeadingFont == "Poppins" }>Poppins</option>
+						<option value="Nunito" selected?={ theme.HeadingFont == "Nunito" }>Nunito</option>
+						<option value="Quicksand" selected?={ theme.HeadingFont == "Quicksand" }>Quicksand</option>
+					</optgroup>
+				</select>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for titles and headings.</p>
+			</div>
+			<!-- Body Font -->
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Body Font</label>
+				<select id="installerBodyFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+					<option value="">System Default</option>
+					<optgroup label="Modern Sans-Serif">
+						<option value="Inter" selected?={ theme.BodyFont == "Inter" }>Inter</option>
+						<option value="DM Sans" selected?={ theme.BodyFont == "DM Sans" }>DM Sans</option>
+						<option value="Plus Jakarta Sans" selected?={ theme.BodyFont == "Plus Jakarta Sans" }>Plus Jakarta Sans</option>
+						<option value="Outfit" selected?={ theme.BodyFont == "Outfit" }>Outfit</option>
+						<option value="Figtree" selected?={ theme.BodyFont == "Figtree" }>Figtree</option>
+						<option value="Manrope" selected?={ theme.BodyFont == "Manrope" }>Manrope</option>
+					</optgroup>
+					<optgroup label="Classic Sans-Serif">
+						<option value="Roboto" selected?={ theme.BodyFont == "Roboto" }>Roboto</option>
+						<option value="Open Sans" selected?={ theme.BodyFont == "Open Sans" }>Open Sans</option>
+						<option value="Lato" selected?={ theme.BodyFont == "Lato" }>Lato</option>
+						<option value="Montserrat" selected?={ theme.BodyFont == "Montserrat" }>Montserrat</option>
+					</optgroup>
+					<optgroup label="Friendly & Rounded">
+						<option value="Poppins" selected?={ theme.BodyFont == "Poppins" }>Poppins</option>
+						<option value="Nunito" selected?={ theme.BodyFont == "Nunito" }>Nunito</option>
+						<option value="Quicksand" selected?={ theme.BodyFont == "Quicksand" }>Quicksand</option>
+					</optgroup>
+				</select>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for paragraphs and body text.</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ installerPageStyleSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Customer Page Style</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the appearance of customer-facing pages.</p>
+		<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+			<!-- Corner Style -->
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Corner Style</label>
+				<div class="grid grid-cols-4 gap-2">
+					@installerRadiusOption("sharp", "Sharp", "0", theme.BorderRadius == "sharp")
+					@installerRadiusOption("subtle", "Subtle", "4px", theme.BorderRadius == "subtle")
+					@installerRadiusOption("rounded", "Rounded", "8px", theme.BorderRadius == "rounded" || theme.BorderRadius == "")
+					@installerRadiusOption("very-rounded", "Very Rounded", "12px", theme.BorderRadius == "very-rounded")
+				</div>
+			</div>
+			<!-- Spacing Density -->
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Spacing Density</label>
+				<div class="space-y-2">
+					@installerDensityOption("compact", "Compact", "Tighter spacing for data-dense views", theme.SpacingDensity == "compact")
+					@installerDensityOption("comfortable", "Comfortable", "Balanced spacing (recommended)", theme.SpacingDensity == "comfortable" || theme.SpacingDensity == "")
+					@installerDensityOption("spacious", "Spacious", "More breathing room for a minimal feel", theme.SpacingDensity == "spacious")
+				</div>
+			</div>
+		</div>
+	</div>
+}
+
+templ installerRadiusOption(value, label, radius string, checked bool) {
+	<label class="cursor-pointer">
+		<input type="radio" name="borderRadius" value={ value } class="sr-only" checked?={ checked }/>
+		<div class="border-2 p-3 text-center transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "installer-radius-" + value + "-option" }>
+			<div class="w-8 h-8 mx-auto mb-1 border-2 border-cool-grey-400 dark:border-cool-grey-500" style={ "border-radius: " + radius + ";" }></div>
+			<span class="text-xs text-cool-grey-600 dark:text-cool-grey-400">{ label }</span>
+		</div>
+	</label>
+}
+
+templ installerDensityOption(value, label, description string, checked bool) {
+	<label class="flex items-start gap-3 p-3 border-2 cursor-pointer transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "installer-density-" + value + "-option" }>
+		<input type="radio" name="spacingDensity" value={ value } class="mt-0.5" checked?={ checked }/>
+		<div>
+			<span class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ label }</span>
+			<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400">{ description }</p>
+		</div>
+	</label>
+}
+
+templ installerPageSupportSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Support</h3>
+		<div>
+			<label for="installerSupportContact" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Support Contact</label>
+			<input
+				type="text"
+				id="installerSupportContact"
+				value={ theme.SupportContact }
+				placeholder="support@yourcompany.com or https://support.yourcompany.com"
+				class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+			/>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Email address or URL shown to customers for help.</p>
+		</div>
+	</div>
+}
+
+func getInstallerPagePrimaryColor(color string) string {
+	if color == "" {
+		return "#8040BF"
+	}
+	return color
+}
+
+func getInstallerPageSecondaryColor(color string) string {
+	if color == "" {
+		return "#8040BF"
+	}
+	return color
+}
+
+func getInstallerPageFontStyle(font string) string {
+	if font == "" {
+		return ""
+	}
+	return "font-family: '" + font + "', ui-sans-serif, system-ui, sans-serif;"
+}
+
+templ installerPageScript() {
+	<script>
+		(function() {
+			var config = document.getElementById('installer-settings-config');
+			var basePath = config.dataset.basePath;
+			window._installerLogoBase64 = config.dataset.logoBase64 || '';
+			window._installerLoadedFonts = window._installerLoadedFonts || new Set();
+
+			function loadGoogleFont(fontFamily) {
+				if (!fontFamily || window._installerLoadedFonts.has(fontFamily)) return;
+				var link = document.createElement("link");
+				link.rel = "stylesheet";
+				link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(fontFamily) + ":wght@400;500;600;700&display=swap";
+				document.head.appendChild(link);
+				window._installerLoadedFonts.add(fontFamily);
+			}
+
+			function updatePreview() {
+				var primaryColor = document.getElementById("installerPrimaryColor").value;
+				var secondaryColor = document.getElementById("installerSecondaryColor").value;
+				var supportContact = document.getElementById("installerSupportContact").value;
+				var headingFont = document.getElementById("installerHeadingFont").value;
+				var bodyFont = document.getElementById("installerBodyFont").value;
+
+				document.getElementById("installerPreviewHeader").style.backgroundColor = primaryColor;
+
+				var previewLogo = document.getElementById("installerPreviewLogo");
+				if (window._installerLogoBase64 && window._installerLogoBase64 !== "REMOVE") {
+					previewLogo.src = window._installerLogoBase64;
+					previewLogo.classList.remove("hidden");
+				} else {
+					previewLogo.classList.add("hidden");
+				}
+
+				document.getElementById("installerPreviewLink").style.color = secondaryColor;
+				document.getElementById("installerPreviewSupportLink").style.color = secondaryColor;
+
+				var previewFooter = document.getElementById("installerPreviewFooter");
+				previewFooter.classList.toggle("hidden", !supportContact);
+
+				var headingFontStyle = headingFont
+					? "'" + headingFont + "', ui-sans-serif, system-ui, sans-serif"
+					: "ui-sans-serif, system-ui, sans-serif";
+				document.getElementById("installerPreviewTitle").style.fontFamily = headingFontStyle;
+				document.getElementById("installerPreviewHeading").style.fontFamily = headingFontStyle;
+
+				var bodyFontStyle = bodyFont
+					? "'" + bodyFont + "', ui-sans-serif, system-ui, sans-serif"
+					: "ui-sans-serif, system-ui, sans-serif";
+				document.getElementById("installerPreviewBody").style.fontFamily = bodyFontStyle;
+				document.getElementById("installerPreviewLink").style.fontFamily = bodyFontStyle;
+				document.getElementById("installerPreviewFooter").style.fontFamily = bodyFontStyle;
+			}
+
+			window.installerRemoveLogo = function() {
+				window._installerLogoBase64 = "REMOVE";
+				document.getElementById("installerLogoPreview").classList.add("hidden");
+				document.getElementById("installerLogoPlaceholder").classList.remove("hidden");
+				document.getElementById("installerLogoUpload").value = "";
+				document.getElementById("installerRemoveLogo").classList.add("hidden");
+				updatePreview();
+			};
+
+			window.saveInstallerSettings = async function() {
+				var saveButton = document.getElementById("installerSaveButton");
+				var successMessage = document.getElementById("installerSuccessMessage");
+				var errorMessage = document.getElementById("installerErrorMessage");
+
+				saveButton.textContent = "Saving...";
+				saveButton.disabled = true;
+				successMessage.classList.add("hidden");
+				errorMessage.classList.add("hidden");
+
+				var formData = {
+					primary_color: document.getElementById("installerPrimaryColor").value,
+					secondary_color: document.getElementById("installerSecondaryColor").value,
+					support_contact: document.getElementById("installerSupportContact").value,
+					heading_font: document.getElementById("installerHeadingFont").value,
+					body_font: document.getElementById("installerBodyFont").value,
+					border_radius: document.querySelector('input[name="borderRadius"]:checked')?.value || "rounded",
+					spacing_density: document.querySelector('input[name="spacingDensity"]:checked')?.value || "comfortable"
+				};
+
+				var originalLogo = config.dataset.logoBase64 || '';
+				if (window._installerLogoBase64 && window._installerLogoBase64 !== originalLogo) {
+					formData.logo_base64 = window._installerLogoBase64;
+				}
+
+				try {
+					var response = await fetch(basePath + "/settings", {
+						method: "PUT",
+						headers: {
+							"Content-Type": "application/json"
+						},
+						credentials: "same-origin",
+						body: JSON.stringify(formData)
+					});
+
+					var data = await response.json();
+
+					if (response.ok) {
+						successMessage.classList.remove("hidden");
+						showToast("Installer settings saved!", "success");
+						setTimeout(function() {
+							successMessage.classList.add("hidden");
+							window.location.reload();
+						}, 1500);
+					} else {
+						errorMessage.textContent = data.error || "Failed to save settings";
+						errorMessage.classList.remove("hidden");
+					}
+				} catch (error) {
+					errorMessage.textContent = "Network error. Please try again.";
+					errorMessage.classList.remove("hidden");
+				}
+
+				saveButton.textContent = "Save Changes";
+				saveButton.disabled = false;
+			};
+
+			// Event listeners for color inputs
+			document.getElementById("installerPrimaryColor")?.addEventListener("input", function(e) {
+				document.getElementById("installerPrimaryColorText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerPrimaryColorText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerPrimaryColor").value = value;
+					updatePreview();
+				}
+			});
+
+			document.getElementById("installerSecondaryColor")?.addEventListener("input", function(e) {
+				document.getElementById("installerSecondaryColorText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerSecondaryColorText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerSecondaryColor").value = value;
+					updatePreview();
+				}
+			});
+
+			document.getElementById("installerSupportContact")?.addEventListener("input", updatePreview);
+
+			document.getElementById("installerHeadingFont")?.addEventListener("change", function(e) {
+				loadGoogleFont(e.target.value);
+				updatePreview();
+			});
+
+			document.getElementById("installerBodyFont")?.addEventListener("change", function(e) {
+				loadGoogleFont(e.target.value);
+				updatePreview();
+			});
+
+			// Load initial fonts
+			var headingFont = config.dataset.headingFont;
+			var bodyFont = config.dataset.bodyFont;
+			if (headingFont) loadGoogleFont(headingFont);
+			if (bodyFont) loadGoogleFont(bodyFont);
+
+			// Border radius radio button styling
+			function updateRadiusSelection() {
+				var options = ['sharp', 'subtle', 'rounded', 'very-rounded'];
+				options.forEach(function(opt) {
+					var el = document.getElementById('installer-radius-' + opt + '-option');
+					var input = document.querySelector('input[name="borderRadius"][value="' + opt + '"]');
+					if (el && input) {
+						if (input.checked) {
+							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
+						} else {
+							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
+						}
+					}
+				});
+			}
+
+			// Spacing density radio button styling
+			function updateDensitySelection() {
+				var options = ['compact', 'comfortable', 'spacious'];
+				options.forEach(function(opt) {
+					var el = document.getElementById('installer-density-' + opt + '-option');
+					var input = document.querySelector('input[name="spacingDensity"][value="' + opt + '"]');
+					if (el && input) {
+						if (input.checked) {
+							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
+						} else {
+							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
+							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
+						}
+					}
+				});
+			}
+
+			document.querySelectorAll('input[name="borderRadius"]').forEach(function(input) {
+				input.addEventListener('change', updateRadiusSelection);
+			});
+
+			document.querySelectorAll('input[name="spacingDensity"]').forEach(function(input) {
+				input.addEventListener('change', updateDensitySelection);
+			});
+
+			updateRadiusSelection();
+			updateDensitySelection();
+
+			// Logo upload handler
+			document.getElementById("installerLogoUpload")?.addEventListener("change", async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+
+				if (file.size > 500 * 1024) {
+					showToast("Logo file must be under 500KB", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var validTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/gif"];
+				if (!validTypes.includes(file.type)) {
+					showToast("Please upload a PNG, JPG, SVG, or GIF image", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._installerLogoBase64 = reader.result;
+					var preview = document.getElementById("installerLogoPreview");
+					var placeholder = document.getElementById("installerLogoPlaceholder");
+					var removeBtn = document.getElementById("installerRemoveLogo");
+
+					preview.src = window._installerLogoBase64;
+					preview.classList.remove("hidden");
+					placeholder.classList.add("hidden");
+					removeBtn.classList.remove("hidden");
+					updatePreview();
+				};
+				reader.readAsDataURL(file);
+			});
+		})();
+	</script>
+}

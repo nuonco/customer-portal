@@ -1,0 +1,390 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+)
+
+// CustomThemeSettingsPageProps for the custom theme settings page
+type CustomThemeSettingsPageProps struct {
+	vendorui.LayoutProps
+	GitHubConfig *models.GitHubRepoConfig
+	Templates    []models.TemplateOverride
+	Assets       []models.AssetOverride
+}
+
+// CustomThemeSettingsPage renders the custom theme settings page
+templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
+	@vendorui.Layout(props.LayoutProps) {
+		<div class="flex h-full -m-6 overflow-hidden">
+			@partials.PortalSubnav(partials.PortalSubnavProps{
+				OrgID:         props.CurrentOrg.ID,
+				ActiveSubPage: "custom-theme",
+				BasePath:      props.BasePath,
+			})
+			<div class="stratus-page-content overflow-auto">
+				<div class="stratus-page-header">
+					<div class="stratus-heading-group">
+						<h1 class="stratus-page-title">Custom Theme</h1>
+						<p class="stratus-page-subtitle">Connect a GitHub repository to customize customer-facing pages.</p>
+					</div>
+				</div>
+				<div class="stratus-page-section">
+					<div class="max-w-4xl space-y-6">
+						@customThemeGitHubSection(props.GitHubConfig, props.Templates, props.Assets)
+					</div>
+				</div>
+				<!-- Config data for JavaScript -->
+				<div
+					id="custom-theme-settings-config"
+					class="hidden"
+					data-base-path={ props.BasePath }
+				></div>
+				@customThemeSettingsScript()
+			</div>
+		</div>
+	}
+}
+
+templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-2 text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Connect a GitHub repository containing your custom templates and assets.
+		</p>
+		<!-- GitHub Config Form -->
+		<div id="customThemeGithubConfigForm">
+			<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+				<div>
+					<label for="customThemeRepoOwner" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Repository Owner</label>
+					<input
+						type="text"
+						id="customThemeRepoOwner"
+						if config != nil {
+							value={ config.RepoOwner }
+						}
+						placeholder="acme-corp"
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+				<div>
+					<label for="customThemeRepoName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Repository Name</label>
+					<input
+						type="text"
+						id="customThemeRepoName"
+						if config != nil {
+							value={ config.RepoName }
+						}
+						placeholder="customer-theme"
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+				<div>
+					<label for="customThemeRepoBranch" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Branch</label>
+					<input
+						type="text"
+						id="customThemeRepoBranch"
+						if config != nil && config.Branch != "" {
+							value={ config.Branch }
+						} else {
+							value="main"
+						}
+						placeholder="main"
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					/>
+				</div>
+			</div>
+			<div class="mb-4">
+				<label for="customThemeAccessToken" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Personal Access Token</label>
+				<input
+					type="password"
+					id="customThemeAccessToken"
+					placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					GitHub PAT with <code class="bg-cool-grey-200 dark:bg-dark-grey-600 px-1 rounded text-xs">repo</code> read access.
+					if config != nil {
+						Leave empty to keep existing token.
+					}
+				</p>
+			</div>
+			<div class="flex flex-wrap gap-2">
+				<button
+					type="button"
+					onclick="customThemeSaveGitHubConfig()"
+					class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
+				>
+					if config != nil {
+						Update Config
+					} else {
+						Save Config
+					}
+				</button>
+				if config != nil {
+					<button
+						type="button"
+						id="customThemeSyncButton"
+						onclick="customThemeSyncGitHub()"
+						class="px-4 py-2 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md"
+					>
+						Sync Now
+					</button>
+					<button
+						type="button"
+						onclick="customThemeRemoveGitHubConfig()"
+						class="px-4 py-2 text-sm font-medium text-red-600 hover:text-red-800 dark:text-red-400"
+					>
+						Remove
+					</button>
+				}
+			</div>
+		</div>
+		<!-- Sync Status (shown when configured) -->
+		if config != nil {
+			<div class="mt-6 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+				<div class="flex items-center justify-between text-sm mb-2">
+					<div>
+						<span class="font-medium text-cool-grey-700 dark:text-cool-grey-300">Status: </span>
+						if config.LastSyncStatus == "success" {
+							<span class="text-green-600 dark:text-green-400">
+								&#10003; Synced
+								if config.LastSyncAt != nil {
+									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
+								}
+							</span>
+						} else if config.LastSyncStatus == "failed" {
+							<span class="text-red-600 dark:text-red-400">
+								&#10007; Failed
+								if config.LastSyncError != "" {
+									- { config.LastSyncError }
+								}
+							</span>
+						} else {
+							<span class="text-cool-grey-500">Not synced</span>
+						}
+					</div>
+					if config.LastSyncSHA != "" {
+						<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
+							{ config.LastSyncSHA[:7] }
+						</span>
+					}
+				</div>
+			</div>
+			<!-- Synced Templates -->
+			if len(templates) > 0 {
+				<div class="mt-4">
+					<h4 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Templates</h4>
+					<div class="space-y-2">
+						for _, tmpl := range templates {
+							<div class="flex items-center justify-between py-2 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded text-sm">
+								<div class="flex items-center space-x-2">
+									<input
+										type="checkbox"
+										id={ "custom-theme-page-tmpl-" + tmpl.PageName }
+										checked?={ tmpl.IsEnabled }
+										data-page-name={ tmpl.PageName }
+										class="custom-theme-page-template-toggle h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-500"
+									/>
+									<label for={ "custom-theme-page-tmpl-" + tmpl.PageName } class="text-cool-grey-700 dark:text-cool-grey-300">
+										{ tmpl.PageName }.html
+									</label>
+								</div>
+								<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
+									{ tmpl.SourcePath }
+								</span>
+							</div>
+						}
+					</div>
+				</div>
+			}
+			<!-- Synced Assets -->
+			if len(assets) > 0 {
+				<div class="mt-4">
+					<h4 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Assets</h4>
+					<div class="space-y-1 text-sm">
+						for _, asset := range assets {
+							<div class="flex items-center justify-between py-1 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded">
+								<span class="text-cool-grey-600 dark:text-cool-grey-400">
+									{ asset.AssetPath }
+								</span>
+								<span class="text-cool-grey-500 dark:text-cool-grey-400 text-xs">
+									{ formatCustomThemePageAssetSize(len(asset.Content)) }
+								</span>
+							</div>
+						}
+					</div>
+				</div>
+			}
+		}
+		<!-- GitHub status messages -->
+		<div id="customThemeGithubSuccessMessage" class="hidden mt-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-sm"></div>
+		<div id="customThemeGithubErrorMessage" class="hidden mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-sm"></div>
+	</div>
+}
+
+func formatCustomThemePageAssetSize(bytes int) string {
+	if bytes < 1024 {
+		return fmt.Sprintf("%d B", bytes)
+	}
+	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+}
+
+templ customThemeSettingsScript() {
+	<script>
+		(function() {
+			var config = document.getElementById('custom-theme-settings-config');
+			var basePath = config.dataset.basePath;
+
+			window.customThemeSaveGitHubConfig = async function() {
+				var successMsg = document.getElementById('customThemeGithubSuccessMessage');
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				successMsg.classList.add('hidden');
+				errorMsg.classList.add('hidden');
+
+				var repoOwner = document.getElementById('customThemeRepoOwner').value.trim();
+				var repoName = document.getElementById('customThemeRepoName').value.trim();
+				var branch = document.getElementById('customThemeRepoBranch').value.trim() || 'main';
+				var accessToken = document.getElementById('customThemeAccessToken').value;
+
+				if (!repoOwner || !repoName) {
+					errorMsg.textContent = 'Repository owner and name are required.';
+					errorMsg.classList.remove('hidden');
+					return;
+				}
+
+				var payload = {
+					repo_owner: repoOwner,
+					repo_name: repoName,
+					branch: branch
+				};
+				if (accessToken) {
+					payload.access_token = accessToken;
+				}
+
+				try {
+					var response = await fetch(basePath + '/settings/github', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify(payload)
+					});
+					var data = await response.json();
+					if (response.ok) {
+						successMsg.textContent = data.message || 'GitHub repository configured successfully.';
+						successMsg.classList.remove('hidden');
+						document.getElementById('customThemeAccessToken').value = '';
+						setTimeout(function() { location.reload(); }, 1500);
+					} else {
+						errorMsg.textContent = data.error || 'Failed to save GitHub configuration.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+			};
+
+			window.customThemeSyncGitHub = async function() {
+				var syncButton = document.getElementById('customThemeSyncButton');
+				var successMsg = document.getElementById('customThemeGithubSuccessMessage');
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				successMsg.classList.add('hidden');
+				errorMsg.classList.add('hidden');
+
+				syncButton.textContent = 'Syncing...';
+				syncButton.disabled = true;
+
+				try {
+					var response = await fetch(basePath + '/settings/github/sync', {
+						method: 'POST',
+						credentials: 'same-origin'
+					});
+					var data = await response.json();
+					if (response.ok) {
+						var msg = 'Sync completed.';
+						if (data.templates_synced > 0 || data.assets_synced > 0) {
+							msg += ' Synced ' + data.templates_synced + ' template(s) and ' + data.assets_synced + ' asset(s).';
+						}
+						successMsg.textContent = msg;
+						successMsg.classList.remove('hidden');
+						setTimeout(function() { location.reload(); }, 1500);
+					} else {
+						errorMsg.textContent = data.error || 'Sync failed.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+
+				syncButton.textContent = 'Sync Now';
+				syncButton.disabled = false;
+			};
+
+			window.customThemeToggleTemplate = async function(pageName, enabled) {
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					var response = await fetch(basePath + '/settings/github/templates/' + pageName, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled })
+					});
+					if (!response.ok) {
+						var data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to toggle template.';
+						errorMsg.classList.remove('hidden');
+						var checkbox = document.getElementById('custom-theme-page-tmpl-' + pageName);
+						if (checkbox) checkbox.checked = !enabled;
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+					var checkbox = document.getElementById('custom-theme-page-tmpl-' + pageName);
+					if (checkbox) checkbox.checked = !enabled;
+				}
+			};
+
+			window.customThemeRemoveGitHubConfig = async function() {
+				if (!confirm('Remove GitHub integration? This will delete all synced templates and assets.')) {
+					return;
+				}
+
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					var response = await fetch(basePath + '/settings/github', {
+						method: 'DELETE',
+						credentials: 'same-origin'
+					});
+					if (response.ok) {
+						location.reload();
+					} else {
+						var data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to remove GitHub integration.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+			};
+
+			// Wire up template toggle checkboxes
+			document.querySelectorAll('.custom-theme-page-template-toggle').forEach(function(checkbox) {
+				checkbox.addEventListener('change', function(e) {
+					var pageName = e.target.dataset.pageName;
+					var enabled = e.target.checked;
+					window.customThemeToggleTemplate(pageName, enabled);
+				});
+			});
+		})();
+	</script>
+}

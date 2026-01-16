@@ -10,6 +10,7 @@ type ErrorPageProps struct {
 	Error        string
 	BasePath     string
 	PrimaryColor string
+	CSSPath      string // Path to CSS file (with cache-busting hash)
 }
 
 // ErrorPage renders the error page
@@ -20,7 +21,7 @@ templ ErrorPage(props ErrorPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ getErrorTitle(props.Title) }</title>
-			<link href="/static/css/vendor.css" rel="stylesheet"/>
+			<link href={ props.CSSPath } rel="stylesheet"/>
 			@errorPageDarkModeScript()
 			<link rel="preconnect" href="https://fonts.googleapis.com"/>
 			<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
