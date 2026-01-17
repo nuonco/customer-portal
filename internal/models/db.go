@@ -110,6 +110,16 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("one-to-one migration failed: %w", err)
 	}
 
+	// Run subdomain migration (idempotent - populates subdomain from org names)
+	if err := runSubdomainMigration(db); err != nil {
+		return nil, fmt.Errorf("subdomain migration failed: %w", err)
+	}
+
+	// Run logo fields migration (idempotent - renames logo_base64 to logo_light_base64, adds logo_dark_base64)
+	if err := runLogoFieldsMigration(db); err != nil {
+		return nil, fmt.Errorf("logo fields migration failed: %w", err)
+	}
+
 	return db, nil
 }
 
@@ -257,7 +267,8 @@ func runWorkspaceMigration(db *gorm.DB) error {
 				// Copy settings from existing theme
 				theme.PrimaryColor = existingTheme.PrimaryColor
 				theme.SecondaryColor = existingTheme.SecondaryColor
-				theme.LogoBase64 = existingTheme.LogoBase64
+				theme.LogoLightBase64 = existingTheme.LogoLightBase64
+				theme.LogoDarkBase64 = existingTheme.LogoDarkBase64
 				theme.SupportContact = existingTheme.SupportContact
 				theme.HeadingFont = existingTheme.HeadingFont
 				theme.BodyFont = existingTheme.BodyFont
@@ -390,6 +401,128 @@ func runOneToOneMigration(db *gorm.DB) error {
 			WHERE deleted_at IS NULL
 		`).Error; err != nil {
 			return fmt.Errorf("failed to create nuon_org unique index: %w", err)
+		}
+
+		return nil
+	})
+}
+
+// runSubdomainMigration populates the subdomain field for existing workspaces
+// that don't have one. Uses the org name (via NuonOrg) as the base for subdomain.
+// This is idempotent - safe to run multiple times.
+func runSubdomainMigration(db *gorm.DB) error {
+	// Check if migration is needed (any workspace without subdomain)
+	var count int64
+	if err := db.Model(&Workspace{}).Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Count(&count).Error; err != nil {
+		return fmt.Errorf("failed to check for workspaces without subdomain: %w", err)
+	}
+
+	// No workspaces need migration
+	if count == 0 {
+		return nil
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		// Get all workspaces with their org names
+		var workspaces []Workspace
+		if err := tx.Preload("NuonOrg").Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Find(&workspaces).Error; err != nil {
+			return fmt.Errorf("failed to fetch workspaces: %w", err)
+		}
+
+		// Track used subdomains to avoid collisions
+		usedSubdomains := make(map[string]bool)
+
+		// First, get all existing subdomains
+		var existingSubdomains []string
+		if err := tx.Model(&Workspace{}).Where("subdomain IS NOT NULL AND subdomain != '' AND deleted_at IS NULL").Pluck("subdomain", &existingSubdomains).Error; err != nil {
+			return fmt.Errorf("failed to fetch existing subdomains: %w", err)
+		}
+		for _, s := range existingSubdomains {
+			usedSubdomains[s] = true
+		}
+
+		for _, ws := range workspaces {
+			// Get the base name from org, fall back to workspace name
+			baseName := ws.Name
+			if ws.NuonOrg != nil && ws.NuonOrg.Name != "" {
+				baseName = ws.NuonOrg.Name
+			}
+
+			// Normalize the subdomain
+			subdomain := NormalizeSubdomain(baseName)
+
+			// Handle collisions by appending suffix
+			finalSubdomain := subdomain
+			suffix := 1
+			for usedSubdomains[finalSubdomain] || ReservedSubdomains[finalSubdomain] {
+				finalSubdomain = fmt.Sprintf("%s-%d", subdomain, suffix)
+				// Ensure we don't exceed max length
+				if len(finalSubdomain) > 63 {
+					maxBaseLen := 63 - len(fmt.Sprintf("-%d", suffix))
+					finalSubdomain = fmt.Sprintf("%s-%d", subdomain[:maxBaseLen], suffix)
+				}
+				suffix++
+			}
+
+			usedSubdomains[finalSubdomain] = true
+
+			if err := tx.Model(&ws).Update("subdomain", finalSubdomain).Error; err != nil {
+				return fmt.Errorf("failed to update subdomain for workspace %s: %w", ws.ID, err)
+			}
+		}
+
+		return nil
+	})
+}
+
+// runLogoFieldsMigration renames logo_base64 to logo_light_base64 and adds logo_dark_base64 column.
+// This is idempotent - safe to run multiple times.
+func runLogoFieldsMigration(db *gorm.DB) error {
+	// Check if migration has already been run by checking for logo_light_base64 column
+	var columnExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = 'app_themes' AND column_name = 'logo_light_base64'
+		)
+	`).Scan(&columnExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for logo_light_base64 column: %w", err)
+	}
+
+	// If logo_light_base64 already exists, migration is complete
+	if columnExists {
+		return nil
+	}
+
+	return db.Transaction(func(tx *gorm.DB) error {
+		// Check if old logo_base64 column exists
+		var oldColumnExists bool
+		err := tx.Raw(`
+			SELECT EXISTS (
+				SELECT 1 FROM information_schema.columns
+				WHERE table_name = 'app_themes' AND column_name = 'logo_base64'
+			)
+		`).Scan(&oldColumnExists).Error
+		if err != nil {
+			return fmt.Errorf("failed to check for logo_base64 column: %w", err)
+		}
+
+		// If old column exists, rename it to logo_light_base64
+		if oldColumnExists {
+			if err := tx.Exec(`ALTER TABLE app_themes RENAME COLUMN logo_base64 TO logo_light_base64`).Error; err != nil {
+				return fmt.Errorf("failed to rename logo_base64 column: %w", err)
+			}
+		} else {
+			// If old column doesn't exist, create logo_light_base64 directly
+			if err := tx.Exec(`ALTER TABLE app_themes ADD COLUMN IF NOT EXISTS logo_light_base64 TEXT`).Error; err != nil {
+				return fmt.Errorf("failed to add logo_light_base64 column: %w", err)
+			}
+		}
+
+		// Add logo_dark_base64 column
+		if err := tx.Exec(`ALTER TABLE app_themes ADD COLUMN IF NOT EXISTS logo_dark_base64 TEXT`).Error; err != nil {
+			return fmt.Errorf("failed to add logo_dark_base64 column: %w", err)
 		}
 
 		return nil

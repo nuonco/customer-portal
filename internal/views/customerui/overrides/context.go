@@ -210,7 +210,7 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		PrimaryColorDark:   darkenColor(primaryColor),
 		SecondaryColor:     secondaryColor,
 		SecondaryColorDark: darkenColor(secondaryColor),
-		LogoBase64:         theme.LogoBase64,
+		LogoBase64:         theme.LogoLightBase64,
 		HeadingFont:        theme.HeadingFont,
 		BodyFont:           theme.BodyFont,
 		HeadingFontBase64:  theme.HeadingFontBase64,

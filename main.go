@@ -78,6 +78,12 @@ func main() {
 		customerBaseURL = "http://localhost:" + port
 	}
 
+	// Get subdomain base domain for workspace subdomains
+	subdomainBaseDomain := os.Getenv("SUBDOMAIN_BASE_DOMAIN")
+	if subdomainBaseDomain == "" {
+		subdomainBaseDomain = "localhost:" + port
+	}
+
 	// Load auth provider configuration from environment
 	authConfig := auth.LoadConfigFromEnv()
 
@@ -129,7 +135,7 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain)
 
 	// Create customer auth factory with env var OIDC as fallback
 	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
@@ -140,7 +146,7 @@ func main() {
 	log.Printf("Customer authentication: %s", getCustomerAuthMode(customerAuthFactory))
 
 	// Set up customer routes at root level (no prefix)
-	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL)
+	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain)
 
 	// Start background health check runner (needs Nuon API URL for status checks)
 	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL)
@@ -156,9 +162,9 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL string) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain string) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin")
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", subdomainBaseDomain)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -225,6 +231,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		settings.GET("/login/panel", h.LoginSettingsPanelContent)
 		settings.PUT("/login", h.UpdateLoginSettings)
 		settings.POST("/login/test", h.TestLoginConnection)
+
+		// DNS settings
+		settings.PUT("/dns", h.UpdateDNSSettings)
+		settings.GET("/dns/check", h.CheckSubdomainAvailability)
 
 		// GitHub template customization settings
 		settings.GET("/github", h.GetGitHubConfig)
@@ -300,6 +310,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 				orgPortal.GET("/branding", h.BrandingSettingsPage)
 				orgPortal.GET("/custom-theme", h.CustomThemeSettingsPage)
 				orgPortal.GET("/login", h.LoginSettingsPage)
+				orgPortal.GET("/dns", h.DNSSettingsPage)
 			}
 		}
 	}
@@ -313,15 +324,34 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 }
 
 // setupCustomerRoutes configures customer-facing routes on the given router group
-func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL string) {
+func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain string) {
+	// Add subdomain detection middleware to all routes
+	// This extracts subdomain from the host and stores it in context
+	rg.Use(middleware.SubdomainContext(subdomainBaseDomain))
+
 	// Initialize handlers with customer auth factory (OIDC only, no local auth)
-	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "")
+	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", subdomainBaseDomain)
+
+	// Base domain auth routes (for OIDC flow without subdomain cookie issues)
+	// These handle the actual OIDC authentication on the base domain to avoid
+	// subdomain cookie scoping problems
+	baseAuth := rg.Group("/auth")
+	baseAuth.Use(middleware.AllowBaseDomainOnly()) // Only accessible from base domain
+	{
+		baseAuth.GET("/login", h.BaseDomainLogin)       // Initiate OIDC from base domain
+		baseAuth.GET("/callback", h.BaseDomainCallback) // OIDC callback handler
+		baseAuth.GET("/error", h.AuthErrorPage)         // Auth error page
+	}
+
+	// Subdomain completion endpoint (sets JWT cookie on subdomain after base domain auth)
+	rg.GET("/auth/complete", h.CompleteSubdomainAuth)
 
 	// Public routes - customer login (OIDC only)
 	rg.GET("/login", h.CustomerLoginPageTempl)
 	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
 
-	// OIDC callback
+	// Legacy OIDC callback (kept for backward compatibility during migration)
+	// TODO: Remove this after all customers have migrated to new auth flow
 	rg.GET("/callback", h.CustomerOIDCCallback)
 
 	// Registration disabled - redirect to login

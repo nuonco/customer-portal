@@ -18,9 +18,9 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -302,7 +302,7 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		BodyFont:           theme.BodyFont,
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
-		LogoBase64:         theme.LogoBase64,
+		LogoBase64:         theme.LogoLightBase64,
 		SupportContact:     theme.SupportContact,
 		RadiusClass:        theme.GetRadiusClass(),
 		DensityClass:       theme.GetDensityClass(),
@@ -595,8 +595,9 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 
 	// Create local Install record with customer as owner
 	install := &models.Install{
-		UserID:            customer.ID, // Customer owns the install
-		CreatedByVendorID: link.UserID, // Track original vendor
+		WorkspaceID:       link.WorkspaceID, // Link to vendor's workspace
+		UserID:            customer.ID,      // Customer owns the install
+		CreatedByVendorID: link.UserID,      // Track original vendor
 		InstallLinkID:     link.ID,
 		NuonInstallID:     nuonInstall.ID,
 		Name:              installName,
@@ -810,10 +811,15 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	// Use workspace ID from first install (all installs for a user typically belong to same workspace)
+	// Get workspace ID from installs (customers view installs from a vendor's workspace)
+	// Try from paginated installs first, then all installs, then context
 	var workspaceID string
-	if len(paginatedInstalls) > 0 {
+	if len(paginatedInstalls) > 0 && paginatedInstalls[0].Install.WorkspaceID != "" {
 		workspaceID = paginatedInstalls[0].Install.WorkspaceID
+	} else if len(allInstalls) > 0 && allInstalls[0].WorkspaceID != "" {
+		workspaceID = allInstalls[0].WorkspaceID
+	} else {
+		workspaceID = h.getWorkspaceIDForTheme(c)
 	}
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 

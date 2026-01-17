@@ -1,0 +1,49 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+// FooterProps contains props for the customer footer component
+type FooterProps struct {
+	Theme          *models.AppTheme
+	SupportContact string
+}
+
+// GetSupportContact returns the support contact from theme or the provided contact
+func (p *FooterProps) GetSupportContact() string {
+	if p.SupportContact != "" {
+		return p.SupportContact
+	}
+	if p.Theme != nil && p.Theme.SupportContact != "" {
+		return p.Theme.SupportContact
+	}
+	return ""
+}
+
+// GetSupportHref returns the support href (mailto: or http://)
+func (p *FooterProps) GetSupportHref() string {
+	contact := p.GetSupportContact()
+	if contact == "" {
+		return ""
+	}
+	if len(contact) > 4 && contact[:4] == "http" {
+		return contact
+	}
+	return "mailto:" + contact
+}
+
+// Footer renders the customer footer with support contact link.
+templ Footer(props FooterProps) {
+	<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
+		<div class="text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body">
+			Powered by Nuon
+			if props.GetSupportContact() != "" {
+				{" "}·{" "}
+				<a href={ templ.SafeURL(props.GetSupportHref()) } class="hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors">
+					Contact Support
+				</a>
+			}
+		</div>
+	</footer>
+}

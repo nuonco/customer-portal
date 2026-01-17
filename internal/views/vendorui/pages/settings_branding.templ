@@ -61,7 +61,8 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					id="installer-settings-config"
 					class="hidden"
 					data-base-path={ props.BasePath }
-					data-logo-base64={ props.Theme.LogoBase64 }
+					data-logo-light-base64={ props.Theme.LogoLightBase64 }
+					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
 					data-heading-font={ props.Theme.HeadingFont }
 					data-body-font={ props.Theme.BodyFont }
 				></div>
@@ -81,8 +82,8 @@ templ installerPageLivePreview(theme *models.AppTheme) {
 			<nav id="installerPreviewHeader" class="text-white p-3" style={ "background-color: " + getInstallerPagePrimaryColor(theme.PrimaryColor) }>
 				<div class="flex justify-between items-center">
 					<div class="flex items-center space-x-2">
-						if theme.LogoBase64 != "" {
-							<img id="installerPreviewLogo" src={ theme.LogoBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain"/>
+						if theme.LogoLightBase64 != "" {
+							<img id="installerPreviewLogo" src={ theme.LogoLightBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain"/>
 						} else {
 							<img id="installerPreviewLogo" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden"/>
 						}
@@ -114,33 +115,65 @@ templ installerPageLivePreview(theme *models.AppTheme) {
 templ installerPageBrandingSection(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Branding</h3>
-		<!-- Logo Upload -->
-		<div>
-			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Logo</label>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Upload separate logos for light and dark mode. If no dark mode logo is provided, the light mode logo will be used.
+		</p>
+		<!-- Light Mode Logo Upload -->
+		<div class="mb-6">
+			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Light Mode Logo</label>
 			<div class="flex items-center space-x-4">
-				<div class="flex-shrink-0">
-					if theme.LogoBase64 != "" {
-						<img id="installerLogoPreview" src={ theme.LogoBase64 } alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700"/>
+				<div class="flex-shrink-0 w-32 h-32 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2">
+					if theme.LogoLightBase64 != "" {
+						<img id="installerLogoLightPreview" src={ theme.LogoLightBase64 } alt="Light logo preview" class="max-w-full max-h-full object-contain"/>
 					} else {
-						<img id="installerLogoPreview" src="" alt="Logo preview" class="h-12 w-auto max-w-32 object-contain border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden"/>
+						<img id="installerLogoLightPreview" src="" alt="Light logo preview" class="max-w-full max-h-full object-contain hidden"/>
 					}
-					<div id="installerLogoPlaceholder" class={ "h-12 w-20 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.LogoBase64 != "") }>
-						<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs">No logo</span>
+					<div id="installerLogoLightPlaceholder" class={ "text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.LogoLightBase64 != "") }>
+						<span>No light logo</span>
 					</div>
 				</div>
 				<div class="flex-1">
 					<input
 						type="file"
-						id="installerLogoUpload"
+						id="installerLogoLightUpload"
 						accept="image/png,image/jpeg,image/svg+xml,image/gif"
 						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
 					/>
+					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
+					<button type="button" id="installerRemoveLogoLight" onclick="installerRemoveLogoLight()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "") }>
+						Remove light logo
+					</button>
 				</div>
 			</div>
-			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB.</p>
-			<button type="button" id="installerRemoveLogo" onclick="installerRemoveLogo()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoBase64 == "") }>
-				Remove logo
-			</button>
+		</div>
+		<!-- Dark Mode Logo Upload -->
+		<div>
+			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Dark Mode Logo</label>
+			<div class="flex items-center space-x-4">
+				<div class="flex-shrink-0 w-32 h-32 bg-dark-grey-900 border-2 border-dark-grey-700 rounded flex items-center justify-center p-2">
+					if theme.LogoDarkBase64 != "" {
+						<img id="installerLogoDarkPreview" src={ theme.LogoDarkBase64 } alt="Dark logo preview" class="max-w-full max-h-full object-contain"/>
+					} else {
+						<img id="installerLogoDarkPreview" src="" alt="Dark logo preview" class="max-w-full max-h-full object-contain hidden"/>
+					}
+					<div id="installerLogoDarkPlaceholder" class={ "text-cool-grey-500 text-xs text-center", templ.KV("hidden", theme.LogoDarkBase64 != "") }>
+						<span>No dark logo</span><br/>
+						<span class="text-[10px]">(will use light logo)</span>
+					</div>
+				</div>
+				<div class="flex-1">
+					<input
+						type="file"
+						id="installerLogoDarkUpload"
+						accept="image/png,image/jpeg,image/svg+xml,image/gif"
+						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+					/>
+					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
+					<button type="button" id="installerRemoveLogoDark" onclick="installerRemoveLogoDark()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "") }>
+						Remove dark logo
+					</button>
+				</div>
+			</div>
 		</div>
 	</div>
 }
@@ -395,12 +428,21 @@ templ installerPageScript() {
 				document.getElementById("installerPreviewFooter").style.fontFamily = bodyFontStyle;
 			}
 
-			window.installerRemoveLogo = function() {
-				window._installerLogoBase64 = "REMOVE";
-				document.getElementById("installerLogoPreview").classList.add("hidden");
-				document.getElementById("installerLogoPlaceholder").classList.remove("hidden");
-				document.getElementById("installerLogoUpload").value = "";
-				document.getElementById("installerRemoveLogo").classList.add("hidden");
+			window.installerRemoveLogoLight = function() {
+				window._installerLogoLightBase64 = "REMOVE";
+				document.getElementById("installerLogoLightPreview").classList.add("hidden");
+				document.getElementById("installerLogoLightPlaceholder").classList.remove("hidden");
+				document.getElementById("installerLogoLightUpload").value = "";
+				document.getElementById("installerRemoveLogoLight").classList.add("hidden");
+				updatePreview();
+			};
+
+			window.installerRemoveLogoDark = function() {
+				window._installerLogoDarkBase64 = "REMOVE";
+				document.getElementById("installerLogoDarkPreview").classList.add("hidden");
+				document.getElementById("installerLogoDarkPlaceholder").classList.remove("hidden");
+				document.getElementById("installerLogoDarkUpload").value = "";
+				document.getElementById("installerRemoveLogoDark").classList.add("hidden");
 				updatePreview();
 			};
 
@@ -424,9 +466,16 @@ templ installerPageScript() {
 					spacing_density: document.querySelector('input[name="spacingDensity"]:checked')?.value || "comfortable"
 				};
 
-				var originalLogo = config.dataset.logoBase64 || '';
-				if (window._installerLogoBase64 && window._installerLogoBase64 !== originalLogo) {
-					formData.logo_base64 = window._installerLogoBase64;
+				// Handle light mode logo
+				var originalLogoLight = config.dataset.logoLightBase64 || '';
+				if (window._installerLogoLightBase64 && window._installerLogoLightBase64 !== originalLogoLight) {
+					formData.logo_light_base64 = window._installerLogoLightBase64;
+				}
+
+				// Handle dark mode logo
+				var originalLogoDark = config.dataset.logoDarkBase64 || '';
+				if (window._installerLogoDarkBase64 && window._installerLogoDarkBase64 !== originalLogoDark) {
+					formData.logo_dark_base64 = window._installerLogoDarkBase64;
 				}
 
 				try {
@@ -553,8 +602,8 @@ templ installerPageScript() {
 			updateRadiusSelection();
 			updateDensitySelection();
 
-			// Logo upload handler
-			document.getElementById("installerLogoUpload")?.addEventListener("change", async function(e) {
+			// Light mode logo upload handler
+			document.getElementById("installerLogoLightUpload")?.addEventListener("change", async function(e) {
 				var file = e.target.files[0];
 				if (!file) return;
 
@@ -573,12 +622,46 @@ templ installerPageScript() {
 
 				var reader = new FileReader();
 				reader.onload = function() {
-					window._installerLogoBase64 = reader.result;
-					var preview = document.getElementById("installerLogoPreview");
-					var placeholder = document.getElementById("installerLogoPlaceholder");
-					var removeBtn = document.getElementById("installerRemoveLogo");
+					window._installerLogoLightBase64 = reader.result;
+					var preview = document.getElementById("installerLogoLightPreview");
+					var placeholder = document.getElementById("installerLogoLightPlaceholder");
+					var removeBtn = document.getElementById("installerRemoveLogoLight");
 
-					preview.src = window._installerLogoBase64;
+					preview.src = window._installerLogoLightBase64;
+					preview.classList.remove("hidden");
+					placeholder.classList.add("hidden");
+					removeBtn.classList.remove("hidden");
+					updatePreview();
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Dark mode logo upload handler
+			document.getElementById("installerLogoDarkUpload")?.addEventListener("change", async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+
+				if (file.size > 500 * 1024) {
+					showToast("Logo file must be under 500KB", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var validTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/gif"];
+				if (!validTypes.includes(file.type)) {
+					showToast("Please upload a PNG, JPG, SVG, or GIF image", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._installerLogoDarkBase64 = reader.result;
+					var preview = document.getElementById("installerLogoDarkPreview");
+					var placeholder = document.getElementById("installerLogoDarkPlaceholder");
+					var removeBtn = document.getElementById("installerRemoveLogoDark");
+
+					preview.src = window._installerLogoDarkBase64;
 					preview.classList.remove("hidden");
 					placeholder.classList.add("hidden");
 					removeBtn.classList.remove("hidden");

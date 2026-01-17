@@ -1,0 +1,16 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
+)
+
+// ThemeStylesProps contains props for theme CSS injection
+type ThemeStylesProps struct {
+	Theme *models.AppTheme
+}
+
+// ThemeStyles injects custom CSS variables for the theme.
+templ ThemeStyles(props ThemeStylesProps) {
+	@templ.Raw(utils.BuildLayoutThemeCSS(props.Theme))
+}

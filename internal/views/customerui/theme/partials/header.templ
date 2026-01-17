@@ -1,0 +1,42 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+// HeaderProps contains props for the customer header component
+type HeaderProps struct {
+	Theme    *models.AppTheme
+	User     *models.User
+	BasePath string
+}
+
+// Header renders the customer header with logo, email, and logout button.
+templ Header(props HeaderProps) {
+	<header class="max-w-5xl mx-auto px-6 lg:px-8 pt-6">
+		<div class="flex items-center justify-between">
+			<!-- Left side: Logo + Email -->
+			<div class="flex items-center gap-4">
+				if props.Theme != nil {
+					if props.Theme.LogoDarkBase64 != "" {
+						<!-- Both logos available - show appropriate one based on dark mode -->
+						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain dark:hidden"/>
+						<img src={ props.Theme.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain hidden dark:block"/>
+					} else if props.Theme.LogoLightBase64 != "" {
+						<!-- Only light logo available - show in both modes -->
+						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>
+					}
+				}
+				if props.User != nil {
+					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">{ props.User.Email }</span>
+				}
+			</div>
+			<!-- Right side: Logout -->
+			if props.User != nil {
+				<button onclick="logout()" class="text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white transition-colors font-body">
+					Logout
+				</button>
+			}
+		</div>
+	</header>
+}

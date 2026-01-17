@@ -44,8 +44,9 @@ func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *Prov
 	// Check if env var OIDC is configured as fallback
 	if envConfig != nil && envConfig.Type == ProviderTypeOIDC && envConfig.IsConfigured() {
 		// Create a copy with the customer callback URL
+		// Use /auth/callback for base domain authentication flow
 		customerEnvConfig := *envConfig
-		customerEnvConfig.RedirectURI = baseURL + "/callback"
+		customerEnvConfig.RedirectURI = baseURL + "/auth/callback"
 		factory.envOIDCConfig = &customerEnvConfig
 	}
 
@@ -62,7 +63,14 @@ func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *Prov
 // GetProvider returns the appropriate auth provider based on current config.
 // Returns DB-configured OIDC provider if active, otherwise falls back to env var OIDC.
 func (f *CustomerAuthProviderFactory) GetProvider() (AuthProvider, error) {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db, "")
+	return f.GetProviderForWorkspace("")
+}
+
+// GetProviderForWorkspace returns the appropriate auth provider for a specific workspace.
+// If workspaceID is provided, uses that workspace's OIDC config.
+// If workspaceID is empty, uses global config or env var fallback.
+func (f *CustomerAuthProviderFactory) GetProviderForWorkspace(workspaceID string) (AuthProvider, error) {
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db, workspaceID)
 	if err != nil {
 		// On DB error, try env var fallback
 		return f.getEnvOIDCProvider()
@@ -70,6 +78,13 @@ func (f *CustomerAuthProviderFactory) GetProvider() (AuthProvider, error) {
 
 	// If DB OIDC is active, use it
 	if config.IsActive() {
+		// For workspace-specific configs, create a fresh provider each time
+		// (we don't cache workspace-specific providers to avoid memory issues)
+		if workspaceID != "" {
+			return f.createOIDCProvider(config)
+		}
+
+		// For global config, use caching
 		f.mu.Lock()
 		defer f.mu.Unlock()
 
@@ -138,7 +153,13 @@ func (f *CustomerAuthProviderFactory) GetConfig() (*models.CustomerAuthConfig, e
 
 // GetAuthURL generates an OIDC authorization URL with the given state.
 func (f *CustomerAuthProviderFactory) GetAuthURL(state string) (string, error) {
-	provider, err := f.GetProvider()
+	return f.GetAuthURLForWorkspace(state, "")
+}
+
+// GetAuthURLForWorkspace generates an OIDC authorization URL for a specific workspace.
+// If workspaceID is provided, uses that workspace's OIDC config.
+func (f *CustomerAuthProviderFactory) GetAuthURLForWorkspace(state string, workspaceID string) (string, error) {
+	provider, err := f.GetProviderForWorkspace(workspaceID)
 	if err != nil {
 		return "", err
 	}
@@ -228,7 +249,7 @@ func (f *CustomerAuthProviderFactory) createOIDCProvider(config *models.Customer
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		IssuerURL:    config.IssuerURL,
-		RedirectURI:  f.baseURL + "/callback",
+		RedirectURI:  f.baseURL + "/auth/callback", // Use /auth/callback for base domain authentication flow
 		Scopes:       config.GetScopes(),
 	}
 

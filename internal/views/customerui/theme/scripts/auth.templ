@@ -1,0 +1,35 @@
+package scripts
+
+// Auth adds authentication helpers for the customer dashboard.
+// This script:
+// - Intercepts fetch requests to ensure credentials are sent
+// - Allows the browser to automatically send httpOnly JWT cookies
+// - Provides logout functionality
+templ Auth(basePath string) {
+	<!-- Config data for JavaScript -->
+	<div id="customer-layout-config" class="hidden" data-base-path={ basePath }></div>
+
+	<script>
+		(function() {
+			// Intercept fetch to ensure credentials are always sent with same-origin requests
+			// This allows the browser to automatically send the httpOnly JWT cookie
+			var originalFetch = window.fetch;
+			window.fetch = function(url, options) {
+				options = options || {};
+				// Default to same-origin credentials if not explicitly set
+				if (!options.credentials) {
+					options.credentials = 'same-origin';
+				}
+				return originalFetch(url, options);
+			};
+		})();
+
+		// Global logout function
+		function logout() {
+			var config = document.getElementById('customer-layout-config');
+			var basePath = config.dataset.basePath;
+			document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+			window.location.href = basePath + "/login/";
+		}
+	</script>
+}

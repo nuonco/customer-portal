@@ -82,6 +82,15 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 		workspaceName = orgName
 	}
 
+	// Generate unique subdomain from org name
+	subdomain, err := models.GenerateUniqueSubdomain(h.db, orgName, "")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "Failed to generate subdomain",
+		})
+		return
+	}
+
 	// Create workspace and org in a transaction
 	var workspace models.Workspace
 	var org models.NuonOrg
@@ -90,6 +99,7 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 		// Create workspace
 		workspace = models.Workspace{
 			Name:       workspaceName,
+			Subdomain:  subdomain,
 			IsPersonal: false,
 		}
 		if err := tx.Create(&workspace).Error; err != nil {
@@ -335,7 +345,7 @@ func (h *Handler) WorkspaceSelectorPage(c *gin.Context) {
 			props.BodyFont = theme.BodyFont
 			props.HeadingFontBase64 = theme.HeadingFontBase64
 			props.BodyFontBase64 = theme.BodyFontBase64
-			props.LogoBase64 = theme.LogoBase64
+			props.LogoBase64 = theme.LogoLightBase64
 		}
 	}
 

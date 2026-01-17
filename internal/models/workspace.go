@@ -12,6 +12,7 @@ import (
 type Workspace struct {
 	ID         string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
 	Name       string         `gorm:"not null;type:varchar(255)" json:"name"`
+	Subdomain  string         `gorm:"type:varchar(63);uniqueIndex:idx_unique_subdomain,where:deleted_at IS NULL" json:"subdomain"`
 	IsPersonal bool           `gorm:"default:false" json:"is_personal"`
 	CreatedAt  time.Time      `json:"created_at"`
 	UpdatedAt  time.Time      `json:"updated_at"`

@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/a-h/templ"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // renderTemplComponent renders a templ.Component to template.HTML.

@@ -70,3 +70,72 @@ type HealthCheckStatusData struct {
 	StatusMessage string
 	LastRunAt     time.Time
 }
+
+// Partial Component Props (for theme/partials/ components)
+
+// HeaderProps contains props for the customer header component
+type HeaderProps struct {
+	Theme    *models.AppTheme
+	User     *models.User
+	BasePath string
+}
+
+// FooterProps contains props for the customer footer component
+type FooterProps struct {
+	Theme          *models.AppTheme
+	SupportContact string
+}
+
+// ThemeStylesProps contains props for theme CSS injection
+type ThemeStylesProps struct {
+	Theme *models.AppTheme
+}
+
+// LayoutProps contains all data needed for the customer layout
+type LayoutProps struct {
+	Title    string
+	User     *models.User
+	BasePath string
+
+	// Theme settings (computed from vendor settings)
+	PrimaryColor       string
+	PrimaryColorDark   string
+	SecondaryColor     string
+	SecondaryColorDark string
+	HeadingFont        string
+	BodyFont           string
+	HeadingFontBase64  string
+	BodyFontBase64     string
+	LogoBase64         string
+	SupportContact     string
+
+	// Style variants
+	RadiusClass  string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"
+	DensityClass string // "density-compact", "density-comfortable", "density-spacious"
+
+	// Asset paths (cache-busted)
+	CSSPath string
+}
+
+// GetSupportContact returns the support contact from theme or empty string
+func (p *FooterProps) GetSupportContact() string {
+	if p.SupportContact != "" {
+		return p.SupportContact
+	}
+	if p.Theme != nil && p.Theme.SupportContact != "" {
+		return p.Theme.SupportContact
+	}
+	return ""
+}
+
+// GetSupportHref returns the support href (mailto: or http://)
+func (p *FooterProps) GetSupportHref() string {
+	contact := p.GetSupportContact()
+	if contact == "" {
+		return ""
+	}
+	if len(contact) > 4 && contact[:4] == "http" {
+		return contact
+	}
+	return "mailto:" + contact
+}

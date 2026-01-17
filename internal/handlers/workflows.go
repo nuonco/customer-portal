@@ -15,9 +15,9 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 

@@ -10,22 +10,25 @@ import (
 // AppTheme stores theme settings for a workspace's customer-facing installer app.
 // Each workspace has its own theme configuration.
 type AppTheme struct {
-	ID                string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID       string    `gorm:"uniqueIndex" json:"workspace_id"` // NEW: One theme per workspace (nullable for migration)
-	PrimaryColor      string    `json:"primary_color"`                   // Hex color for navigation and primary buttons
-	SecondaryColor    string    `json:"secondary_color"`                 // Hex color for links and accents
-	LogoBase64        string    `json:"logo_base64,omitempty"`           // Base64-encoded logo image (data URI format)
-	SupportContact    string    `json:"support_contact"`                 // Email or URL for customer support
-	HeadingFont       string    `json:"heading_font"`                    // Google Font name (or display name if custom)
-	BodyFont          string    `json:"body_font"`                       // Google Font name (or display name if custom)
-	HeadingFontBase64 string    `json:"heading_font_base64"`             // Custom font data URI (empty = use Google Font)
-	BodyFontBase64    string    `json:"body_font_base64"`                // Custom font data URI (empty = use Google Font)
-	BorderRadius      string    `json:"border_radius"`                   // Customer page corner style: sharp, subtle, rounded, very-rounded
-	SpacingDensity    string    `json:"spacing_density"`                 // Customer page spacing: compact, comfortable, spacious
-	LoginTitle        string    `json:"login_title"`                     // Customer login page title (default: "Customer Dashboard")
-	LoginSubtitle     string    `json:"login_subtitle"`                  // Customer login page subtitle (default: "Manage your customer's install experience.")
-	CreatedAt         time.Time `json:"created_at"`
-	UpdatedAt         time.Time `json:"updated_at"`
+	ID                        string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
+	WorkspaceID               string    `gorm:"uniqueIndex" json:"workspace_id"` // NEW: One theme per workspace (nullable for migration)
+	PrimaryColor              string    `json:"primary_color"`                   // Hex color for navigation and primary buttons
+	SecondaryColor            string    `json:"secondary_color"`                 // Hex color for links and accents
+	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`     // Base64-encoded logo for light mode (data URI format)
+	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`      // Base64-encoded logo for dark mode (data URI format)
+	SupportContact            string    `json:"support_contact"`                 // Email or URL for customer support
+	HeadingFont               string    `json:"heading_font"`                    // Google Font name (or display name if custom)
+	BodyFont                  string    `json:"body_font"`                       // Google Font name (or display name if custom)
+	HeadingFontBase64         string    `json:"heading_font_base64"`             // Custom font data URI (empty = use Google Font)
+	BodyFontBase64            string    `json:"body_font_base64"`                // Custom font data URI (empty = use Google Font)
+	BorderRadius              string    `json:"border_radius"`                   // Customer page corner style: sharp, subtle, rounded, very-rounded
+	SpacingDensity            string    `json:"spacing_density"`                 // Customer page spacing: compact, comfortable, spacious
+	LoginTitle                string    `json:"login_title"`                     // Customer login page title (default: "Customer Dashboard")
+	LoginSubtitle             string    `json:"login_subtitle"`                  // Customer login page subtitle (default: "Manage your customer's install experience.")
+	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`   // Base64-encoded right side image for login page (data URI format)
+	LoginRightSideGradient    string    `json:"login_right_side_gradient"`       // CSS gradient for login right side (e.g., "linear-gradient(135deg, #667eea, #764ba2)")
+	CreatedAt                 time.Time `json:"created_at"`
+	UpdatedAt                 time.Time `json:"updated_at"`
 
 	// Relationships
 	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
@@ -109,6 +112,31 @@ func (t *AppTheme) GetLoginSubtitle() string {
 		return DefaultLoginSubtitle
 	}
 	return t.LoginSubtitle
+}
+
+// GetLoginRightSideImage returns the customer login page right side image (base64 data URI)
+func (t *AppTheme) GetLoginRightSideImage() string {
+	return t.LoginRightSideImageBase64
+}
+
+// GetLoginRightSideGradient returns the customer login page right side gradient CSS
+func (t *AppTheme) GetLoginRightSideGradient() string {
+	return t.LoginRightSideGradient
+}
+
+// GetLogoForMode returns the appropriate logo based on the color scheme.
+// If dark mode is requested and no dark logo is set, falls back to light logo.
+func (t *AppTheme) GetLogoForMode(isDark bool) string {
+	if isDark && t.LogoDarkBase64 != "" {
+		return t.LogoDarkBase64
+	}
+	return t.LogoLightBase64
+}
+
+// LogoBase64 provides backward compatibility for any code still referencing the old field name.
+// Returns the light mode logo.
+func (t *AppTheme) LogoBase64() string {
+	return t.LogoLightBase64
 }
 
 // GetOrCreateAppTheme returns the AppTheme record for a workspace, creating it with defaults if it doesn't exist.

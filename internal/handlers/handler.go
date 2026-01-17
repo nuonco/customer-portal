@@ -23,7 +23,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -87,6 +87,7 @@ type Handler struct {
 	nuonAPIURL          string                            // Global Nuon API URL for all orgs
 	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
 	templateRenderer    *overrides.TemplateRenderer       // Template renderer for customer page overrides
+	subdomainBaseDomain string                            // Base domain for workspace subdomains (e.g., "portal.nuon.co")
 }
 
 // PaginationData holds pagination metadata for templates
@@ -114,20 +115,21 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string) *Handler {
 	return &Handler{
-		db:               db,
-		auth:             jwtAuth,
-		authProvider:     authProvider,
-		customerBaseURL:  customerBaseURL,
-		nuonAPIURL:       nuonAPIURL,
-		basePath:         basePath,
-		templateRenderer: overrides.NewTemplateRenderer(db),
+		db:                  db,
+		auth:                jwtAuth,
+		authProvider:        authProvider,
+		customerBaseURL:     customerBaseURL,
+		nuonAPIURL:          nuonAPIURL,
+		basePath:            basePath,
+		templateRenderer:    overrides.NewTemplateRenderer(db),
+		subdomainBaseDomain: subdomainBaseDomain,
 	}
 }
 
 // NewHandlerWithCustomerAuth creates a handler with customer authentication support
-func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath string) *Handler {
+func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string) *Handler {
 	return &Handler{
 		db:                  db,
 		auth:                jwtAuth,
@@ -136,6 +138,7 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 		nuonAPIURL:          nuonAPIURL,
 		basePath:            basePath,
 		templateRenderer:    overrides.NewTemplateRenderer(db),
+		subdomainBaseDomain: subdomainBaseDomain,
 	}
 }
 
@@ -328,14 +331,23 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 }
 
 // getWorkspaceIDForTheme safely gets workspace ID for theme operations
-// For vendor pages with workspace context, uses that. Otherwise returns empty string for fallback.
+// For vendor pages with workspace context, uses that. For customer pages with subdomain, looks up workspace.
 func (h *Handler) getWorkspaceIDForTheme(c *gin.Context) string {
 	// Try to get workspace from context (vendor routes with middleware)
 	if workspace := middleware.GetCurrentWorkspace(c); workspace != nil {
 		return workspace.ID
 	}
 
-	// For routes without workspace context (login, register, errors), return empty
+	// For customer-facing routes, try to resolve workspace from subdomain
+	subdomain, exists := c.Get("subdomain")
+	if exists && subdomain != nil && subdomain.(string) != "" {
+		var workspace models.Workspace
+		if err := h.db.Where("subdomain = ?", subdomain.(string)).First(&workspace).Error; err == nil {
+			return workspace.ID
+		}
+	}
+
+	// For routes without workspace context and no subdomain, return empty
 	// The GetOrCreateAppTheme function will need to handle empty workspace ID
 	return ""
 }
@@ -455,34 +467,47 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	workspaceID := h.getWorkspaceIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
+	// Check if we're on a subdomain
+	subdomain, _ := c.Get("subdomain")
+	var authURL string
+
+	if subdomain != nil && subdomain.(string) != "" {
+		// On subdomain: buttons should link to base domain auth endpoint
+		// This initiates the base domain auth flow to avoid cookie scoping issues
+		authURL = fmt.Sprintf("%s/auth/login?return_to=%s",
+			h.customerBaseURL, subdomain.(string))
+	} else {
+		// On base domain: show error or fallback behavior
+		if errorMsg == "" {
+			errorMsg = "Please access login from your workspace subdomain"
+		}
+
+		// Generate fallback OIDC URL for base domain (legacy behavior)
+		state, err := auth.GenerateState()
+		if err != nil {
+			errorMsg = "Failed to generate security token"
+		} else {
+			// Store state in cookie for validation on callback
+			c.SetCookie("auth_state", state, 600, "/", "", false, true)
+
+			fallbackAuthURL, err := h.customerAuthFactory.GetAuthURL(state)
+			if err != nil {
+				errorMsg = "Failed to generate login URL"
+			} else {
+				authURL = fallbackAuthURL
+			}
+		}
+	}
+
 	props := customerpages.CustomerLoginPageProps{
 		BasePath:   h.basePath,
 		Error:      errorMsg,
+		AuthURL:    authURL,
 		SwitchURL:  "/admin/login/",
 		SwitchText: "Looking for vendor login?",
 		Theme:      theme,
 		CSSPath:    assets.CustomerCSSPath(),
 	}
-
-	// Generate OIDC authorization URL
-	state, err := auth.GenerateState()
-	if err != nil {
-		props.Error = "Failed to generate security token"
-		h.RenderTempl(c, http.StatusInternalServerError, customerpages.CustomerLoginPage(props))
-		return
-	}
-
-	// Store state in cookie for validation on callback
-	c.SetCookie("auth_state", state, 600, "/", "", false, true)
-
-	authURL, err := h.customerAuthFactory.GetAuthURL(state)
-	if err != nil {
-		props.Error = "Failed to generate login URL"
-		h.RenderTempl(c, http.StatusInternalServerError, customerpages.CustomerLoginPage(props))
-		return
-	}
-
-	props.AuthURL = authURL
 
 	// Try template override first
 	pageData := overrides.LoginPageData{
@@ -765,7 +790,7 @@ func (h *Handler) VendorRegisterPageTempl(c *gin.Context) {
 		BodyFont:           theme.BodyFont,
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
-		LogoBase64:         theme.LogoBase64,
+		LogoBase64:         theme.LogoLightBase64,
 		CSSPath:            assets.VendorCSSPath(),
 	}
 
@@ -918,7 +943,7 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org: *org,
@@ -1040,7 +1065,7 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:   *org,
@@ -1200,7 +1225,7 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Link:       &link,
@@ -1462,18 +1487,22 @@ func (h *Handler) CustomThemePanelContent(c *gin.Context) {
 // UpdateThemeSettings handles PUT request to update global theme settings
 func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	var req struct {
-		PrimaryColor      string `json:"primary_color"`
-		SecondaryColor    string `json:"secondary_color"`
-		LogoBase64        string `json:"logo_base64"`
-		SupportContact    string `json:"support_contact"`
-		HeadingFont       string `json:"heading_font"`
-		BodyFont          string `json:"body_font"`
-		HeadingFontBase64 string `json:"heading_font_base64"`
-		BodyFontBase64    string `json:"body_font_base64"`
-		BorderRadius      string `json:"border_radius"`
-		SpacingDensity    string `json:"spacing_density"`
-		LoginTitle        string `json:"login_title"`
-		LoginSubtitle     string `json:"login_subtitle"`
+		PrimaryColor              string `json:"primary_color"`
+		SecondaryColor            string `json:"secondary_color"`
+		LogoBase64                string `json:"logo_base64"`       // Kept for backward compatibility (maps to LogoLightBase64)
+		LogoLightBase64           string `json:"logo_light_base64"` // Light mode logo
+		LogoDarkBase64            string `json:"logo_dark_base64"`  // Dark mode logo
+		SupportContact            string `json:"support_contact"`
+		HeadingFont               string `json:"heading_font"`
+		BodyFont                  string `json:"body_font"`
+		HeadingFontBase64         string `json:"heading_font_base64"`
+		BodyFontBase64            string `json:"body_font_base64"`
+		BorderRadius              string `json:"border_radius"`
+		SpacingDensity            string `json:"spacing_density"`
+		LoginTitle                string `json:"login_title"`
+		LoginSubtitle             string `json:"login_subtitle"`
+		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
+		LoginRightSideGradient    string `json:"login_right_side_gradient"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1496,12 +1525,30 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		theme.SecondaryColor = req.SecondaryColor
 	}
 
-	// Handle logo - "REMOVE" clears, valid data URI sets
+	// Handle light mode logo - "REMOVE" clears, valid data URI sets
+	if req.LogoLightBase64 != "" {
+		if req.LogoLightBase64 == "REMOVE" {
+			theme.LogoLightBase64 = ""
+		} else if strings.HasPrefix(req.LogoLightBase64, "data:image/") {
+			theme.LogoLightBase64 = req.LogoLightBase64
+		}
+	}
+
+	// Handle dark mode logo - "REMOVE" clears, valid data URI sets
+	if req.LogoDarkBase64 != "" {
+		if req.LogoDarkBase64 == "REMOVE" {
+			theme.LogoDarkBase64 = ""
+		} else if strings.HasPrefix(req.LogoDarkBase64, "data:image/") {
+			theme.LogoDarkBase64 = req.LogoDarkBase64
+		}
+	}
+
+	// Backward compatibility: handle legacy LogoBase64 field (maps to light mode logo)
 	if req.LogoBase64 != "" {
 		if req.LogoBase64 == "REMOVE" {
-			theme.LogoBase64 = ""
+			theme.LogoLightBase64 = ""
 		} else if strings.HasPrefix(req.LogoBase64, "data:image/") {
-			theme.LogoBase64 = req.LogoBase64
+			theme.LogoLightBase64 = req.LogoBase64
 		}
 	}
 
@@ -1557,6 +1604,24 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	// Update login page text - allow setting to empty to use defaults
 	theme.LoginTitle = req.LoginTitle
 	theme.LoginSubtitle = req.LoginSubtitle
+
+	// Handle login right side image - "REMOVE" clears, valid data URI sets
+	if req.LoginRightSideImageBase64 != "" {
+		if req.LoginRightSideImageBase64 == "REMOVE" {
+			theme.LoginRightSideImageBase64 = ""
+		} else if strings.HasPrefix(req.LoginRightSideImageBase64, "data:image/") {
+			theme.LoginRightSideImageBase64 = req.LoginRightSideImageBase64
+		}
+	}
+
+	// Handle login right side gradient - "REMOVE" clears, otherwise sets CSS gradient
+	if req.LoginRightSideGradient != "" {
+		if req.LoginRightSideGradient == "REMOVE" {
+			theme.LoginRightSideGradient = ""
+		} else {
+			theme.LoginRightSideGradient = req.LoginRightSideGradient
+		}
+	}
 
 	if err := h.db.Save(theme).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save theme settings"})
@@ -1768,7 +1833,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:  *org,
@@ -2289,14 +2354,16 @@ func (h *Handler) LoginSettingsPanelContent(c *gin.Context) {
 // UpdateLoginSettings handles PUT request to update login settings
 func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	var req struct {
-		Enabled       bool   `json:"enabled"`
-		ProviderName  string `json:"provider_name"`
-		ClientID      string `json:"client_id"`
-		ClientSecret  string `json:"client_secret"`
-		IssuerURL     string `json:"issuer_url"`
-		Scopes        string `json:"scopes"`
-		LoginTitle    string `json:"login_title"`
-		LoginSubtitle string `json:"login_subtitle"`
+		Enabled                   bool   `json:"enabled"`
+		ProviderName              string `json:"provider_name"`
+		ClientID                  string `json:"client_id"`
+		ClientSecret              string `json:"client_secret"`
+		IssuerURL                 string `json:"issuer_url"`
+		Scopes                    string `json:"scopes"`
+		LoginTitle                string `json:"login_title"`
+		LoginSubtitle             string `json:"login_subtitle"`
+		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
+		LoginRightSideGradient    string `json:"login_right_side_gradient"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2340,6 +2407,25 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	if err == nil {
 		theme.LoginTitle = req.LoginTitle
 		theme.LoginSubtitle = req.LoginSubtitle
+
+		// Handle login right side image - "REMOVE" clears, valid data URI sets
+		if req.LoginRightSideImageBase64 != "" {
+			if req.LoginRightSideImageBase64 == "REMOVE" {
+				theme.LoginRightSideImageBase64 = ""
+			} else if strings.HasPrefix(req.LoginRightSideImageBase64, "data:image/") {
+				theme.LoginRightSideImageBase64 = req.LoginRightSideImageBase64
+			}
+		}
+
+		// Handle login right side gradient - "REMOVE" clears, otherwise sets CSS gradient
+		if req.LoginRightSideGradient != "" {
+			if req.LoginRightSideGradient == "REMOVE" {
+				theme.LoginRightSideGradient = ""
+			} else {
+				theme.LoginRightSideGradient = req.LoginRightSideGradient
+			}
+		}
+
 		h.db.Save(theme)
 	}
 
@@ -2470,8 +2556,9 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		if result.Error == gorm.ErrRecordNotFound {
 			// Create new config
 			config = models.AppInputConfig{
-				OrgID: orgID,
-				AppID: appID,
+				WorkspaceID: org.WorkspaceID,
+				OrgID:       orgID,
+				AppID:       appID,
 			}
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch input config"})
@@ -2621,7 +2708,7 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:         *org,
@@ -2769,7 +2856,7 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			BodyFont:           theme.BodyFont,
 			HeadingFontBase64:  theme.HeadingFontBase64,
 			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoBase64,
+			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
 		Org:      *org,

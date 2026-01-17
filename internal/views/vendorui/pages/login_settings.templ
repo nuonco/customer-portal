@@ -1,6 +1,8 @@
 package pages
 
 import (
+	"strings"
+
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -87,6 +89,99 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Descriptive text shown below the title.</p>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Image</label>
+				<div class="flex items-center space-x-4">
+					<div class="flex-shrink-0">
+						if theme.GetLoginRightSideImage() != "" {
+							<img id="loginRightSidePreview" src={ theme.GetLoginRightSideImage() } alt="Login right side preview" class="h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700"/>
+						} else {
+							<img id="loginRightSidePreview" src="" alt="Login right side preview" class="h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden"/>
+						}
+						<div id="loginRightSidePlaceholder" class={ "h-24 w-32 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.GetLoginRightSideImage() != "") }>
+							<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs text-center px-2">No image</span>
+						</div>
+					</div>
+					<div class="flex-1">
+						<input
+							type="file"
+							id="loginRightSideUpload"
+							accept="image/png,image/jpeg,image/svg+xml,image/gif"
+							class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+						/>
+					</div>
+				</div>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB. Displayed on right side of login page (desktop only).</p>
+				<button type="button" id="removeLoginRightSide" onclick="removeLoginRightSide()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideImage() == "") }>
+					Remove image
+				</button>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Gradient (alternative to image)</label>
+				<div class="space-y-3">
+					<div class="flex items-center space-x-3">
+						<div class="flex-1">
+							<label for="gradientColor1" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Start Color</label>
+							<div class="flex items-center space-x-2">
+								<input
+									type="color"
+									id="gradientColor1"
+									value={ getGradientColor1(theme.GetLoginRightSideGradient()) }
+									class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+								/>
+								<input
+									type="text"
+									id="gradientColor1Text"
+									value={ getGradientColor1(theme.GetLoginRightSideGradient()) }
+									placeholder="#667eea"
+									class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+									pattern="^#[0-9A-Fa-f]{6}$"
+								/>
+							</div>
+						</div>
+						<div class="flex-1">
+							<label for="gradientColor2" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">End Color</label>
+							<div class="flex items-center space-x-2">
+								<input
+									type="color"
+									id="gradientColor2"
+									value={ getGradientColor2(theme.GetLoginRightSideGradient()) }
+									class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+								/>
+								<input
+									type="text"
+									id="gradientColor2Text"
+									value={ getGradientColor2(theme.GetLoginRightSideGradient()) }
+									placeholder="#764ba2"
+									class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+									pattern="^#[0-9A-Fa-f]{6}$"
+								/>
+							</div>
+						</div>
+					</div>
+					<div>
+						<label for="gradientDirection" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Direction</label>
+						<select
+							id="gradientDirection"
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+						>
+							<option value="135deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradient()) == "135deg" }>Diagonal (↘)</option>
+							<option value="180deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradient()) == "180deg" }>Vertical (↓)</option>
+							<option value="90deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradient()) == "90deg" }>Horizontal (→)</option>
+							<option value="45deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradient()) == "45deg" }>Diagonal (↗)</option>
+						</select>
+					</div>
+					<div>
+						<div class="flex items-center space-x-3">
+							<div id="gradientPreview" class="h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded" style={ getGradientPreviewStyle(theme.GetLoginRightSideGradient()) }></div>
+							<button type="button" id="removeGradient" onclick="removeGradient()" class={ "text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideGradient() == "") }>
+								Remove gradient
+							</button>
+						</div>
+					</div>
+				</div>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Configure a gradient background. Note: Image takes priority over gradient if both are set.</p>
 			</div>
 		</div>
 	</div>
@@ -271,6 +366,74 @@ func getLoginScopesValue(scopes string) string {
 	return scopes
 }
 
+func getGradientColor1(gradient string) string {
+	if gradient == "" {
+		return "#667eea"
+	}
+	// Parse gradient like "linear-gradient(135deg, #667eea, #764ba2)"
+	// Extract first color
+	if len(gradient) > 0 {
+		start := strings.Index(gradient, "#")
+		if start != -1 {
+			end := start + 7
+			if end <= len(gradient) {
+				return gradient[start:end]
+			}
+		}
+	}
+	return "#667eea"
+}
+
+func getGradientColor2(gradient string) string {
+	if gradient == "" {
+		return "#764ba2"
+	}
+	// Parse gradient and extract second color
+	if len(gradient) > 0 {
+		// Find last occurrence of #
+		lastHash := strings.LastIndex(gradient, "#")
+		if lastHash != -1 && lastHash != strings.Index(gradient, "#") {
+			end := lastHash + 7
+			if end <= len(gradient) {
+				color := gradient[lastHash:end]
+				// Remove trailing characters like )
+				if strings.Contains(color, ")") {
+					color = strings.Split(color, ")")[0]
+				}
+				return color
+			}
+		}
+	}
+	return "#764ba2"
+}
+
+func getGradientDirection(gradient string) string {
+	if gradient == "" {
+		return "135deg"
+	}
+	// Parse gradient and extract direction
+	if strings.Contains(gradient, "135deg") {
+		return "135deg"
+	}
+	if strings.Contains(gradient, "180deg") {
+		return "180deg"
+	}
+	if strings.Contains(gradient, "90deg") {
+		return "90deg"
+	}
+	if strings.Contains(gradient, "45deg") {
+		return "45deg"
+	}
+	return "135deg"
+}
+
+func getGradientPreviewStyle(gradient string) string {
+	if gradient == "" {
+		return "background: linear-gradient(135deg, #667eea, #764ba2);"
+	}
+	return "background: " + gradient + ";"
+}
+
 templ loginSaveSection(primaryColor string) {
 	<div class="flex flex-col space-y-3">
 		<button
@@ -320,6 +483,7 @@ templ loginSettingsScript() {
 		(function() {
 			var config = document.getElementById('login-settings-config');
 			var basePath = config.dataset.basePath;
+			window._loginRightSideBase64 = '';
 
 			// Toggle enable/disable
 			document.getElementById('oidcEnabled').addEventListener('change', function(e) {
@@ -396,8 +560,40 @@ templ loginSettingsScript() {
 				btn.innerHTML = '<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>Test Connection';
 			};
 
+			// Remove login right side image
+			window.removeLoginRightSide = function() {
+				window._loginRightSideBase64 = 'REMOVE';
+				document.getElementById('loginRightSidePreview').classList.add('hidden');
+				document.getElementById('loginRightSidePlaceholder').classList.remove('hidden');
+				document.getElementById('loginRightSideUpload').value = '';
+				document.getElementById('removeLoginRightSide').classList.add('hidden');
+			};
+
+			// Remove gradient
+			window.removeGradient = function() {
+				window._gradientValue = 'REMOVE';
+				document.getElementById('gradientColor1').value = '#667eea';
+				document.getElementById('gradientColor1Text').value = '#667eea';
+				document.getElementById('gradientColor2').value = '#764ba2';
+				document.getElementById('gradientColor2Text').value = '#764ba2';
+				document.getElementById('gradientDirection').value = '135deg';
+				document.getElementById('gradientPreview').style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+				document.getElementById('removeGradient').classList.add('hidden');
+			};
+
+			// Update gradient preview
+			function updateGradientPreview() {
+				var color1 = document.getElementById('gradientColor1').value;
+				var color2 = document.getElementById('gradientColor2').value;
+				var direction = document.getElementById('gradientDirection').value;
+				var gradient = 'linear-gradient(' + direction + ', ' + color1 + ', ' + color2 + ')';
+				document.getElementById('gradientPreview').style.background = gradient;
+				window._gradientValue = gradient;
+				document.getElementById('removeGradient').classList.remove('hidden');
+			}
+
 			function getFormData() {
-				return {
+				var formData = {
 					enabled: document.getElementById('oidcEnabled').checked,
 					provider_name: document.getElementById('providerName').value,
 					issuer_url: document.getElementById('issuerUrl').value,
@@ -407,6 +603,18 @@ templ loginSettingsScript() {
 					login_title: document.getElementById('loginTitle').value,
 					login_subtitle: document.getElementById('loginSubtitle').value
 				};
+
+				// Add login right side image if changed
+				if (window._loginRightSideBase64) {
+					formData.login_right_side_image_base64 = window._loginRightSideBase64;
+				}
+
+				// Add login right side gradient if changed
+				if (window._gradientValue) {
+					formData.login_right_side_gradient = window._gradientValue;
+				}
+
+				return formData;
 			}
 
 			// Save settings
@@ -457,6 +665,73 @@ templ loginSettingsScript() {
 				saveButton.textContent = 'Save Changes';
 				saveButton.disabled = false;
 			};
+
+			// Login right side image upload handler
+			document.getElementById('loginRightSideUpload')?.addEventListener('change', async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+
+				if (file.size > 500 * 1024) {
+					showToast('Image file must be under 500KB', 'error');
+					e.target.value = '';
+					return;
+				}
+
+				var validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif'];
+				if (!validTypes.includes(file.type)) {
+					showToast('Please upload a PNG, JPG, SVG, or GIF image', 'error');
+					e.target.value = '';
+					return;
+				}
+
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._loginRightSideBase64 = reader.result;
+					var preview = document.getElementById('loginRightSidePreview');
+					var placeholder = document.getElementById('loginRightSidePlaceholder');
+					var removeBtn = document.getElementById('removeLoginRightSide');
+
+					preview.src = window._loginRightSideBase64;
+					preview.classList.remove('hidden');
+					placeholder.classList.add('hidden');
+					removeBtn.classList.remove('hidden');
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Gradient color picker event listeners
+			document.getElementById('gradientColor1')?.addEventListener('input', function(e) {
+				document.getElementById('gradientColor1Text').value = e.target.value.toUpperCase();
+				updateGradientPreview();
+			});
+
+			document.getElementById('gradientColor1Text')?.addEventListener('input', function(e) {
+				var value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById('gradientColor1').value = value;
+					updateGradientPreview();
+				}
+			});
+
+			document.getElementById('gradientColor2')?.addEventListener('input', function(e) {
+				document.getElementById('gradientColor2Text').value = e.target.value.toUpperCase();
+				updateGradientPreview();
+			});
+
+			document.getElementById('gradientColor2Text')?.addEventListener('input', function(e) {
+				var value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById('gradientColor2').value = value;
+					updateGradientPreview();
+				}
+			});
+
+			document.getElementById('gradientDirection')?.addEventListener('change', updateGradientPreview);
+
+			// Initialize gradient preview on page load
+			if (document.getElementById('gradientColor1')) {
+				updateGradientPreview();
+			}
 		})();
 	</script>
 }

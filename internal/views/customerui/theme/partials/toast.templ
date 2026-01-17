@@ -1,0 +1,35 @@
+package partials
+
+// Toast renders a toast notification container and provides the showToast JavaScript function.
+// Usage from JavaScript:
+//   showToast('Message here', 'success')  // success, error, or info
+//   showToast('Error occurred', 'error')
+//
+// The toast automatically disappears after 3 seconds.
+templ Toast() {
+	<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
+	<script>
+		window.showToast = function(message, type) {
+			type = type || 'info';
+			var container = document.getElementById('toast-container');
+			var toast = document.createElement('div');
+			var bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
+			toast.className = bgColor + ' text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0';
+			toast.textContent = message;
+			container.appendChild(toast);
+
+			// Slide in
+			setTimeout(function() {
+				toast.classList.remove('translate-x-full', 'opacity-0');
+			}, 10);
+
+			// Slide out and remove after 3 seconds
+			setTimeout(function() {
+				toast.classList.add('translate-x-full', 'opacity-0');
+				setTimeout(function() {
+					toast.remove();
+				}, 300);
+			}, 3000);
+		};
+	</script>
+}
