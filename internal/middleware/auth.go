@@ -139,7 +139,7 @@ func RequireRole(role models.UserRole) gin.HandlerFunc {
 }
 
 // RequireInstallOwnership middleware to verify user has access to the install
-// Customers must own the install (user_id), vendors must have created it (created_by_vendor_id)
+// On the customer portal, access is always determined by user_id ownership
 func RequireInstallOwnership(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		user := GetCurrentUser(c)
@@ -162,16 +162,11 @@ func RequireInstallOwnership(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check access based on role
+		// Check access - on customer portal, always check user_id ownership
+		// (regardless of the user's database role, as users may have accepted
+		// installs through install-links which link via user_id)
 		var install models.Install
-		var err error
-		if user.Role == models.RoleVendor {
-			// Vendors can access installs they created
-			err = db.Where("id = ? AND created_by_vendor_id = ?", installID, user.ID).First(&install).Error
-		} else {
-			// Customers can access installs they own
-			err = db.Where("id = ? AND user_id = ?", installID, user.ID).First(&install).Error
-		}
+		err := db.Where("id = ? AND user_id = ?", installID, user.ID).First(&install).Error
 
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {

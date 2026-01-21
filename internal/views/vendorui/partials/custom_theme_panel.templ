@@ -48,6 +48,7 @@ templ CustomThemePanel(props CustomThemePanelProps) {
 				<div class="space-y-6">
 					<!-- GitHub Template Customization Section -->
 					@customThemeGitHubSection(props.GitHubConfig, props.Templates, props.Assets, props.BasePath)
+					@customThemeSyncedFilesSectionPanel(props.GitHubConfig, props.Templates, props.Assets)
 				</div>
 			</div>
 		</div>
@@ -57,7 +58,23 @@ templ CustomThemePanel(props CustomThemePanelProps) {
 
 templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride, basePath string) {
 	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
-		<h3 class="text-base font-semibold mb-2 text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+		<div class="flex items-center justify-between mb-2">
+			<h3 class="text-base font-semibold text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+			if config != nil {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("https://github.com/%s/%s/tree/%s", config.RepoOwner, config.RepoName, config.Branch)) }
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 text-xs flex items-center space-x-1"
+					title="View repository on GitHub"
+				>
+					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+					</svg>
+					<span>View Repo</span>
+				</a>
+			}
+		</div>
 		<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4">
 			Connect a GitHub repository containing your custom templates and assets.
 		</p>
@@ -149,79 +166,44 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 				}
 			</div>
 		</div>
-		<!-- Sync Status (shown when configured) -->
+		<!-- Success callout for successful sync -->
 		if config != nil {
-			<div class="mt-4 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
-				<div class="flex items-center justify-between text-xs mb-2">
-					<div>
-						<span class="font-medium text-cool-grey-700 dark:text-cool-grey-300">Status: </span>
-						if config.LastSyncStatus == "success" {
-							<span class="text-green-600 dark:text-green-400">
-								&#10003; Synced
+			if config.LastSyncStatus == "success" && config.LastSyncSHA != "" {
+				<div class="mt-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-xs">
+					<div class="flex items-start">
+						<svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+						</svg>
+						<div class="flex-1">
+							<h4 class="font-medium mb-0.5">
+								Status: &#10003; Synced
 								if config.LastSyncAt != nil {
 									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
 								}
-							</span>
-						} else if config.LastSyncStatus == "failed" {
-							<span class="text-red-600 dark:text-red-400">
-								&#10007; Failed
-								if config.LastSyncError != "" {
-									- { config.LastSyncError }
-								}
-							</span>
-						} else {
-							<span class="text-cool-grey-500">Not synced</span>
-						}
-					</div>
-					if config.LastSyncSHA != "" {
-						<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono">
-							{ config.LastSyncSHA[:7] }
-						</span>
-					}
-				</div>
-			</div>
-			<!-- Synced Templates -->
-			if len(templates) > 0 {
-				<div class="mt-3">
-					<h4 class="text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Templates</h4>
-					<div class="space-y-1">
-						for _, tmpl := range templates {
-							<div class="flex items-center justify-between py-1.5 px-2 bg-white dark:bg-dark-grey-700 rounded text-xs">
-								<div class="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										id={ "custom-theme-tmpl-" + tmpl.PageName }
-										checked?={ tmpl.IsEnabled }
-										data-page-name={ tmpl.PageName }
-										class="custom-theme-template-toggle h-3.5 w-3.5 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-500"
-									/>
-									<label for={ "custom-theme-tmpl-" + tmpl.PageName } class="text-cool-grey-700 dark:text-cool-grey-300">
-										{ tmpl.PageName }.html
-									</label>
-								</div>
-								<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
-									{ tmpl.SourcePath }
-								</span>
+							</h4>
+							<div class="text-xs">
+								Commit: <span class="font-mono">{ config.LastSyncSHA[:7] }</span>
 							</div>
-						}
+						</div>
 					</div>
 				</div>
 			}
-			<!-- Synced Assets -->
-			if len(assets) > 0 {
-				<div class="mt-3">
-					<h4 class="text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Assets</h4>
-					<div class="space-y-1 text-xs">
-						for _, asset := range assets {
-							<div class="flex items-center justify-between">
-								<span class="text-cool-grey-600 dark:text-cool-grey-400">
-									&bull; { asset.AssetPath }
-								</span>
-								<span class="text-cool-grey-500 dark:text-cool-grey-400">
-									{ formatCustomThemeAssetSize(len(asset.Content)) }
-								</span>
-							</div>
-						}
+			<!-- Error callout for failed sync -->
+			if config.LastSyncStatus == "failed" && config.LastSyncError != "" {
+				<div class="mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs">
+					<div class="flex items-start">
+						<svg class="w-4 h-4 mr-1.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293z" clip-rule="evenodd"/>
+						</svg>
+						<div class="flex-1">
+							<h4 class="font-medium mb-0.5">
+								Status: &#10007; Failed
+								if config.LastSyncAt != nil {
+									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
+								}
+							</h4>
+							<p class="text-xs">{ config.LastSyncError }</p>
+						</div>
 					</div>
 				</div>
 			}
@@ -232,11 +214,187 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 	</div>
 }
 
+templ customThemeSyncedFilesSectionPanel(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride) {
+	<!-- Synced Files Table (shown when files exist) -->
+	if config != nil && (len(templates) > 0 || len(assets) > 0) {
+		<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-4 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
+			<!-- Header with search -->
+			<div class="flex items-center justify-between mb-3">
+				<h3 class="text-base font-semibold text-cool-grey-900 dark:text-white">
+					Synced Files
+					<span class="text-xs font-normal text-cool-grey-500 dark:text-cool-grey-400 ml-2">
+						({ fmt.Sprintf("%d", len(templates) + len(assets)) } files)
+					</span>
+				</h3>
+				<div class="relative w-48">
+					<input
+						type="text"
+						id="syncedFilesPanelSearch"
+						placeholder="Search files..."
+						class="w-full px-2 py-1.5 pl-8 text-xs border border-cool-grey-300 dark:border-dark-grey-600 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+					/>
+					<svg class="absolute left-2 top-2 w-3 h-3 text-cool-grey-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+					</svg>
+				</div>
+			</div>
+			<!-- Bulk Actions -->
+			<div class="flex items-center gap-1.5 mb-3">
+				<button
+					type="button"
+					id="customThemePanelEnableAllBtn"
+					onclick="customThemePanelBulkEnable()"
+					class="px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					Enable All
+				</button>
+				<button
+					type="button"
+					id="customThemePanelDisableAllBtn"
+					onclick="customThemePanelBulkDisable()"
+					class="px-2 py-1 text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-200 dark:bg-dark-grey-700 hover:bg-cool-grey-300 dark:hover:bg-dark-grey-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+				>
+					Disable All
+				</button>
+			</div>
+			<!-- Table -->
+			<div class="overflow-x-auto">
+				<table class="w-full text-xs" id="syncedFilesPanelTable">
+					<thead class="bg-white dark:bg-dark-grey-700 border-b border-cool-grey-200 dark:border-dark-grey-600">
+						<tr>
+							<th class="px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600" data-sort="type">
+								Type <span class="sort-indicator"></span>
+							</th>
+							<th class="px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600" data-sort="name">
+								File Name <span class="sort-indicator"></span>
+							</th>
+							<th class="px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600" data-sort="source">
+								Source <span class="sort-indicator"></span>
+							</th>
+							<th class="px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600" data-sort="size">
+								Size <span class="sort-indicator"></span>
+							</th>
+							<th class="px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600" data-sort="status">
+								Status <span class="sort-indicator"></span>
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-cool-grey-200 dark:divide-dark-grey-600">
+						<!-- Template rows -->
+						for _, tmpl := range templates {
+							<tr
+								class="synced-file-panel-row hover:bg-white dark:hover:bg-dark-grey-700"
+								data-type="template"
+								data-name={ tmpl.PageName + ".html" }
+								data-source={ tmpl.SourcePath }
+								data-size={ fmt.Sprintf("%d", len(tmpl.Content)) }
+								data-status={ boolToStatusPanel(tmpl.IsEnabled) }
+							>
+								<td class="px-3 py-2">
+									<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+										Tmpl
+									</span>
+								</td>
+								<td class="px-3 py-2 font-mono text-cool-grey-900 dark:text-white">
+									{ tmpl.PageName }.html
+								</td>
+								<td class="px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400 truncate max-w-xs">
+									{ tmpl.SourcePath }
+								</td>
+								<td class="px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400">
+									{ formatCustomThemeAssetSize(len(tmpl.Content)) }
+								</td>
+								<td class="px-3 py-2">
+									<label class="inline-flex items-center cursor-pointer">
+										<input
+											type="checkbox"
+											checked?={ tmpl.IsEnabled }
+											data-page-name={ tmpl.PageName }
+											class="custom-theme-template-toggle w-3.5 h-3.5 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500"
+										/>
+										<span class="ml-1.5 text-xs text-cool-grey-700 dark:text-cool-grey-300">
+											if tmpl.IsEnabled {
+												On
+											} else {
+												Off
+											}
+										</span>
+									</label>
+								</td>
+							</tr>
+						}
+						<!-- Asset rows -->
+						for _, asset := range assets {
+							<tr
+								class="synced-file-panel-row hover:bg-white dark:hover:bg-dark-grey-700"
+								data-type={ asset.AssetType }
+								data-name={ asset.AssetPath }
+								data-source={ asset.SourcePath }
+								data-size={ fmt.Sprintf("%d", asset.FileSize) }
+								data-status={ boolToStatusPanel(asset.IsEnabled) }
+							>
+								<td class="px-3 py-2">
+									if asset.AssetType == "css" {
+										<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+											CSS
+										</span>
+									} else {
+										<span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+											Img
+										</span>
+									}
+								</td>
+								<td class="px-3 py-2 font-mono text-cool-grey-900 dark:text-white">
+									{ asset.AssetPath }
+								</td>
+								<td class="px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400 truncate max-w-xs">
+									{ asset.SourcePath }
+								</td>
+								<td class="px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400">
+									{ formatCustomThemeAssetSize(int(asset.FileSize)) }
+								</td>
+								<td class="px-3 py-2">
+									<label class="inline-flex items-center cursor-pointer">
+										<input
+											type="checkbox"
+											checked?={ asset.IsEnabled }
+											data-asset-path={ asset.AssetPath }
+											class="custom-theme-asset-toggle w-3.5 h-3.5 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500"
+										/>
+										<span class="ml-1.5 text-xs text-cool-grey-700 dark:text-cool-grey-300">
+											if asset.IsEnabled {
+												On
+											} else {
+												Off
+											}
+										</span>
+									</label>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<!-- Empty state (shown when search returns no results) -->
+			<div id="noResultsPanelMessage" class="hidden text-center py-6 text-cool-grey-500 dark:text-cool-grey-400 text-xs">
+				No files match your search criteria
+			</div>
+		</div>
+	}
+}
+
 func formatCustomThemeAssetSize(bytes int) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%d B", bytes)
 	}
 	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+}
+
+func boolToStatusPanel(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
 }
 
 templ customThemePanelScript() {
@@ -440,6 +598,245 @@ templ customThemePanelScript() {
 				});
 			});
 
+			window.customThemeToggleAsset = async function(assetPath, enabled) {
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					const response = await fetch(`${basePath}/settings/github/assets/${assetPath}`, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled })
+					});
+
+					if (!response.ok) {
+						const data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to toggle asset.';
+						errorMsg.classList.remove('hidden');
+						// Revert checkbox on error
+						document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {
+							if (cb.dataset.assetPath === assetPath) {
+								cb.checked = !enabled;
+							}
+						});
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+					document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {
+						if (cb.dataset.assetPath === assetPath) {
+							cb.checked = !enabled;
+						}
+					});
+				}
+			};
+
+			// Wire up asset toggle checkboxes
+			document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(checkbox) {
+				checkbox.addEventListener('change', function(e) {
+					const assetPath = e.target.dataset.assetPath;
+					const enabled = e.target.checked;
+					window.customThemeToggleAsset(assetPath, enabled);
+				});
+			});
+
+			window.customThemePanelBulkEnable = function() {
+				customThemePanelBulkToggle(true);
+			};
+
+			window.customThemePanelBulkDisable = function() {
+				customThemePanelBulkToggle(false);
+			};
+
+			window.customThemePanelBulkToggle = async function(enabled) {
+				const enableBtn = document.getElementById('customThemePanelEnableAllBtn');
+				const disableBtn = document.getElementById('customThemePanelDisableAllBtn');
+				const errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				const successMsg = document.getElementById('customThemeGithubSuccessMessage');
+
+				errorMsg.classList.add('hidden');
+				successMsg.classList.add('hidden');
+
+				// Disable buttons during operation
+				enableBtn.disabled = true;
+				disableBtn.disabled = true;
+				enableBtn.textContent = enabled ? 'Enabling...' : 'Enable All';
+				disableBtn.textContent = enabled ? 'Disable All' : 'Disabling...';
+
+				try {
+					const response = await fetch(`${basePath}/settings/github/bulk-toggle`, {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled, all: true })
+					});
+
+					const data = await response.json();
+
+					if (response.ok) {
+						// Update all checkboxes
+						document.querySelectorAll('.custom-theme-template-toggle, .custom-theme-asset-toggle').forEach(function(cb) {
+							cb.checked = enabled;
+						});
+
+						// Update all status text
+						document.querySelectorAll('.synced-file-panel-row').forEach(function(row) {
+							const statusCell = row.querySelector('label span:last-child');
+							if (statusCell) {
+								statusCell.textContent = enabled ? 'On' : 'Off';
+							}
+						});
+
+						successMsg.textContent = data.message || (enabled ? 'All files enabled' : 'All files disabled');
+						successMsg.classList.remove('hidden');
+					} else {
+						errorMsg.textContent = data.error || 'Failed to update files.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+
+				// Re-enable buttons
+				enableBtn.disabled = false;
+				disableBtn.disabled = false;
+				enableBtn.textContent = 'Enable All';
+				disableBtn.textContent = 'Disable All';
+			};
+
+		// Search functionality for panel
+		const panelSearchInput = document.getElementById('syncedFilesPanelSearch');
+		const panelTableRows = document.querySelectorAll('.synced-file-panel-row');
+		const noResultsPanelMessage = document.getElementById('noResultsPanelMessage');
+		const panelTableBody = document.querySelector('#syncedFilesPanelTable tbody');
+
+		if (panelSearchInput) {
+			panelSearchInput.addEventListener('input', function(e) {
+				const searchTerm = e.target.value.toLowerCase();
+				let visibleCount = 0;
+
+				panelTableRows.forEach(function(row) {
+					const type = row.dataset.type.toLowerCase();
+					const name = row.dataset.name.toLowerCase();
+					const source = row.dataset.source.toLowerCase();
+					const status = row.dataset.status.toLowerCase();
+
+					const matches =
+						type.includes(searchTerm) ||
+						name.includes(searchTerm) ||
+						source.includes(searchTerm) ||
+						status.includes(searchTerm);
+
+					if (matches) {
+						row.style.display = '';
+						visibleCount++;
+					} else {
+						row.style.display = 'none';
+					}
+				});
+
+				// Show/hide empty state
+				if (visibleCount === 0) {
+					panelTableBody.style.display = 'none';
+					noResultsPanelMessage.classList.remove('hidden');
+				} else {
+					panelTableBody.style.display = '';
+					noResultsPanelMessage.classList.add('hidden');
+				}
+			});
+		}
+
+		// Sort functionality for panel
+		let currentPanelSort = { column: 'name', direction: 'asc' };
+
+		document.querySelectorAll('#syncedFilesPanelTable [data-sort]').forEach(function(header) {
+			header.addEventListener('click', function() {
+				const column = this.dataset.sort;
+
+				// Toggle direction if same column, otherwise default to asc
+				if (currentPanelSort.column === column) {
+					currentPanelSort.direction = currentPanelSort.direction === 'asc' ? 'desc' : 'asc';
+				} else {
+					currentPanelSort.column = column;
+					currentPanelSort.direction = 'asc';
+				}
+
+				sortPanelTable(column, currentPanelSort.direction);
+				updatePanelSortIndicators(column, currentPanelSort.direction);
+			});
+		});
+
+		function sortPanelTable(column, direction) {
+			const tbody = document.querySelector('#syncedFilesPanelTable tbody');
+			if (!tbody) return;
+
+			const rows = Array.from(tbody.querySelectorAll('.synced-file-panel-row'));
+
+			rows.sort(function(a, b) {
+				let aVal, bVal;
+
+				switch(column) {
+					case 'type':
+						aVal = a.dataset.type;
+						bVal = b.dataset.type;
+						break;
+					case 'name':
+						aVal = a.dataset.name;
+						bVal = b.dataset.name;
+						break;
+					case 'source':
+						aVal = a.dataset.source;
+						bVal = b.dataset.source;
+						break;
+					case 'size':
+						aVal = parseInt(a.dataset.size) || 0;
+						bVal = parseInt(b.dataset.size) || 0;
+						break;
+					case 'status':
+						aVal = a.dataset.status;
+						bVal = b.dataset.status;
+						break;
+					default:
+						return 0;
+				}
+
+				// Numeric comparison for size
+				if (column === 'size') {
+					return direction === 'asc' ? aVal - bVal : bVal - aVal;
+				}
+
+				// String comparison for others
+				if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+				if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+				return 0;
+			});
+
+			// Reorder DOM
+			rows.forEach(function(row) {
+				tbody.appendChild(row);
+			});
+		}
+
+		function updatePanelSortIndicators(activeColumn, direction) {
+			// Clear all indicators
+			document.querySelectorAll('#syncedFilesPanelTable .sort-indicator').forEach(function(indicator) {
+				indicator.textContent = '';
+			});
+
+			// Set active indicator
+			const activeHeader = document.querySelector('#syncedFilesPanelTable [data-sort="' + activeColumn + '"] .sort-indicator');
+			if (activeHeader) {
+				activeHeader.textContent = direction === 'asc' ? ' ↑' : ' ↓';
+			}
+		}
+
+		// Initial sort by name for panel
+		if (document.getElementById('syncedFilesPanelTable')) {
+			sortPanelTable('name', 'asc');
+			updatePanelSortIndicators('name', 'asc');
+		}
 			openCustomThemePanel();
 		})();
 	</script>

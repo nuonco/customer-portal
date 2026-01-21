@@ -69,12 +69,18 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 
 	// Try to get CloudFormation link from install stack
 	var cloudFormationLink string
+	var platform string
 	fmt.Printf("Attempting to fetch install stack for install ID: %s\n", install.NuonInstallID)
 
 	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		fmt.Printf("ERROR: Failed to initialize Nuon client for stack fetch: %v\n", err)
 	} else {
+		// Fetch platform from app
+		app, err := nuonClient.GetApp(c.Request.Context(), install.InstallLink.AppID)
+		if err == nil && app != nil && app.RunnerConfig != nil {
+			platform = string(app.RunnerConfig.AppRunnerType)
+		}
 		stack, err := nuonClient.GetInstallStack(c.Request.Context(), install.NuonInstallID)
 		if err != nil {
 			fmt.Printf("Failed to get install stack: %v\n", err)
@@ -172,16 +178,17 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 
 	pageData := overrides.WorkflowsPageData{
 		Install: overrides.InstallData{
-			ID:      install.ID,
-			Name:    install.Name,
-			Status:  string(install.Status),
-			Region:  install.Region,
-			AppName: install.InstallLink.AppName,
+			ID:       install.ID,
+			Name:     install.Name,
+			Status:   string(install.Status),
+			Region:   install.Region,
+			Platform: platform,
+			AppName:  install.InstallLink.AppName,
 		},
 		Workflows: workflowsData,
 	}
 
-	ctx := h.buildTemplateContext("Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, "Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "workflows", ctx) {
 		return
 	}

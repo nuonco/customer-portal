@@ -66,6 +66,19 @@ type Branch struct {
 	} `json:"commit"`
 }
 
+// Commit represents a GitHub commit with full metadata.
+type Commit struct {
+	SHA    string `json:"sha"`
+	Commit struct {
+		Message string `json:"message"`
+		Author  struct {
+			Name  string    `json:"name"`
+			Email string    `json:"email"`
+			Date  time.Time `json:"date"`
+		} `json:"author"`
+	} `json:"commit"`
+}
+
 // GetTree fetches the repository tree (recursive) for a given branch.
 func (c *Client) GetTree(ctx context.Context, owner, repo, branch, token string) (*Tree, error) {
 	// First, get the branch to find the commit SHA
@@ -135,6 +148,38 @@ func (c *Client) GetBranch(ctx context.Context, owner, repo, branch, token strin
 	}
 
 	return &branchInfo, nil
+}
+
+// GetCommit fetches detailed information about a specific commit.
+func (c *Client) GetCommit(ctx context.Context, owner, repo, sha, token string) (*Commit, error) {
+	url := fmt.Sprintf("%s/repos/%s/%s/commits/%s", c.baseURL, owner, repo, sha)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("Authorization", "Bearer "+token)
+	req.Header.Set("X-GitHub-Api-Version", "2022-11-28")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch commit: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("GitHub API error (status %d): %s", resp.StatusCode, string(body))
+	}
+
+	var commit Commit
+	if err := json.NewDecoder(resp.Body).Decode(&commit); err != nil {
+		return nil, fmt.Errorf("failed to decode commit response: %w", err)
+	}
+
+	return &commit, nil
 }
 
 // GetFileContent fetches the content of a file from the repository.

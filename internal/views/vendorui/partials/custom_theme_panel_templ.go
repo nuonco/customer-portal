@@ -92,6 +92,10 @@ func CustomThemePanel(props CustomThemePanelProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = customThemeSyncedFilesSectionPanel(props.GitHubConfig, props.Templates, props.Assets).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -125,30 +129,30 @@ func customThemeGitHubSection(config *models.GitHubRepoConfig, templates []model
 			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600\"><h3 class=\"text-base font-semibold mb-2 text-cool-grey-800 dark:text-white\">GitHub Repository</h3><p class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Connect a GitHub repository containing your custom templates and assets.</p><!-- GitHub Config Form --><div id=\"customThemeGithubConfigForm\"><div class=\"grid grid-cols-3 gap-3 mb-3\"><div><label for=\"customThemeRepoOwner\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Repository Owner</label> <input type=\"text\" id=\"customThemeRepoOwner\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600\"><div class=\"flex items-center justify-between mb-2\"><h3 class=\"text-base font-semibold text-cool-grey-800 dark:text-white\">GitHub Repository</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " value=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(config.RepoOwner)
+			var templ_7745c5c3_Var4 templ.SafeURL
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("https://github.com/%s/%s/tree/%s", config.RepoOwner, config.RepoName, config.Branch)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 73, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 65, Col: 124}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 text-xs flex items-center space-x-1\" title=\"View repository on GitHub\"><svg class=\"w-4 h-4\" fill=\"currentColor\" viewBox=\"0 0 24 24\"><path d=\"M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z\"></path></svg> <span>View Repo</span></a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " placeholder=\"acme-corp\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div><div><label for=\"customThemeRepoName\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Repository Name</label> <input type=\"text\" id=\"customThemeRepoName\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><p class=\"text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Connect a GitHub repository containing your custom templates and assets.</p><!-- GitHub Config Form --><div id=\"customThemeGithubConfigForm\"><div class=\"grid grid-cols-3 gap-3 mb-3\"><div><label for=\"customThemeRepoOwner\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Repository Owner</label> <input type=\"text\" id=\"customThemeRepoOwner\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -158,9 +162,9 @@ func customThemeGitHubSection(config *models.GitHubRepoConfig, templates []model
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(config.RepoName)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(config.RepoOwner)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 85, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 90, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -171,19 +175,19 @@ func customThemeGitHubSection(config *models.GitHubRepoConfig, templates []model
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " placeholder=\"customer-theme\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div><div><label for=\"customThemeRepoBranch\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Branch</label> <input type=\"text\" id=\"customThemeRepoBranch\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, " placeholder=\"acme-corp\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div><div><label for=\"customThemeRepoName\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Repository Name</label> <input type=\"text\" id=\"customThemeRepoName\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if config != nil && config.Branch != "" {
+		if config != nil {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, " value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(config.Branch)
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(config.RepoName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 97, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 102, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -193,274 +197,505 @@ func customThemeGitHubSection(config *models.GitHubRepoConfig, templates []model
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " value=\"main\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " placeholder=\"main\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div></div><div class=\"mb-3\"><label for=\"customThemeAccessToken\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Personal Access Token</label> <input type=\"password\" id=\"customThemeAccessToken\" placeholder=\"ghp_xxxxxxxxxxxxxxxxxxxx\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">GitHub PAT with <code class=\"bg-cool-grey-200 dark:bg-dark-grey-600 px-1 rounded text-xs\">repo</code> read access. ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " placeholder=\"customer-theme\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div><div><label for=\"customThemeRepoBranch\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Branch</label> <input type=\"text\" id=\"customThemeRepoBranch\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if config != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "Leave empty to keep existing token.")
+		if config != nil && config.Branch != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " value=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</p></div><div class=\"flex space-x-2\"><button type=\"button\" onclick=\"customThemeSaveGitHubConfig()\" class=\"px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if config != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "Update Config")
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(config.Branch)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 114, Col: 28}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "Save Config")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, " value=\"main\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</button> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " placeholder=\"main\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"></div></div><div class=\"mb-3\"><label for=\"customThemeAccessToken\" class=\"block text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Personal Access Token</label> <input type=\"password\" id=\"customThemeAccessToken\" placeholder=\"ghp_xxxxxxxxxxxxxxxxxxxx\" class=\"block w-full px-2 py-1.5 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">GitHub PAT with <code class=\"bg-cool-grey-200 dark:bg-dark-grey-600 px-1 rounded text-xs\">repo</code> read access. ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<button type=\"button\" id=\"customThemeSyncButton\" onclick=\"customThemeSyncGitHub()\" class=\"px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md\">Sync Now</button> <button type=\"button\" onclick=\"customThemeRemoveGitHubConfig()\" class=\"px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400\">Remove</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "Leave empty to keep existing token.")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div><!-- Sync Status (shown when configured) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</p></div><div class=\"flex space-x-2\"><button type=\"button\" onclick=\"customThemeSaveGitHubConfig()\" class=\"px-3 py-1.5 text-xs font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"mt-4 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><div class=\"flex items-center justify-between text-xs mb-2\"><div><span class=\"font-medium text-cool-grey-700 dark:text-cool-grey-300\">Status: </span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "Update Config")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if config.LastSyncStatus == "success" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<span class=\"text-green-600 dark:text-green-400\">&#10003; Synced ")
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "Save Config")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</button> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if config != nil {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<button type=\"button\" id=\"customThemeSyncButton\" onclick=\"customThemeSyncGitHub()\" class=\"px-3 py-1.5 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md\">Sync Now</button> <button type=\"button\" onclick=\"customThemeRemoveGitHubConfig()\" class=\"px-3 py-1.5 text-xs font-medium text-red-600 hover:text-red-800 dark:text-red-400\">Remove</button>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div></div><!-- Success callout for successful sync -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if config != nil {
+			if config.LastSyncStatus == "success" && config.LastSyncSHA != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"mt-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-xs\"><div class=\"flex items-start\"><svg class=\"w-4 h-4 mr-1.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg><div class=\"flex-1\"><h4 class=\"font-medium mb-0.5\">Status: &#10003; Synced ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if config.LastSyncAt != nil {
-					var templ_7745c5c3_Var7 string
-					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncAt.Format("Jan 2, 3:04 PM"))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 162, Col: 53}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else if config.LastSyncStatus == "failed" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<span class=\"text-red-600 dark:text-red-400\">&#10007; Failed ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if config.LastSyncError != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "- ")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
 					var templ_7745c5c3_Var8 string
-					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncError)
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncAt.Format("Jan 2, 3:04 PM"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 169, Col: 33}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 181, Col: 53}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"text-cool-grey-500\">Not synced</span>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if config.LastSyncSHA != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<span class=\"text-cool-grey-500 dark:text-cool-grey-400 font-mono\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</h4><div class=\"text-xs\">Commit: <span class=\"font-mono\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncSHA[:7])
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 178, Col: 31}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 185, Col: 64}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</span></div></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div><!-- Synced Templates --> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " <!-- Error callout for failed sync --> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if len(templates) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"mt-3\"><h4 class=\"text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Synced Templates</h4><div class=\"space-y-1\">")
+			if config.LastSyncStatus == "failed" && config.LastSyncError != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs\"><div class=\"flex items-start\"><svg class=\"w-4 h-4 mr-1.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293z\" clip-rule=\"evenodd\"></path></svg><div class=\"flex-1\"><h4 class=\"font-medium mb-0.5\">Status: &#10007; Failed ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				for _, tmpl := range templates {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"flex items-center justify-between py-1.5 px-2 bg-white dark:bg-dark-grey-700 rounded text-xs\"><div class=\"flex items-center space-x-2\"><input type=\"checkbox\" id=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
+				if config.LastSyncAt != nil {
 					var templ_7745c5c3_Var10 string
-					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs("custom-theme-tmpl-" + tmpl.PageName)
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncAt.Format("Jan 2, 3:04 PM"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 193, Col: 51}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 202, Col: 53}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if tmpl.IsEnabled {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " checked")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, " data-page-name=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var11 string
-					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.PageName)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 195, Col: 40}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" class=\"custom-theme-template-toggle h-3.5 w-3.5 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-500\"> <label for=\"")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var12 string
-					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs("custom-theme-tmpl-" + tmpl.PageName)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 198, Col: 58}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" class=\"text-cool-grey-700 dark:text-cool-grey-300\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var13 string
-					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.PageName)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 199, Col: 25}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, ".html</label></div><span class=\"text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var14 string
-					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.SourcePath)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 203, Col: 26}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</span></div>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</h4><p class=\"text-xs\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " <!-- Synced Assets --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if len(assets) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<div class=\"mt-3\"><h4 class=\"text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Synced Assets</h4><div class=\"space-y-1 text-xs\">")
+				var templ_7745c5c3_Var11 string
+				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(config.LastSyncError)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 205, Col: 48}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				for _, asset := range assets {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<div class=\"flex items-center justify-between\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">&bull; ")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var15 string
-					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(asset.AssetPath)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 218, Col: 33}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</span> <span class=\"text-cool-grey-500 dark:text-cool-grey-400\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var16 string
-					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(formatCustomThemeAssetSize(len(asset.Content)))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 221, Col: 57}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</span></div>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "</div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</p></div></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<!-- GitHub status messages --><div id=\"customThemeGithubSuccessMessage\" class=\"hidden mt-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-xs\"></div><div id=\"customThemeGithubErrorMessage\" class=\"hidden mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<!-- GitHub status messages --><div id=\"customThemeGithubSuccessMessage\" class=\"hidden mt-3 p-2 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-xs\"></div><div id=\"customThemeGithubErrorMessage\" class=\"hidden mt-3 p-2 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-xs\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func customThemeSyncedFilesSectionPanel(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Synced Files Table (shown when files exist) -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if config != nil && (len(templates) > 0 || len(assets) > 0) {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"bg-cool-grey-50 dark:bg-dark-grey-800 p-4 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600\"><!-- Header with search --><div class=\"flex items-center justify-between mb-3\"><h3 class=\"text-base font-semibold text-cool-grey-900 dark:text-white\">Synced Files <span class=\"text-xs font-normal text-cool-grey-500 dark:text-cool-grey-400 ml-2\">(")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(templates)+len(assets)))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 226, Col: 56}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, " files)</span></h3><div class=\"relative w-48\"><input type=\"text\" id=\"syncedFilesPanelSearch\" placeholder=\"Search files...\" class=\"w-full px-2 py-1.5 pl-8 text-xs border border-cool-grey-300 dark:border-dark-grey-600 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500\"> <svg class=\"absolute left-2 top-2 w-3 h-3 text-cool-grey-400\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z\"></path></svg></div></div><!-- Bulk Actions --><div class=\"flex items-center gap-1.5 mb-3\"><button type=\"button\" id=\"customThemePanelEnableAllBtn\" onclick=\"customThemePanelBulkEnable()\" class=\"px-2 py-1 text-xs font-medium text-white bg-green-600 hover:bg-green-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed\">Enable All</button> <button type=\"button\" id=\"customThemePanelDisableAllBtn\" onclick=\"customThemePanelBulkDisable()\" class=\"px-2 py-1 text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-200 dark:bg-dark-grey-700 hover:bg-cool-grey-300 dark:hover:bg-dark-grey-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed\">Disable All</button></div><!-- Table --><div class=\"overflow-x-auto\"><table class=\"w-full text-xs\" id=\"syncedFilesPanelTable\"><thead class=\"bg-white dark:bg-dark-grey-700 border-b border-cool-grey-200 dark:border-dark-grey-600\"><tr><th class=\"px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600\" data-sort=\"type\">Type <span class=\"sort-indicator\"></span></th><th class=\"px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600\" data-sort=\"name\">File Name <span class=\"sort-indicator\"></span></th><th class=\"px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600\" data-sort=\"source\">Source <span class=\"sort-indicator\"></span></th><th class=\"px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600\" data-sort=\"size\">Size <span class=\"sort-indicator\"></span></th><th class=\"px-3 py-2 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-600\" data-sort=\"status\">Status <span class=\"sort-indicator\"></span></th></tr></thead> <tbody class=\"divide-y divide-cool-grey-200 dark:divide-dark-grey-600\"><!-- Template rows -->")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, tmpl := range templates {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<tr class=\"synced-file-panel-row hover:bg-white dark:hover:bg-dark-grey-700\" data-type=\"template\" data-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var14 string
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.PageName + ".html")
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 288, Col: 43}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "\" data-source=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var15 string
+				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.SourcePath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 289, Col: 37}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" data-size=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var16 string
+				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(tmpl.Content)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 290, Col: 56}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" data-status=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var17 string
+				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(boolToStatusPanel(tmpl.IsEnabled))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 291, Col: 55}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\"><td class=\"px-3 py-2\"><span class=\"inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200\">Tmpl</span></td><td class=\"px-3 py-2 font-mono text-cool-grey-900 dark:text-white\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var18 string
+				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.PageName)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 299, Col: 24}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, ".html</td><td class=\"px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400 truncate max-w-xs\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var19 string
+				templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.SourcePath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 302, Col: 26}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</td><td class=\"px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var20 string
+				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(formatCustomThemeAssetSize(len(tmpl.Content)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 305, Col: 56}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</td><td class=\"px-3 py-2\"><label class=\"inline-flex items-center cursor-pointer\"><input type=\"checkbox\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if tmpl.IsEnabled {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " checked")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, " data-page-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var21 string
+				templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(tmpl.PageName)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 312, Col: 41}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\" class=\"custom-theme-template-toggle w-3.5 h-3.5 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500\"> <span class=\"ml-1.5 text-xs text-cool-grey-700 dark:text-cool-grey-300\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if tmpl.IsEnabled {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "On")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "Off")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span></label></td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<!-- Asset rows -->")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, asset := range assets {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<tr class=\"synced-file-panel-row hover:bg-white dark:hover:bg-dark-grey-700\" data-type=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var22 string
+				templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(asset.AssetType)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 330, Col: 35}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" data-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var23 string
+				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(asset.AssetPath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 331, Col: 35}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\" data-source=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var24 string
+				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(asset.SourcePath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 332, Col: 38}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\" data-size=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var25 string
+				templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", asset.FileSize))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 333, Col: 53}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" data-status=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var26 string
+				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(boolToStatusPanel(asset.IsEnabled))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 334, Col: 56}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\"><td class=\"px-3 py-2\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if asset.AssetType == "css" {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<span class=\"inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200\">CSS</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<span class=\"inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200\">Img</span>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</td><td class=\"px-3 py-2 font-mono text-cool-grey-900 dark:text-white\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var27 string
+				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(asset.AssetPath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 348, Col: 26}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "</td><td class=\"px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400 truncate max-w-xs\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var28 string
+				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(asset.SourcePath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 351, Col: 27}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "</td><td class=\"px-3 py-2 text-cool-grey-600 dark:text-cool-grey-400\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var29 string
+				templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(formatCustomThemeAssetSize(int(asset.FileSize)))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 354, Col: 58}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "</td><td class=\"px-3 py-2\"><label class=\"inline-flex items-center cursor-pointer\"><input type=\"checkbox\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if asset.IsEnabled {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, " checked")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, " data-asset-path=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var30 string
+				templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(asset.AssetPath)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/custom_theme_panel.templ`, Line: 361, Col: 44}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" class=\"custom-theme-asset-toggle w-3.5 h-3.5 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500\"> <span class=\"ml-1.5 text-xs text-cool-grey-700 dark:text-cool-grey-300\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if asset.IsEnabled {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "On")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "Off")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "</span></label></td></tr>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "</tbody></table></div><!-- Empty state (shown when search returns no results) --><div id=\"noResultsPanelMessage\" class=\"hidden text-center py-6 text-cool-grey-500 dark:text-cool-grey-400 text-xs\">No files match your search criteria</div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})
@@ -471,6 +706,13 @@ func formatCustomThemeAssetSize(bytes int) string {
 		return fmt.Sprintf("%d B", bytes)
 	}
 	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+}
+
+func boolToStatusPanel(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
 }
 
 func customThemePanelScript() templ.Component {
@@ -489,12 +731,12 @@ func customThemePanelScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var17 == nil {
-			templ_7745c5c3_Var17 = templ.NopComponent
+		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var31 == nil {
+			templ_7745c5c3_Var31 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<script>\n\t\t(function() {\n\t\t\tconst panel = document.getElementById('custom-theme-panel');\n\t\t\tconst basePath = panel.dataset.basePath;\n\n\t\t\tfunction openCustomThemePanel() {\n\t\t\t\tpanel.classList.remove('panel-hidden');\n\t\t\t\tpanel.classList.add('panel-visible');\n\t\t\t\tdocument.body.classList.add('overflow-hidden');\n\t\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\t\tif (userDropdown) userDropdown.classList.add('hidden');\n\t\t\t}\n\n\t\t\tfunction closeCustomThemePanel() {\n\t\t\t\tpanel.classList.remove('panel-visible', 'panel-full');\n\t\t\t\tpanel.classList.add('panel-hidden');\n\t\t\t\tdocument.body.classList.remove('overflow-hidden');\n\t\t\t\tdocument.getElementById('customThemeExpandIcon')?.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('customThemeCollapseIcon')?.classList.add('hidden');\n\t\t\t\tdocument.getElementById('customThemePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');\n\t\t\t}\n\n\t\t\tfunction toggleCustomThemePanelSize() {\n\t\t\t\tconst expandIcon = document.getElementById('customThemeExpandIcon');\n\t\t\t\tconst collapseIcon = document.getElementById('customThemeCollapseIcon');\n\t\t\t\tconst expandBtn = document.getElementById('customThemePanelExpandBtn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.openCustomThemePanel = openCustomThemePanel;\n\t\t\twindow.closeCustomThemePanel = closeCustomThemePanel;\n\t\t\twindow.toggleCustomThemePanelSize = toggleCustomThemePanelSize;\n\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tif (panel && panel.classList.contains('panel-visible')) {\n\t\t\t\t\t\tcloseCustomThemePanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// GitHub integration functions\n\t\t\twindow.customThemeSaveGitHubConfig = async function() {\n\t\t\t\tconst successMsg = document.getElementById('customThemeGithubSuccessMessage');\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\tsuccessMsg.classList.add('hidden');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\tconst repoOwner = document.getElementById('customThemeRepoOwner').value.trim();\n\t\t\t\tconst repoName = document.getElementById('customThemeRepoName').value.trim();\n\t\t\t\tconst branch = document.getElementById('customThemeRepoBranch').value.trim() || 'main';\n\t\t\t\tconst accessToken = document.getElementById('customThemeAccessToken').value;\n\n\t\t\t\tif (!repoOwner || !repoName) {\n\t\t\t\t\terrorMsg.textContent = 'Repository owner and name are required.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tconst payload = {\n\t\t\t\t\trepo_owner: repoOwner,\n\t\t\t\t\trepo_name: repoName,\n\t\t\t\t\tbranch: branch\n\t\t\t\t};\n\t\t\t\tif (accessToken) {\n\t\t\t\t\tpayload.access_token = accessToken;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(payload)\n\t\t\t\t\t});\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMsg.textContent = data.message || 'GitHub repository configured successfully.';\n\t\t\t\t\t\tsuccessMsg.classList.remove('hidden');\n\t\t\t\t\t\tdocument.getElementById('customThemeAccessToken').value = '';\n\t\t\t\t\t\tsetTimeout(() => { location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to save GitHub configuration.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.customThemeSyncGitHub = async function() {\n\t\t\t\tconst syncButton = document.getElementById('customThemeSyncButton');\n\t\t\t\tconst successMsg = document.getElementById('customThemeGithubSuccessMessage');\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\tsuccessMsg.classList.add('hidden');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\tsyncButton.textContent = 'Syncing...';\n\t\t\t\tsyncButton.disabled = true;\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/sync`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tlet msg = 'Sync completed.';\n\t\t\t\t\t\tif (data.templates_synced > 0 || data.assets_synced > 0) {\n\t\t\t\t\t\t\tmsg += ` Synced ${data.templates_synced} template(s) and ${data.assets_synced} asset(s).`;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tsuccessMsg.textContent = msg;\n\t\t\t\t\t\tsuccessMsg.classList.remove('hidden');\n\t\t\t\t\t\tsetTimeout(() => { location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Sync failed.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsyncButton.textContent = 'Sync Now';\n\t\t\t\tsyncButton.disabled = false;\n\t\t\t};\n\n\t\t\twindow.customThemeToggleTemplate = async function(pageName, enabled) {\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/templates/${pageName}`, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ enabled: enabled })\n\t\t\t\t\t});\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to toggle template.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t\tconst checkbox = document.getElementById('custom-theme-tmpl-' + pageName);\n\t\t\t\t\t\tif (checkbox) checkbox.checked = !enabled;\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\tconst checkbox = document.getElementById('custom-theme-tmpl-' + pageName);\n\t\t\t\t\tif (checkbox) checkbox.checked = !enabled;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.customThemeRemoveGitHubConfig = async function() {\n\t\t\t\tif (!confirm('Remove GitHub integration? This will delete all synced templates and assets.')) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github`, {\n\t\t\t\t\t\tmethod: 'DELETE',\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to remove GitHub integration.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Wire up template toggle checkboxes\n\t\t\tdocument.querySelectorAll('.custom-theme-template-toggle').forEach(function(checkbox) {\n\t\t\t\tcheckbox.addEventListener('change', function(e) {\n\t\t\t\t\tconst pageName = e.target.dataset.pageName;\n\t\t\t\t\tconst enabled = e.target.checked;\n\t\t\t\t\twindow.customThemeToggleTemplate(pageName, enabled);\n\t\t\t\t});\n\t\t\t});\n\n\t\t\topenCustomThemePanel();\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "<script>\n\t\t(function() {\n\t\t\tconst panel = document.getElementById('custom-theme-panel');\n\t\t\tconst basePath = panel.dataset.basePath;\n\n\t\t\tfunction openCustomThemePanel() {\n\t\t\t\tpanel.classList.remove('panel-hidden');\n\t\t\t\tpanel.classList.add('panel-visible');\n\t\t\t\tdocument.body.classList.add('overflow-hidden');\n\t\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\t\tif (userDropdown) userDropdown.classList.add('hidden');\n\t\t\t}\n\n\t\t\tfunction closeCustomThemePanel() {\n\t\t\t\tpanel.classList.remove('panel-visible', 'panel-full');\n\t\t\t\tpanel.classList.add('panel-hidden');\n\t\t\t\tdocument.body.classList.remove('overflow-hidden');\n\t\t\t\tdocument.getElementById('customThemeExpandIcon')?.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('customThemeCollapseIcon')?.classList.add('hidden');\n\t\t\t\tdocument.getElementById('customThemePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');\n\t\t\t}\n\n\t\t\tfunction toggleCustomThemePanelSize() {\n\t\t\t\tconst expandIcon = document.getElementById('customThemeExpandIcon');\n\t\t\t\tconst collapseIcon = document.getElementById('customThemeCollapseIcon');\n\t\t\t\tconst expandBtn = document.getElementById('customThemePanelExpandBtn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.openCustomThemePanel = openCustomThemePanel;\n\t\t\twindow.closeCustomThemePanel = closeCustomThemePanel;\n\t\t\twindow.toggleCustomThemePanelSize = toggleCustomThemePanelSize;\n\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tif (panel && panel.classList.contains('panel-visible')) {\n\t\t\t\t\t\tcloseCustomThemePanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// GitHub integration functions\n\t\t\twindow.customThemeSaveGitHubConfig = async function() {\n\t\t\t\tconst successMsg = document.getElementById('customThemeGithubSuccessMessage');\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\tsuccessMsg.classList.add('hidden');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\tconst repoOwner = document.getElementById('customThemeRepoOwner').value.trim();\n\t\t\t\tconst repoName = document.getElementById('customThemeRepoName').value.trim();\n\t\t\t\tconst branch = document.getElementById('customThemeRepoBranch').value.trim() || 'main';\n\t\t\t\tconst accessToken = document.getElementById('customThemeAccessToken').value;\n\n\t\t\t\tif (!repoOwner || !repoName) {\n\t\t\t\t\terrorMsg.textContent = 'Repository owner and name are required.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tconst payload = {\n\t\t\t\t\trepo_owner: repoOwner,\n\t\t\t\t\trepo_name: repoName,\n\t\t\t\t\tbranch: branch\n\t\t\t\t};\n\t\t\t\tif (accessToken) {\n\t\t\t\t\tpayload.access_token = accessToken;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(payload)\n\t\t\t\t\t});\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMsg.textContent = data.message || 'GitHub repository configured successfully.';\n\t\t\t\t\t\tsuccessMsg.classList.remove('hidden');\n\t\t\t\t\t\tdocument.getElementById('customThemeAccessToken').value = '';\n\t\t\t\t\t\tsetTimeout(() => { location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to save GitHub configuration.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.customThemeSyncGitHub = async function() {\n\t\t\t\tconst syncButton = document.getElementById('customThemeSyncButton');\n\t\t\t\tconst successMsg = document.getElementById('customThemeGithubSuccessMessage');\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\tsuccessMsg.classList.add('hidden');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\tsyncButton.textContent = 'Syncing...';\n\t\t\t\tsyncButton.disabled = true;\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/sync`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tlet msg = 'Sync completed.';\n\t\t\t\t\t\tif (data.templates_synced > 0 || data.assets_synced > 0) {\n\t\t\t\t\t\t\tmsg += ` Synced ${data.templates_synced} template(s) and ${data.assets_synced} asset(s).`;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tsuccessMsg.textContent = msg;\n\t\t\t\t\t\tsuccessMsg.classList.remove('hidden');\n\t\t\t\t\t\tsetTimeout(() => { location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Sync failed.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsyncButton.textContent = 'Sync Now';\n\t\t\t\tsyncButton.disabled = false;\n\t\t\t};\n\n\t\t\twindow.customThemeToggleTemplate = async function(pageName, enabled) {\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/templates/${pageName}`, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ enabled: enabled })\n\t\t\t\t\t});\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to toggle template.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t\tconst checkbox = document.getElementById('custom-theme-tmpl-' + pageName);\n\t\t\t\t\t\tif (checkbox) checkbox.checked = !enabled;\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\tconst checkbox = document.getElementById('custom-theme-tmpl-' + pageName);\n\t\t\t\t\tif (checkbox) checkbox.checked = !enabled;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.customThemeRemoveGitHubConfig = async function() {\n\t\t\t\tif (!confirm('Remove GitHub integration? This will delete all synced templates and assets.')) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github`, {\n\t\t\t\t\t\tmethod: 'DELETE',\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to remove GitHub integration.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Wire up template toggle checkboxes\n\t\t\tdocument.querySelectorAll('.custom-theme-template-toggle').forEach(function(checkbox) {\n\t\t\t\tcheckbox.addEventListener('change', function(e) {\n\t\t\t\t\tconst pageName = e.target.dataset.pageName;\n\t\t\t\t\tconst enabled = e.target.checked;\n\t\t\t\t\twindow.customThemeToggleTemplate(pageName, enabled);\n\t\t\t\t});\n\t\t\t});\n\n\t\t\twindow.customThemeToggleAsset = async function(assetPath, enabled) {\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\terrorMsg.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/assets/${assetPath}`, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ enabled: enabled })\n\t\t\t\t\t});\n\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to toggle asset.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t\t// Revert checkbox on error\n\t\t\t\t\t\tdocument.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {\n\t\t\t\t\t\t\tif (cb.dataset.assetPath === assetPath) {\n\t\t\t\t\t\t\t\tcb.checked = !enabled;\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\tdocument.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {\n\t\t\t\t\t\tif (cb.dataset.assetPath === assetPath) {\n\t\t\t\t\t\t\tcb.checked = !enabled;\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Wire up asset toggle checkboxes\n\t\t\tdocument.querySelectorAll('.custom-theme-asset-toggle').forEach(function(checkbox) {\n\t\t\t\tcheckbox.addEventListener('change', function(e) {\n\t\t\t\t\tconst assetPath = e.target.dataset.assetPath;\n\t\t\t\t\tconst enabled = e.target.checked;\n\t\t\t\t\twindow.customThemeToggleAsset(assetPath, enabled);\n\t\t\t\t});\n\t\t\t});\n\n\t\t\twindow.customThemePanelBulkEnable = function() {\n\t\t\t\tcustomThemePanelBulkToggle(true);\n\t\t\t};\n\n\t\t\twindow.customThemePanelBulkDisable = function() {\n\t\t\t\tcustomThemePanelBulkToggle(false);\n\t\t\t};\n\n\t\t\twindow.customThemePanelBulkToggle = async function(enabled) {\n\t\t\t\tconst enableBtn = document.getElementById('customThemePanelEnableAllBtn');\n\t\t\t\tconst disableBtn = document.getElementById('customThemePanelDisableAllBtn');\n\t\t\t\tconst errorMsg = document.getElementById('customThemeGithubErrorMessage');\n\t\t\t\tconst successMsg = document.getElementById('customThemeGithubSuccessMessage');\n\n\t\t\t\terrorMsg.classList.add('hidden');\n\t\t\t\tsuccessMsg.classList.add('hidden');\n\n\t\t\t\t// Disable buttons during operation\n\t\t\t\tenableBtn.disabled = true;\n\t\t\t\tdisableBtn.disabled = true;\n\t\t\t\tenableBtn.textContent = enabled ? 'Enabling...' : 'Enable All';\n\t\t\t\tdisableBtn.textContent = enabled ? 'Disable All' : 'Disabling...';\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(`${basePath}/settings/github/bulk-toggle`, {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ enabled: enabled, all: true })\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\t// Update all checkboxes\n\t\t\t\t\t\tdocument.querySelectorAll('.custom-theme-template-toggle, .custom-theme-asset-toggle').forEach(function(cb) {\n\t\t\t\t\t\t\tcb.checked = enabled;\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\t// Update all status text\n\t\t\t\t\t\tdocument.querySelectorAll('.synced-file-panel-row').forEach(function(row) {\n\t\t\t\t\t\t\tconst statusCell = row.querySelector('label span:last-child');\n\t\t\t\t\t\t\tif (statusCell) {\n\t\t\t\t\t\t\t\tstatusCell.textContent = enabled ? 'On' : 'Off';\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\n\t\t\t\t\t\tsuccessMsg.textContent = data.message || (enabled ? 'All files enabled' : 'All files disabled');\n\t\t\t\t\t\tsuccessMsg.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMsg.textContent = data.error || 'Failed to update files.';\n\t\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMsg.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMsg.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\t// Re-enable buttons\n\t\t\t\tenableBtn.disabled = false;\n\t\t\t\tdisableBtn.disabled = false;\n\t\t\t\tenableBtn.textContent = 'Enable All';\n\t\t\t\tdisableBtn.textContent = 'Disable All';\n\t\t\t};\n\n\t\t// Search functionality for panel\n\t\tconst panelSearchInput = document.getElementById('syncedFilesPanelSearch');\n\t\tconst panelTableRows = document.querySelectorAll('.synced-file-panel-row');\n\t\tconst noResultsPanelMessage = document.getElementById('noResultsPanelMessage');\n\t\tconst panelTableBody = document.querySelector('#syncedFilesPanelTable tbody');\n\n\t\tif (panelSearchInput) {\n\t\t\tpanelSearchInput.addEventListener('input', function(e) {\n\t\t\t\tconst searchTerm = e.target.value.toLowerCase();\n\t\t\t\tlet visibleCount = 0;\n\n\t\t\t\tpanelTableRows.forEach(function(row) {\n\t\t\t\t\tconst type = row.dataset.type.toLowerCase();\n\t\t\t\t\tconst name = row.dataset.name.toLowerCase();\n\t\t\t\t\tconst source = row.dataset.source.toLowerCase();\n\t\t\t\t\tconst status = row.dataset.status.toLowerCase();\n\n\t\t\t\t\tconst matches =\n\t\t\t\t\t\ttype.includes(searchTerm) ||\n\t\t\t\t\t\tname.includes(searchTerm) ||\n\t\t\t\t\t\tsource.includes(searchTerm) ||\n\t\t\t\t\t\tstatus.includes(searchTerm);\n\n\t\t\t\t\tif (matches) {\n\t\t\t\t\t\trow.style.display = '';\n\t\t\t\t\t\tvisibleCount++;\n\t\t\t\t\t} else {\n\t\t\t\t\t\trow.style.display = 'none';\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Show/hide empty state\n\t\t\t\tif (visibleCount === 0) {\n\t\t\t\t\tpanelTableBody.style.display = 'none';\n\t\t\t\t\tnoResultsPanelMessage.classList.remove('hidden');\n\t\t\t\t} else {\n\t\t\t\t\tpanelTableBody.style.display = '';\n\t\t\t\t\tnoResultsPanelMessage.classList.add('hidden');\n\t\t\t\t}\n\t\t\t});\n\t\t}\n\n\t\t// Sort functionality for panel\n\t\tlet currentPanelSort = { column: 'name', direction: 'asc' };\n\n\t\tdocument.querySelectorAll('#syncedFilesPanelTable [data-sort]').forEach(function(header) {\n\t\t\theader.addEventListener('click', function() {\n\t\t\t\tconst column = this.dataset.sort;\n\n\t\t\t\t// Toggle direction if same column, otherwise default to asc\n\t\t\t\tif (currentPanelSort.column === column) {\n\t\t\t\t\tcurrentPanelSort.direction = currentPanelSort.direction === 'asc' ? 'desc' : 'asc';\n\t\t\t\t} else {\n\t\t\t\t\tcurrentPanelSort.column = column;\n\t\t\t\t\tcurrentPanelSort.direction = 'asc';\n\t\t\t\t}\n\n\t\t\t\tsortPanelTable(column, currentPanelSort.direction);\n\t\t\t\tupdatePanelSortIndicators(column, currentPanelSort.direction);\n\t\t\t});\n\t\t});\n\n\t\tfunction sortPanelTable(column, direction) {\n\t\t\tconst tbody = document.querySelector('#syncedFilesPanelTable tbody');\n\t\t\tif (!tbody) return;\n\n\t\t\tconst rows = Array.from(tbody.querySelectorAll('.synced-file-panel-row'));\n\n\t\t\trows.sort(function(a, b) {\n\t\t\t\tlet aVal, bVal;\n\n\t\t\t\tswitch(column) {\n\t\t\t\t\tcase 'type':\n\t\t\t\t\t\taVal = a.dataset.type;\n\t\t\t\t\t\tbVal = b.dataset.type;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'name':\n\t\t\t\t\t\taVal = a.dataset.name;\n\t\t\t\t\t\tbVal = b.dataset.name;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'source':\n\t\t\t\t\t\taVal = a.dataset.source;\n\t\t\t\t\t\tbVal = b.dataset.source;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'size':\n\t\t\t\t\t\taVal = parseInt(a.dataset.size) || 0;\n\t\t\t\t\t\tbVal = parseInt(b.dataset.size) || 0;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tcase 'status':\n\t\t\t\t\t\taVal = a.dataset.status;\n\t\t\t\t\t\tbVal = b.dataset.status;\n\t\t\t\t\t\tbreak;\n\t\t\t\t\tdefault:\n\t\t\t\t\t\treturn 0;\n\t\t\t\t}\n\n\t\t\t\t// Numeric comparison for size\n\t\t\t\tif (column === 'size') {\n\t\t\t\t\treturn direction === 'asc' ? aVal - bVal : bVal - aVal;\n\t\t\t\t}\n\n\t\t\t\t// String comparison for others\n\t\t\t\tif (aVal < bVal) return direction === 'asc' ? -1 : 1;\n\t\t\t\tif (aVal > bVal) return direction === 'asc' ? 1 : -1;\n\t\t\t\treturn 0;\n\t\t\t});\n\n\t\t\t// Reorder DOM\n\t\t\trows.forEach(function(row) {\n\t\t\t\ttbody.appendChild(row);\n\t\t\t});\n\t\t}\n\n\t\tfunction updatePanelSortIndicators(activeColumn, direction) {\n\t\t\t// Clear all indicators\n\t\t\tdocument.querySelectorAll('#syncedFilesPanelTable .sort-indicator').forEach(function(indicator) {\n\t\t\t\tindicator.textContent = '';\n\t\t\t});\n\n\t\t\t// Set active indicator\n\t\t\tconst activeHeader = document.querySelector('#syncedFilesPanelTable [data-sort=\"' + activeColumn + '\"] .sort-indicator');\n\t\t\tif (activeHeader) {\n\t\t\t\tactiveHeader.textContent = direction === 'asc' ? ' ↑' : ' ↓';\n\t\t\t}\n\t\t}\n\n\t\t// Initial sort by name for panel\n\t\tif (document.getElementById('syncedFilesPanelTable')) {\n\t\t\tsortPanelTable('name', 'asc');\n\t\t\tupdatePanelSortIndicators('name', 'asc');\n\t\t}\n\t\t\topenCustomThemePanel();\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -518,12 +760,12 @@ func customThemeCodeIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M69.12,94.15,28.5,128l40.62,33.85a8,8,0,1,1-10.24,12.29l-48-40a8,8,0,0,1,0-12.29l48-40a8,8,0,0,1,10.24,12.3Zm176,27.7-48-40a8,8,0,1,0-10.24,12.3L227.5,128l-40.62,33.85a8,8,0,1,0,10.24,12.29l48-40a8,8,0,0,0,0-12.29ZM162.73,32.48a8,8,0,0,0-10.25,4.79l-64,176a8,8,0,0,0,4.79,10.26A8.14,8.14,0,0,0,96,224a8,8,0,0,0,7.52-5.27l64-176A8,8,0,0,0,162.73,32.48Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -547,12 +789,12 @@ func customThemeExpandIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var33 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var33 == nil {
+			templ_7745c5c3_Var33 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<svg id=\"customThemeExpandIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<svg id=\"customThemeExpandIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -576,12 +818,12 @@ func customThemeCollapseIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var34 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var34 == nil {
+			templ_7745c5c3_Var34 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<svg id=\"customThemeCollapseIcon\" class=\"hidden\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "<svg id=\"customThemeCollapseIcon\" class=\"hidden\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -605,12 +847,12 @@ func customThemeArrowRightIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var35 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var35 == nil {
+			templ_7745c5c3_Var35 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

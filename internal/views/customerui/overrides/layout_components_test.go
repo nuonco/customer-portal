@@ -214,7 +214,7 @@ func TestRenderHeader(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			html := RenderHeader(tt.ctx)
+			html := RenderHeader(tt.ctx, nil)
 			htmlStr := string(html)
 
 			for _, want := range tt.contains {
@@ -275,7 +275,7 @@ func TestRenderFooter(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			html := RenderFooter(tt.ctx)
+			html := RenderFooter(tt.ctx, nil)
 			htmlStr := string(html)
 
 			for _, want := range tt.contains {
@@ -298,7 +298,7 @@ func TestRenderScripts(t *testing.T) {
 		BasePath: "/app",
 	}
 
-	html := RenderScripts(ctx)
+	html := RenderScripts(ctx, nil)
 	htmlStr := string(html)
 
 	expected := []string{
@@ -433,7 +433,7 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tmpl, err := template.New("test").Funcs(templateFuncs()).Parse(tt.tmplStr)
+			tmpl, err := template.New("test").Funcs(getBaseFuncMap()).Parse(tt.tmplStr)
 			if err != nil {
 				t.Fatalf("Failed to parse template: %v", err)
 			}

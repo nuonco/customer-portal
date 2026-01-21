@@ -155,18 +155,23 @@ func (p *OIDCProvider) SupportsLogout() bool {
 	return p.config.PostLogoutRedirectURI != ""
 }
 
-// findOrCreateUser finds an existing user by email or creates a new one
+// findOrCreateUser finds an existing user by email or creates a new one with RoleVendor (admin portal default)
 func (p *OIDCProvider) findOrCreateUser(email, name string) (*models.User, error) {
+	return p.findOrCreateUserWithRole(email, name, models.RoleVendor)
+}
+
+// findOrCreateUserWithRole finds an existing user by email or creates a new one with the specified role
+func (p *OIDCProvider) findOrCreateUserWithRole(email, name string, defaultRole models.UserRole) (*models.User, error) {
 	var user models.User
 	result := p.db.Where("email = ?", email).First(&user)
 
 	if result.Error != nil {
 		if result.Error == gorm.ErrRecordNotFound {
-			// Create new vendor user
+			// Create new user with the specified role
 			user = models.User{
 				Email: email,
 				Name:  name,
-				Role:  models.RoleVendor,
+				Role:  defaultRole,
 			}
 			if err := p.db.Create(&user).Error; err != nil {
 				return nil, fmt.Errorf("failed to create user: %w", err)
@@ -183,4 +188,67 @@ func (p *OIDCProvider) findOrCreateUser(email, name string) (*models.User, error
 	}
 
 	return &user, nil
+}
+
+// HandleCallbackWithRole processes the OIDC callback and creates NEW users with the specified role.
+// Existing users keep their current database role.
+func (p *OIDCProvider) HandleCallbackWithRole(ctx context.Context, req CallbackRequest, defaultRole models.UserRole) (*AuthResult, error) {
+	// Exchange authorization code for tokens
+	token, err := p.oauth2.Exchange(ctx, req.Code)
+	if err != nil {
+		return nil, fmt.Errorf("failed to exchange code: %w", err)
+	}
+
+	// Extract and verify ID token
+	rawIDToken, ok := token.Extra("id_token").(string)
+	if !ok {
+		return nil, fmt.Errorf("no id_token in token response")
+	}
+
+	idToken, err := p.verifier.Verify(ctx, rawIDToken)
+	if err != nil {
+		return nil, fmt.Errorf("failed to verify ID token: %w", err)
+	}
+
+	// Extract claims
+	var claims struct {
+		Email         string `json:"email"`
+		EmailVerified bool   `json:"email_verified"`
+		Name          string `json:"name"`
+		GivenName     string `json:"given_name"`
+		FamilyName    string `json:"family_name"`
+		Sub           string `json:"sub"`
+	}
+	if err := idToken.Claims(&claims); err != nil {
+		return nil, fmt.Errorf("failed to extract claims: %w", err)
+	}
+
+	// Determine email
+	email := claims.Email
+	if email == "" {
+		return nil, fmt.Errorf("no email claim in ID token")
+	}
+
+	// Determine name (prefer Name, fall back to GivenName + FamilyName)
+	name := claims.Name
+	if name == "" {
+		name = claims.GivenName
+		if claims.FamilyName != "" {
+			if name != "" {
+				name += " "
+			}
+			name += claims.FamilyName
+		}
+	}
+
+	// Find or create user with specified role for NEW users
+	user, err := p.findOrCreateUserWithRole(email, name, defaultRole)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthResult{
+		User:      user,
+		SessionID: idToken.Subject, // Use subject as session identifier
+	}, nil
 }

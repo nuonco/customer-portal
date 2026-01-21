@@ -504,7 +504,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 		SubmitURL:    h.basePath + "/install-link/",
 	}
 
-	ctx := h.buildTemplateContext("Install "+link.AppName, loggedInUser, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, "Install "+link.AppName, loggedInUser, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "install_link", ctx) {
 		return
 	}
@@ -641,15 +641,10 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	page := getPageFromQuery(c)
 	offset := (page - 1) * installsPerPage
 
-	// Get all installs based on user role
-	// Vendors see installs they created, customers see installs they own
+	// Get all installs owned by this user
 	var allInstalls []models.Install
 	query := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Order("created_at DESC")
-	if user.Role == models.RoleVendor {
-		query = query.Where("created_by_vendor_id = ?", user.ID)
-	} else {
-		query = query.Where("user_id = ?", user.ID)
-	}
+	query = query.Where("user_id = ?", user.ID)
 	if err := query.Find(&allInstalls).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
 		props := customerpages.ErrorPageProps{
@@ -823,14 +818,44 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
 
+	// Fetch platform information for all installs
+	// Build a map of AppID -> Platform by fetching apps from Nuon API
+	platformMap := make(map[string]string)
+	for _, inst := range paginatedInstalls {
+		appID := inst.Install.InstallLink.AppID
+		if _, exists := platformMap[appID]; !exists {
+			// Initialize Nuon client with the org's credentials
+			nuonClient, err := nuon.NewClientWithURL(
+				inst.Install.InstallLink.NuonOrg.APIToken,
+				inst.Install.InstallLink.NuonOrg.NuonOrgID,
+				h.nuonAPIURL,
+			)
+			if err == nil {
+				// Fetch app details to get platform
+				app, err := nuonClient.GetApp(c.Request.Context(), appID)
+				if err == nil && app != nil && app.RunnerConfig != nil {
+					platformMap[appID] = string(app.RunnerConfig.AppRunnerType)
+				} else {
+					platformMap[appID] = "" // Default to empty if fetch fails
+				}
+			} else {
+				platformMap[appID] = "" // Default to empty if client init fails
+			}
+		}
+	}
+
 	// Try template override first
 	installsData := make([]overrides.InstallData, 0, len(paginatedInstalls))
 	for _, inst := range paginatedInstalls {
+		appID := inst.Install.InstallLink.AppID
+		platform := platformMap[appID]
+
 		installsData = append(installsData, overrides.InstallData{
 			ID:                  inst.Install.ID,
 			Name:                inst.Install.Name,
 			Status:              string(inst.Install.Status),
 			Region:              inst.Install.Region,
+			Platform:            platform,
 			AppName:             inst.Install.InstallLink.AppName,
 			CreatedAt:           inst.Install.CreatedAt.Format("Jan 2, 2006"),
 			HasHealthChecks:     inst.HasHealthChecks,
@@ -858,7 +883,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		ShowingTo:           showingTo,
 	}
 
-	ctx := h.buildTemplateContext("Your Installs", user, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, "Your Installs", user, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "installs", ctx) {
 		return
 	}
@@ -908,6 +933,22 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		recentWorkflows = []customerui.WorkflowData{}
 	} else {
 		recentWorkflows = convertWorkflowsToData(workflows)
+	}
+
+	// Fetch platform information from app
+	var platform string
+	if install.InstallLink.NuonOrg.APIToken != "" {
+		client, err := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if err == nil {
+			app, err := client.GetApp(c.Request.Context(), install.InstallLink.AppID)
+			if err == nil && app != nil && app.RunnerConfig != nil {
+				platform = string(app.RunnerConfig.AppRunnerType)
+			}
+		}
 	}
 
 	// Fetch health check status if configured
@@ -987,6 +1028,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 			Name:                install.Name,
 			Status:              string(install.Status),
 			Region:              install.Region,
+			Platform:            platform,
 			AppName:             install.InstallLink.AppName,
 			CreatedAt:           install.CreatedAt.Format("Jan 2, 2006"),
 			HasHealthChecks:     len(healthCheckIDs) > 0,
@@ -1000,7 +1042,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		PendingApproval: pendingApproval,
 	}
 
-	ctx := h.buildTemplateContext("Install - "+install.Name, user, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, "Install - "+install.Name, user, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "install_detail", ctx) {
 		return
 	}

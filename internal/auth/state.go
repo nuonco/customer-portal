@@ -14,8 +14,9 @@ const StateLength = 32
 // The state parameter is used for CSRF protection and can carry additional
 // context like the subdomain to return to after authentication completes.
 type StateData struct {
-	Random          string `json:"r"` // Random bytes for CSRF protection
-	ReturnSubdomain string `json:"s"` // Subdomain to return to after auth (empty for base domain)
+	Random          string `json:"r"`           // Random bytes for CSRF protection
+	ReturnSubdomain string `json:"s"`           // Subdomain to return to after auth (empty for base domain)
+	RedirectURL     string `json:"u,omitempty"` // URL to redirect to after auth completion (optional)
 }
 
 // GenerateState creates a cryptographically secure random state parameter
@@ -78,6 +79,54 @@ func ExtractSubdomainFromState(state string) (string, error) {
 	}
 
 	return stateData.ReturnSubdomain, nil
+}
+
+// GenerateStateWithRedirect creates a state parameter with subdomain AND redirect URL.
+// This extends GenerateStateWithSubdomain to also track the URL to redirect to after
+// authentication completes (e.g., /install-link?sha=XYZ).
+//
+// This is used when the user needs to be redirected to a specific page after auth,
+// such as when clicking an install link while not logged in.
+func GenerateStateWithRedirect(subdomain, redirectURL string) (string, error) {
+	// Generate random bytes for CSRF protection
+	randomBytes := make([]byte, StateLength)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("failed to generate random state: %w", err)
+	}
+
+	// Create state data with random component, subdomain, and redirect URL
+	stateData := StateData{
+		Random:          base64.URLEncoding.EncodeToString(randomBytes),
+		ReturnSubdomain: subdomain,
+		RedirectURL:     redirectURL,
+	}
+
+	// Marshal to JSON
+	stateJSON, err := json.Marshal(stateData)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal state: %w", err)
+	}
+
+	// Base64 encode the JSON
+	return base64.URLEncoding.EncodeToString(stateJSON), nil
+}
+
+// ExtractRedirectFromState extracts the redirect URL from a state parameter.
+// Returns empty string if no redirect URL was embedded, or an error if the state is malformed.
+func ExtractRedirectFromState(state string) (string, error) {
+	// Base64 decode
+	stateJSON, err := base64.URLEncoding.DecodeString(state)
+	if err != nil {
+		return "", fmt.Errorf("failed to decode state: %w", err)
+	}
+
+	// Unmarshal JSON
+	var stateData StateData
+	if err := json.Unmarshal(stateJSON, &stateData); err != nil {
+		return "", fmt.Errorf("failed to unmarshal state: %w", err)
+	}
+
+	return stateData.RedirectURL, nil
 }
 
 // ValidateState checks if the received state matches the expected state

@@ -168,7 +168,8 @@ func (f *CustomerAuthProviderFactory) GetAuthURLForWorkspace(state string, works
 }
 
 // HandleCallback processes the OIDC callback with customer role.
-// Creates users with RoleCustomer instead of RoleVendor.
+// NEW users are created with RoleCustomer in the database.
+// Existing users keep their current database role for backwards compatibility.
 func (f *CustomerAuthProviderFactory) HandleCallback(ctx context.Context, req CallbackRequest) (*AuthResult, error) {
 	provider, err := f.GetProvider()
 	if err != nil {
@@ -180,22 +181,8 @@ func (f *CustomerAuthProviderFactory) HandleCallback(ctx context.Context, req Ca
 		return nil, fmt.Errorf("expected OIDC provider")
 	}
 
-	// Handle the callback - this will find or create a user
-	result, err := oidcProvider.HandleCallback(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure the user has customer role
-	// This handles the case where a user might have been created as a vendor
-	// and is now logging in as a customer
-	if result.User.Role != models.RoleCustomer {
-		// If user exists as vendor, we need to decide what to do
-		// For now, we'll allow them to log in but not change their role
-		// They can use the same account for both
-	}
-
-	return result, nil
+	// Create NEW users as customers (existing users keep their database role)
+	return oidcProvider.HandleCallbackWithRole(ctx, req, models.RoleCustomer)
 }
 
 // TestConnection tests if the OIDC provider can be initialized with the current config.

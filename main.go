@@ -243,6 +243,8 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		settings.DELETE("/github", h.DeleteGitHubConfig)
 		settings.PUT("/github/templates/:page", h.ToggleTemplateOverride)
 		settings.DELETE("/github/templates/:page", h.DeleteTemplateOverride)
+		settings.PUT("/github/assets/*path", h.ToggleAssetOverride)
+		settings.POST("/github/bulk-toggle", h.BulkToggleOverrides)
 	}
 
 	// Profile settings (user can edit their own profile)

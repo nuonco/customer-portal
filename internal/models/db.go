@@ -385,6 +385,24 @@ func runOneToOneMigration(db *gorm.DB) error {
 			return fmt.Errorf("failed to soft-delete orphaned workspaces: %w", err)
 		}
 
+		// Step 2b: For org_ids with multiple active records, keep only the oldest
+		// This handles cases where the same Nuon org was connected to multiple workspaces
+		if err := tx.Exec(`
+			UPDATE nuon_orgs
+			SET deleted_at = NOW()
+			WHERE deleted_at IS NULL
+			AND id NOT IN (
+				SELECT DISTINCT ON (org_id) id
+				FROM nuon_orgs
+				WHERE deleted_at IS NULL AND org_id IS NOT NULL AND org_id != ''
+				ORDER BY org_id, created_at ASC
+			)
+			AND org_id IS NOT NULL
+			AND org_id != ''
+		`).Error; err != nil {
+			return fmt.Errorf("failed to soft-delete duplicate orgs by org_id: %w", err)
+		}
+
 		// Step 3: Add unique partial index on workspace_id (one org per workspace)
 		if err := tx.Exec(`
 			CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_workspace_org

@@ -58,8 +58,16 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 	// Fetch repository tree
 	tree, err := s.client.GetTree(ctx, config.RepoOwner, config.RepoName, config.Branch, config.AccessToken)
 	if err != nil {
-		s.updateSyncStatus(config, models.SyncStatusFailed, fmt.Sprintf("Failed to fetch repository tree: %v", err), "")
+		s.updateSyncStatus(config, models.SyncStatusFailed, fmt.Sprintf("Failed to fetch repository tree: %v", err), "", nil)
 		return nil, fmt.Errorf("failed to fetch tree: %w", err)
+	}
+
+	// Fetch commit details
+	var commit *Commit
+	commit, err = s.client.GetCommit(ctx, config.RepoOwner, config.RepoName, tree.SHA, config.AccessToken)
+	if err != nil {
+		// Log error but don't fail the sync - commit metadata is supplementary
+		fmt.Printf("Warning: failed to fetch commit details: %v\n", err)
 	}
 
 	// Discover files by convention
@@ -83,6 +91,18 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 					continue
 				}
 				discoveredTemplates[pageName] = entry
+				totalSize += entry.Size
+			}
+
+		case strings.HasPrefix(entry.Path, "partials/") && strings.HasSuffix(entry.Path, ".html"):
+			// Partial template file: partials/header.html -> "header"
+			partialName := strings.TrimSuffix(filepath.Base(entry.Path), ".html")
+			if models.IsValidPartialName(partialName) {
+				if entry.Size > MaxTemplateSize {
+					result.Errors = append(result.Errors, fmt.Sprintf("Partial %s exceeds size limit (%d > %d)", entry.Path, entry.Size, MaxTemplateSize))
+					continue
+				}
+				discoveredTemplates[partialName] = entry
 				totalSize += entry.Size
 			}
 
@@ -114,7 +134,7 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 
 	// Check total size limit
 	if totalSize > MaxTotalSize {
-		s.updateSyncStatus(config, models.SyncStatusFailed, fmt.Sprintf("Total size exceeds limit (%d > %d)", totalSize, MaxTotalSize), "")
+		s.updateSyncStatus(config, models.SyncStatusFailed, fmt.Sprintf("Total size exceeds limit (%d > %d)", totalSize, MaxTotalSize), "", nil)
 		return nil, fmt.Errorf("total size exceeds limit: %d > %d", totalSize, MaxTotalSize)
 	}
 
@@ -167,7 +187,7 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 		status = models.SyncStatusFailed
 		syncError = strings.Join(result.Errors, "; ")
 	}
-	s.updateSyncStatus(config, status, syncError, tree.SHA)
+	s.updateSyncStatus(config, status, syncError, tree.SHA, commit)
 
 	return result, nil
 }
@@ -274,13 +294,18 @@ func (s *Syncer) syncAsset(ctx context.Context, config *models.GitHubRepoConfig,
 }
 
 // updateSyncStatus updates the sync status on the config.
-func (s *Syncer) updateSyncStatus(config *models.GitHubRepoConfig, status, errorMsg, sha string) {
+func (s *Syncer) updateSyncStatus(config *models.GitHubRepoConfig, status, errorMsg, sha string, commit *Commit) {
 	now := time.Now()
 	config.LastSyncAt = &now
 	config.LastSyncStatus = status
 	config.LastSyncError = errorMsg
 	if sha != "" {
 		config.LastSyncSHA = sha
+	}
+	if commit != nil {
+		config.LastSyncCommitMessage = commit.Commit.Message
+		config.LastSyncCommitAuthor = commit.Commit.Author.Name
+		config.LastSyncCommitDate = &commit.Commit.Author.Date
 	}
 	s.db.Save(config)
 }

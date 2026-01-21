@@ -35,6 +35,7 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 				<div class="stratus-page-section">
 					<div class="max-w-4xl space-y-6">
 						@customThemeGitHubSection(props.GitHubConfig, props.Templates, props.Assets)
+						@customThemeSyncedFilesSection(props.GitHubConfig, props.Templates, props.Assets)
 					</div>
 				</div>
 				<!-- Config data for JavaScript -->
@@ -51,7 +52,23 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 
 templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-2 text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+		<div class="flex items-center justify-between mb-2">
+			<h3 class="text-lg font-semibold text-cool-grey-800 dark:text-white">GitHub Repository</h3>
+			if config != nil {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("https://github.com/%s/%s/tree/%s", config.RepoOwner, config.RepoName, config.Branch)) }
+					target="_blank"
+					rel="noopener noreferrer"
+					class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 text-xs flex items-center space-x-1"
+					title="View repository on GitHub"
+				>
+					<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+						<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
+					</svg>
+					<span>View Repo</span>
+				</a>
+			}
+		</div>
 		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
 			Connect a GitHub repository containing your custom templates and assets.
 		</p>
@@ -143,93 +160,67 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 				}
 			</div>
 		</div>
-		<!-- Sync Status (shown when configured) -->
+		<!-- Success callout for successful sync -->
 		if config != nil {
-			<div class="mt-6 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
-				<div class="flex items-center justify-between text-sm mb-2">
-					<div>
-						<span class="font-medium text-cool-grey-700 dark:text-cool-grey-300">Status: </span>
-						if config.LastSyncStatus == "success" {
-							<span class="text-green-600 dark:text-green-400">
-								&#10003; Synced
+			if config.LastSyncStatus == "success" && config.LastSyncSHA != "" {
+				<div class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded text-sm">
+					<div class="flex items-start">
+						<svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+						</svg>
+						<div class="flex-1">
+							<h4 class="font-medium mb-1">
+								Status: &#10003; Synced
 								if config.LastSyncAt != nil {
 									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
 								}
-							</span>
-						} else if config.LastSyncStatus == "failed" {
-							<span class="text-red-600 dark:text-red-400">
-								&#10007; Failed
-								if config.LastSyncError != "" {
-									- { config.LastSyncError }
-								}
-							</span>
-						} else {
-							<span class="text-cool-grey-500">Not synced</span>
-						}
-					</div>
-					<div class="flex items-center space-x-3">
-						if config.LastSyncSHA != "" {
-							<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
-								{ config.LastSyncSHA[:7] }
-							</span>
-						}
-						<a
-							href={ templ.SafeURL(fmt.Sprintf("https://github.com/%s/%s/tree/%s", config.RepoOwner, config.RepoName, config.Branch)) }
-							target="_blank"
-							rel="noopener noreferrer"
-							class="text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300 text-xs flex items-center space-x-1"
-							title="View repository on GitHub"
-						>
-							<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-								<path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-							</svg>
-							<span>View Repo</span>
-						</a>
-					</div>
-				</div>
-			</div>
-			<!-- Synced Templates -->
-			if len(templates) > 0 {
-				<div class="mt-4">
-					<h4 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Templates</h4>
-					<div class="space-y-2">
-						for _, tmpl := range templates {
-							<div class="flex items-center justify-between py-2 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded text-sm">
+							</h4>
+							<div class="pl-3 border-l-2 border-green-300 dark:border-green-700 space-y-2">
 								<div class="flex items-center space-x-2">
-									<input
-										type="checkbox"
-										id={ "custom-theme-page-tmpl-" + tmpl.PageName }
-										checked?={ tmpl.IsEnabled }
-										data-page-name={ tmpl.PageName }
-										class="custom-theme-page-template-toggle h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-500"
-									/>
-									<label for={ "custom-theme-page-tmpl-" + tmpl.PageName } class="text-cool-grey-700 dark:text-cool-grey-300">
-										{ tmpl.PageName }.html
-									</label>
+									<span class="text-xs font-medium">Commit:</span>
+									<a
+										href={ templ.SafeURL(fmt.Sprintf("https://github.com/%s/%s/commit/%s", config.RepoOwner, config.RepoName, config.LastSyncSHA)) }
+										target="_blank"
+										rel="noopener noreferrer"
+										class="text-primary-600 hover:text-primary-800 dark:text-primary-400 font-mono text-xs"
+									>
+										{ config.LastSyncSHA[:7] }
+									</a>
 								</div>
-								<span class="text-cool-grey-500 dark:text-cool-grey-400 font-mono text-xs">
-									{ tmpl.SourcePath }
-								</span>
+								if config.LastSyncCommitMessage != "" {
+									<div class="text-sm">{ config.LastSyncCommitMessage }</div>
+								}
+								if config.LastSyncCommitAuthor != "" || config.LastSyncCommitDate != nil {
+									<div class="flex items-center space-x-3 text-xs">
+										if config.LastSyncCommitAuthor != "" {
+											<span>by { config.LastSyncCommitAuthor }</span>
+										}
+										if config.LastSyncCommitDate != nil {
+											<span>{ config.LastSyncCommitDate.Format("Jan 2, 2006 at 3:04 PM") }</span>
+										}
+									</div>
+								}
 							</div>
-						}
+						</div>
 					</div>
 				</div>
 			}
-			<!-- Synced Assets -->
-			if len(assets) > 0 {
-				<div class="mt-4">
-					<h4 class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Synced Assets</h4>
-					<div class="space-y-1 text-sm">
-						for _, asset := range assets {
-							<div class="flex items-center justify-between py-1 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded">
-								<span class="text-cool-grey-600 dark:text-cool-grey-400">
-									{ asset.AssetPath }
-								</span>
-								<span class="text-cool-grey-500 dark:text-cool-grey-400 text-xs">
-									{ formatCustomThemePageAssetSize(len(asset.Content)) }
-								</span>
-							</div>
-						}
+			<!-- Error callout for failed sync -->
+			if config.LastSyncStatus == "failed" && config.LastSyncError != "" {
+				<div class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded text-sm">
+					<div class="flex items-start">
+						<svg class="w-5 h-5 mr-2 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 9.586 8.707 8.293z" clip-rule="evenodd"/>
+						</svg>
+						<div class="flex-1">
+							<h4 class="font-medium mb-1">
+								Status: &#10007; Failed
+								if config.LastSyncAt != nil {
+									{ config.LastSyncAt.Format("Jan 2, 3:04 PM") }
+								}
+							</h4>
+							<p class="text-sm">{ config.LastSyncError }</p>
+						</div>
 					</div>
 				</div>
 			}
@@ -240,11 +231,189 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 	</div>
 }
 
+templ customThemeSyncedFilesSection(config *models.GitHubRepoConfig, templates []models.TemplateOverride, assets []models.AssetOverride) {
+	<!-- Synced Files Table (shown when files exist) -->
+	if config != nil && (len(templates) > 0 || len(assets) > 0) {
+		<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-sm p-6 border border-cool-grey-200 dark:border-dark-grey-700">
+			<!-- Header with search -->
+			<div class="flex items-center justify-between mb-4">
+				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">
+					Synced Files
+					<span class="text-sm font-normal text-cool-grey-500 dark:text-cool-grey-400 ml-2">
+						({ fmt.Sprintf("%d", len(templates) + len(assets)) } files)
+					</span>
+				</h3>
+				<div class="relative w-64">
+					<input
+						type="text"
+						id="syncedFilesSearch"
+						placeholder="Search files..."
+						class="w-full px-3 py-2 pl-10 text-sm border border-cool-grey-300 dark:border-dark-grey-600 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+					/>
+					<svg class="absolute left-3 top-2.5 w-4 h-4 text-cool-grey-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+					</svg>
+				</div>
+			</div>
+			<!-- Bulk Actions -->
+			<div class="flex items-center justify-between mb-4">
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						id="customThemeEnableAllBtn"
+						onclick="customThemeBulkEnable()"
+						class="px-3 py-1.5 text-sm font-medium text-white bg-green-600 hover:bg-green-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						Enable All
+					</button>
+					<button
+						type="button"
+						id="customThemeDisableAllBtn"
+						onclick="customThemeBulkDisable()"
+						class="px-3 py-1.5 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-200 dark:bg-dark-grey-700 hover:bg-cool-grey-300 dark:hover:bg-dark-grey-600 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
+					>
+						Disable All
+					</button>
+				</div>
+			</div>
+			<!-- Table -->
+			<div class="overflow-x-auto">
+				<table class="w-full text-sm" id="syncedFilesTable">
+					<thead class="bg-cool-grey-50 dark:bg-dark-grey-800 border-b border-cool-grey-200 dark:border-dark-grey-700">
+						<tr>
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="type">
+								Type <span class="sort-indicator"></span>
+							</th>
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="name">
+								File Name <span class="sort-indicator"></span>
+							</th>
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="source">
+								Source Path <span class="sort-indicator"></span>
+							</th>
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="size">
+								Size <span class="sort-indicator"></span>
+							</th>
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="status">
+								Status <span class="sort-indicator"></span>
+							</th>
+						</tr>
+					</thead>
+					<tbody class="divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
+						<!-- Template rows -->
+						for _, tmpl := range templates {
+							<tr
+								class="synced-file-row hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800"
+								data-type="template"
+								data-name={ tmpl.PageName + ".html" }
+								data-source={ tmpl.SourcePath }
+								data-size={ fmt.Sprintf("%d", len(tmpl.Content)) }
+								data-status={ boolToStatus(tmpl.IsEnabled) }
+							>
+								<td class="px-4 py-3">
+									<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200">
+										Template
+									</span>
+								</td>
+								<td class="px-4 py-3 font-mono text-cool-grey-900 dark:text-white">
+									{ tmpl.PageName }.html
+								</td>
+								<td class="px-4 py-3 text-cool-grey-600 dark:text-cool-grey-400">
+									{ tmpl.SourcePath }
+								</td>
+								<td class="px-4 py-3 text-cool-grey-600 dark:text-cool-grey-400">
+									{ formatCustomThemePageAssetSize(len(tmpl.Content)) }
+								</td>
+								<td class="px-4 py-3">
+									<label class="inline-flex items-center cursor-pointer">
+										<input
+											type="checkbox"
+											checked?={ tmpl.IsEnabled }
+											data-page-name={ tmpl.PageName }
+											class="custom-theme-page-template-toggle w-4 h-4 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-dark-grey-800 focus:ring-2 dark:bg-dark-grey-700 dark:border-dark-grey-600"
+										/>
+										<span class="ml-2 text-sm text-cool-grey-700 dark:text-cool-grey-300">
+											if tmpl.IsEnabled {
+												Enabled
+											} else {
+												Disabled
+											}
+										</span>
+									</label>
+								</td>
+							</tr>
+						}
+						<!-- Asset rows -->
+						for _, asset := range assets {
+							<tr
+								class="synced-file-row hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800"
+								data-type={ asset.AssetType }
+								data-name={ asset.AssetPath }
+								data-source={ asset.SourcePath }
+								data-size={ fmt.Sprintf("%d", asset.FileSize) }
+								data-status={ boolToStatus(asset.IsEnabled) }
+							>
+								<td class="px-4 py-3">
+									if asset.AssetType == "css" {
+										<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200">
+											CSS
+										</span>
+									} else {
+										<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+											Image
+										</span>
+									}
+								</td>
+								<td class="px-4 py-3 font-mono text-cool-grey-900 dark:text-white">
+									{ asset.AssetPath }
+								</td>
+								<td class="px-4 py-3 text-cool-grey-600 dark:text-cool-grey-400">
+									{ asset.SourcePath }
+								</td>
+								<td class="px-4 py-3 text-cool-grey-600 dark:text-cool-grey-400">
+									{ formatCustomThemePageAssetSize(int(asset.FileSize)) }
+								</td>
+								<td class="px-4 py-3">
+									<label class="inline-flex items-center cursor-pointer">
+										<input
+											type="checkbox"
+											checked?={ asset.IsEnabled }
+											data-asset-path={ asset.AssetPath }
+											class="custom-theme-asset-toggle w-4 h-4 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-dark-grey-800 focus:ring-2 dark:bg-dark-grey-700 dark:border-dark-grey-600"
+										/>
+										<span class="ml-2 text-sm text-cool-grey-700 dark:text-cool-grey-300">
+											if asset.IsEnabled {
+												Enabled
+											} else {
+												Disabled
+											}
+										</span>
+									</label>
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+			<!-- Empty state (shown when search returns no results) -->
+			<div id="noResultsMessage" class="hidden text-center py-8 text-cool-grey-500 dark:text-cool-grey-400">
+				No files match your search criteria
+			</div>
+		</div>
+	}
+}
+
 func formatCustomThemePageAssetSize(bytes int) string {
 	if bytes < 1024 {
 		return fmt.Sprintf("%d B", bytes)
 	}
 	return fmt.Sprintf("%.1f KB", float64(bytes)/1024)
+}
+
+func boolToStatus(enabled bool) string {
+	if enabled {
+		return "enabled"
+	}
+	return "disabled"
 }
 
 templ customThemeSettingsScript() {
@@ -399,6 +568,246 @@ templ customThemeSettingsScript() {
 					window.customThemeToggleTemplate(pageName, enabled);
 				});
 			});
+
+			window.customThemeToggleAsset = async function(assetPath, enabled) {
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				errorMsg.classList.add('hidden');
+
+				try {
+					var response = await fetch(basePath + '/settings/github/assets/' + assetPath, {
+						method: 'PUT',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled })
+					});
+
+					if (!response.ok) {
+						var data = await response.json();
+						errorMsg.textContent = data.error || 'Failed to toggle asset.';
+						errorMsg.classList.remove('hidden');
+						// Revert checkbox on error
+						document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {
+							if (cb.dataset.assetPath === assetPath) {
+								cb.checked = !enabled;
+							}
+						});
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+					document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(cb) {
+						if (cb.dataset.assetPath === assetPath) {
+							cb.checked = !enabled;
+						}
+					});
+				}
+			};
+
+			// Wire up asset toggle checkboxes
+			document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(checkbox) {
+				checkbox.addEventListener('change', function(e) {
+					var assetPath = e.target.dataset.assetPath;
+					var enabled = e.target.checked;
+					window.customThemeToggleAsset(assetPath, enabled);
+				});
+			});
+
+			window.customThemeBulkEnable = function() {
+				customThemeBulkToggle(true);
+			};
+
+			window.customThemeBulkDisable = function() {
+				customThemeBulkToggle(false);
+			};
+
+			window.customThemeBulkToggle = async function(enabled) {
+				var enableBtn = document.getElementById('customThemeEnableAllBtn');
+				var disableBtn = document.getElementById('customThemeDisableAllBtn');
+				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
+				var successMsg = document.getElementById('customThemeGithubSuccessMessage');
+
+				errorMsg.classList.add('hidden');
+				successMsg.classList.add('hidden');
+
+				// Disable buttons during operation
+				enableBtn.disabled = true;
+				disableBtn.disabled = true;
+				enableBtn.textContent = enabled ? 'Enabling...' : 'Enable All';
+				disableBtn.textContent = enabled ? 'Disable All' : 'Disabling...';
+
+				try {
+					var response = await fetch(basePath + '/settings/github/bulk-toggle', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						credentials: 'same-origin',
+						body: JSON.stringify({ enabled: enabled, all: true })
+					});
+
+					var data = await response.json();
+
+					if (response.ok) {
+						// Update all checkboxes
+						document.querySelectorAll('.custom-theme-page-template-toggle, .custom-theme-asset-toggle').forEach(function(cb) {
+							cb.checked = enabled;
+						});
+
+						// Update all status text
+						document.querySelectorAll('.synced-file-row').forEach(function(row) {
+							var statusCell = row.querySelector('label span:last-child');
+							if (statusCell) {
+								statusCell.textContent = enabled ? 'Enabled' : 'Disabled';
+							}
+						});
+
+						successMsg.textContent = data.message || (enabled ? 'All files enabled' : 'All files disabled');
+						successMsg.classList.remove('hidden');
+					} else {
+						errorMsg.textContent = data.error || 'Failed to update files.';
+						errorMsg.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorMsg.textContent = 'Network error. Please try again.';
+					errorMsg.classList.remove('hidden');
+				}
+
+				// Re-enable buttons
+				enableBtn.disabled = false;
+				disableBtn.disabled = false;
+				enableBtn.textContent = 'Enable All';
+				disableBtn.textContent = 'Disable All';
+			};
+
+		// Search functionality
+		var searchInput = document.getElementById('syncedFilesSearch');
+		var tableRows = document.querySelectorAll('.synced-file-row');
+		var noResultsMessage = document.getElementById('noResultsMessage');
+		var tableBody = document.querySelector('#syncedFilesTable tbody');
+
+		if (searchInput) {
+			searchInput.addEventListener('input', function(e) {
+				var searchTerm = e.target.value.toLowerCase();
+				var visibleCount = 0;
+
+				tableRows.forEach(function(row) {
+					var type = row.dataset.type.toLowerCase();
+					var name = row.dataset.name.toLowerCase();
+					var source = row.dataset.source.toLowerCase();
+					var status = row.dataset.status.toLowerCase();
+
+					var matches =
+						type.includes(searchTerm) ||
+						name.includes(searchTerm) ||
+						source.includes(searchTerm) ||
+						status.includes(searchTerm);
+
+					if (matches) {
+						row.style.display = '';
+						visibleCount++;
+					} else {
+						row.style.display = 'none';
+					}
+				});
+
+				// Show/hide empty state
+				if (visibleCount === 0) {
+					tableBody.style.display = 'none';
+					noResultsMessage.classList.remove('hidden');
+				} else {
+					tableBody.style.display = '';
+					noResultsMessage.classList.add('hidden');
+				}
+			});
+		}
+
+		// Sort functionality
+		var currentSort = { column: 'name', direction: 'asc' };
+
+		document.querySelectorAll('[data-sort]').forEach(function(header) {
+			header.addEventListener('click', function() {
+				var column = this.dataset.sort;
+
+				// Toggle direction if same column, otherwise default to asc
+				if (currentSort.column === column) {
+					currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+				} else {
+					currentSort.column = column;
+					currentSort.direction = 'asc';
+				}
+
+				sortTable(column, currentSort.direction);
+				updateSortIndicators(column, currentSort.direction);
+			});
+		});
+
+		function sortTable(column, direction) {
+			var tbody = document.querySelector('#syncedFilesTable tbody');
+			if (!tbody) return;
+
+			var rows = Array.from(tbody.querySelectorAll('.synced-file-row'));
+
+			rows.sort(function(a, b) {
+				var aVal, bVal;
+
+				switch(column) {
+					case 'type':
+						aVal = a.dataset.type;
+						bVal = b.dataset.type;
+						break;
+					case 'name':
+						aVal = a.dataset.name;
+						bVal = b.dataset.name;
+						break;
+					case 'source':
+						aVal = a.dataset.source;
+						bVal = b.dataset.source;
+						break;
+					case 'size':
+						aVal = parseInt(a.dataset.size) || 0;
+						bVal = parseInt(b.dataset.size) || 0;
+						break;
+					case 'status':
+						aVal = a.dataset.status;
+						bVal = b.dataset.status;
+						break;
+					default:
+						return 0;
+				}
+
+				// Numeric comparison for size
+				if (column === 'size') {
+					return direction === 'asc' ? aVal - bVal : bVal - aVal;
+				}
+
+				// String comparison for others
+				if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+				if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+				return 0;
+			});
+
+			// Reorder DOM
+			rows.forEach(function(row) {
+				tbody.appendChild(row);
+			});
+		}
+
+		function updateSortIndicators(activeColumn, direction) {
+			// Clear all indicators
+			document.querySelectorAll('.sort-indicator').forEach(function(indicator) {
+				indicator.textContent = '';
+			});
+
+			// Set active indicator
+			var activeHeader = document.querySelector('[data-sort="' + activeColumn + '"] .sort-indicator');
+			if (activeHeader) {
+				activeHeader.textContent = direction === 'asc' ? ' ↑' : ' ↓';
+			}
+		}
+
+		// Initial sort by name
+		if (document.getElementById('syncedFilesTable')) {
+			sortTable('name', 'asc');
+			updateSortIndicators('name', 'asc');
+		}
 		})();
 	</script>
 }

@@ -2,6 +2,7 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 
@@ -40,6 +41,39 @@ func (il *InstallLink) BeforeCreate(tx *gorm.DB) error {
 
 func (il *InstallLink) GetInstallURL(baseURL string) string {
 	return baseURL + "/install-link?sha=" + il.SHA
+}
+
+// GetInstallURLWithSubdomain returns the install URL with workspace subdomain if configured
+// Falls back to base URL if workspace has no subdomain configured
+func (il *InstallLink) GetInstallURLWithSubdomain(baseURL, baseDomain string) string {
+	// If workspace is preloaded and has a subdomain, construct subdomain URL
+	if il.Workspace.Subdomain != "" {
+		subdomainURL := constructSubdomainURL(baseURL, baseDomain, il.Workspace.Subdomain)
+		return subdomainURL + "/install-link?sha=" + il.SHA
+	}
+
+	// Fallback to base URL (existing behavior)
+	return il.GetInstallURL(baseURL)
+}
+
+// constructSubdomainURL builds a URL with subdomain inserted properly
+// Handles both localhost (with port) and production domains
+// Examples:
+//
+//	baseURL: "http://localhost:8080", baseDomain: "localhost:8080", subdomain: "acme"
+//	-> "http://acme.localhost:8080"
+//
+//	baseURL: "https://portal.nuon.co", baseDomain: "portal.nuon.co", subdomain: "acme"
+//	-> "https://acme.portal.nuon.co"
+func constructSubdomainURL(baseURL, baseDomain, subdomain string) string {
+	// Parse scheme from baseURL (http:// or https://)
+	scheme := "https://"
+	if strings.HasPrefix(baseURL, "http://") {
+		scheme = "http://"
+	}
+
+	// Construct subdomain URL: scheme + subdomain + . + baseDomain
+	return fmt.Sprintf("%s%s.%s", scheme, subdomain, baseDomain)
 }
 
 // GetHealthCheckActionIDs returns the health check action IDs as a slice

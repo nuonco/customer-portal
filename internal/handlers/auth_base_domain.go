@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
 
@@ -15,10 +16,11 @@ import (
 // BaseDomainLogin initiates OIDC login from the base domain.
 // This is the first step in the base domain authentication flow:
 // 1. Customer visits subdomain.portal.nuon.co/login
-// 2. Redirects to portal.nuon.co/auth/login?return_to=subdomain
+// 2. Redirects to portal.nuon.co/auth/login?return_to=subdomain&redirect=/some/path
 // 3. This handler generates state, stores cookie, redirects to OIDC provider
 //
-// The state parameter embeds the subdomain so we know where to redirect after auth.
+// The state parameter embeds both the subdomain and redirect URL so we know
+// where to redirect after auth completes.
 func (h *Handler) BaseDomainLogin(c *gin.Context) {
 	// Get return subdomain from query parameter
 	returnSubdomain := c.Query("return_to")
@@ -28,6 +30,9 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 		})
 		return
 	}
+
+	// Get redirect URL from query parameter (optional, e.g., /install-link?sha=XYZ)
+	redirectURL := c.Query("redirect")
 
 	// Validate subdomain format
 	if err := validateSubdomain(returnSubdomain); err != nil {
@@ -44,8 +49,8 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 		return
 	}
 
-	// Generate state with embedded subdomain info
-	state, err := auth.GenerateStateWithSubdomain(returnSubdomain)
+	// Generate state with embedded subdomain and redirect URL
+	state, err := auth.GenerateStateWithRedirect(returnSubdomain, redirectURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to generate security token",
@@ -131,11 +136,19 @@ func (h *Handler) BaseDomainCallback(c *gin.Context) {
 		return
 	}
 
+	// Extract redirect URL from state (if present)
+	redirectURL, _ := auth.ExtractRedirectFromState(state)
+
 	// Redirect to subdomain with JWT in query parameter (single-use)
 	// The subdomain completion handler will set the JWT cookie on the subdomain
 	protocol := getRequestProtocol(c)
 	subdomainURL := fmt.Sprintf("%s://%s.%s/auth/complete?token=%s",
 		protocol, returnSubdomain, h.subdomainBaseDomain, tokenString)
+
+	// Pass redirect URL to subdomain completion handler if present
+	if redirectURL != "" {
+		subdomainURL = fmt.Sprintf("%s&redirect=%s", subdomainURL, url.QueryEscape(redirectURL))
+	}
 
 	c.Redirect(http.StatusFound, subdomainURL)
 }
@@ -185,8 +198,19 @@ func (h *Handler) CompleteSubdomainAuth(c *gin.Context) {
 		true,  // httpOnly
 	)
 
-	// Redirect to installs page
-	c.Redirect(http.StatusFound, "/installs")
+	// Get redirect URL from query params, default to /installs
+	redirectURL := c.Query("redirect")
+	if redirectURL == "" {
+		redirectURL = "/installs"
+	}
+
+	// Security: Validate redirect URL is a relative path to prevent open redirect attacks
+	// Only allow paths that start with "/" and don't contain "//" (which could be a protocol-relative URL)
+	if !strings.HasPrefix(redirectURL, "/") || strings.Contains(redirectURL, "//") {
+		redirectURL = "/installs"
+	}
+
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 // AuthErrorPage displays an error page for authentication failures.

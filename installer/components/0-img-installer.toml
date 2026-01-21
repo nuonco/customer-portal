@@ -1,9 +1,0 @@
-#:schema https://api.nuon.co/v1/general/config-schema?source=docker_build
-name = "img_installer"
-type = "docker_build"
-dockerfile = "Dockerfile"
-
-[connected_repo]
-directory = "exp/installer/app"
-repo      = "nuonco/mono"
-branch    = "ja/installer-v2"

@@ -8,6 +8,7 @@ import (
 // This provides a unified data structure that both Templ and html/template can use.
 type TemplateContext struct {
 	// Layout data (available on all pages)
+	WorkspaceID   string     `json:"workspace_id,omitempty"`
 	Title         string     `json:"title"`
 	User          *UserData  `json:"user,omitempty"`
 	BasePath      string     `json:"base_path"`
@@ -33,7 +34,9 @@ type ThemeData struct {
 	PrimaryColorDark   string `json:"primary_color_dark"`
 	SecondaryColor     string `json:"secondary_color"`
 	SecondaryColorDark string `json:"secondary_color_dark"`
-	LogoBase64         string `json:"logo_base64,omitempty"`
+	LogoBase64         string `json:"logo_base64,omitempty"`       // Backward compatibility (alias for LogoLightBase64)
+	LogoLightBase64    string `json:"logo_light_base64,omitempty"` // Light mode logo
+	LogoDarkBase64     string `json:"logo_dark_base64,omitempty"`  // Dark mode logo
 	HeadingFont        string `json:"heading_font,omitempty"`
 	BodyFont           string `json:"body_font,omitempty"`
 	HeadingFontBase64  string `json:"heading_font_base64,omitempty"`
@@ -89,6 +92,7 @@ type InstallData struct {
 	Name                string `json:"name"`
 	Status              string `json:"status"`
 	Region              string `json:"region"`
+	Platform            string `json:"platform"`
 	AppName             string `json:"app_name"`
 	CreatedAt           string `json:"created_at"`
 	HasHealthChecks     bool   `json:"has_health_checks"`
@@ -210,7 +214,9 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		PrimaryColorDark:   darkenColor(primaryColor),
 		SecondaryColor:     secondaryColor,
 		SecondaryColorDark: darkenColor(secondaryColor),
-		LogoBase64:         theme.LogoLightBase64,
+		LogoBase64:         theme.LogoLightBase64, // Backward compatibility
+		LogoLightBase64:    theme.LogoLightBase64,
+		LogoDarkBase64:     theme.LogoDarkBase64,
 		HeadingFont:        theme.HeadingFont,
 		BodyFont:           theme.BodyFont,
 		HeadingFontBase64:  theme.HeadingFontBase64,

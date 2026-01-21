@@ -121,7 +121,7 @@ func (r *TemplateRenderer) getOrParseTemplate(workspaceID, pageName, content str
 	r.cacheMu.RUnlock()
 
 	// Parse template
-	tmpl, err := template.New(pageName).Funcs(templateFuncs()).Parse(content)
+	tmpl, err := template.New(pageName).Funcs(r.getFuncMap()).Parse(content)
 	if err != nil {
 		return nil, err
 	}
@@ -176,12 +176,34 @@ func (r *TemplateRenderer) GetCustomCSSPath(workspaceID, basePath string) string
 // with all available template functions (including component functions).
 // This should be used by the syncer when validating templates from GitHub.
 func ValidateTemplate(name, content string) error {
-	_, err := template.New(name).Funcs(templateFuncs()).Parse(content)
+	_, err := template.New(name).Funcs(getBaseFuncMap()).Parse(content)
 	return err
 }
 
-// templateFuncs returns template functions available in override templates.
-func templateFuncs() template.FuncMap {
+// getFuncMap returns template functions available in override templates.
+// This is a method on TemplateRenderer so layout functions can access the renderer.
+func (r *TemplateRenderer) getFuncMap() template.FuncMap {
+	funcMap := getBaseFuncMap()
+
+	// Override layout functions to pass renderer instance
+	funcMap["header"] = func(ctx *TemplateContext) template.HTML {
+		return RenderHeader(ctx, r)
+	}
+	funcMap["sidebar"] = func(ctx *TemplateContext) template.HTML {
+		return RenderSidebar(ctx, r)
+	}
+	funcMap["footer"] = func(ctx *TemplateContext) template.HTML {
+		return RenderFooter(ctx, r)
+	}
+	funcMap["scripts"] = func(ctx *TemplateContext) template.HTML {
+		return RenderScripts(ctx, r)
+	}
+
+	return funcMap
+}
+
+// getBaseFuncMap returns the base template functions that don't need renderer access.
+func getBaseFuncMap() template.FuncMap {
 	return template.FuncMap{
 		// Safe URL output
 		"safeURL": func(s string) template.URL {
@@ -216,6 +238,10 @@ func templateFuncs() template.FuncMap {
 			}
 			return val
 		},
+		// String prefix check
+		"hasPrefix": func(s, prefix string) bool {
+			return len(s) >= len(prefix) && s[:len(prefix)] == prefix
+		},
 
 		// Component functions - render pre-defined Templ components
 		// Usage: {{ statusBadge .Status }} or {{ statusBadge .Status "install" "md" }}
@@ -229,18 +255,26 @@ func templateFuncs() template.FuncMap {
 		// Helper to create pagination data: {{ pagination (paginationData 1 10 false true 0 2 "?page=") }}
 		"paginationData": MakePaginationData,
 
-		// Layout functions - render standard layout components
+		// Layout functions - render standard layout components (without override support)
+		// Note: These will be overridden in getFuncMap() to add renderer support
 		// Usage: {{ head . }} - renders complete <head> section with CSS, fonts, theme
 		"head": RenderHead,
 		// Usage: <body {{ bodyAttrs . }}> - renders body attributes with theme classes
 		"bodyAttrs": RenderBodyAttrs,
-		// Usage: {{ header . }} - renders header with logo, user, logout
-		"header": RenderHeader,
-		// Usage: {{ footer . }} - renders footer with branding
-		"footer": RenderFooter,
-		// Usage: {{ scripts . }} - renders utility scripts (toast, modals, auth)
-		"scripts": RenderScripts,
 		// Usage: {{ previewBanner }} - renders dismissible preview banner
 		"previewBanner": RenderPreviewBanner,
+		// Stub versions of layout functions for validation (will be overridden with full versions in getFuncMap)
+		"header": func(ctx *TemplateContext) template.HTML {
+			return template.HTML("<!-- header placeholder -->")
+		},
+		"sidebar": func(ctx *TemplateContext) template.HTML {
+			return template.HTML("<!-- sidebar placeholder -->")
+		},
+		"footer": func(ctx *TemplateContext) template.HTML {
+			return template.HTML("<!-- footer placeholder -->")
+		},
+		"scripts": func(ctx *TemplateContext) template.HTML {
+			return template.HTML("<!-- scripts placeholder -->")
+		},
 	}
 }

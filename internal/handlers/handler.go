@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -165,13 +166,15 @@ func (h *Handler) RenderTempl(c *gin.Context, status int, component templ.Compon
 }
 
 // buildTemplateContext creates a TemplateContext for override templates from existing data
-func (h *Handler) buildTemplateContext(title string, user *models.User, theme *models.AppTheme, pageData interface{}) *overrides.TemplateContext {
+func (h *Handler) buildTemplateContext(workspaceID, title string, user *models.User, theme *models.AppTheme, pageData interface{}) *overrides.TemplateContext {
 	ctx := &overrides.TemplateContext{
-		Title:    title,
-		BasePath: h.basePath,
-		CSSPath:  assets.CustomerCSSPath(),
-		Theme:    overrides.NewThemeData(theme),
-		PageData: pageData,
+		WorkspaceID:   workspaceID,
+		Title:         title,
+		BasePath:      h.basePath,
+		CSSPath:       assets.CustomerCSSPath(),
+		CustomCSSPath: h.getCustomCSSPath(workspaceID),
+		Theme:         overrides.NewThemeData(theme),
+		PageData:      pageData,
 	}
 
 	if user != nil {
@@ -317,7 +320,7 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 		Message: errorMsg,
 		Code:    status,
 	}
-	ctx := h.buildTemplateContext(title, user, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, title, user, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "error", ctx) {
 		return
 	}
@@ -471,11 +474,19 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	subdomain, _ := c.Get("subdomain")
 	var authURL string
 
+	// Get redirect URL from query params (e.g., from install link page when user is not logged in)
+	redirectURL := c.Query("redirect")
+
 	if subdomain != nil && subdomain.(string) != "" {
 		// On subdomain: buttons should link to base domain auth endpoint
 		// This initiates the base domain auth flow to avoid cookie scoping issues
 		authURL = fmt.Sprintf("%s/auth/login?return_to=%s",
 			h.customerBaseURL, subdomain.(string))
+
+		// Preserve redirect URL through the auth flow
+		if redirectURL != "" {
+			authURL = fmt.Sprintf("%s&redirect=%s", authURL, url.QueryEscape(redirectURL))
+		}
 	} else {
 		// On base domain: show error or fallback behavior
 		if errorMsg == "" {
@@ -516,7 +527,7 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 		SwitchURL:  props.SwitchURL,
 		SwitchText: props.SwitchText,
 	}
-	ctx := h.buildTemplateContext(theme.GetLoginTitle(), nil, theme, pageData)
+	ctx := h.buildTemplateContext(workspaceID, theme.GetLoginTitle(), nil, theme, pageData)
 	if h.tryRenderOverride(c, workspaceID, "login", ctx) {
 		return
 	}
@@ -843,21 +854,43 @@ func (h *Handler) LocalRegister(c *gin.Context) {
 	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
-// OrgsPage redirects to the workspace's connected org's links page.
+// OrgsPage renders the organizations list page for a workspace.
 // Each workspace has exactly one connected org (one-to-one relationship).
+// New users may have a workspace but no org yet - they need to see the empty state
+// with the "Connect Your First Org" button rather than an error page.
 func (h *Handler) OrgsPage(c *gin.Context) {
+	user := middleware.GetCurrentUser(c)
 	workspace := middleware.GetCurrentWorkspace(c)
 
 	// Load the workspace's org (one-to-one relationship)
-	var org models.NuonOrg
-	if err := h.db.Where("workspace_id = ? AND deleted_at IS NULL", workspace.ID).First(&org).Error; err != nil {
-		// This shouldn't happen with one-to-one - workspace should always have an org
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace has no connected organization. Please contact support.")
-		return
+	// Returns empty slice if no org exists (valid state for new users)
+	var orgs []models.NuonOrg
+	h.db.Where("workspace_id = ? AND deleted_at IS NULL", workspace.ID).Find(&orgs)
+
+	// Get user workspaces for workspace switcher
+	userWorkspaces := h.GetUserWorkspaces(user.ID)
+
+	// Set current org to nil if no orgs exist (for new users)
+	var currentOrg *models.NuonOrg
+	if len(orgs) > 0 {
+		currentOrg = &orgs[0]
 	}
 
-	// Redirect to the org's install links page
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID))
+	// Render the orgs page template
+	vendorpages.OrgsPage(vendorpages.OrgsPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:            "Connected Organizations",
+			ActivePage:       "", // No active page on orgs list
+			User:             user,
+			CurrentOrg:       currentOrg,
+			Orgs:             orgs,
+			BasePath:         h.basePath,
+			CurrentWorkspace: workspace,
+			Workspaces:       userWorkspaces,
+			CSSPath:          assets.VendorCSSPath(),
+		},
+		Orgs: orgs,
+	}).Render(c.Request.Context(), c.Writer)
 }
 
 // CreateOrg is deprecated - orgs are now created with workspaces (one-to-one relationship).
@@ -1180,12 +1213,12 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 	}
 
 	var link models.InstallLink
-	if err := h.db.Preload("Install").Preload("NuonOrg").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
+	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Preload("Workspace").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
-	installURL := link.GetInstallURL(h.customerBaseURL)
+	installURL := link.GetInstallURLWithSubdomain(h.customerBaseURL, h.subdomainBaseDomain)
 
 	// Fetch all orgs for sidebar dropdown
 	workspace := middleware.GetCurrentWorkspace(c)
@@ -1253,12 +1286,12 @@ func (h *Handler) InstallLinkStatus(c *gin.Context) {
 	}
 
 	var link models.InstallLink
-	if err := h.db.Preload("Install").Preload("NuonOrg").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
+	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Preload("Workspace").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
-	installURL := link.GetInstallURL(h.customerBaseURL)
+	installURL := link.GetInstallURLWithSubdomain(h.customerBaseURL, h.subdomainBaseDomain)
 
 	// For HTMX requests, return only the status partial
 	if isHTMXRequest(c) {
@@ -2643,7 +2676,7 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 	query := h.db.Table("installs").
 		Select("users.id as user_id, users.name, users.email, COUNT(*) as install_count").
 		Joins("JOIN users ON users.id = installs.user_id").
-		Where("installs.workspace_id = ? AND users.role = ?", workspace.ID, models.RoleCustomer).
+		Where("installs.workspace_id = ?", workspace.ID).
 		Group("users.id, users.name, users.email").
 		Order("users.name ASC")
 
@@ -2740,9 +2773,9 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 	// Get customer ID from URL
 	customerID := c.Param("customer_id")
 
-	// Get customer user
+	// Get customer user (role filter removed - if they own installs in this workspace, they're a customer)
 	var customer models.User
-	if err := h.db.Where("id = ? AND role = ?", customerID, models.RoleCustomer).First(&customer).Error; err != nil {
+	if err := h.db.Where("id = ?", customerID).First(&customer).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Customer not found")
 		return
 	}

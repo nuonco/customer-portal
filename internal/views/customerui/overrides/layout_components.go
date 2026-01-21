@@ -3,6 +3,8 @@ package overrides
 import (
 	"html/template"
 	"strings"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // Static HTML/script constants - matches output from layout.templ
@@ -175,6 +177,31 @@ const authScript = `<script>
 	};
 })();
 </script>`
+
+// renderPartialOverride attempts to render a partial override, returns empty string if not found.
+func renderPartialOverride(ctx *TemplateContext, renderer *TemplateRenderer, partialName string) template.HTML {
+	if ctx == nil || renderer == nil || ctx.WorkspaceID == "" {
+		return ""
+	}
+
+	override, err := models.GetEnabledTemplateOverride(renderer.db, ctx.WorkspaceID, partialName)
+	if err != nil || override == nil {
+		return ""
+	}
+
+	// Parse and execute the override template
+	tmpl, err := template.New(partialName).Funcs(renderer.getFuncMap()).Parse(override.Content)
+	if err != nil {
+		return ""
+	}
+
+	var buf strings.Builder
+	if err := tmpl.Execute(&buf, ctx); err != nil {
+		return ""
+	}
+
+	return template.HTML(buf.String())
+}
 
 // RenderHead generates the complete <head> section including:
 // - Meta charset and viewport
@@ -362,7 +389,13 @@ func RenderBodyAttrs(ctx *TemplateContext) template.HTMLAttr {
 // RenderHeader generates the header HTML with logo, user email, and logout button.
 //
 // Usage in templates: {{ header . }}
-func RenderHeader(ctx *TemplateContext) template.HTML {
+func RenderHeader(ctx *TemplateContext, renderer *TemplateRenderer) template.HTML {
+	// Check for partial override
+	if override := renderPartialOverride(ctx, renderer, "header"); override != "" {
+		return override
+	}
+
+	// Default header rendering
 	var b strings.Builder
 
 	b.WriteString(`<header class="max-w-5xl mx-auto px-6 lg:px-8 pt-6">`)
@@ -396,10 +429,32 @@ func RenderHeader(ctx *TemplateContext) template.HTML {
 	return template.HTML(b.String())
 }
 
+// RenderSidebar generates the sidebar navigation HTML.
+// This checks for a sidebar partial override and renders it if found.
+// If no override exists, returns empty string (no default sidebar implementation).
+//
+// Usage in templates: {{ sidebar . }}
+func RenderSidebar(ctx *TemplateContext, renderer *TemplateRenderer) template.HTML {
+	// Check for partial override
+	if override := renderPartialOverride(ctx, renderer, "sidebar"); override != "" {
+		return override
+	}
+
+	// No default sidebar - return empty
+	// Workspaces must provide their own sidebar.html partial
+	return ""
+}
+
 // RenderFooter generates the footer HTML with branding and support link.
 //
 // Usage in templates: {{ footer . }}
-func RenderFooter(ctx *TemplateContext) template.HTML {
+func RenderFooter(ctx *TemplateContext, renderer *TemplateRenderer) template.HTML {
+	// Check for partial override
+	if override := renderPartialOverride(ctx, renderer, "footer"); override != "" {
+		return override
+	}
+
+	// Default footer rendering
 	var b strings.Builder
 
 	b.WriteString(`<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">`)
@@ -435,32 +490,38 @@ func layoutGetSupportHref(contact string) string {
 // - Auth script (fetch credentials)
 //
 // Usage in templates: {{ scripts . }}
-func RenderScripts(ctx *TemplateContext) template.HTML {
+func RenderScripts(ctx *TemplateContext, renderer *TemplateRenderer) template.HTML {
 	var b strings.Builder
 
-	// Config data element
+	// Config data element (always included)
 	b.WriteString(`<div id="customer-layout-config" class="hidden" data-base-path="`)
 	b.WriteString(template.HTMLEscapeString(ctx.BasePath))
 	b.WriteString(`"></div>`)
 	b.WriteString("\n")
 
-	// Logout script
+	// Logout script (always included)
 	b.WriteString(logoutScript)
 	b.WriteString("\n")
 
-	// Toast
-	b.WriteString(toastHTML)
+	// Toast - check for override
+	if override := renderPartialOverride(ctx, renderer, "toast"); override != "" {
+		b.WriteString(string(override))
+	} else {
+		b.WriteString(toastHTML)
+	}
 	b.WriteString("\n")
 
-	// Confirm modal
-	b.WriteString(confirmModalHTML)
+	// Modal - check for override
+	if override := renderPartialOverride(ctx, renderer, "modal"); override != "" {
+		b.WriteString(string(override))
+	} else {
+		b.WriteString(confirmModalHTML)
+		b.WriteString("\n")
+		b.WriteString(promptModalHTML)
+	}
 	b.WriteString("\n")
 
-	// Prompt modal
-	b.WriteString(promptModalHTML)
-	b.WriteString("\n")
-
-	// Auth script
+	// Auth script (always included)
 	b.WriteString(authScript)
 
 	return template.HTML(b.String())

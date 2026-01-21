@@ -36,6 +36,21 @@ templ LinkStatus(props LinkStatusProps) {
 					<p class="text-sm text-green-600 dark:text-green-400 mt-1">
 						Install ID: { props.Link.Install.NuonInstallID }
 					</p>
+					if props.Link.Install.User.ID != "" {
+						<p class="text-sm text-green-600 dark:text-green-400 mt-1">
+							Customer:{ " " }
+							<a
+								href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/customers/%s", props.BasePath, props.Link.OrgID, props.Link.Install.User.ID)) }
+								class="font-medium text-green-700 dark:text-green-300 underline hover:text-green-800 dark:hover:text-green-200"
+							>
+								if props.Link.Install.User.Name != "" {
+									{ props.Link.Install.User.Name }
+								} else {
+									{ props.Link.Install.User.Email }
+								}
+							</a>
+						</p>
+					}
 					<div class="flex flex-wrap gap-2 mt-3">
 						<a
 							href={ templ.SafeURL(fmt.Sprintf("/installs/%s", props.Link.Install.ID)) }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -34,16 +35,19 @@ func (h *Handler) GetGitHubConfig(c *gin.Context) {
 	assets, _ := models.GetAllAssetOverrides(h.db, workspace.ID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"configured":       true,
-		"repo_owner":       config.RepoOwner,
-		"repo_name":        config.RepoName,
-		"branch":           config.Branch,
-		"last_sync_at":     config.LastSyncAt,
-		"last_sync_status": config.LastSyncStatus,
-		"last_sync_error":  config.LastSyncError,
-		"last_sync_sha":    config.LastSyncSHA,
-		"templates":        templates,
-		"assets":           assets,
+		"configured":               true,
+		"repo_owner":               config.RepoOwner,
+		"repo_name":                config.RepoName,
+		"branch":                   config.Branch,
+		"last_sync_at":             config.LastSyncAt,
+		"last_sync_status":         config.LastSyncStatus,
+		"last_sync_error":          config.LastSyncError,
+		"last_sync_sha":            config.LastSyncSHA,
+		"last_sync_commit_message": config.LastSyncCommitMessage,
+		"last_sync_commit_author":  config.LastSyncCommitAuthor,
+		"last_sync_commit_date":    config.LastSyncCommitDate,
+		"templates":                templates,
+		"assets":                   assets,
 	})
 }
 
@@ -234,6 +238,116 @@ func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
 		"message":    "Template override updated",
 		"page_name":  pageName,
 		"is_enabled": override.IsEnabled,
+	})
+}
+
+// ToggleAssetOverride enables or disables a custom asset.
+func (h *Handler) ToggleAssetOverride(c *gin.Context) {
+	workspace := middleware.GetCurrentWorkspace(c)
+	if workspace == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+		return
+	}
+
+	assetPath := c.Param("path")
+	// Remove leading slash if present
+	if len(assetPath) > 0 && assetPath[0] == '/' {
+		assetPath = assetPath[1:]
+	}
+
+	var req struct {
+		Enabled bool `json:"enabled"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Get the asset override
+	asset, err := models.GetAssetOverride(h.db, workspace.ID, assetPath)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Asset not found"})
+		return
+	}
+
+	// Update enabled state
+	asset.IsEnabled = req.Enabled
+	if err := h.db.Save(asset).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update asset"})
+		return
+	}
+
+	// Invalidate CSS cache if it's a CSS file
+	if asset.AssetType == models.AssetTypeCSS {
+		// Clear workspace CSS cache by invalidating all CSS assets
+		h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":    "Asset override updated",
+		"asset_path": assetPath,
+		"is_enabled": asset.IsEnabled,
+	})
+}
+
+// BulkToggleOverrides enables or disables multiple templates and assets at once.
+func (h *Handler) BulkToggleOverrides(c *gin.Context) {
+	workspace := middleware.GetCurrentWorkspace(c)
+	if workspace == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+		return
+	}
+
+	var req struct {
+		Enabled bool `json:"enabled"`
+		All     bool `json:"all"` // If true, toggle all files
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	// Start transaction for atomicity
+	tx := h.db.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	if req.All {
+		// Update all templates
+		if err := tx.Model(&models.TemplateOverride{}).
+			Where("workspace_id = ?", workspace.ID).
+			Update("is_enabled", req.Enabled).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update templates"})
+			return
+		}
+
+		// Update all assets
+		if err := tx.Model(&models.AssetOverride{}).
+			Where("workspace_id = ?", workspace.ID).
+			Update("is_enabled", req.Enabled).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assets"})
+			return
+		}
+	}
+
+	// Commit transaction
+	if err := tx.Commit().Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to commit changes"})
+		return
+	}
+
+	// Invalidate all caches for this workspace
+	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": fmt.Sprintf("All files %s successfully",
+			map[bool]string{true: "enabled", false: "disabled"}[req.Enabled]),
+		"enabled": req.Enabled,
 	})
 }
 

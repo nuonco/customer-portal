@@ -10,18 +10,21 @@ import (
 // GitHubRepoConfig stores the GitHub repository configuration for a workspace's
 // custom template overrides. Each workspace can have one GitHub repo configured.
 type GitHubRepoConfig struct {
-	ID             string     `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID    string     `gorm:"uniqueIndex" json:"workspace_id"` // One config per workspace
-	RepoOwner      string     `json:"repo_owner"`                      // e.g., "acme-corp"
-	RepoName       string     `json:"repo_name"`                       // e.g., "customer-portal-theme"
-	Branch         string     `json:"branch"`                          // default: "main"
-	AccessToken    string     `json:"-"`                               // GitHub PAT (not exposed in JSON)
-	LastSyncAt     *time.Time `json:"last_sync_at"`
-	LastSyncStatus string     `json:"last_sync_status"` // "success", "failed", "pending", ""
-	LastSyncError  string     `json:"last_sync_error"`
-	LastSyncSHA    string     `json:"last_sync_sha"` // Git commit SHA of last sync
-	CreatedAt      time.Time  `json:"created_at"`
-	UpdatedAt      time.Time  `json:"updated_at"`
+	ID                    string     `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
+	WorkspaceID           string     `gorm:"uniqueIndex" json:"workspace_id"` // One config per workspace
+	RepoOwner             string     `json:"repo_owner"`                      // e.g., "acme-corp"
+	RepoName              string     `json:"repo_name"`                       // e.g., "customer-portal-theme"
+	Branch                string     `json:"branch"`                          // default: "main"
+	AccessToken           string     `json:"-"`                               // GitHub PAT (not exposed in JSON)
+	LastSyncAt            *time.Time `json:"last_sync_at"`
+	LastSyncStatus        string     `json:"last_sync_status"` // "success", "failed", "pending", ""
+	LastSyncError         string     `json:"last_sync_error"`
+	LastSyncSHA           string     `json:"last_sync_sha"`            // Git commit SHA of last sync
+	LastSyncCommitMessage string     `json:"last_sync_commit_message"` // Commit message from last sync
+	LastSyncCommitAuthor  string     `json:"last_sync_commit_author"`  // Commit author from last sync
+	LastSyncCommitDate    *time.Time `json:"last_sync_commit_date"`    // Commit date from last sync
+	CreatedAt             time.Time  `json:"created_at"`
+	UpdatedAt             time.Time  `json:"updated_at"`
 
 	// Relationships
 	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"`

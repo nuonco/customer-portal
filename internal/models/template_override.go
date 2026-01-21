@@ -52,6 +52,26 @@ func IsValidPageName(pageName string) bool {
 	return false
 }
 
+// ValidPartialNames are the customer partials that can be overridden.
+var ValidPartialNames = []string{
+	"header",
+	"footer",
+	"sidebar",
+	"modal",
+	"theme_styles",
+	"toast",
+}
+
+// IsValidPartialName checks if a partial name is valid for override.
+func IsValidPartialName(partialName string) bool {
+	for _, valid := range ValidPartialNames {
+		if valid == partialName {
+			return true
+		}
+	}
+	return false
+}
+
 // GetTemplateOverride returns the template override for a workspace and page, or nil if not found.
 func GetTemplateOverride(db *gorm.DB, workspaceID, pageName string) (*TemplateOverride, error) {
 	var override TemplateOverride
