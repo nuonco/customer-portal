@@ -425,7 +425,7 @@ templ createOrgScript() {
 			errorDiv.classList.add('hidden');
 
 			try {
-				const response = await fetch(basePath + '/workspaces', {
+				const response = await fetch(basePath + '/org/create', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'

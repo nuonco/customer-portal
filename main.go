@@ -256,17 +256,18 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		profile.PUT("/", h.UpdateProfile)
 	}
 
-	// Protected vendor routes (require org context)
+	// Protected vendor routes
 	orgs := rg.Group("/orgs")
 	orgs.Use(jwtAuth.MiddlewareFunc())
 	orgs.Use(middleware.RequireRole(models.RoleVendor))
-	orgs.Use(middleware.RequireOrgContext(db))
 	{
-		// Org-level routes (no specific org selected)
+		// Org-level routes (no specific org selected, no RequireOrgContext)
+		// This allows users with no orgs to reach this route without redirect loop
 		orgs.GET("/", h.OrgsPage)
 
-		// Org-specific routes (require org access by param)
+		// Org-specific routes (require org context and access by param)
 		orgRoutes := orgs.Group("/:org_id")
+		orgRoutes.Use(middleware.RequireOrgContext(db))
 		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
 		{
 			orgRoutes.GET("/install-links", h.OrgDetailPage)

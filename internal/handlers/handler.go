@@ -859,19 +859,41 @@ func (h *Handler) LocalRegister(c *gin.Context) {
 // New users may have a workspace but no org yet - they need to see the empty state
 // with the "Connect Your First Org" button rather than an error page.
 func (h *Handler) OrgsPage(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
+	user := h.GetFreshUser(c)
 
 	// Get all orgs accessible to this user
 	orgs := h.GetUserOrgs(user.ID)
 
-	// Redirect to first org's apps page
+	// If user has orgs, redirect to the first org's apps page
 	if len(orgs) > 0 {
 		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, orgs[0].ID))
 		return
 	}
 
-	// No orgs - show error
-	h.RenderErrorPage(c, http.StatusNotFound, "No organizations found")
+	// No orgs - render the OrgsPage template with empty state
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
+	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
+	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
+
+	props := vendorpages.OrgsPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:              "Organizations",
+			ActivePage:         "orgs",
+			User:               user,
+			CurrentOrg:         nil,
+			Orgs:               orgs,
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
+			BasePath:           h.basePath,
+			PrimaryColor:       primaryColor,
+			PrimaryColorDark:   primaryColorDark,
+			SecondaryColor:     secondaryColor,
+			SecondaryColorDark: secondaryColorDark,
+			CSSPath:            assets.VendorCSSPath(),
+		},
+		Orgs: orgs,
+	}
+
+	h.RenderTempl(c, http.StatusOK, vendorpages.OrgsPage(props))
 }
 
 // NOTE: CreateOrg and UpdateOrg are now defined in workspaces.go
