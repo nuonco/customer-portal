@@ -19,11 +19,22 @@ metadata:
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=300
     alb.ingress.kubernetes.io/tags: 'service=customer-dashboard,service_type=app,env={{ .Values.env.ENV }}'
-    external-dns.alpha.kubernetes.io/hostname: {{ .Values.app.alb.public_domain }}
+    external-dns.alpha.kubernetes.io/hostname: {{ .Values.app.alb.public_domain }},*.{{ .Values.app.alb.public_domain }}
 spec:
   ingressClassName: alb
   rules:
-    - http:
+    - host: "{{ .Values.app.alb.public_domain }}"
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "common.fullname" . }}
+                port:
+                  name: http
+    - host: "*.{{ .Values.app.alb.public_domain }}"
+      http:
         paths:
           - path: /
             pathType: Prefix
