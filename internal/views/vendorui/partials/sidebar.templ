@@ -65,7 +65,7 @@ templ Sidebar(props SidebarProps) {
 						</div>
 					}
 					<div class="border-t border-cool-grey-200 dark:border-dark-grey-600 mt-1 pt-1">
-						<button type="button" onclick="openCreateWorkspaceModal(); toggleOrgDropdown();" class="stratus-org-item w-full text-left">
+						<button type="button" onclick="openCreateOrgModal(); toggleOrgDropdown();" class="stratus-org-item w-full text-left">
 							@plusIcon()
 							<span>Connect Org</span>
 						</button>
@@ -125,11 +125,18 @@ templ Sidebar(props SidebarProps) {
 							<span class="sidebar-text">Customer Portal</span>
 						</a>
 						<a
-							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/settings/team") }
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/team/members") }
 							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "settings-team") }
 						>
 							@usersIcon()
 							<span class="sidebar-text">Team</span>
+						</a>
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "settings") }
+						>
+							@keyIcon()
+							<span class="sidebar-text">Org Connection</span>
 						</a>
 					} else {
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
@@ -139,6 +146,10 @@ templ Sidebar(props SidebarProps) {
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 							@usersIcon()
 							<span class="sidebar-text">Team</span>
+						</span>
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@keyIcon()
+							<span class="sidebar-text">Org Connection</span>
 						</span>
 					}
 				</nav>

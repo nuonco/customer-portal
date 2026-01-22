@@ -17,24 +17,17 @@ import (
 // DNSSettingsPage renders the DNS settings page
 func (h *Handler) DNSSettingsPage(c *gin.Context) {
 	user := h.GetFreshUser(c)
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		h.RenderErrorPage(c, http.StatusBadRequest, "Workspace context not found")
+	currentOrg := middleware.GetCurrentOrg(c)
+	if currentOrg == nil {
+		h.RenderErrorPage(c, http.StatusBadRequest, "Organization context not found")
 		return
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Get current org from middleware context
-	currentOrg := middleware.GetCurrentOrg(c)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Fetch user's orgs for switcher
+	userOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 
 	// Build breadcrumb path with org ID
@@ -46,19 +39,17 @@ func (h *Handler) DNSSettingsPage(c *gin.Context) {
 			ActivePage: "portal-dns",
 			User:       user,
 			CurrentOrg: currentOrg,
-			Orgs:       allOrgs,
+			Orgs:       userOrgs,
 			Breadcrumbs: []partials.Breadcrumb{
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "DNS", Path: portalBasePath + "/dns", Active: true},
 			},
 			BasePath:         h.basePath,
-			CurrentWorkspace: workspace,
-			Workspaces:       userWorkspaces,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
 			CSSPath:          assets.VendorCSSPath(),
 		},
-		Workspace:  workspace,
+		Org:        currentOrg,
 		BaseDomain: h.subdomainBaseDomain,
 	}
 
@@ -78,7 +69,7 @@ func (h *Handler) UpdateDNSSettings(c *gin.Context) {
 		return
 	}
 
-	workspace := middleware.GetCurrentWorkspace(c)
+	workspace := middleware.GetCurrentOrg(c)
 	if workspace == nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
 		return
@@ -122,10 +113,10 @@ func (h *Handler) CheckSubdomainAvailability(c *gin.Context) {
 		return
 	}
 
-	workspace := middleware.GetCurrentWorkspace(c)
-	workspaceID := ""
-	if workspace != nil {
-		workspaceID = workspace.ID
+	org := middleware.GetCurrentOrg(c)
+	orgID := ""
+	if org != nil {
+		orgID = org.ID
 	}
 
 	// Validate format first
@@ -137,7 +128,7 @@ func (h *Handler) CheckSubdomainAvailability(c *gin.Context) {
 		return
 	}
 
-	available, err := models.IsSubdomainAvailable(h.db, subdomain, workspaceID)
+	available, err := models.IsSubdomainAvailable(h.db, subdomain, orgID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check availability"})
 		return

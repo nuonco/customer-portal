@@ -16,10 +16,11 @@ import (
 
 // LinkStatusProps for the HTMX polling link status partial
 type LinkStatusProps struct {
-	Link         *models.InstallLink
-	InstallURL   string
-	PrimaryColor string
-	BasePath     string
+	Link                        *models.InstallLink
+	InstallURL                  string
+	CustomerDashboardInstallURL string // Full URL with subdomain for viewing install in customer dashboard
+	PrimaryColor                string
+	BasePath                    string
 }
 
 // LinkStatus renders link status with HTMX polling for real-time updates
@@ -51,7 +52,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/links/%s/status", props.BasePath, props.Link.OrgID, props.Link.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 21, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 22, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -64,7 +65,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%t", props.Link.Used))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 24, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 25, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -87,7 +88,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.Install.NuonInstallID)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 37, Col: 52}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 38, Col: 52}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -105,7 +106,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 					var templ_7745c5c3_Var5 string
 					templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 41, Col: 21}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 42, Col: 21}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 					if templ_7745c5c3_Err != nil {
@@ -118,7 +119,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 					var templ_7745c5c3_Var6 templ.SafeURL
 					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/customers/%s", props.BasePath, props.Link.OrgID, props.Link.Install.User.ID)))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 43, Col: 130}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 44, Col: 130}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 					if templ_7745c5c3_Err != nil {
@@ -132,7 +133,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.Install.User.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 47, Col: 39}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 48, Col: 39}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -142,7 +143,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.Install.User.Email)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 49, Col: 40}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 50, Col: 40}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -159,9 +160,9 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var9 templ.SafeURL
-				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("/installs/%s", props.Link.Install.ID)))
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.CustomerDashboardInstallURL))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 56, Col: 79}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 57, Col: 62}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -182,7 +183,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 				var templ_7745c5c3_Var10 templ.SafeURL
 				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("https://app.nuon.co/%s/installs/%s", props.Link.NuonOrg.NuonOrgID, props.Link.Install.NuonInstallID)))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 65, Col: 142}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 66, Col: 142}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
@@ -226,7 +227,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.InstallURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 91, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/link_status.templ`, Line: 92, Col: 78}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {

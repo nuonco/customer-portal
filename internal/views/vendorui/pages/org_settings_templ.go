@@ -54,59 +54,46 @@ func OrgSettingsPage(props OrgSettingsPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Org Connection</h1><p class=\"stratus-page-subtitle\">Manage connection settings for this organization.</p></div></div><div class=\"stratus-page-section\"><!-- Connection Settings Form --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 mb-6\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-cool-grey-200\">Connection Settings</h3><div class=\"space-y-4\"><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Organization Name</label><p class=\"text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-800 px-3 py-2 rounded\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 21, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 32, Col: 126}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, " - Settings</h1><p class=\"stratus-page-subtitle\">Manage connection settings for this organization.</p></div></div><div class=\"stratus-page-section\"><!-- Connection Settings Form --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 mb-6\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-cool-grey-200\">Connection Settings</h3><div class=\"space-y-4\"><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Organization Name</label><p class=\"text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-800 px-3 py-2 rounded\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</p><p class=\"mt-1 text-xs text-cool-grey-500\">Organization name is synced from the Nuon API.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Org ID</label><p class=\"font-mono text-sm text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-800 px-3 py-2 rounded\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Name)
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.NuonOrgID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 32, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 37, Col: 149}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p><p class=\"mt-1 text-xs text-cool-grey-500\">Organization name is synced from the Nuon API.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Org ID</label><p class=\"font-mono text-sm text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-800 px-3 py-2 rounded\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p><p class=\"mt-1 text-xs text-cool-grey-500\">The Nuon organization ID cannot be changed.</p></div><div><label for=\"connectionAPIToken\" class=\"block text-sm font-medium text-cool-grey-700 mb-1\">API Token</label> <input type=\"password\" id=\"connectionAPIToken\" value=\"\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" placeholder=\"Leave blank to keep current token\"><p class=\"mt-1 text-xs text-cool-grey-500\">Only enter a new token if you want to change it.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Connected</label><p class=\"text-cool-grey-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.NuonOrgID)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.CreatedAt.Format("Jan 2, 2006 at 3:04 PM"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 37, Col: 149}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 53, Col: 107}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p><p class=\"mt-1 text-xs text-cool-grey-500\">The Nuon organization ID cannot be changed.</p></div><div><label for=\"connectionAPIToken\" class=\"block text-sm font-medium text-cool-grey-700 mb-1\">API Token</label> <input type=\"password\" id=\"connectionAPIToken\" value=\"\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" placeholder=\"Leave blank to keep current token\"><p class=\"mt-1 text-xs text-cool-grey-500\">Only enter a new token if you want to change it.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Connected</label><p class=\"text-cool-grey-900 dark:text-white\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.CreatedAt.Format("Jan 2, 2006 at 3:04 PM"))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 53, Col: 107}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p></div></div><!-- Save Button --><div class=\"mt-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></div></div><!-- Save Button --><div class=\"mt-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -119,7 +106,7 @@ func OrgSettingsPage(props OrgSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div><!-- Status Messages --><div id=\"connectionSuccessMessage\" class=\"hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg\">Connection settings saved successfully!</div><div id=\"connectionErrorMessage\" class=\"hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg\"></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div><!-- Status Messages --><div id=\"connectionSuccessMessage\" class=\"hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg\">Connection settings saved successfully!</div><div id=\"connectionErrorMessage\" class=\"hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg\"></div></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -153,38 +140,38 @@ func orgSettingsScript(basePath, orgID string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Config data for JavaScript --><div id=\"org-settings-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Config data for JavaScript --><div id=\"org-settings-config\" class=\"hidden\" data-base-path=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var7 string
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 82, Col: 27}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-org-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 82, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 83, Col: 21}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-org-id=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var9 string
-		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/org_settings.templ`, Line: 83, Col: 21}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"></div><script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('org-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\n\t\t\twindow.saveConnectionSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveConnectionButton');\n\t\t\t\tvar successMessage = document.getElementById('connectionSuccessMessage');\n\t\t\t\tvar errorMessage = document.getElementById('connectionErrorMessage');\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\tvar formData = {};\n\t\t\t\tvar apiToken = document.getElementById('connectionAPIToken').value;\n\t\t\t\tif (apiToken) {\n\t\t\t\t\tformData.api_token = apiToken;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tdocument.getElementById('connectionAPIToken').value = '';\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.textContent = data.error || 'Failed to save connection settings';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save Connection Settings';\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></div><script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('org-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\n\t\t\twindow.saveConnectionSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveConnectionButton');\n\t\t\t\tvar successMessage = document.getElementById('connectionSuccessMessage');\n\t\t\t\tvar errorMessage = document.getElementById('connectionErrorMessage');\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\tvar formData = {};\n\t\t\t\tvar apiToken = document.getElementById('connectionAPIToken').value;\n\t\t\t\tif (apiToken) {\n\t\t\t\t\tformData.api_token = apiToken;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId, {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tdocument.getElementById('connectionAPIToken').value = '';\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.textContent = data.error || 'Failed to save connection settings';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save Connection Settings';\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

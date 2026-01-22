@@ -20,7 +20,7 @@ type LoginSettingsPageProps struct {
 // LoginSettingsPage renders the login settings page
 templ LoginSettingsPage(props LoginSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6 overflow-hidden">
+		<div class="flex -m-6 overflow-hidden">
 			@partials.PortalSubnav(partials.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "login",

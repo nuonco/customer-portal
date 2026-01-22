@@ -7,27 +7,27 @@ import (
 	"gorm.io/gorm"
 )
 
-// GitHubRepoConfig stores the GitHub repository configuration for a workspace's
-// custom template overrides. Each workspace can have one GitHub repo configured.
+// GitHubRepoConfig stores the GitHub repository configuration for an org's
+// custom template overrides. Each org can have one GitHub repo configured.
 type GitHubRepoConfig struct {
 	ID                    string     `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID           string     `gorm:"uniqueIndex" json:"workspace_id"` // One config per workspace
-	RepoOwner             string     `json:"repo_owner"`                      // e.g., "acme-corp"
-	RepoName              string     `json:"repo_name"`                       // e.g., "customer-portal-theme"
-	Branch                string     `json:"branch"`                          // default: "main"
-	AccessToken           string     `json:"-"`                               // GitHub PAT (not exposed in JSON)
+	OrgID                 string     `gorm:"uniqueIndex" json:"org_id"` // One config per org
+	RepoOwner             string     `json:"repo_owner"`                // e.g., "acme-corp"
+	RepoName              string     `json:"repo_name"`                 // e.g., "customer-portal-theme"
+	Branch                string     `json:"branch"`                    // default: "main"
+	AccessToken           string     `json:"-"`                         // GitHub PAT (not exposed in JSON)
 	LastSyncAt            *time.Time `json:"last_sync_at"`
 	LastSyncStatus        string     `json:"last_sync_status"` // "success", "failed", "pending", ""
 	LastSyncError         string     `json:"last_sync_error"`
-	LastSyncSHA           string     `json:"last_sync_sha"`            // Git commit SHA of last sync
-	LastSyncCommitMessage string     `json:"last_sync_commit_message"` // Commit message from last sync
-	LastSyncCommitAuthor  string     `json:"last_sync_commit_author"`  // Commit author from last sync
-	LastSyncCommitDate    *time.Time `json:"last_sync_commit_date"`    // Commit date from last sync
+	LastSyncSHA           string     `json:"last_sync_sha"`
+	LastSyncCommitMessage string     `json:"last_sync_commit_message"`
+	LastSyncCommitAuthor  string     `json:"last_sync_commit_author"`
+	LastSyncCommitDate    *time.Time `json:"last_sync_commit_date"`
 	CreatedAt             time.Time  `json:"created_at"`
 	UpdatedAt             time.Time  `json:"updated_at"`
 
 	// Relationships
-	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"`
+	Org NuonOrg `gorm:"foreignKey:OrgID" json:"org,omitempty"`
 }
 
 func (c *GitHubRepoConfig) BeforeCreate(tx *gorm.DB) error {
@@ -52,10 +52,10 @@ const (
 	SyncStatusPending = "pending"
 )
 
-// GetOrCreateGitHubRepoConfig returns the GitHubRepoConfig for a workspace, or nil if not configured.
-func GetGitHubRepoConfig(db *gorm.DB, workspaceID string) (*GitHubRepoConfig, error) {
+// GetGitHubRepoConfig returns the GitHubRepoConfig for an org, or nil if not configured.
+func GetGitHubRepoConfig(db *gorm.DB, orgID string) (*GitHubRepoConfig, error) {
 	var config GitHubRepoConfig
-	if err := db.Where("workspace_id = ?", workspaceID).First(&config).Error; err != nil {
+	if err := db.Where("org_id = ?", orgID).First(&config).Error; err != nil {
 		return nil, err
 	}
 	return &config, nil

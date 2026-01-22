@@ -7,70 +7,70 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// WorkspacePanelProps for the workspace settings panel
-type WorkspacePanelProps struct {
-	Workspace       *models.Workspace
-	Members         []models.WorkspaceMember
-	Invitations     []models.WorkspaceInvitation
+// OrgPanelProps for the org settings panel
+type OrgPanelProps struct {
+	Org             *models.NuonOrg
+	Members         []models.OrgMember
+	Invitations     []models.OrgInvitation
 	BasePath        string
 	CurrentUser     *models.User
 	CustomerBaseURL string
 }
 
-// WorkspacePanel renders the workspace settings slide-in panel
-templ WorkspacePanel(props WorkspacePanelProps) {
-	<div id="workspace-panel" class="stratus-panel panel-hidden" data-base-path={ props.BasePath } data-customer-base-url={ props.CustomerBaseURL }>
+// OrgPanel renders the org settings slide-in panel
+templ OrgPanel(props OrgPanelProps) {
+	<div id="org-panel" class="stratus-panel panel-hidden" data-base-path={ props.BasePath } data-customer-base-url={ props.CustomerBaseURL }>
 		<!-- Overlay - click to close -->
-		<div class="stratus-panel-overlay" onclick="closeWorkspacePanel()"></div>
+		<div class="stratus-panel-overlay" onclick="closeOrgPanel()"></div>
 		<!-- Panel Container -->
 		<div class="stratus-panel-container" style="max-width: 36rem;">
 			<!-- Header -->
 			<div class="stratus-panel-header">
 				<div class="stratus-panel-title">
-					@workspacePanelIcon()
-					<span>Workspace Settings</span>
+					@orgPanelIcon()
+					<span>Organization Settings</span>
 				</div>
 				<div class="flex items-center gap-2">
 					<!-- Expand/Collapse button -->
-					<button type="button" onclick="toggleWorkspacePanelSize()" class="stratus-panel-action" id="workspacePanelExpandBtn" title="Expand to full screen">
-						@workspacePanelExpandIcon()
-						@workspacePanelCollapseIcon()
+					<button type="button" onclick="toggleOrgPanelSize()" class="stratus-panel-action" id="orgPanelExpandBtn" title="Expand to full screen">
+						@orgPanelExpandIcon()
+						@orgPanelCollapseIcon()
 					</button>
 					<!-- Close button -->
-					<button type="button" onclick="closeWorkspacePanel()" class="stratus-panel-action" title="Close panel">
-						@workspacePanelArrowRightIcon()
+					<button type="button" onclick="closeOrgPanel()" class="stratus-panel-action" title="Close panel">
+						@orgPanelArrowRightIcon()
 					</button>
 				</div>
 			</div>
 			<!-- Content -->
 			<div class="stratus-panel-content">
-				<!-- Workspace Details Section -->
+				<!-- Organization Details Section -->
 				<div class="mb-8">
 					<h4 class="text-sm font-semibold text-cool-grey-900 dark:text-white mb-4 flex items-center gap-2">
-						@workspacePanelSettingsIcon()
-						Workspace Details
+						@orgPanelSettingsIcon()
+						Organization Details
 					</h4>
-					<form id="workspaceNameForm" class="space-y-4">
+					<form id="orgNameForm" class="space-y-4">
 						<div>
-							<label for="workspaceName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">
-								Workspace Name
+							<label for="orgName" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">
+								Organization Name
 							</label>
 							<input
 								type="text"
-								id="workspaceName"
+								id="orgName"
 								name="name"
-								value={ props.Workspace.Name }
-								placeholder="Enter workspace name"
+								value={ props.Org.Name }
+								placeholder="Enter organization name"
 								class="w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-cool-grey-400 dark:placeholder-cool-grey-500"
 							/>
 						</div>
 						<div class="flex justify-end">
 							<button
 								type="submit"
-								id="workspaceNameSaveBtn"
+								id="orgNameSaveBtn"
 								class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							>
-								<span id="workspaceNameSaveBtnText">Save Name</span>
+								<span id="orgNameSaveBtnText">Save Name</span>
 							</button>
 						</div>
 					</form>
@@ -78,7 +78,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 				<!-- Team Members Section -->
 				<div class="mb-8">
 					<h4 class="text-sm font-semibold text-cool-grey-900 dark:text-white mb-4 flex items-center gap-2">
-						@workspacePanelUsersIcon()
+						@orgPanelUsersIcon()
 						Team Members
 						<span class="text-cool-grey-500 dark:text-cool-grey-400 font-normal">({ fmt.Sprintf("%d", len(props.Members)) })</span>
 					</h4>
@@ -108,7 +108,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 										class="p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
 										title="Remove member"
 									>
-										@workspacePanelTrashIcon()
+										@orgPanelTrashIcon()
 									</button>
 								}
 							</div>
@@ -123,7 +123,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 				<!-- Invitations Section -->
 				<div class="mb-8">
 					<h4 class="text-sm font-semibold text-cool-grey-900 dark:text-white mb-4 flex items-center gap-2">
-						@workspacePanelLinkIcon()
+						@orgPanelLinkIcon()
 						Invitation Links
 						<span class="text-cool-grey-500 dark:text-cool-grey-400 font-normal">({ fmt.Sprintf("%d", len(props.Invitations)) })</span>
 					</h4>
@@ -146,7 +146,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 											class="p-1.5 text-cool-grey-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
 											title="Copy invitation link"
 										>
-											@workspacePanelCopyIcon()
+											@orgPanelCopyIcon()
 										</button>
 										<button
 											type="button"
@@ -155,7 +155,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 											class="p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
 											title="Delete invitation"
 										>
-											@workspacePanelTrashIcon()
+											@orgPanelTrashIcon()
 										</button>
 									</div>
 								</div>
@@ -246,7 +246,7 @@ templ WorkspacePanel(props WorkspacePanelProps) {
 			</div>
 		</div>
 	</div>
-	@workspacePanelScript()
+	@orgPanelScript()
 }
 
 func getMemberInitials(name, email string) string {
@@ -307,14 +307,14 @@ func formatExpiration(t time.Time) string {
 	return fmt.Sprintf("%d days", days)
 }
 
-templ workspacePanelScript() {
+templ orgPanelScript() {
 	<script>
 		(function() {
-			const basePath = document.getElementById('workspace-panel').dataset.basePath;
-			const customerBaseURL = document.getElementById('workspace-panel').dataset.customerBaseUrl;
+			const basePath = document.getElementById('org-panel').dataset.basePath;
+			const customerBaseURL = document.getElementById('org-panel').dataset.customerBaseUrl;
 
-			function openWorkspacePanel() {
-				const panel = document.getElementById('workspace-panel');
+			function openOrgPanel() {
+				const panel = document.getElementById('org-panel');
 				panel.classList.remove('panel-hidden');
 				panel.classList.add('panel-visible');
 				document.body.classList.add('overflow-hidden');
@@ -322,25 +322,25 @@ templ workspacePanelScript() {
 				if (userDropdown) userDropdown.classList.add('hidden');
 			}
 
-			function closeWorkspacePanel() {
-				const panel = document.getElementById('workspace-panel');
+			function closeOrgPanel() {
+				const panel = document.getElementById('org-panel');
 				panel.classList.remove('panel-visible', 'panel-full');
 				panel.classList.add('panel-hidden');
 				document.body.classList.remove('overflow-hidden');
-				document.getElementById('workspacePanelExpandIcon')?.classList.remove('hidden');
-				document.getElementById('workspacePanelCollapseIcon')?.classList.add('hidden');
-				document.getElementById('workspacePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');
+				document.getElementById('orgPanelExpandIcon')?.classList.remove('hidden');
+				document.getElementById('orgPanelCollapseIcon')?.classList.add('hidden');
+				document.getElementById('orgPanelExpandBtn')?.setAttribute('title', 'Expand to full screen');
 				setTimeout(function() {
 					document.getElementById('settings-panel-container').innerHTML = '';
 				}, 300);
 			}
 
-			function toggleWorkspacePanelSize() {
-				const panel = document.getElementById('workspace-panel');
+			function toggleOrgPanelSize() {
+				const panel = document.getElementById('org-panel');
 				const container = panel.querySelector('.stratus-panel-container');
-				const expandIcon = document.getElementById('workspacePanelExpandIcon');
-				const collapseIcon = document.getElementById('workspacePanelCollapseIcon');
-				const expandBtn = document.getElementById('workspacePanelExpandBtn');
+				const expandIcon = document.getElementById('orgPanelExpandIcon');
+				const collapseIcon = document.getElementById('orgPanelCollapseIcon');
+				const expandBtn = document.getElementById('orgPanelExpandBtn');
 
 				if (panel.classList.contains('panel-full')) {
 					panel.classList.remove('panel-full');
@@ -360,12 +360,12 @@ templ workspacePanelScript() {
 			async function removeMember(btn) {
 				const userId = btn.dataset.userId;
 				const userName = btn.dataset.userName;
-				if (!confirm(`Remove ${userName} from this workspace?`)) {
+				if (!confirm(`Remove ${userName} from this organization?`)) {
 					return;
 				}
 
 				try {
-					const response = await fetch(basePath + '/workspace/members/' + userId, {
+					const response = await fetch(basePath + '/org/members/' + userId, {
 						method: 'DELETE',
 						headers: {
 							'Content-Type': 'application/json'
@@ -375,7 +375,7 @@ templ workspacePanelScript() {
 					if (response.ok) {
 						showToast('Member removed successfully', 'success');
 						// Reload the panel
-						htmx.ajax('GET', basePath + '/workspace/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
+						htmx.ajax('GET', basePath + '/org/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
 					} else {
 						const data = await response.json();
 						showToast(data.error || 'Failed to remove member', 'error');
@@ -410,7 +410,7 @@ templ workspacePanelScript() {
 				}
 
 				try {
-					const response = await fetch(basePath + '/workspace/invitations/' + inviteId, {
+					const response = await fetch(basePath + '/org/invitations/' + inviteId, {
 						method: 'DELETE',
 						headers: {
 							'Content-Type': 'application/json'
@@ -420,7 +420,7 @@ templ workspacePanelScript() {
 					if (response.ok) {
 						showToast('Invitation deleted', 'success');
 						// Reload the panel
-						htmx.ajax('GET', basePath + '/workspace/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
+						htmx.ajax('GET', basePath + '/org/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
 					} else {
 						const data = await response.json();
 						showToast(data.error || 'Failed to delete invitation', 'error');
@@ -430,35 +430,35 @@ templ workspacePanelScript() {
 				}
 			}
 
-			window.openWorkspacePanel = openWorkspacePanel;
-			window.closeWorkspacePanel = closeWorkspacePanel;
-			window.toggleWorkspacePanelSize = toggleWorkspacePanelSize;
+			window.openOrgPanel = openOrgPanel;
+			window.closeOrgPanel = closeOrgPanel;
+			window.toggleOrgPanelSize = toggleOrgPanelSize;
 			window.removeMember = removeMember;
 			window.copyInviteLink = copyInviteLink;
 			window.deleteInvitation = deleteInvitation;
 
 			document.addEventListener('keydown', function(e) {
 				if (e.key === 'Escape') {
-					const panel = document.getElementById('workspace-panel');
+					const panel = document.getElementById('org-panel');
 					if (panel && panel.classList.contains('panel-visible')) {
-						closeWorkspacePanel();
+						closeOrgPanel();
 					}
 				}
 			});
 
-			// Workspace name form submission
-			document.getElementById('workspaceNameForm').addEventListener('submit', async function(e) {
+			// Organization name form submission
+			document.getElementById('orgNameForm').addEventListener('submit', async function(e) {
 				e.preventDefault();
 
-				const saveBtn = document.getElementById('workspaceNameSaveBtn');
-				const saveBtnText = document.getElementById('workspaceNameSaveBtnText');
-				const nameInput = document.getElementById('workspaceName');
+				const saveBtn = document.getElementById('orgNameSaveBtn');
+				const saveBtnText = document.getElementById('orgNameSaveBtnText');
+				const nameInput = document.getElementById('orgName');
 
 				saveBtn.disabled = true;
 				saveBtnText.textContent = 'Saving...';
 
 				try {
-					const response = await fetch(basePath + '/workspace', {
+					const response = await fetch(basePath + '/org', {
 						method: 'PUT',
 						headers: {
 							'Content-Type': 'application/json'
@@ -471,14 +471,14 @@ templ workspacePanelScript() {
 					const data = await response.json();
 
 					if (response.ok) {
-						showToast('Workspace name updated', 'success');
-						// Update the workspace name in the topbar
-						const wsNameEl = document.querySelector('[data-workspace-name]');
-						if (wsNameEl) {
-							wsNameEl.textContent = nameInput.value;
+						showToast('Organization name updated', 'success');
+						// Update the organization name in the topbar
+						const orgNameEl = document.querySelector('[data-org-name]');
+						if (orgNameEl) {
+							orgNameEl.textContent = nameInput.value;
 						}
 					} else {
-						showToast(data.error || 'Failed to update workspace', 'error');
+						showToast(data.error || 'Failed to update organization', 'error');
 					}
 				} catch (error) {
 					showToast('Network error. Please try again.', 'error');
@@ -510,7 +510,7 @@ templ workspacePanelScript() {
 				}
 
 				try {
-					const response = await fetch(basePath + '/workspace/invitations', {
+					const response = await fetch(basePath + '/org/invitations', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'
@@ -536,7 +536,7 @@ templ workspacePanelScript() {
 						}
 						// Reset form and reload panel
 						document.getElementById('generateInviteForm').reset();
-						htmx.ajax('GET', basePath + '/workspace/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
+						htmx.ajax('GET', basePath + '/org/settings/panel', {target: '#settings-panel-container', swap: 'innerHTML'});
 					} else {
 						showToast(data.error || 'Failed to create invitation', 'error');
 					}
@@ -548,61 +548,61 @@ templ workspacePanelScript() {
 				}
 			});
 
-			openWorkspacePanel();
+			openOrgPanel();
 		})();
 	</script>
 }
 
-// Icons for the workspace panel
-templ workspacePanelIcon() {
+// Icons for the org panel
+templ orgPanelIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216,56H40A16,16,0,0,0,24,72V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V72A16,16,0,0,0,216,56ZM40,72H216V88H40ZM216,200H40V104H216v96Zm-80-64a8,8,0,0,1-8,8H64a8,8,0,0,1,0-16h64A8,8,0,0,1,136,136Zm56,0a8,8,0,0,1-8,8H168a8,8,0,0,1,0-16h16A8,8,0,0,1,192,136Z"></path>
 	</svg>
 }
 
-templ workspacePanelExpandIcon() {
-	<svg id="workspacePanelExpandIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+templ orgPanelExpandIcon() {
+	<svg id="orgPanelExpandIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path>
 	</svg>
 }
 
-templ workspacePanelCollapseIcon() {
-	<svg id="workspacePanelCollapseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+templ orgPanelCollapseIcon() {
+	<svg id="orgPanelCollapseIcon" class="hidden" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
 	</svg>
 }
 
-templ workspacePanelArrowRightIcon() {
+templ orgPanelArrowRightIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z"></path>
 	</svg>
 }
 
-templ workspacePanelSettingsIcon() {
+templ orgPanelSettingsIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm88-29.84q.06-2.16,0-4.32l14.92-18.64a8,8,0,0,0,1.48-7.06,107.21,107.21,0,0,0-10.88-26.25,8,8,0,0,0-6-3.93l-23.72-2.64q-1.48-1.56-3-3L186,40.54a8,8,0,0,0-3.94-6,107.71,107.71,0,0,0-26.25-10.87,8,8,0,0,0-7.06,1.49L130.16,40Q128,40,125.84,40L107.2,25.11a8,8,0,0,0-7.06-1.48A107.6,107.6,0,0,0,73.89,34.51a8,8,0,0,0-3.93,6L67.32,64.27q-1.56,1.49-3,3L40.54,70a8,8,0,0,0-6,3.94,107.71,107.71,0,0,0-10.87,26.25,8,8,0,0,0,1.49,7.06L40,125.84Q40,128,40,130.16L25.11,148.8a8,8,0,0,0-1.48,7.06,107.21,107.21,0,0,0,10.88,26.25,8,8,0,0,0,6,3.93l23.72,2.64q1.49,1.56,3,3L70,215.46a8,8,0,0,0,3.94,6,107.71,107.71,0,0,0,26.25,10.87,8,8,0,0,0,7.06-1.49L125.84,216q2.16.06,4.32,0l18.64,14.92a8,8,0,0,0,7.06,1.48,107.21,107.21,0,0,0,26.25-10.88,8,8,0,0,0,3.93-6l2.64-23.72q1.56-1.48,3-3L215.46,186a8,8,0,0,0,6-3.94,107.71,107.71,0,0,0,10.87-26.25,8,8,0,0,0-1.49-7.06Zm-16.1-6.5a73.93,73.93,0,0,1,0,8.68,8,8,0,0,0,1.74,5.48l14.19,17.73a91.57,91.57,0,0,1-6.23,15L187,173.11a8,8,0,0,0-5.1,2.64,74.11,74.11,0,0,1-6.14,6.14,8,8,0,0,0-2.64,5.1l-2.51,22.58a91.32,91.32,0,0,1-15,6.23l-17.74-14.19a8,8,0,0,0-5-1.75h-.48a73.93,73.93,0,0,1-8.68,0,8,8,0,0,0-5.48,1.74l-17.78,14.2a91.57,91.57,0,0,1-15-6.23L82.89,187a8,8,0,0,0-2.64-5.1,74.11,74.11,0,0,1-6.14-6.14,8,8,0,0,0-5.1-2.64L46.43,170.6a91.32,91.32,0,0,1-6.23-15l14.19-17.74a8,8,0,0,0,1.74-5.48,73.93,73.93,0,0,1,0-8.68,8,8,0,0,0-1.74-5.48L40.2,100.45a91.57,91.57,0,0,1,6.23-15L69,82.89a8,8,0,0,0,5.1-2.64,74.11,74.11,0,0,1,6.14-6.14A8,8,0,0,0,82.89,69l2.51-22.57a91.32,91.32,0,0,1,15-6.23l17.74,14.19a8,8,0,0,0,5.48,1.74,73.93,73.93,0,0,1,8.68,0,8,8,0,0,0,5.48-1.74l17.77-14.19a91.57,91.57,0,0,1,15,6.23L173.11,69a8,8,0,0,0,2.64,5.1,74.11,74.11,0,0,1,6.14,6.14,8,8,0,0,0,5.1,2.64l22.58,2.51a91.32,91.32,0,0,1,6.23,15l-14.19,17.74A8,8,0,0,0,199.87,123.66Z"></path>
 	</svg>
 }
 
-templ workspacePanelUsersIcon() {
+templ orgPanelUsersIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
 	</svg>
 }
 
-templ workspacePanelLinkIcon() {
+templ orgPanelLinkIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M137.54,186.36a8,8,0,0,1,0,11.31l-9.94,10A56,56,0,0,1,48.38,128.4L72.5,104.28A56,56,0,0,1,149.31,102a8,8,0,1,1-10.64,12,40,40,0,0,0-54.85,1.63L59.7,139.72a40,40,0,0,0,56.58,56.58l9.94-9.94A8,8,0,0,1,137.54,186.36Zm70.08-138a56.08,56.08,0,0,0-79.22,0l-9.94,9.95a8,8,0,0,0,11.32,11.31l9.94-9.94a40,40,0,0,1,56.58,56.58L172.18,140a40,40,0,0,1-54.85,1.63,8,8,0,1,0-10.64,12,56,56,0,0,0,76.81-2.13l24.12-24.12A56.08,56.08,0,0,0,207.62,48.38Z"></path>
 	</svg>
 }
 
-templ workspacePanelTrashIcon() {
+templ orgPanelTrashIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path>
 	</svg>
 }
 
-templ workspacePanelCopyIcon() {
+templ orgPanelCopyIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z"></path>
 	</svg>

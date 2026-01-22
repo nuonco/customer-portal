@@ -9,26 +9,28 @@ import (
 // DNSSettingsPageProps for the DNS settings page
 type DNSSettingsPageProps struct {
 	vendorui.LayoutProps
-	Workspace  *models.Workspace
+	Org  *models.NuonOrg
 	BaseDomain string // e.g., "portal.nuon.co" or "localhost:8080"
 }
 
 // DNSSettingsPage renders the DNS settings page
 templ DNSSettingsPage(props DNSSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6 overflow-hidden">
+		<div class="flex -m-6 overflow-hidden">
 			@partials.PortalSubnav(partials.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "dns",
 				BasePath:      props.BasePath,
 			})
 			<div class="stratus-page-content overflow-auto">
-				<div class="max-w-4xl mx-auto">
-					<h2 class="text-2xl font-semibold text-cool-grey-900 dark:text-white mb-2">DNS Settings</h2>
-					<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
-						Configure the subdomain for your customer portal. Customers will access their portal at this URL.
-					</p>
-					<div class="space-y-6">
+				<div class="stratus-page-header">
+					<div class="stratus-heading-group">
+						<h1 class="stratus-page-title">DNS Settings</h1>
+						<p class="stratus-page-subtitle">Configure the subdomain for your customer portal. Customers will access their portal at this URL.</p>
+					</div>
+				</div>
+				<div class="stratus-page-section">
+					<div class="max-w-4xl space-y-6">
 						@dnsCurrentURLSection(props)
 						@dnsSubdomainSection(props)
 						@dnsSaveSection(props.PrimaryColor)
@@ -40,7 +42,7 @@ templ DNSSettingsPage(props DNSSettingsPageProps) {
 					class="hidden"
 					data-base-path={ props.BasePath }
 					data-base-domain={ props.BaseDomain }
-					data-current-subdomain={ props.Workspace.Subdomain }
+					data-current-subdomain={ props.Org.Subdomain }
 				></div>
 				@dnsSettingsScript()
 			</div>
@@ -58,7 +60,7 @@ templ dnsCurrentURLSection(props DNSSettingsPageProps) {
 		</div>
 		<div class="flex items-center gap-3">
 			<div class="flex-1 p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg font-mono text-sm text-cool-grey-900 dark:text-white overflow-x-auto">
-				<span id="previewURL">https://{ props.Workspace.Subdomain }.{ props.BaseDomain }</span>
+				<span id="previewURL">https://{ props.Org.Subdomain }.{ props.BaseDomain }</span>
 			</div>
 			<button
 				type="button"
@@ -90,7 +92,7 @@ templ dnsSubdomainSection(props DNSSettingsPageProps) {
 					<input
 						type="text"
 						id="subdomain"
-						value={ props.Workspace.Subdomain }
+						value={ props.Org.Subdomain }
 						placeholder="your-company"
 						class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
 						oninput="onSubdomainInput()"

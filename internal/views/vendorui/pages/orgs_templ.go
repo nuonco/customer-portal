@@ -169,7 +169,7 @@ func orgCard(org models.NuonOrg, basePath string) templ.Component {
 		templ_7745c5c3_Err = components.Button(components.ButtonProps{
 			Text:    "Settings",
 			Variant: "secondary",
-			Href:    fmt.Sprintf("%s/orgs/%s/settings", basePath, org.ID),
+			Href:    fmt.Sprintf("%s/orgs/%s/connection", basePath, org.ID),
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -218,7 +218,7 @@ func emptyState(basePath string) templ.Component {
 		templ_7745c5c3_Err = components.Button(components.ButtonProps{
 			Text:    "Connect Your First Org",
 			Variant: "primary",
-			OnClick: "openCreateWorkspaceModal()",
+			OnClick: "openCreateOrgModal()",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err

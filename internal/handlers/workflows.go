@@ -34,7 +34,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	installInterface, exists := c.Get("install")
 	if !exists {
 		fmt.Printf("ERROR: Install not found in context\n")
-		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Install not found",
@@ -58,7 +58,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	// Fetch workflow data using helper function
 	processedWorkflows, hasMoreFromAPI, err := h.fetchWorkflowData(c, install, offset, limit)
 	if err != nil {
-		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       err.Error(),
@@ -160,8 +160,8 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 	orderedWorkflowGroups := groupAndSortWorkflowsByDateTempl(processedWorkflows)
 
 	// Get global app theme for customer UI
-	workspaceID := h.getWorkspaceIDForTheme(c)
-	theme, _ := localModels.GetOrCreateAppTheme(h.db, workspaceID)
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, orgID)
 
 	// Try template override first
 	workflowsData := make([]overrides.WorkflowData, 0, len(processedWorkflows))
@@ -171,6 +171,7 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 		status, _ := wf["status"].(string)
 		workflowsData = append(workflowsData, overrides.WorkflowData{
 			ID:     id,
+			Name:   name,
 			Type:   name,
 			Status: status,
 		})
@@ -188,8 +189,8 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 		Workflows: workflowsData,
 	}
 
-	ctx := h.buildTemplateContext(workspaceID, "Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "workflows", ctx) {
+	ctx := h.buildTemplateContext(orgID, "Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "workflows", ctx) {
 		return
 	}
 
@@ -952,7 +953,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 	processed := processWorkflowForCustomer(workflow)
 
 	// Get global app theme for styling
-	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
 	// Convert gin.H to WorkflowData

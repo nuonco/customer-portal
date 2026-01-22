@@ -42,10 +42,10 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 		return
 	}
 
-	// Look up workspace by subdomain to get workspace-specific OIDC config
-	var workspace models.Workspace
-	if err := h.db.Where("subdomain = ?", returnSubdomain).First(&workspace).Error; err != nil {
-		c.Redirect(http.StatusFound, "/auth/error?message=Workspace+not+found")
+	// Look up org by subdomain to get org-specific OIDC config
+	var org models.NuonOrg
+	if err := h.db.Where("subdomain = ?", returnSubdomain).First(&org).Error; err != nil {
+		c.Redirect(http.StatusFound, "/auth/error?message=Organization+not+found")
 		return
 	}
 
@@ -72,8 +72,8 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 		true,         // httpOnly
 	)
 
-	// Get OIDC authorization URL using workspace-specific config
-	authURL, err := h.customerAuthFactory.GetAuthURLForWorkspace(state, workspace.ID)
+	// Get OIDC authorization URL using org-specific config
+	authURL, err := h.customerAuthFactory.GetAuthURLForOrg(state, org.ID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to generate login URL",
@@ -222,8 +222,8 @@ func (h *Handler) AuthErrorPage(c *gin.Context) {
 	}
 
 	// Get theme for error page (no user context since auth failed)
-	workspaceID := h.getWorkspaceIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	props := pages.AuthErrorPageProps{
 		LayoutProps: h.buildCustomerLayoutProps("Authentication Error", nil, theme),

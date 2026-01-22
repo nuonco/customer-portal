@@ -10,18 +10,16 @@ import (
 	gojwt "github.com/golang-jwt/jwt/v4"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
-// CreateWorkspace creates a new workspace with a connected Nuon organization.
-// Each workspace requires exactly one Nuon org to be connected at creation time.
-func (h *Handler) CreateWorkspace(c *gin.Context) {
+// CreateOrg creates a new organization with a connected Nuon platform org.
+// Each org requires a Nuon API token and org ID to be connected at creation time.
+func (h *Handler) CreateOrg(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 
 	var req struct {
@@ -67,19 +65,19 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 		orgName = req.OrgID // Fallback to org ID if name is empty
 	}
 
-	// Check if this Nuon org is already connected to another workspace
+	// Check if this Nuon org is already connected
 	var existingOrg models.NuonOrg
 	if err := h.db.Where("org_id = ? AND deleted_at IS NULL", req.OrgID).First(&existingOrg).Error; err == nil {
 		c.JSON(http.StatusConflict, gin.H{
-			"error": "This Nuon organization is already connected to another workspace",
+			"error": "This Nuon organization is already connected",
 		})
 		return
 	}
 
-	// Use org name for workspace name if not provided
-	workspaceName := req.Name
-	if workspaceName == "" {
-		workspaceName = orgName
+	// Use org name for display if not provided
+	displayName := req.Name
+	if displayName == "" {
+		displayName = orgName
 	}
 
 	// Generate unique subdomain from org name
@@ -91,48 +89,37 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 		return
 	}
 
-	// Create workspace and org in a transaction
-	var workspace models.Workspace
+	// Create org and related entities in a transaction
 	var org models.NuonOrg
 
 	err = h.db.Transaction(func(tx *gorm.DB) error {
-		// Create workspace
-		workspace = models.Workspace{
-			Name:       workspaceName,
-			Subdomain:  subdomain,
-			IsPersonal: false,
-		}
-		if err := tx.Create(&workspace).Error; err != nil {
-			return fmt.Errorf("failed to create workspace: %w", err)
-		}
-
-		// Create connected org
+		// Create the org
 		org = models.NuonOrg{
-			WorkspaceID: workspace.ID,
-			UserID:      user.ID,
-			NuonOrgID:   req.OrgID,
-			APIToken:    req.APIToken,
-			Name:        orgName,
+			UserID:    user.ID,
+			NuonOrgID: req.OrgID,
+			APIToken:  req.APIToken,
+			Name:      displayName,
+			Subdomain: subdomain,
 		}
 		if err := tx.Create(&org).Error; err != nil {
-			return fmt.Errorf("failed to connect organization: %w", err)
+			return fmt.Errorf("failed to create organization: %w", err)
 		}
 
 		// Add user as first member
 		now := time.Now()
-		member := models.WorkspaceMember{
-			WorkspaceID: workspace.ID,
-			UserID:      user.ID,
-			Status:      models.MemberStatusActive,
-			JoinedAt:    &now,
+		member := models.OrgMember{
+			OrgID:    org.ID,
+			UserID:   user.ID,
+			Status:   models.MemberStatusActive,
+			JoinedAt: &now,
 		}
 		if err := tx.Create(&member).Error; err != nil {
-			return fmt.Errorf("failed to add user to workspace: %w", err)
+			return fmt.Errorf("failed to add user to organization: %w", err)
 		}
 
-		// Create default theme for this workspace
+		// Create default theme for this org
 		theme := models.AppTheme{
-			WorkspaceID:    workspace.ID,
+			OrgID:          org.ID,
 			PrimaryColor:   models.DefaultPrimaryColor,
 			SecondaryColor: models.DefaultPrimaryColor,
 			BorderRadius:   models.DefaultBorderRadius,
@@ -142,11 +129,11 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 			return fmt.Errorf("failed to create theme: %w", err)
 		}
 
-		// Create default auth config for this workspace
+		// Create default auth config for this org
 		authConfig := models.CustomerAuthConfig{
-			WorkspaceID: workspace.ID,
-			Enabled:     false,
-			Scopes:      models.DefaultScopes,
+			OrgID:   org.ID,
+			Enabled: false,
+			Scopes:  models.DefaultScopes,
 		}
 		if err := tx.Create(&authConfig).Error; err != nil {
 			return fmt.Errorf("failed to create auth config: %w", err)
@@ -157,36 +144,35 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to create workspace: " + err.Error(),
+			"error": "Failed to create organization: " + err.Error(),
 		})
 		return
 	}
 
-	// Set workspace cookie to the new workspace
-	middleware.SetWorkspaceCookie(c, workspace.ID)
+	// Set org cookie to the new org
+	middleware.SetOrgCookie(c, org.ID)
 
 	// Return success with redirect URL to the org's install links page
 	c.JSON(http.StatusOK, gin.H{
-		"id":          workspace.ID,
-		"name":        workspace.Name,
-		"org_id":      org.ID,
+		"id":          org.ID,
+		"name":        org.Name,
 		"redirect_to": fmt.Sprintf("/admin/orgs/%s/install-links", org.ID),
 	})
 }
 
-// UpdateWorkspace updates workspace details
-func (h *Handler) UpdateWorkspace(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
+// UpdateOrg updates organization details (name and/or API token)
+func (h *Handler) UpdateOrg(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Workspace context not found",
+			"error": "Organization context not found",
 		})
 		return
 	}
 
 	var req struct {
-		Name        string `json:"name" binding:"required"`
-		Description string `json:"description"`
+		Name     string `json:"name"`
+		APIToken string `json:"api_token"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -196,27 +182,42 @@ func (h *Handler) UpdateWorkspace(c *gin.Context) {
 		return
 	}
 
-	// Update workspace
-	if err := h.db.Model(workspace).Updates(map[string]interface{}{
-		"name": req.Name,
-	}).Error; err != nil {
+	// Build updates map
+	updates := make(map[string]interface{})
+	if req.Name != "" {
+		updates["name"] = req.Name
+	}
+	if req.APIToken != "" {
+		updates["api_token"] = req.APIToken
+	}
+
+	if len(updates) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "No fields to update",
+		})
+		return
+	}
+
+	// Update org
+	if err := h.db.Model(org).Updates(updates).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to update workspace",
+			"error": "Failed to update organization",
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "Workspace updated successfully",
+		"message": "Organization updated successfully",
+		"org":     *org,
 	})
 }
 
-// SwitchWorkspace changes the active workspace for the user
-func (h *Handler) SwitchWorkspace(c *gin.Context) {
+// SwitchOrg changes the active organization for the user
+func (h *Handler) SwitchOrg(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 
 	var req struct {
-		WorkspaceID string `json:"workspace_id" binding:"required"`
+		OrgID string `json:"org_id" binding:"required"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -226,157 +227,65 @@ func (h *Handler) SwitchWorkspace(c *gin.Context) {
 		return
 	}
 
-	// Validate workspace_id format
-	if !shortid.IsValid(req.WorkspaceID) {
+	// Validate org_id format
+	if !shortid.IsValid(req.OrgID) {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid workspace ID format",
+			"error": "Invalid organization ID format",
 		})
 		return
 	}
 
-	// Verify user is a member of the workspace
-	var member models.WorkspaceMember
-	err := h.db.Where("workspace_id = ? AND user_id = ? AND status = ?",
-		req.WorkspaceID, user.ID, models.MemberStatusActive).First(&member).Error
+	// Verify user is a member of the org
+	var member models.OrgMember
+	err := h.db.Where("org_id = ? AND user_id = ? AND status = ?",
+		req.OrgID, user.ID, models.MemberStatusActive).First(&member).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Access denied to workspace",
+				"error": "Access denied to organization",
 			})
 			return
 		}
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to verify workspace membership",
+			"error": "Failed to verify organization membership",
 		})
 		return
 	}
 
-	// Set workspace cookie
-	middleware.SetWorkspaceCookie(c, req.WorkspaceID)
+	// Set org cookie
+	middleware.SetOrgCookie(c, req.OrgID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "Workspace switched successfully",
+		"message":     "Organization switched successfully",
 		"redirect_to": "/admin/orgs",
 	})
 }
 
-// WorkspaceSelectorPage renders the workspace selection page (for users with multiple workspaces)
-func (h *Handler) WorkspaceSelectorPage(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-
-	// Get user's workspaces
-	var memberships []models.WorkspaceMember
-	if err := h.db.Where("user_id = ? AND status = ?", user.ID, models.MemberStatusActive).
-		Preload("Workspace").
-		Find(&memberships).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to load workspaces",
-		})
-		return
-	}
-
-	// Extract workspaces
-	workspaces := make([]models.Workspace, 0, len(memberships))
-	for _, m := range memberships {
-		workspaces = append(workspaces, m.Workspace)
-	}
-
-	// If user has no workspaces, create personal workspace
-	if len(workspaces) == 0 {
-		workspace := models.Workspace{
-			Name:       user.Name + "'s Personal Workspace",
-			IsPersonal: true,
-		}
-		if err := h.db.Create(&workspace).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to create personal workspace",
-			})
-			return
-		}
-
-		// Add user as member
-		now := time.Now()
-		member := models.WorkspaceMember{
-			WorkspaceID: workspace.ID,
-			UserID:      user.ID,
-			Status:      models.MemberStatusActive,
-			JoinedAt:    &now,
-		}
-		if err := h.db.Create(&member).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"error": "Failed to add user to workspace",
-			})
-			return
-		}
-
-		// Set workspace cookie and redirect
-		middleware.SetWorkspaceCookie(c, workspace.ID)
-		c.Redirect(http.StatusFound, "/admin/orgs")
-		return
-	}
-
-	// If user has exactly one workspace, auto-select it
-	if len(workspaces) == 1 {
-		middleware.SetWorkspaceCookie(c, workspaces[0].ID)
-		c.Redirect(http.StatusFound, "/admin/orgs")
-		return
-	}
-
-	// Render workspace selector for multiple workspaces
-	props := pages.WorkspaceSelectProps{
-		Title:      "Select Workspace",
-		User:       user,
-		Workspaces: workspaces,
-		BasePath:   h.basePath,
-		CSSPath:    assets.VendorCSSPath(),
-	}
-
-	// Load theme if available (use first workspace's theme as fallback)
-	if len(workspaces) > 0 {
-		var theme models.AppTheme
-		if err := h.db.Where("workspace_id = ?", workspaces[0].ID).First(&theme).Error; err == nil {
-			primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-			secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-			props.PrimaryColor = primaryColor
-			props.PrimaryColorDark = primaryColorDark
-			props.SecondaryColor = secondaryColor
-			props.SecondaryColorDark = secondaryColorDark
-			props.HeadingFont = theme.HeadingFont
-			props.BodyFont = theme.BodyFont
-			props.HeadingFontBase64 = theme.HeadingFontBase64
-			props.BodyFontBase64 = theme.BodyFontBase64
-			props.LogoBase64 = theme.LogoLightBase64
-		}
-	}
-
-	h.RenderTempl(c, http.StatusOK, pages.WorkspaceSelectPage(props))
-}
-
-// WorkspaceSettingsPanel renders the workspace settings panel (HTMX)
-func (h *Handler) WorkspaceSettingsPanel(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
+// OrgSettingsPanel renders the organization settings panel (HTMX)
+func (h *Handler) OrgSettingsPanel(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Workspace context not found",
+			"error": "Organization context not found",
 		})
 		return
 	}
 
-	// Load workspace members
-	var members []models.WorkspaceMember
-	if err := h.db.Where("workspace_id = ? AND status = ?", workspace.ID, models.MemberStatusActive).
+	// Load org members
+	var members []models.OrgMember
+	if err := h.db.Where("org_id = ? AND status = ?", org.ID, models.MemberStatusActive).
 		Preload("User").
 		Find(&members).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to load workspace members",
+			"error": "Failed to load organization members",
 		})
 		return
 	}
 
 	// Load active invitations
-	var invitations []models.WorkspaceInvitation
-	if err := h.db.Where("workspace_id = ? AND (expires_at IS NULL OR expires_at > ?) AND (max_uses = 0 OR used_count < max_uses)",
-		workspace.ID, time.Now()).
+	var invitations []models.OrgInvitation
+	if err := h.db.Where("org_id = ? AND (expires_at IS NULL OR expires_at > ?) AND (max_uses = 0 OR used_count < max_uses)",
+		org.ID, time.Now()).
 		Find(&invitations).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to load invitations",
@@ -387,9 +296,9 @@ func (h *Handler) WorkspaceSettingsPanel(c *gin.Context) {
 	// Get current user
 	user := middleware.GetCurrentUser(c)
 
-	// Render workspace settings panel template
-	props := partials.WorkspacePanelProps{
-		Workspace:       workspace,
+	// Render org settings panel template
+	props := partials.OrgPanelProps{
+		Org:             org,
 		Members:         members,
 		Invitations:     invitations,
 		BasePath:        h.basePath,
@@ -397,15 +306,15 @@ func (h *Handler) WorkspaceSettingsPanel(c *gin.Context) {
 		CustomerBaseURL: h.customerBaseURL,
 	}
 
-	h.RenderTempl(c, http.StatusOK, partials.WorkspacePanel(props))
+	h.RenderTempl(c, http.StatusOK, partials.OrgPanel(props))
 }
 
-// GenerateInvitation creates a new invitation link for the workspace
-func (h *Handler) GenerateInvitation(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
+// GenerateOrgInvitation creates a new invitation link for the organization
+func (h *Handler) GenerateOrgInvitation(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Workspace context not found",
+			"error": "Organization context not found",
 		})
 		return
 	}
@@ -415,7 +324,6 @@ func (h *Handler) GenerateInvitation(c *gin.Context) {
 	var req struct {
 		Email     string     `json:"email"`
 		ExpiresAt *time.Time `json:"expires_at"`
-		MaxUses   int        `json:"max_uses"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -425,13 +333,28 @@ func (h *Handler) GenerateInvitation(c *gin.Context) {
 		return
 	}
 
-	// Create invitation
-	invitation := models.WorkspaceInvitation{
-		WorkspaceID: workspace.ID,
-		Email:       req.Email,
-		InvitedBy:   user.ID,
-		ExpiresAt:   req.ExpiresAt,
-		MaxUses:     req.MaxUses,
+	// Validate email is provided
+	if req.Email == "" {
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "Email is required",
+		})
+		return
+	}
+
+	// Set default expiration of 7 days if not provided
+	expiresAt := req.ExpiresAt
+	if expiresAt == nil {
+		defaultExpiry := time.Now().Add(7 * 24 * time.Hour)
+		expiresAt = &defaultExpiry
+	}
+
+	// Create invitation - always single-use (max_uses = 1)
+	invitation := models.OrgInvitation{
+		OrgID:     org.ID,
+		Email:     req.Email,
+		InvitedBy: user.ID,
+		ExpiresAt: expiresAt,
+		MaxUses:   1,
 	}
 
 	// BeforeCreate hook will generate the token
@@ -454,12 +377,12 @@ func (h *Handler) GenerateInvitation(c *gin.Context) {
 	})
 }
 
-// DeleteInvitation revokes an invitation link
-func (h *Handler) DeleteInvitation(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
+// DeleteOrgInvitation revokes an invitation link
+func (h *Handler) DeleteOrgInvitation(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Workspace context not found",
+			"error": "Organization context not found",
 		})
 		return
 	}
@@ -472,9 +395,9 @@ func (h *Handler) DeleteInvitation(c *gin.Context) {
 		return
 	}
 
-	// Delete invitation (verify it belongs to the workspace)
-	result := h.db.Where("id = ? AND workspace_id = ?", invitationID, workspace.ID).
-		Delete(&models.WorkspaceInvitation{})
+	// Delete invitation (verify it belongs to the org)
+	result := h.db.Where("id = ? AND org_id = ?", invitationID, org.ID).
+		Delete(&models.OrgInvitation{})
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -495,12 +418,12 @@ func (h *Handler) DeleteInvitation(c *gin.Context) {
 	})
 }
 
-// RemoveMember removes a user from the workspace
-func (h *Handler) RemoveMember(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
+// RemoveOrgMember removes a user from the organization
+func (h *Handler) RemoveOrgMember(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Workspace context not found",
+			"error": "Organization context not found",
 		})
 		return
 	}
@@ -517,14 +440,14 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	currentUser := middleware.GetCurrentUser(c)
 	if userID == currentUser.ID {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Cannot remove yourself from workspace",
+			"error": "Cannot remove yourself from organization",
 		})
 		return
 	}
 
-	// Delete membership (verify it belongs to the workspace)
-	result := h.db.Where("workspace_id = ? AND user_id = ?", workspace.ID, userID).
-		Delete(&models.WorkspaceMember{})
+	// Delete membership (verify it belongs to the org)
+	result := h.db.Where("org_id = ? AND user_id = ?", org.ID, userID).
+		Delete(&models.OrgMember{})
 
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -545,8 +468,8 @@ func (h *Handler) RemoveMember(c *gin.Context) {
 	})
 }
 
-// AcceptInvitation is a public endpoint for accepting workspace invitations
-func (h *Handler) AcceptInvitation(c *gin.Context) {
+// AcceptOrgInvitation is a public endpoint for accepting organization invitations
+func (h *Handler) AcceptOrgInvitation(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -556,8 +479,8 @@ func (h *Handler) AcceptInvitation(c *gin.Context) {
 	}
 
 	// Find invitation
-	var invitation models.WorkspaceInvitation
-	if err := h.db.Where("token = ?", token).Preload("Workspace").First(&invitation).Error; err != nil {
+	var invitation models.OrgInvitation
+	if err := h.db.Where("token = ?", token).Preload("Org").First(&invitation).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error": "Invitation not found or expired",
@@ -588,14 +511,14 @@ func (h *Handler) AcceptInvitation(c *gin.Context) {
 	}
 
 	// Check if user is already a member
-	var existingMember models.WorkspaceMember
-	err := h.db.Where("workspace_id = ? AND user_id = ?", invitation.WorkspaceID, user.ID).
+	var existingMember models.OrgMember
+	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
 		First(&existingMember).Error
 	if err == nil {
-		// Already a member - just switch to this workspace
-		middleware.SetWorkspaceCookie(c, invitation.WorkspaceID)
+		// Already a member - just switch to this org
+		middleware.SetOrgCookie(c, invitation.OrgID)
 		c.JSON(http.StatusOK, gin.H{
-			"message":     "Already a member of this workspace",
+			"message":     "Already a member of this organization",
 			"redirect_to": "/admin/orgs",
 		})
 		return
@@ -603,17 +526,17 @@ func (h *Handler) AcceptInvitation(c *gin.Context) {
 
 	// Add user as member
 	now := time.Now()
-	member := models.WorkspaceMember{
-		WorkspaceID: invitation.WorkspaceID,
-		UserID:      user.ID,
-		InvitedBy:   &invitation.InvitedBy,
-		Status:      models.MemberStatusActive,
-		JoinedAt:    &now,
+	member := models.OrgMember{
+		OrgID:     invitation.OrgID,
+		UserID:    user.ID,
+		InvitedBy: &invitation.InvitedBy,
+		Status:    models.MemberStatusActive,
+		JoinedAt:  &now,
 	}
 
 	if err := h.db.Create(&member).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to add member to workspace",
+			"error": "Failed to add member to organization",
 		})
 		return
 	}
@@ -625,18 +548,18 @@ func (h *Handler) AcceptInvitation(c *gin.Context) {
 	acceptedAt := time.Now()
 	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
 
-	// Set workspace cookie
-	middleware.SetWorkspaceCookie(c, invitation.WorkspaceID)
+	// Set org cookie
+	middleware.SetOrgCookie(c, invitation.OrgID)
 
 	c.JSON(http.StatusOK, gin.H{
-		"message":     "Successfully joined workspace",
+		"message":     "Successfully joined organization",
 		"redirect_to": "/admin/orgs",
 	})
 }
 
-// AcceptInvitationPage handles invitation acceptance via browser navigation
+// AcceptOrgInvitationPage handles invitation acceptance via browser navigation
 // This is a public endpoint that redirects to login if not authenticated
-func (h *Handler) AcceptInvitationPage(c *gin.Context) {
+func (h *Handler) AcceptOrgInvitationPage(c *gin.Context) {
 	token := c.Query("token")
 	if token == "" {
 		h.RenderErrorPage(c, http.StatusBadRequest, "Invitation token is required")
@@ -644,8 +567,8 @@ func (h *Handler) AcceptInvitationPage(c *gin.Context) {
 	}
 
 	// Find invitation
-	var invitation models.WorkspaceInvitation
-	if err := h.db.Where("token = ?", token).Preload("Workspace").First(&invitation).Error; err != nil {
+	var invitation models.OrgInvitation
+	if err := h.db.Where("token = ?", token).Preload("Org").First(&invitation).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			h.RenderErrorPage(c, http.StatusNotFound, "Invitation not found or expired")
 			return
@@ -666,35 +589,35 @@ func (h *Handler) AcceptInvitationPage(c *gin.Context) {
 		// Not authenticated - store return URL in cookie and redirect to login
 		// URL-encode the token in case it contains special characters
 		returnURL := h.basePath + "/invite?token=" + url.QueryEscape(token)
-		fmt.Printf("AcceptInvitationPage: user not authenticated, setting return_url=%s and redirecting to login\n", returnURL)
+		fmt.Printf("AcceptOrgInvitationPage: user not authenticated, setting return_url=%s and redirecting to login\n", returnURL)
 		c.SetCookie("return_url", returnURL, 3600, "/", "", false, true)
 		c.Redirect(http.StatusFound, h.basePath+"/login/")
 		return
 	}
 
 	// Check if user is already a member
-	var existingMember models.WorkspaceMember
-	err := h.db.Where("workspace_id = ? AND user_id = ?", invitation.WorkspaceID, user.ID).
+	var existingMember models.OrgMember
+	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
 		First(&existingMember).Error
 	if err == nil {
-		// Already a member - just switch to this workspace
-		middleware.SetWorkspaceCookie(c, invitation.WorkspaceID)
+		// Already a member - just switch to this org
+		middleware.SetOrgCookie(c, invitation.OrgID)
 		c.Redirect(http.StatusFound, h.basePath+"/orgs")
 		return
 	}
 
 	// Add user as member
 	now := time.Now()
-	member := models.WorkspaceMember{
-		WorkspaceID: invitation.WorkspaceID,
-		UserID:      user.ID,
-		InvitedBy:   &invitation.InvitedBy,
-		Status:      models.MemberStatusActive,
-		JoinedAt:    &now,
+	member := models.OrgMember{
+		OrgID:     invitation.OrgID,
+		UserID:    user.ID,
+		InvitedBy: &invitation.InvitedBy,
+		Status:    models.MemberStatusActive,
+		JoinedAt:  &now,
 	}
 
 	if err := h.db.Create(&member).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to join workspace")
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to join organization")
 		return
 	}
 
@@ -705,10 +628,10 @@ func (h *Handler) AcceptInvitationPage(c *gin.Context) {
 	acceptedAt := time.Now()
 	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
 
-	// Set workspace cookie
-	middleware.SetWorkspaceCookie(c, invitation.WorkspaceID)
+	// Set org cookie
+	middleware.SetOrgCookie(c, invitation.OrgID)
 
-	// Redirect to the workspace
+	// Redirect to the org
 	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
@@ -755,4 +678,52 @@ func (h *Handler) tryGetCurrentUser(c *gin.Context) *models.User {
 
 	fmt.Printf("tryGetCurrentUser: successfully loaded user %s (%s)\n", user.ID, user.Email)
 	return &user
+}
+
+// Deprecated aliases for backwards compatibility during migration
+// These will be removed after all routes are updated
+
+// CreateWorkspace is deprecated - use CreateOrg instead
+func (h *Handler) CreateWorkspace(c *gin.Context) {
+	h.CreateOrg(c)
+}
+
+// UpdateWorkspace is deprecated - use UpdateOrg instead
+func (h *Handler) UpdateWorkspace(c *gin.Context) {
+	h.UpdateOrg(c)
+}
+
+// SwitchWorkspace is deprecated - use SwitchOrg instead
+func (h *Handler) SwitchWorkspace(c *gin.Context) {
+	h.SwitchOrg(c)
+}
+
+// WorkspaceSettingsPanel is deprecated - use OrgSettingsPanel instead
+func (h *Handler) WorkspaceSettingsPanel(c *gin.Context) {
+	h.OrgSettingsPanel(c)
+}
+
+// GenerateInvitation is deprecated - use GenerateOrgInvitation instead
+func (h *Handler) GenerateInvitation(c *gin.Context) {
+	h.GenerateOrgInvitation(c)
+}
+
+// DeleteInvitation is deprecated - use DeleteOrgInvitation instead
+func (h *Handler) DeleteInvitation(c *gin.Context) {
+	h.DeleteOrgInvitation(c)
+}
+
+// RemoveMember is deprecated - use RemoveOrgMember instead
+func (h *Handler) RemoveMember(c *gin.Context) {
+	h.RemoveOrgMember(c)
+}
+
+// AcceptInvitation is deprecated - use AcceptOrgInvitation instead
+func (h *Handler) AcceptInvitation(c *gin.Context) {
+	h.AcceptOrgInvitation(c)
+}
+
+// AcceptInvitationPage is deprecated - use AcceptOrgInvitationPage instead
+func (h *Handler) AcceptInvitationPage(c *gin.Context) {
+	h.AcceptOrgInvitationPage(c)
 }

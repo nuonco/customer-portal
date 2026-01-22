@@ -8,7 +8,7 @@ import (
 // This provides a unified data structure that both Templ and html/template can use.
 type TemplateContext struct {
 	// Layout data (available on all pages)
-	WorkspaceID   string     `json:"workspace_id,omitempty"`
+	OrgID         string     `json:"org_id,omitempty"` // Organization ID for template rendering
 	Title         string     `json:"title"`
 	User          *UserData  `json:"user,omitempty"`
 	BasePath      string     `json:"base_path"`
@@ -106,17 +106,21 @@ type InstallData struct {
 type InstallDetailPageData struct {
 	Install         InstallData       `json:"install"`
 	Workflows       []WorkflowData    `json:"workflows"`
+	RecentWorkflows []WorkflowData    `json:"recent_workflows"`
 	HealthChecks    []HealthCheckData `json:"health_checks"`
+	HasHealthChecks bool              `json:"has_health_checks"`
 	PendingApproval *WorkflowData     `json:"pending_approval,omitempty"`
 }
 
 // WorkflowData contains data for a workflow.
 type WorkflowData struct {
 	ID          string `json:"id"`
+	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Status      string `json:"status"`
 	CreatedAt   string `json:"created_at"`
 	CompletedAt string `json:"completed_at,omitempty"`
+	FinishedAt  string `json:"finished_at,omitempty"`
 	Error       string `json:"error,omitempty"`
 }
 

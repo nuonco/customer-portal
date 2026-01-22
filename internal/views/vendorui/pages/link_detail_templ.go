@@ -18,8 +18,9 @@ import (
 // LinkDetailPageProps for the install link detail page
 type LinkDetailPageProps struct {
 	vendorui.LayoutProps
-	Link       *models.InstallLink
-	InstallURL string
+	Link                        *models.InstallLink
+	InstallURL                  string
+	CustomerDashboardInstallURL string // Full URL with subdomain for viewing install in customer dashboard
 }
 
 // LinkDetailPage renders the install link detail page
@@ -63,7 +64,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.AppName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 34, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 35, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -76,7 +77,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.AppID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 35, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 36, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -89,7 +90,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.CreatedAt.Format("January 2, 2006 at 3:04 PM"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 39, Col: 120}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 40, Col: 120}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -112,10 +113,11 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = partials.LinkStatus(partials.LinkStatusProps{
-				Link:         props.Link,
-				InstallURL:   props.InstallURL,
-				PrimaryColor: props.PrimaryColor,
-				BasePath:     props.BasePath,
+				Link:                        props.Link,
+				InstallURL:                  props.InstallURL,
+				CustomerDashboardInstallURL: props.CustomerDashboardInstallURL,
+				PrimaryColor:                props.PrimaryColor,
+				BasePath:                    props.BasePath,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -127,7 +129,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 71, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 73, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -140,7 +142,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.OrgID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 72, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 74, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -153,7 +155,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 73, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 75, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
@@ -166,7 +168,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(boolToString(props.Link.Used))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 74, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 76, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {

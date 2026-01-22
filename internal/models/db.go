@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"time"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/rds/auth"
@@ -78,13 +78,12 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Auto-migrate all models (including new workspace models)
+	// Auto-migrate all models
 	err = db.AutoMigrate(
 		&User{},
-		&Workspace{},
-		&WorkspaceMember{},
-		&WorkspaceInvitation{},
 		&NuonOrg{},
+		&OrgMember{},
+		&OrgInvitation{},
 		&InstallLink{},
 		&Install{},
 		&AppTheme{},
@@ -100,24 +99,24 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
-	// Run workspace data migration (idempotent - safe to run multiple times)
-	if err := runWorkspaceMigration(db); err != nil {
-		return nil, fmt.Errorf("workspace migration failed: %w", err)
+	// Run workspace to org data migration (idempotent - safe to run multiple times)
+	if err := runWorkspaceToOrgMigration(db); err != nil {
+		return nil, fmt.Errorf("workspace to org migration failed: %w", err)
 	}
 
-	// Run one-to-one workspace-org migration (idempotent)
-	if err := runOneToOneMigration(db); err != nil {
-		return nil, fmt.Errorf("one-to-one migration failed: %w", err)
-	}
-
-	// Run subdomain migration (idempotent - populates subdomain from org names)
-	if err := runSubdomainMigration(db); err != nil {
-		return nil, fmt.Errorf("subdomain migration failed: %w", err)
+	// Run subdomain migration (idempotent - populates subdomain on orgs from org names)
+	if err := runOrgSubdomainMigration(db); err != nil {
+		return nil, fmt.Errorf("org subdomain migration failed: %w", err)
 	}
 
 	// Run logo fields migration (idempotent - renames logo_base64 to logo_light_base64, adds logo_dark_base64)
 	if err := runLogoFieldsMigration(db); err != nil {
 		return nil, fmt.Errorf("logo fields migration failed: %w", err)
+	}
+
+	// Run workspace_id nullable migration (make workspace_id nullable since we're phasing it out)
+	if err := runWorkspaceIDNullableMigration(db); err != nil {
+		return nil, fmt.Errorf("workspace_id nullable migration failed: %w", err)
 	}
 
 	return db, nil
@@ -132,319 +131,258 @@ func Ping(db *gorm.DB) error {
 	return sqlDB.Ping()
 }
 
-// runWorkspaceMigration performs the data migration to workspace-scoped resources.
+// runWorkspaceToOrgMigration migrates data from the old workspace-based schema to the new org-based schema.
 // This is idempotent - safe to run multiple times.
-func runWorkspaceMigration(db *gorm.DB) error {
-	// Check if migration has already been run by counting workspaces
-	var workspaceCount int64
-	if err := db.Model(&Workspace{}).Count(&workspaceCount).Error; err != nil {
-		return fmt.Errorf("failed to count workspaces: %w", err)
+func runWorkspaceToOrgMigration(db *gorm.DB) error {
+	// Check if old workspaces table exists
+	var tableExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.tables
+			WHERE table_name = 'workspaces'
+		)
+	`).Scan(&tableExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for workspaces table: %w", err)
 	}
 
-	// If workspaces already exist, assume migration is complete
-	if workspaceCount > 0 {
+	// If workspaces table doesn't exist, no migration needed
+	if !tableExists {
 		return nil
 	}
 
-	// Begin transaction for data migration
-	return db.Transaction(func(tx *gorm.DB) error {
-		// Step 1: Create personal workspaces for all vendor users
-		var vendorUsers []User
-		if err := tx.Where("role = ? AND deleted_at IS NULL", RoleVendor).Find(&vendorUsers).Error; err != nil {
-			return fmt.Errorf("failed to fetch vendor users: %w", err)
+	// Check if migration has already been run by checking if org_members table has data
+	var orgMemberCount int64
+	if err := db.Model(&OrgMember{}).Count(&orgMemberCount).Error; err != nil {
+		return fmt.Errorf("failed to count org members: %w", err)
+	}
+
+	// If org_members already has data, assume migration is complete
+	if orgMemberCount > 0 {
+		return nil
+	}
+
+	err = db.Transaction(func(tx *gorm.DB) error {
+		// Step 1: Migrate workspace_members to org_members
+		// This maps workspace_id -> the corresponding nuon_org's ID
+		if err := tx.Exec(`
+			INSERT INTO org_members (id, org_id, user_id, invited_by, status, invited_at, joined_at, created_at, updated_at)
+			SELECT
+				wm.id,
+				no.id as org_id,
+				wm.user_id,
+				wm.invited_by,
+				wm.status,
+				wm.invited_at,
+				wm.joined_at,
+				wm.created_at,
+				wm.updated_at
+			FROM workspace_members wm
+			INNER JOIN nuon_orgs no ON no.workspace_id = wm.workspace_id
+			WHERE wm.deleted_at IS NULL AND no.deleted_at IS NULL
+			ON CONFLICT (id) DO NOTHING
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate workspace_members to org_members: %w", err)
 		}
 
-		workspaceMap := make(map[string]string) // userID -> workspaceID
-
-		for _, user := range vendorUsers {
-			workspaceName := user.Name
-			if workspaceName == "" {
-				workspaceName = user.Email
-			}
-			workspaceName = workspaceName + "'s Personal Workspace"
-
-			workspace := Workspace{
-				Name:       workspaceName,
-				IsPersonal: true,
-			}
-			if err := tx.Create(&workspace).Error; err != nil {
-				return fmt.Errorf("failed to create workspace for user %s: %w", user.ID, err)
-			}
-
-			workspaceMap[user.ID] = workspace.ID
-
-			// Add user as active member
-			now := time.Now()
-			member := WorkspaceMember{
-				WorkspaceID: workspace.ID,
-				UserID:      user.ID,
-				Status:      MemberStatusActive,
-				JoinedAt:    &now,
-			}
-			if err := tx.Create(&member).Error; err != nil {
-				return fmt.Errorf("failed to create workspace member for user %s: %w", user.ID, err)
-			}
+		// Step 2: Migrate workspace_invitations to org_invitations
+		if err := tx.Exec(`
+			INSERT INTO org_invitations (id, org_id, email, invited_by, token, expires_at, accepted_at, used_count, max_uses, created_at, updated_at)
+			SELECT
+				wi.id,
+				no.id as org_id,
+				wi.email,
+				wi.invited_by,
+				wi.token,
+				wi.expires_at,
+				wi.accepted_at,
+				wi.used_count,
+				wi.max_uses,
+				wi.created_at,
+				wi.updated_at
+			FROM workspace_invitations wi
+			INNER JOIN nuon_orgs no ON no.workspace_id = wi.workspace_id
+			WHERE wi.deleted_at IS NULL AND no.deleted_at IS NULL
+			ON CONFLICT (id) DO NOTHING
+		`).Error; err != nil {
+			return fmt.Errorf("failed to migrate workspace_invitations to org_invitations: %w", err)
 		}
 
-		// Step 2: Migrate nuon_orgs to personal workspaces
+		// Step 3: Copy subdomain from workspaces to nuon_orgs
 		if err := tx.Exec(`
 			UPDATE nuon_orgs
-			SET workspace_id = (
-				SELECT w.id FROM workspaces w
-				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
-				WHERE wm.user_id = nuon_orgs.user_id AND w.is_personal = true
-				LIMIT 1
-			)
-			WHERE deleted_at IS NULL AND workspace_id IS NULL
+			SET subdomain = ws.subdomain
+			FROM workspaces ws
+			WHERE nuon_orgs.workspace_id = ws.id
+			AND ws.subdomain IS NOT NULL
+			AND ws.subdomain != ''
+			AND (nuon_orgs.subdomain IS NULL OR nuon_orgs.subdomain = '')
 		`).Error; err != nil {
-			return fmt.Errorf("failed to migrate nuon_orgs: %w", err)
-		}
-
-		// Step 3: Migrate install_links to personal workspaces
-		if err := tx.Exec(`
-			UPDATE install_links
-			SET workspace_id = (
-				SELECT w.id FROM workspaces w
-				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
-				WHERE wm.user_id = install_links.user_id AND w.is_personal = true
-				LIMIT 1
-			)
-			WHERE deleted_at IS NULL AND workspace_id IS NULL
-		`).Error; err != nil {
-			return fmt.Errorf("failed to migrate install_links: %w", err)
-		}
-
-		// Step 4: Migrate app_input_configs via nuon_org lookup
-		if err := tx.Exec(`
-			UPDATE app_input_configs
-			SET workspace_id = (
-				SELECT workspace_id FROM nuon_orgs
-				WHERE nuon_orgs.id = app_input_configs.org_id
-				LIMIT 1
-			)
-			WHERE deleted_at IS NULL AND workspace_id IS NULL
-		`).Error; err != nil {
-			return fmt.Errorf("failed to migrate app_input_configs: %w", err)
-		}
-
-		// Step 5: Migrate installs to vendor workspaces (based on who created them)
-		if err := tx.Exec(`
-			UPDATE installs
-			SET workspace_id = (
-				SELECT w.id FROM workspaces w
-				INNER JOIN workspace_members wm ON wm.workspace_id = w.id
-				WHERE wm.user_id = installs.created_by_vendor_id AND w.is_personal = true
-				LIMIT 1
-			)
-			WHERE deleted_at IS NULL AND workspace_id IS NULL
-		`).Error; err != nil {
-			return fmt.Errorf("failed to migrate installs: %w", err)
-		}
-
-		// Step 6: Get existing theme and auth config (if any) for duplication
-		var existingTheme AppTheme
-		hasTheme := tx.First(&existingTheme).Error == nil
-
-		var existingAuthConfig CustomerAuthConfig
-		hasAuthConfig := tx.First(&existingAuthConfig).Error == nil
-
-		// Step 7: Create theme and auth config for each workspace
-		var workspaces []Workspace
-		if err := tx.Find(&workspaces).Error; err != nil {
-			return fmt.Errorf("failed to fetch workspaces: %w", err)
-		}
-
-		for _, workspace := range workspaces {
-			// Create theme for this workspace
-			theme := AppTheme{
-				WorkspaceID:    workspace.ID,
-				PrimaryColor:   DefaultPrimaryColor,
-				SecondaryColor: DefaultPrimaryColor,
-				BorderRadius:   DefaultBorderRadius,
-				SpacingDensity: DefaultSpacingDensity,
-			}
-			if hasTheme {
-				// Copy settings from existing theme
-				theme.PrimaryColor = existingTheme.PrimaryColor
-				theme.SecondaryColor = existingTheme.SecondaryColor
-				theme.LogoLightBase64 = existingTheme.LogoLightBase64
-				theme.LogoDarkBase64 = existingTheme.LogoDarkBase64
-				theme.SupportContact = existingTheme.SupportContact
-				theme.HeadingFont = existingTheme.HeadingFont
-				theme.BodyFont = existingTheme.BodyFont
-				theme.HeadingFontBase64 = existingTheme.HeadingFontBase64
-				theme.BodyFontBase64 = existingTheme.BodyFontBase64
-				theme.BorderRadius = existingTheme.BorderRadius
-				theme.SpacingDensity = existingTheme.SpacingDensity
-				theme.LoginTitle = existingTheme.LoginTitle
-				theme.LoginSubtitle = existingTheme.LoginSubtitle
-			}
-			if err := tx.Create(&theme).Error; err != nil {
-				return fmt.Errorf("failed to create theme for workspace %s: %w", workspace.ID, err)
-			}
-
-			// Create auth config for this workspace
-			authConfig := CustomerAuthConfig{
-				WorkspaceID: workspace.ID,
-				Enabled:     false,
-				Scopes:      DefaultScopes,
-			}
-			if hasAuthConfig {
-				// Copy settings from existing config
-				authConfig.Enabled = existingAuthConfig.Enabled
-				authConfig.ProviderName = existingAuthConfig.ProviderName
-				authConfig.ClientID = existingAuthConfig.ClientID
-				authConfig.ClientSecret = existingAuthConfig.ClientSecret
-				authConfig.IssuerURL = existingAuthConfig.IssuerURL
-				authConfig.Scopes = existingAuthConfig.Scopes
-			}
-			if err := tx.Create(&authConfig).Error; err != nil {
-				return fmt.Errorf("failed to create auth config for workspace %s: %w", workspace.ID, err)
-			}
-		}
-
-		// Step 8: Delete old global theme and auth config (if they exist and have no workspace_id)
-		if hasTheme {
-			if err := tx.Where("workspace_id IS NULL OR workspace_id = ''").Delete(&AppTheme{}).Error; err != nil {
-				return fmt.Errorf("failed to delete old theme: %w", err)
-			}
-		}
-		if hasAuthConfig {
-			if err := tx.Where("workspace_id IS NULL OR workspace_id = ''").Delete(&CustomerAuthConfig{}).Error; err != nil {
-				return fmt.Errorf("failed to delete old auth config: %w", err)
-			}
-		}
-
-		// Step 9: Verify migration - check for orphaned records
-		var orphanedCounts struct {
-			Orgs     int64
-			Links    int64
-			Configs  int64
-			Installs int64
-		}
-
-		tx.Model(&NuonOrg{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Orgs)
-		tx.Model(&InstallLink{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Links)
-		tx.Model(&AppInputConfig{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Configs)
-		tx.Model(&Install{}).Where("workspace_id IS NULL AND deleted_at IS NULL").Count(&orphanedCounts.Installs)
-
-		if orphanedCounts.Orgs > 0 || orphanedCounts.Links > 0 || orphanedCounts.Configs > 0 || orphanedCounts.Installs > 0 {
-			return fmt.Errorf("migration incomplete: found orphaned records (orgs:%d links:%d configs:%d installs:%d)",
-				orphanedCounts.Orgs, orphanedCounts.Links, orphanedCounts.Configs, orphanedCounts.Installs)
+			return fmt.Errorf("failed to copy subdomain to nuon_orgs: %w", err)
 		}
 
 		return nil
 	})
-}
 
-// runOneToOneMigration enforces one-to-one relationship between workspaces and orgs.
-// This is idempotent - safe to run multiple times.
-func runOneToOneMigration(db *gorm.DB) error {
-	// Check if migration has already been run by checking for the unique index
-	var indexExists int
-	db.Raw(`
-		SELECT 1 FROM pg_indexes
-		WHERE indexname = 'idx_unique_workspace_org'
-	`).Scan(&indexExists)
-
-	if indexExists == 1 {
-		// Migration already complete
-		return nil
+	if err != nil {
+		return err
 	}
 
-	return db.Transaction(func(tx *gorm.DB) error {
-		// Step 1: For workspaces with multiple orgs, keep only the oldest one (by created_at)
-		// Soft-delete all other orgs for that workspace
-		if err := tx.Exec(`
-			UPDATE nuon_orgs
-			SET deleted_at = NOW()
-			WHERE deleted_at IS NULL
-			AND id NOT IN (
-				SELECT DISTINCT ON (workspace_id) id
-				FROM nuon_orgs
-				WHERE deleted_at IS NULL AND workspace_id IS NOT NULL AND workspace_id != ''
-				ORDER BY workspace_id, created_at ASC
+	// Step 4: Update tables that referenced workspace_id to use the nuon_org's ID directly
+	// Run these OUTSIDE the transaction since some tables may not exist yet.
+	// Each update runs in its own implicit transaction.
+
+	// Helper to safely run an optional migration
+	safeExec := func(tableName, query string) {
+		// First check if table exists
+		var exists bool
+		db.Raw(`
+			SELECT EXISTS (
+				SELECT FROM information_schema.tables
+				WHERE table_schema = 'public'
+				AND table_name = ?
 			)
-			AND workspace_id IS NOT NULL
-			AND workspace_id != ''
-		`).Error; err != nil {
-			return fmt.Errorf("failed to soft-delete extra orgs: %w", err)
+		`, tableName).Scan(&exists)
+
+		if !exists {
+			return // Table doesn't exist, skip
 		}
 
-		// Step 2: Soft-delete workspaces that have no connected orgs
-		if err := tx.Exec(`
-			UPDATE workspaces
-			SET deleted_at = NOW()
-			WHERE deleted_at IS NULL
-			AND id NOT IN (
-				SELECT DISTINCT workspace_id
-				FROM nuon_orgs
-				WHERE deleted_at IS NULL AND workspace_id IS NOT NULL AND workspace_id != ''
+		// Check if workspace_id column exists
+		var hasWorkspaceCol bool
+		db.Raw(`
+			SELECT EXISTS (
+				SELECT FROM information_schema.columns
+				WHERE table_schema = 'public'
+				AND table_name = ?
+				AND column_name = 'workspace_id'
 			)
-		`).Error; err != nil {
-			return fmt.Errorf("failed to soft-delete orphaned workspaces: %w", err)
+		`, tableName).Scan(&hasWorkspaceCol)
+
+		if !hasWorkspaceCol {
+			return // workspace_id column doesn't exist, skip
 		}
 
-		// Step 2b: For org_ids with multiple active records, keep only the oldest
-		// This handles cases where the same Nuon org was connected to multiple workspaces
-		if err := tx.Exec(`
-			UPDATE nuon_orgs
-			SET deleted_at = NOW()
-			WHERE deleted_at IS NULL
-			AND id NOT IN (
-				SELECT DISTINCT ON (org_id) id
-				FROM nuon_orgs
-				WHERE deleted_at IS NULL AND org_id IS NOT NULL AND org_id != ''
-				ORDER BY org_id, created_at ASC
-			)
-			AND org_id IS NOT NULL
-			AND org_id != ''
-		`).Error; err != nil {
-			return fmt.Errorf("failed to soft-delete duplicate orgs by org_id: %w", err)
-		}
+		// Run the migration
+		db.Exec(query)
+	}
 
-		// Step 3: Add unique partial index on workspace_id (one org per workspace)
-		if err := tx.Exec(`
-			CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_workspace_org
-			ON nuon_orgs (workspace_id)
-			WHERE deleted_at IS NULL
-		`).Error; err != nil {
-			return fmt.Errorf("failed to create workspace unique index: %w", err)
-		}
+	// Update app_themes
+	safeExec("app_themes", `
+		UPDATE app_themes
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE app_themes.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (app_themes.org_id IS NULL OR app_themes.org_id = '')
+	`)
 
-		// Step 4: Add unique partial index on org_id (one workspace per Nuon org)
-		if err := tx.Exec(`
-			CREATE UNIQUE INDEX IF NOT EXISTS idx_unique_nuon_org
-			ON nuon_orgs (org_id)
-			WHERE deleted_at IS NULL
-		`).Error; err != nil {
-			return fmt.Errorf("failed to create nuon_org unique index: %w", err)
-		}
+	// Update customer_auth_configs
+	safeExec("customer_auth_configs", `
+		UPDATE customer_auth_configs
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE customer_auth_configs.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (customer_auth_configs.org_id IS NULL OR customer_auth_configs.org_id = '')
+	`)
 
-		return nil
-	})
+	// Update github_repo_configs
+	safeExec("github_repo_configs", `
+		UPDATE github_repo_configs
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE github_repo_configs.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (github_repo_configs.org_id IS NULL OR github_repo_configs.org_id = '')
+	`)
+
+	// Update template_overrides
+	safeExec("template_overrides", `
+		UPDATE template_overrides
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE template_overrides.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (template_overrides.org_id IS NULL OR template_overrides.org_id = '')
+	`)
+
+	// Update asset_overrides
+	safeExec("asset_overrides", `
+		UPDATE asset_overrides
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE asset_overrides.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (asset_overrides.org_id IS NULL OR asset_overrides.org_id = '')
+	`)
+
+	// Update app_input_configs
+	safeExec("app_input_configs", `
+		UPDATE app_input_configs
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE app_input_configs.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (app_input_configs.org_id IS NULL OR app_input_configs.org_id = '')
+	`)
+
+	// Update install_links
+	safeExec("install_links", `
+		UPDATE install_links
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE install_links.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (install_links.org_id IS NULL OR install_links.org_id = '')
+	`)
+
+	// Update installs
+	safeExec("installs", `
+		UPDATE installs
+		SET org_id = no.id
+		FROM nuon_orgs no
+		WHERE installs.workspace_id = no.workspace_id
+		AND no.deleted_at IS NULL
+		AND (installs.org_id IS NULL OR installs.org_id = '')
+	`)
+
+	return nil
 }
 
-// runSubdomainMigration populates the subdomain field for existing workspaces
-// that don't have one. Uses the org name (via NuonOrg) as the base for subdomain.
+// isColumnOrTableNotExistsError checks if the error is about a column or table not existing
+// This allows the migration to gracefully skip tables/columns that don't exist yet
+func isColumnNotExistsError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	// Check for common "does not exist" patterns (column, relation/table)
+	return strings.Contains(errStr, "does not exist") ||
+		strings.Contains(errStr, "42P01") || // PostgreSQL: undefined_table
+		strings.Contains(errStr, "42703") // PostgreSQL: undefined_column
+}
+
+// runOrgSubdomainMigration populates the subdomain field for existing orgs
+// that don't have one. Uses the org name as the base for subdomain.
 // This is idempotent - safe to run multiple times.
-func runSubdomainMigration(db *gorm.DB) error {
-	// Check if migration is needed (any workspace without subdomain)
+func runOrgSubdomainMigration(db *gorm.DB) error {
+	// Check if migration is needed (any org without subdomain)
 	var count int64
-	if err := db.Model(&Workspace{}).Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Count(&count).Error; err != nil {
-		return fmt.Errorf("failed to check for workspaces without subdomain: %w", err)
+	if err := db.Model(&NuonOrg{}).Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Count(&count).Error; err != nil {
+		return fmt.Errorf("failed to check for orgs without subdomain: %w", err)
 	}
 
-	// No workspaces need migration
+	// No orgs need migration
 	if count == 0 {
 		return nil
 	}
 
 	return db.Transaction(func(tx *gorm.DB) error {
-		// Get all workspaces with their org names
-		var workspaces []Workspace
-		if err := tx.Preload("NuonOrg").Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Find(&workspaces).Error; err != nil {
-			return fmt.Errorf("failed to fetch workspaces: %w", err)
+		// Get all orgs without subdomains
+		var orgs []NuonOrg
+		if err := tx.Where("(subdomain IS NULL OR subdomain = '') AND deleted_at IS NULL").Find(&orgs).Error; err != nil {
+			return fmt.Errorf("failed to fetch orgs: %w", err)
 		}
 
 		// Track used subdomains to avoid collisions
@@ -452,18 +390,18 @@ func runSubdomainMigration(db *gorm.DB) error {
 
 		// First, get all existing subdomains
 		var existingSubdomains []string
-		if err := tx.Model(&Workspace{}).Where("subdomain IS NOT NULL AND subdomain != '' AND deleted_at IS NULL").Pluck("subdomain", &existingSubdomains).Error; err != nil {
+		if err := tx.Model(&NuonOrg{}).Where("subdomain IS NOT NULL AND subdomain != '' AND deleted_at IS NULL").Pluck("subdomain", &existingSubdomains).Error; err != nil {
 			return fmt.Errorf("failed to fetch existing subdomains: %w", err)
 		}
 		for _, s := range existingSubdomains {
 			usedSubdomains[s] = true
 		}
 
-		for _, ws := range workspaces {
-			// Get the base name from org, fall back to workspace name
-			baseName := ws.Name
-			if ws.NuonOrg != nil && ws.NuonOrg.Name != "" {
-				baseName = ws.NuonOrg.Name
+		for _, org := range orgs {
+			// Use org name as base for subdomain
+			baseName := org.Name
+			if baseName == "" {
+				baseName = "org"
 			}
 
 			// Normalize the subdomain
@@ -484,8 +422,8 @@ func runSubdomainMigration(db *gorm.DB) error {
 
 			usedSubdomains[finalSubdomain] = true
 
-			if err := tx.Model(&ws).Update("subdomain", finalSubdomain).Error; err != nil {
-				return fmt.Errorf("failed to update subdomain for workspace %s: %w", ws.ID, err)
+			if err := tx.Model(&org).Update("subdomain", finalSubdomain).Error; err != nil {
+				return fmt.Errorf("failed to update subdomain for org %s: %w", org.ID, err)
 			}
 		}
 
@@ -545,4 +483,51 @@ func runLogoFieldsMigration(db *gorm.DB) error {
 
 		return nil
 	})
+}
+
+// runWorkspaceIDNullableMigration makes the workspace_id column nullable on nuon_orgs.
+// This is needed because we're phasing out the workspace abstraction and consolidating
+// everything into NuonOrg. The column needs to be nullable to prevent constraint violations
+// when GORM cascades updates to NuonOrg records (since the model no longer has WorkspaceID).
+// This is idempotent - safe to run multiple times.
+func runWorkspaceIDNullableMigration(db *gorm.DB) error {
+	// Check if workspace_id column exists on nuon_orgs
+	var columnExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = 'nuon_orgs' AND column_name = 'workspace_id'
+		)
+	`).Scan(&columnExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for workspace_id column: %w", err)
+	}
+
+	// If workspace_id column doesn't exist, nothing to do
+	if !columnExists {
+		return nil
+	}
+
+	// Check if workspace_id column is NOT NULL
+	var isNotNull bool
+	err = db.Raw(`
+		SELECT is_nullable = 'NO'
+		FROM information_schema.columns
+		WHERE table_name = 'nuon_orgs' AND column_name = 'workspace_id'
+	`).Scan(&isNotNull).Error
+	if err != nil {
+		return fmt.Errorf("failed to check workspace_id nullable status: %w", err)
+	}
+
+	// If column is already nullable, nothing to do
+	if !isNotNull {
+		return nil
+	}
+
+	// Make workspace_id nullable
+	if err := db.Exec(`ALTER TABLE nuon_orgs ALTER COLUMN workspace_id DROP NOT NULL`).Error; err != nil {
+		return fmt.Errorf("failed to make workspace_id nullable: %w", err)
+	}
+
+	return nil
 }

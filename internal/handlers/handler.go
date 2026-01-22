@@ -11,7 +11,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/a-h/templ"
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -37,6 +36,20 @@ const DefaultPrimaryColor = "#2563EB"
 // isHTMXRequest checks if the request was made by HTMX (for partial responses)
 func isHTMXRequest(c *gin.Context) bool {
 	return c.GetHeader("HX-Request") == "true"
+}
+
+// constructCustomerDashboardInstallURL builds the URL for viewing an install in the customer dashboard.
+// If a subdomain is provided, it constructs a full URL with the subdomain (e.g., https://acme.portal.nuon.co/installs/{id}).
+// Otherwise, it falls back to the base URL path.
+func constructCustomerDashboardInstallURL(baseURL, baseDomain, subdomain, installID string) string {
+	if subdomain != "" && baseDomain != "" {
+		scheme := "https://"
+		if strings.HasPrefix(baseURL, "http://") {
+			scheme = "http://"
+		}
+		return fmt.Sprintf("%s%s.%s/installs/%s", scheme, subdomain, baseDomain, installID)
+	}
+	return fmt.Sprintf("%s/installs/%s", baseURL, installID)
 }
 
 // DarkenColor takes a hex color and returns a darker version (for hover states)
@@ -143,17 +156,20 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 	}
 }
 
-// GetUserWorkspaces returns all active workspaces for a user
-func (h *Handler) GetUserWorkspaces(userID string) []models.Workspace {
-	var memberships []models.WorkspaceMember
+// GetUserOrgs returns all active organizations for a user
+func (h *Handler) GetUserOrgs(userID string) []models.NuonOrg {
+	var memberships []models.OrgMember
 	h.db.Where("user_id = ? AND status = ?", userID, models.MemberStatusActive).
-		Preload("Workspace").Find(&memberships)
+		Preload("Org", "deleted_at IS NULL").Find(&memberships)
 
-	workspaces := make([]models.Workspace, 0, len(memberships))
+	orgs := make([]models.NuonOrg, 0, len(memberships))
 	for _, m := range memberships {
-		workspaces = append(workspaces, m.Workspace)
+		// Only include memberships with valid (non-deleted) orgs
+		if m.Org.ID != "" {
+			orgs = append(orgs, m.Org)
+		}
 	}
-	return workspaces
+	return orgs
 }
 
 // RenderTempl renders a Templ component to the response
@@ -166,13 +182,13 @@ func (h *Handler) RenderTempl(c *gin.Context, status int, component templ.Compon
 }
 
 // buildTemplateContext creates a TemplateContext for override templates from existing data
-func (h *Handler) buildTemplateContext(workspaceID, title string, user *models.User, theme *models.AppTheme, pageData interface{}) *overrides.TemplateContext {
+func (h *Handler) buildTemplateContext(orgID, title string, user *models.User, theme *models.AppTheme, pageData interface{}) *overrides.TemplateContext {
 	ctx := &overrides.TemplateContext{
-		WorkspaceID:   workspaceID,
+		OrgID:         orgID,
 		Title:         title,
 		BasePath:      h.basePath,
 		CSSPath:       assets.CustomerCSSPath(),
-		CustomCSSPath: h.getCustomCSSPath(workspaceID),
+		CustomCSSPath: h.getCustomCSSPath(orgID),
 		Theme:         overrides.NewThemeData(theme),
 		PageData:      pageData,
 	}
@@ -184,37 +200,47 @@ func (h *Handler) buildTemplateContext(workspaceID, title string, user *models.U
 	return ctx
 }
 
-// getCustomCSSPath returns the custom CSS path for a workspace, or empty string if none
-func (h *Handler) getCustomCSSPath(workspaceID string) string {
-	if workspaceID == "" {
+// getCustomCSSPath returns the custom CSS path for an org, or empty string if none
+func (h *Handler) getCustomCSSPath(orgID string) string {
+	if orgID == "" {
 		return ""
 	}
-	// Check if workspace has any enabled CSS overrides
-	cssAssets, err := models.GetCSSOverrides(h.db, workspaceID)
+	// Check if org has any enabled CSS overrides
+	cssAssets, err := models.GetCSSOverrides(h.db, orgID)
 	if err != nil || len(cssAssets) == 0 {
 		return ""
 	}
-	return h.basePath + "/custom/css/" + workspaceID + ".css"
+	return h.basePath + "/custom/css/" + orgID + ".css"
 }
 
 // tryRenderOverride attempts to render a template override for the given page
 // Returns true if an override was rendered, false if fallback to default template is needed
-func (h *Handler) tryRenderOverride(c *gin.Context, workspaceID, pageName string, ctx *overrides.TemplateContext) bool {
-	if workspaceID == "" {
+func (h *Handler) tryRenderOverride(c *gin.Context, orgID, pageName string, ctx *overrides.TemplateContext) bool {
+	// Debug: Log the org ID being used
+	subdomain, _ := c.Get("subdomain")
+	fmt.Printf("[DEBUG] tryRenderOverride: pageName=%s, orgID=%s, subdomain=%v\n",
+		pageName, orgID, subdomain)
+
+	if orgID == "" {
+		fmt.Printf("[DEBUG] tryRenderOverride: orgID is empty, skipping override\n")
 		return false
 	}
 
 	// Add custom CSS path if available
-	ctx.CustomCSSPath = h.getCustomCSSPath(workspaceID)
+	ctx.CustomCSSPath = h.getCustomCSSPath(orgID)
 
-	result := h.templateRenderer.TryRender(c, workspaceID, pageName, ctx)
+	result := h.templateRenderer.TryRender(c, orgID, pageName, ctx)
+
+	// Debug: Log the result
+	fmt.Printf("[DEBUG] tryRenderOverride: rendered=%v, error=%v\n", result.Rendered, result.Error)
+
 	if result.Error != nil {
-		fmt.Printf("Template override error for workspace %s, page %s: %v\n", workspaceID, pageName, result.Error)
+		fmt.Printf("Template override error for org %s, page %s: %v\n", orgID, pageName, result.Error)
 	}
 	return result.Rendered
 }
 
-// HandlePostLoginRedirect handles workspace selection logic after successful authentication
+// HandlePostLoginRedirect handles org selection logic after successful authentication
 // This is called from both LocalLogin and AuthCallback handlers
 func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
 	fmt.Printf("HandlePostLoginRedirect: user=%s (%s), role=%s\n", user.ID, user.Email, user.Role)
@@ -229,71 +255,45 @@ func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
 	}
 	fmt.Printf("HandlePostLoginRedirect: no return_url cookie found\n")
 
-	// Only apply workspace logic for vendor users
+	// Only apply org logic for vendor users
 	if user.Role != models.RoleVendor {
 		c.Redirect(http.StatusFound, h.basePath+"/orgs")
 		return
 	}
 
-	// Get user's active workspaces
-	var memberships []models.WorkspaceMember
+	// Get user's active orgs (filter out soft-deleted orgs)
+	var memberships []models.OrgMember
 	if err := h.db.Where("user_id = ? AND status = ?", user.ID, models.MemberStatusActive).
-		Preload("Workspace").
+		Preload("Org", "deleted_at IS NULL").
 		Find(&memberships).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load workspaces")
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load organizations")
 		return
 	}
 
-	// Extract workspaces
-	workspaces := make([]models.Workspace, 0, len(memberships))
+	// Extract orgs (only those with valid non-deleted orgs)
+	orgs := make([]models.NuonOrg, 0, len(memberships))
 	for _, m := range memberships {
-		workspaces = append(workspaces, m.Workspace)
+		if m.Org.ID != "" {
+			orgs = append(orgs, m.Org)
+		}
 	}
 
-	// Case 1: No workspaces - create personal workspace
-	if len(workspaces) == 0 {
-		workspace := models.Workspace{
-			Name:       user.Name + "'s Personal Workspace",
-			IsPersonal: true,
-		}
-		if err := h.db.Create(&workspace).Error; err != nil {
-			h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to create personal workspace")
-			return
-		}
-
-		// Add user as member
-		now := time.Now()
-		member := models.WorkspaceMember{
-			WorkspaceID: workspace.ID,
-			UserID:      user.ID,
-			Status:      models.MemberStatusActive,
-			JoinedAt:    &now,
-		}
-		if err := h.db.Create(&member).Error; err != nil {
-			h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to add user to workspace")
-			return
-		}
-
-		// Set workspace cookie and redirect
-		middleware.SetWorkspaceCookie(c, workspace.ID)
+	// Case 1: No orgs - redirect to org creation page
+	// (Personal orgs are no longer auto-created; users must connect a Nuon org)
+	if len(orgs) == 0 {
 		c.Redirect(http.StatusFound, h.basePath+"/orgs")
 		return
 	}
 
-	// Case 2: Single workspace - auto-select it
-	if len(workspaces) == 1 {
-		middleware.SetWorkspaceCookie(c, workspaces[0].ID)
-		c.Redirect(http.StatusFound, h.basePath+"/orgs")
-		return
-	}
-
-	// Case 3: Multiple workspaces - redirect to workspace selector
-	c.Redirect(http.StatusFound, h.basePath+"/workspaces/select")
+	// Case 2: One or more orgs - auto-select the first one
+	// (The org selector on /orgs page allows switching between orgs)
+	middleware.SetOrgCookie(c, orgs[0].ID)
+	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
 // RenderErrorPage renders a templ error page (for vendor pages)
 func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor := ""
 	if theme != nil {
 		primaryColor = theme.PrimaryColor
@@ -311,8 +311,8 @@ func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
 
 // RenderCustomerErrorPage renders an error page for customer-facing pages with override support
 func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, errorMsg string, user *models.User) {
-	workspaceID := h.getWorkspaceIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	// Try template override first
 	pageData := overrides.ErrorPageData{
@@ -320,8 +320,8 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 		Message: errorMsg,
 		Code:    status,
 	}
-	ctx := h.buildTemplateContext(workspaceID, title, user, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "error", ctx) {
+	ctx := h.buildTemplateContext(orgID, title, user, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "error", ctx) {
 		return
 	}
 
@@ -333,25 +333,25 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 	h.RenderTempl(c, status, customerpages.ErrorPage(props))
 }
 
-// getWorkspaceIDForTheme safely gets workspace ID for theme operations
-// For vendor pages with workspace context, uses that. For customer pages with subdomain, looks up workspace.
-func (h *Handler) getWorkspaceIDForTheme(c *gin.Context) string {
-	// Try to get workspace from context (vendor routes with middleware)
-	if workspace := middleware.GetCurrentWorkspace(c); workspace != nil {
-		return workspace.ID
+// getOrgIDForTheme safely gets org ID for theme operations
+// For vendor pages with org context, uses that. For customer pages with subdomain, looks up org.
+func (h *Handler) getOrgIDForTheme(c *gin.Context) string {
+	// Try to get org from context (vendor routes with middleware)
+	if org := middleware.GetCurrentOrg(c); org != nil {
+		return org.ID
 	}
 
-	// For customer-facing routes, try to resolve workspace from subdomain
+	// For customer-facing routes, try to resolve org from subdomain
 	subdomain, exists := c.Get("subdomain")
 	if exists && subdomain != nil && subdomain.(string) != "" {
-		var workspace models.Workspace
-		if err := h.db.Where("subdomain = ?", subdomain.(string)).First(&workspace).Error; err == nil {
-			return workspace.ID
+		var org models.NuonOrg
+		if err := h.db.Where("subdomain = ?", subdomain.(string)).First(&org).Error; err == nil {
+			return org.ID
 		}
 	}
 
-	// For routes without workspace context and no subdomain, return empty
-	// The GetOrCreateAppTheme function will need to handle empty workspace ID
+	// For routes without org context and no subdomain, return empty
+	// The GetOrCreateAppTheme function will need to handle empty org ID
 	return ""
 }
 
@@ -389,7 +389,7 @@ func (h *Handler) MergeData(base gin.H, additional gin.H) gin.H {
 // getThemeData fetches the global theme settings for use in vendor pages
 // Returns a gin.H map with theme data for the template
 func (h *Handler) getThemeData(c *gin.Context) gin.H {
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		// Return empty theme on error
 		return gin.H{
@@ -467,8 +467,8 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	errorMsg := c.Query("error")
 
 	// Get vendor theme for customer-facing pages
-	workspaceID := h.getWorkspaceIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	// Check if we're on a subdomain
 	subdomain, _ := c.Get("subdomain")
@@ -527,8 +527,8 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 		SwitchURL:  props.SwitchURL,
 		SwitchText: props.SwitchText,
 	}
-	ctx := h.buildTemplateContext(workspaceID, theme.GetLoginTitle(), nil, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "login", ctx) {
+	ctx := h.buildTemplateContext(orgID, theme.GetLoginTitle(), nil, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "login", ctx) {
 		return
 	}
 
@@ -781,7 +781,7 @@ func (h *Handler) LocalLogin(c *gin.Context) {
 
 // VendorRegisterPageTempl renders the vendor registration page using Templ
 func (h *Handler) VendorRegisterPageTempl(c *gin.Context) {
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -854,84 +854,27 @@ func (h *Handler) LocalRegister(c *gin.Context) {
 	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 
-// OrgsPage renders the organizations list page for a workspace.
+// OrgsPage renders the organizations list page for a org.
 // Each workspace has exactly one connected org (one-to-one relationship).
 // New users may have a workspace but no org yet - they need to see the empty state
 // with the "Connect Your First Org" button rather than an error page.
 func (h *Handler) OrgsPage(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	workspace := middleware.GetCurrentWorkspace(c)
 
-	// Load the workspace's org (one-to-one relationship)
-	// Returns empty slice if no org exists (valid state for new users)
-	var orgs []models.NuonOrg
-	h.db.Where("workspace_id = ? AND deleted_at IS NULL", workspace.ID).Find(&orgs)
+	// Get all orgs accessible to this user
+	orgs := h.GetUserOrgs(user.ID)
 
-	// Get user workspaces for workspace switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
-
-	// Set current org to nil if no orgs exist (for new users)
-	var currentOrg *models.NuonOrg
+	// Redirect to first org's apps page
 	if len(orgs) > 0 {
-		currentOrg = &orgs[0]
-	}
-
-	// Render the orgs page template
-	vendorpages.OrgsPage(vendorpages.OrgsPageProps{
-		LayoutProps: vendorui.LayoutProps{
-			Title:            "Connected Organizations",
-			ActivePage:       "", // No active page on orgs list
-			User:             user,
-			CurrentOrg:       currentOrg,
-			Orgs:             orgs,
-			BasePath:         h.basePath,
-			CurrentWorkspace: workspace,
-			Workspaces:       userWorkspaces,
-			CSSPath:          assets.VendorCSSPath(),
-		},
-		Orgs: orgs,
-	}).Render(c.Request.Context(), c.Writer)
-}
-
-// CreateOrg is deprecated - orgs are now created with workspaces (one-to-one relationship).
-// This endpoint returns an error directing users to create a new workspace instead.
-func (h *Handler) CreateOrg(c *gin.Context) {
-	c.JSON(http.StatusGone, gin.H{
-		"error":     "Creating orgs separately is no longer supported. Each workspace has exactly one connected org.",
-		"migration": "To connect a different Nuon org, create a new workspace with the org credentials.",
-	})
-}
-
-// UpdateOrg handles PUT request to update org settings (name, api_token)
-func (h *Handler) UpdateOrg(c *gin.Context) {
-	// Get org from context (validated by RequireOrgAccess middleware)
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
+		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, orgs[0].ID))
 		return
 	}
 
-	var req struct {
-		APIToken string `json:"api_token"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Update API token if provided
-	if req.APIToken != "" {
-		org.APIToken = req.APIToken
-	}
-
-	if err := h.db.Save(org).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update organization"})
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{"org": *org})
+	// No orgs - show error
+	h.RenderErrorPage(c, http.StatusNotFound, "No organizations found")
 }
+
+// NOTE: CreateOrg and UpdateOrg are now defined in workspaces.go
 
 // OrgSettingsPage renders the org settings page using Templ
 func (h *Handler) OrgSettingsPage(c *gin.Context) {
@@ -945,17 +888,12 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 	}
 
 	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
-	// Get user workspaces
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
 
 	props := vendorpages.OrgSettingsPageProps{
 		LayoutProps: vendorui.LayoutProps{
@@ -964,10 +902,8 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 			User:               user,
 			CurrentOrg:         org,
 			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: "Settings", Path: fmt.Sprintf("%s/orgs/%s/settings", h.basePath, org.ID), Active: true}},
+			Breadcrumbs:        []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,
@@ -1066,18 +1002,13 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 		showingFrom = 0
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
-	// Get user workspaces
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
 
 	props := vendorpages.OrgDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
@@ -1088,8 +1019,6 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 			Orgs:               allOrgs,
 			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,
@@ -1137,7 +1066,6 @@ func generateSHA() (string, error) {
 // The Install is created when customer accepts the link (not here)
 func (h *Handler) CreateInstallLink(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	workspace := middleware.GetCurrentWorkspace(c)
 	org := middleware.GetCurrentOrg(c)
 
 	var req struct {
@@ -1160,13 +1088,12 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 
 	// Create install link with vendor inputs stored
 	link := models.InstallLink{
-		WorkspaceID: workspace.ID,
-		UserID:      user.ID,
-		OrgID:       org.ID,
-		AppID:       req.AppID,
-		AppName:     req.AppName,
-		SHA:         sha,
-		Used:        false,
+		UserID:  user.ID,
+		OrgID:   org.ID,
+		AppID:   req.AppID,
+		AppName: req.AppName,
+		SHA:     sha,
+		Used:    false,
 	}
 
 	// Store vendor inputs for later use when customer accepts
@@ -1213,23 +1140,31 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 	}
 
 	var link models.InstallLink
-	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Preload("Workspace").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
+	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
 	installURL := link.GetInstallURLWithSubdomain(h.customerBaseURL, h.subdomainBaseDomain)
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
+	// Construct the customer dashboard install URL (with subdomain)
+	var customerDashboardInstallURL string
+	if link.Install != nil && link.NuonOrg.ID != "" {
+		customerDashboardInstallURL = constructCustomerDashboardInstallURL(
+			h.customerBaseURL,
+			h.subdomainBaseDomain,
+			link.NuonOrg.Subdomain,
+			link.Install.ID,
+		)
+	}
 
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Fetch all orgs for this user
+	currentOrg := middleware.GetCurrentOrg(c)
+	var allOrgs []models.NuonOrg
+	h.db.Where("id = ?", currentOrg.ID).Find(&allOrgs)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -1239,17 +1174,18 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 		breadcrumbText = link.Install.Name
 	}
 
+	// Get user's orgs for org switcher
+	userOrgs := h.GetUserOrgs(user.ID)
+
 	props := vendorpages.LinkDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
 			Title:              "Install - " + link.AppName,
 			ActivePage:         "install-links",
 			User:               user,
 			CurrentOrg:         org,
-			Orgs:               allOrgs,
+			Orgs:               userOrgs,
 			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,
@@ -1261,8 +1197,9 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 			LogoBase64:         theme.LogoLightBase64,
 			CSSPath:            assets.VendorCSSPath(),
 		},
-		Link:       &link,
-		InstallURL: installURL,
+		Link:                        &link,
+		InstallURL:                  installURL,
+		CustomerDashboardInstallURL: customerDashboardInstallURL,
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.LinkDetailPage(props))
@@ -1286,22 +1223,34 @@ func (h *Handler) InstallLinkStatus(c *gin.Context) {
 	}
 
 	var link models.InstallLink
-	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Preload("Workspace").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
+	if err := h.db.Preload("Install").Preload("Install.User").Preload("NuonOrg").Where("id = ? AND org_id = ?", linkID, org.ID).First(&link).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Install link not found")
 		return
 	}
 
 	installURL := link.GetInstallURLWithSubdomain(h.customerBaseURL, h.subdomainBaseDomain)
 
+	// Construct the customer dashboard install URL (with subdomain)
+	var customerDashboardInstallURL string
+	if link.Install != nil && link.NuonOrg.ID != "" {
+		customerDashboardInstallURL = constructCustomerDashboardInstallURL(
+			h.customerBaseURL,
+			h.subdomainBaseDomain,
+			link.NuonOrg.Subdomain,
+			link.Install.ID,
+		)
+	}
+
 	// For HTMX requests, return only the status partial
 	if isHTMXRequest(c) {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 		h.RenderTempl(c, http.StatusOK, partials.LinkStatus(partials.LinkStatusProps{
-			Link:         &link,
-			InstallURL:   installURL,
-			PrimaryColor: primaryColor,
-			BasePath:     h.basePath,
+			Link:                        &link,
+			InstallURL:                  installURL,
+			CustomerDashboardInstallURL: customerDashboardInstallURL,
+			PrimaryColor:                primaryColor,
+			BasePath:                    h.basePath,
 		}))
 		return
 	}
@@ -1480,7 +1429,7 @@ func (h *Handler) DeleteOrg(c *gin.Context) {
 
 // ThemeSettingsPanelContent returns just the panel HTML for HTMX lazy loading
 func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load theme settings")
 		return
@@ -1496,16 +1445,16 @@ func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
 
 // CustomThemePanelContent returns the custom theme panel HTML for HTMX lazy loading
 func (h *Handler) CustomThemePanelContent(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.String(http.StatusBadRequest, "Workspace context not found")
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.String(http.StatusBadRequest, "Organization context not found")
 		return
 	}
 
 	// Load GitHub config and overrides
-	gitHubConfig, _ := models.GetGitHubRepoConfig(h.db, workspace.ID)
-	templateOverrides, _ := models.GetAllTemplateOverrides(h.db, workspace.ID)
-	assetOverrides, _ := models.GetAllAssetOverrides(h.db, workspace.ID)
+	gitHubConfig, _ := models.GetGitHubRepoConfig(h.db, org.ID)
+	templateOverrides, _ := models.GetAllTemplateOverrides(h.db, org.ID)
+	assetOverrides, _ := models.GetAllAssetOverrides(h.db, org.ID)
 
 	props := partials.CustomThemePanelProps{
 		BasePath:     h.basePath,
@@ -1544,7 +1493,7 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	}
 
 	// Get or create the global app theme
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load theme settings"})
 		return
@@ -1707,18 +1656,18 @@ func (h *Handler) UpdateProfile(c *gin.Context) {
 // DebugUserOrgs returns debug information about user's organizations
 func (h *Handler) DebugUserOrgs(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
-	workspace := middleware.GetCurrentWorkspace(c)
+	org := middleware.GetCurrentOrg(c)
 
-	fmt.Printf("DebugUserOrgs: Request from user %s (%s) in workspace %s\n", user.ID, user.Email, workspace.ID)
+	fmt.Printf("DebugUserOrgs: Request from user %s (%s) in workspace %s\n", user.ID, user.Email, org.ID)
 
 	var orgs []models.NuonOrg
-	if err := h.db.Where("workspace_id = ?", workspace.ID).Find(&orgs).Error; err != nil {
+	if err := h.db.Where("org_id = ?", org.ID).Find(&orgs).Error; err != nil {
 		fmt.Printf("DebugUserOrgs: Error querying orgs: %v\n", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	fmt.Printf("DebugUserOrgs: Found %d organizations for workspace %s\n", len(orgs), workspace.ID)
+	fmt.Printf("DebugUserOrgs: Found %d organizations for workspace %s\n", len(orgs), org.ID)
 
 	// Format debug response
 	debugOrgs := make([]gin.H, len(orgs))
@@ -1822,16 +1771,11 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		appsWithStatus[i] = appStatus
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -1856,8 +1800,6 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			Orgs:               allOrgs,
 			Breadcrumbs:        []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,
@@ -2049,16 +1991,11 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 		}
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 
 	props := vendorpages.AppInputsPageProps{
@@ -2075,8 +2012,6 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 				{Text: "Inputs", Path: "", Active: true},
 			},
 			BasePath:         h.basePath,
-			CurrentWorkspace: workspace,
-			Workspaces:       userWorkspaces,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
 			CSSPath:          assets.VendorCSSPath(),
@@ -2188,16 +2123,11 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 		selectedIDs[id] = true
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 
 	// Get primary colors
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
@@ -2227,8 +2157,6 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 				{Text: "Health Checks", Path: "", Active: true},
 			},
 			BasePath:         h.basePath,
-			CurrentWorkspace: workspace,
-			Workspaces:       userWorkspaces,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
 			CSSPath:          assets.VendorCSSPath(),
@@ -2319,25 +2247,20 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 	user := h.GetFreshUser(c)
 
 	// Get or create the customer auth config
-	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load login settings")
 		return
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	workspace := middleware.GetCurrentWorkspace(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
 	// Get current org from middleware context (set by RequireOrgAccess)
 	currentOrg := middleware.GetCurrentOrg(c)
 
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling and login page settings
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 
 	// Build breadcrumb path with org ID
@@ -2355,8 +2278,6 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 				{Text: "Login", Path: portalBasePath + "/login", Active: true},
 			},
 			BasePath:         h.basePath,
-			CurrentWorkspace: workspace,
-			Workspaces:       userWorkspaces,
 			PrimaryColor:     primaryColor,
 			PrimaryColorDark: primaryColorDark,
 			CSSPath:          assets.VendorCSSPath(),
@@ -2370,7 +2291,7 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 
 // LoginSettingsPanelContent returns just the panel HTML for HTMX lazy loading
 func (h *Handler) LoginSettingsPanelContent(c *gin.Context) {
-	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load login settings")
 		return
@@ -2405,7 +2326,7 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	}
 
 	// Get or create the customer auth config
-	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load login settings"})
 		return
@@ -2436,7 +2357,7 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	}
 
 	// Update login page appearance in theme
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, err := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	if err == nil {
 		theme.LoginTitle = req.LoginTitle
 		theme.LoginSubtitle = req.LoginSubtitle
@@ -2479,7 +2400,7 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 // TestLoginConnection tests the OIDC connection with current settings
 func (h *Handler) TestLoginConnection(c *gin.Context) {
 	// Get the current config
-	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getWorkspaceIDForTheme(c))
+	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getOrgIDForTheme(c))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load login settings"})
 		return
@@ -2589,9 +2510,8 @@ func (h *Handler) UpdateAppCustomerInputConfig(c *gin.Context) {
 		if result.Error == gorm.ErrRecordNotFound {
 			// Create new config
 			config = models.AppInputConfig{
-				WorkspaceID: org.WorkspaceID,
-				OrgID:       orgID,
-				AppID:       appID,
+				OrgID: orgID,
+				AppID: appID,
 			}
 		} else {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch input config"})
@@ -2655,13 +2575,6 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 		return
 	}
 
-	// Get workspace from context
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace context not found")
-		return
-	}
-
 	// Get search query
 	searchQuery := c.Query("q")
 
@@ -2676,7 +2589,7 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 	query := h.db.Table("installs").
 		Select("users.id as user_id, users.name, users.email, COUNT(*) as install_count").
 		Joins("JOIN users ON users.id = installs.user_id").
-		Where("installs.workspace_id = ?", workspace.ID).
+		Where("installs.org_id = ?", org.ID).
 		Group("users.id, users.name, users.email").
 		Order("users.name ASC")
 
@@ -2710,15 +2623,11 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 		return
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -2731,8 +2640,6 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 			Orgs:               allOrgs,
 			Breadcrumbs:        []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,
@@ -2763,26 +2670,19 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 		return
 	}
 
-	// Get workspace from context
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Workspace context not found")
-		return
-	}
-
 	// Get customer ID from URL
 	customerID := c.Param("customer_id")
 
-	// Get customer user (role filter removed - if they own installs in this workspace, they're a customer)
+	// Get customer user (role filter removed - if they own installs in this org, they're a customer)
 	var customer models.User
 	if err := h.db.Where("id = ?", customerID).First(&customer).Error; err != nil {
 		h.RenderErrorPage(c, http.StatusNotFound, "Customer not found")
 		return
 	}
 
-	// Get all installs for this customer in this workspace
+	// Get all installs for this customer in this org
 	var installs []models.Install
-	if err := h.db.Where("user_id = ? AND workspace_id = ?", customerID, workspace.ID).
+	if err := h.db.Where("user_id = ? AND org_id = ?", customerID, org.ID).
 		Preload("InstallLink").
 		Preload("InstallLink.NuonOrg").
 		Order("created_at DESC").
@@ -2791,7 +2691,7 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 		return
 	}
 
-	// Verify customer has installs in this workspace
+	// Verify customer has installs in this org
 	if len(installs) == 0 {
 		h.RenderErrorPage(c, http.StatusNotFound, "Customer has no installs in this organization")
 		return
@@ -2855,15 +2755,11 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 		}
 	}
 
-	// Fetch all orgs for sidebar dropdown
-	var allOrgs []models.NuonOrg
-	h.db.Where("workspace_id = ?", workspace.ID).Find(&allOrgs)
-
-	// Fetch user's workspaces for switcher
-	userWorkspaces := h.GetUserWorkspaces(user.ID)
+	// Get user's orgs for sidebar dropdown
+	allOrgs := h.GetUserOrgs(user.ID)
 
 	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -2879,8 +2775,6 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 				{Text: customer.Name, Path: fmt.Sprintf("%s/orgs/%s/customers/%s", h.basePath, org.ID, customer.ID), Active: true},
 			},
 			BasePath:           h.basePath,
-			CurrentWorkspace:   workspace,
-			Workspaces:         userWorkspaces,
 			PrimaryColor:       primaryColor,
 			PrimaryColorDark:   primaryColorDark,
 			SecondaryColor:     secondaryColor,

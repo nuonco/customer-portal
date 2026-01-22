@@ -14,11 +14,11 @@ import (
 )
 
 // TemplateRenderer handles rendering customer pages with optional template overrides.
-// It checks for workspace-specific template overrides and falls back to default Templ templates.
+// It checks for org-specific template overrides and falls back to default Templ templates.
 type TemplateRenderer struct {
 	db *gorm.DB
 
-	// Template cache: map[workspaceID:pageName]*template.Template
+	// Template cache: map[orgID:pageName]*template.Template
 	cache   map[string]*template.Template
 	cacheMu sync.RWMutex
 }
@@ -43,20 +43,27 @@ type RenderResult struct {
 // Returns (true, nil) if an override was rendered successfully.
 // Returns (false, nil) if no override exists (caller should use default template).
 // Returns (false, error) if an override exists but rendering failed.
-func (r *TemplateRenderer) TryRender(c *gin.Context, workspaceID, pageName string, ctx *TemplateContext) RenderResult {
-	if workspaceID == "" {
+func (r *TemplateRenderer) TryRender(c *gin.Context, orgID, pageName string, ctx *TemplateContext) RenderResult {
+	if orgID == "" {
 		return RenderResult{Rendered: false}
 	}
 
 	// Check for enabled override
-	override, err := models.GetEnabledTemplateOverride(r.db, workspaceID, pageName)
+	override, err := models.GetEnabledTemplateOverride(r.db, orgID, pageName)
 	if err != nil {
+		// Debug: Log when no override is found
+		fmt.Printf("[DEBUG] TryRender: no override found for org=%s, page=%s, err=%v\n",
+			orgID, pageName, err)
 		// No override found - use default
 		return RenderResult{Rendered: false}
 	}
 
+	// Debug: Log that override was found
+	fmt.Printf("[DEBUG] TryRender: found override for org=%s, page=%s, id=%s\n",
+		orgID, pageName, override.ID)
+
 	// Get or parse the template
-	tmpl, err := r.getOrParseTemplate(workspaceID, pageName, override.Content)
+	tmpl, err := r.getOrParseTemplate(orgID, pageName, override.Content)
 	if err != nil {
 		return RenderResult{Rendered: false, Error: fmt.Errorf("failed to parse template: %w", err)}
 	}
@@ -76,20 +83,20 @@ func (r *TemplateRenderer) TryRender(c *gin.Context, workspaceID, pageName strin
 }
 
 // TryRenderWithStatus is like TryRender but allows specifying an HTTP status code.
-func (r *TemplateRenderer) TryRenderWithStatus(c *gin.Context, status int, workspaceID, pageName string, ctx *TemplateContext) RenderResult {
-	if workspaceID == "" {
+func (r *TemplateRenderer) TryRenderWithStatus(c *gin.Context, status int, orgID, pageName string, ctx *TemplateContext) RenderResult {
+	if orgID == "" {
 		return RenderResult{Rendered: false}
 	}
 
 	// Check for enabled override
-	override, err := models.GetEnabledTemplateOverride(r.db, workspaceID, pageName)
+	override, err := models.GetEnabledTemplateOverride(r.db, orgID, pageName)
 	if err != nil {
 		// No override found - use default
 		return RenderResult{Rendered: false}
 	}
 
 	// Get or parse the template
-	tmpl, err := r.getOrParseTemplate(workspaceID, pageName, override.Content)
+	tmpl, err := r.getOrParseTemplate(orgID, pageName, override.Content)
 	if err != nil {
 		return RenderResult{Rendered: false, Error: fmt.Errorf("failed to parse template: %w", err)}
 	}
@@ -109,8 +116,10 @@ func (r *TemplateRenderer) TryRenderWithStatus(c *gin.Context, status int, works
 }
 
 // getOrParseTemplate returns a cached template or parses and caches a new one.
-func (r *TemplateRenderer) getOrParseTemplate(workspaceID, pageName, content string) (*template.Template, error) {
-	cacheKey := workspaceID + ":" + pageName
+// It also loads and parses any enabled partial templates for the org,
+// making them available for inclusion via {{ template "partial.html" . }}.
+func (r *TemplateRenderer) getOrParseTemplate(orgID, pageName, content string) (*template.Template, error) {
+	cacheKey := orgID + ":" + pageName
 
 	// Try cache first
 	r.cacheMu.RLock()
@@ -120,10 +129,26 @@ func (r *TemplateRenderer) getOrParseTemplate(workspaceID, pageName, content str
 	}
 	r.cacheMu.RUnlock()
 
-	// Parse template
+	// Parse main template
 	tmpl, err := template.New(pageName).Funcs(r.getFuncMap()).Parse(content)
 	if err != nil {
 		return nil, err
+	}
+
+	// Load and parse any enabled partials for this org
+	partials, err := models.GetEnabledPartials(r.db, orgID)
+	if err == nil && len(partials) > 0 {
+		for _, partial := range partials {
+			// Register partial with .html suffix to match template references like {{ template "modal.html" . }}
+			partialName := partial.PageName + ".html"
+			_, err := tmpl.New(partialName).Parse(partial.Content)
+			if err != nil {
+				fmt.Printf("[DEBUG] getOrParseTemplate: failed to parse partial %s: %v\n", partialName, err)
+				// Continue with other partials - don't fail the whole template
+				continue
+			}
+			fmt.Printf("[DEBUG] getOrParseTemplate: loaded partial %s for org %s\n", partialName, orgID)
+		}
 	}
 
 	// Cache it
@@ -136,40 +161,46 @@ func (r *TemplateRenderer) getOrParseTemplate(workspaceID, pageName, content str
 
 // InvalidateCache removes a template from the cache.
 // Call this when a template override is updated or deleted.
-func (r *TemplateRenderer) InvalidateCache(workspaceID, pageName string) {
-	cacheKey := workspaceID + ":" + pageName
+func (r *TemplateRenderer) InvalidateCache(orgID, pageName string) {
+	cacheKey := orgID + ":" + pageName
 	r.cacheMu.Lock()
 	delete(r.cache, cacheKey)
 	r.cacheMu.Unlock()
 }
 
-// InvalidateWorkspaceCache removes all templates for a workspace from the cache.
+// InvalidateOrgCache removes all templates for an org from the cache.
 // Call this when templates are synced from GitHub.
-func (r *TemplateRenderer) InvalidateWorkspaceCache(workspaceID string) {
+func (r *TemplateRenderer) InvalidateOrgCache(orgID string) {
 	r.cacheMu.Lock()
 	for key := range r.cache {
-		// Keys are in format "workspaceID:pageName"
-		if len(key) > len(workspaceID)+1 && key[:len(workspaceID)+1] == workspaceID+":" {
+		// Keys are in format "orgID:pageName"
+		if len(key) > len(orgID)+1 && key[:len(orgID)+1] == orgID+":" {
 			delete(r.cache, key)
 		}
 	}
 	r.cacheMu.Unlock()
 }
 
-// GetCustomCSSPath returns the URL path for custom CSS if it exists for the workspace.
-func (r *TemplateRenderer) GetCustomCSSPath(workspaceID, basePath string) string {
-	if workspaceID == "" {
+// InvalidateWorkspaceCache is deprecated - use InvalidateOrgCache instead.
+// Kept temporarily for backwards compatibility during migration.
+func (r *TemplateRenderer) InvalidateWorkspaceCache(orgID string) {
+	r.InvalidateOrgCache(orgID)
+}
+
+// GetCustomCSSPath returns the URL path for custom CSS if it exists for the org.
+func (r *TemplateRenderer) GetCustomCSSPath(orgID, basePath string) string {
+	if orgID == "" {
 		return ""
 	}
 
 	// Check if any CSS overrides exist
-	cssAssets, err := models.GetCSSOverrides(r.db, workspaceID)
+	cssAssets, err := models.GetCSSOverrides(r.db, orgID)
 	if err != nil || len(cssAssets) == 0 {
 		return ""
 	}
 
 	// Return the path to serve custom CSS
-	return basePath + "/custom/css/" + workspaceID + ".css"
+	return basePath + "/custom/css/" + orgID + ".css"
 }
 
 // ValidateTemplate validates a template string to ensure it parses correctly

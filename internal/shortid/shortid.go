@@ -59,16 +59,12 @@ func NewAppInputConfigID() string {
 	return New("aic")
 }
 
-func NewWorkspaceID() string {
-	return New("wsp")
+func NewOrgMemberID() string {
+	return New("ogm")
 }
 
-func NewWorkspaceMemberID() string {
-	return New("wsm")
-}
-
-func NewWorkspaceInvitationID() string {
-	return New("wsi")
+func NewOrgInvitationID() string {
+	return New("ogi")
 }
 
 func NewGitHubRepoConfigID() string {

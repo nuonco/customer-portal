@@ -438,7 +438,7 @@ func (h *Handler) tryGetLoggedInUser(c *gin.Context) *models.User {
 func (h *Handler) InstallLinkPage(c *gin.Context) {
 	sha := c.Query("sha")
 	if sha == "" {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "Missing or invalid install link",
@@ -449,7 +449,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 
 	var link models.InstallLink
 	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "Install link not found or invalid",
@@ -459,7 +459,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	if link.Used {
-		theme, _ := models.GetOrCreateAppTheme(h.db, link.WorkspaceID)
+		theme, _ := models.GetOrCreateAppTheme(h.db, link.OrgID)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
 			Error:       "This install link has already been used",
@@ -469,9 +469,9 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	// Use install link's workspace ID (not getWorkspaceIDForTheme which only works for vendor routes)
-	workspaceID := link.WorkspaceID
-	theme, err := models.GetOrCreateAppTheme(h.db, workspaceID)
+	// Use install link's org ID (not getOrgIDForTheme which only works for vendor routes)
+	orgID := link.OrgID
+	theme, err := models.GetOrCreateAppTheme(h.db, orgID)
 	if err != nil {
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
@@ -504,8 +504,8 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 		SubmitURL:    h.basePath + "/install-link/",
 	}
 
-	ctx := h.buildTemplateContext(workspaceID, "Install "+link.AppName, loggedInUser, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "install_link", ctx) {
+	ctx := h.buildTemplateContext(orgID, "Install "+link.AppName, loggedInUser, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "install_link", ctx) {
 		return
 	}
 
@@ -595,9 +595,9 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 
 	// Create local Install record with customer as owner
 	install := &models.Install{
-		WorkspaceID:       link.WorkspaceID, // Link to vendor's workspace
-		UserID:            customer.ID,      // Customer owns the install
-		CreatedByVendorID: link.UserID,      // Track original vendor
+		OrgID:             link.OrgID,  // Link to vendor's org
+		UserID:            customer.ID, // Customer owns the install
+		CreatedByVendorID: link.UserID, // Track original vendor
 		InstallLinkID:     link.ID,
 		NuonInstallID:     nuonInstall.ID,
 		Name:              installName,
@@ -646,7 +646,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	query := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Order("created_at DESC")
 	query = query.Where("user_id = ?", user.ID)
 	if err := query.Find(&allInstalls).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Failed to load installs",
@@ -806,17 +806,17 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Get global app theme for customer UI
-	// Get workspace ID from installs (customers view installs from a vendor's workspace)
+	// Get org ID from installs (customers view installs from a vendor's org)
 	// Try from paginated installs first, then all installs, then context
-	var workspaceID string
-	if len(paginatedInstalls) > 0 && paginatedInstalls[0].Install.WorkspaceID != "" {
-		workspaceID = paginatedInstalls[0].Install.WorkspaceID
-	} else if len(allInstalls) > 0 && allInstalls[0].WorkspaceID != "" {
-		workspaceID = allInstalls[0].WorkspaceID
+	var orgID string
+	if len(paginatedInstalls) > 0 && paginatedInstalls[0].Install.OrgID != "" {
+		orgID = paginatedInstalls[0].Install.OrgID
+	} else if len(allInstalls) > 0 && allInstalls[0].OrgID != "" {
+		orgID = allInstalls[0].OrgID
 	} else {
-		workspaceID = h.getWorkspaceIDForTheme(c)
+		orgID = h.getOrgIDForTheme(c)
 	}
-	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	// Fetch platform information for all installs
 	// Build a map of AppID -> Platform by fetching apps from Nuon API
@@ -883,8 +883,8 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		ShowingTo:           showingTo,
 	}
 
-	ctx := h.buildTemplateContext(workspaceID, "Your Installs", user, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "installs", ctx) {
+	ctx := h.buildTemplateContext(orgID, "Your Installs", user, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "installs", ctx) {
 		return
 	}
 
@@ -903,7 +903,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getWorkspaceIDForTheme(c))
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Install not found",
@@ -916,7 +916,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 
 	// Load the install link with NuonOrg for display and health checks
 	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, install.WorkspaceID)
+		theme, _ := models.GetOrCreateAppTheme(h.db, install.OrgID)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
 			Error:       "Failed to load install details",
@@ -977,20 +977,22 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		}
 	}
 
-	// Get global app theme for customer UI
-	// Use install's workspace ID (not getWorkspaceIDForTheme which only works for vendor routes)
-	workspaceID := install.WorkspaceID
-	theme, _ := models.GetOrCreateAppTheme(h.db, workspaceID)
+	// Get global app theme for customer UI using subdomain-based lookup
+	// This handles legacy installs that may not have OrgID set
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	// Try template override first
 	workflowsData := make([]overrides.WorkflowData, 0, len(recentWorkflows))
 	for _, wf := range recentWorkflows {
 		workflowsData = append(workflowsData, overrides.WorkflowData{
 			ID:          wf.ID,
+			Name:        wf.Name,
 			Type:        wf.Name,
 			Status:      wf.Status,
 			CreatedAt:   wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
 			CompletedAt: wf.FinishedAt.Format("Jan 2, 2006 3:04 PM"),
+			FinishedAt:  wf.FinishedAt.Format("Jan 2, 2006 3:04 PM"),
 		})
 	}
 
@@ -1014,6 +1016,7 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 		if wf.CanApprove || wf.CanApproveAll {
 			pendingApproval = &overrides.WorkflowData{
 				ID:        wf.ID,
+				Name:      wf.Name,
 				Type:      wf.Name,
 				Status:    wf.Status,
 				CreatedAt: wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
@@ -1038,12 +1041,14 @@ func (h *Handler) InstallDetail(c *gin.Context) {
 			HasPendingApproval:  pendingApproval != nil,
 		},
 		Workflows:       workflowsData,
+		RecentWorkflows: workflowsData,
 		HealthChecks:    healthChecksData,
+		HasHealthChecks: len(healthCheckIDs) > 0,
 		PendingApproval: pendingApproval,
 	}
 
-	ctx := h.buildTemplateContext(workspaceID, "Install - "+install.Name, user, theme, pageData)
-	if h.tryRenderOverride(c, workspaceID, "install_detail", ctx) {
+	ctx := h.buildTemplateContext(orgID, "Install - "+install.Name, user, theme, pageData)
+	if h.tryRenderOverride(c, orgID, "install_detail", ctx) {
 		return
 	}
 

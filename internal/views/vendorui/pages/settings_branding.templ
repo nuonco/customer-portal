@@ -15,7 +15,7 @@ type BrandingSettingsPageProps struct {
 // BrandingSettingsPage renders the branding settings page
 templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6 overflow-hidden">
+		<div class="flex -m-6 overflow-hidden">
 			@partials.PortalSubnav(partials.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "branding",

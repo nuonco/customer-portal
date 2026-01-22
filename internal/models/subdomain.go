@@ -10,7 +10,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// ReservedSubdomains contains subdomains that cannot be used by workspaces
+// ReservedSubdomains contains subdomains that cannot be used by orgs
 var ReservedSubdomains = map[string]bool{
 	"www":     true,
 	"api":     true,
@@ -69,7 +69,7 @@ func NormalizeSubdomain(name string) string {
 
 	// If empty after normalization, generate a fallback
 	if name == "" {
-		name = "workspace"
+		name = "org"
 	}
 
 	return name
@@ -115,12 +115,12 @@ func ValidateSubdomain(subdomain string) error {
 	return nil
 }
 
-// IsSubdomainAvailable checks if a subdomain is available (not used by another workspace)
-func IsSubdomainAvailable(db *gorm.DB, subdomain string, excludeWorkspaceID string) (bool, error) {
+// IsSubdomainAvailable checks if a subdomain is available (not used by another org)
+func IsSubdomainAvailable(db *gorm.DB, subdomain string, excludeOrgID string) (bool, error) {
 	var count int64
-	query := db.Model(&Workspace{}).Where("subdomain = ? AND deleted_at IS NULL", subdomain)
-	if excludeWorkspaceID != "" {
-		query = query.Where("id != ?", excludeWorkspaceID)
+	query := db.Model(&NuonOrg{}).Where("subdomain = ? AND deleted_at IS NULL", subdomain)
+	if excludeOrgID != "" {
+		query = query.Where("id != ?", excludeOrgID)
 	}
 	if err := query.Count(&count).Error; err != nil {
 		return false, err
@@ -130,12 +130,12 @@ func IsSubdomainAvailable(db *gorm.DB, subdomain string, excludeWorkspaceID stri
 
 // GenerateUniqueSubdomain generates a unique subdomain from a base name
 // If the normalized subdomain is taken, it appends -1, -2, etc. until finding an available one
-func GenerateUniqueSubdomain(db *gorm.DB, baseName string, excludeWorkspaceID string) (string, error) {
+func GenerateUniqueSubdomain(db *gorm.DB, baseName string, excludeOrgID string) (string, error) {
 	subdomain := NormalizeSubdomain(baseName)
 
 	// Check if the base subdomain is available and valid
 	if err := ValidateSubdomain(subdomain); err == nil {
-		available, err := IsSubdomainAvailable(db, subdomain, excludeWorkspaceID)
+		available, err := IsSubdomainAvailable(db, subdomain, excludeOrgID)
 		if err != nil {
 			return "", err
 		}
@@ -158,7 +158,7 @@ func GenerateUniqueSubdomain(db *gorm.DB, baseName string, excludeWorkspaceID st
 			continue
 		}
 
-		available, err := IsSubdomainAvailable(db, candidate, excludeWorkspaceID)
+		available, err := IsSubdomainAvailable(db, candidate, excludeOrgID)
 		if err != nil {
 			return "", err
 		}

@@ -10,8 +10,9 @@ import (
 // LinkDetailPageProps for the install link detail page
 type LinkDetailPageProps struct {
 	vendorui.LayoutProps
-	Link       *models.InstallLink
-	InstallURL string
+	Link                        *models.InstallLink
+	InstallURL                  string
+	CustomerDashboardInstallURL string // Full URL with subdomain for viewing install in customer dashboard
 }
 
 // LinkDetailPage renders the install link detail page
@@ -55,10 +56,11 @@ templ LinkDetailPage(props LinkDetailPageProps) {
 					<h2 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Link Management</h2>
 					<div class="space-y-4">
 						@partials.LinkStatus(partials.LinkStatusProps{
-							Link:         props.Link,
-							InstallURL:   props.InstallURL,
-							PrimaryColor: props.PrimaryColor,
-							BasePath:     props.BasePath,
+							Link:                        props.Link,
+							InstallURL:                  props.InstallURL,
+							CustomerDashboardInstallURL: props.CustomerDashboardInstallURL,
+							PrimaryColor:                props.PrimaryColor,
+							BasePath:                    props.BasePath,
 						})
 					</div>
 				</div>

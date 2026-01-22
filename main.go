@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"regexp"
 	"strings"
@@ -78,7 +79,7 @@ func main() {
 		customerBaseURL = "http://localhost:" + port
 	}
 
-	// Get subdomain base domain for workspace subdomains
+	// Get subdomain base domain for org subdomains
 	subdomainBaseDomain := os.Getenv("SUBDOMAIN_BASE_DOMAIN")
 	if subdomainBaseDomain == "" {
 		subdomainBaseDomain = "localhost:" + port
@@ -193,34 +194,33 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	// JWT refresh endpoint
 	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
 
-	// Workspace management routes (no workspace context required)
-	workspaceRoutes := rg.Group("/")
-	workspaceRoutes.Use(jwtAuth.MiddlewareFunc())
-	workspaceRoutes.Use(middleware.RequireRole(models.RoleVendor))
+	// Organization management routes (no org context required)
+	orgMgmtRoutes := rg.Group("/")
+	orgMgmtRoutes.Use(jwtAuth.MiddlewareFunc())
+	orgMgmtRoutes.Use(middleware.RequireRole(models.RoleVendor))
 	{
-		workspaceRoutes.POST("/workspaces", h.CreateWorkspace)
-		workspaceRoutes.GET("/workspaces/select", h.WorkspaceSelectorPage)
-		workspaceRoutes.POST("/workspace/switch", h.SwitchWorkspace)
+		orgMgmtRoutes.POST("/org/create", h.CreateOrg) // Create new org
+		orgMgmtRoutes.POST("/org/switch", h.SwitchOrg) // Switch org context
 	}
 
-	// Workspace management routes (workspace context required)
-	workspaceContextRoutes := rg.Group("/workspace")
-	workspaceContextRoutes.Use(jwtAuth.MiddlewareFunc())
-	workspaceContextRoutes.Use(middleware.RequireRole(models.RoleVendor))
-	workspaceContextRoutes.Use(middleware.RequireWorkspaceContext(db))
+	// Organization management routes (org context required)
+	orgContextRoutes := rg.Group("/org")
+	orgContextRoutes.Use(jwtAuth.MiddlewareFunc())
+	orgContextRoutes.Use(middleware.RequireRole(models.RoleVendor))
+	orgContextRoutes.Use(middleware.RequireOrgContext(db))
 	{
-		workspaceContextRoutes.GET("/settings/panel", h.WorkspaceSettingsPanel)
-		workspaceContextRoutes.PUT("", h.UpdateWorkspace)
-		workspaceContextRoutes.POST("/invitations", h.GenerateInvitation)
-		workspaceContextRoutes.DELETE("/invitations/:id", h.DeleteInvitation)
-		workspaceContextRoutes.DELETE("/members/:user_id", h.RemoveMember)
+		orgContextRoutes.GET("/settings/panel", h.OrgSettingsPanel)
+		orgContextRoutes.PUT("", h.UpdateOrg)
+		orgContextRoutes.POST("/invitations", h.GenerateOrgInvitation)
+		orgContextRoutes.DELETE("/invitations/:id", h.DeleteOrgInvitation)
+		orgContextRoutes.DELETE("/members/:user_id", h.RemoveOrgMember)
 	}
 
-	// Settings API endpoints (workspace-scoped, pages are under /orgs/:org_id/settings/)
+	// Settings API endpoints (org-scoped, pages are under /orgs/:org_id/settings/)
 	settings := rg.Group("/settings")
 	settings.Use(jwtAuth.MiddlewareFunc())
 	settings.Use(middleware.RequireRole(models.RoleVendor))
-	settings.Use(middleware.RequireWorkspaceContext(db))
+	settings.Use(middleware.RequireOrgContext(db))
 	{
 		// Panel endpoints (for HTMX lazy loading)
 		settings.GET("/panel", h.ThemeSettingsPanelContent)
@@ -256,22 +256,21 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		profile.PUT("/", h.UpdateProfile)
 	}
 
-	// Protected vendor routes (require workspace context)
+	// Protected vendor routes (require org context)
 	orgs := rg.Group("/orgs")
 	orgs.Use(jwtAuth.MiddlewareFunc())
 	orgs.Use(middleware.RequireRole(models.RoleVendor))
-	orgs.Use(middleware.RequireWorkspaceContext(db))
+	orgs.Use(middleware.RequireOrgContext(db))
 	{
-		// Workspace-level routes (no specific org)
+		// Org-level routes (no specific org selected)
 		orgs.GET("/", h.OrgsPage)
-		orgs.POST("/", h.CreateOrg)
 
-		// Org-specific routes (require org access)
+		// Org-specific routes (require org access by param)
 		orgRoutes := orgs.Group("/:org_id")
-		orgRoutes.Use(middleware.RequireOrgAccess(db))
+		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
 		{
 			orgRoutes.GET("/install-links", h.OrgDetailPage)
-			orgRoutes.GET("/settings", h.OrgSettingsPage)
+			orgRoutes.GET("/connection", h.OrgSettingsPage)
 			orgRoutes.PUT("/", h.UpdateOrg)
 			orgRoutes.DELETE("/", h.DeleteOrg)
 
@@ -300,11 +299,12 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/customers", h.CustomersPage)
 			orgRoutes.GET("/customers/:customer_id", h.CustomerDetailPage)
 
-			// Settings pages (org-scoped to preserve org context in URL)
-			orgSettings := orgRoutes.Group("/settings")
-			{
-				orgSettings.GET("/team", h.TeamSettingsPage)
-			}
+			// Team pages (org-scoped)
+			orgRoutes.GET("/team", func(c *gin.Context) {
+				c.Redirect(http.StatusFound, c.Request.URL.Path+"/members")
+			})
+			orgRoutes.GET("/team/members", h.TeamMembersPage)
+			orgRoutes.GET("/team/invites", h.TeamInvitesPage)
 
 			// Customer Portal pages (org-scoped)
 			orgPortal := orgRoutes.Group("/portal")
@@ -367,9 +367,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installLinks.GET("/:sha/app-config", h.GetInstallLinkAppConfig)
 	}
 
-	// Custom asset serving (workspace-specific CSS and images from GitHub sync)
-	rg.GET("/custom/css/:workspace_id", h.ServeCustomCSS)
-	rg.GET("/custom/assets/:workspace_id/*path", h.ServeCustomAsset)
+	// Custom asset serving (org-specific CSS and images from GitHub sync)
+	rg.GET("/custom/css/:org_id", h.ServeCustomCSS)
+	rg.GET("/custom/assets/:org_id/*path", h.ServeCustomAsset)
 
 	// JWT refresh endpoint
 	rg.POST("/refresh_token", jwtAuth.RefreshHandler)

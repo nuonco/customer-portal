@@ -16,10 +16,6 @@ type LayoutProps struct {
 	Breadcrumbs []partials.Breadcrumb
 	BasePath    string
 
-	// Workspace context
-	CurrentWorkspace *models.Workspace
-	Workspaces       []models.Workspace
-
 	// Entity title bar
 	EntityTitle   string
 	EntityID      string
@@ -102,8 +98,8 @@ templ Layout(props LayoutProps) {
 						Breadcrumbs:      props.Breadcrumbs,
 						User:             props.User,
 						BasePath:         props.BasePath,
-						CurrentWorkspace: props.CurrentWorkspace,
-						Workspaces:       props.Workspaces,
+						CurrentOrg: props.CurrentOrg,
+						Orgs:       props.Orgs,
 					})
 					<!-- Entity Title Bar (shown on detail pages) -->
 					@partials.TitleBar(partials.TitleBarProps{
@@ -120,7 +116,7 @@ templ Layout(props LayoutProps) {
 			<!-- Toast and Modal components -->
 			@components.Toast()
 			@components.ConfirmModal()
-			@createWorkspaceModal(props.BasePath)
+			@createOrgModal(props.BasePath)
 			@keyboardShortcutsModal()
 			<!-- Theme Settings Panel - lazy loaded via HTMX -->
 			<div id="settings-panel-container"></div>
@@ -276,12 +272,12 @@ templ layoutScripts(basePath string) {
 		}
 
 		// Connect Org Modal
-		function openCreateWorkspaceModal() {
-			const modal = document.getElementById('create-workspace-modal');
+		function openCreateOrgModal() {
+			const modal = document.getElementById('create-org-modal');
 			if (modal) {
 				modal.classList.remove('hidden');
 				// Focus on org ID input
-				const orgIdInput = document.getElementById('workspace-org-id');
+				const orgIdInput = document.getElementById('org-org-id');
 				if (orgIdInput) {
 					orgIdInput.focus();
 				}
@@ -293,14 +289,14 @@ templ layoutScripts(basePath string) {
 			}
 		}
 
-		function closeCreateWorkspaceModal() {
-			const modal = document.getElementById('create-workspace-modal');
+		function closeCreateOrgModal() {
+			const modal = document.getElementById('create-org-modal');
 			if (modal) {
 				modal.classList.add('hidden');
 				// Clear form and errors
-				const form = document.getElementById('create-workspace-form');
+				const form = document.getElementById('create-org-form');
 				if (form) form.reset();
-				const errorDiv = document.getElementById('create-workspace-error');
+				const errorDiv = document.getElementById('create-org-error');
 				if (errorDiv) errorDiv.classList.add('hidden');
 			}
 		}
@@ -331,7 +327,7 @@ templ layoutScripts(basePath string) {
 			// Escape = Close any open modal
 			if (e.key === 'Escape') {
 				closeKeyboardShortcutsModal();
-				closeCreateWorkspaceModal();
+				closeCreateOrgModal();
 			}
 		});
 
@@ -353,26 +349,26 @@ templ layoutScripts(basePath string) {
 	</script>
 }
 
-templ createWorkspaceModal(basePath string) {
-	<div id="create-workspace-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
+templ createOrgModal(basePath string) {
+	<div id="create-org-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
 		<div class="flex items-center justify-center min-h-full p-4">
 			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
 				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
 					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Org</h3>
-					<button type="button" onclick="closeCreateWorkspaceModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+					<button type="button" onclick="closeCreateOrgModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
 						</svg>
 					</button>
 				</div>
-				<form id="create-workspace-form" class="px-6 py-4 space-y-4">
+				<form id="create-org-form" class="px-6 py-4 space-y-4">
 					<div>
-						<label for="workspace-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+						<label for="org-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
 							Nuon Org ID <span class="text-red-500">*</span>
 						</label>
 						<input
 							type="text"
-							id="workspace-org-id"
+							id="org-org-id"
 							name="org_id"
 							required
 							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -380,12 +376,12 @@ templ createWorkspaceModal(basePath string) {
 						/>
 					</div>
 					<div>
-						<label for="workspace-api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+						<label for="org-api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
 							API Token <span class="text-red-500">*</span>
 						</label>
 						<input
 							type="password"
-							id="workspace-api-token"
+							id="org-api-token"
 							name="api_token"
 							required
 							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
@@ -395,13 +391,13 @@ templ createWorkspaceModal(basePath string) {
 							To get a new token, run: <code>nuon orgs api-token -j</code>
 						</p>
 					</div>
-					<div id="create-workspace-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+					<div id="create-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
 				</form>
 				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
-					<button type="button" onclick="closeCreateWorkspaceModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
+					<button type="button" onclick="closeCreateOrgModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
 						Cancel
 					</button>
-					<button type="button" onclick="submitCreateWorkspace()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
+					<button type="button" onclick="submitCreateOrg()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
 						Connect
 					</button>
 				</div>
@@ -410,20 +406,20 @@ templ createWorkspaceModal(basePath string) {
 	</div>
 	<!-- Config data for JavaScript -->
 	<div
-		id="create-workspace-config"
+		id="create-org-config"
 		class="hidden"
 		data-base-path={ basePath }
 	></div>
-	@createWorkspaceScript()
+	@createOrgScript()
 }
 
-templ createWorkspaceScript() {
+templ createOrgScript() {
 	<script>
-		async function submitCreateWorkspace() {
-			const configEl = document.getElementById('create-workspace-config');
+		async function submitCreateOrg() {
+			const configEl = document.getElementById('create-org-config');
 			const basePath = configEl.dataset.basePath;
-			const form = document.getElementById('create-workspace-form');
-			const errorDiv = document.getElementById('create-workspace-error');
+			const form = document.getElementById('create-org-form');
+			const errorDiv = document.getElementById('create-org-error');
 			const formData = new FormData(form);
 
 			errorDiv.classList.add('hidden');

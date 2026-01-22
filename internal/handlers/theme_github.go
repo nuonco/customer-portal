@@ -13,15 +13,15 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// GetGitHubConfig returns the GitHub repo configuration for the current workspace.
+// GetGitHubConfig returns the GitHub repo configuration for the current org.
 func (h *Handler) GetGitHubConfig(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
-	config, err := models.GetGitHubRepoConfig(h.db, workspace.ID)
+	config, err := models.GetGitHubRepoConfig(h.db, org.ID)
 	if err != nil {
 		// Not found is OK - just means not configured yet
 		c.JSON(http.StatusOK, gin.H{
@@ -30,9 +30,9 @@ func (h *Handler) GetGitHubConfig(c *gin.Context) {
 		return
 	}
 
-	// Get template overrides for this workspace
-	templates, _ := models.GetAllTemplateOverrides(h.db, workspace.ID)
-	assets, _ := models.GetAllAssetOverrides(h.db, workspace.ID)
+	// Get template overrides for this org
+	templates, _ := models.GetAllTemplateOverrides(h.db, org.ID)
+	assets, _ := models.GetAllAssetOverrides(h.db, org.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"configured":               true,
@@ -53,9 +53,9 @@ func (h *Handler) GetGitHubConfig(c *gin.Context) {
 
 // SaveGitHubConfig saves or updates the GitHub repo configuration.
 func (h *Handler) SaveGitHubConfig(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
@@ -86,11 +86,11 @@ func (h *Handler) SaveGitHubConfig(c *gin.Context) {
 	}
 
 	// Check if config already exists
-	config, err := models.GetGitHubRepoConfig(h.db, workspace.ID)
+	config, err := models.GetGitHubRepoConfig(h.db, org.ID)
 	if err != nil {
 		// Create new
 		config = &models.GitHubRepoConfig{
-			WorkspaceID: workspace.ID,
+			OrgID:       org.ID,
 			RepoOwner:   req.RepoOwner,
 			RepoName:    req.RepoName,
 			Branch:      req.Branch,
@@ -124,13 +124,13 @@ func (h *Handler) SaveGitHubConfig(c *gin.Context) {
 
 // SyncGitHub triggers a sync from the configured GitHub repository.
 func (h *Handler) SyncGitHub(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
-	config, err := models.GetGitHubRepoConfig(h.db, workspace.ID)
+	config, err := models.GetGitHubRepoConfig(h.db, org.ID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "GitHub repository not configured"})
 		return
@@ -151,7 +151,7 @@ func (h *Handler) SyncGitHub(c *gin.Context) {
 	}
 
 	// Invalidate template cache to pick up new/updated templates
-	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+	h.templateRenderer.InvalidateWorkspaceCache(org.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":           "Sync completed",
@@ -166,41 +166,41 @@ func (h *Handler) SyncGitHub(c *gin.Context) {
 
 // DeleteGitHubConfig removes the GitHub configuration and all associated overrides.
 func (h *Handler) DeleteGitHubConfig(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
 	// Delete all template overrides
-	if err := h.db.Where("workspace_id = ?", workspace.ID).Delete(&models.TemplateOverride{}).Error; err != nil {
+	if err := h.db.Where("org_id = ?", org.ID).Delete(&models.TemplateOverride{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete template overrides"})
 		return
 	}
 
 	// Delete all asset overrides
-	if err := h.db.Where("workspace_id = ?", workspace.ID).Delete(&models.AssetOverride{}).Error; err != nil {
+	if err := h.db.Where("org_id = ?", org.ID).Delete(&models.AssetOverride{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete asset overrides"})
 		return
 	}
 
 	// Delete the config
-	if err := h.db.Where("workspace_id = ?", workspace.ID).Delete(&models.GitHubRepoConfig{}).Error; err != nil {
+	if err := h.db.Where("org_id = ?", org.ID).Delete(&models.GitHubRepoConfig{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete configuration"})
 		return
 	}
 
-	// Invalidate all cached templates for this workspace
-	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+	// Invalidate all cached templates for this org
+	h.templateRenderer.InvalidateWorkspaceCache(org.ID)
 
 	c.JSON(http.StatusOK, gin.H{"message": "GitHub integration removed"})
 }
 
 // ToggleTemplateOverride enables or disables a specific template override.
 func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
@@ -219,7 +219,7 @@ func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
 		return
 	}
 
-	override, err := models.GetTemplateOverride(h.db, workspace.ID, pageName)
+	override, err := models.GetTemplateOverride(h.db, org.ID, pageName)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Template override not found"})
 		return
@@ -232,7 +232,7 @@ func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
 	}
 
 	// Invalidate cache for this specific template
-	h.templateRenderer.InvalidateCache(workspace.ID, pageName)
+	h.templateRenderer.InvalidateCache(org.ID, pageName)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message":    "Template override updated",
@@ -243,9 +243,9 @@ func (h *Handler) ToggleTemplateOverride(c *gin.Context) {
 
 // ToggleAssetOverride enables or disables a custom asset.
 func (h *Handler) ToggleAssetOverride(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
@@ -264,7 +264,7 @@ func (h *Handler) ToggleAssetOverride(c *gin.Context) {
 	}
 
 	// Get the asset override
-	asset, err := models.GetAssetOverride(h.db, workspace.ID, assetPath)
+	asset, err := models.GetAssetOverride(h.db, org.ID, assetPath)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Asset not found"})
 		return
@@ -279,8 +279,8 @@ func (h *Handler) ToggleAssetOverride(c *gin.Context) {
 
 	// Invalidate CSS cache if it's a CSS file
 	if asset.AssetType == models.AssetTypeCSS {
-		// Clear workspace CSS cache by invalidating all CSS assets
-		h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+		// Clear org CSS cache by invalidating all CSS assets
+		h.templateRenderer.InvalidateWorkspaceCache(org.ID)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -292,9 +292,9 @@ func (h *Handler) ToggleAssetOverride(c *gin.Context) {
 
 // BulkToggleOverrides enables or disables multiple templates and assets at once.
 func (h *Handler) BulkToggleOverrides(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
@@ -318,7 +318,7 @@ func (h *Handler) BulkToggleOverrides(c *gin.Context) {
 	if req.All {
 		// Update all templates
 		if err := tx.Model(&models.TemplateOverride{}).
-			Where("workspace_id = ?", workspace.ID).
+			Where("org_id = ?", org.ID).
 			Update("is_enabled", req.Enabled).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update templates"})
@@ -327,7 +327,7 @@ func (h *Handler) BulkToggleOverrides(c *gin.Context) {
 
 		// Update all assets
 		if err := tx.Model(&models.AssetOverride{}).
-			Where("workspace_id = ?", workspace.ID).
+			Where("org_id = ?", org.ID).
 			Update("is_enabled", req.Enabled).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update assets"})
@@ -341,8 +341,8 @@ func (h *Handler) BulkToggleOverrides(c *gin.Context) {
 		return
 	}
 
-	// Invalidate all caches for this workspace
-	h.templateRenderer.InvalidateWorkspaceCache(workspace.ID)
+	// Invalidate all caches for this org
+	h.templateRenderer.InvalidateWorkspaceCache(org.ID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": fmt.Sprintf("All files %s successfully",
@@ -353,9 +353,9 @@ func (h *Handler) BulkToggleOverrides(c *gin.Context) {
 
 // DeleteTemplateOverride removes a specific template override.
 func (h *Handler) DeleteTemplateOverride(c *gin.Context) {
-	workspace := middleware.GetCurrentWorkspace(c)
-	if workspace == nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Workspace context not found"})
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Organization context not found"})
 		return
 	}
 
@@ -365,32 +365,32 @@ func (h *Handler) DeleteTemplateOverride(c *gin.Context) {
 		return
 	}
 
-	if err := h.db.Where("workspace_id = ? AND page_name = ?", workspace.ID, pageName).Delete(&models.TemplateOverride{}).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND page_name = ?", org.ID, pageName).Delete(&models.TemplateOverride{}).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete override"})
 		return
 	}
 
 	// Invalidate cache for this specific template
-	h.templateRenderer.InvalidateCache(workspace.ID, pageName)
+	h.templateRenderer.InvalidateCache(org.ID, pageName)
 
 	c.JSON(http.StatusOK, gin.H{"message": "Template override deleted"})
 }
 
-// ServeCustomCSS serves the combined custom CSS for a workspace.
+// ServeCustomCSS serves the combined custom CSS for an org.
 func (h *Handler) ServeCustomCSS(c *gin.Context) {
-	workspaceID := c.Param("workspace_id")
-	if workspaceID == "" {
+	orgID := c.Param("org_id")
+	if orgID == "" {
 		c.Status(http.StatusNotFound)
 		return
 	}
 
 	// Remove .css extension if present
-	if len(workspaceID) > 4 && workspaceID[len(workspaceID)-4:] == ".css" {
-		workspaceID = workspaceID[:len(workspaceID)-4]
+	if len(orgID) > 4 && orgID[len(orgID)-4:] == ".css" {
+		orgID = orgID[:len(orgID)-4]
 	}
 
-	// Get all enabled CSS overrides for this workspace
-	cssAssets, err := models.GetCSSOverrides(h.db, workspaceID)
+	// Get all enabled CSS overrides for this org
+	cssAssets, err := models.GetCSSOverrides(h.db, orgID)
 	if err != nil || len(cssAssets) == 0 {
 		c.Status(http.StatusNotFound)
 		return
@@ -408,12 +408,12 @@ func (h *Handler) ServeCustomCSS(c *gin.Context) {
 	}
 }
 
-// ServeCustomAsset serves a custom asset (image) for a workspace.
+// ServeCustomAsset serves a custom asset (image) for an org.
 func (h *Handler) ServeCustomAsset(c *gin.Context) {
-	workspaceID := c.Param("workspace_id")
+	orgID := c.Param("org_id")
 	assetPath := c.Param("path")
 
-	if workspaceID == "" || assetPath == "" {
+	if orgID == "" || assetPath == "" {
 		c.Status(http.StatusNotFound)
 		return
 	}
@@ -423,7 +423,7 @@ func (h *Handler) ServeCustomAsset(c *gin.Context) {
 		assetPath = assetPath[1:]
 	}
 
-	asset, err := models.GetEnabledAssetOverride(h.db, workspaceID, assetPath)
+	asset, err := models.GetEnabledAssetOverride(h.db, orgID, assetPath)
 	if err != nil {
 		c.Status(http.StatusNotFound)
 		return

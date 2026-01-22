@@ -13,20 +13,18 @@ import (
 // It also stores custom ordering for groups and inputs within groups.
 type AppInputConfig struct {
 	ID                 string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID        string         `gorm:"index;uniqueIndex:idx_workspace_app" json:"workspace_id"` // NEW: Workspace ownership (nullable for migration)
-	OrgID              string         `gorm:"not null" json:"org_id"`                                  // FK to NuonOrg.ID (kept as reference)
-	AppID              string         `gorm:"not null;uniqueIndex:idx_workspace_app" json:"app_id"`    // Nuon app ID
-	CustomerInputNames string         `gorm:"type:text" json:"customer_input_names,omitempty"`         // JSON array of input names that are customer-facing
-	GroupOrder         string         `gorm:"type:text" json:"group_order,omitempty"`                  // JSON array of group names in display order
-	InputOrder         string         `gorm:"type:text" json:"input_order,omitempty"`                  // JSON object: {"group_name": ["input1", "input2"]}
-	CollapsedGroups    string         `gorm:"type:text" json:"collapsed_groups,omitempty"`             // JSON array of group names that are collapsed by default
+	OrgID              string         `gorm:"not null;uniqueIndex:idx_org_app" json:"org_id"` // Org ownership
+	AppID              string         `gorm:"not null;uniqueIndex:idx_org_app" json:"app_id"` // Nuon app ID
+	CustomerInputNames string         `gorm:"type:text" json:"customer_input_names,omitempty"`
+	GroupOrder         string         `gorm:"type:text" json:"group_order,omitempty"`
+	InputOrder         string         `gorm:"type:text" json:"input_order,omitempty"`
+	CollapsedGroups    string         `gorm:"type:text" json:"collapsed_groups,omitempty"`
 	CreatedAt          time.Time      `json:"created_at"`
 	UpdatedAt          time.Time      `json:"updated_at"`
 	DeletedAt          gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
-	NuonOrg   NuonOrg   `gorm:"foreignKey:OrgID;references:ID" json:"nuon_org,omitempty"`
+	Org NuonOrg `gorm:"foreignKey:OrgID;references:ID" json:"org,omitempty"`
 }
 
 // TableName ensures GORM creates a proper table name

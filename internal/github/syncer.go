@@ -157,7 +157,7 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 	}
 
 	// Remove templates that no longer exist in repo
-	existingTemplates, _ := models.GetAllTemplateOverrides(s.db, config.WorkspaceID)
+	existingTemplates, _ := models.GetAllTemplateOverrides(s.db, config.OrgID)
 	for _, tmpl := range existingTemplates {
 		if _, exists := discoveredTemplates[tmpl.PageName]; !exists {
 			if err := s.db.Delete(&tmpl).Error; err != nil {
@@ -169,7 +169,7 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 	}
 
 	// Remove assets that no longer exist in repo
-	existingAssets, _ := models.GetAllAssetOverrides(s.db, config.WorkspaceID)
+	existingAssets, _ := models.GetAllAssetOverrides(s.db, config.OrgID)
 	for _, asset := range existingAssets {
 		if _, exists := discoveredAssets[asset.AssetPath]; !exists {
 			if err := s.db.Delete(&asset).Error; err != nil {
@@ -207,17 +207,17 @@ func (s *Syncer) syncTemplate(ctx context.Context, config *models.GitHubRepoConf
 
 	// Upsert template override
 	var existing models.TemplateOverride
-	err = s.db.Where("workspace_id = ? AND page_name = ?", config.WorkspaceID, pageName).First(&existing).Error
+	err = s.db.Where("workspace_id = ? AND page_name = ?", config.OrgID, pageName).First(&existing).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Create new
 		override := models.TemplateOverride{
-			WorkspaceID: config.WorkspaceID,
-			PageName:    pageName,
-			Content:     string(content),
-			SourcePath:  entry.Path,
-			SourceSHA:   commitSHA,
-			IsEnabled:   true,
+			OrgID:      config.OrgID,
+			PageName:   pageName,
+			Content:    string(content),
+			SourcePath: entry.Path,
+			SourceSHA:  commitSHA,
+			IsEnabled:  true,
 		}
 		return s.db.Create(&override).Error
 	} else if err != nil {
@@ -264,20 +264,20 @@ func (s *Syncer) syncAsset(ctx context.Context, config *models.GitHubRepoConfig,
 
 	// Upsert asset override
 	var existing models.AssetOverride
-	err = s.db.Where("workspace_id = ? AND asset_path = ?", config.WorkspaceID, assetPath).First(&existing).Error
+	err = s.db.Where("workspace_id = ? AND asset_path = ?", config.OrgID, assetPath).First(&existing).Error
 
 	if err == gorm.ErrRecordNotFound {
 		// Create new
 		asset := models.AssetOverride{
-			WorkspaceID: config.WorkspaceID,
-			AssetType:   assetType,
-			AssetPath:   assetPath,
-			Content:     content,
-			MimeType:    mimeType,
-			FileSize:    int64(len(content)),
-			SourcePath:  entry.Path,
-			SourceSHA:   commitSHA,
-			IsEnabled:   true,
+			OrgID:      config.OrgID,
+			AssetType:  assetType,
+			AssetPath:  assetPath,
+			Content:    content,
+			MimeType:   mimeType,
+			FileSize:   int64(len(content)),
+			SourcePath: entry.Path,
+			SourceSHA:  commitSHA,
+			IsEnabled:  true,
 		}
 		return s.db.Create(&asset).Error
 	} else if err != nil {

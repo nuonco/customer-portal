@@ -8,11 +8,11 @@ import (
 
 // TopbarProps for the topbar with breadcrumbs
 type TopbarProps struct {
-	Breadcrumbs      []Breadcrumb
-	User             *models.User
-	BasePath         string
-	CurrentWorkspace *models.Workspace
-	Workspaces       []models.Workspace
+	Breadcrumbs []Breadcrumb
+	User        *models.User
+	BasePath    string
+	CurrentOrg  *models.NuonOrg
+	Orgs        []models.NuonOrg
 }
 
 // Breadcrumb for navigation trail

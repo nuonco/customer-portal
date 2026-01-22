@@ -60,7 +60,9 @@ func (p *OIDCProvider) Name() string {
 
 // GetAuthorizationURL returns the URL to redirect users for login
 func (p *OIDCProvider) GetAuthorizationURL(state string) (string, error) {
-	return p.oauth2.AuthCodeURL(state), nil
+	// Use prompt=select_account to always show the account selection screen,
+	// even if the user has an existing session with the identity provider
+	return p.oauth2.AuthCodeURL(state, oauth2.SetAuthURLParam("prompt", "select_account")), nil
 }
 
 // HandleCallback processes the OIDC authorization code callback

@@ -13,6 +13,9 @@ env:
 
   NUON_API_URL: "https://api.nuon.co"
 
+  CUSTOMER_BASE_URL: "https://$TFO_PUBLIC_DOMAIN"
+  SUBDOMAIN_BASE_DOMAIN: "$TFO_PUBLIC_DOMAIN"
+
 envSecrets:
   - name: "JWT_SECRET"
     valueFrom:

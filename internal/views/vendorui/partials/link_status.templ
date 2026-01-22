@@ -8,10 +8,11 @@ import (
 
 // LinkStatusProps for the HTMX polling link status partial
 type LinkStatusProps struct {
-	Link         *models.InstallLink
-	InstallURL   string
-	PrimaryColor string
-	BasePath     string
+	Link                        *models.InstallLink
+	InstallURL                  string
+	CustomerDashboardInstallURL string // Full URL with subdomain for viewing install in customer dashboard
+	PrimaryColor                string
+	BasePath                    string
 }
 
 // LinkStatus renders link status with HTMX polling for real-time updates
@@ -53,7 +54,7 @@ templ LinkStatus(props LinkStatusProps) {
 					}
 					<div class="flex flex-wrap gap-2 mt-3">
 						<a
-							href={ templ.SafeURL(fmt.Sprintf("/installs/%s", props.Link.Install.ID)) }
+							href={ templ.SafeURL(props.CustomerDashboardInstallURL) }
 							target="_blank"
 							rel="noopener noreferrer"
 							class="inline-flex items-center px-4 py-2 text-sm rounded-md font-medium text-white bg-green-600 hover:bg-green-700"

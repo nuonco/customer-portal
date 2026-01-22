@@ -51,7 +51,7 @@ templ orgCard(org models.NuonOrg, basePath string) {
 				@components.Button(components.ButtonProps{
 					Text:    "Settings",
 					Variant: "secondary",
-					Href:    fmt.Sprintf("%s/orgs/%s/settings", basePath, org.ID),
+					Href:    fmt.Sprintf("%s/orgs/%s/connection", basePath, org.ID),
 				})
 			</div>
 		</div>
@@ -68,7 +68,7 @@ templ emptyState(basePath string) {
 		@components.Button(components.ButtonProps{
 			Text:    "Connect Your First Org",
 			Variant: "primary",
-			OnClick: "openCreateWorkspaceModal()",
+			OnClick: "openCreateOrgModal()",
 		})
 	</div>
 }

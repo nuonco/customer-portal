@@ -7,31 +7,31 @@ import (
 	"gorm.io/gorm"
 )
 
-// AppTheme stores theme settings for a workspace's customer-facing installer app.
-// Each workspace has its own theme configuration.
+// AppTheme stores theme settings for an org's customer-facing installer app.
+// Each org has its own theme configuration.
 type AppTheme struct {
 	ID                        string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	WorkspaceID               string    `gorm:"uniqueIndex" json:"workspace_id"` // NEW: One theme per workspace (nullable for migration)
-	PrimaryColor              string    `json:"primary_color"`                   // Hex color for navigation and primary buttons
-	SecondaryColor            string    `json:"secondary_color"`                 // Hex color for links and accents
-	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`     // Base64-encoded logo for light mode (data URI format)
-	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`      // Base64-encoded logo for dark mode (data URI format)
-	SupportContact            string    `json:"support_contact"`                 // Email or URL for customer support
-	HeadingFont               string    `json:"heading_font"`                    // Google Font name (or display name if custom)
-	BodyFont                  string    `json:"body_font"`                       // Google Font name (or display name if custom)
-	HeadingFontBase64         string    `json:"heading_font_base64"`             // Custom font data URI (empty = use Google Font)
-	BodyFontBase64            string    `json:"body_font_base64"`                // Custom font data URI (empty = use Google Font)
-	BorderRadius              string    `json:"border_radius"`                   // Customer page corner style: sharp, subtle, rounded, very-rounded
-	SpacingDensity            string    `json:"spacing_density"`                 // Customer page spacing: compact, comfortable, spacious
-	LoginTitle                string    `json:"login_title"`                     // Customer login page title (default: "Customer Dashboard")
-	LoginSubtitle             string    `json:"login_subtitle"`                  // Customer login page subtitle (default: "Manage your customer's install experience.")
-	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`   // Base64-encoded right side image for login page (data URI format)
-	LoginRightSideGradient    string    `json:"login_right_side_gradient"`       // CSS gradient for login right side (e.g., "linear-gradient(135deg, #667eea, #764ba2)")
+	OrgID                     string    `gorm:"uniqueIndex" json:"org_id"` // One theme per org
+	PrimaryColor              string    `json:"primary_color"`             // Hex color for navigation and primary buttons
+	SecondaryColor            string    `json:"secondary_color"`           // Hex color for links and accents
+	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`
+	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`
+	SupportContact            string    `json:"support_contact"`
+	HeadingFont               string    `json:"heading_font"`
+	BodyFont                  string    `json:"body_font"`
+	HeadingFontBase64         string    `json:"heading_font_base64"`
+	BodyFontBase64            string    `json:"body_font_base64"`
+	BorderRadius              string    `json:"border_radius"`
+	SpacingDensity            string    `json:"spacing_density"`
+	LoginTitle                string    `json:"login_title"`
+	LoginSubtitle             string    `json:"login_subtitle"`
+	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`
+	LoginRightSideGradient    string    `json:"login_right_side_gradient"`
 	CreatedAt                 time.Time `json:"created_at"`
 	UpdatedAt                 time.Time `json:"updated_at"`
 
 	// Relationships
-	Workspace Workspace `gorm:"foreignKey:WorkspaceID" json:"workspace,omitempty"` // NEW
+	Org NuonOrg `gorm:"foreignKey:OrgID" json:"org,omitempty"`
 }
 
 func (t *AppTheme) BeforeCreate(tx *gorm.DB) error {
@@ -139,11 +139,11 @@ func (t *AppTheme) LogoBase64() string {
 	return t.LogoLightBase64
 }
 
-// GetOrCreateAppTheme returns the AppTheme record for a workspace, creating it with defaults if it doesn't exist.
-// If workspaceID is empty, returns a default theme without saving to database (for login/register pages).
-func GetOrCreateAppTheme(db *gorm.DB, workspaceID string) (*AppTheme, error) {
-	// If no workspace ID provided (pre-login pages), return default theme
-	if workspaceID == "" {
+// GetOrCreateAppTheme returns the AppTheme record for an org, creating it with defaults if it doesn't exist.
+// If orgID is empty, returns a default theme without saving to database (for login/register pages).
+func GetOrCreateAppTheme(db *gorm.DB, orgID string) (*AppTheme, error) {
+	// If no org ID provided (pre-login pages), return default theme
+	if orgID == "" {
 		return &AppTheme{
 			PrimaryColor:   DefaultPrimaryColor,
 			SecondaryColor: DefaultPrimaryColor,
@@ -156,12 +156,12 @@ func GetOrCreateAppTheme(db *gorm.DB, workspaceID string) (*AppTheme, error) {
 
 	var theme AppTheme
 
-	// Try to get the existing theme for this workspace
-	if err := db.Where("workspace_id = ?", workspaceID).First(&theme).Error; err != nil {
+	// Try to get the existing theme for this org
+	if err := db.Where("org_id = ?", orgID).First(&theme).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
-			// Create default theme for this workspace
+			// Create default theme for this org
 			theme = AppTheme{
-				WorkspaceID:    workspaceID,
+				OrgID:          orgID,
 				PrimaryColor:   DefaultPrimaryColor,
 				SecondaryColor: DefaultPrimaryColor,
 				BorderRadius:   DefaultBorderRadius,

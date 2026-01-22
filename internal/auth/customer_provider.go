@@ -63,14 +63,14 @@ func NewCustomerAuthProviderFactory(db *gorm.DB, baseURL string, envConfig *Prov
 // GetProvider returns the appropriate auth provider based on current config.
 // Returns DB-configured OIDC provider if active, otherwise falls back to env var OIDC.
 func (f *CustomerAuthProviderFactory) GetProvider() (AuthProvider, error) {
-	return f.GetProviderForWorkspace("")
+	return f.GetProviderForOrg("")
 }
 
-// GetProviderForWorkspace returns the appropriate auth provider for a specific workspace.
-// If workspaceID is provided, uses that workspace's OIDC config.
-// If workspaceID is empty, uses global config or env var fallback.
-func (f *CustomerAuthProviderFactory) GetProviderForWorkspace(workspaceID string) (AuthProvider, error) {
-	config, err := models.GetOrCreateCustomerAuthConfig(f.db, workspaceID)
+// GetProviderForOrg returns the appropriate auth provider for a specific org.
+// If orgID is provided, uses that org's OIDC config.
+// If orgID is empty, uses global config or env var fallback.
+func (f *CustomerAuthProviderFactory) GetProviderForOrg(orgID string) (AuthProvider, error) {
+	config, err := models.GetOrCreateCustomerAuthConfig(f.db, orgID)
 	if err != nil {
 		// On DB error, try env var fallback
 		return f.getEnvOIDCProvider()
@@ -78,9 +78,9 @@ func (f *CustomerAuthProviderFactory) GetProviderForWorkspace(workspaceID string
 
 	// If DB OIDC is active, use it
 	if config.IsActive() {
-		// For workspace-specific configs, create a fresh provider each time
-		// (we don't cache workspace-specific providers to avoid memory issues)
-		if workspaceID != "" {
+		// For org-specific configs, create a fresh provider each time
+		// (we don't cache org-specific providers to avoid memory issues)
+		if orgID != "" {
 			return f.createOIDCProvider(config)
 		}
 
@@ -153,13 +153,13 @@ func (f *CustomerAuthProviderFactory) GetConfig() (*models.CustomerAuthConfig, e
 
 // GetAuthURL generates an OIDC authorization URL with the given state.
 func (f *CustomerAuthProviderFactory) GetAuthURL(state string) (string, error) {
-	return f.GetAuthURLForWorkspace(state, "")
+	return f.GetAuthURLForOrg(state, "")
 }
 
-// GetAuthURLForWorkspace generates an OIDC authorization URL for a specific workspace.
-// If workspaceID is provided, uses that workspace's OIDC config.
-func (f *CustomerAuthProviderFactory) GetAuthURLForWorkspace(state string, workspaceID string) (string, error) {
-	provider, err := f.GetProviderForWorkspace(workspaceID)
+// GetAuthURLForOrg generates an OIDC authorization URL for a specific org.
+// If orgID is provided, uses that org's OIDC config.
+func (f *CustomerAuthProviderFactory) GetAuthURLForOrg(state string, orgID string) (string, error) {
+	provider, err := f.GetProviderForOrg(orgID)
 	if err != nil {
 		return "", err
 	}

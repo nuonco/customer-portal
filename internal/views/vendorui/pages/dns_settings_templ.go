@@ -17,7 +17,7 @@ import (
 // DNSSettingsPageProps for the DNS settings page
 type DNSSettingsPageProps struct {
 	vendorui.LayoutProps
-	Workspace  *models.Workspace
+	Org        *models.NuonOrg
 	BaseDomain string // e.g., "portal.nuon.co" or "localhost:8080"
 }
 
@@ -55,7 +55,7 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex h-full -m-6 overflow-hidden\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex -m-6 overflow-hidden\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -67,7 +67,7 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"max-w-4xl mx-auto\"><h2 class=\"text-2xl font-semibold text-cool-grey-900 dark:text-white mb-2\">DNS Settings</h2><p class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-6\">Configure the subdomain for your customer portal. Customers will access their portal at this URL.</p><div class=\"space-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">DNS Settings</h1><p class=\"stratus-page-subtitle\">Configure the subdomain for your customer portal. Customers will access their portal at this URL.</p></div></div><div class=\"stratus-page-section\"><div class=\"max-w-4xl space-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -90,7 +90,7 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 41, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 43, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -103,7 +103,7 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 42, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 44, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -114,9 +114,9 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workspace.Subdomain)
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 43, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 45, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -178,9 +178,9 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workspace.Subdomain)
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 61, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 63, Col: 55}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -193,7 +193,7 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 61, Col: 82}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 63, Col: 76}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -241,9 +241,9 @@ func dnsSubdomainSection(props DNSSettingsPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workspace.Subdomain)
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 93, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 95, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -256,7 +256,7 @@ func dnsSubdomainSection(props DNSSettingsPageProps) templ.Component {
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 99, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 101, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -327,7 +327,7 @@ func dnsSaveSection(primaryColor string) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + primaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 122, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 124, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {

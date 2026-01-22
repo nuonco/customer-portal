@@ -180,11 +180,11 @@ const authScript = `<script>
 
 // renderPartialOverride attempts to render a partial override, returns empty string if not found.
 func renderPartialOverride(ctx *TemplateContext, renderer *TemplateRenderer, partialName string) template.HTML {
-	if ctx == nil || renderer == nil || ctx.WorkspaceID == "" {
+	if ctx == nil || renderer == nil || ctx.OrgID == "" {
 		return ""
 	}
 
-	override, err := models.GetEnabledTemplateOverride(renderer.db, ctx.WorkspaceID, partialName)
+	override, err := models.GetEnabledTemplateOverride(renderer.db, ctx.OrgID, partialName)
 	if err != nil || override == nil {
 		return ""
 	}
@@ -441,7 +441,7 @@ func RenderSidebar(ctx *TemplateContext, renderer *TemplateRenderer) template.HT
 	}
 
 	// No default sidebar - return empty
-	// Workspaces must provide their own sidebar.html partial
+	// Organizations must provide their own sidebar.html partial
 	return ""
 }
 
