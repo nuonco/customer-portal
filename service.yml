@@ -40,6 +40,7 @@ env:
 
   # Customer base URL for install links
   CUSTOMER_BASE_URL: http://localhost:8080
+  SUBDOMAIN_BASE_DOMAIN: localhost:8080
 
   # Auth config for OIDC (using stage credentials for local dev)
   AUTH_PROVIDER: oidc
@@ -52,8 +53,6 @@ env:
   SERVICE_DEPLOYMENT: customer-dashboard
   DISABLE_METRICS: true
 
-disable_watch: true
-
 watch_ignore:
   - '\/static/'
   - '\/node_modules/'
@@ -64,9 +63,10 @@ local_startup_cmds:
   - nuonctl scripts exec customer-dashboard-setup
 
 local_build_cmds:
+  - ./scripts/build.sh
 
 local_cmds:
-  - air
+  - ./tmp/main
 
 docker_cmds:
   - cmd: ""

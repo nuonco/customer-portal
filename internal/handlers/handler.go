@@ -542,50 +542,6 @@ func (h *Handler) CustomerLocalLogin(c *gin.Context) {
 	c.JSON(http.StatusMethodNotAllowed, gin.H{"message": "Local login is not supported. Please use SSO."})
 }
 
-// CustomerOIDCCallback handles the OIDC callback for customer authentication
-func (h *Handler) CustomerOIDCCallback(c *gin.Context) {
-	// Get the authorization code
-	code := c.Query("code")
-	if code == "" {
-		c.Redirect(http.StatusFound, "/login?error=Missing+authorization+code")
-		return
-	}
-
-	// Validate state
-	state := c.Query("state")
-	storedState, err := c.Cookie("auth_state")
-	if err != nil || state != storedState {
-		c.Redirect(http.StatusFound, "/login?error=Invalid+state+parameter")
-		return
-	}
-
-	// Clear the state cookie
-	c.SetCookie("auth_state", "", -1, "/", "", false, true)
-
-	// Handle the callback
-	result, err := h.customerAuthFactory.HandleCallback(c.Request.Context(), auth.CallbackRequest{
-		Code:  code,
-		State: state,
-	})
-	if err != nil {
-		c.Redirect(http.StatusFound, "/login?error=Authentication+failed")
-		return
-	}
-
-	// Generate JWT token
-	token, _, err := h.auth.TokenGenerator(result.User)
-	if err != nil {
-		c.Redirect(http.StatusFound, "/login?error=Failed+to+generate+token")
-		return
-	}
-
-	// Set the JWT cookie
-	c.SetCookie("jwt", token, 86400, "/", "", false, true)
-
-	// Redirect to installs page
-	c.Redirect(http.StatusFound, "/installs")
-}
-
 // CustomerRegisterPage redirects to login - registration is not available for customers.
 // Customer accounts are created via OIDC authentication.
 func (h *Handler) CustomerRegisterPage(c *gin.Context) {
@@ -2444,7 +2400,7 @@ func (h *Handler) TestLoginConnection(c *gin.Context) {
 		ClientID:     config.ClientID,
 		ClientSecret: config.ClientSecret,
 		IssuerURL:    config.IssuerURL,
-		RedirectURI:  h.customerBaseURL + "/callback",
+		RedirectURI:  h.customerBaseURL + "/auth/callback",
 		Scopes:       config.GetScopes(),
 	}
 

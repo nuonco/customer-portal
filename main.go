@@ -353,10 +353,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	rg.GET("/login", h.CustomerLoginPageTempl)
 	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
 
-	// Legacy OIDC callback (kept for backward compatibility during migration)
-	// TODO: Remove this after all customers have migrated to new auth flow
-	rg.GET("/callback", h.CustomerOIDCCallback)
-
 	// Registration disabled - redirect to login
 	rg.GET("/register", h.CustomerRegisterPage)
 

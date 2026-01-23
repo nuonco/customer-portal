@@ -2,6 +2,7 @@
 region: us-west-2
 cluster_name: stage-nuon
 root_domain: nuon.us-west-2.stage.internal.nuon.co
+wildcard_domain: "*.customers.stage.nuon.co"
 rds:
   instance_class: "db.t4g.micro"
   deletion_protection: false

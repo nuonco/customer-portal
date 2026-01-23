@@ -6,5 +6,5 @@ module "certificate" {
   use_root_domain           = local.vars.use_root_domain
   env                       = var.env
   service                   = local.name
-  subject_alternative_names = ["*.${local.vars.subdomain}.${var.env}.nuon.co"]
+  subject_alternative_names = [local.vars.wildcard_domain]
 }
