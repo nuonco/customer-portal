@@ -312,7 +312,6 @@ darkerColor := utils.DarkenColor("#FF0000", 20)  // 20% darker
 
 // CSS class helpers
 radiusClass := utils.GetRadiusClass("rounded")    // "radius-rounded"
-densityClass := utils.GetDensityClass("compact")  // "density-compact"
 ```
 
 ## Custom Theme Development
@@ -411,16 +410,6 @@ Apply to containers:
 ```html
 <div class="radius-rounded">...</div>
 ```
-
-### 4. Use Density Classes
-
-Spacing density classes control layout compactness:
-
-- `density-compact` - Tight spacing
-- `density-comfortable` - Balanced spacing (default)
-- `density-spacious` - Generous spacing
-
-These are automatically applied to the `<body>` tag.
 
 ## Migration from Old Structure
 

@@ -1458,7 +1458,6 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		HeadingFontBase64         string `json:"heading_font_base64"`
 		BodyFontBase64            string `json:"body_font_base64"`
 		BorderRadius              string `json:"border_radius"`
-		SpacingDensity            string `json:"spacing_density"`
 		LoginTitle                string `json:"login_title"`
 		LoginSubtitle             string `json:"login_subtitle"`
 		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
@@ -1551,13 +1550,6 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	if req.BorderRadius != "" {
 		if models.IsValidBorderRadius(req.BorderRadius) {
 			theme.BorderRadius = req.BorderRadius
-		}
-	}
-
-	// Update spacing density if provided and valid
-	if req.SpacingDensity != "" {
-		if models.IsValidSpacingDensity(req.SpacingDensity) {
-			theme.SpacingDensity = req.SpacingDensity
 		}
 	}
 

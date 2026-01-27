@@ -123,7 +123,6 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 			PrimaryColor:   models.DefaultPrimaryColor,
 			SecondaryColor: models.DefaultPrimaryColor,
 			BorderRadius:   models.DefaultBorderRadius,
-			SpacingDensity: models.DefaultSpacingDensity,
 		}
 		if err := tx.Create(&theme).Error; err != nil {
 			return fmt.Errorf("failed to create theme: %w", err)

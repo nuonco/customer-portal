@@ -130,7 +130,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white\"><!-- Preview Banner --><div id=\"preview-banner\" class=\"bg-violet-600 text-white px-4 py-3 text-sm hidden\"><div class=\"max-w-7xl mx-auto flex items-center justify-between\"><p>This application is currently in preview. Features may change and some functionality may be incomplete.</p><button onclick=\"closePreviewBanner()\" class=\"ml-4 text-white/80 hover:text-white flex-shrink-0\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden\"><!-- Preview Banner --><div id=\"preview-banner\" class=\"bg-violet-600 text-white px-4 py-3 text-sm hidden\"><div class=\"max-w-7xl mx-auto flex items-center justify-between\"><p>This application is currently in preview. Features may change and some functionality may be incomplete.</p><button onclick=\"closePreviewBanner()\" class=\"ml-4 text-white/80 hover:text-white flex-shrink-0\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -178,7 +178,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Page Content --><main class=\"flex-1 p-6 overflow-y-auto\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!-- Page Content --><main class=\"flex-1 flex flex-col overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

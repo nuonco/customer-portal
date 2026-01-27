@@ -16,7 +16,7 @@ type DNSSettingsPageProps struct {
 // DNSSettingsPage renders the DNS settings page
 templ DNSSettingsPage(props DNSSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex -m-6 overflow-hidden">
+		<div class="flex flex-1 overflow-hidden">
 			@partials.PortalSubnav(partials.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "dns",

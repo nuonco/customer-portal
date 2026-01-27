@@ -34,7 +34,7 @@ type AppInfo struct {
 // AppHealthChecksPage renders the app health checks configuration page
 templ AppHealthChecksPage(props AppHealthChecksPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6 overflow-hidden">
+		<div class="flex h-full overflow-hidden">
 			@partials.AppSubnav(partials.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,

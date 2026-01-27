@@ -49,35 +49,6 @@
   --theme-radius: 12px;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
- * SPACING DENSITY PRESETS
- * Applied to <body> based on vendor theme settings
- * ───────────────────────────────────────────────────────────────────────────── */
-
-.density-compact {
-  --spacing-card-padding: 16px;
-  --spacing-section-gap: 16px;
-  --spacing-element-gap: 12px;
-  --spacing-input-padding-y: 8px;
-  --spacing-input-padding-x: 12px;
-}
-
-.density-comfortable {
-  --spacing-card-padding: 24px;
-  --spacing-section-gap: 24px;
-  --spacing-element-gap: 16px;
-  --spacing-input-padding-y: 12px;
-  --spacing-input-padding-x: 16px;
-}
-
-.density-spacious {
-  --spacing-card-padding: 32px;
-  --spacing-section-gap: 32px;
-  --spacing-element-gap: 20px;
-  --spacing-input-padding-y: 14px;
-  --spacing-input-padding-x: 20px;
-}
-
 /* ═══════════════════════════════════════════════════════════════════════════════
  * THEME-AWARE UTILITY CLASSES
  * Use these for consistent styling across customer pages

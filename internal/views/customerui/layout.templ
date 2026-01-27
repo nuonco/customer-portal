@@ -32,7 +32,7 @@ templ Layout(props LayoutProps) {
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 		</head>
-		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, props.DensityClass }>
+		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass }>
 			<!-- Auth helpers -->
 			@scripts.Auth(props.BasePath)
 
@@ -44,7 +44,7 @@ templ Layout(props LayoutProps) {
 			})
 
 			<!-- Main content -->
-			<main class="customer-main flex-1">
+			<main class="mx-auto px-6 lg:px-8 pt-6 flex-1 w-full max-w-4xl">
 				{ children... }
 			</main>
 

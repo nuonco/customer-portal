@@ -42,12 +42,10 @@ type ThemeData struct {
 	HeadingFontBase64  string `json:"heading_font_base64,omitempty"`
 	BodyFontBase64     string `json:"body_font_base64,omitempty"`
 	BorderRadius       string `json:"border_radius"`
-	SpacingDensity     string `json:"spacing_density"`
 	SupportContact     string `json:"support_contact,omitempty"`
 	LoginTitle         string `json:"login_title"`
 	LoginSubtitle      string `json:"login_subtitle"`
 	RadiusClass        string `json:"radius_class"`
-	DensityClass       string `json:"density_class"`
 }
 
 // Page-specific data types
@@ -195,11 +193,9 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 			PrimaryColor:   models.DefaultPrimaryColor,
 			SecondaryColor: models.DefaultPrimaryColor,
 			BorderRadius:   models.DefaultBorderRadius,
-			SpacingDensity: models.DefaultSpacingDensity,
 			LoginTitle:     models.DefaultLoginTitle,
 			LoginSubtitle:  models.DefaultLoginSubtitle,
 			RadiusClass:    "radius-" + models.DefaultBorderRadius,
-			DensityClass:   "density-" + models.DefaultSpacingDensity,
 		}
 	}
 
@@ -226,12 +222,10 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
 		BorderRadius:       theme.BorderRadius,
-		SpacingDensity:     theme.SpacingDensity,
 		SupportContact:     theme.SupportContact,
 		LoginTitle:         theme.GetLoginTitle(),
 		LoginSubtitle:      theme.GetLoginSubtitle(),
 		RadiusClass:        theme.GetRadiusClass(),
-		DensityClass:       theme.GetDensityClass(),
 	}
 }
 

@@ -305,7 +305,6 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		LogoBase64:         theme.LogoLightBase64,
 		SupportContact:     theme.SupportContact,
 		RadiusClass:        theme.GetRadiusClass(),
-		DensityClass:       theme.GetDensityClass(),
 		CSSPath:            assets.CustomerCSSPath(),
 	}
 }

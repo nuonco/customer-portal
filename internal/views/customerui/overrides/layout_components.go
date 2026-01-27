@@ -368,7 +368,7 @@ func buildThemeCSS(theme *ThemeData) string {
 }
 
 // RenderBodyAttrs generates body element attributes string.
-// Returns: class="bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white radius-rounded density-comfortable"
+// Returns: class="bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white radius-rounded"
 //
 // Usage in templates: <body {{ bodyAttrs . }}>
 func RenderBodyAttrs(ctx *TemplateContext) template.HTMLAttr {
@@ -377,9 +377,6 @@ func RenderBodyAttrs(ctx *TemplateContext) template.HTMLAttr {
 	if ctx.Theme != nil {
 		if ctx.Theme.RadiusClass != "" {
 			classes = append(classes, ctx.Theme.RadiusClass)
-		}
-		if ctx.Theme.DensityClass != "" {
-			classes = append(classes, ctx.Theme.DensityClass)
 		}
 	}
 

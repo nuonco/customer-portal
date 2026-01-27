@@ -18,7 +18,7 @@ type TeamMembersPageProps struct {
 // TeamMembersPage renders the team members page with sub-nav
 templ TeamMembersPage(props TeamMembersPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex -m-6 overflow-hidden">
+		<div class="flex flex-1 overflow-hidden">
 			@partials.TeamSubnav(partials.TeamSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "members",

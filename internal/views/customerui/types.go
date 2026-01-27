@@ -110,8 +110,7 @@ type LayoutProps struct {
 	SupportContact     string
 
 	// Style variants
-	RadiusClass  string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"
-	DensityClass string // "density-compact", "density-comfortable", "density-spacious"
+	RadiusClass string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"
 
 	// Asset paths (cache-busted)
 	CSSPath string

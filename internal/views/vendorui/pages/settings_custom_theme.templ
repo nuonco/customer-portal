@@ -19,7 +19,7 @@ type CustomThemeSettingsPageProps struct {
 // CustomThemeSettingsPage renders the custom theme settings page
 templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex -m-6 overflow-hidden">
+		<div class="flex flex-1 overflow-hidden">
 			@partials.PortalSubnav(partials.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "custom-theme",

@@ -270,24 +270,15 @@ templ themePageStyleSection(theme *models.AppTheme) {
 	<div class="bg-cool-grey-50 dark:bg-dark-grey-800 p-5 rounded-lg border border-cool-grey-200 dark:border-dark-grey-600">
 		<h3 class="text-base font-semibold mb-4 text-cool-grey-800 dark:text-white">Customer Page Style</h3>
 		<p class="text-xs text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the appearance of customer-facing pages.</p>
-		<div class="flex gap-6">
+		<div>
 			<!-- Corner Style -->
-			<div class="flex-1">
+			<div>
 				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Corner Style</label>
 				<div class="grid grid-cols-4 gap-2">
 					@radiusOption("sharp", "Sharp", "0", theme.BorderRadius == "sharp")
 					@radiusOption("subtle", "Subtle", "4px", theme.BorderRadius == "subtle")
 					@radiusOption("rounded", "Rounded", "8px", theme.BorderRadius == "rounded" || theme.BorderRadius == "")
 					@radiusOption("very-rounded", "Very Rounded", "12px", theme.BorderRadius == "very-rounded")
-				</div>
-			</div>
-			<!-- Spacing Density -->
-			<div class="flex-1">
-				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Spacing Density</label>
-				<div class="space-y-2">
-					@densityOption("compact", "Compact", "Tighter spacing for data-dense views", theme.SpacingDensity == "compact")
-					@densityOption("comfortable", "Comfortable", "Balanced spacing (recommended)", theme.SpacingDensity == "comfortable" || theme.SpacingDensity == "")
-					@densityOption("spacious", "Spacious", "More breathing room for a minimal feel", theme.SpacingDensity == "spacious")
 				</div>
 			</div>
 		</div>
@@ -300,16 +291,6 @@ templ radiusOption(value, label, radius string, checked bool) {
 		<div class="border-2 p-3 text-center transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "radius-" + value + "-option" }>
 			<div class="w-8 h-8 mx-auto mb-1 border-2 border-cool-grey-400 dark:border-cool-grey-500" style={ "border-radius: " + radius + ";" }></div>
 			<span class="text-xs text-cool-grey-600 dark:text-cool-grey-400">{ label }</span>
-		</div>
-	</label>
-}
-
-templ densityOption(value, label, description string, checked bool) {
-	<label class="flex items-start gap-3 p-3 border-2 cursor-pointer transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "density-" + value + "-option" }>
-		<input type="radio" name="spacingDensity" value={ value } class="mt-0.5" checked?={ checked }/>
-		<div>
-			<span class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ label }</span>
-			<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400">{ description }</p>
 		</div>
 	</label>
 }
@@ -688,7 +669,6 @@ templ themePanelScript() {
 					heading_font: document.getElementById("panelHeadingFont").value,
 					body_font: document.getElementById("panelBodyFont").value,
 					border_radius: document.querySelector('input[name="borderRadius"]:checked')?.value || "rounded",
-					spacing_density: document.querySelector('input[name="spacingDensity"]:checked')?.value || "comfortable",
 					login_title: document.getElementById("panelLoginTitle").value,
 					login_subtitle: document.getElementById("panelLoginSubtitle").value,
 				};
@@ -817,34 +797,11 @@ templ themePanelScript() {
 				});
 			}
 
-			// Spacing density radio button styling
-			function updateDensitySelection() {
-				const options = ['compact', 'comfortable', 'spacious'];
-				options.forEach(opt => {
-					const el = document.getElementById(`density-${opt}-option`);
-					const input = document.querySelector(`input[name="spacingDensity"][value="${opt}"]`);
-					if (el && input) {
-						if (input.checked) {
-							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
-							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
-						} else {
-							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
-							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
-						}
-					}
-				});
-			}
-
 			document.querySelectorAll('input[name="borderRadius"]').forEach(input => {
 				input.addEventListener('change', updateRadiusSelection);
 			});
 
-			document.querySelectorAll('input[name="spacingDensity"]').forEach(input => {
-				input.addEventListener('change', updateDensitySelection);
-			});
-
 			updateRadiusSelection();
-			updateDensitySelection();
 
 			// Logo upload handler
 			document.getElementById("panelLogoUpload")?.addEventListener("change", async (e) => {

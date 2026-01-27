@@ -41,7 +41,7 @@ func Header(props HeaderProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"max-w-5xl mx-auto px-6 lg:px-8 pt-6\"><div class=\"flex items-center justify-between\"><!-- Left side: Logo + Email --><div class=\"flex items-center gap-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<header class=\"w-full max-w-4xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto\"><div class=\"flex items-center justify-between\"><!-- Left side: Logo + Email --><div class=\"flex items-center gap-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

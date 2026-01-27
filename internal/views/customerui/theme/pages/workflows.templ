@@ -32,7 +32,7 @@ type WorkflowsPageProps struct {
 // WorkflowsPage renders the workflow history page for an install
 templ WorkflowsPage(props WorkflowsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="max-w-5xl mx-auto px-4 py-8">
+		<div class="w-full">
 			<!-- Header with back button -->
 			<div class="mb-8">
 				<a href={ templ.SafeURL(props.LayoutProps.BasePath + "/installs/" + props.Install.ID) } class="inline-flex items-center text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white mb-4">

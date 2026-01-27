@@ -22,7 +22,6 @@ type AppTheme struct {
 	HeadingFontBase64         string    `json:"heading_font_base64"`
 	BodyFontBase64            string    `json:"body_font_base64"`
 	BorderRadius              string    `json:"border_radius"`
-	SpacingDensity            string    `json:"spacing_density"`
 	LoginTitle                string    `json:"login_title"`
 	LoginSubtitle             string    `json:"login_subtitle"`
 	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`
@@ -46,8 +45,7 @@ const DefaultPrimaryColor = "#2563EB"
 
 // Default customer page styling
 const (
-	DefaultBorderRadius   = "rounded"     // rounded corners (8px)
-	DefaultSpacingDensity = "comfortable" // balanced spacing
+	DefaultBorderRadius = "rounded" // rounded corners (8px)
 )
 
 // Default customer login page text
@@ -59,22 +57,9 @@ const (
 // ValidBorderRadiusValues are the allowed values for BorderRadius
 var ValidBorderRadiusValues = []string{"sharp", "subtle", "rounded", "very-rounded"}
 
-// ValidSpacingDensityValues are the allowed values for SpacingDensity
-var ValidSpacingDensityValues = []string{"compact", "comfortable", "spacious"}
-
 // IsValidBorderRadius checks if a value is a valid border radius option
 func IsValidBorderRadius(value string) bool {
 	for _, v := range ValidBorderRadiusValues {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
-// IsValidSpacingDensity checks if a value is a valid spacing density option
-func IsValidSpacingDensity(value string) bool {
-	for _, v := range ValidSpacingDensityValues {
 		if v == value {
 			return true
 		}
@@ -88,14 +73,6 @@ func (t *AppTheme) GetRadiusClass() string {
 		return "radius-" + DefaultBorderRadius
 	}
 	return "radius-" + t.BorderRadius
-}
-
-// GetDensityClass returns the CSS class name for the spacing density setting
-func (t *AppTheme) GetDensityClass() string {
-	if t.SpacingDensity == "" {
-		return "density-" + DefaultSpacingDensity
-	}
-	return "density-" + t.SpacingDensity
 }
 
 // GetLoginTitle returns the customer login page title, or the default if not set
@@ -148,7 +125,6 @@ func GetOrCreateAppTheme(db *gorm.DB, orgID string) (*AppTheme, error) {
 			PrimaryColor:   DefaultPrimaryColor,
 			SecondaryColor: DefaultPrimaryColor,
 			BorderRadius:   DefaultBorderRadius,
-			SpacingDensity: DefaultSpacingDensity,
 			LoginTitle:     DefaultLoginTitle,
 			LoginSubtitle:  DefaultLoginSubtitle,
 		}, nil
@@ -165,7 +141,6 @@ func GetOrCreateAppTheme(db *gorm.DB, orgID string) (*AppTheme, error) {
 				PrimaryColor:   DefaultPrimaryColor,
 				SecondaryColor: DefaultPrimaryColor,
 				BorderRadius:   DefaultBorderRadius,
-				SpacingDensity: DefaultSpacingDensity,
 			}
 			if err := db.Create(&theme).Error; err != nil {
 				return nil, err

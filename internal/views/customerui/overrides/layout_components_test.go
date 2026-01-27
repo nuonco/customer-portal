@@ -127,16 +127,14 @@ func TestRenderBodyAttrs(t *testing.T) {
 			},
 		},
 		{
-			name: "with radius and density classes",
+			name: "with radius class",
 			ctx: &TemplateContext{
 				Theme: &ThemeData{
-					RadiusClass:  "radius-rounded",
-					DensityClass: "density-comfortable",
+					RadiusClass: "radius-rounded",
 				},
 			},
 			contains: []string{
 				"radius-rounded",
-				"density-comfortable",
 			},
 		},
 	}
@@ -413,7 +411,6 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				Theme: &ThemeData{
 					PrimaryColor:   "#123456",
 					RadiusClass:    "radius-rounded",
-					DensityClass:   "density-comfortable",
 					SupportContact: "help@example.com",
 				},
 			},
@@ -422,7 +419,6 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				"<title>Full Layout</title>",
 				"--theme-primary: #123456",
 				"radius-rounded",
-				"density-comfortable",
 				"test@example.com",
 				"Powered by Nuon",
 				"mailto:help@example.com",

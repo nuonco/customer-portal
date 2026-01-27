@@ -148,18 +148,6 @@ func GetRadiusClass(radius string) string {
 	}
 }
 
-// GetDensityClass returns the CSS class for the specified spacing density.
-func GetDensityClass(density string) string {
-	switch density {
-	case "compact":
-		return "density-compact"
-	case "spacious":
-		return "density-spacious"
-	default:
-		return "density-comfortable"
-	}
-}
-
 // DarkenColor darkens a hex color by the specified percentage.
 // percentage should be between 0 and 100 (e.g., 20 for 20% darker).
 func DarkenColor(hexColor string, percent int) string {
