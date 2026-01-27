@@ -13,6 +13,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
@@ -71,7 +72,7 @@ func LoginSettingsPage(props LoginSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Login</h1><p class=\"stratus-page-subtitle\">Configure the customer login page and authentication settings.</p></div></div><div class=\"stratus-page-section\"><div class=\"max-w-4xl space-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Login</h1><p class=\"stratus-page-subtitle\">Configure the customer login page and authentication settings.</p></div></div><div class=\"stratus-page-section\"><div class=\"grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start\"><!-- Left Column: Settings --><div class=\"space-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -95,46 +96,157 @@ func LoginSettingsPage(props LoginSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div><!-- Config data for JavaScript --><div id=\"login-settings-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div><!-- Right Column: Live Preview --><div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 49, Col: 36}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+			templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = loginPreviewContent(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = components.PreviewContainer(components.PreviewContainerProps{
+				Title:          "Live Preview",
+				Description:    "This is how the customer login page will appear.",
+				InitialMode:    "light",
+				InitialSize:    "desktop",
+				PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
+				SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" data-enabled=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div></div><!-- Config data for JavaScript --><div id=\"login-settings-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(loginBoolToString(props.Config.Enabled))
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 50, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 66, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-has-secret=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-enabled=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(loginBoolToString(props.Config.HasClientSecret()))
+			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(loginBoolToString(props.Config.Enabled))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 51, Col: 72}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 67, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" data-has-secret=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var6 string
+			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(loginBoolToString(props.Config.HasClientSecret()))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 68, Col: 72}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-primary-color=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var7 string
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingPrimaryColor(props.Theme.PrimaryColor))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 69, Col: 75}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-secondary-color=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingSecondaryColor(props.Theme.SecondaryColor))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 70, Col: 81}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" data-logo-light-base64=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoLightBase64)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 71, Col: 57}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" data-logo-dark-base64=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoDarkBase64)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 72, Col: 55}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" data-login-right-side-image=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.GetLoginRightSideImage())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 73, Col: 71}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" data-login-right-side-gradient=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.GetLoginRightSideGradient())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 74, Col: 77}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -142,7 +254,7 @@ func LoginSettingsPage(props LoginSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -179,220 +291,93 @@ func loginPageAppearanceSection(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Login Page Appearance</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Customize the text displayed on the customer login page.</p><div class=\"space-y-4\"><div><label for=\"loginTitle\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Title</label> <input type=\"text\" id=\"loginTitle\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var7 string
-		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginTitle())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 76, Col: 34}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" placeholder=\"Customer Dashboard\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Main heading shown on the customer login page.</p></div><div><label for=\"loginSubtitle\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Subtitle</label> <input type=\"text\" id=\"loginSubtitle\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var8 string
-		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginSubtitle())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 87, Col: 37}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" placeholder=\"Manage your customer's install experience.\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Descriptive text shown below the title.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Right Side Image</label><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if theme.GetLoginRightSideImage() != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<img id=\"loginRightSidePreview\" src=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginRightSideImage())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 98, Col: 75}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" alt=\"Login right side preview\" class=\"h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<img id=\"loginRightSidePreview\" src=\"\" alt=\"Login right side preview\" class=\"h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		var templ_7745c5c3_Var10 = []any{"h-24 w-32 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.GetLoginRightSideImage() != "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div id=\"loginRightSidePlaceholder\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var10).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><span class=\"text-cool-grey-400 dark:text-cool-grey-500 text-xs text-center px-2\">No image</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"loginRightSideUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"></div></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">PNG, JPG, SVG, or GIF. Max 500KB. Displayed on right side of login page (desktop only).</p>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideImage() == "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<button type=\"button\" id=\"removeLoginRightSide\" onclick=\"removeLoginRightSide()\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 string
-		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var12).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\">Remove image</button></div><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Right Side Gradient (alternative to image)</label><div class=\"space-y-3\"><div class=\"flex items-center space-x-3\"><div class=\"flex-1\"><label for=\"gradientColor1\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Start Color</label><div class=\"flex items-center space-x-2\"><input type=\"color\" id=\"gradientColor1\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Login Page Appearance</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Customize the text displayed on the customer login page.</p><div class=\"space-y-4\"><div><label for=\"loginTitle\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Title</label> <input type=\"text\" id=\"loginTitle\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor1(theme.GetLoginRightSideGradient()))
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginTitle())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 130, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 99, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"gradientColor1Text\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" placeholder=\"Customer Dashboard\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Main heading shown on the customer login page.</p></div><div><label for=\"loginSubtitle\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Subtitle</label> <input type=\"text\" id=\"loginSubtitle\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor1(theme.GetLoginRightSideGradient()))
+		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginSubtitle())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 136, Col: 69}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 110, Col: 37}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" placeholder=\"#667eea\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div></div><div class=\"flex-1\"><label for=\"gradientColor2\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">End Color</label><div class=\"flex items-center space-x-2\"><input type=\"color\" id=\"gradientColor2\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"Manage your customer's install experience.\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Descriptive text shown below the title.</p></div><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Right Side Image</label><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor2(theme.GetLoginRightSideGradient()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 149, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"gradientColor2Text\" value=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor2(theme.GetLoginRightSideGradient()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 155, Col: 69}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" placeholder=\"#764ba2\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div></div></div><div><label for=\"gradientDirection\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Direction</label> <select id=\"gradientDirection\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"135deg\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if getGradientDirection(theme.GetLoginRightSideGradient()) == "135deg" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " selected")
+		if theme.GetLoginRightSideImage() != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<img id=\"loginRightSidePreview\" src=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var16 string
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginRightSideImage())
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 121, Col: 75}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" alt=\"Login right side preview\" class=\"h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<img id=\"loginRightSidePreview\" src=\"\" alt=\"Login right side preview\" class=\"h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, ">Diagonal (↘)</option> <option value=\"180deg\"")
+		var templ_7745c5c3_Var17 = []any{"h-24 w-32 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.GetLoginRightSideImage() != "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if getGradientDirection(theme.GetLoginRightSideGradient()) == "180deg" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, ">Vertical (↓)</option> <option value=\"90deg\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if getGradientDirection(theme.GetLoginRightSideGradient()) == "90deg" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, ">Horizontal (→)</option> <option value=\"45deg\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if getGradientDirection(theme.GetLoginRightSideGradient()) == "45deg" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, ">Diagonal (↗)</option></select></div><div><div class=\"flex items-center space-x-3\"><div id=\"gradientPreview\" class=\"h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded\" style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div id=\"loginRightSidePlaceholder\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getGradientPreviewStyle(theme.GetLoginRightSideGradient()))
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 177, Col: 179}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"><span class=\"text-cool-grey-400 dark:text-cool-grey-500 text-xs text-center px-2\">No image</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"loginRightSideUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"></div></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">PNG, JPG, SVG, or GIF. Max 500KB. Displayed on right side of login page (desktop only).</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var19 = []any{"text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideGradient() == "")}
+		var templ_7745c5c3_Var19 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideImage() == "")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<button type=\"button\" id=\"removeGradient\" onclick=\"removeGradient()\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<button type=\"button\" id=\"removeLoginRightSide\" onclick=\"removeLoginRightSide()\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -405,7 +390,112 @@ func loginPageAppearanceSection(theme *models.AppTheme) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\">Remove gradient</button></div></div></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Configure a gradient background. Note: Image takes priority over gradient if both are set.</p></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\">Remove image</button></div><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Right Side Gradient (alternative to image)</label><div class=\"space-y-3\"><div><label for=\"gradientColor1\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Start Color</label><div class=\"flex items-center space-x-2\"><input type=\"color\" id=\"gradientColor1\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var21 string
+		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor1ForPicker(theme.GetLoginRightSideGradient(), theme.PrimaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 152, Col: 97}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"gradientColor1Text\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var22 string
+		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor1Text(theme.GetLoginRightSideGradient()))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 158, Col: 72}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" placeholder=\"(uses primary color)\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div></div><div><label for=\"gradientColor2\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">End Color</label><div class=\"flex items-center space-x-2\"><input type=\"color\" id=\"gradientColor2\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor2ForPicker(theme.GetLoginRightSideGradient(), theme.SecondaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 171, Col: 99}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"gradientColor2Text\" value=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var24 string
+		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(getGradientColor2Text(theme.GetLoginRightSideGradient()))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 177, Col: 72}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" placeholder=\"(uses secondary color)\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div></div><div><label for=\"gradientDirection\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Direction</label> <select id=\"gradientDirection\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"135deg\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if getGradientDirection(theme.GetLoginRightSideGradient()) == "135deg" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, ">Diagonal (↘)</option> <option value=\"180deg\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if getGradientDirection(theme.GetLoginRightSideGradient()) == "180deg" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, ">Vertical (↓)</option> <option value=\"90deg\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if getGradientDirection(theme.GetLoginRightSideGradient()) == "90deg" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, ">Horizontal (→)</option> <option value=\"45deg\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if getGradientDirection(theme.GetLoginRightSideGradient()) == "45deg" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, ">Diagonal (↗)</option></select></div><div><div id=\"gradientPreview\" class=\"h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded\" style=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var25 string
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getGradientPreviewStyle(theme.GetLoginRightSideGradient(), theme.PrimaryColor, theme.SecondaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 197, Col: 220}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\"></div></div></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Configure a gradient background. Note: Image takes priority over gradient if both are set.</p></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -429,37 +519,37 @@ func loginEnableToggleSection(config *models.CustomerAuthConfig) templ.Component
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var26 == nil {
+			templ_7745c5c3_Var26 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"flex items-center justify-between\"><div><h3 class=\"text-lg font-semibold text-cool-grey-800 dark:text-white\">OIDC Authentication</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1\">Enable single sign-on for customers using an OIDC provider (Google, Okta, Auth0, etc.)</p></div><label class=\"relative inline-flex items-center cursor-pointer\"><input type=\"checkbox\" id=\"oidcEnabled\" class=\"sr-only peer\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"flex items-center justify-between\"><div><h3 class=\"text-lg font-semibold text-cool-grey-800 dark:text-white\">OIDC Authentication</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1\">Enable single sign-on for customers using an OIDC provider (Google, Okta, Auth0, etc.)</p></div><label class=\"relative inline-flex items-center cursor-pointer\"><input type=\"checkbox\" id=\"oidcEnabled\" class=\"sr-only peer\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.Enabled {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, " checked")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, " checked")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "><div class=\"w-11 h-6 bg-cool-grey-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-dark-grey-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600\"></div></label></div><div id=\"enabledStatus\" class=\"mt-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "><div class=\"w-11 h-6 bg-cool-grey-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary-300 dark:peer-focus:ring-primary-800 rounded-full peer dark:bg-dark-grey-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-cool-grey-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-dark-grey-600 peer-checked:bg-primary-600\"></div></label></div><div id=\"enabledStatus\" class=\"mt-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.Enabled {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400\"><svg class=\"w-3 h-3 mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> OIDC Enabled</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400\"><svg class=\"w-3 h-3 mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> OIDC Enabled</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300\">Using email/password authentication</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300\">Using email/password authentication</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -483,139 +573,139 @@ func loginOidcConfigSection(config *models.CustomerAuthConfig) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var22 == nil {
-			templ_7745c5c3_Var22 = templ.NopComponent
+		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var27 == nil {
+			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div id=\"oidcConfigSection\" class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">OIDC Configuration</h3><div class=\"space-y-4\"><!-- Provider Name --><div><label for=\"providerName\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Provider</label> <select id=\"providerName\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div id=\"oidcConfigSection\" class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">OIDC Configuration</h3><div class=\"space-y-4\"><!-- Provider Name --><div><label for=\"providerName\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Provider</label> <select id=\"providerName\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><option value=\"\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, ">Select a provider...</option> <option value=\"Google\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, ">Select a provider...</option> <option value=\"Google\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "Google" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, ">Google</option> <option value=\"Okta\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, ">Google</option> <option value=\"Okta\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "Okta" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, ">Okta</option> <option value=\"Auth0\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, ">Okta</option> <option value=\"Auth0\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "Auth0" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, ">Auth0</option> <option value=\"Azure AD\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, ">Auth0</option> <option value=\"Azure AD\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "Azure AD" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, ">Azure AD</option> <option value=\"Custom\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, ">Azure AD</option> <option value=\"Custom\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.ProviderName == "Custom" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, " selected")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, ">Custom OIDC</option></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The identity provider your customers will use to sign in.</p></div><!-- Issuer URL --><div><label for=\"issuerUrl\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Issuer URL <span class=\"text-red-500\">*</span></label> <input type=\"url\" id=\"issuerUrl\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, ">Custom OIDC</option></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The identity provider your customers will use to sign in.</p></div><!-- Issuer URL --><div><label for=\"issuerUrl\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Issuer URL <span class=\"text-red-500\">*</span></label> <input type=\"url\" id=\"issuerUrl\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(config.IssuerURL)
+		var templ_7745c5c3_Var28 string
+		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(config.IssuerURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 260, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 276, Col: 29}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "\" placeholder=\"https://accounts.google.com\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OIDC issuer URL (discovery endpoint). For Google: https://accounts.google.com</p></div><!-- Client ID --><div><label for=\"clientId\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Client ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"clientId\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(config.ClientID)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 276, Col: 28}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\" placeholder=\"https://accounts.google.com\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OIDC issuer URL (discovery endpoint). For Google: https://accounts.google.com</p></div><!-- Client ID --><div><label for=\"clientId\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Client ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"clientId\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\" placeholder=\"your-client-id.apps.googleusercontent.com\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OAuth client ID from your identity provider.</p></div><!-- Client Secret --><div><label for=\"clientSecret\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Client Secret <span class=\"text-red-500\">*</span></label><div class=\"relative\"><input type=\"password\" id=\"clientSecret\" placeholder=\"")
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(config.ClientID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 292, Col: 28}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginSecretPlaceholder(config.HasClientSecret()))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 293, Col: 71}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" placeholder=\"your-client-id.apps.googleusercontent.com\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OAuth client ID from your identity provider.</p></div><!-- Client Secret --><div><label for=\"clientSecret\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Client Secret <span class=\"text-red-500\">*</span></label><div class=\"relative\"><input type=\"password\" id=\"clientSecret\" placeholder=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 pr-10\"> <button type=\"button\" onclick=\"toggleSecretVisibility()\" class=\"absolute inset-y-0 right-0 pr-3 flex items-center text-cool-grey-400 hover:text-cool-grey-600\"><svg id=\"eyeIcon\" class=\"h-5 w-5\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path></svg></button></div>")
+		var templ_7745c5c3_Var30 string
+		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginSecretPlaceholder(config.HasClientSecret()))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 309, Col: 71}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 pr-10\"> <button type=\"button\" onclick=\"toggleSecretVisibility()\" class=\"absolute inset-y-0 right-0 pr-3 flex items-center text-cool-grey-400 hover:text-cool-grey-600\"><svg id=\"eyeIcon\" class=\"h-5 w-5\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path></svg></button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if config.HasClientSecret() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<p class=\"mt-1 text-xs text-green-600 dark:text-green-400\"><svg class=\"w-3 h-3 inline mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Secret is configured. Leave blank to keep existing secret.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<p class=\"mt-1 text-xs text-green-600 dark:text-green-400\"><svg class=\"w-3 h-3 inline mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Secret is configured. Leave blank to keep existing secret.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OAuth client secret from your identity provider.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">The OAuth client secret from your identity provider.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "</div><!-- Scopes --><div><label for=\"scopes\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Scopes</label> <input type=\"text\" id=\"scopes\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "</div><!-- Scopes --><div><label for=\"scopes\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Scopes</label> <input type=\"text\" id=\"scopes\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginScopesValue(config.Scopes))
+		var templ_7745c5c3_Var31 string
+		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginScopesValue(config.Scopes))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 328, Col: 47}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 344, Col: 47}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" placeholder=\"openid,profile,email\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Comma-separated OAuth scopes. Default: openid,profile,email</p></div><!-- Test Connection Button --><div class=\"pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><button type=\"button\" id=\"testConnectionBtn\" onclick=\"testConnection()\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-primary-500\"><svg class=\"w-4 h-4 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> Test Connection</button><div id=\"testResult\" class=\"mt-3 hidden\"></div></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" placeholder=\"openid,profile,email\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Comma-separated OAuth scopes. Default: openid,profile,email</p></div><!-- Test Connection Button --><div class=\"pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><button type=\"button\" id=\"testConnectionBtn\" onclick=\"testConnection()\" class=\"inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-primary-500\"><svg class=\"w-4 h-4 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg> Test Connection</button><div id=\"testResult\" class=\"mt-3 hidden\"></div></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -637,45 +727,75 @@ func getLoginScopesValue(scopes string) string {
 	return scopes
 }
 
-func getGradientColor1(gradient string) string {
+// parseGradientColor1 extracts the first color from a gradient string, or returns empty if not found
+func parseGradientColor1(gradient string) string {
 	if gradient == "" {
-		return "#667eea"
+		return ""
 	}
 	// Parse gradient like "linear-gradient(135deg, #667eea, #764ba2)"
 	// Extract first color
-	if len(gradient) > 0 {
-		start := strings.Index(gradient, "#")
-		if start != -1 {
-			end := start + 7
-			if end <= len(gradient) {
-				return gradient[start:end]
-			}
+	start := strings.Index(gradient, "#")
+	if start != -1 {
+		end := start + 7
+		if end <= len(gradient) {
+			return gradient[start:end]
 		}
 	}
-	return "#667eea"
+	return ""
 }
 
-func getGradientColor2(gradient string) string {
+// parseGradientColor2 extracts the second color from a gradient string, or returns empty if not found
+func parseGradientColor2(gradient string) string {
 	if gradient == "" {
-		return "#764ba2"
+		return ""
 	}
-	// Parse gradient and extract second color
-	if len(gradient) > 0 {
-		// Find last occurrence of #
-		lastHash := strings.LastIndex(gradient, "#")
-		if lastHash != -1 && lastHash != strings.Index(gradient, "#") {
-			end := lastHash + 7
-			if end <= len(gradient) {
-				color := gradient[lastHash:end]
-				// Remove trailing characters like )
-				if strings.Contains(color, ")") {
-					color = strings.Split(color, ")")[0]
-				}
-				return color
+	// Find last occurrence of #
+	lastHash := strings.LastIndex(gradient, "#")
+	firstHash := strings.Index(gradient, "#")
+	if lastHash != -1 && lastHash != firstHash {
+		end := lastHash + 7
+		if end <= len(gradient) {
+			color := gradient[lastHash:end]
+			// Remove trailing characters like )
+			if strings.Contains(color, ")") {
+				color = strings.Split(color, ")")[0]
 			}
+			return color
 		}
 	}
-	return "#764ba2"
+	return ""
+}
+
+// getGradientColor1ForPicker returns a color for the color picker input (always valid - parsed or primary fallback)
+func getGradientColor1ForPicker(gradient, primaryColor string) string {
+	if parsed := parseGradientColor1(gradient); parsed != "" {
+		return parsed
+	}
+	if primaryColor != "" {
+		return primaryColor
+	}
+	return "#8040BF" // default primary
+}
+
+// getGradientColor1Text returns the parsed color for the text input (empty if no gradient set, for placeholder display)
+func getGradientColor1Text(gradient string) string {
+	return parseGradientColor1(gradient)
+}
+
+// getGradientColor2ForPicker returns a color for the color picker input (always valid - parsed or secondary fallback)
+func getGradientColor2ForPicker(gradient, secondaryColor string) string {
+	if parsed := parseGradientColor2(gradient); parsed != "" {
+		return parsed
+	}
+	if secondaryColor != "" {
+		return secondaryColor
+	}
+	return "#06B6D4" // default secondary
+}
+
+// getGradientColor2Text returns the parsed color for the text input (empty if no gradient set, for placeholder display)
+func getGradientColor2Text(gradient string) string {
+	return parseGradientColor2(gradient)
 }
 
 func getGradientDirection(gradient string) string {
@@ -698,11 +818,21 @@ func getGradientDirection(gradient string) string {
 	return "135deg"
 }
 
-func getGradientPreviewStyle(gradient string) string {
-	if gradient == "" {
-		return "background: linear-gradient(135deg, #667eea, #764ba2);"
+// getGradientPreviewStyle returns the style for the gradient preview box
+func getGradientPreviewStyle(gradient, primaryColor, secondaryColor string) string {
+	if gradient != "" {
+		return "background: " + gradient + ";"
 	}
-	return "background: " + gradient + ";"
+	// Fall back to primary-to-secondary gradient
+	primary := primaryColor
+	if primary == "" {
+		primary = "#8040BF"
+	}
+	secondary := secondaryColor
+	if secondary == "" {
+		secondary = "#06B6D4"
+	}
+	return "background: linear-gradient(135deg, " + primary + ", " + secondary + ");"
 }
 
 func loginSaveSection(primaryColor string) templ.Component {
@@ -721,59 +851,59 @@ func loginSaveSection(primaryColor string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var27 == nil {
-			templ_7745c5c3_Var27 = templ.NopComponent
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<div class=\"flex flex-col space-y-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "<div class=\"flex flex-col space-y-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var28 = []any{"w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white",
+		var templ_7745c5c3_Var33 = []any{"w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white",
 			templ.KV("bg-theme-primary hover:bg-theme-primary-hover", primaryColor != ""),
 			templ.KV("bg-primary-600 hover:bg-primary-700", primaryColor == "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var33...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<button type=\"button\" id=\"saveButton\" onclick=\"saveLoginSettings()\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<button type=\"button\" id=\"saveButton\" onclick=\"saveLoginSettings()\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var29 string
-		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var28).String())
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var33).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if primaryColor != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, " style=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, " style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var30 string
-			templ_7745c5c3_Var30, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + primaryColor)
+			var templ_7745c5c3_Var35 string
+			templ_7745c5c3_Var35, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + primaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 447, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 503, Col: 47}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, ">Save Changes</button><div id=\"successMessage\" class=\"hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg\"><div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Settings saved successfully!</div></div><div id=\"errorMessage\" class=\"hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, ">Save Changes</button><div id=\"successMessage\" class=\"hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg\"><div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Settings saved successfully!</div></div><div id=\"errorMessage\" class=\"hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -797,17 +927,173 @@ func loginFallbackInfoSection() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var31 == nil {
-			templ_7745c5c3_Var31 = templ.NopComponent
+		templ_7745c5c3_Var36 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var36 == nil {
+			templ_7745c5c3_Var36 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<div class=\"bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800\"><div class=\"flex\"><svg class=\"w-5 h-5 text-blue-500 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z\" clip-rule=\"evenodd\"></path></svg><div><h4 class=\"text-sm font-medium text-blue-800 dark:text-blue-300\">Email/Password Fallback</h4><p class=\"mt-1 text-sm text-blue-700 dark:text-blue-400\">When OIDC is disabled or not configured, customers will use email and password authentication. They can register when accepting an install link and then log in with their credentials.</p></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div class=\"bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800\"><div class=\"flex\"><svg class=\"w-5 h-5 text-blue-500 dark:text-blue-400 mr-3 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z\" clip-rule=\"evenodd\"></path></svg><div><h4 class=\"text-sm font-medium text-blue-800 dark:text-blue-300\">Email/Password Fallback</h4><p class=\"mt-1 text-sm text-blue-700 dark:text-blue-400\">When OIDC is disabled or not configured, customers will use email and password authentication. They can register when accepting an install link and then log in with their credentials.</p></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		return nil
 	})
+}
+
+// loginPreviewContent renders a preview of the customer login page
+func loginPreviewContent(theme *models.AppTheme) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, "<div class=\"preview-page-bg h-full flex\"><!-- Left Side - Login Card --><div class=\"flex flex-col gap-6 justify-center w-[520px] bg-cool-grey-50 preview-page-bg px-10 py-10\"><!-- Card --><div class=\"preview-card px-8 py-10 flex flex-col gap-5 rounded-lg\"><!-- Logo -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if theme.LogoLightBase64 != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, "<img id=\"loginPreviewLogoLight\" src=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var38 string
+			templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoLightBase64)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 546, Col: 64}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-32 object-contain mx-auto preview-logo-light\"> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, "<img id=\"loginPreviewLogoLight\" src=\"\" alt=\"Logo\" class=\"h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-light\"> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		if theme.LogoDarkBase64 != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, "<img id=\"loginPreviewLogoDark\" src=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var39 string
+			templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoDarkBase64)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 551, Col: 62}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-dark\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, "<img id=\"loginPreviewLogoDark\" src=\"\" alt=\"Logo\" class=\"h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-dark\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, "<!-- Heading and Subtitle --><div class=\"flex flex-col gap-3\"><h1 id=\"loginPreviewTitle\" class=\"text-2xl font-semibold preview-text-heading\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var40 string
+		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginTitle())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 558, Col: 29}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</h1><p id=\"loginPreviewSubtitle\" class=\"text-sm preview-text-muted\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var41 string
+		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(theme.GetLoginSubtitle())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 561, Col: 32}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "</p></div><!-- Sign Up Button (Primary) --><button id=\"loginPreviewSignUpBtn\" class=\"w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 font-medium text-white rounded-md\" style=\"background-color: var(--preview-primary);\">Sign up</button><!-- Divider --><hr class=\"border-cool-grey-300 preview-status-border\"><!-- Already have account section --><h2 class=\"text-lg font-semibold preview-text-heading\">Already have an account?</h2><!-- Sign In Button (Secondary/Outline) --><button id=\"loginPreviewSignInBtn\" class=\"w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 font-medium rounded-md bg-white preview-card\" style=\"border: 1px solid var(--preview-primary); color: var(--preview-primary);\">Sign in</button></div></div><!-- Right Side - Image, Gradient, or Primary Color --><div id=\"loginPreviewRightSide\" class=\"hidden lg:flex flex-1 overflow-hidden\" style=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var42 string
+		templ_7745c5c3_Var42, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getLoginPreviewRightSideStyle(theme))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 589, Col: 124}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, "\"><!-- Grid pattern overlay -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var43 = []any{"absolute inset-0 opacity-10", templ.KV("hidden", theme.GetLoginRightSideImage() != "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var43...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, "<div id=\"loginPreviewGridOverlay\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var44 string
+		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var43).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/login_settings.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, "\"><svg class=\"w-full h-full\" viewBox=\"0 0 100 100\" preserveAspectRatio=\"none\"><defs><pattern id=\"loginPreviewGrid\" width=\"10\" height=\"10\" patternUnits=\"userSpaceOnUse\"><path d=\"M 10 0 L 0 0 0 10\" fill=\"none\" stroke=\"white\" stroke-width=\"0.5\"></path></pattern></defs> <rect width=\"100\" height=\"100\" fill=\"url(#loginPreviewGrid)\"></rect></svg></div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func getLoginPreviewRightSideStyle(theme *models.AppTheme) string {
+	// Priority 1: Custom image
+	if theme.GetLoginRightSideImage() != "" {
+		return "background-image: url(" + theme.GetLoginRightSideImage() + "); background-size: cover; background-position: center; position: relative;"
+	}
+	// Priority 2: Custom gradient
+	if theme.GetLoginRightSideGradient() != "" {
+		return "background: " + theme.GetLoginRightSideGradient() + "; position: relative;"
+	}
+	// Priority 3: Default gradient from primary to secondary
+	return "background: linear-gradient(135deg, var(--preview-primary), var(--preview-secondary)); position: relative;"
 }
 
 func loginSettingsScript() templ.Component {
@@ -826,12 +1112,12 @@ func loginSettingsScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var32 == nil {
-			templ_7745c5c3_Var32 = templ.NopComponent
+		templ_7745c5c3_Var45 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var45 == nil {
+			templ_7745c5c3_Var45 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('login-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\twindow._loginRightSideBase64 = '';\n\n\t\t\t// Toggle enable/disable\n\t\t\tdocument.getElementById('oidcEnabled').addEventListener('change', function(e) {\n\t\t\t\tupdateEnabledStatus(e.target.checked);\n\t\t\t});\n\n\t\t\tfunction updateEnabledStatus(enabled) {\n\t\t\t\tvar statusDiv = document.getElementById('enabledStatus');\n\t\t\t\tif (enabled) {\n\t\t\t\t\tstatusDiv.innerHTML = '<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400\"><svg class=\"w-3 h-3 mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>OIDC Enabled</span>';\n\t\t\t\t} else {\n\t\t\t\t\tstatusDiv.innerHTML = '<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300\">Using email/password authentication</span>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Toggle password visibility\n\t\t\twindow.toggleSecretVisibility = function() {\n\t\t\t\tvar input = document.getElementById('clientSecret');\n\t\t\t\tvar icon = document.getElementById('eyeIcon');\n\t\t\t\tif (input.type === 'password') {\n\t\t\t\t\tinput.type = 'text';\n\t\t\t\t\ticon.innerHTML = '<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21\"></path>';\n\t\t\t\t} else {\n\t\t\t\t\tinput.type = 'password';\n\t\t\t\t\ticon.innerHTML = '<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path>';\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Test connection\n\t\t\twindow.testConnection = async function() {\n\t\t\t\tvar btn = document.getElementById('testConnectionBtn');\n\t\t\t\tvar resultDiv = document.getElementById('testResult');\n\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtn.innerHTML = '<svg class=\"animate-spin w-4 h-4 mr-2\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle><path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>Testing...';\n\n\t\t\t\t// First save the current settings\n\t\t\t\tvar formData = getFormData();\n\n\t\t\t\ttry {\n\t\t\t\t\t// Save settings first\n\t\t\t\t\tvar saveResponse = await fetch(basePath + '/settings/login', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tif (!saveResponse.ok) {\n\t\t\t\t\t\tthrow new Error('Failed to save settings before testing');\n\t\t\t\t\t}\n\n\t\t\t\t\t// Then test the connection\n\t\t\t\t\tvar response = await fetch(basePath + '/settings/login/test', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tresultDiv.classList.remove('hidden');\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-md flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>Connection successful! OIDC provider is reachable.</div>';\n\t\t\t\t\t} else {\n\t\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md flex items-start\"><svg class=\"w-5 h-5 mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg><div><strong>Connection failed</strong><br/>' + (data.error || 'Unknown error') + '</div></div>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tresultDiv.classList.remove('hidden');\n\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md\">Network error: ' + error.message + '</div>';\n\t\t\t\t}\n\n\t\t\t\tbtn.disabled = false;\n\t\t\t\tbtn.innerHTML = '<svg class=\"w-4 h-4 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg>Test Connection';\n\t\t\t};\n\n\t\t\t// Remove login right side image\n\t\t\twindow.removeLoginRightSide = function() {\n\t\t\t\twindow._loginRightSideBase64 = 'REMOVE';\n\t\t\t\tdocument.getElementById('loginRightSidePreview').classList.add('hidden');\n\t\t\t\tdocument.getElementById('loginRightSidePlaceholder').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('loginRightSideUpload').value = '';\n\t\t\t\tdocument.getElementById('removeLoginRightSide').classList.add('hidden');\n\t\t\t};\n\n\t\t\t// Remove gradient\n\t\t\twindow.removeGradient = function() {\n\t\t\t\twindow._gradientValue = 'REMOVE';\n\t\t\t\tdocument.getElementById('gradientColor1').value = '#667eea';\n\t\t\t\tdocument.getElementById('gradientColor1Text').value = '#667eea';\n\t\t\t\tdocument.getElementById('gradientColor2').value = '#764ba2';\n\t\t\t\tdocument.getElementById('gradientColor2Text').value = '#764ba2';\n\t\t\t\tdocument.getElementById('gradientDirection').value = '135deg';\n\t\t\t\tdocument.getElementById('gradientPreview').style.background = 'linear-gradient(135deg, #667eea, #764ba2)';\n\t\t\t\tdocument.getElementById('removeGradient').classList.add('hidden');\n\t\t\t};\n\n\t\t\t// Update gradient preview\n\t\t\tfunction updateGradientPreview() {\n\t\t\t\tvar color1 = document.getElementById('gradientColor1').value;\n\t\t\t\tvar color2 = document.getElementById('gradientColor2').value;\n\t\t\t\tvar direction = document.getElementById('gradientDirection').value;\n\t\t\t\tvar gradient = 'linear-gradient(' + direction + ', ' + color1 + ', ' + color2 + ')';\n\t\t\t\tdocument.getElementById('gradientPreview').style.background = gradient;\n\t\t\t\twindow._gradientValue = gradient;\n\t\t\t\tdocument.getElementById('removeGradient').classList.remove('hidden');\n\t\t\t}\n\n\t\t\tfunction getFormData() {\n\t\t\t\tvar formData = {\n\t\t\t\t\tenabled: document.getElementById('oidcEnabled').checked,\n\t\t\t\t\tprovider_name: document.getElementById('providerName').value,\n\t\t\t\t\tissuer_url: document.getElementById('issuerUrl').value,\n\t\t\t\t\tclient_id: document.getElementById('clientId').value,\n\t\t\t\t\tclient_secret: document.getElementById('clientSecret').value,\n\t\t\t\t\tscopes: document.getElementById('scopes').value,\n\t\t\t\t\tlogin_title: document.getElementById('loginTitle').value,\n\t\t\t\t\tlogin_subtitle: document.getElementById('loginSubtitle').value\n\t\t\t\t};\n\n\t\t\t\t// Add login right side image if changed\n\t\t\t\tif (window._loginRightSideBase64) {\n\t\t\t\t\tformData.login_right_side_image_base64 = window._loginRightSideBase64;\n\t\t\t\t}\n\n\t\t\t\t// Add login right side gradient if changed\n\t\t\t\tif (window._gradientValue) {\n\t\t\t\t\tformData.login_right_side_gradient = window._gradientValue;\n\t\t\t\t}\n\n\t\t\t\treturn formData;\n\t\t\t}\n\n\t\t\t// Save settings\n\t\t\twindow.saveLoginSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveButton');\n\t\t\t\tvar successMessage = document.getElementById('successMessage');\n\t\t\t\tvar errorMessage = document.getElementById('errorMessage');\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\tvar formData = getFormData();\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/settings/login', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tshowToast('Login settings saved!', 'success');\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\n\t\t\t\t\t\t// Update the \"has secret\" indicator if secret was changed\n\t\t\t\t\t\tif (formData.client_secret) {\n\t\t\t\t\t\t\tvar secretHelp = document.querySelector('#clientSecret').parentElement.nextElementSibling;\n\t\t\t\t\t\t\tif (secretHelp) {\n\t\t\t\t\t\t\t\tsecretHelp.innerHTML = '<svg class=\"w-3 h-3 inline mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>Secret is configured. Leave blank to keep existing secret.';\n\t\t\t\t\t\t\t\tsecretHelp.className = 'mt-1 text-xs text-green-600 dark:text-green-400';\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + (data.error || 'Failed to save settings') + '</div>';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Network error. Please try again.</div>';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save Changes';\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\n\t\t\t// Login right side image upload handler\n\t\t\tdocument.getElementById('loginRightSideUpload')?.addEventListener('change', async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast('Image file must be under 500KB', 'error');\n\t\t\t\t\te.target.value = '';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif'];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast('Please upload a PNG, JPG, SVG, or GIF image', 'error');\n\t\t\t\t\te.target.value = '';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._loginRightSideBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById('loginRightSidePreview');\n\t\t\t\t\tvar placeholder = document.getElementById('loginRightSidePlaceholder');\n\t\t\t\t\tvar removeBtn = document.getElementById('removeLoginRightSide');\n\n\t\t\t\t\tpreview.src = window._loginRightSideBase64;\n\t\t\t\t\tpreview.classList.remove('hidden');\n\t\t\t\t\tplaceholder.classList.add('hidden');\n\t\t\t\t\tremoveBtn.classList.remove('hidden');\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\n\t\t\t// Gradient color picker event listeners\n\t\t\tdocument.getElementById('gradientColor1')?.addEventListener('input', function(e) {\n\t\t\t\tdocument.getElementById('gradientColor1Text').value = e.target.value.toUpperCase();\n\t\t\t\tupdateGradientPreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor1Text')?.addEventListener('input', function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById('gradientColor1').value = value;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor2')?.addEventListener('input', function(e) {\n\t\t\t\tdocument.getElementById('gradientColor2Text').value = e.target.value.toUpperCase();\n\t\t\t\tupdateGradientPreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor2Text')?.addEventListener('input', function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById('gradientColor2').value = value;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientDirection')?.addEventListener('change', updateGradientPreview);\n\n\t\t\t// Initialize gradient preview on page load\n\t\t\tif (document.getElementById('gradientColor1')) {\n\t\t\t\tupdateGradientPreview();\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('login-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\twindow._loginRightSideBase64 = '';\n\n\t\t\t// Update preview function\n\t\t\twindow.updatePreview = function() {\n\t\t\t\tvar title = document.getElementById('loginTitle').value || 'Customer Dashboard';\n\t\t\t\tvar subtitle = document.getElementById('loginSubtitle').value || \"Manage your customer's install experience.\";\n\t\t\t\tvar primaryColor = config.dataset.primaryColor || '#8040BF';\n\n\t\t\t\t// Update title and subtitle\n\t\t\t\tvar previewTitle = document.getElementById('loginPreviewTitle');\n\t\t\t\tvar previewSubtitle = document.getElementById('loginPreviewSubtitle');\n\t\t\t\tif (previewTitle) previewTitle.textContent = title;\n\t\t\t\tif (previewSubtitle) previewSubtitle.textContent = subtitle;\n\n\t\t\t\t// Update primary color buttons\n\t\t\t\tvar signUpBtn = document.getElementById('loginPreviewSignUpBtn');\n\t\t\t\tvar signInBtn = document.getElementById('loginPreviewSignInBtn');\n\t\t\t\tif (signUpBtn) signUpBtn.style.backgroundColor = primaryColor;\n\t\t\t\tif (signInBtn) {\n\t\t\t\t\tsignInBtn.style.borderColor = primaryColor;\n\t\t\t\t\tsignInBtn.style.color = primaryColor;\n\t\t\t\t}\n\n\t\t\t\t// Update logo based on mode\n\t\t\t\tvar previewLogoLight = document.getElementById('loginPreviewLogoLight');\n\t\t\t\tvar previewLogoDark = document.getElementById('loginPreviewLogoDark');\n\t\t\t\tvar lightLogoSrc = config.dataset.logoLightBase64 || '';\n\t\t\t\tvar darkLogoSrc = config.dataset.logoDarkBase64 || '';\n\n\t\t\t\tif (previewLogoLight) {\n\t\t\t\t\tif (lightLogoSrc) {\n\t\t\t\t\t\tpreviewLogoLight.src = lightLogoSrc;\n\t\t\t\t\t\tpreviewLogoLight.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tpreviewLogoLight.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\tif (previewLogoDark) {\n\t\t\t\t\tif (darkLogoSrc) {\n\t\t\t\t\t\tpreviewLogoDark.src = darkLogoSrc;\n\t\t\t\t\t\tpreviewLogoDark.classList.remove('hidden');\n\t\t\t\t\t} else if (lightLogoSrc) {\n\t\t\t\t\t\t// Fall back to light logo for dark mode\n\t\t\t\t\t\tpreviewLogoDark.src = lightLogoSrc;\n\t\t\t\t\t\tpreviewLogoDark.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tpreviewLogoDark.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Update right side preview\n\t\t\t\tvar rightSide = document.getElementById('loginPreviewRightSide');\n\t\t\t\tvar gridOverlay = document.getElementById('loginPreviewGridOverlay');\n\n\t\t\t\tif (rightSide) {\n\t\t\t\t\t// Check for custom image first (from upload or initial data)\n\t\t\t\t\tvar imageBase64 = window._loginRightSideBase64;\n\t\t\t\t\tif (imageBase64 === 'REMOVE') {\n\t\t\t\t\t\timageBase64 = '';\n\t\t\t\t\t} else if (!imageBase64) {\n\t\t\t\t\t\timageBase64 = config.dataset.loginRightSideImage || '';\n\t\t\t\t\t}\n\n\t\t\t\t\t// Check for gradient\n\t\t\t\t\tvar gradient = window._gradientValue;\n\t\t\t\t\tif (gradient === 'REMOVE') {\n\t\t\t\t\t\tgradient = '';\n\t\t\t\t\t} else if (!gradient) {\n\t\t\t\t\t\tgradient = config.dataset.loginRightSideGradient || '';\n\t\t\t\t\t}\n\n\t\t\t\t\t// Priority: Image > Gradient > Primary Color\n\t\t\t\t\tif (imageBase64) {\n\t\t\t\t\t\trightSide.style.backgroundImage = 'url(' + imageBase64 + ')';\n\t\t\t\t\t\trightSide.style.backgroundSize = 'cover';\n\t\t\t\t\t\trightSide.style.backgroundPosition = 'center';\n\t\t\t\t\t\trightSide.style.background = '';\n\t\t\t\t\t\trightSide.style.backgroundColor = '';\n\t\t\t\t\t\trightSide.style.backgroundImage = 'url(' + imageBase64 + ')';\n\t\t\t\t\t\tif (gridOverlay) gridOverlay.classList.add('hidden');\n\t\t\t\t\t} else if (gradient) {\n\t\t\t\t\t\trightSide.style.backgroundImage = '';\n\t\t\t\t\t\trightSide.style.background = gradient;\n\t\t\t\t\t\tif (gridOverlay) gridOverlay.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\t// No image, no custom gradient - use default primary-to-secondary gradient\n\t\t\t\t\t\trightSide.style.backgroundImage = '';\n\t\t\t\t\t\tvar secondaryColor = config.dataset.secondaryColor || '#06B6D4';\n\t\t\t\t\t\trightSide.style.background = 'linear-gradient(135deg, ' + primaryColor + ', ' + secondaryColor + ')';\n\t\t\t\t\t\tif (gridOverlay) gridOverlay.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t}\n\n\t\t\t\t// Update CSS variables on preview container\n\t\t\t\tvar container = document.getElementById('previewContainer');\n\t\t\t\tif (container) {\n\t\t\t\t\tcontainer.style.setProperty('--preview-primary', primaryColor);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Hook into preview mode changes\n\t\t\twindow.onPreviewModeChange = function(mode) {\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\t// Toggle enable/disable\n\t\t\tdocument.getElementById('oidcEnabled').addEventListener('change', function(e) {\n\t\t\t\tupdateEnabledStatus(e.target.checked);\n\t\t\t});\n\n\t\t\tfunction updateEnabledStatus(enabled) {\n\t\t\t\tvar statusDiv = document.getElementById('enabledStatus');\n\t\t\t\tif (enabled) {\n\t\t\t\t\tstatusDiv.innerHTML = '<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400\"><svg class=\"w-3 h-3 mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>OIDC Enabled</span>';\n\t\t\t\t} else {\n\t\t\t\t\tstatusDiv.innerHTML = '<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 text-cool-grey-800 dark:bg-dark-grey-700 dark:text-cool-grey-300\">Using email/password authentication</span>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Toggle password visibility\n\t\t\twindow.toggleSecretVisibility = function() {\n\t\t\t\tvar input = document.getElementById('clientSecret');\n\t\t\t\tvar icon = document.getElementById('eyeIcon');\n\t\t\t\tif (input.type === 'password') {\n\t\t\t\t\tinput.type = 'text';\n\t\t\t\t\ticon.innerHTML = '<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21\"></path>';\n\t\t\t\t} else {\n\t\t\t\t\tinput.type = 'password';\n\t\t\t\t\ticon.innerHTML = '<path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path>';\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Test connection\n\t\t\twindow.testConnection = async function() {\n\t\t\t\tvar btn = document.getElementById('testConnectionBtn');\n\t\t\t\tvar resultDiv = document.getElementById('testResult');\n\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtn.innerHTML = '<svg class=\"animate-spin w-4 h-4 mr-2\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle><path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>Testing...';\n\n\t\t\t\t// First save the current settings\n\t\t\t\tvar formData = getFormData();\n\n\t\t\t\ttry {\n\t\t\t\t\t// Save settings first\n\t\t\t\t\tvar saveResponse = await fetch(basePath + '/settings/login', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tif (!saveResponse.ok) {\n\t\t\t\t\t\tthrow new Error('Failed to save settings before testing');\n\t\t\t\t\t}\n\n\t\t\t\t\t// Then test the connection\n\t\t\t\t\tvar response = await fetch(basePath + '/settings/login/test', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tresultDiv.classList.remove('hidden');\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-md flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>Connection successful! OIDC provider is reachable.</div>';\n\t\t\t\t\t} else {\n\t\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md flex items-start\"><svg class=\"w-5 h-5 mr-2 mt-0.5 flex-shrink-0\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg><div><strong>Connection failed</strong><br/>' + (data.error || 'Unknown error') + '</div></div>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tresultDiv.classList.remove('hidden');\n\t\t\t\t\tresultDiv.innerHTML = '<div class=\"p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-md\">Network error: ' + error.message + '</div>';\n\t\t\t\t}\n\n\t\t\t\tbtn.disabled = false;\n\t\t\t\tbtn.innerHTML = '<svg class=\"w-4 h-4 mr-2\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z\"></path></svg>Test Connection';\n\t\t\t};\n\n\t\t\t// Remove login right side image\n\t\t\twindow.removeLoginRightSide = function() {\n\t\t\t\twindow._loginRightSideBase64 = 'REMOVE';\n\t\t\t\tdocument.getElementById('loginRightSidePreview').classList.add('hidden');\n\t\t\t\tdocument.getElementById('loginRightSidePlaceholder').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('loginRightSideUpload').value = '';\n\t\t\t\tdocument.getElementById('removeLoginRightSide').classList.add('hidden');\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\t// Update gradient preview\n\t\t\tfunction updateGradientPreview() {\n\t\t\t\tvar primaryColor = config.dataset.primaryColor || '#8040BF';\n\t\t\t\tvar secondaryColor = config.dataset.secondaryColor || '#06B6D4';\n\t\t\t\tvar color1Text = document.getElementById('gradientColor1Text').value;\n\t\t\t\tvar color2Text = document.getElementById('gradientColor2Text').value;\n\t\t\t\t// Use text input values if set, otherwise fall back to primary/secondary\n\t\t\t\tvar color1 = color1Text || primaryColor;\n\t\t\t\tvar color2 = color2Text || secondaryColor;\n\t\t\t\tvar direction = document.getElementById('gradientDirection').value;\n\t\t\t\tvar gradient = 'linear-gradient(' + direction + ', ' + color1 + ', ' + color2 + ')';\n\t\t\t\tdocument.getElementById('gradientPreview').style.background = gradient;\n\t\t\t\t// Only set gradient value if at least one custom color is specified\n\t\t\t\tif (color1Text || color2Text) {\n\t\t\t\t\twindow._gradientValue = gradient;\n\t\t\t\t}\n\t\t\t\tupdatePreview();\n\t\t\t}\n\n\t\t\tfunction getFormData() {\n\t\t\t\tvar formData = {\n\t\t\t\t\tenabled: document.getElementById('oidcEnabled').checked,\n\t\t\t\t\tprovider_name: document.getElementById('providerName').value,\n\t\t\t\t\tissuer_url: document.getElementById('issuerUrl').value,\n\t\t\t\t\tclient_id: document.getElementById('clientId').value,\n\t\t\t\t\tclient_secret: document.getElementById('clientSecret').value,\n\t\t\t\t\tscopes: document.getElementById('scopes').value,\n\t\t\t\t\tlogin_title: document.getElementById('loginTitle').value,\n\t\t\t\t\tlogin_subtitle: document.getElementById('loginSubtitle').value\n\t\t\t\t};\n\n\t\t\t\t// Add login right side image if changed\n\t\t\t\tif (window._loginRightSideBase64) {\n\t\t\t\t\tformData.login_right_side_image_base64 = window._loginRightSideBase64;\n\t\t\t\t}\n\n\t\t\t\t// Always send gradient - empty string clears any saved gradient\n\t\t\t\tvar color1Text = document.getElementById('gradientColor1Text').value;\n\t\t\t\tvar color2Text = document.getElementById('gradientColor2Text').value;\n\t\t\t\tif (color1Text || color2Text) {\n\t\t\t\t\t// Custom gradient specified\n\t\t\t\t\tformData.login_right_side_gradient = window._gradientValue || '';\n\t\t\t\t} else {\n\t\t\t\t\t// No custom colors - clear saved gradient to use primary/secondary defaults\n\t\t\t\t\tformData.login_right_side_gradient = '';\n\t\t\t\t}\n\n\t\t\t\treturn formData;\n\t\t\t}\n\n\t\t\t// Save settings\n\t\t\twindow.saveLoginSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveButton');\n\t\t\t\tvar successMessage = document.getElementById('successMessage');\n\t\t\t\tvar errorMessage = document.getElementById('errorMessage');\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\tvar formData = getFormData();\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/settings/login', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tshowToast('Login settings saved!', 'success');\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\n\t\t\t\t\t\t// Update the \"has secret\" indicator if secret was changed\n\t\t\t\t\t\tif (formData.client_secret) {\n\t\t\t\t\t\t\tvar secretHelp = document.querySelector('#clientSecret').parentElement.nextElementSibling;\n\t\t\t\t\t\t\tif (secretHelp) {\n\t\t\t\t\t\t\t\tsecretHelp.innerHTML = '<svg class=\"w-3 h-3 inline mr-1\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>Secret is configured. Leave blank to keep existing secret.';\n\t\t\t\t\t\t\t\tsecretHelp.className = 'mt-1 text-xs text-green-600 dark:text-green-400';\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + (data.error || 'Failed to save settings') + '</div>';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Network error. Please try again.</div>';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save Changes';\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\n\t\t\t// Login right side image upload handler\n\t\t\tdocument.getElementById('loginRightSideUpload')?.addEventListener('change', async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast('Image file must be under 500KB', 'error');\n\t\t\t\t\te.target.value = '';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif'];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast('Please upload a PNG, JPG, SVG, or GIF image', 'error');\n\t\t\t\t\te.target.value = '';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._loginRightSideBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById('loginRightSidePreview');\n\t\t\t\t\tvar placeholder = document.getElementById('loginRightSidePlaceholder');\n\t\t\t\t\tvar removeBtn = document.getElementById('removeLoginRightSide');\n\n\t\t\t\t\tpreview.src = window._loginRightSideBase64;\n\t\t\t\t\tpreview.classList.remove('hidden');\n\t\t\t\t\tplaceholder.classList.add('hidden');\n\t\t\t\t\tremoveBtn.classList.remove('hidden');\n\t\t\t\t\tupdatePreview();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\n\t\t\t// Gradient color picker event listeners\n\t\t\tdocument.getElementById('gradientColor1')?.addEventListener('input', function(e) {\n\t\t\t\tvar textInput = document.getElementById('gradientColor1Text');\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdateGradientPreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor1Text')?.addEventListener('input', function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar primaryColor = config.dataset.primaryColor || '#8040BF';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Allow clearing - reset color picker to primary color\n\t\t\t\t\tdocument.getElementById('gradientColor1').value = primaryColor;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById('gradientColor1').value = value;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor2')?.addEventListener('input', function(e) {\n\t\t\t\tvar textInput = document.getElementById('gradientColor2Text');\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdateGradientPreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientColor2Text')?.addEventListener('input', function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar secondaryColor = config.dataset.secondaryColor || '#06B6D4';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Allow clearing - reset color picker to secondary color\n\t\t\t\t\tdocument.getElementById('gradientColor2').value = secondaryColor;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById('gradientColor2').value = value;\n\t\t\t\t\tupdateGradientPreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('gradientDirection')?.addEventListener('change', updateGradientPreview);\n\n\t\t\t// Title and subtitle input listeners\n\t\t\tdocument.getElementById('loginTitle')?.addEventListener('input', updatePreview);\n\t\t\tdocument.getElementById('loginSubtitle')?.addEventListener('input', updatePreview);\n\n\t\t\t// Initialize gradient preview on page load\n\t\t\tif (document.getElementById('gradientColor1')) {\n\t\t\t\t// Check if a gradient was initially set (both text fields will have values from server)\n\t\t\t\tvar initialColor1Text = document.getElementById('gradientColor1Text').value;\n\t\t\t\tvar initialColor2Text = document.getElementById('gradientColor2Text').value;\n\t\t\t\tvar initialGradient = config.dataset.loginRightSideGradient || '';\n\n\t\t\t\t// If there's an existing gradient, set up the state\n\t\t\t\tif (initialGradient && (initialColor1Text || initialColor2Text)) {\n\t\t\t\t\twindow._gradientValue = initialGradient;\n\t\t\t\t}\n\t\t\t\t// Update the preview (will use text values or fall back to primary/secondary)\n\t\t\t\tupdateGradientPreview();\n\t\t\t}\n\n\t\t\t// Initialize preview on page load\n\t\t\tupdatePreview();\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

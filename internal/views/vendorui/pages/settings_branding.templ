@@ -3,6 +3,7 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
@@ -32,10 +33,16 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					<div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
 						<!-- Left Column: Settings -->
 						<div class="space-y-6">
-							@installerPageBrandingSection(props.Theme)
-							@installerPageColorsSection(props.Theme)
+							@installerSettingsModeToggle()
+							<div id="lightModeSettings" class="space-y-6">
+								@installerPageBrandingSectionLight(props.Theme)
+								@installerPageColorsSectionLight(props.Theme)
+							</div>
+							<div id="darkModeSettings" class="hidden space-y-6">
+								@installerPageBrandingSectionDark(props.Theme)
+								@installerPageColorsSectionDark(props.Theme)
+							</div>
 							@installerPageTypographySection(props.Theme)
-							@installerPageStyleSection(props.Theme)
 							@installerPageSupportSection(props.Theme)
 							<!-- Save Button -->
 							<div class="flex flex-col space-y-3">
@@ -51,7 +58,16 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 						</div>
 						<!-- Right Column: Live Preview (sticky) -->
 						<div>
-							@installerPageLivePreview(props.Theme)
+							@components.PreviewContainer(components.PreviewContainerProps{
+								Title:          "Live Preview",
+								Description:    "This is how your customer portal will appear.",
+								InitialMode:    "light",
+								InitialSize:    "desktop",
+								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
+								SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+							}) {
+								@brandingPreviewContent(props.Theme)
+							}
 						</div>
 					</div>
 				</div>
@@ -64,6 +80,10 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
 					data-heading-font={ props.Theme.HeadingFont }
 					data-body-font={ props.Theme.BodyFont }
+					data-primary-color={ props.Theme.PrimaryColor }
+					data-secondary-color={ props.Theme.SecondaryColor }
+					data-primary-color-dark={ props.Theme.PrimaryColorDark }
+					data-secondary-color-dark={ props.Theme.SecondaryColorDark }
 				></div>
 				@installerPageScript()
 			</div>
@@ -71,276 +91,235 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 	}
 }
 
-templ installerPageLivePreview(theme *models.AppTheme) {
-	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<div class="flex items-center justify-between mb-3">
-			<div>
-				<h3 class="text-lg font-semibold text-cool-grey-800 dark:text-white">Live Preview</h3>
-				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400">This is how your customer portal will appear.</p>
-			</div>
-			<!-- Mode Toggle -->
-			<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
-				<button
-					type="button"
-					id="previewLightModeBtn"
-					onclick="setPreviewMode('light')"
-					class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm"
-				>
-					Light
-				</button>
-				<button
-					type="button"
-					id="previewDarkModeBtn"
-					onclick="setPreviewMode('dark')"
-					class="px-3 py-1.5 text-xs font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
-				>
-					Dark
-				</button>
-			</div>
-		</div>
-		<!-- Preview Container with scaling -->
-		<div class="border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden">
-			<div
-				id="installerPreviewContainer"
-				class="preview-light"
-				style={ "--preview-primary: " + getInstallerPagePrimaryColor(theme.PrimaryColor) + "; --preview-secondary: " + getInstallerPageSecondaryColor(theme.SecondaryColor) + "; --preview-radius: " + getInstallerPageRadius(theme.BorderRadius) + ";" }
-			>
-				<!-- Scaled preview frame -->
-				<div class="origin-top-left" style="transform: scale(0.6); width: 166.67%; height: auto;">
-					<div class="preview-page-bg min-h-[400px] pb-6">
-						<!-- Header -->
-						<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
-							<div class="flex items-center justify-between">
-								<div class="flex items-center gap-3">
-									if theme.LogoLightBase64 != "" {
-										<img id="installerPreviewLogoLight" src={ theme.LogoLightBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain preview-logo-light"/>
-									} else {
-										<img id="installerPreviewLogoLight" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light"/>
-									}
-									if theme.LogoDarkBase64 != "" {
-										<img id="installerPreviewLogoDark" src={ theme.LogoDarkBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
-									} else {
-										<img id="installerPreviewLogoDark" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
-									}
-									<span id="installerPreviewEmail" class="text-sm preview-text-muted" style={ getInstallerPageFontStyle(theme.BodyFont) }>user@example.com</span>
-								</div>
-								<span class="text-sm preview-text-muted" style={ getInstallerPageFontStyle(theme.BodyFont) }>Logout</span>
-							</div>
-						</header>
-						<!-- Main Content -->
-						<main class="mx-auto px-6 pt-4 w-full max-w-4xl">
-							<!-- Back Link -->
-							<div class="mb-4">
-								<a id="installerPreviewBackLink" href="#" class="text-sm hover:underline" style={ "color: var(--preview-secondary); " + getInstallerPageFontStyle(theme.BodyFont) }>
-									← Back to My Installs
-								</a>
-							</div>
-							<!-- Main Card -->
-							<div class="preview-card p-5 shadow-md" style="border-radius: var(--preview-radius)">
-								<div class="flex gap-6">
-									<!-- Left: Install Details -->
-									<div class="flex-1">
-										<h3 id="installerPreviewDetailsTitle" class="text-base font-medium preview-text-heading mb-2" style={ getInstallerPageFontStyle(theme.HeadingFont) }>Install Details</h3>
-										<div class="space-y-1.5 text-sm">
-											<div>
-												<span class="font-medium preview-text-muted">App:</span>
-												<span id="installerPreviewAppName" class="ml-1 preview-text-body" style={ getInstallerPageFontStyle(theme.BodyFont) }>Acme App</span>
-											</div>
-											<div>
-												<span class="font-medium preview-text-muted">Region:</span>
-												<span class="ml-1 preview-text-body" style={ getInstallerPageFontStyle(theme.BodyFont) }>us-west-2</span>
-											</div>
-											<div>
-												<span class="font-medium preview-text-muted">Created:</span>
-												<span class="ml-1 preview-text-body" style={ getInstallerPageFontStyle(theme.BodyFont) }>Jan 15, 2025</span>
-											</div>
-										</div>
-									</div>
-									<!-- Right: Health Status -->
-									<div class="flex-1">
-										<h3 class="text-base font-medium preview-text-heading mb-2" style={ getInstallerPageFontStyle(theme.HeadingFont) }>Health Status</h3>
-										<div class="flex items-center gap-2">
-											<div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-											<span class="text-sm preview-text-body" style={ getInstallerPageFontStyle(theme.BodyFont) }>1 check passing</span>
-										</div>
-									</div>
-								</div>
-							</div>
-							<!-- Latest Update Section -->
-							<div class="mt-5">
-								<h3 id="installerPreviewUpdateTitle" class="text-base preview-text-heading mb-3" style={ getInstallerPageFontStyle(theme.HeadingFont) }>Latest Update</h3>
-								<!-- Workflow Card -->
-								<div class="preview-card p-5 shadow-md" style="border-radius: var(--preview-radius)">
-									<div class="flex justify-between items-start">
-										<div class="flex-grow">
-											<div class="flex items-center space-x-2 mb-1">
-												<h4 id="installerPreviewWorkflowName" class="text-lg preview-text-body" style={ getInstallerPageFontStyle(theme.HeadingFont) }>Deploy</h4>
-												<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">In Progress</span>
-											</div>
-											<p class="text-xs preview-text-muted" style={ getInstallerPageFontStyle(theme.BodyFont) }>Started: 2:30 PM</p>
-										</div>
-										<div class="flex space-x-2">
-											<button
-												id="installerPreviewApproveBtn"
-												class="text-white px-3 py-1.5 text-xs"
-												style={ "background-color: var(--preview-primary); border-radius: var(--preview-radius);" }
-											>
-												Approve
-											</button>
-											<button
-												class="text-white px-3 py-1.5 text-xs"
-												style={ "background-color: var(--preview-secondary); border-radius: var(--preview-radius);" }
-											>
-												Cancel
-											</button>
-										</div>
-									</div>
-									<!-- Status message -->
-									<div class="mt-3 p-3 preview-status-bg preview-status-border" style="border-radius: var(--preview-radius)">
-										<div class="flex items-center space-x-2">
-											<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
-											<p class="text-xs preview-text-body" style={ getInstallerPageFontStyle(theme.BodyFont) }>
-												<strong>In Progress:</strong> This update is currently running.
-											</p>
-										</div>
-									</div>
-								</div>
-								<!-- View History Button -->
-								<div class="mt-3 text-center">
-									<button
-										id="installerPreviewHistoryBtn"
-										class="text-white px-4 py-2 text-sm"
-										style={ "background-color: var(--preview-primary); border-radius: var(--preview-radius);" }
-									>
-										View Update History
-									</button>
-								</div>
-							</div>
-						</main>
-						<!-- Footer -->
-						<footer class="w-full max-w-4xl mx-auto px-6 pt-8 pb-4 mt-auto">
-							<div
-								id="installerPreviewFooter"
-								class={ "text-center text-sm preview-text-muted", templ.KV("hidden", theme.SupportContact == "") }
-								style={ getInstallerPageFontStyle(theme.BodyFont) }
-							>
-								Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style="color: var(--preview-secondary);">support</a>
-							</div>
-						</footer>
-					</div>
-				</div>
-			</div>
-		</div>
-		<!-- Preview styles -->
-		<style>
-			/* Light mode preview */
-			.preview-light .preview-page-bg { background-color: #f8fafc; }
-			.preview-light .preview-card { background-color: #ffffff; border: 1px solid #d1d5db; }
-			.preview-light .preview-text-heading { color: #374151; }
-			.preview-light .preview-text-body { color: #1f2937; }
-			.preview-light .preview-text-muted { color: #6b7280; }
-			.preview-light .preview-status-bg { background-color: #f8fafc; }
-			.preview-light .preview-status-border { border: 1px solid #e5e7eb; }
-			.preview-light .preview-logo-light { display: block; }
-			.preview-light .preview-logo-dark { display: none !important; }
-
-			/* Dark mode preview */
-			.preview-dark .preview-page-bg { background-color: #0f172a; }
-			.preview-dark .preview-card { background-color: #1e293b; border: 1px solid #334155; }
-			.preview-dark .preview-text-heading { color: #e2e8f0; }
-			.preview-dark .preview-text-body { color: #f8fafc; }
-			.preview-dark .preview-text-muted { color: #94a3b8; }
-			.preview-dark .preview-status-bg { background-color: #1e293b; }
-			.preview-dark .preview-status-border { border: 1px solid #334155; }
-			.preview-dark .preview-logo-light { display: none !important; }
-			.preview-dark .preview-logo-dark { display: block; }
-		</style>
-	</div>
-}
-
-templ installerPageBrandingSection(theme *models.AppTheme) {
-	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Branding</h3>
-		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
-			Upload separate logos for light and dark mode. If no dark mode logo is provided, the light mode logo will be used.
-		</p>
-		<!-- Light Mode Logo Upload -->
-		<div class="mb-6">
-			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Light Mode Logo</label>
-			<div class="flex items-center space-x-4">
-				<div class="flex-shrink-0 w-32 h-32 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2">
+templ brandingPreviewContent(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full pb-6">
+		<!-- Header -->
+		<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
 					if theme.LogoLightBase64 != "" {
-						<img id="installerLogoLightPreview" src={ theme.LogoLightBase64 } alt="Light logo preview" class="max-w-full max-h-full object-contain"/>
+						<img id="installerPreviewLogoLight" src={ theme.LogoLightBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain preview-logo-light"/>
 					} else {
-						<img id="installerLogoLightPreview" src="" alt="Light logo preview" class="max-w-full max-h-full object-contain hidden"/>
+						<img id="installerPreviewLogoLight" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light"/>
 					}
-					<div id="installerLogoLightPlaceholder" class={ "text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.LogoLightBase64 != "") }>
-						<span>No light logo</span>
+					if theme.LogoDarkBase64 != "" {
+						<img id="installerPreviewLogoDark" src={ theme.LogoDarkBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
+					} else {
+						<img id="installerPreviewLogoDark" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
+					}
+					<span id="installerPreviewEmail" class="text-sm preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>user@example.com</span>
+				</div>
+				<span class="text-sm preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>Logout</span>
+			</div>
+		</header>
+		<!-- Main Content -->
+		<main class="mx-auto px-6 pt-4 w-full max-w-4xl">
+			<!-- Back Link -->
+			<div class="mb-4">
+				<a id="installerPreviewBackLink" href="#" class="text-sm hover:underline" style={ "color: var(--preview-secondary); " + getBrandingFontStyle(theme.BodyFont) }>
+					← Back to My Installs
+				</a>
+			</div>
+			<!-- Main Card -->
+			<div class="preview-card p-5 shadow-md rounded-lg">
+				<div class="flex gap-6">
+					<!-- Left: Install Details -->
+					<div class="flex-1">
+						<h3 id="installerPreviewDetailsTitle" class="text-base font-medium preview-text-heading mb-2" style={ getBrandingFontStyle(theme.HeadingFont) }>Install Details</h3>
+						<div class="space-y-1.5 text-sm">
+							<div>
+								<span class="font-medium preview-text-muted">App:</span>
+								<span id="installerPreviewAppName" class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>Acme App</span>
+							</div>
+							<div>
+								<span class="font-medium preview-text-muted">Region:</span>
+								<span class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>us-west-2</span>
+							</div>
+							<div>
+								<span class="font-medium preview-text-muted">Created:</span>
+								<span class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>Jan 15, 2025</span>
+							</div>
+						</div>
+					</div>
+					<!-- Right: Health Status -->
+					<div class="flex-1">
+						<h3 class="text-base font-medium preview-text-heading mb-2" style={ getBrandingFontStyle(theme.HeadingFont) }>Health Status</h3>
+						<div class="flex items-center gap-2">
+							<div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
+							<span class="text-sm preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>1 check passing</span>
+						</div>
 					</div>
 				</div>
-				<div class="flex-1">
-					<input
-						type="file"
-						id="installerLogoLightUpload"
-						accept="image/png,image/jpeg,image/svg+xml,image/gif"
-						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
-					/>
-					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
-					<button type="button" id="installerRemoveLogoLight" onclick="installerRemoveLogoLight()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "") }>
-						Remove light logo
+			</div>
+			<!-- Latest Update Section -->
+			<div class="mt-5">
+				<h3 id="installerPreviewUpdateTitle" class="text-base preview-text-heading mb-3" style={ getBrandingFontStyle(theme.HeadingFont) }>Latest Update</h3>
+				<!-- Workflow Card -->
+				<div class="preview-card p-5 shadow-md rounded-lg">
+					<div class="flex justify-between items-start">
+						<div class="flex-grow">
+							<div class="flex items-center space-x-2 mb-1">
+								<h4 id="installerPreviewWorkflowName" class="text-lg preview-text-body" style={ getBrandingFontStyle(theme.HeadingFont) }>Deploy</h4>
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">In Progress</span>
+							</div>
+							<p class="text-xs preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>Started: 2:30 PM</p>
+						</div>
+						<div class="flex space-x-2">
+							<button
+								id="installerPreviewApproveBtn"
+								class="text-white px-3 py-1.5 text-xs rounded-lg"
+								style="background-color: var(--preview-primary);"
+							>
+								Approve
+							</button>
+							<button
+								class="text-white px-3 py-1.5 text-xs rounded-lg"
+								style="background-color: var(--preview-secondary);"
+							>
+								Cancel
+							</button>
+						</div>
+					</div>
+					<!-- Status message -->
+					<div class="mt-3 p-3 preview-status-bg preview-status-border rounded-lg">
+						<div class="flex items-center space-x-2">
+							<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
+							<p class="text-xs preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>
+								<strong>In Progress:</strong> This update is currently running.
+							</p>
+						</div>
+					</div>
+				</div>
+				<!-- View History Button -->
+				<div class="mt-3 text-center">
+					<button
+						id="installerPreviewHistoryBtn"
+						class="text-white px-4 py-2 text-sm rounded-lg"
+						style="background-color: var(--preview-primary);"
+					>
+						View Update History
 					</button>
 				</div>
 			</div>
-		</div>
-		<!-- Dark Mode Logo Upload -->
-		<div>
-			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Dark Mode Logo</label>
-			<div class="flex items-center space-x-4">
-				<div class="flex-shrink-0 w-32 h-32 bg-dark-grey-900 border-2 border-dark-grey-700 rounded flex items-center justify-center p-2">
-					if theme.LogoDarkBase64 != "" {
-						<img id="installerLogoDarkPreview" src={ theme.LogoDarkBase64 } alt="Dark logo preview" class="max-w-full max-h-full object-contain"/>
-					} else {
-						<img id="installerLogoDarkPreview" src="" alt="Dark logo preview" class="max-w-full max-h-full object-contain hidden"/>
-					}
-					<div id="installerLogoDarkPlaceholder" class={ "text-cool-grey-500 text-xs text-center", templ.KV("hidden", theme.LogoDarkBase64 != "") }>
-						<span>No dark logo</span><br/>
-						<span class="text-[10px]">(will use light logo)</span>
-					</div>
+		</main>
+		<!-- Footer -->
+		<footer class="w-full max-w-4xl mx-auto px-6 pt-8 pb-4 mt-auto">
+			<div
+				id="installerPreviewFooter"
+				class={ "text-center text-sm preview-text-muted", templ.KV("hidden", theme.SupportContact == "") }
+				style={ getBrandingFontStyle(theme.BodyFont) }
+			>
+				Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style="color: var(--preview-secondary);">support</a>
+			</div>
+		</footer>
+	</div>
+}
+
+templ installerSettingsModeToggle() {
+	<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
+		<button
+			type="button"
+			id="settingsLightModeBtn"
+			onclick="setSettingsMode('light')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm"
+		>
+			Light Mode
+		</button>
+		<button
+			type="button"
+			id="settingsDarkModeBtn"
+			onclick="setSettingsMode('dark')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
+		>
+			Dark Mode
+		</button>
+	</div>
+}
+
+templ installerPageBrandingSectionLight(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Logo</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			This logo will be displayed when the customer portal is in light mode.
+		</p>
+		<div class="flex items-center space-x-4">
+			<div class="flex-shrink-0 w-32 h-32 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2">
+				if theme.LogoLightBase64 != "" {
+					<img id="installerLogoLightPreview" src={ theme.LogoLightBase64 } alt="Light logo preview" class="max-w-full max-h-full object-contain"/>
+				} else {
+					<img id="installerLogoLightPreview" src="" alt="Light logo preview" class="max-w-full max-h-full object-contain hidden"/>
+				}
+				<div id="installerLogoLightPlaceholder" class={ "text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.LogoLightBase64 != "") }>
+					<span>No logo</span>
 				</div>
-				<div class="flex-1">
-					<input
-						type="file"
-						id="installerLogoDarkUpload"
-						accept="image/png,image/jpeg,image/svg+xml,image/gif"
-						class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
-					/>
-					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
-					<button type="button" id="installerRemoveLogoDark" onclick="installerRemoveLogoDark()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "") }>
-						Remove dark logo
-					</button>
-				</div>
+			</div>
+			<div class="flex-1">
+				<input
+					type="file"
+					id="installerLogoLightUpload"
+					accept="image/png,image/jpeg,image/svg+xml,image/gif"
+					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
+				<button type="button" id="installerRemoveLogoLight" onclick="installerRemoveLogoLight()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "") }>
+					Remove logo
+				</button>
 			</div>
 		</div>
 	</div>
 }
 
-templ installerPageColorsSection(theme *models.AppTheme) {
+templ installerPageBrandingSectionDark(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Dark Mode Logo</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			This logo will be displayed when the customer portal is in dark mode. If not provided, the light mode logo will be used.
+		</p>
+		<div class="flex items-center space-x-4">
+			<div class="flex-shrink-0 w-32 h-32 bg-dark-grey-900 border-2 border-dark-grey-700 rounded flex items-center justify-center p-2">
+				if theme.LogoDarkBase64 != "" {
+					<img id="installerLogoDarkPreview" src={ theme.LogoDarkBase64 } alt="Dark logo preview" class="max-w-full max-h-full object-contain"/>
+				} else {
+					<img id="installerLogoDarkPreview" src="" alt="Dark logo preview" class="max-w-full max-h-full object-contain hidden"/>
+				}
+				<div id="installerLogoDarkPlaceholder" class={ "text-cool-grey-500 text-xs text-center", templ.KV("hidden", theme.LogoDarkBase64 != "") }>
+					<span>No logo</span><br/>
+					<span class="text-[10px]">(will use light logo)</span>
+				</div>
+			</div>
+			<div class="flex-1">
+				<input
+					type="file"
+					id="installerLogoDarkUpload"
+					accept="image/png,image/jpeg,image/svg+xml,image/gif"
+					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
+				<button type="button" id="installerRemoveLogoDark" onclick="installerRemoveLogoDark()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "") }>
+					Remove logo
+				</button>
+			</div>
+		</div>
+	</div>
+}
+
+templ installerPageColorsSectionLight(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Colors</h3>
 		<!-- Primary Color -->
 		<div class="mb-5">
-			<label for="installerPrimaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Primary Color</label>
+			<label for="installerPrimaryColorLight" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Primary Color</label>
 			<div class="flex items-center space-x-3">
 				<input
 					type="color"
-					id="installerPrimaryColor"
-					value={ getInstallerPagePrimaryColor(theme.PrimaryColor) }
+					id="installerPrimaryColorLight"
+					value={ getBrandingPrimaryColor(theme.PrimaryColor) }
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
-					id="installerPrimaryColorText"
-					value={ getInstallerPagePrimaryColor(theme.PrimaryColor) }
+					id="installerPrimaryColorLightText"
+					value={ getBrandingPrimaryColor(theme.PrimaryColor) }
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="#8040BF"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -350,24 +329,75 @@ templ installerPageColorsSection(theme *models.AppTheme) {
 		</div>
 		<!-- Secondary Color -->
 		<div>
-			<label for="installerSecondaryColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
+			<label for="installerSecondaryColorLight" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
 			<div class="flex items-center space-x-3">
 				<input
 					type="color"
-					id="installerSecondaryColor"
-					value={ getInstallerPageSecondaryColor(theme.SecondaryColor) }
+					id="installerSecondaryColorLight"
+					value={ getBrandingSecondaryColor(theme.SecondaryColor) }
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
-					id="installerSecondaryColorText"
-					value={ getInstallerPageSecondaryColor(theme.SecondaryColor) }
+					id="installerSecondaryColorLightText"
+					value={ getBrandingSecondaryColor(theme.SecondaryColor) }
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="#8040BF"
 					pattern="^#[0-9A-Fa-f]{6}$"
 				/>
 			</div>
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements.</p>
+		</div>
+	</div>
+}
+
+templ installerPageColorsSectionDark(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Dark Mode Colors</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			If not set, colors will fall back to the light mode colors.
+		</p>
+		<!-- Primary Color Dark -->
+		<div class="mb-5">
+			<label for="installerPrimaryColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Primary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerPrimaryColorDark"
+					value={ getBrandingDarkColor(theme.PrimaryColorDark, theme.PrimaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerPrimaryColorDarkText"
+					value={ getBrandingDarkColorText(theme.PrimaryColorDark) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="(uses light mode)"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons in dark mode.</p>
+		</div>
+		<!-- Secondary Color Dark -->
+		<div>
+			<label for="installerSecondaryColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerSecondaryColorDark"
+					value={ getBrandingDarkColor(theme.SecondaryColorDark, theme.SecondaryColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerSecondaryColorDarkText"
+					value={ getBrandingDarkColorText(theme.SecondaryColorDark) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="(uses light mode)"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements in dark mode.</p>
 		</div>
 	</div>
 }
@@ -434,35 +464,6 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 	</div>
 }
 
-templ installerPageStyleSection(theme *models.AppTheme) {
-	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Customer Page Style</h3>
-		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the appearance of customer-facing pages.</p>
-		<div class="space-y-6">
-			<!-- Corner Style -->
-			<div>
-				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Corner Style</label>
-				<div class="grid grid-cols-4 gap-2">
-					@installerRadiusOption("sharp", "Sharp", "0", theme.BorderRadius == "sharp")
-					@installerRadiusOption("subtle", "Subtle", "4px", theme.BorderRadius == "subtle")
-					@installerRadiusOption("rounded", "Rounded", "8px", theme.BorderRadius == "rounded" || theme.BorderRadius == "")
-					@installerRadiusOption("very-rounded", "Very Rounded", "12px", theme.BorderRadius == "very-rounded")
-				</div>
-			</div>
-		</div>
-	</div>
-}
-
-templ installerRadiusOption(value, label, radius string, checked bool) {
-	<label class="cursor-pointer">
-		<input type="radio" name="borderRadius" value={ value } class="sr-only" checked?={ checked }/>
-		<div class="border-2 p-3 text-center transition-colors hover:border-cool-grey-400 dark:hover:border-dark-grey-400 rounded" id={ "installer-radius-" + value + "-option" }>
-			<div class="w-8 h-8 mx-auto mb-1 border-2 border-cool-grey-400 dark:border-cool-grey-500" style={ "border-radius: " + radius + ";" }></div>
-			<span class="text-xs text-cool-grey-600 dark:text-cool-grey-400">{ label }</span>
-		</div>
-	</label>
-}
-
 templ installerPageSupportSection(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Support</h3>
@@ -480,38 +481,43 @@ templ installerPageSupportSection(theme *models.AppTheme) {
 	</div>
 }
 
-func getInstallerPagePrimaryColor(color string) string {
+func getBrandingPrimaryColor(color string) string {
 	if color == "" {
 		return "#8040BF"
 	}
 	return color
 }
 
-func getInstallerPageSecondaryColor(color string) string {
+func getBrandingSecondaryColor(color string) string {
 	if color == "" {
 		return "#8040BF"
 	}
 	return color
 }
 
-func getInstallerPageFontStyle(font string) string {
+// getBrandingDarkColor returns the dark color for the color picker (needs a valid color value).
+// Falls back to the light mode color for the color picker display.
+func getBrandingDarkColor(darkColor, lightColor string) string {
+	if darkColor != "" {
+		return darkColor
+	}
+	if lightColor != "" {
+		return lightColor
+	}
+	return "#8040BF"
+}
+
+// getBrandingDarkColorText returns the dark color for the text input.
+// Returns empty string if not set (to show placeholder).
+func getBrandingDarkColorText(color string) string {
+	return color
+}
+
+func getBrandingFontStyle(font string) string {
 	if font == "" {
 		return ""
 	}
 	return "font-family: '" + font + "', ui-sans-serif, system-ui, sans-serif;"
-}
-
-func getInstallerPageRadius(radius string) string {
-	switch radius {
-	case "sharp":
-		return "0"
-	case "subtle":
-		return "4px"
-	case "very-rounded":
-		return "12px"
-	default:
-		return "8px" // "rounded" is default
-	}
 }
 
 templ installerPageScript() {
@@ -521,7 +527,6 @@ templ installerPageScript() {
 			var basePath = config.dataset.basePath;
 			window._installerLogoBase64 = config.dataset.logoBase64 || '';
 			window._installerLoadedFonts = window._installerLoadedFonts || new Set();
-			window._installerPreviewMode = 'light';
 
 			function loadGoogleFont(fontFamily) {
 				if (!fontFamily || window._installerLoadedFonts.has(fontFamily)) return;
@@ -532,59 +537,71 @@ templ installerPageScript() {
 				window._installerLoadedFonts.add(fontFamily);
 			}
 
-			function getRadiusValue(radiusName) {
-				switch (radiusName) {
-					case 'sharp': return '0';
-					case 'subtle': return '4px';
-					case 'very-rounded': return '12px';
-					default: return '8px';
-				}
-			}
-
-			window.setPreviewMode = function(mode) {
-				window._installerPreviewMode = mode;
-				var container = document.getElementById('installerPreviewContainer');
-				var lightBtn = document.getElementById('previewLightModeBtn');
-				var darkBtn = document.getElementById('previewDarkModeBtn');
+			window.setSettingsMode = function(mode, skipPreviewSync) {
+				var lightSettings = document.getElementById('lightModeSettings');
+				var darkSettings = document.getElementById('darkModeSettings');
+				var settingsLightBtn = document.getElementById('settingsLightModeBtn');
+				var settingsDarkBtn = document.getElementById('settingsDarkModeBtn');
 
 				if (mode === 'light') {
-					container.classList.remove('preview-dark');
-					container.classList.add('preview-light');
-					lightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					lightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-					darkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					darkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
+					lightSettings.classList.remove('hidden');
+					darkSettings.classList.add('hidden');
+					settingsLightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
+					settingsLightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
+					settingsDarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
+					settingsDarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
 				} else {
-					container.classList.remove('preview-light');
-					container.classList.add('preview-dark');
-					darkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					darkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-					lightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					lightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
+					lightSettings.classList.add('hidden');
+					darkSettings.classList.remove('hidden');
+					settingsDarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
+					settingsDarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
+					settingsLightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
+					settingsLightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
 				}
 
-				updatePreview();
+				// Sync preview mode (unless called from setPreviewMode to avoid loop)
+				if (!skipPreviewSync) {
+					setPreviewMode(mode, true);
+				}
 			};
 
-			function updatePreview() {
-				var primaryColor = document.getElementById("installerPrimaryColor").value;
-				var secondaryColor = document.getElementById("installerSecondaryColor").value;
+			// Hook into preview mode changes to sync settings panel
+			window.onPreviewModeChange = function(mode) {
+				setSettingsMode(mode, true);
+			};
+
+			window.updatePreview = function() {
+				var isDarkMode = window._previewMode === 'dark';
+				var primaryColor, secondaryColor;
+
+				// Get colors based on current preview mode
+				if (isDarkMode) {
+					// Dark mode: use dark colors, fall back to light colors
+					var darkPrimary = document.getElementById("installerPrimaryColorDarkText").value;
+					var darkSecondary = document.getElementById("installerSecondaryColorDarkText").value;
+					var lightPrimary = document.getElementById("installerPrimaryColorLight").value;
+					var lightSecondary = document.getElementById("installerSecondaryColorLight").value;
+
+					primaryColor = darkPrimary || lightPrimary;
+					secondaryColor = darkSecondary || lightSecondary;
+				} else {
+					// Light mode: use light colors
+					primaryColor = document.getElementById("installerPrimaryColorLight").value;
+					secondaryColor = document.getElementById("installerSecondaryColorLight").value;
+				}
+
 				var supportContact = document.getElementById("installerSupportContact").value;
 				var headingFont = document.getElementById("installerHeadingFont").value;
 				var bodyFont = document.getElementById("installerBodyFont").value;
-				var borderRadius = document.querySelector('input[name="borderRadius"]:checked')?.value || 'rounded';
-				var radiusValue = getRadiusValue(borderRadius);
 
 				// Update CSS variables on preview container
-				var container = document.getElementById("installerPreviewContainer");
+				var container = document.getElementById("previewContainer");
 				container.style.setProperty('--preview-primary', primaryColor);
 				container.style.setProperty('--preview-secondary', secondaryColor);
-				container.style.setProperty('--preview-radius', radiusValue);
 
 				// Update logo visibility based on mode
 				var previewLogoLight = document.getElementById("installerPreviewLogoLight");
 				var previewLogoDark = document.getElementById("installerPreviewLogoDark");
-				var isDarkMode = window._installerPreviewMode === 'dark';
 
 				// Get current logo values
 				var lightLogoSrc = window._installerLogoLightBase64 || config.dataset.logoLightBase64 || '';
@@ -695,12 +712,13 @@ templ installerPageScript() {
 				errorMessage.classList.add("hidden");
 
 				var formData = {
-					primary_color: document.getElementById("installerPrimaryColor").value,
-					secondary_color: document.getElementById("installerSecondaryColor").value,
+					primary_color: document.getElementById("installerPrimaryColorLight").value,
+					secondary_color: document.getElementById("installerSecondaryColorLight").value,
+					primary_color_dark: document.getElementById("installerPrimaryColorDarkText").value || "",
+					secondary_color_dark: document.getElementById("installerSecondaryColorDarkText").value || "",
 					support_contact: document.getElementById("installerSupportContact").value,
 					heading_font: document.getElementById("installerHeadingFont").value,
-					body_font: document.getElementById("installerBodyFont").value,
-					border_radius: document.querySelector('input[name="borderRadius"]:checked')?.value || "rounded"
+					body_font: document.getElementById("installerBodyFont").value
 				};
 
 				// Handle light mode logo
@@ -747,29 +765,68 @@ templ installerPageScript() {
 				saveButton.disabled = false;
 			};
 
-			// Event listeners for color inputs
-			document.getElementById("installerPrimaryColor")?.addEventListener("input", function(e) {
-				document.getElementById("installerPrimaryColorText").value = e.target.value.toUpperCase();
+			// Event listeners for light mode color inputs
+			document.getElementById("installerPrimaryColorLight")?.addEventListener("input", function(e) {
+				document.getElementById("installerPrimaryColorLightText").value = e.target.value.toUpperCase();
 				updatePreview();
 			});
 
-			document.getElementById("installerPrimaryColorText")?.addEventListener("input", function(e) {
+			document.getElementById("installerPrimaryColorLightText")?.addEventListener("input", function(e) {
 				var value = e.target.value;
 				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerPrimaryColor").value = value;
+					document.getElementById("installerPrimaryColorLight").value = value;
 					updatePreview();
 				}
 			});
 
-			document.getElementById("installerSecondaryColor")?.addEventListener("input", function(e) {
-				document.getElementById("installerSecondaryColorText").value = e.target.value.toUpperCase();
+			document.getElementById("installerSecondaryColorLight")?.addEventListener("input", function(e) {
+				document.getElementById("installerSecondaryColorLightText").value = e.target.value.toUpperCase();
 				updatePreview();
 			});
 
-			document.getElementById("installerSecondaryColorText")?.addEventListener("input", function(e) {
+			document.getElementById("installerSecondaryColorLightText")?.addEventListener("input", function(e) {
 				var value = e.target.value;
 				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerSecondaryColor").value = value;
+					document.getElementById("installerSecondaryColorLight").value = value;
+					updatePreview();
+				}
+			});
+
+			// Event listeners for dark mode color inputs
+			document.getElementById("installerPrimaryColorDark")?.addEventListener("input", function(e) {
+				var textInput = document.getElementById("installerPrimaryColorDarkText");
+				textInput.value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerPrimaryColorDarkText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				var lightColor = document.getElementById("installerPrimaryColorLight").value || '#8040BF';
+				if (value === '') {
+					// Reset color picker to light mode fallback when cleared
+					document.getElementById("installerPrimaryColorDark").value = lightColor;
+					updatePreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerPrimaryColorDark").value = value;
+					updatePreview();
+				}
+			});
+
+			document.getElementById("installerSecondaryColorDark")?.addEventListener("input", function(e) {
+				var textInput = document.getElementById("installerSecondaryColorDarkText");
+				textInput.value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerSecondaryColorDarkText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				var lightColor = document.getElementById("installerSecondaryColorLight").value || '#8040BF';
+				if (value === '') {
+					// Reset color picker to light mode fallback when cleared
+					document.getElementById("installerSecondaryColorDark").value = lightColor;
+					updatePreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerSecondaryColorDark").value = value;
 					updatePreview();
 				}
 			});
@@ -791,33 +848,6 @@ templ installerPageScript() {
 			var bodyFont = config.dataset.bodyFont;
 			if (headingFont) loadGoogleFont(headingFont);
 			if (bodyFont) loadGoogleFont(bodyFont);
-
-			// Border radius radio button styling
-			function updateRadiusSelection() {
-				var options = ['sharp', 'subtle', 'rounded', 'very-rounded'];
-				options.forEach(function(opt) {
-					var el = document.getElementById('installer-radius-' + opt + '-option');
-					var input = document.querySelector('input[name="borderRadius"][value="' + opt + '"]');
-					if (el && input) {
-						if (input.checked) {
-							el.classList.add('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
-							el.classList.remove('border-cool-grey-200', 'dark:border-dark-grey-600');
-						} else {
-							el.classList.remove('border-primary-600', 'dark:border-primary-500', 'bg-primary-50', 'dark:bg-primary-900/20');
-							el.classList.add('border-cool-grey-200', 'dark:border-dark-grey-600');
-						}
-					}
-				});
-			}
-
-			document.querySelectorAll('input[name="borderRadius"]').forEach(function(input) {
-				input.addEventListener('change', function() {
-					updateRadiusSelection();
-					updatePreview();
-				});
-			});
-
-			updateRadiusSelection();
 
 			// Initial preview update
 			updatePreview();

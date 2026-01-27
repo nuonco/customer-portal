@@ -5,6 +5,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
@@ -34,12 +35,28 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="max-w-4xl space-y-6">
-						@loginPageAppearanceSection(props.Theme)
-						@loginEnableToggleSection(props.Config)
-						@loginOidcConfigSection(props.Config)
-						@loginSaveSection(props.PrimaryColor)
-						@loginFallbackInfoSection()
+					<div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+						<!-- Left Column: Settings -->
+						<div class="space-y-6">
+							@loginPageAppearanceSection(props.Theme)
+							@loginEnableToggleSection(props.Config)
+							@loginOidcConfigSection(props.Config)
+							@loginSaveSection(props.PrimaryColor)
+							@loginFallbackInfoSection()
+						</div>
+						<!-- Right Column: Live Preview -->
+						<div>
+							@components.PreviewContainer(components.PreviewContainerProps{
+								Title:          "Live Preview",
+								Description:    "This is how the customer login page will appear.",
+								InitialMode:    "light",
+								InitialSize:    "desktop",
+								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
+								SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+							}) {
+								@loginPreviewContent(props.Theme)
+							}
+						</div>
 					</div>
 				</div>
 				<!-- Config data for JavaScript -->
@@ -49,6 +66,12 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					data-base-path={ props.BasePath }
 					data-enabled={ loginBoolToString(props.Config.Enabled) }
 					data-has-secret={ loginBoolToString(props.Config.HasClientSecret()) }
+					data-primary-color={ getBrandingPrimaryColor(props.Theme.PrimaryColor) }
+					data-secondary-color={ getBrandingSecondaryColor(props.Theme.SecondaryColor) }
+					data-logo-light-base64={ props.Theme.LogoLightBase64 }
+					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
+					data-login-right-side-image={ props.Theme.GetLoginRightSideImage() }
+					data-login-right-side-gradient={ props.Theme.GetLoginRightSideGradient() }
 				></div>
 				@loginSettingsScript()
 			</div>
@@ -120,44 +143,42 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 			<div>
 				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Gradient (alternative to image)</label>
 				<div class="space-y-3">
-					<div class="flex items-center space-x-3">
-						<div class="flex-1">
-							<label for="gradientColor1" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Start Color</label>
-							<div class="flex items-center space-x-2">
-								<input
-									type="color"
-									id="gradientColor1"
-									value={ getGradientColor1(theme.GetLoginRightSideGradient()) }
-									class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
-								/>
-								<input
-									type="text"
-									id="gradientColor1Text"
-									value={ getGradientColor1(theme.GetLoginRightSideGradient()) }
-									placeholder="#667eea"
-									class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
-									pattern="^#[0-9A-Fa-f]{6}$"
-								/>
-							</div>
+					<div>
+						<label for="gradientColor1" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Start Color</label>
+						<div class="flex items-center space-x-2">
+							<input
+								type="color"
+								id="gradientColor1"
+								value={ getGradientColor1ForPicker(theme.GetLoginRightSideGradient(), theme.PrimaryColor) }
+								class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+							/>
+							<input
+								type="text"
+								id="gradientColor1Text"
+								value={ getGradientColor1Text(theme.GetLoginRightSideGradient()) }
+								placeholder="(uses primary color)"
+								class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+								pattern="^#[0-9A-Fa-f]{6}$"
+							/>
 						</div>
-						<div class="flex-1">
-							<label for="gradientColor2" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">End Color</label>
-							<div class="flex items-center space-x-2">
-								<input
-									type="color"
-									id="gradientColor2"
-									value={ getGradientColor2(theme.GetLoginRightSideGradient()) }
-									class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
-								/>
-								<input
-									type="text"
-									id="gradientColor2Text"
-									value={ getGradientColor2(theme.GetLoginRightSideGradient()) }
-									placeholder="#764ba2"
-									class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
-									pattern="^#[0-9A-Fa-f]{6}$"
-								/>
-							</div>
+					</div>
+					<div>
+						<label for="gradientColor2" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">End Color</label>
+						<div class="flex items-center space-x-2">
+							<input
+								type="color"
+								id="gradientColor2"
+								value={ getGradientColor2ForPicker(theme.GetLoginRightSideGradient(), theme.SecondaryColor) }
+								class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+							/>
+							<input
+								type="text"
+								id="gradientColor2Text"
+								value={ getGradientColor2Text(theme.GetLoginRightSideGradient()) }
+								placeholder="(uses secondary color)"
+								class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+								pattern="^#[0-9A-Fa-f]{6}$"
+							/>
 						</div>
 					</div>
 					<div>
@@ -173,12 +194,7 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 						</select>
 					</div>
 					<div>
-						<div class="flex items-center space-x-3">
-							<div id="gradientPreview" class="h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded" style={ getGradientPreviewStyle(theme.GetLoginRightSideGradient()) }></div>
-							<button type="button" id="removeGradient" onclick="removeGradient()" class={ "text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideGradient() == "") }>
-								Remove gradient
-							</button>
-						</div>
+						<div id="gradientPreview" class="h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded" style={ getGradientPreviewStyle(theme.GetLoginRightSideGradient(), theme.PrimaryColor, theme.SecondaryColor) }></div>
 					</div>
 				</div>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Configure a gradient background. Note: Image takes priority over gradient if both are set.</p>
@@ -366,45 +382,75 @@ func getLoginScopesValue(scopes string) string {
 	return scopes
 }
 
-func getGradientColor1(gradient string) string {
+// parseGradientColor1 extracts the first color from a gradient string, or returns empty if not found
+func parseGradientColor1(gradient string) string {
 	if gradient == "" {
-		return "#667eea"
+		return ""
 	}
 	// Parse gradient like "linear-gradient(135deg, #667eea, #764ba2)"
 	// Extract first color
-	if len(gradient) > 0 {
-		start := strings.Index(gradient, "#")
-		if start != -1 {
-			end := start + 7
-			if end <= len(gradient) {
-				return gradient[start:end]
-			}
+	start := strings.Index(gradient, "#")
+	if start != -1 {
+		end := start + 7
+		if end <= len(gradient) {
+			return gradient[start:end]
 		}
 	}
-	return "#667eea"
+	return ""
 }
 
-func getGradientColor2(gradient string) string {
+// parseGradientColor2 extracts the second color from a gradient string, or returns empty if not found
+func parseGradientColor2(gradient string) string {
 	if gradient == "" {
-		return "#764ba2"
+		return ""
 	}
-	// Parse gradient and extract second color
-	if len(gradient) > 0 {
-		// Find last occurrence of #
-		lastHash := strings.LastIndex(gradient, "#")
-		if lastHash != -1 && lastHash != strings.Index(gradient, "#") {
-			end := lastHash + 7
-			if end <= len(gradient) {
-				color := gradient[lastHash:end]
-				// Remove trailing characters like )
-				if strings.Contains(color, ")") {
-					color = strings.Split(color, ")")[0]
-				}
-				return color
+	// Find last occurrence of #
+	lastHash := strings.LastIndex(gradient, "#")
+	firstHash := strings.Index(gradient, "#")
+	if lastHash != -1 && lastHash != firstHash {
+		end := lastHash + 7
+		if end <= len(gradient) {
+			color := gradient[lastHash:end]
+			// Remove trailing characters like )
+			if strings.Contains(color, ")") {
+				color = strings.Split(color, ")")[0]
 			}
+			return color
 		}
 	}
-	return "#764ba2"
+	return ""
+}
+
+// getGradientColor1ForPicker returns a color for the color picker input (always valid - parsed or primary fallback)
+func getGradientColor1ForPicker(gradient, primaryColor string) string {
+	if parsed := parseGradientColor1(gradient); parsed != "" {
+		return parsed
+	}
+	if primaryColor != "" {
+		return primaryColor
+	}
+	return "#8040BF" // default primary
+}
+
+// getGradientColor1Text returns the parsed color for the text input (empty if no gradient set, for placeholder display)
+func getGradientColor1Text(gradient string) string {
+	return parseGradientColor1(gradient)
+}
+
+// getGradientColor2ForPicker returns a color for the color picker input (always valid - parsed or secondary fallback)
+func getGradientColor2ForPicker(gradient, secondaryColor string) string {
+	if parsed := parseGradientColor2(gradient); parsed != "" {
+		return parsed
+	}
+	if secondaryColor != "" {
+		return secondaryColor
+	}
+	return "#06B6D4" // default secondary
+}
+
+// getGradientColor2Text returns the parsed color for the text input (empty if no gradient set, for placeholder display)
+func getGradientColor2Text(gradient string) string {
+	return parseGradientColor2(gradient)
 }
 
 func getGradientDirection(gradient string) string {
@@ -427,11 +473,21 @@ func getGradientDirection(gradient string) string {
 	return "135deg"
 }
 
-func getGradientPreviewStyle(gradient string) string {
-	if gradient == "" {
-		return "background: linear-gradient(135deg, #667eea, #764ba2);"
+// getGradientPreviewStyle returns the style for the gradient preview box
+func getGradientPreviewStyle(gradient, primaryColor, secondaryColor string) string {
+	if gradient != "" {
+		return "background: " + gradient + ";"
 	}
-	return "background: " + gradient + ";"
+	// Fall back to primary-to-secondary gradient
+	primary := primaryColor
+	if primary == "" {
+		primary = "#8040BF"
+	}
+	secondary := secondaryColor
+	if secondary == "" {
+		secondary = "#06B6D4"
+	}
+	return "background: linear-gradient(135deg, " + primary + ", " + secondary + ");"
 }
 
 templ loginSaveSection(primaryColor string) {
@@ -478,12 +534,197 @@ templ loginFallbackInfoSection() {
 	</div>
 }
 
+// loginPreviewContent renders a preview of the customer login page
+templ loginPreviewContent(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full flex">
+		<!-- Left Side - Login Card -->
+		<div class="flex flex-col gap-6 justify-center w-[520px] bg-cool-grey-50 preview-page-bg px-10 py-10">
+			<!-- Card -->
+			<div class="preview-card px-8 py-10 flex flex-col gap-5 rounded-lg">
+				<!-- Logo -->
+				if theme.LogoLightBase64 != "" {
+					<img id="loginPreviewLogoLight" src={ theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain mx-auto preview-logo-light"/>
+				} else {
+					<img id="loginPreviewLogoLight" src="" alt="Logo" class="h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-light"/>
+				}
+				if theme.LogoDarkBase64 != "" {
+					<img id="loginPreviewLogoDark" src={ theme.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-dark"/>
+				} else {
+					<img id="loginPreviewLogoDark" src="" alt="Logo" class="h-8 w-auto max-w-32 object-contain mx-auto hidden preview-logo-dark"/>
+				}
+				<!-- Heading and Subtitle -->
+				<div class="flex flex-col gap-3">
+					<h1 id="loginPreviewTitle" class="text-2xl font-semibold preview-text-heading">
+						{ theme.GetLoginTitle() }
+					</h1>
+					<p id="loginPreviewSubtitle" class="text-sm preview-text-muted">
+						{ theme.GetLoginSubtitle() }
+					</p>
+				</div>
+				<!-- Sign Up Button (Primary) -->
+				<button
+					id="loginPreviewSignUpBtn"
+					class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 font-medium text-white rounded-md"
+					style="background-color: var(--preview-primary);"
+				>
+					Sign up
+				</button>
+				<!-- Divider -->
+				<hr class="border-cool-grey-300 preview-status-border"/>
+				<!-- Already have account section -->
+				<h2 class="text-lg font-semibold preview-text-heading">
+					Already have an account?
+				</h2>
+				<!-- Sign In Button (Secondary/Outline) -->
+				<button
+					id="loginPreviewSignInBtn"
+					class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 font-medium rounded-md bg-white preview-card"
+					style="border: 1px solid var(--preview-primary); color: var(--preview-primary);"
+				>
+					Sign in
+				</button>
+			</div>
+		</div>
+		<!-- Right Side - Image, Gradient, or Primary Color -->
+		<div id="loginPreviewRightSide" class="hidden lg:flex flex-1 overflow-hidden" style={ getLoginPreviewRightSideStyle(theme) }>
+			<!-- Grid pattern overlay -->
+			<div id="loginPreviewGridOverlay" class={ "absolute inset-0 opacity-10", templ.KV("hidden", theme.GetLoginRightSideImage() != "") }>
+				<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+					<defs>
+						<pattern id="loginPreviewGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+							<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"></path>
+						</pattern>
+					</defs>
+					<rect width="100" height="100" fill="url(#loginPreviewGrid)"></rect>
+				</svg>
+			</div>
+		</div>
+	</div>
+}
+
+func getLoginPreviewRightSideStyle(theme *models.AppTheme) string {
+	// Priority 1: Custom image
+	if theme.GetLoginRightSideImage() != "" {
+		return "background-image: url(" + theme.GetLoginRightSideImage() + "); background-size: cover; background-position: center; position: relative;"
+	}
+	// Priority 2: Custom gradient
+	if theme.GetLoginRightSideGradient() != "" {
+		return "background: " + theme.GetLoginRightSideGradient() + "; position: relative;"
+	}
+	// Priority 3: Default gradient from primary to secondary
+	return "background: linear-gradient(135deg, var(--preview-primary), var(--preview-secondary)); position: relative;"
+}
+
 templ loginSettingsScript() {
 	<script>
 		(function() {
 			var config = document.getElementById('login-settings-config');
 			var basePath = config.dataset.basePath;
 			window._loginRightSideBase64 = '';
+
+			// Update preview function
+			window.updatePreview = function() {
+				var title = document.getElementById('loginTitle').value || 'Customer Dashboard';
+				var subtitle = document.getElementById('loginSubtitle').value || "Manage your customer's install experience.";
+				var primaryColor = config.dataset.primaryColor || '#8040BF';
+
+				// Update title and subtitle
+				var previewTitle = document.getElementById('loginPreviewTitle');
+				var previewSubtitle = document.getElementById('loginPreviewSubtitle');
+				if (previewTitle) previewTitle.textContent = title;
+				if (previewSubtitle) previewSubtitle.textContent = subtitle;
+
+				// Update primary color buttons
+				var signUpBtn = document.getElementById('loginPreviewSignUpBtn');
+				var signInBtn = document.getElementById('loginPreviewSignInBtn');
+				if (signUpBtn) signUpBtn.style.backgroundColor = primaryColor;
+				if (signInBtn) {
+					signInBtn.style.borderColor = primaryColor;
+					signInBtn.style.color = primaryColor;
+				}
+
+				// Update logo based on mode
+				var previewLogoLight = document.getElementById('loginPreviewLogoLight');
+				var previewLogoDark = document.getElementById('loginPreviewLogoDark');
+				var lightLogoSrc = config.dataset.logoLightBase64 || '';
+				var darkLogoSrc = config.dataset.logoDarkBase64 || '';
+
+				if (previewLogoLight) {
+					if (lightLogoSrc) {
+						previewLogoLight.src = lightLogoSrc;
+						previewLogoLight.classList.remove('hidden');
+					} else {
+						previewLogoLight.classList.add('hidden');
+					}
+				}
+
+				if (previewLogoDark) {
+					if (darkLogoSrc) {
+						previewLogoDark.src = darkLogoSrc;
+						previewLogoDark.classList.remove('hidden');
+					} else if (lightLogoSrc) {
+						// Fall back to light logo for dark mode
+						previewLogoDark.src = lightLogoSrc;
+						previewLogoDark.classList.remove('hidden');
+					} else {
+						previewLogoDark.classList.add('hidden');
+					}
+				}
+
+				// Update right side preview
+				var rightSide = document.getElementById('loginPreviewRightSide');
+				var gridOverlay = document.getElementById('loginPreviewGridOverlay');
+
+				if (rightSide) {
+					// Check for custom image first (from upload or initial data)
+					var imageBase64 = window._loginRightSideBase64;
+					if (imageBase64 === 'REMOVE') {
+						imageBase64 = '';
+					} else if (!imageBase64) {
+						imageBase64 = config.dataset.loginRightSideImage || '';
+					}
+
+					// Check for gradient
+					var gradient = window._gradientValue;
+					if (gradient === 'REMOVE') {
+						gradient = '';
+					} else if (!gradient) {
+						gradient = config.dataset.loginRightSideGradient || '';
+					}
+
+					// Priority: Image > Gradient > Primary Color
+					if (imageBase64) {
+						rightSide.style.backgroundImage = 'url(' + imageBase64 + ')';
+						rightSide.style.backgroundSize = 'cover';
+						rightSide.style.backgroundPosition = 'center';
+						rightSide.style.background = '';
+						rightSide.style.backgroundColor = '';
+						rightSide.style.backgroundImage = 'url(' + imageBase64 + ')';
+						if (gridOverlay) gridOverlay.classList.add('hidden');
+					} else if (gradient) {
+						rightSide.style.backgroundImage = '';
+						rightSide.style.background = gradient;
+						if (gridOverlay) gridOverlay.classList.remove('hidden');
+					} else {
+						// No image, no custom gradient - use default primary-to-secondary gradient
+						rightSide.style.backgroundImage = '';
+						var secondaryColor = config.dataset.secondaryColor || '#06B6D4';
+						rightSide.style.background = 'linear-gradient(135deg, ' + primaryColor + ', ' + secondaryColor + ')';
+						if (gridOverlay) gridOverlay.classList.remove('hidden');
+					}
+				}
+
+				// Update CSS variables on preview container
+				var container = document.getElementById('previewContainer');
+				if (container) {
+					container.style.setProperty('--preview-primary', primaryColor);
+				}
+			};
+
+			// Hook into preview mode changes
+			window.onPreviewModeChange = function(mode) {
+				updatePreview();
+			};
 
 			// Toggle enable/disable
 			document.getElementById('oidcEnabled').addEventListener('change', function(e) {
@@ -567,29 +808,26 @@ templ loginSettingsScript() {
 				document.getElementById('loginRightSidePlaceholder').classList.remove('hidden');
 				document.getElementById('loginRightSideUpload').value = '';
 				document.getElementById('removeLoginRightSide').classList.add('hidden');
-			};
-
-			// Remove gradient
-			window.removeGradient = function() {
-				window._gradientValue = 'REMOVE';
-				document.getElementById('gradientColor1').value = '#667eea';
-				document.getElementById('gradientColor1Text').value = '#667eea';
-				document.getElementById('gradientColor2').value = '#764ba2';
-				document.getElementById('gradientColor2Text').value = '#764ba2';
-				document.getElementById('gradientDirection').value = '135deg';
-				document.getElementById('gradientPreview').style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
-				document.getElementById('removeGradient').classList.add('hidden');
+				updatePreview();
 			};
 
 			// Update gradient preview
 			function updateGradientPreview() {
-				var color1 = document.getElementById('gradientColor1').value;
-				var color2 = document.getElementById('gradientColor2').value;
+				var primaryColor = config.dataset.primaryColor || '#8040BF';
+				var secondaryColor = config.dataset.secondaryColor || '#06B6D4';
+				var color1Text = document.getElementById('gradientColor1Text').value;
+				var color2Text = document.getElementById('gradientColor2Text').value;
+				// Use text input values if set, otherwise fall back to primary/secondary
+				var color1 = color1Text || primaryColor;
+				var color2 = color2Text || secondaryColor;
 				var direction = document.getElementById('gradientDirection').value;
 				var gradient = 'linear-gradient(' + direction + ', ' + color1 + ', ' + color2 + ')';
 				document.getElementById('gradientPreview').style.background = gradient;
-				window._gradientValue = gradient;
-				document.getElementById('removeGradient').classList.remove('hidden');
+				// Only set gradient value if at least one custom color is specified
+				if (color1Text || color2Text) {
+					window._gradientValue = gradient;
+				}
+				updatePreview();
 			}
 
 			function getFormData() {
@@ -609,9 +847,15 @@ templ loginSettingsScript() {
 					formData.login_right_side_image_base64 = window._loginRightSideBase64;
 				}
 
-				// Add login right side gradient if changed
-				if (window._gradientValue) {
-					formData.login_right_side_gradient = window._gradientValue;
+				// Always send gradient - empty string clears any saved gradient
+				var color1Text = document.getElementById('gradientColor1Text').value;
+				var color2Text = document.getElementById('gradientColor2Text').value;
+				if (color1Text || color2Text) {
+					// Custom gradient specified
+					formData.login_right_side_gradient = window._gradientValue || '';
+				} else {
+					// No custom colors - clear saved gradient to use primary/secondary defaults
+					formData.login_right_side_gradient = '';
 				}
 
 				return formData;
@@ -695,32 +939,45 @@ templ loginSettingsScript() {
 					preview.classList.remove('hidden');
 					placeholder.classList.add('hidden');
 					removeBtn.classList.remove('hidden');
+					updatePreview();
 				};
 				reader.readAsDataURL(file);
 			});
 
 			// Gradient color picker event listeners
 			document.getElementById('gradientColor1')?.addEventListener('input', function(e) {
-				document.getElementById('gradientColor1Text').value = e.target.value.toUpperCase();
+				var textInput = document.getElementById('gradientColor1Text');
+				textInput.value = e.target.value.toUpperCase();
 				updateGradientPreview();
 			});
 
 			document.getElementById('gradientColor1Text')?.addEventListener('input', function(e) {
 				var value = e.target.value;
-				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+				var primaryColor = config.dataset.primaryColor || '#8040BF';
+				if (value === '') {
+					// Allow clearing - reset color picker to primary color
+					document.getElementById('gradientColor1').value = primaryColor;
+					updateGradientPreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
 					document.getElementById('gradientColor1').value = value;
 					updateGradientPreview();
 				}
 			});
 
 			document.getElementById('gradientColor2')?.addEventListener('input', function(e) {
-				document.getElementById('gradientColor2Text').value = e.target.value.toUpperCase();
+				var textInput = document.getElementById('gradientColor2Text');
+				textInput.value = e.target.value.toUpperCase();
 				updateGradientPreview();
 			});
 
 			document.getElementById('gradientColor2Text')?.addEventListener('input', function(e) {
 				var value = e.target.value;
-				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+				var secondaryColor = config.dataset.secondaryColor || '#06B6D4';
+				if (value === '') {
+					// Allow clearing - reset color picker to secondary color
+					document.getElementById('gradientColor2').value = secondaryColor;
+					updateGradientPreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
 					document.getElementById('gradientColor2').value = value;
 					updateGradientPreview();
 				}
@@ -728,10 +985,27 @@ templ loginSettingsScript() {
 
 			document.getElementById('gradientDirection')?.addEventListener('change', updateGradientPreview);
 
+			// Title and subtitle input listeners
+			document.getElementById('loginTitle')?.addEventListener('input', updatePreview);
+			document.getElementById('loginSubtitle')?.addEventListener('input', updatePreview);
+
 			// Initialize gradient preview on page load
 			if (document.getElementById('gradientColor1')) {
+				// Check if a gradient was initially set (both text fields will have values from server)
+				var initialColor1Text = document.getElementById('gradientColor1Text').value;
+				var initialColor2Text = document.getElementById('gradientColor2Text').value;
+				var initialGradient = config.dataset.loginRightSideGradient || '';
+
+				// If there's an existing gradient, set up the state
+				if (initialGradient && (initialColor1Text || initialColor2Text)) {
+					window._gradientValue = initialGradient;
+				}
+				// Update the preview (will use text values or fall back to primary/secondary)
 				updateGradientPreview();
 			}
+
+			// Initialize preview on page load
+			updatePreview();
 		})();
 	</script>
 }

@@ -26,10 +26,6 @@ func (h *Handler) DNSSettingsPage(c *gin.Context) {
 	// Fetch user's orgs for switcher
 	userOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Build breadcrumb path with org ID
 	portalBasePath := h.basePath + "/orgs/" + currentOrg.ID + "/portal"
 
@@ -44,10 +40,8 @@ func (h *Handler) DNSSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "DNS", Path: portalBasePath + "/dns", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org:        currentOrg,
 		BaseDomain: h.subdomainBaseDomain,

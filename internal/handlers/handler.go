@@ -293,17 +293,10 @@ func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
 
 // RenderErrorPage renders a templ error page (for vendor pages)
 func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor := ""
-	if theme != nil {
-		primaryColor = theme.PrimaryColor
-	}
-
 	props := vendorpages.ErrorPageProps{
-		Error:        errorMsg,
-		BasePath:     h.basePath,
-		PrimaryColor: primaryColor,
-		CSSPath:      assets.VendorCSSPath(),
+		Error:    errorMsg,
+		BasePath: h.basePath,
+		CSSPath:  assets.VendorCSSPath(),
 	}
 
 	h.RenderTempl(c, status, vendorpages.ErrorPage(props))
@@ -737,28 +730,15 @@ func (h *Handler) LocalLogin(c *gin.Context) {
 
 // VendorRegisterPageTempl renders the vendor registration page using Templ
 func (h *Handler) VendorRegisterPageTempl(c *gin.Context) {
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	// Check for error message in query params
 	errorMsg := c.Query("error")
 
 	props := vendorpages.RegisterPageProps{
-		Title:              "Create Account",
-		ButtonText:         "Sign Up",
-		BasePath:           h.basePath,
-		Error:              errorMsg,
-		PrimaryColor:       primaryColor,
-		PrimaryColorDark:   primaryColorDark,
-		SecondaryColor:     secondaryColor,
-		SecondaryColorDark: secondaryColorDark,
-		HeadingFont:        theme.HeadingFont,
-		BodyFont:           theme.BodyFont,
-		HeadingFontBase64:  theme.HeadingFontBase64,
-		BodyFontBase64:     theme.BodyFontBase64,
-		LogoBase64:         theme.LogoLightBase64,
-		CSSPath:            assets.VendorCSSPath(),
+		Title:      "Create Account",
+		ButtonText: "Sign Up",
+		BasePath:   h.basePath,
+		Error:      errorMsg,
+		CSSPath:    assets.VendorCSSPath(),
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.RegisterPage(props))
@@ -827,24 +807,16 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 	}
 
 	// No orgs - render the OrgsPage template with empty state
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	props := vendorpages.OrgsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              "Organizations",
-			ActivePage:         "orgs",
-			User:               user,
-			CurrentOrg:         nil,
-			Orgs:               orgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       "Organizations",
+			ActivePage:  "orgs",
+			User:        user,
+			CurrentOrg:  nil,
+			Orgs:        orgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Orgs: orgs,
 	}
@@ -868,30 +840,16 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 	// Fetch all orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	props := vendorpages.OrgSettingsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              org.Name + " - Settings",
-			ActivePage:         "settings",
-			User:               user,
-			CurrentOrg:         org,
-			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       org.Name + " - Settings",
+			ActivePage:  "settings",
+			User:        user,
+			CurrentOrg:  org,
+			Orgs:        allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Org: *org,
 	}
@@ -983,30 +941,16 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	props := vendorpages.OrgDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              org.Name + " - Install Links",
-			ActivePage:         "install-links",
-			User:               user,
-			CurrentOrg:         org,
-			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       org.Name + " - Install Links",
+			ActivePage:  "install-links",
+			User:        user,
+			CurrentOrg:  org,
+			Orgs:        allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Org:   *org,
 		Links: links,
@@ -1136,16 +1080,6 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 		)
 	}
 
-	// Fetch all orgs for this user
-	currentOrg := middleware.GetCurrentOrg(c)
-	var allOrgs []models.NuonOrg
-	h.db.Where("id = ?", currentOrg.ID).Find(&allOrgs)
-
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	// Determine breadcrumb text (install name or app name)
 	breadcrumbText := link.AppName
 	if link.Install != nil && link.Install.Name != "" {
@@ -1157,23 +1091,14 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 
 	props := vendorpages.LinkDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              "Install - " + link.AppName,
-			ActivePage:         "install-links",
-			User:               user,
-			CurrentOrg:         org,
-			Orgs:               userOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       "Install - " + link.AppName,
+			ActivePage:  "install-links",
+			User:        user,
+			CurrentOrg:  org,
+			Orgs:        userOrgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Link:                        &link,
 		InstallURL:                  installURL,
@@ -1221,13 +1146,10 @@ func (h *Handler) InstallLinkStatus(c *gin.Context) {
 
 	// For HTMX requests, return only the status partial
 	if isHTMXRequest(c) {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-		primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 		h.RenderTempl(c, http.StatusOK, partials.LinkStatus(partials.LinkStatusProps{
 			Link:                        &link,
 			InstallURL:                  installURL,
 			CustomerDashboardInstallURL: customerDashboardInstallURL,
-			PrimaryColor:                primaryColor,
 			BasePath:                    h.basePath,
 		}))
 		return
@@ -1449,9 +1371,11 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	var req struct {
 		PrimaryColor              string `json:"primary_color"`
 		SecondaryColor            string `json:"secondary_color"`
-		LogoBase64                string `json:"logo_base64"`       // Kept for backward compatibility (maps to LogoLightBase64)
-		LogoLightBase64           string `json:"logo_light_base64"` // Light mode logo
-		LogoDarkBase64            string `json:"logo_dark_base64"`  // Dark mode logo
+		PrimaryColorDark          string `json:"primary_color_dark"`   // Dark mode primary color
+		SecondaryColorDark        string `json:"secondary_color_dark"` // Dark mode secondary color
+		LogoBase64                string `json:"logo_base64"`          // Kept for backward compatibility (maps to LogoLightBase64)
+		LogoLightBase64           string `json:"logo_light_base64"`    // Light mode logo
+		LogoDarkBase64            string `json:"logo_dark_base64"`     // Dark mode logo
 		SupportContact            string `json:"support_contact"`
 		HeadingFont               string `json:"heading_font"`
 		BodyFont                  string `json:"body_font"`
@@ -1482,6 +1406,36 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	}
 	if req.SecondaryColor != "" {
 		theme.SecondaryColor = req.SecondaryColor
+	}
+
+	// Handle dark mode colors - empty string or "REMOVE" clears, valid hex color sets
+	// Unlike light mode colors, dark mode colors can be cleared to fall back to light mode
+	isValidHexColor := func(s string) bool {
+		if len(s) != 7 || s[0] != '#' {
+			return false
+		}
+		for _, c := range s[1:] {
+			if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F')) {
+				return false
+			}
+		}
+		return true
+	}
+
+	// Dark mode primary color: valid hex sets it, empty/REMOVE clears it
+	if isValidHexColor(req.PrimaryColorDark) {
+		theme.PrimaryColorDark = req.PrimaryColorDark
+	} else {
+		// Clear dark mode color (falls back to light mode)
+		theme.PrimaryColorDark = ""
+	}
+
+	// Dark mode secondary color: valid hex sets it, empty/REMOVE clears it
+	if isValidHexColor(req.SecondaryColorDark) {
+		theme.SecondaryColorDark = req.SecondaryColorDark
+	} else {
+		// Clear dark mode color (falls back to light mode)
+		theme.SecondaryColorDark = ""
 	}
 
 	// Handle light mode logo - "REMOVE" clears, valid data URI sets
@@ -1744,11 +1698,6 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	// Convert to templ type
 	templApps := make([]vendorpages.AppWithHealthCheckStatus, len(appsWithStatus))
 	for i, app := range appsWithStatus {
@@ -1763,23 +1712,14 @@ func (h *Handler) AppsPage(c *gin.Context) {
 
 	props := vendorpages.AppsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              org.Name + " - Apps",
-			ActivePage:         "apps",
-			User:               user,
-			CurrentOrg:         org,
-			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       org.Name + " - Apps",
+			ActivePage:  "apps",
+			User:        user,
+			CurrentOrg:  org,
+			Orgs:        allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Org:  *org,
 		Apps: templApps,
@@ -1964,10 +1904,6 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	props := vendorpages.AppInputsPageProps{
 		LayoutProps: vendorui.LayoutProps{
 			Title:      app.Name + " - Inputs",
@@ -1981,10 +1917,8 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
 				{Text: "Inputs", Path: "", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org:   *org,
 		AppID: appID,
@@ -2096,12 +2030,6 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-
-	// Get primary colors
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Convert actions to templ type
 	templActions := make([]vendorpages.ActionForHealthCheck, len(actions))
 	for i, a := range actions {
@@ -2126,10 +2054,8 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
 				{Text: "Health Checks", Path: "", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org: *org,
 		App: vendorpages.AppInfo{
@@ -2229,9 +2155,8 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling and login page settings
+	// Load theme for login page settings (theme data is passed to the page, not for vendor UI styling)
 	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 
 	// Build breadcrumb path with org ID
 	portalBasePath := h.basePath + "/orgs/" + currentOrg.ID + "/portal"
@@ -2247,10 +2172,8 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Login", Path: portalBasePath + "/login", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Config: config,
 		Theme:  theme,
@@ -2341,13 +2264,13 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 			}
 		}
 
-		// Handle login right side gradient - "REMOVE" clears, otherwise sets CSS gradient
-		if req.LoginRightSideGradient != "" {
-			if req.LoginRightSideGradient == "REMOVE" {
-				theme.LoginRightSideGradient = ""
-			} else {
-				theme.LoginRightSideGradient = req.LoginRightSideGradient
-			}
+		// Handle login right side gradient - always update (matches dark mode color pattern)
+		// Valid CSS gradient sets it, empty string clears it
+		if req.LoginRightSideGradient != "" && strings.HasPrefix(req.LoginRightSideGradient, "linear-gradient") {
+			theme.LoginRightSideGradient = req.LoginRightSideGradient
+		} else {
+			// Clear gradient (falls back to primary/secondary colors)
+			theme.LoginRightSideGradient = ""
 		}
 
 		h.db.Save(theme)
@@ -2596,30 +2519,16 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	props := vendorpages.CustomersPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:              org.Name + " - Customers",
-			ActivePage:         "customers",
-			User:               user,
-			CurrentOrg:         org,
-			Orgs:               allOrgs,
-			Breadcrumbs:        []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			Title:       org.Name + " - Customers",
+			ActivePage:  "customers",
+			User:        user,
+			CurrentOrg:  org,
+			Orgs:        allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
+			BasePath:    h.basePath,
+			CSSPath:     assets.VendorCSSPath(),
 		},
 		Org:         *org,
 		Customers:   customers,
@@ -2728,11 +2637,6 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
-
 	props := vendorpages.CustomerDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
 			Title:      customer.Name + " - Customer Details",
@@ -2744,17 +2648,8 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 				{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: false},
 				{Text: customer.Name, Path: fmt.Sprintf("%s/orgs/%s/customers/%s", h.basePath, org.ID, customer.ID), Active: true},
 			},
-			BasePath:           h.basePath,
-			PrimaryColor:       primaryColor,
-			PrimaryColorDark:   primaryColorDark,
-			SecondaryColor:     secondaryColor,
-			SecondaryColorDark: secondaryColorDark,
-			HeadingFont:        theme.HeadingFont,
-			BodyFont:           theme.BodyFont,
-			HeadingFontBase64:  theme.HeadingFontBase64,
-			BodyFontBase64:     theme.BodyFontBase64,
-			LogoBase64:         theme.LogoLightBase64,
-			CSSPath:            assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org:      *org,
 		Customer: &customer,

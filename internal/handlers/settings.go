@@ -35,10 +35,6 @@ func (h *Handler) TeamMembersPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Build breadcrumb path with org ID
 	teamBasePath := h.basePath + "/orgs/" + org.ID + "/team"
 
@@ -53,10 +49,8 @@ func (h *Handler) TeamMembersPage(c *gin.Context) {
 				{Text: "Team", Path: teamBasePath},
 				{Text: "Members", Path: teamBasePath + "/members", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org:     org,
 		Members: members,
@@ -86,10 +80,6 @@ func (h *Handler) TeamInvitesPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Build breadcrumb path with org ID
 	teamBasePath := h.basePath + "/orgs/" + org.ID + "/team"
 
@@ -104,10 +94,8 @@ func (h *Handler) TeamInvitesPage(c *gin.Context) {
 				{Text: "Team", Path: teamBasePath},
 				{Text: "Invites", Path: teamBasePath + "/invites", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Org:         org,
 		Invitations: invitations,
@@ -131,9 +119,6 @@ func (h *Handler) BrandingSettingsPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme colors for styling
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Build breadcrumb path with org ID
 	portalBasePath := h.basePath + "/orgs/" + org.ID + "/portal"
 
@@ -148,10 +133,8 @@ func (h *Handler) BrandingSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Branding", Path: portalBasePath + "/branding", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		Theme: theme,
 	}
@@ -176,10 +159,6 @@ func (h *Handler) CustomThemeSettingsPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Load theme for styling
-	theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-
 	// Build breadcrumb path with org ID
 	portalBasePath := h.basePath + "/orgs/" + org.ID + "/portal"
 
@@ -194,10 +173,8 @@ func (h *Handler) CustomThemeSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Custom Theme", Path: portalBasePath + "/custom-theme", Active: true},
 			},
-			BasePath:         h.basePath,
-			PrimaryColor:     primaryColor,
-			PrimaryColorDark: primaryColorDark,
-			CSSPath:          assets.VendorCSSPath(),
+			BasePath: h.basePath,
+			CSSPath:  assets.VendorCSSPath(),
 		},
 		GitHubConfig: gitHubConfig,
 		Templates:    templateOverrides,

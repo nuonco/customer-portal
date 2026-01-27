@@ -12,8 +12,10 @@ import (
 type AppTheme struct {
 	ID                        string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
 	OrgID                     string    `gorm:"uniqueIndex" json:"org_id"` // One theme per org
-	PrimaryColor              string    `json:"primary_color"`             // Hex color for navigation and primary buttons
-	SecondaryColor            string    `json:"secondary_color"`           // Hex color for links and accents
+	PrimaryColor              string    `json:"primary_color"`             // Hex color for navigation and primary buttons (light mode)
+	SecondaryColor            string    `json:"secondary_color"`           // Hex color for links and accents (light mode)
+	PrimaryColorDark          string    `json:"primary_color_dark"`        // Hex color for navigation and primary buttons (dark mode)
+	SecondaryColorDark        string    `json:"secondary_color_dark"`      // Hex color for links and accents (dark mode)
 	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`
 	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`
 	SupportContact            string    `json:"support_contact"`
@@ -108,6 +110,34 @@ func (t *AppTheme) GetLogoForMode(isDark bool) string {
 		return t.LogoDarkBase64
 	}
 	return t.LogoLightBase64
+}
+
+// GetColorsForMode returns the primary and secondary colors for the given mode.
+// If dark mode is requested and no dark colors are set, falls back to light mode colors.
+// If no light mode colors are set, falls back to defaults.
+func (t *AppTheme) GetColorsForMode(isDark bool) (primary, secondary string) {
+	if isDark {
+		primary = t.PrimaryColorDark
+		secondary = t.SecondaryColorDark
+		// Fall back to light mode colors if dark not set
+		if primary == "" {
+			primary = t.PrimaryColor
+		}
+		if secondary == "" {
+			secondary = t.SecondaryColor
+		}
+	} else {
+		primary = t.PrimaryColor
+		secondary = t.SecondaryColor
+	}
+	// Apply defaults
+	if primary == "" {
+		primary = DefaultPrimaryColor
+	}
+	if secondary == "" {
+		secondary = primary
+	}
+	return
 }
 
 // LogoBase64 provides backward compatibility for any code still referencing the old field name.
