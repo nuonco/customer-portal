@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -19,8 +20,8 @@ import (
 // 2. Redirects to portal.nuon.co/auth/login?return_to=subdomain&redirect=/some/path
 // 3. This handler generates state, stores cookie, redirects to OIDC provider
 //
-// The state parameter embeds both the subdomain and redirect URL so we know
-// where to redirect after auth completes.
+// The state parameter embeds the subdomain, redirect URL, and attribution data
+// so we know where to redirect after auth completes and can track marketing source.
 func (h *Handler) BaseDomainLogin(c *gin.Context) {
 	// Get return subdomain from query parameter
 	returnSubdomain := c.Query("return_to")
@@ -49,8 +50,20 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 		return
 	}
 
-	// Generate state with embedded subdomain and redirect URL
-	state, err := auth.GenerateStateWithRedirect(returnSubdomain, redirectURL)
+	// Extract attribution data from query parameters (passed from marketing site)
+	attribution := auth.Attribution{
+		UTMSource:   c.Query("utm_source"),
+		UTMMedium:   c.Query("utm_medium"),
+		UTMCampaign: c.Query("utm_campaign"),
+		UTMTerm:     c.Query("utm_term"),
+		UTMContent:  c.Query("utm_content"),
+		GCLID:       c.Query("gclid"),
+		Referrer:    c.Query("referrer"),
+		LandingPage: c.Query("landing_page"),
+	}
+
+	// Generate state with embedded subdomain, redirect URL, and attribution
+	state, err := auth.GenerateStateWithAttribution(returnSubdomain, redirectURL, attribution)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to generate security token",
@@ -138,6 +151,26 @@ func (h *Handler) BaseDomainCallback(c *gin.Context) {
 
 	// Extract redirect URL from state (if present)
 	redirectURL, _ := auth.ExtractRedirectFromState(state)
+
+	// Extract attribution from state and set as cookie for ctl-api to read
+	// The cookie is set on the base domain so it's accessible during API calls
+	attribution, _ := auth.ExtractAttributionFromState(state)
+	if !attribution.IsEmpty() {
+		attrJSON, err := json.Marshal(attribution.ToMap())
+		if err == nil {
+			// Set attribution cookie on base domain (accessible to ctl-api)
+			// Use a short expiry since it's only needed during account creation
+			c.SetCookie(
+				"nuon_attribution",        // name
+				string(attrJSON),          // value (JSON-encoded attribution)
+				3600,                      // maxAge (1 hour - enough time to complete signup)
+				"/",                       // path
+				"."+h.subdomainBaseDomain, // domain (base domain with leading dot for subdomain access)
+				true,                      // secure
+				false,                     // httpOnly (false so JS can read it if needed, but ctl-api reads from header)
+			)
+		}
+	}
 
 	// Redirect to subdomain with JWT in query parameter (single-use)
 	// The subdomain completion handler will set the JWT cookie on the subdomain

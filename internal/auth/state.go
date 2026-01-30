@@ -14,9 +14,17 @@ const StateLength = 32
 // The state parameter is used for CSRF protection and can carry additional
 // context like the subdomain to return to after authentication completes.
 type StateData struct {
-	Random          string `json:"r"`           // Random bytes for CSRF protection
-	ReturnSubdomain string `json:"s"`           // Subdomain to return to after auth (empty for base domain)
-	RedirectURL     string `json:"u,omitempty"` // URL to redirect to after auth completion (optional)
+	Random          string `json:"r"`            // Random bytes for CSRF protection
+	ReturnSubdomain string `json:"s"`            // Subdomain to return to after auth (empty for base domain)
+	RedirectURL     string `json:"u,omitempty"`  // URL to redirect to after auth completion (optional)
+	UTMSource       string `json:"us,omitempty"` // Attribution: utm_source
+	UTMMedium       string `json:"um,omitempty"` // Attribution: utm_medium
+	UTMCampaign     string `json:"uc,omitempty"` // Attribution: utm_campaign
+	UTMTerm         string `json:"ut,omitempty"` // Attribution: utm_term
+	UTMContent      string `json:"uo,omitempty"` // Attribution: utm_content
+	GCLID           string `json:"gc,omitempty"` // Attribution: Google Click ID
+	Referrer        string `json:"rf,omitempty"` // Attribution: Original referrer
+	LandingPage     string `json:"lp,omitempty"` // Attribution: Landing page path
 }
 
 // GenerateState creates a cryptographically secure random state parameter
@@ -139,4 +147,114 @@ func ValidateState(expected, received string) bool {
 	// For state parameters, a simple equality check is sufficient
 	// since the state is random and not a secret
 	return expected == received
+}
+
+// Attribution represents marketing attribution data captured from UTM parameters
+type Attribution struct {
+	UTMSource   string `json:"utm_source,omitempty"`
+	UTMMedium   string `json:"utm_medium,omitempty"`
+	UTMCampaign string `json:"utm_campaign,omitempty"`
+	UTMTerm     string `json:"utm_term,omitempty"`
+	UTMContent  string `json:"utm_content,omitempty"`
+	GCLID       string `json:"gclid,omitempty"`
+	Referrer    string `json:"referrer,omitempty"`
+	LandingPage string `json:"landing_page,omitempty"`
+}
+
+// IsEmpty returns true if no attribution data is present
+func (a Attribution) IsEmpty() bool {
+	return a.UTMSource == "" && a.UTMMedium == "" && a.UTMCampaign == "" &&
+		a.UTMTerm == "" && a.UTMContent == "" && a.GCLID == "" &&
+		a.Referrer == "" && a.LandingPage == ""
+}
+
+// ToMap converts Attribution to a map for JSON storage
+func (a Attribution) ToMap() map[string]interface{} {
+	m := make(map[string]interface{})
+	if a.UTMSource != "" {
+		m["utm_source"] = a.UTMSource
+	}
+	if a.UTMMedium != "" {
+		m["utm_medium"] = a.UTMMedium
+	}
+	if a.UTMCampaign != "" {
+		m["utm_campaign"] = a.UTMCampaign
+	}
+	if a.UTMTerm != "" {
+		m["utm_term"] = a.UTMTerm
+	}
+	if a.UTMContent != "" {
+		m["utm_content"] = a.UTMContent
+	}
+	if a.GCLID != "" {
+		m["gclid"] = a.GCLID
+	}
+	if a.Referrer != "" {
+		m["referrer"] = a.Referrer
+	}
+	if a.LandingPage != "" {
+		m["landing_page"] = a.LandingPage
+	}
+	return m
+}
+
+// GenerateStateWithAttribution creates a state parameter with subdomain, redirect URL, and attribution data.
+// This extends GenerateStateWithRedirect to also include marketing attribution parameters.
+func GenerateStateWithAttribution(subdomain, redirectURL string, attr Attribution) (string, error) {
+	// Generate random bytes for CSRF protection
+	randomBytes := make([]byte, StateLength)
+	if _, err := rand.Read(randomBytes); err != nil {
+		return "", fmt.Errorf("failed to generate random state: %w", err)
+	}
+
+	// Create state data with all components
+	stateData := StateData{
+		Random:          base64.URLEncoding.EncodeToString(randomBytes),
+		ReturnSubdomain: subdomain,
+		RedirectURL:     redirectURL,
+		UTMSource:       attr.UTMSource,
+		UTMMedium:       attr.UTMMedium,
+		UTMCampaign:     attr.UTMCampaign,
+		UTMTerm:         attr.UTMTerm,
+		UTMContent:      attr.UTMContent,
+		GCLID:           attr.GCLID,
+		Referrer:        attr.Referrer,
+		LandingPage:     attr.LandingPage,
+	}
+
+	// Marshal to JSON
+	stateJSON, err := json.Marshal(stateData)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal state: %w", err)
+	}
+
+	// Base64 encode the JSON
+	return base64.URLEncoding.EncodeToString(stateJSON), nil
+}
+
+// ExtractAttributionFromState extracts attribution data from a state parameter.
+// Returns an Attribution struct (may be empty if no attribution data was present).
+func ExtractAttributionFromState(state string) (Attribution, error) {
+	// Base64 decode
+	stateJSON, err := base64.URLEncoding.DecodeString(state)
+	if err != nil {
+		return Attribution{}, fmt.Errorf("failed to decode state: %w", err)
+	}
+
+	// Unmarshal JSON
+	var stateData StateData
+	if err := json.Unmarshal(stateJSON, &stateData); err != nil {
+		return Attribution{}, fmt.Errorf("failed to unmarshal state: %w", err)
+	}
+
+	return Attribution{
+		UTMSource:   stateData.UTMSource,
+		UTMMedium:   stateData.UTMMedium,
+		UTMCampaign: stateData.UTMCampaign,
+		UTMTerm:     stateData.UTMTerm,
+		UTMContent:  stateData.UTMContent,
+		GCLID:       stateData.GCLID,
+		Referrer:    stateData.Referrer,
+		LandingPage: stateData.LandingPage,
+	}, nil
 }
