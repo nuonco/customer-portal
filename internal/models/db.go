@@ -78,6 +78,13 @@ func InitDB() (*gorm.DB, error) {
 		return nil, err
 	}
 
+	// IMPORTANT: Prepare install_links.name column BEFORE AutoMigrate
+	// This adds the column as nullable and populates existing rows,
+	// so AutoMigrate can safely add the NOT NULL constraint.
+	if err := prepareInstallLinkNameColumn(db); err != nil {
+		return nil, fmt.Errorf("install link name preparation failed: %w", err)
+	}
+
 	// Auto-migrate all models
 	err = db.AutoMigrate(
 		&User{},
@@ -117,6 +124,11 @@ func InitDB() (*gorm.DB, error) {
 	// Run workspace_id nullable migration (make workspace_id nullable since we're phasing it out)
 	if err := runWorkspaceIDNullableMigration(db); err != nil {
 		return nil, fmt.Errorf("workspace_id nullable migration failed: %w", err)
+	}
+
+	// Run install link name migration as a safety net (populates name field for any links missed)
+	if err := ensureInstallLinkNamesPopulated(db); err != nil {
+		return nil, fmt.Errorf("install link name migration failed: %w", err)
 	}
 
 	return db, nil
@@ -527,6 +539,112 @@ func runWorkspaceIDNullableMigration(db *gorm.DB) error {
 	// Make workspace_id nullable
 	if err := db.Exec(`ALTER TABLE nuon_orgs ALTER COLUMN workspace_id DROP NOT NULL`).Error; err != nil {
 		return fmt.Errorf("failed to make workspace_id nullable: %w", err)
+	}
+
+	return nil
+}
+
+// prepareInstallLinkNameColumn adds the name column as nullable and populates existing rows
+// BEFORE AutoMigrate runs. This prevents the error:
+// "column 'name' of relation 'install_links' contains null values"
+// which occurs when AutoMigrate tries to add `name text NOT NULL` to a table with existing rows.
+// This is idempotent - safe to run multiple times.
+func prepareInstallLinkNameColumn(db *gorm.DB) error {
+	// Check if install_links table exists
+	var tableExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.tables
+			WHERE table_name = 'install_links'
+		)
+	`).Scan(&tableExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for install_links table: %w", err)
+	}
+
+	// If table doesn't exist, nothing to do - AutoMigrate will create it with the column
+	if !tableExists {
+		return nil
+	}
+
+	// Check if name column already exists
+	var columnExists bool
+	err = db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = 'install_links' AND column_name = 'name'
+		)
+	`).Scan(&columnExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for name column: %w", err)
+	}
+
+	// If column doesn't exist, add it as NULLABLE first
+	if !columnExists {
+		if err := db.Exec(`ALTER TABLE install_links ADD COLUMN name text`).Error; err != nil {
+			return fmt.Errorf("failed to add name column: %w", err)
+		}
+	}
+
+	// Populate any rows that have NULL or empty names
+	// Pattern: {app_name}-install-{created_at_unix}
+	if err := db.Exec(`
+		UPDATE install_links
+		SET name = CONCAT(app_name, '-install-', EXTRACT(EPOCH FROM created_at)::bigint)
+		WHERE (name IS NULL OR name = '') AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to populate install link names: %w", err)
+	}
+
+	return nil
+}
+
+// ensureInstallLinkNamesPopulated is a safety net that runs AFTER AutoMigrate.
+// It populates the name field for any install links that might have been missed.
+// Uses the pattern: {app_name}-install-{created_at_unix}
+// This is idempotent - safe to run multiple times.
+func ensureInstallLinkNamesPopulated(db *gorm.DB) error {
+	// Check if name column exists on install_links
+	var columnExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = 'install_links' AND column_name = 'name'
+		)
+	`).Scan(&columnExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for name column: %w", err)
+	}
+
+	// If name column doesn't exist yet, GORM AutoMigrate will create it
+	// We just need to populate existing rows after that happens
+	if !columnExists {
+		return nil
+	}
+
+	// Check if migration is needed (any install links without a name)
+	var count int64
+	if err := db.Model(&InstallLink{}).Where("(name IS NULL OR name = '') AND deleted_at IS NULL").Count(&count).Error; err != nil {
+		// Column might not exist yet if AutoMigrate hasn't run
+		if strings.Contains(err.Error(), "does not exist") {
+			return nil
+		}
+		return fmt.Errorf("failed to check for install links without name: %w", err)
+	}
+
+	// No links need migration
+	if count == 0 {
+		return nil
+	}
+
+	// Update all install links without names using the pattern: {app_name}-install-{created_at_unix}
+	// This is safe because we're generating unique names based on timestamp
+	if err := db.Exec(`
+		UPDATE install_links
+		SET name = CONCAT(app_name, '-install-', EXTRACT(EPOCH FROM created_at)::bigint)
+		WHERE (name IS NULL OR name = '') AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to populate install link names: %w", err)
 	}
 
 	return nil

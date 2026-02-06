@@ -504,21 +504,17 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	}
 
 	props := customerpages.CustomerLoginPageProps{
-		BasePath:   h.basePath,
-		Error:      errorMsg,
-		AuthURL:    authURL,
-		SwitchURL:  "/admin/login/",
-		SwitchText: "Looking for vendor login?",
-		Theme:      theme,
-		CSSPath:    assets.CustomerCSSPath(),
+		BasePath: h.basePath,
+		Error:    errorMsg,
+		AuthURL:  authURL,
+		Theme:    theme,
+		CSSPath:  assets.CustomerCSSPath(),
 	}
 
 	// Try template override first
 	pageData := overrides.LoginPageData{
-		AuthURL:    authURL,
-		Error:      errorMsg,
-		SwitchURL:  props.SwitchURL,
-		SwitchText: props.SwitchText,
+		AuthURL: authURL,
+		Error:   errorMsg,
 	}
 	ctx := h.buildTemplateContext(orgID, theme.GetLoginTitle(), nil, theme, pageData)
 	if h.tryRenderOverride(c, orgID, "login", ctx) {
@@ -558,12 +554,10 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 	errorMsg := c.Query("error")
 
 	props := vendorpages.VendorLoginPageProps{
-		Title:      "Customer Dashboard",
-		BasePath:   h.basePath,
-		Error:      errorMsg,
-		SwitchURL:  "/login",
-		SwitchText: "Looking for customer login?",
-		CSSPath:    assets.CustomerCSSPath(),
+		Title:    "Customer Portal",
+		BasePath: h.basePath,
+		Error:    errorMsg,
+		CSSPath:  assets.CustomerCSSPath(),
 	}
 
 	// Check if we have an auth provider configured
@@ -993,11 +987,46 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 	var req struct {
 		AppID   string            `json:"app_id" binding:"required"`
 		AppName string            `json:"app_name" binding:"required"`
-		Inputs  map[string]string `json:"inputs"` // Vendor-facing inputs (stored for later)
+		Name    string            `json:"name" binding:"required"` // Required install name
+		Inputs  map[string]string `json:"inputs"`                  // Vendor-facing inputs (stored for later)
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Normalize and validate install name
+	normalizedName := models.NormalizeInstallName(req.Name)
+	if err := models.ValidateInstallName(normalizedName); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Check local uniqueness (unused install links with same name for this app)
+	localAvailable, err := models.IsInstallNameAvailableLocally(h.db, org.ID, req.AppID, normalizedName, "")
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to check install name availability"})
+		return
+	}
+	if !localAvailable {
+		c.JSON(http.StatusConflict, gin.H{"error": "An install link with this name already exists"})
+		return
+	}
+
+	// Check Nuon API uniqueness (existing installs with same name)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		return
+	}
+
+	nuonAvailable, err := nuonClient.IsInstallNameAvailable(c.Request.Context(), req.AppID, normalizedName)
+	if err != nil {
+		// Log error but don't fail - Nuon API check is best-effort
+		fmt.Printf("Warning: Failed to check Nuon API for install name availability: %v\n", err)
+	} else if !nuonAvailable {
+		c.JSON(http.StatusConflict, gin.H{"error": "An install with this name already exists"})
 		return
 	}
 
@@ -1014,6 +1043,7 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 		OrgID:   org.ID,
 		AppID:   req.AppID,
 		AppName: req.AppName,
+		Name:    normalizedName,
 		SHA:     sha,
 		Used:    false,
 	}
@@ -1218,10 +1248,12 @@ func (h *Handler) GetAppInputConfig(c *gin.Context) {
 	}
 
 	// Fetch app input configuration from Nuon API
+	// Note: Input config may not exist for all apps - that's okay, we'll return empty config
 	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), appIDParam)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch app input config: %v", err)})
-		return
+		// Input config doesn't exist or failed to fetch - return empty config rather than error
+		// This allows the form to render without inputs for apps that don't have input configs
+		inputConfig = nil
 	}
 
 	// Apply filtering if requested
@@ -1325,45 +1357,6 @@ func (h *Handler) DeleteOrg(c *gin.Context) {
 		"error":     "Org deletion is no longer supported. Each workspace has exactly one connected org.",
 		"migration": "To remove this org, delete the workspace from workspace settings.",
 	})
-}
-
-// ThemeSettingsPanelContent returns just the panel HTML for HTMX lazy loading
-func (h *Handler) ThemeSettingsPanelContent(c *gin.Context) {
-	theme, err := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load theme settings")
-		return
-	}
-
-	props := partials.ThemePanelProps{
-		Theme:    theme,
-		BasePath: h.basePath,
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.ThemePanel(props))
-}
-
-// CustomThemePanelContent returns the custom theme panel HTML for HTMX lazy loading
-func (h *Handler) CustomThemePanelContent(c *gin.Context) {
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		c.String(http.StatusBadRequest, "Organization context not found")
-		return
-	}
-
-	// Load GitHub config and overrides
-	gitHubConfig, _ := models.GetGitHubRepoConfig(h.db, org.ID)
-	templateOverrides, _ := models.GetAllTemplateOverrides(h.db, org.ID)
-	assetOverrides, _ := models.GetAllAssetOverrides(h.db, org.ID)
-
-	props := partials.CustomThemePanelProps{
-		BasePath:     h.basePath,
-		GitHubConfig: gitHubConfig,
-		Templates:    templateOverrides,
-		Assets:       assetOverrides,
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.CustomThemePanel(props))
 }
 
 // UpdateThemeSettings handles PUT request to update global theme settings
@@ -2180,22 +2173,6 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 	}
 
 	h.RenderTempl(c, http.StatusOK, vendorpages.LoginSettingsPage(props))
-}
-
-// LoginSettingsPanelContent returns just the panel HTML for HTMX lazy loading
-func (h *Handler) LoginSettingsPanelContent(c *gin.Context) {
-	config, err := models.GetOrCreateCustomerAuthConfig(h.db, h.getOrgIDForTheme(c))
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load login settings")
-		return
-	}
-
-	props := partials.CustomerAuthPanelProps{
-		Config:   config,
-		BasePath: h.basePath,
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.CustomerAuthPanel(props))
 }
 
 // UpdateLoginSettings handles PUT request to update login settings

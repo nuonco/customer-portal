@@ -11,11 +11,11 @@ type HeaderProps struct {
 	BasePath string
 }
 
-// Header renders the customer header with logo, email, and logout button.
+// Header renders the customer header with logo and user menu dropdown.
 templ Header(props HeaderProps) {
-	<header class="w-full max-w-4xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
+	<header class="w-full max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
 		<div class="flex items-center justify-between">
-			<!-- Left side: Logo + Email -->
+			<!-- Left side: Logo -->
 			<div class="flex items-center gap-4">
 				if props.Theme != nil {
 					if props.Theme.LogoDarkBase64 != "" {
@@ -27,15 +27,13 @@ templ Header(props HeaderProps) {
 						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>
 					}
 				}
-				if props.User != nil {
-					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">{ props.User.Email }</span>
-				}
 			</div>
-			<!-- Right side: Logout -->
+			<!-- Right side: User Menu Dropdown -->
 			if props.User != nil {
-				<button onclick="logout()" class="text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white transition-colors font-body">
-					Logout
-				</button>
+				@UserMenu(UserMenuProps{
+					User:     props.User,
+					BasePath: props.BasePath,
+				})
 			}
 		</div>
 	</header>

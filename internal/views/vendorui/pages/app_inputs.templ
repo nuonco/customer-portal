@@ -49,7 +49,7 @@ func hasInputs(groups []AppInputGroup) bool {
 // AppInputsPage renders the app inputs configuration page
 templ AppInputsPage(props AppInputsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex h-full -m-6 overflow-hidden">
+		<div class="flex h-full overflow-hidden">
 			@partials.AppSubnav(partials.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,

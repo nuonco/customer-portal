@@ -37,7 +37,6 @@ func (p *FooterProps) GetSupportHref() string {
 templ Footer(props FooterProps) {
 	<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
 		<div class="text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body">
-			Powered by Nuon
 			if props.GetSupportContact() != "" {
 				{" "}·{" "}
 				<a href={ templ.SafeURL(props.GetSupportHref()) } class="hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors">

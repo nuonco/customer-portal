@@ -430,3 +430,333 @@
 .input-group-chevron.rotate-180 {
   transform: rotate(180deg);
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * MAIN WRAPPER LAYOUT
+ * Flex container for proper panel positioning
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.main-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * INSTALLS TABLE
+ * Table-based layout for installs list with hover states
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.installs-table {
+  @apply w-full border-collapse;
+}
+
+.installs-table th {
+  @apply text-left text-xs font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide;
+  @apply px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600;
+  @apply bg-cool-grey-50 dark:bg-dark-grey-800/50;
+}
+
+.installs-table td {
+  @apply px-4 py-4 text-sm text-cool-grey-700 dark:text-cool-grey-300;
+  @apply border-b border-cool-grey-100 dark:border-dark-grey-700;
+}
+
+.install-row {
+  @apply cursor-pointer transition-colors duration-150;
+  @apply bg-white dark:bg-dark-grey-800;
+}
+
+.install-row:hover {
+  @apply bg-cool-grey-50 dark:bg-dark-grey-700;
+}
+
+.install-row.active {
+  @apply bg-blue-50 dark:bg-blue-900/20;
+  box-shadow: inset 3px 0 0 var(--theme-primary, #3b82f6);
+}
+
+.install-row td:first-child {
+  @apply font-medium text-cool-grey-900 dark:text-white;
+}
+
+.install-name-link {
+  @apply hover:underline;
+  color: var(--theme-secondary, var(--theme-primary, #3b82f6));
+}
+
+/* Hide columns on mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PLATFORM CHIPS
+ * Cloud platform badges with icons
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.platform-chip {
+  @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded;
+}
+
+.platform-chip-aws {
+  @apply bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300;
+}
+
+.platform-chip-azure {
+  @apply bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300;
+}
+
+.platform-chip-gcp {
+  @apply bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300;
+}
+
+.platform-chip-unknown {
+  @apply bg-cool-grey-100 text-cool-grey-700 dark:bg-dark-grey-700 dark:text-cool-grey-300;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * HEALTH PILLS
+ * Compact health check indicators
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.health-pills {
+  @apply inline-flex items-center gap-1;
+}
+
+.health-pill {
+  @apply inline-flex items-center gap-0.5 px-1.5 py-0.5 text-xs font-medium rounded;
+}
+
+.health-pill-passed {
+  @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400;
+}
+
+.health-pill-failed {
+  @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400;
+}
+
+.health-pill-pending {
+  @apply bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-700 dark:text-cool-grey-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * SLIDING DETAIL PANEL
+ * Right-side panel that slides in from the edge
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.panel-overlay {
+  @apply fixed inset-0 bg-dark-grey-900/50 backdrop-blur-sm;
+  @apply opacity-0 invisible transition-all duration-300;
+  z-index: 50;
+}
+
+.panel-overlay.open {
+  @apply opacity-100 visible;
+}
+
+.detail-panel {
+  @apply fixed top-0 right-0 h-full bg-white dark:bg-dark-grey-800;
+  @apply border-l border-cool-grey-200 dark:border-dark-grey-600;
+  @apply transform translate-x-full transition-transform duration-300 ease-out;
+  @apply flex flex-col;
+  width: 70%;
+  max-width: 900px;
+  z-index: 51;
+}
+
+.detail-panel.open {
+  @apply translate-x-0;
+}
+
+/* Full width on mobile */
+@media (max-width: 768px) {
+  .detail-panel {
+    width: 100%;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PANEL HEADER
+ * Sticky header with title and close button
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.panel-header {
+  @apply flex items-center justify-between px-6 py-4;
+  @apply border-b border-cool-grey-200 dark:border-dark-grey-600;
+  @apply bg-white dark:bg-dark-grey-800;
+  @apply sticky top-0;
+  z-index: 1;
+}
+
+.panel-header h2 {
+  @apply text-lg font-semibold text-cool-grey-900 dark:text-white truncate;
+  max-width: calc(100% - 48px);
+}
+
+.panel-close-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-full;
+  @apply text-cool-grey-500 hover:text-cool-grey-700 dark:text-cool-grey-400 dark:hover:text-white;
+  @apply hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700;
+  @apply transition-colors duration-150;
+  font-size: 24px;
+  line-height: 1;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PANEL CONTENT
+ * Scrollable content area
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.panel-content {
+  @apply flex-1 overflow-y-auto;
+}
+
+.panel-body {
+  @apply p-6;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PANEL TAB SYSTEM
+ * Tabs for switching between Manage and History views
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.panel-tab-headers {
+  @apply flex border-b border-cool-grey-200 dark:border-dark-grey-600;
+  @apply bg-cool-grey-50 dark:bg-dark-grey-900;
+  @apply px-6;
+}
+
+.panel-tab-button {
+  @apply px-4 py-3 text-sm font-medium;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+  @apply border-b-2 border-transparent;
+  @apply hover:text-cool-grey-900 dark:hover:text-white;
+  @apply transition-colors duration-150;
+  margin-bottom: -1px;
+}
+
+.panel-tab-button.active {
+  @apply text-cool-grey-900 dark:text-white;
+  border-color: var(--theme-primary, #3b82f6);
+}
+
+.panel-tab-pane {
+  @apply hidden;
+}
+
+.panel-tab-pane.active {
+  @apply block;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PANEL LOADING STATE
+ * Loading indicator for async content
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.panel-loading {
+  @apply flex items-center justify-center py-12;
+}
+
+.panel-loading-spinner {
+  @apply w-8 h-8 border-2 border-cool-grey-200 dark:border-dark-grey-600 rounded-full;
+  border-top-color: var(--theme-primary, #3b82f6);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PANEL DETAIL SECTIONS
+ * Styled sections for install details within panel
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.panel-section {
+  @apply mb-6;
+}
+
+.panel-section:last-child {
+  @apply mb-0;
+}
+
+.panel-section-title {
+  @apply text-sm font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide mb-3;
+}
+
+.panel-detail-grid {
+  @apply grid grid-cols-2 gap-4;
+}
+
+.panel-detail-item {
+  @apply text-sm;
+}
+
+.panel-detail-label {
+  @apply text-cool-grey-500 dark:text-cool-grey-400 mb-1;
+}
+
+.panel-detail-value {
+  @apply text-cool-grey-900 dark:text-white font-medium;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * PANEL ACTIONS
+ * Action buttons within the panel
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.panel-actions {
+  @apply flex flex-wrap gap-2 mt-4 pt-4;
+  @apply border-t border-cool-grey-200 dark:border-dark-grey-600;
+}
+
+.panel-action-btn {
+  @apply inline-flex items-center px-3 py-2 text-sm font-medium;
+  @apply border rounded-lg transition-colors duration-150;
+}
+
+.panel-action-btn-primary {
+  @apply text-white border-transparent;
+  background-color: var(--theme-primary, #3b82f6);
+}
+
+.panel-action-btn-primary:hover {
+  background-color: var(--theme-primary-hover, #2563eb);
+}
+
+.panel-action-btn-secondary {
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  @apply bg-white dark:bg-dark-grey-700;
+  @apply border-cool-grey-300 dark:border-dark-grey-500;
+  @apply hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600;
+}
+
+.panel-action-btn-danger {
+  @apply text-red-600 dark:text-red-400;
+  @apply bg-white dark:bg-dark-grey-700;
+  @apply border-red-300 dark:border-red-800;
+  @apply hover:bg-red-50 dark:hover:bg-red-900/20;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * TABLE WRAPPER
+ * Container for responsive table layout
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.table-wrapper {
+  @apply bg-white dark:bg-dark-grey-800;
+  @apply border border-cool-grey-200 dark:border-dark-grey-600;
+  @apply overflow-hidden;
+  border-radius: var(--theme-radius);
+}
+
+.table-wrapper .installs-table th:first-child {
+  border-top-left-radius: var(--theme-radius);
+}
+
+.table-wrapper .installs-table th:last-child {
+  border-top-right-radius: var(--theme-radius);
+}

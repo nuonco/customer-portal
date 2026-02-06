@@ -52,8 +52,8 @@ const (
 
 // Default customer login page text
 const (
-	DefaultLoginTitle    = "Customer Dashboard"
-	DefaultLoginSubtitle = "Manage your customer's install experience."
+	DefaultLoginTitle    = "Customer Portal"
+	DefaultLoginSubtitle = "Manage your installs."
 )
 
 // ValidBorderRadiusValues are the allowed values for BorderRadius

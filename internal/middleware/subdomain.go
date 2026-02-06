@@ -63,6 +63,34 @@ func RequireSubdomain() gin.HandlerFunc {
 	}
 }
 
+// RedirectBaseDomainCustomerRoutes redirects customer-facing routes on the base domain
+// to the admin login page, since customer routes require a subdomain for org context.
+// This middleware should be used after SubdomainContext in the middleware chain.
+func RedirectBaseDomainCustomerRoutes() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		isBase, exists := c.Get("is_base_domain")
+		if !exists || !isBase.(bool) {
+			// Has subdomain - continue normally
+			c.Next()
+			return
+		}
+
+		// On base domain - check if this is a customer-facing path that needs redirect
+		path := c.Request.URL.Path
+
+		// Paths that should redirect to admin login when on base domain
+		if path == "/" || path == "/login" || path == "/login/" ||
+			strings.HasPrefix(path, "/installs") {
+			c.Redirect(http.StatusFound, "/admin/login")
+			c.Abort()
+			return
+		}
+
+		// Other paths (auth flow, install-link, static) continue normally
+		c.Next()
+	}
+}
+
 // extractSubdomain extracts the subdomain portion from a host string.
 // Returns empty string if the request is to the base domain.
 //

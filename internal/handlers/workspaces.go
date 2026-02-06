@@ -13,7 +13,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -258,54 +257,6 @@ func (h *Handler) SwitchOrg(c *gin.Context) {
 		"message":     "Organization switched successfully",
 		"redirect_to": "/admin/orgs",
 	})
-}
-
-// OrgSettingsPanel renders the organization settings panel (HTMX)
-func (h *Handler) OrgSettingsPanel(c *gin.Context) {
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Organization context not found",
-		})
-		return
-	}
-
-	// Load org members
-	var members []models.OrgMember
-	if err := h.db.Where("org_id = ? AND status = ?", org.ID, models.MemberStatusActive).
-		Preload("User").
-		Find(&members).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to load organization members",
-		})
-		return
-	}
-
-	// Load active invitations
-	var invitations []models.OrgInvitation
-	if err := h.db.Where("org_id = ? AND (expires_at IS NULL OR expires_at > ?) AND (max_uses = 0 OR used_count < max_uses)",
-		org.ID, time.Now()).
-		Find(&invitations).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to load invitations",
-		})
-		return
-	}
-
-	// Get current user
-	user := middleware.GetCurrentUser(c)
-
-	// Render org settings panel template
-	props := partials.OrgPanelProps{
-		Org:             org,
-		Members:         members,
-		Invitations:     invitations,
-		BasePath:        h.basePath,
-		CurrentUser:     user,
-		CustomerBaseURL: h.customerBaseURL,
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.OrgPanel(props))
 }
 
 // GenerateOrgInvitation creates a new invitation link for the organization
@@ -695,11 +646,6 @@ func (h *Handler) UpdateWorkspace(c *gin.Context) {
 // SwitchWorkspace is deprecated - use SwitchOrg instead
 func (h *Handler) SwitchWorkspace(c *gin.Context) {
 	h.SwitchOrg(c)
-}
-
-// WorkspaceSettingsPanel is deprecated - use OrgSettingsPanel instead
-func (h *Handler) WorkspaceSettingsPanel(c *gin.Context) {
-	h.OrgSettingsPanel(c)
 }
 
 // GenerateInvitation is deprecated - use GenerateOrgInvitation instead

@@ -2,11 +2,14 @@ package nuon
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"sort"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -394,4 +397,155 @@ func (c *Client) UpdateInstallInputs(ctx context.Context, installID string, inpu
 		return "", fmt.Errorf("failed to update install inputs: %w", err)
 	}
 	return workflowID, nil
+}
+
+// AuditLogEntry represents a single audit log entry from the Nuon API
+type AuditLogEntry struct {
+	InstallID string
+	LogLine   string
+	TimeStamp time.Time
+	Type      string
+}
+
+// GetInstallAuditLogs retrieves audit logs for an install within a time range
+// The API returns CSV format with columns: install_id, log_line, time_stamp, type
+func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, start, end time.Time) ([]AuditLogEntry, error) {
+	// Build URL with required start and end parameters (RFC3339 format)
+	url := fmt.Sprintf("%s/v1/installs/%s/audit_logs?start=%s&end=%s",
+		c.apiURL, installID,
+		start.Format(time.RFC3339),
+		end.Format(time.RFC3339))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add authentication headers
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse CSV response
+	// Columns: install_id, log_line, time_stamp, type
+	csvReader := csv.NewReader(strings.NewReader(string(body)))
+
+	var entries []AuditLogEntry
+
+	// Read all records (skip header if present)
+	records, err := csvReader.ReadAll()
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse CSV response: %w", err)
+	}
+
+	for i, record := range records {
+		// Skip header row (if first row contains column names)
+		if i == 0 && len(record) > 0 && record[0] == "install_id" {
+			continue
+		}
+
+		// Expect 4 columns: install_id, log_line, time_stamp, type
+		if len(record) < 4 {
+			continue
+		}
+
+		// Parse timestamp
+		timestamp, err := time.Parse(time.RFC3339, record[2])
+		if err != nil {
+			// Try alternate formats
+			timestamp, err = time.Parse(time.RFC3339Nano, record[2])
+			if err != nil {
+				// Use current time as fallback
+				timestamp = time.Now()
+			}
+		}
+
+		entries = append(entries, AuditLogEntry{
+			InstallID: record[0],
+			LogLine:   record[1],
+			TimeStamp: timestamp,
+			Type:      record[3],
+		})
+	}
+
+	// Sort by timestamp (newest first)
+	sort.Slice(entries, func(i, j int) bool {
+		return entries[i].TimeStamp.After(entries[j].TimeStamp)
+	})
+
+	return entries, nil
+}
+
+// IsInstallNameAvailable checks if an install name is available for an app via the Nuon API.
+// It queries existing installs and checks for exact name matches (case-insensitive).
+// Returns true if the name is available (no existing install with that name).
+func (c *Client) IsInstallNameAvailable(ctx context.Context, appID, name string) (bool, error) {
+	// Use search query to find installs with matching name
+	// The API returns installs that match the search query
+	url := fmt.Sprintf("%s/v1/apps/%s/installs?q=%s&limit=100",
+		c.apiURL, appID, name)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return false, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add authentication headers
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return false, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return false, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return false, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response
+	var installs []struct {
+		ID   string `json:"id"`
+		Name string `json:"name"`
+	}
+	if err := json.Unmarshal(body, &installs); err != nil {
+		return false, fmt.Errorf("failed to parse installs: %w", err)
+	}
+
+	// Check for exact match (case-insensitive)
+	normalizedName := strings.ToLower(strings.TrimSpace(name))
+	for _, install := range installs {
+		if strings.ToLower(strings.TrimSpace(install.Name)) == normalizedName {
+			return false, nil // Name is taken
+		}
+	}
+
+	return true, nil // Name is available
 }

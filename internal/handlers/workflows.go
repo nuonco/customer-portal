@@ -15,36 +15,23 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
-// WorkflowsPage renders the workflows history page for a customer install
-func (h *Handler) WorkflowsPage(c *gin.Context) {
-	user := h.GetFreshUser(c) // Load from DB for topbar display
-	installIDParam := c.Param("install_id")
-
-	fmt.Printf("=== WorkflowsPage DEBUG START ===\n")
-	fmt.Printf("User: %+v\n", user)
-	fmt.Printf("Install ID param: %s\n", installIDParam)
-
+// WorkflowsPanel renders the workflow history content for the sliding panel (no layout wrapper)
+func (h *Handler) WorkflowsPanel(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
 		fmt.Printf("ERROR: Install not found in context\n")
-		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
-			Error:       "Install not found",
-		}
-		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
+		c.String(http.StatusNotFound, "Install not found")
 		return
 	}
 
 	install := installInterface.(*localModels.Install)
-	fmt.Printf("Install loaded: ID=%s, NuonInstallID=%s\n", install.ID, install.NuonInstallID)
+	fmt.Printf("WorkflowsPanel: Install loaded: ID=%s, NuonInstallID=%s\n", install.ID, install.NuonInstallID)
 
 	// Get pagination parameters
 	offsetParam := c.DefaultQuery("offset", "0")
@@ -53,150 +40,61 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 		offset = 0
 	}
 
-	limit := 10 // Fixed page size for customer view
+	limit := 10
 
 	// Fetch workflow data using helper function
 	processedWorkflows, hasMoreFromAPI, err := h.fetchWorkflowData(c, install, offset, limit)
 	if err != nil {
-		theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
-			Error:       err.Error(),
-		}
-		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
+		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Try to get CloudFormation link from install stack
 	var cloudFormationLink string
-	var platform string
-	fmt.Printf("Attempting to fetch install stack for install ID: %s\n", install.NuonInstallID)
 
 	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		fmt.Printf("ERROR: Failed to initialize Nuon client for stack fetch: %v\n", err)
-	} else {
-		// Fetch platform from app
-		app, err := nuonClient.GetApp(c.Request.Context(), install.InstallLink.AppID)
-		if err == nil && app != nil && app.RunnerConfig != nil {
-			platform = string(app.RunnerConfig.AppRunnerType)
-		}
+	if err == nil {
 		stack, err := nuonClient.GetInstallStack(c.Request.Context(), install.NuonInstallID)
-		if err != nil {
-			fmt.Printf("Failed to get install stack: %v\n", err)
-		} else if stack != nil {
-			fmt.Printf("Got install stack: %+v\n", stack)
-			// Check if stack has versions with quick link
-			if stack.Versions != nil && len(stack.Versions) > 0 {
-				if stack.Versions[0].QuickLinkURL != "" {
-					cloudFormationLink = stack.Versions[0].QuickLinkURL
-					fmt.Printf("Found CloudFormation link from stack: %s\n", cloudFormationLink)
-				}
+		if err == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+			if stack.Versions[0].QuickLinkURL != "" {
+				cloudFormationLink = stack.Versions[0].QuickLinkURL
 			}
 		}
 
 		// Append customer inputs to CloudFormation URL if available
 		if cloudFormationLink != "" {
-			fmt.Printf("DEBUG: CloudFormation link found, attempting to append customer inputs\n")
-			fmt.Printf("DEBUG: AppID=%s, InstallID=%s\n", install.InstallLink.AppID, install.NuonInstallID)
-
-			// Fetch app input config to identify customer input names
 			inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
-			if err != nil {
-				fmt.Printf("DEBUG: Error fetching app input config: %v\n", err)
-			} else if inputConfig == nil {
-				fmt.Printf("DEBUG: App input config is nil\n")
-			} else {
-				fmt.Printf("DEBUG: Got app input config (type %T): %+v\n", inputConfig, inputConfig)
-
-				// Convert typed struct to map for processing (same pattern as customer.go)
+			if err == nil && inputConfig != nil {
 				var configMap map[string]interface{}
 				jsonBytes, err := json.Marshal(inputConfig)
-				if err != nil {
-					fmt.Printf("DEBUG: Error marshaling input config: %v\n", err)
-				} else if err := json.Unmarshal(jsonBytes, &configMap); err != nil {
-					fmt.Printf("DEBUG: Error unmarshaling input config to map: %v\n", err)
-				} else {
-					fmt.Printf("DEBUG: Converted input config to map: %+v\n", configMap)
-
-					// Extract customer input mappings from config (inputName -> CF param name)
-					inputMappings := extractCustomerInputMappings(configMap)
-					fmt.Printf("DEBUG: Customer input mappings found: %v\n", inputMappings)
-
-					if len(inputMappings) > 0 {
-						// Get current install inputs from Nuon API
-						currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
-						if err != nil {
-							fmt.Printf("DEBUG: Error fetching install inputs: %v\n", err)
-						} else if currentInputs == nil {
-							fmt.Printf("DEBUG: Current inputs is nil\n")
-						} else {
-							fmt.Printf("DEBUG: Current inputs values: %+v\n", currentInputs.Values)
-							if currentInputs.Values != nil {
-								// Append customer inputs as CloudFormation parameters
+				if err == nil {
+					if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+						inputMappings := extractCustomerInputMappings(configMap)
+						if len(inputMappings) > 0 {
+							currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
+							if err == nil && currentInputs != nil && currentInputs.Values != nil {
 								cloudFormationLink = appendInputsToCloudFormationURL(
 									cloudFormationLink,
 									currentInputs.Values,
 									inputMappings,
 								)
-								fmt.Printf("DEBUG: CloudFormation link with customer inputs: %s\n", cloudFormationLink)
-							} else {
-								fmt.Printf("DEBUG: Current inputs Values is nil\n")
 							}
 						}
-					} else {
-						fmt.Printf("DEBUG: No customer input names found in config\n")
 					}
 				}
 			}
 		}
 	}
 
-	if cloudFormationLink == "" {
-		fmt.Printf("No CloudFormation link found\n")
-	}
+	// Group workflows by date and sort in descending order - convert to panel types
+	orderedWorkflowGroups := groupAndSortWorkflowsByDatePanel(processedWorkflows)
 
-	// Group workflows by date and sort in descending order - convert to templ types
-	orderedWorkflowGroups := groupAndSortWorkflowsByDateTempl(processedWorkflows)
-
-	// Get global app theme for customer UI
+	// Get theme
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := localModels.GetOrCreateAppTheme(h.db, orgID)
+	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
-	// Try template override first
-	workflowsData := make([]overrides.WorkflowData, 0, len(processedWorkflows))
-	for _, wf := range processedWorkflows {
-		id, _ := wf["id"].(string)
-		name, _ := wf["name"].(string)
-		status, _ := wf["status"].(string)
-		workflowsData = append(workflowsData, overrides.WorkflowData{
-			ID:     id,
-			Name:   name,
-			Type:   name,
-			Status: status,
-		})
-	}
-
-	pageData := overrides.WorkflowsPageData{
-		Install: overrides.InstallData{
-			ID:       install.ID,
-			Name:     install.Name,
-			Status:   string(install.Status),
-			Region:   install.Region,
-			Platform: platform,
-			AppName:  install.InstallLink.AppName,
-		},
-		Workflows: workflowsData,
-	}
-
-	ctx := h.buildTemplateContext(orgID, "Workflow History - "+install.InstallLink.AppName, user, theme, pageData)
-	if h.tryRenderOverride(c, orgID, "workflows", ctx) {
-		return
-	}
-
-	// Fall back to default Templ template
-	props := customerpages.WorkflowsPageProps{
-		LayoutProps:        h.buildCustomerLayoutProps("Workflow History - "+install.InstallLink.AppName, user, theme),
+	props := partials.WorkflowsPanelProps{
 		Install:            install,
 		WorkflowGroups:     orderedWorkflowGroups,
 		CloudFormationLink: cloudFormationLink,
@@ -206,8 +104,49 @@ func (h *Handler) WorkflowsPage(c *gin.Context) {
 		HasPrev:            offset > 0,
 		NextOffset:         offset + limit,
 		PrevOffset:         max(0, offset-limit),
+		BasePath:           h.basePath,
+		PrimaryColor:       primaryColor,
 	}
-	h.RenderTempl(c, http.StatusOK, customerpages.WorkflowsPage(props))
+	h.RenderTempl(c, http.StatusOK, partials.WorkflowsPanel(props))
+}
+
+// groupAndSortWorkflowsByDatePanel groups workflows by date for panel display
+func groupAndSortWorkflowsByDatePanel(workflows []gin.H) []partials.WorkflowGroupPanel {
+	grouped := make(map[string][]partials.WorkflowDataPanel)
+
+	for _, workflow := range workflows {
+		var dateKey string
+		if createdAt, ok := workflow["created_at"].(time.Time); ok && !createdAt.IsZero() {
+			dateKey = createdAt.Format("2006-01-02")
+		}
+		if dateKey != "" {
+			wfData := ginHToWorkflowDataPanel(workflow)
+			grouped[dateKey] = append(grouped[dateKey], wfData)
+		}
+	}
+
+	var dates []string
+	for date := range grouped {
+		dates = append(dates, date)
+	}
+	for i := 0; i < len(dates); i++ {
+		for j := i + 1; j < len(dates); j++ {
+			if dates[i] < dates[j] {
+				dates[i], dates[j] = dates[j], dates[i]
+			}
+		}
+	}
+
+	var orderedGroups []partials.WorkflowGroupPanel
+	for _, date := range dates {
+		orderedGroups = append(orderedGroups, partials.WorkflowGroupPanel{
+			Date:        date,
+			DisplayDate: formatDateForDisplay(date),
+			Workflows:   grouped[date],
+		})
+	}
+
+	return orderedGroups
 }
 
 // ApproveWorkflowStep handles workflow step approval
@@ -601,49 +540,6 @@ type WorkflowGroup struct {
 	Workflows   []gin.H `json:"workflows"`
 }
 
-// groupAndSortWorkflowsByDateTempl groups workflows by date and returns them in descending order for templ
-func groupAndSortWorkflowsByDateTempl(workflows []gin.H) []customerpages.WorkflowGroup {
-	// First, group workflows by date
-	grouped := make(map[string][]customerui.WorkflowData)
-
-	for _, workflow := range workflows {
-		var dateKey string
-		if createdAt, ok := workflow["created_at"].(time.Time); ok && !createdAt.IsZero() {
-			dateKey = createdAt.Format("2006-01-02")
-		}
-		if dateKey != "" {
-			// Convert gin.H to WorkflowData
-			wfData := ginHToWorkflowData(workflow)
-			grouped[dateKey] = append(grouped[dateKey], wfData)
-		}
-	}
-
-	// Extract and sort dates in descending order (newest first)
-	var dates []string
-	for date := range grouped {
-		dates = append(dates, date)
-	}
-	for i := 0; i < len(dates); i++ {
-		for j := i + 1; j < len(dates); j++ {
-			if dates[i] < dates[j] {
-				dates[i], dates[j] = dates[j], dates[i]
-			}
-		}
-	}
-
-	// Build ordered workflow groups
-	var orderedGroups []customerpages.WorkflowGroup
-	for _, date := range dates {
-		orderedGroups = append(orderedGroups, customerpages.WorkflowGroup{
-			Date:        date,
-			DisplayDate: formatDateForDisplay(date),
-			Workflows:   grouped[date],
-		})
-	}
-
-	return orderedGroups
-}
-
 // ginHToWorkflowData converts gin.H workflow data to customerui.WorkflowData
 func ginHToWorkflowData(wf gin.H) customerui.WorkflowData {
 	data := customerui.WorkflowData{
@@ -670,6 +566,40 @@ func ginHToWorkflowData(wf gin.H) customerui.WorkflowData {
 	// Handle approval step
 	if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
 		data.ApprovalStep = &customerui.ApprovalStepData{
+			StepID:     getString(step, "step_id"),
+			ApprovalID: getString(step, "approval_id"),
+		}
+	}
+
+	return data
+}
+
+// ginHToWorkflowDataPanel converts gin.H workflow data to partials.WorkflowDataPanel
+func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
+	data := partials.WorkflowDataPanel{
+		ID:                       getString(wf, "id"),
+		Name:                     getString(wf, "name"),
+		Status:                   getString(wf, "status"),
+		StatusClass:              getString(wf, "status_class"),
+		CanApprove:               getBool(wf, "can_approve"),
+		CanApproveAll:            getBool(wf, "can_approve_all"),
+		CanCancel:                getBool(wf, "can_cancel"),
+		ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
+		ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
+		CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
+	}
+
+	// Handle time fields
+	if t, ok := wf["created_at"].(time.Time); ok {
+		data.CreatedAt = t
+	}
+	if t, ok := wf["finished_at"].(time.Time); ok {
+		data.FinishedAt = t
+	}
+
+	// Handle approval step
+	if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
+		data.ApprovalStep = &partials.ApprovalStepDataPanel{
 			StepID:     getString(step, "step_id"),
 			ApprovalID: getString(step, "approval_id"),
 		}

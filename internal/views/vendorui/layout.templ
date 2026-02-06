@@ -70,18 +70,6 @@ templ Layout(props LayoutProps) {
 			@layoutScripts(props.BasePath)
 		</head>
 		<body class="bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden">
-			<!-- Preview Banner -->
-			<div id="preview-banner" class="bg-violet-600 text-white px-4 py-3 text-sm hidden">
-				<div class="max-w-7xl mx-auto flex items-center justify-between">
-					<p>This application is currently in preview. Features may change and some functionality may be incomplete.</p>
-					<button onclick="closePreviewBanner()" class="ml-4 text-white/80 hover:text-white flex-shrink-0">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
-				</div>
-			</div>
-			@previewBannerScript()
 			<div class="flex h-screen overflow-hidden">
 				<!-- Sidebar -->
 				@partials.Sidebar(partials.SidebarProps{
@@ -147,22 +135,6 @@ templ darkModeAndSidebarScript() {
 				}
 			}
 		})();
-	</script>
-}
-
-templ previewBannerScript() {
-	<script>
-		(function() {
-			// Show banner if cookie is not set
-			if (document.cookie.indexOf('preview_banner_dismissed=') === -1) {
-				document.getElementById('preview-banner').classList.remove('hidden');
-			}
-		})();
-
-		function closePreviewBanner() {
-			document.getElementById('preview-banner').classList.add('hidden');
-			document.cookie = 'preview_banner_dismissed=1; path=/; max-age=31536000';
-		}
 	</script>
 }
 

@@ -240,7 +240,7 @@ func TestRenderFooter(t *testing.T) {
 		{
 			name:     "basic footer",
 			ctx:      &TemplateContext{},
-			contains: []string{"<footer", "Powered by Nuon", "</footer>"},
+			contains: []string{"<footer>", "</footer>"},
 		},
 		{
 			name: "footer with email support",
@@ -319,23 +319,6 @@ func TestRenderScripts(t *testing.T) {
 	}
 }
 
-func TestRenderPreviewBanner(t *testing.T) {
-	html := RenderPreviewBanner()
-	htmlStr := string(html)
-
-	expected := []string{
-		"preview-banner",
-		"preview",
-		"closePreviewBanner",
-	}
-
-	for _, want := range expected {
-		if !strings.Contains(htmlStr, want) {
-			t.Errorf("RenderPreviewBanner() missing %q", want)
-		}
-	}
-}
-
 func TestLayoutComponentsInTemplate(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -374,7 +357,7 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 			name:     "footer in template",
 			tmplStr:  `{{ footer . }}`,
 			ctx:      &TemplateContext{},
-			contains: []string{"<footer", "Powered by Nuon"},
+			contains: []string{"<footer>"},
 		},
 		{
 			name:    "scripts in template",
@@ -385,18 +368,11 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 			contains: []string{"showToast", "showConfirmModal"},
 		},
 		{
-			name:     "previewBanner in template",
-			tmplStr:  `{{ previewBanner }}`,
-			ctx:      &TemplateContext{},
-			contains: []string{"preview-banner"},
-		},
-		{
 			name: "full layout template",
 			tmplStr: `<!DOCTYPE html>
 <html lang="en">
 {{ head . }}
 <body {{ bodyAttrs . }}>
-{{ previewBanner }}
 {{ header . }}
 <main>Content</main>
 {{ footer . }}
@@ -420,7 +396,6 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				"--theme-primary: #123456",
 				"radius-rounded",
 				"test@example.com",
-				"Powered by Nuon",
 				"mailto:help@example.com",
 				"showToast",
 			},

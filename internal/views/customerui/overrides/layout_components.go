@@ -35,29 +35,6 @@ function logout() {
 }
 </script>`
 
-const previewBannerHTML = `<div id="preview-banner" class="bg-violet-600 text-white px-4 py-3 text-sm hidden">
-<div class="max-w-7xl mx-auto flex items-center justify-between">
-<p>This application is currently in preview. Features may change and some functionality may be incomplete.</p>
-<button onclick="closePreviewBanner()" class="ml-4 text-white/80 hover:text-white flex-shrink-0">
-<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-</svg>
-</button>
-</div>
-</div>
-<script>
-(function() {
-	if (document.cookie.indexOf('preview_banner_dismissed=') === -1) {
-		document.getElementById('preview-banner').classList.remove('hidden');
-	}
-})();
-
-function closePreviewBanner() {
-	document.getElementById('preview-banner').classList.add('hidden');
-	document.cookie = 'preview_banner_dismissed=1; path=/; max-age=31536000';
-}
-</script>`
-
 const toastHTML = `<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
 <script>
 window.showToast = function(message, type) {
@@ -456,7 +433,6 @@ func RenderFooter(ctx *TemplateContext, renderer *TemplateRenderer) template.HTM
 
 	b.WriteString(`<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">`)
 	b.WriteString(`<div class="text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body">`)
-	b.WriteString(`Powered by Nuon`)
 
 	if ctx.Theme != nil && ctx.Theme.SupportContact != "" {
 		b.WriteString(` · <a href="`)
@@ -522,11 +498,4 @@ func RenderScripts(ctx *TemplateContext, renderer *TemplateRenderer) template.HT
 	b.WriteString(authScript)
 
 	return template.HTML(b.String())
-}
-
-// RenderPreviewBanner generates the dismissible preview banner HTML.
-//
-// Usage in templates: {{ previewBanner }}
-func RenderPreviewBanner() template.HTML {
-	return template.HTML(previewBannerHTML)
 }

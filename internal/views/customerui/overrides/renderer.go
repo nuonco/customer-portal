@@ -292,20 +292,18 @@ func getBaseFuncMap() template.FuncMap {
 		"head": RenderHead,
 		// Usage: <body {{ bodyAttrs . }}> - renders body attributes with theme classes
 		"bodyAttrs": RenderBodyAttrs,
-		// Usage: {{ previewBanner }} - renders dismissible preview banner
-		"previewBanner": RenderPreviewBanner,
-		// Stub versions of layout functions for validation (will be overridden with full versions in getFuncMap)
+		// Layout functions - call real render functions with nil renderer (uses default rendering)
 		"header": func(ctx *TemplateContext) template.HTML {
-			return template.HTML("<!-- header placeholder -->")
+			return RenderHeader(ctx, nil)
 		},
 		"sidebar": func(ctx *TemplateContext) template.HTML {
-			return template.HTML("<!-- sidebar placeholder -->")
+			return RenderSidebar(ctx, nil)
 		},
 		"footer": func(ctx *TemplateContext) template.HTML {
-			return template.HTML("<!-- footer placeholder -->")
+			return RenderFooter(ctx, nil)
 		},
 		"scripts": func(ctx *TemplateContext) template.HTML {
-			return template.HTML("<!-- scripts placeholder -->")
+			return RenderScripts(ctx, nil)
 		},
 	}
 }

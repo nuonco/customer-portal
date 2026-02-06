@@ -101,7 +101,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = components.Button(components.ButtonProps{
-				Text:    "Delete Install",
+				Text:    "Delete Link",
 				Variant: "danger",
 				OnClick: "deleteLink()",
 			}).Render(ctx, templ_7745c5c3_Buffer)

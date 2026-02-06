@@ -52,18 +52,14 @@ type ThemeData struct {
 
 // LoginPageData contains data for the login page.
 type LoginPageData struct {
-	AuthURL    string `json:"auth_url"`
-	Error      string `json:"error,omitempty"`
-	SwitchURL  string `json:"switch_url,omitempty"`
-	SwitchText string `json:"switch_text,omitempty"`
+	AuthURL string `json:"auth_url"`
+	Error   string `json:"error,omitempty"`
 }
 
 // RegisterPageData contains data for the register page.
 type RegisterPageData struct {
-	AuthURL    string `json:"auth_url"`
-	Error      string `json:"error,omitempty"`
-	SwitchURL  string `json:"switch_url,omitempty"`
-	SwitchText string `json:"switch_text,omitempty"`
+	AuthURL string `json:"auth_url"`
+	Error   string `json:"error,omitempty"`
 }
 
 // InstallsPageData contains data for the installs list page.

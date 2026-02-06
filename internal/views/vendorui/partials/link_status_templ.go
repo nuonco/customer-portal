@@ -168,7 +168,7 @@ func LinkStatus(props LinkStatusProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center px-4 py-2 text-sm rounded-md font-medium text-white bg-green-600 hover:bg-green-700\">View in Customer Dashboard")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center px-4 py-2 text-sm rounded-md font-medium text-white bg-green-600 hover:bg-green-700\">View in Customer Portal")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

@@ -43,16 +43,19 @@ templ Layout(props LayoutProps) {
 				BasePath: props.BasePath,
 			})
 
-			<!-- Main content -->
-			<main class="mx-auto px-6 lg:px-8 pt-6 flex-1 w-full max-w-4xl">
-				{ children... }
-			</main>
+			<!-- Main wrapper for panel support -->
+			<div id="main-wrapper" class="main-wrapper">
+				<!-- Main content -->
+				<main class="mx-auto px-6 lg:px-8 pt-6 flex-1 w-full max-w-5xl">
+					{ children... }
+				</main>
 
-			<!-- Footer -->
-			@partials.Footer(partials.FooterProps{
-				Theme: convertPropsToTheme(props),
-				SupportContact: props.SupportContact,
-			})
+				<!-- Footer -->
+				@partials.Footer(partials.FooterProps{
+					Theme: convertPropsToTheme(props),
+					SupportContact: props.SupportContact,
+				})
+			</div>
 
 			<!-- Toast notifications -->
 			@partials.Toast()

@@ -16,6 +16,7 @@ type InstallLink struct {
 	UserID               string         `gorm:"not null" json:"user_id"`                    // Kept for audit trail (who created it)
 	AppID                string         `gorm:"not null" json:"app_id"`
 	AppName              string         `gorm:"not null" json:"app_name"`
+	Name                 string         `gorm:"not null" json:"name"` // Required install name (provided by vendor)
 	SHA                  string         `gorm:"uniqueIndex;not null" json:"sha"`
 	Used                 bool           `gorm:"default:false" json:"used"`
 	HealthCheckActionIDs string         `json:"health_check_action_ids"`        // Comma-separated action workflow IDs

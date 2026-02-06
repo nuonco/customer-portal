@@ -130,11 +130,6 @@ func main() {
 		c.JSON(200, gin.H{"status": "ready"})
 	})
 
-	// Root redirect to customer login (primary interface)
-	router.GET("/", func(c *gin.Context) {
-		c.Redirect(302, "/login")
-	})
-
 	// Set up vendor routes under /admin prefix
 	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain)
 
@@ -209,7 +204,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	orgContextRoutes.Use(middleware.RequireRole(models.RoleVendor))
 	orgContextRoutes.Use(middleware.RequireOrgContext(db))
 	{
-		orgContextRoutes.GET("/settings/panel", h.OrgSettingsPanel)
 		orgContextRoutes.PUT("", h.UpdateOrg)
 		orgContextRoutes.POST("/invitations", h.GenerateOrgInvitation)
 		orgContextRoutes.DELETE("/invitations/:id", h.DeleteOrgInvitation)
@@ -222,13 +216,9 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	settings.Use(middleware.RequireRole(models.RoleVendor))
 	settings.Use(middleware.RequireOrgContext(db))
 	{
-		// Panel endpoints (for HTMX lazy loading)
-		settings.GET("/panel", h.ThemeSettingsPanelContent)
-		settings.GET("/customization/panel", h.CustomThemePanelContent)
 		settings.PUT("/", h.UpdateThemeSettings)
 
 		// Login settings API endpoints
-		settings.GET("/login/panel", h.LoginSettingsPanelContent)
 		settings.PUT("/login", h.UpdateLoginSettings)
 		settings.POST("/login/test", h.TestLoginConnection)
 
@@ -332,8 +322,18 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	// This extracts subdomain from the host and stores it in context
 	rg.Use(middleware.SubdomainContext(subdomainBaseDomain))
 
+	// Redirect customer-facing routes to admin login when accessed without subdomain
+	// This prevents users from getting stuck on pages that require org context
+	rg.Use(middleware.RedirectBaseDomainCustomerRoutes())
+
 	// Initialize handlers with customer auth factory (OIDC only, no local auth)
 	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", subdomainBaseDomain)
+
+	// Root redirect to customer login (with subdomain) or admin login (without subdomain)
+	// The RedirectBaseDomainCustomerRoutes middleware handles the base domain case
+	rg.GET("/", func(c *gin.Context) {
+		c.Redirect(302, "/login")
+	})
 
 	// Base domain auth routes (for OIDC flow without subdomain cookie issues)
 	// These handle the actual OIDC authentication on the base domain to avoid
@@ -382,7 +382,11 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installOwnership := installs.Group("/:install_id")
 		installOwnership.Use(middleware.RequireInstallOwnership(db))
 		{
-			installOwnership.GET("/", h.InstallDetail)
+			// Panel endpoints (for sliding panel content)
+			installOwnership.GET("/panel", h.InstallDetailPanel)     // Panel manage tab
+			installOwnership.GET("/panel/history", h.WorkflowsPanel) // Panel history tab
+			installOwnership.GET("/panel/audit", h.AuditLogsPanel)   // Panel audit tab
+
 			installOwnership.PUT("/", h.UpdateInstall)                         // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)                      // Customer can delete (deprovision) their install
 			installOwnership.POST("/forget", h.ForgetInstall)                  // Customer can forget (remove from DB) their install
@@ -392,8 +396,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/inputs", h.GetInstallInputs)    // Customer can view current inputs
 			installOwnership.PUT("/inputs", h.UpdateInstallInputs) // Customer can update inputs
 
-			// Workflow history and actions
-			installOwnership.GET("/workflows", h.WorkflowsPage)
+			// Workflow actions
 			installOwnership.POST("/workflows/:workflow_id/approve", h.ApproveWorkflowStep)
 			installOwnership.POST("/workflows/:workflow_id/approve-all", h.ApproveAllWorkflowSteps)
 			installOwnership.POST("/workflows/:workflow_id/cancel", h.CancelWorkflow)

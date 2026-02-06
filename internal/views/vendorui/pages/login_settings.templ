@@ -41,8 +41,8 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 							@loginPageAppearanceSection(props.Theme)
 							@loginEnableToggleSection(props.Config)
 							@loginOidcConfigSection(props.Config)
-							@loginSaveSection(props.PrimaryColor)
 							@loginFallbackInfoSection()
+							@loginSaveSection(props.PrimaryColor)
 						</div>
 						<!-- Right Column: Live Preview -->
 						<div>
@@ -97,7 +97,7 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 					type="text"
 					id="loginTitle"
 					value={ theme.GetLoginTitle() }
-					placeholder="Customer Dashboard"
+					placeholder="Customer Portal"
 					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Main heading shown on the customer login page.</p>
@@ -108,7 +108,7 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 					type="text"
 					id="loginSubtitle"
 					value={ theme.GetLoginSubtitle() }
-					placeholder="Manage your customer's install experience."
+					placeholder="Manage your installs."
 					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Descriptive text shown below the title.</p>
@@ -526,8 +526,7 @@ templ loginFallbackInfoSection() {
 			<div>
 				<h4 class="text-sm font-medium text-blue-800 dark:text-blue-300">Email/Password Fallback</h4>
 				<p class="mt-1 text-sm text-blue-700 dark:text-blue-400">
-					When OIDC is disabled or not configured, customers will use email and password authentication.
-					They can register when accepting an install link and then log in with their credentials.
+					When no OIDC provider is configured, customer login will default to the same provider used for admin login.
 				</p>
 			</div>
 		</div>
@@ -624,8 +623,8 @@ templ loginSettingsScript() {
 
 			// Update preview function
 			window.updatePreview = function() {
-				var title = document.getElementById('loginTitle').value || 'Customer Dashboard';
-				var subtitle = document.getElementById('loginSubtitle').value || "Manage your customer's install experience.";
+				var title = document.getElementById('loginTitle').value || 'Customer Portal';
+				var subtitle = document.getElementById('loginSubtitle').value || "Manage your installs.";
 				var primaryColor = config.dataset.primaryColor || '#8040BF';
 
 				// Update title and subtitle

@@ -21,6 +21,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -582,8 +583,8 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Generate install name
-	installName := nuon.GenerateInstallName(link.AppName)
+	// Use the vendor-provided install name from the link
+	installName := link.Name
 
 	// Create the install via Nuon API with merged inputs
 	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, mergedInputs)
@@ -895,174 +896,6 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallsPage(props))
 }
 
-// InstallDetail renders the install detail page
-func (h *Handler) InstallDetail(c *gin.Context) {
-	user := h.GetFreshUser(c) // Load from DB for topbar display
-
-	// Get install from middleware (RequireInstallOwnership sets this)
-	installInterface, exists := c.Get("install")
-	if !exists {
-		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
-			Error:       "Install not found",
-		}
-		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
-		return
-	}
-
-	install := installInterface.(*models.Install)
-
-	// Load the install link with NuonOrg for display and health checks
-	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, install.OrgID)
-		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
-			Error:       "Failed to load install details",
-		}
-		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
-		return
-	}
-
-	// Fetch recent workflows for embedded display
-	var recentWorkflows []customerui.WorkflowData
-	if workflows, err := h.fetchRecentWorkflows(c, install); err != nil {
-		// Log the error but don't fail the page - just show no workflows
-		c.Header("X-Workflow-Error", err.Error()) // For debugging
-		recentWorkflows = []customerui.WorkflowData{}
-	} else {
-		recentWorkflows = convertWorkflowsToData(workflows)
-	}
-
-	// Fetch platform information from app
-	var platform string
-	if install.InstallLink.NuonOrg.APIToken != "" {
-		client, err := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
-			h.nuonAPIURL,
-		)
-		if err == nil {
-			app, err := client.GetApp(c.Request.Context(), install.InstallLink.AppID)
-			if err == nil && app != nil && app.RunnerConfig != nil {
-				platform = string(app.RunnerConfig.AppRunnerType)
-			}
-		}
-	}
-
-	// Fetch health check status if configured
-	var healthCheckStatuses []customerui.HealthCheckStatusData
-	var overallHealthStatus string
-	healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
-
-	if len(healthCheckIDs) > 0 && install.InstallLink.NuonOrg.APIToken != "" {
-		// Create Nuon client using global API URL
-		client, err := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
-			h.nuonAPIURL,
-		)
-		if err != nil {
-			log.Printf("Failed to create Nuon client for health checks: %v", err)
-		} else {
-			ctx := context.Background()
-			bgHealthStatuses, status, err := background.CheckInstallHealthStatus(ctx, client, install)
-			if err != nil {
-				log.Printf("Failed to fetch health check status: %v", err)
-			} else {
-				overallHealthStatus = status
-				healthCheckStatuses = convertHealthCheckStatuses(bgHealthStatuses)
-			}
-		}
-	}
-
-	// Get global app theme for customer UI using subdomain-based lookup
-	// This handles legacy installs that may not have OrgID set
-	orgID := h.getOrgIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-
-	// Try template override first
-	workflowsData := make([]overrides.WorkflowData, 0, len(recentWorkflows))
-	for _, wf := range recentWorkflows {
-		workflowsData = append(workflowsData, overrides.WorkflowData{
-			ID:          wf.ID,
-			Name:        wf.Name,
-			Type:        wf.Name,
-			Status:      wf.Status,
-			CreatedAt:   wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
-			CompletedAt: wf.FinishedAt.Format("Jan 2, 2006 3:04 PM"),
-			FinishedAt:  wf.FinishedAt.Format("Jan 2, 2006 3:04 PM"),
-		})
-	}
-
-	healthChecksData := make([]overrides.HealthCheckData, 0, len(healthCheckStatuses))
-	for _, hc := range healthCheckStatuses {
-		checkedAt := ""
-		if !hc.LastRunAt.IsZero() {
-			checkedAt = hc.LastRunAt.Format("Jan 2, 2006 3:04 PM")
-		}
-		healthChecksData = append(healthChecksData, overrides.HealthCheckData{
-			ID:        hc.ActionID,
-			Name:      hc.ActionName,
-			Status:    hc.Status,
-			Message:   hc.StatusMessage,
-			CheckedAt: checkedAt,
-		})
-	}
-
-	var pendingApproval *overrides.WorkflowData
-	for _, wf := range recentWorkflows {
-		if wf.CanApprove || wf.CanApproveAll {
-			pendingApproval = &overrides.WorkflowData{
-				ID:        wf.ID,
-				Name:      wf.Name,
-				Type:      wf.Name,
-				Status:    wf.Status,
-				CreatedAt: wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"),
-			}
-			break
-		}
-	}
-
-	pageData := overrides.InstallDetailPageData{
-		Install: overrides.InstallData{
-			ID:                  install.ID,
-			Name:                install.Name,
-			Status:              string(install.Status),
-			Region:              install.Region,
-			Platform:            platform,
-			AppName:             install.InstallLink.AppName,
-			CreatedAt:           install.CreatedAt.Format("Jan 2, 2006"),
-			HasHealthChecks:     len(healthCheckIDs) > 0,
-			HealthChecksPassed:  countHealthCheckStatus(healthCheckStatuses, "Passing"),
-			HealthChecksPending: countHealthCheckStatus(healthCheckStatuses, "Pending"),
-			HealthChecksFailed:  countHealthCheckStatus(healthCheckStatuses, "Failing"),
-			HasPendingApproval:  pendingApproval != nil,
-		},
-		Workflows:       workflowsData,
-		RecentWorkflows: workflowsData,
-		HealthChecks:    healthChecksData,
-		HasHealthChecks: len(healthCheckIDs) > 0,
-		PendingApproval: pendingApproval,
-	}
-
-	ctx := h.buildTemplateContext(orgID, "Install - "+install.Name, user, theme, pageData)
-	if h.tryRenderOverride(c, orgID, "install_detail", ctx) {
-		return
-	}
-
-	// Fall back to default Templ template
-	props := customerpages.InstallDetailPageProps{
-		LayoutProps:         h.buildCustomerLayoutProps("Install - "+install.Name, user, theme),
-		Install:             install,
-		RecentWorkflows:     recentWorkflows,
-		HealthCheckStatuses: healthCheckStatuses,
-		OverallHealthStatus: overallHealthStatus,
-		HasHealthChecks:     len(healthCheckIDs) > 0,
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallDetailPage(props))
-}
-
 // countHealthCheckStatus counts health checks with the given status
 func countHealthCheckStatus(statuses []customerui.HealthCheckStatusData, status string) int {
 	count := 0
@@ -1072,44 +905,6 @@ func countHealthCheckStatus(statuses []customerui.HealthCheckStatusData, status 
 		}
 	}
 	return count
-}
-
-// convertWorkflowsToData converts gin.H workflow data to customerui.WorkflowData
-func convertWorkflowsToData(workflows []gin.H) []customerui.WorkflowData {
-	result := make([]customerui.WorkflowData, 0, len(workflows))
-	for _, wf := range workflows {
-		data := customerui.WorkflowData{
-			ID:                       getString(wf, "id"),
-			Name:                     getString(wf, "name"),
-			Status:                   getString(wf, "status"),
-			StatusClass:              getString(wf, "status_class"),
-			CanApprove:               getBool(wf, "can_approve"),
-			CanApproveAll:            getBool(wf, "can_approve_all"),
-			CanCancel:                getBool(wf, "can_cancel"),
-			ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
-			ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
-			CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
-		}
-
-		// Handle time fields
-		if t, ok := wf["created_at"].(time.Time); ok {
-			data.CreatedAt = t
-		}
-		if t, ok := wf["finished_at"].(time.Time); ok {
-			data.FinishedAt = t
-		}
-
-		// Handle approval step
-		if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
-			data.ApprovalStep = &customerui.ApprovalStepData{
-				StepID:     getString(step, "step_id"),
-				ApprovalID: getString(step, "approval_id"),
-			}
-		}
-
-		result = append(result, data)
-	}
-	return result
 }
 
 // convertHealthCheckStatuses converts background.HealthCheckStatus to customerui.HealthCheckStatusData
@@ -1297,10 +1092,12 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 	}
 
 	// Fetch current inputs from Nuon API
+	// Note: This returns 404 if no inputs have been set yet - that's OK, we still want to show the form
 	currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch install inputs: %v", err)})
-		return
+		// Log the error but don't fail - we can still show the input form with empty values
+		// The input config will tell us what fields to display
+		currentInputs = nil
 	}
 	// Fetch app input config for field definitions
 	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
@@ -1653,4 +1450,220 @@ func (h *Handler) checkIsUpdating(c *gin.Context, install *models.Install) bool 
 	}
 
 	return false
+}
+
+// InstallDetailPanel renders the install detail content for the sliding panel (no layout wrapper)
+func (h *Handler) InstallDetailPanel(c *gin.Context) {
+	// Get install from middleware (RequireInstallOwnership sets this)
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	// Load the install link with NuonOrg for display and health checks
+	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	// Fetch recent workflows for embedded display
+	var recentWorkflows []partials.WorkflowDataPanel
+	if workflows, err := h.fetchRecentWorkflows(c, install); err == nil {
+		recentWorkflows = convertWorkflowsToPanelData(workflows)
+	}
+
+	// Fetch health check status if configured
+	var healthCheckStatuses []partials.HealthCheckStatusDataPanel
+	var overallHealthStatus string
+	healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
+
+	if len(healthCheckIDs) > 0 && install.InstallLink.NuonOrg.APIToken != "" {
+		client, err := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if err == nil {
+			ctx := context.Background()
+			bgHealthStatuses, status, err := background.CheckInstallHealthStatus(ctx, client, install)
+			if err == nil {
+				overallHealthStatus = status
+				healthCheckStatuses = convertHealthCheckStatusesToPanel(bgHealthStatuses)
+			}
+		}
+	}
+
+	// Get theme colors
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
+	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
+	secondaryColor, _ := GetPrimaryColors(theme.SecondaryColor)
+
+	props := partials.InstallDetailPanelProps{
+		Install:             install,
+		RecentWorkflows:     recentWorkflows,
+		HealthCheckStatuses: healthCheckStatuses,
+		OverallHealthStatus: overallHealthStatus,
+		HasHealthChecks:     len(healthCheckIDs) > 0,
+		BasePath:            h.basePath,
+		PrimaryColor:        primaryColor,
+		SecondaryColor:      secondaryColor,
+	}
+	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
+}
+
+// convertWorkflowsToPanelData converts gin.H workflow data to partials.WorkflowDataPanel
+func convertWorkflowsToPanelData(workflows []gin.H) []partials.WorkflowDataPanel {
+	result := make([]partials.WorkflowDataPanel, 0, len(workflows))
+	for _, wf := range workflows {
+		data := partials.WorkflowDataPanel{
+			ID:                       getString(wf, "id"),
+			Name:                     getString(wf, "name"),
+			Status:                   getString(wf, "status"),
+			StatusClass:              getString(wf, "status_class"),
+			CanApprove:               getBool(wf, "can_approve"),
+			CanApproveAll:            getBool(wf, "can_approve_all"),
+			CanCancel:                getBool(wf, "can_cancel"),
+			ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
+			ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
+			CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
+		}
+
+		if t, ok := wf["created_at"].(time.Time); ok {
+			data.CreatedAt = t
+		}
+		if t, ok := wf["finished_at"].(time.Time); ok {
+			data.FinishedAt = t
+		}
+
+		if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
+			data.ApprovalStep = &partials.ApprovalStepDataPanel{
+				StepID:     getString(step, "step_id"),
+				ApprovalID: getString(step, "approval_id"),
+			}
+		}
+
+		result = append(result, data)
+	}
+	return result
+}
+
+// convertHealthCheckStatusesToPanel converts background.HealthCheckStatus to partials.HealthCheckStatusDataPanel
+func convertHealthCheckStatusesToPanel(statuses []background.HealthCheckStatus) []partials.HealthCheckStatusDataPanel {
+	result := make([]partials.HealthCheckStatusDataPanel, 0, len(statuses))
+	for _, s := range statuses {
+		result = append(result, partials.HealthCheckStatusDataPanel{
+			ActionID:      s.ActionID,
+			ActionName:    s.ActionName,
+			Status:        s.Status,
+			StatusClass:   s.StatusClass,
+			StatusMessage: s.StatusMessage,
+			LastRunAt:     s.LastRunAt,
+		})
+	}
+	return result
+}
+
+// AuditLogsPanel renders the audit logs panel content (no layout wrapper)
+func (h *Handler) AuditLogsPanel(c *gin.Context) {
+	// Get install from middleware (RequireInstallOwnership sets this)
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	// Load install link with NuonOrg
+	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	// Handle NuonOrg loading with fallback strategies
+	if install.InstallLink.NuonOrg.ID == "" {
+		var installLinkWithOrg models.InstallLink
+		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
+			if installLinkWithOrg.NuonOrg.ID != "" {
+				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
+			}
+		}
+
+		if install.InstallLink.NuonOrg.ID == "" {
+			var nuonOrg models.NuonOrg
+			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
+				c.String(http.StatusInternalServerError, "Failed to load organization")
+				return
+			}
+			install.InstallLink.NuonOrg = nuonOrg
+		}
+	}
+
+	// Parse time range parameters
+	now := time.Now()
+	rangeType := c.DefaultQuery("range", "past-hour")
+	var startTime, endTime time.Time
+
+	startStr := c.Query("start")
+	endStr := c.Query("end")
+
+	if startStr != "" && endStr != "" {
+		parsedStart, err1 := time.Parse(time.RFC3339, startStr)
+		parsedEnd, err2 := time.Parse(time.RFC3339, endStr)
+		if err1 == nil && err2 == nil {
+			startTime = parsedStart
+			endTime = parsedEnd
+			rangeType = "custom"
+		} else {
+			startTime = now.Add(-time.Hour)
+			endTime = now
+			rangeType = "past-hour"
+		}
+	} else {
+		switch rangeType {
+		case "past-day":
+			startTime = now.Add(-24 * time.Hour)
+			endTime = now
+		case "past-week":
+			startTime = now.Add(-7 * 24 * time.Hour)
+			endTime = now
+		default:
+			startTime = now.Add(-time.Hour)
+			endTime = now
+			rangeType = "past-hour"
+		}
+	}
+
+	// Fetch audit logs via Nuon client
+	var auditEntries []partials.AuditLogEntryPanel
+	org := install.InstallLink.NuonOrg
+	if org.APIToken != "" {
+		client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+		if err == nil {
+			entries, err := client.GetInstallAuditLogs(c.Request.Context(), install.NuonInstallID, startTime, endTime)
+			if err == nil {
+				for _, entry := range entries {
+					auditEntries = append(auditEntries, partials.AuditLogEntryPanel{
+						LogLine:   entry.LogLine,
+						TimeStamp: entry.TimeStamp,
+						Type:      entry.Type,
+					})
+				}
+			}
+		}
+	}
+
+	props := partials.AuditLogsPanelProps{
+		Install:   install,
+		Entries:   auditEntries,
+		StartTime: startTime,
+		EndTime:   endTime,
+		RangeType: rangeType,
+		BasePath:  h.basePath,
+	}
+	h.RenderTempl(c, http.StatusOK, partials.AuditLogsPanel(props))
 }

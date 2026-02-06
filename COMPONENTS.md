@@ -54,11 +54,13 @@ internal/views/customerui/
 ### What Can Be Customized
 
 ✅ **Themeable** (in `/theme` directory):
+
 - All `.templ` template files
 - Layout, scripts, partial components, page components
 - HTML structure, CSS classes, content
 
 ❌ **NOT Themeable** (outside `/theme`):
+
 - `types.go` - Go type definitions
 - `utils/theme.go` - Theme CSS generation logic
 - `overrides/` - Backend override system
@@ -68,6 +70,7 @@ internal/views/customerui/
 ### Scripts (`theme/scripts/`)
 
 #### Dark Mode (`dark_mode.templ`)
+
 Automatically detects and applies user's system dark mode preference.
 
 ```go
@@ -75,6 +78,7 @@ Automatically detects and applies user's system dark mode preference.
 ```
 
 #### Auth (`auth.templ`)
+
 Provides authentication helpers and logout functionality.
 
 ```go
@@ -84,9 +88,11 @@ Provides authentication helpers and logout functionality.
 ### Partial Components (`theme/partials/`)
 
 #### Header (`header.templ`)
+
 Renders header with logo, user email, and logout button.
 
 **Props:**
+
 ```go
 type HeaderProps struct {
     Theme    *models.AppTheme
@@ -96,6 +102,7 @@ type HeaderProps struct {
 ```
 
 **Usage:**
+
 ```go
 @partials.Header(partials.HeaderProps{
     Theme: theme,
@@ -105,9 +112,11 @@ type HeaderProps struct {
 ```
 
 #### Footer (`footer.templ`)
-Renders footer with "Powered by Nuon" and optional support contact.
+
+Renders footer with optional support contact.
 
 **Props:**
+
 ```go
 type FooterProps struct {
     Theme          *models.AppTheme
@@ -116,6 +125,7 @@ type FooterProps struct {
 ```
 
 **Usage:**
+
 ```go
 @partials.Footer(partials.FooterProps{
     Theme: theme,
@@ -124,66 +134,74 @@ type FooterProps struct {
 ```
 
 #### Toast (`toast.templ`)
+
 Toast notification system with JavaScript API.
 
 **Usage (Template):**
+
 ```go
 @partials.Toast()
 ```
 
 **Usage (JavaScript):**
+
 ```javascript
 // Show success toast
-showToast('Operation completed!', 'success');
+showToast("Operation completed!", "success");
 
 // Show error toast
-showToast('An error occurred', 'error');
+showToast("An error occurred", "error");
 
 // Show info toast
-showToast('Please note...', 'info');
+showToast("Please note...", "info");
 ```
 
 #### Modal (`modal.templ`)
+
 Provides confirmation and prompt modal dialogs.
 
 **Usage (Template):**
+
 ```go
 @partials.ConfirmModal()
 @partials.PromptModal()
 ```
 
 **Usage (JavaScript):**
+
 ```javascript
 // Confirmation dialog
 showConfirmModal({
-    title: 'Delete Item',
-    message: 'Are you sure?',
-    confirmText: 'Delete',
-    cancelText: 'Cancel'
-}).then(confirmed => {
-    if (confirmed) {
-        // User clicked confirm
-    }
+  title: "Delete Item",
+  message: "Are you sure?",
+  confirmText: "Delete",
+  cancelText: "Cancel",
+}).then((confirmed) => {
+  if (confirmed) {
+    // User clicked confirm
+  }
 });
 
 // Prompt dialog
 showPromptModal({
-    title: 'Enter Name',
-    message: 'Please enter a name',
-    placeholder: 'Item name',
-    expectedValue: 'DELETE',  // Optional validation
-    validationMessage: 'Type DELETE to confirm'
-}).then(value => {
-    if (value !== null) {
-        // User entered: value
-    }
+  title: "Enter Name",
+  message: "Please enter a name",
+  placeholder: "Item name",
+  expectedValue: "DELETE", // Optional validation
+  validationMessage: "Type DELETE to confirm",
+}).then((value) => {
+  if (value !== null) {
+    // User entered: value
+  }
 });
 ```
 
 #### Theme Styles (`theme_styles.templ`)
+
 Injects CSS custom properties for theme colors and fonts.
 
 **Props:**
+
 ```go
 type ThemeStylesProps struct {
     Theme *models.AppTheme
@@ -191,6 +209,7 @@ type ThemeStylesProps struct {
 ```
 
 **Usage:**
+
 ```go
 @partials.ThemeStyles(partials.ThemeStylesProps{Theme: theme})
 ```
@@ -198,9 +217,11 @@ type ThemeStylesProps struct {
 ### Page Components (`theme/components/`)
 
 #### Status Badge (`status_badge.templ`)
+
 Displays colored status indicators.
 
 **Props:**
+
 ```go
 type StatusBadgeProps struct {
     Status  string  // "running", "completed", "failed", etc.
@@ -210,6 +231,7 @@ type StatusBadgeProps struct {
 ```
 
 **Usage:**
+
 ```go
 @components.StatusBadge(components.StatusBadgeProps{
     Status: "running",
@@ -219,9 +241,11 @@ type StatusBadgeProps struct {
 ```
 
 #### Empty State (`empty_state.templ`)
+
 Shows placeholder when no content is available.
 
 **Props:**
+
 ```go
 type EmptyStateProps struct {
     Title   string
@@ -231,6 +255,7 @@ type EmptyStateProps struct {
 ```
 
 **Usage:**
+
 ```go
 @components.EmptyState(components.EmptyStateProps{
     Title: "No Installs Yet",
@@ -240,9 +265,11 @@ type EmptyStateProps struct {
 ```
 
 #### Alert (`alert.templ`)
+
 Displays alert/notification banners.
 
 **Props:**
+
 ```go
 type AlertProps struct {
     Type    string  // "info", "success", "warning", "error"
@@ -251,6 +278,7 @@ type AlertProps struct {
 ```
 
 **Usage:**
+
 ```go
 @components.Alert(components.AlertProps{
     Type: "warning",
@@ -259,9 +287,11 @@ type AlertProps struct {
 ```
 
 #### Pagination (`pagination.templ`)
+
 Renders pagination controls.
 
 **Props:**
+
 ```go
 type PaginationProps struct {
     CurrentPage  int
@@ -275,6 +305,7 @@ type PaginationProps struct {
 ```
 
 **Usage:**
+
 ```go
 @components.Pagination(components.PaginationProps{
     CurrentPage: 2,
@@ -327,24 +358,23 @@ radiusClass := utils.GetRadiusClass("rounded")    // "radius-rounded"
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-    <link href="{{.CSSPath}}" rel="stylesheet"/>
+  <head>
+    <link href="{{.CSSPath}}" rel="stylesheet" />
     {{.Components.ThemeStyles}}
-</head>
-<body>
+  </head>
+  <body>
     {{.Components.Header .User}}
 
     <main>
-        <h1>{{.PageData.Title}}</h1>
-        {{range .PageData.Installs}}
-            {{$.Components.StatusBadge .Status "install"}}
-            <p>{{.Name}}</p>
-        {{end}}
+      <h1>{{.PageData.Title}}</h1>
+      {{range .PageData.Installs}} {{$.Components.StatusBadge .Status
+      "install"}}
+      <p>{{.Name}}</p>
+      {{end}}
     </main>
 
-    {{.Components.Footer}}
-    {{.Components.Toast}}
-</body>
+    {{.Components.Footer}} {{.Components.Toast}}
+  </body>
 </html>
 ```
 
@@ -370,16 +400,16 @@ Theme colors are available as CSS variables:
 ```css
 /* In your custom styles */
 .my-button {
-    background-color: var(--theme-primary);
-    border-color: var(--theme-primary);
+  background-color: var(--theme-primary);
+  border-color: var(--theme-primary);
 }
 
 .my-button:hover {
-    background-color: var(--theme-primary-hover);
+  background-color: var(--theme-primary-hover);
 }
 
 .my-link {
-    color: var(--theme-secondary);
+  color: var(--theme-secondary);
 }
 ```
 
@@ -389,11 +419,11 @@ Font families are also CSS variables:
 
 ```css
 .heading {
-    font-family: var(--font-heading);
+  font-family: var(--font-heading);
 }
 
 .body-text {
-    font-family: var(--font-body);
+  font-family: var(--font-body);
 }
 ```
 
@@ -407,6 +437,7 @@ The theme system provides radius classes:
 - `radius-very-rounded` - Very rounded corners (12px)
 
 Apply to containers:
+
 ```html
 <div class="radius-rounded">...</div>
 ```
@@ -415,17 +446,18 @@ Apply to containers:
 
 ### Old → New Paths
 
-| Old Path | New Path |
-|----------|----------|
-| `customerui/components/*.templ` | `customerui/theme/components/*.templ` |
-| `customerui/pages/*.templ` | `customerui/theme/pages/*.templ` |
+| Old Path                              | New Path                              |
+| ------------------------------------- | ------------------------------------- |
+| `customerui/components/*.templ`       | `customerui/theme/components/*.templ` |
+| `customerui/pages/*.templ`            | `customerui/theme/pages/*.templ`      |
 | `customerui/layout.templ` (384 lines) | `customerui/layout.templ` (171 lines) |
-| Inline components in layout | `customerui/theme/partials/*.templ` |
-| Inline scripts in layout | `customerui/theme/scripts/*.templ` |
+| Inline components in layout           | `customerui/theme/partials/*.templ`   |
+| Inline scripts in layout              | `customerui/theme/scripts/*.templ`    |
 
 ### Import Updates
 
 **Handlers:**
+
 ```go
 // Old
 import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
@@ -437,6 +469,7 @@ import "github.com/nuonco/mono/services/customer-dashboard/internal/views/custom
 ```
 
 **Templates:**
+
 ```go
 // Old (in .templ files)
 import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
@@ -457,25 +490,31 @@ import "github.com/nuonco/mono/services/customer-dashboard/internal/views/custom
 ### Build Errors
 
 **"undefined: customerui.LayoutProps"**
+
 - ✅ Solution: LayoutProps is now in `customerui/types.go`, not in layout.templ
 
 **"import cycle not allowed"**
+
 - ✅ Solution: Core components define their own prop types locally
 
 **"cannot find package"**
+
 - ✅ Solution: Update imports from `customerui/components` to `customerui/theme/components`
 
 ### Runtime Issues
 
 **Styles not applying**
+
 - Check that `@partials.ThemeStyles()` is called in `<head>`
 - Verify theme colors are set in `AppTheme` model
 
 **Fonts not loading**
+
 - Ensure font data is base64-encoded
 - Check Google Fonts URL is correctly generated
 
 **Dark mode not working**
+
 - Verify `@scripts.DarkMode()` is called in `<head>`
 - Check that dark mode CSS classes are defined
 

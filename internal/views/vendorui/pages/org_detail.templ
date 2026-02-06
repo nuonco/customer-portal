@@ -238,6 +238,18 @@ templ createInstallModal(basePath, orgID string) {
 							<option value="">Loading apps...</option>
 						</select>
 					</div>
+					<!-- Install Name -->
+					<div>
+						<label for="installNameInput" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Install Name *</label>
+						<input
+							type="text"
+							id="installNameInput"
+							required
+							placeholder="e.g., customer-acme-prod"
+							class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+						/>
+						<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">Letters, numbers, spaces, dashes, and underscores only.</p>
+					</div>
 					<!-- Vendor-facing Inputs (dynamic based on app config) -->
 					<div id="vendorInputsContainer">
 						<!-- Will be populated by JavaScript -->
@@ -339,6 +351,7 @@ templ createInstallModalScript() {
 			function clearInputs() {
 				document.getElementById("vendorInputsContainer").innerHTML = '';
 				document.getElementById("inputConfigLoading").classList.add("hidden");
+				document.getElementById("installNameInput").value = '';
 				currentPlatform = null;
 				currentInputConfig = null;
 			}
@@ -479,6 +492,22 @@ templ createInstallModalScript() {
 					return;
 				}
 
+				// Validate install name
+				const installName = document.getElementById("installNameInput").value.trim();
+				if (!installName) {
+					errorDiv.textContent = "Please enter an install name";
+					errorDiv.classList.remove("hidden");
+					return;
+				}
+
+				// Validate install name format (letters, numbers, spaces, dashes, underscores)
+				const namePattern = /^[a-zA-Z0-9 _-]+$/;
+				if (!namePattern.test(installName)) {
+					errorDiv.textContent = "Install name can only contain letters, numbers, spaces, dashes, and underscores";
+					errorDiv.classList.remove("hidden");
+					return;
+				}
+
 				const selectedApp = JSON.parse(selectedAppValue);
 
 				// Collect vendor inputs
@@ -506,6 +535,7 @@ templ createInstallModalScript() {
 						body: JSON.stringify({
 							app_id: selectedApp.id,
 							app_name: selectedApp.name,
+							name: installName,
 							inputs: inputs
 						}),
 					});

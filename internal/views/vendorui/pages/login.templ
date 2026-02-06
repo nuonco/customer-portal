@@ -8,10 +8,6 @@ type VendorLoginPageProps struct {
 	ProviderName string // e.g., "Google", "Okta", "SSO" (optional, shows icon if set)
 	Error        string // Error message to display
 	CSSPath      string // Path to CSS file (with cache-busting hash)
-
-	// Switch link to alternate login page
-	SwitchURL  string // URL to other login page
-	SwitchText string // e.g., "Looking for customer login?"
 }
 
 // VendorLoginPage renders the vendor login page matching dashboard-ui design
@@ -27,18 +23,6 @@ templ VendorLoginPage(props VendorLoginPageProps) {
 			@vendorLoginFontLinks()
 		</head>
 		<body class="bg-cool-grey-50 dark:bg-dark-grey-950">
-			<!-- Preview Banner -->
-			<div id="preview-banner" class="bg-violet-600 text-white px-4 py-3 text-sm hidden">
-				<div class="max-w-7xl mx-auto flex items-center justify-between">
-					<p>This application is currently in preview. Features may change and some functionality may be incomplete.</p>
-					<button onclick="closePreviewBanner()" class="ml-4 text-white/80 hover:text-white flex-shrink-0">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
-				</div>
-			</div>
-			@vendorLoginPreviewBannerScript()
 			<div class="flex h-screen w-full">
 				<!-- Left Side - Content -->
 				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] bg-cool-grey-50 dark:bg-dark-grey-950 px-8 md:px-20 py-16">
@@ -85,14 +69,6 @@ templ VendorLoginPage(props VendorLoginPageProps) {
 						>
 							Sign in
 						</a>
-						<!-- Switch link to other login page -->
-						if props.SwitchURL != "" && props.SwitchText != "" {
-							<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center">
-								<a href={ templ.SafeURL(props.SwitchURL) } class="text-primary-600 hover:text-primary-700 dark:text-primary-400 hover:underline">
-									{ props.SwitchText }
-								</a>
-							</p>
-						}
 					</div>
 					<!-- Learn More Link -->
 					<a
@@ -250,20 +226,4 @@ templ vendorLoginArrowUpRightIcon() {
 		<line x1="7" y1="17" x2="17" y2="7"></line>
 		<polyline points="7 7 17 7 17 17"></polyline>
 	</svg>
-}
-
-templ vendorLoginPreviewBannerScript() {
-	<script>
-		(function() {
-			// Show banner if cookie is not set
-			if (document.cookie.indexOf('preview_banner_dismissed=') === -1) {
-				document.getElementById('preview-banner').classList.remove('hidden');
-			}
-		})();
-
-		function closePreviewBanner() {
-			document.getElementById('preview-banner').classList.add('hidden');
-			document.cookie = 'preview_banner_dismissed=1; path=/; max-age=31536000';
-		}
-	</script>
 }
