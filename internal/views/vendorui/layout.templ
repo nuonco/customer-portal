@@ -32,6 +32,14 @@ type LayoutProps struct {
 	BodyFontBase64     string
 	LogoBase64         string
 
+	// Portal URL components (for org dropdown link)
+	PortalScheme     string // e.g., "https://"
+	PortalBaseDomain string // e.g., "portal.nuon.co"
+
+	// Org status (live check against Nuon API)
+	OrgStatus        string // "active" | "error"
+	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
+
 	// Asset paths (cache-busted)
 	CSSPath string
 }
@@ -73,11 +81,15 @@ templ Layout(props LayoutProps) {
 			<div class="flex h-screen overflow-hidden">
 				<!-- Sidebar -->
 				@partials.Sidebar(partials.SidebarProps{
-					ActivePage: props.ActivePage,
-					CurrentOrg: props.CurrentOrg,
-					Orgs:       props.Orgs,
-					BasePath:   props.BasePath,
-					LogoBase64: props.LogoBase64,
+					ActivePage:       props.ActivePage,
+					CurrentOrg:       props.CurrentOrg,
+					Orgs:             props.Orgs,
+					BasePath:         props.BasePath,
+					LogoBase64:       props.LogoBase64,
+					PortalScheme:     props.PortalScheme,
+					PortalBaseDomain: props.PortalBaseDomain,
+					OrgStatus:        props.OrgStatus,
+					OrgStatusMessage: props.OrgStatusMessage,
 				})
 				<!-- Main Content Area -->
 				<div class="flex-1 flex flex-col h-full overflow-hidden">

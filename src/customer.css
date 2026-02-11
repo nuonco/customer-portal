@@ -517,6 +517,10 @@
   @apply bg-cool-grey-100 text-cool-grey-700 dark:bg-dark-grey-700 dark:text-cool-grey-300;
 }
 
+.platform-chip-region {
+  @apply bg-cool-grey-100 text-cool-grey-700 dark:bg-dark-grey-700 dark:text-cool-grey-300;
+}
+
 /* ─────────────────────────────────────────────────────────────────────────────
  * HEALTH PILLS
  * Compact health check indicators
@@ -571,6 +575,12 @@
   @apply translate-x-0;
 }
 
+/* Full-width expanded panel state */
+.detail-panel.panel-full {
+  width: 100%;
+  max-width: none;
+}
+
 /* Full width on mobile */
 @media (max-width: 768px) {
   .detail-panel {
@@ -584,7 +594,7 @@
  * ───────────────────────────────────────────────────────────────────────────── */
 
 .panel-header {
-  @apply flex items-center justify-between px-6 py-4;
+  @apply flex items-center justify-between gap-4 px-6 py-4;
   @apply border-b border-cool-grey-200 dark:border-dark-grey-600;
   @apply bg-white dark:bg-dark-grey-800;
   @apply sticky top-0;
@@ -593,7 +603,6 @@
 
 .panel-header h2 {
   @apply text-lg font-semibold text-cool-grey-900 dark:text-white truncate;
-  max-width: calc(100% - 48px);
 }
 
 .panel-close-btn {
@@ -603,6 +612,15 @@
   @apply transition-colors duration-150;
   font-size: 24px;
   line-height: 1;
+}
+
+/* Header action button (expand/collapse) */
+.panel-header-btn {
+  @apply flex items-center justify-center w-8 h-8 rounded-md;
+  @apply text-cool-grey-500 hover:text-cool-grey-700;
+  @apply dark:text-cool-grey-400 dark:hover:text-cool-grey-200;
+  @apply hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700;
+  @apply transition-colors duration-150;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -668,6 +686,16 @@
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+ * OVERVIEW HEADER
+ * Compact summary bar at top of panel overview tab
+ * ───────────────────────────────────────────────────────────────────────────── */
+
+.overview-header {
+  @apply pb-4 mb-4 border-b border-cool-grey-200;
+  @apply dark:border-dark-grey-600;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

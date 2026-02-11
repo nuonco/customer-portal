@@ -1,6 +1,8 @@
 package partials
 
 import (
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -39,28 +41,65 @@ type HealthCheckStatusDataPanel struct {
 	LastRunAt     time.Time
 }
 
+// platformFromRegion determines cloud platform from a region string
+func platformFromRegion(region string) string {
+	if strings.Contains(region, "us-") || strings.Contains(region, "eu-") || strings.Contains(region, "ap-") {
+		return "aws"
+	} else if strings.Contains(region, "eastus") || strings.Contains(region, "westus") || strings.Contains(region, "northeurope") {
+		return "azure"
+	} else if strings.Contains(region, "us-central") || strings.Contains(region, "us-east") || strings.Contains(region, "europe-") {
+		return "gcp"
+	}
+	return "unknown"
+}
+
+// platformLabel returns a display label for a platform string
+func platformLabel(platform string) string {
+	switch platform {
+	case "aws":
+		return "AWS"
+	case "azure":
+		return "Azure"
+	case "gcp":
+		return "GCP"
+	default:
+		return "Cloud"
+	}
+}
+
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
-	Install             *models.Install
-	RecentWorkflows     []WorkflowDataPanel
-	HealthCheckStatuses []HealthCheckStatusDataPanel
-	OverallHealthStatus string
-	HasHealthChecks     bool
-	BasePath            string
-	PrimaryColor        string
-	SecondaryColor      string
+	Install                  *models.Install
+	HealthCheckStatuses      []HealthCheckStatusDataPanel
+	OverallHealthStatus      string
+	HasHealthChecks          bool
+	HealthChecksPassed       int
+	HealthChecksFailed       int
+	HealthChecksPending      int
+	BasePath                 string
+	PrimaryColor             string
+	SecondaryColor           string
+	AppConfigVersion         int64
+	AppConfigUpdatedAt       string
+	InstallConfigVersion     int64
+	InstallConfigUpdatedAt   string
+	ActiveProvisionWorkflow  *WorkflowDataPanel
+	CloudFormationLink       string
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
 templ InstallDetailPanel(props InstallDetailPanelProps) {
-	<!-- Actions Dropdown -->
+	{{
+		platform := platformFromRegion(props.Install.Region)
+	}}
+	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
 	if props.Install.Status != "deprovisioning" {
-		<div class="mb-4 flex justify-end">
+		<div id="panel-actions-source" class="hidden">
 			<div class="relative" id="actionsDropdown">
 				<button
 					type="button"
 					onclick="toggleActionsDropdown()"
-					class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+					class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
 					style="border-radius: var(--theme-radius)"
 				>
 					Actions
@@ -98,56 +137,20 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			</div>
 		</div>
 	}
-	<!-- Main Card -->
-	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
-		<!-- Two-column layout: Install Details + Health Status -->
-		<div class="flex flex-col md:flex-row gap-6 mb-6">
-			<!-- Left: Install Details -->
-			<div class="md:w-1/2">
-				<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Install Details</h3>
-				<div class="space-y-2 text-sm">
-					<div>
-						<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">App:</span>
-						<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.InstallLink.AppName }</span>
-					</div>
-					if props.Install.Region != "" {
-						<div>
-							<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Region:</span>
-							<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.Region }</span>
-						</div>
-					}
-					<div>
-						<span class="font-medium text-cool-grey-600 dark:text-cool-grey-400">Created:</span>
-						<span class="ml-1 text-cool-grey-800 dark:text-cool-grey-300">{ props.Install.CreatedAt.Format("Jan 2, 2006 at 3:04 PM") }</span>
-					</div>
-					<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
-						<span class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400">ID:</span>
-						<span class="ml-1 text-xs font-mono text-cool-grey-600 dark:text-cool-grey-400">{ props.Install.NuonInstallID }</span>
-					</div>
-				</div>
-			</div>
-			<!-- Right: Health Status -->
-			<div class="md:w-1/2">
-				@healthStatusPanel(props)
-			</div>
-		</div>
-	</div>
-	<!-- Latest Updates -->
-	<div class="mt-6">
-		<h3 class="text-lg text-cool-grey-700 dark:text-cool-grey-300 mb-4">Latest Update</h3>
-		if len(props.RecentWorkflows) > 0 {
-			for _, workflow := range props.RecentWorkflows {
-				@workflowCardPanel(workflow, props.Install.ID, props.BasePath, props.PrimaryColor)
-			}
-		} else {
-			<div class="text-center py-8 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg">
-				<svg class="mx-auto h-8 w-8 text-cool-grey-400 dark:text-cool-grey-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
-				</svg>
-				<h3 class="mt-2 text-sm font-medium text-cool-grey-900 dark:text-white">No Active Updates</h3>
-				<p class="mt-1 text-xs text-cool-grey-600 dark:text-cool-grey-400">There are no active updates at this time.</p>
-			</div>
+	<div class="space-y-4 mt-4">
+		<!-- Active Provision Banner -->
+		if props.ActiveProvisionWorkflow != nil {
+			@activeProvisionBanner(*props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
 		}
+		<!-- App Config + Platform (side by side) -->
+		<div class="grid grid-cols-2 gap-4">
+			@appConfigCard(props)
+			@platformCard(platform, props.Install.Region)
+		</div>
+		<!-- Health Status (full width) -->
+		<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+			@healthStatusPanel(props)
+		</div>
 	</div>
 	<!-- Edit Inputs Modal -->
 	@editInputsModalPanel()
@@ -158,9 +161,138 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		data-base-path={ props.BasePath }
 		data-install-id={ props.Install.ID }
 		data-install-name={ props.Install.Name }
+		data-nuon-install-id={ props.Install.NuonInstallID }
 	></div>
 	<!-- JavaScript for actions -->
 	@installDetailPanelScripts()
+}
+
+// overviewPlatformChip renders a platform chip inline (avoids import cycle with components)
+templ overviewPlatformChip(platform string) {
+	switch platform {
+	case "aws":
+		<span class="platform-chip platform-chip-aws">AWS</span>
+	case "azure":
+		<span class="platform-chip platform-chip-azure">Azure</span>
+	case "gcp":
+		<span class="platform-chip platform-chip-gcp">GCP</span>
+	default:
+		<span class="platform-chip platform-chip-unknown">Cloud</span>
+	}
+}
+
+// platformCard renders the platform information card
+templ platformCard(platform string, region string) {
+	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+		<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Platform</h3>
+		<div class="space-y-3 text-sm">
+			<div>
+				<span class="text-cool-grey-500 dark:text-cool-grey-400">Name</span>
+				<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ platformLabel(platform) }</p>
+			</div>
+			if region != "" {
+				<div>
+					<span class="text-cool-grey-500 dark:text-cool-grey-400">Region</span>
+					<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ region }</p>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// activeProvisionBanner renders a banner for an active provision workflow at the top of the overview
+templ activeProvisionBanner(workflow WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
+	<div class="space-y-4">
+		@workflowCardPanel(workflow, installID, basePath, primaryColor)
+		if cloudFormationLink != "" {
+			<div class="p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
+				<div class="flex items-center justify-between">
+					<div>
+						<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
+						<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">Complete your infrastructure setup in AWS Console</p>
+					</div>
+					<a
+						href={ templ.SafeURL(cloudFormationLink) }
+						target="_blank"
+						rel="noopener noreferrer"
+						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
+						style="border-radius: var(--theme-radius)"
+					>
+						Open in AWS
+						<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+						</svg>
+					</a>
+				</div>
+			</div>
+		}
+	</div>
+}
+
+// appConfigCard renders the app configuration card
+templ appConfigCard(props InstallDetailPanelProps) {
+	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+		<div class="flex items-center gap-2 mb-3">
+			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.Install.InstallLink.AppName }</h3>
+			if props.AppConfigVersion > 0 {
+				if props.InstallConfigVersion < props.AppConfigVersion {
+					<span class="inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">update available</span>
+				} else {
+					<span class="inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">up to date</span>
+				}
+			}
+		</div>
+		<div class="grid grid-cols-2 gap-6 text-sm">
+			<!-- First column: Installed Version -->
+			<div class="space-y-2">
+				if props.InstallConfigVersion > 0 {
+					<div>
+						<span class="text-cool-grey-500 dark:text-cool-grey-400">Installed Version</span>
+						if props.AppConfigVersion > 0 && props.InstallConfigVersion < props.AppConfigVersion {
+							<p class="font-medium text-amber-600 dark:text-amber-400">{ fmt.Sprintf("v%d", props.InstallConfigVersion) }</p>
+						} else {
+							<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ fmt.Sprintf("v%d", props.InstallConfigVersion) }</p>
+						}
+					</div>
+					if props.InstallConfigUpdatedAt != "" {
+						<div>
+							<span class="text-cool-grey-500 dark:text-cool-grey-400">Last Updated</span>
+							<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ formatConfigDate(props.InstallConfigUpdatedAt) }</p>
+						</div>
+					}
+				} else {
+					<div>
+						<span class="text-cool-grey-500 dark:text-cool-grey-400">Installed Version</span>
+						<p class="font-medium text-cool-grey-400 dark:text-cool-grey-500">—</p>
+					</div>
+				}
+			</div>
+			<!-- Second column: Latest Version + Published -->
+			<div class="space-y-2">
+				if props.AppConfigVersion > 0 {
+					<div>
+						<span class="text-cool-grey-500 dark:text-cool-grey-400">Latest Version</span>
+						<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ fmt.Sprintf("v%d", props.AppConfigVersion) }</p>
+					</div>
+				}
+				if props.AppConfigUpdatedAt != "" {
+					<div>
+						<span class="text-cool-grey-500 dark:text-cool-grey-400">Published</span>
+						<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ formatConfigDate(props.AppConfigUpdatedAt) }</p>
+					</div>
+				}
+			</div>
+		</div>
+	</div>
+}
+
+func formatConfigDate(dateStr string) string {
+	for _, layout := range []string{time.RFC3339, time.RFC3339Nano, "2006-01-02T15:04:05Z", "2006-01-02T15:04:05"} {
+		if t, err := time.Parse(layout, dateStr); err == nil {
+			return t.Format("Jan 2, 2006")
+		}
+	}
+	return dateStr
 }
 
 // healthStatusPanel renders health status for the panel
@@ -268,6 +400,20 @@ templ installDetailPanelScripts() {
 			var basePath = configEl.dataset.basePath;
 			var installID = configEl.dataset.installId;
 			var installName = configEl.dataset.installName;
+			var nuonInstallID = configEl.dataset.nuonInstallId;
+
+			// Set the install ID in the panel header
+			var installIdEl = document.getElementById('panel-install-id');
+			if (installIdEl && nuonInstallID) {
+				installIdEl.textContent = nuonInstallID;
+			}
+
+			// Move actions dropdown into panel header
+			var actionsSource = document.getElementById('panel-actions-source');
+			var actionsContainer = document.getElementById('panel-actions-container');
+			if (actionsSource && actionsContainer) {
+				actionsContainer.innerHTML = actionsSource.innerHTML;
+			}
 
 			// Actions dropdown toggle
 			window.toggleActionsDropdown = function() {

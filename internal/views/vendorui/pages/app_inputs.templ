@@ -3,7 +3,7 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // AppInputInfo represents an input field for display
@@ -50,7 +50,7 @@ func hasInputs(groups []AppInputGroup) bool {
 templ AppInputsPage(props AppInputsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex h-full overflow-hidden">
-			@partials.AppSubnav(partials.AppSubnavProps{
+			@components.AppSubnav(components.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,
 				ActiveSubPage: "inputs",

@@ -3,21 +3,22 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // DNSSettingsPageProps for the DNS settings page
 type DNSSettingsPageProps struct {
 	vendorui.LayoutProps
-	Org  *models.NuonOrg
+	Org        *models.NuonOrg
 	BaseDomain string // e.g., "portal.nuon.co" or "localhost:8080"
+	Scheme     string // "https://" or "http://"
 }
 
 // DNSSettingsPage renders the DNS settings page
 templ DNSSettingsPage(props DNSSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.PortalSubnav(partials.PortalSubnavProps{
+			@components.PortalSubnav(components.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "dns",
 				BasePath:      props.BasePath,
@@ -30,7 +31,7 @@ templ DNSSettingsPage(props DNSSettingsPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="max-w-4xl space-y-6">
+					<div class="space-y-6">
 						@dnsCurrentURLSection(props)
 						@dnsSubdomainSection(props)
 						@dnsSaveSection(props.PrimaryColor)
@@ -43,6 +44,7 @@ templ DNSSettingsPage(props DNSSettingsPageProps) {
 					data-base-path={ props.BasePath }
 					data-base-domain={ props.BaseDomain }
 					data-current-subdomain={ props.Org.Subdomain }
+					data-scheme={ props.Scheme }
 				></div>
 				@dnsSettingsScript()
 			</div>
@@ -60,7 +62,7 @@ templ dnsCurrentURLSection(props DNSSettingsPageProps) {
 		</div>
 		<div class="flex items-center gap-3">
 			<div class="flex-1 p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg font-mono text-sm text-cool-grey-900 dark:text-white overflow-x-auto">
-				<span id="previewURL">https://{ props.Org.Subdomain }.{ props.BaseDomain }</span>
+				<span id="previewURL">{ props.Scheme }{ props.Org.Subdomain }.{ props.BaseDomain }</span>
 			</div>
 			<button
 				type="button"
@@ -87,7 +89,7 @@ templ dnsSubdomainSection(props DNSSettingsPageProps) {
 				</label>
 				<div class="flex items-center">
 					<span class="px-3 py-2 bg-cool-grey-100 dark:bg-dark-grey-700 border border-r-0 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-600 dark:text-cool-grey-400 rounded-l-md">
-						https://
+						{ props.Scheme }
 					</span>
 					<input
 						type="text"
@@ -157,6 +159,7 @@ templ dnsSettingsScript() {
 			var basePath = config.dataset.basePath;
 			var baseDomain = config.dataset.baseDomain;
 			var currentSubdomain = config.dataset.currentSubdomain;
+			var scheme = config.dataset.scheme;
 			var checkTimeout = null;
 
 			// Copy URL to clipboard
@@ -179,7 +182,7 @@ templ dnsSettingsScript() {
 
 				// Update preview
 				var preview = document.getElementById('previewURL');
-				preview.textContent = 'https://' + (value || 'your-company') + '.' + baseDomain;
+				preview.textContent = scheme + (value || 'your-company') + '.' + baseDomain;
 
 				// Debounce availability check
 				clearTimeout(checkTimeout);

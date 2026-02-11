@@ -13,7 +13,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // ActionForHealthCheck represents an action that can be configured as a health check
@@ -77,7 +77,7 @@ func AppHealthChecksPage(props AppHealthChecksPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = partials.AppSubnav(partials.AppSubnavProps{
+			templ_7745c5c3_Err = components.AppSubnav(components.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,
 				ActiveSubPage: "health-checks",

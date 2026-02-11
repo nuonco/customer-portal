@@ -39,8 +39,8 @@ serviceAccount:
 
 app:
   port: 8080
-  liveness_probe: /health
-  readiness_probe: /ready
+  liveness_probe: /livez
+  readiness_probe: /readyz
 
   resources:
     limits:

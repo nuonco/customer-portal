@@ -15,6 +15,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/nuonco/nuon-go"
 	"github.com/nuonco/nuon-go/models"
+	"go.uber.org/zap"
 )
 
 // Client wraps the Nuon API client for the installer app
@@ -39,7 +40,10 @@ func NewClientWithURL(apiToken, orgID, apiURL string) (*Client, error) {
 	// Create validator instance
 	v := validator.New()
 
-	fmt.Printf("NUON AUTH - API URL: %s, OrgID: %s\n", apiURL, orgID)
+	zap.L().Debug("creating Nuon client",
+		zap.String("api_url", apiURL),
+		zap.String("org_id", orgID),
+	)
 
 	// Create Nuon client with options - using exact CLI pattern
 	client, err := nuon.New(
@@ -217,7 +221,7 @@ func (c *Client) GetInstallWorkflowsByType(ctx context.Context, installID string
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
 	req.Header.Set("Content-Type", "application/json")
 
-	fmt.Printf("NUON CLIENT: Making request to %s\n", url)
+	zap.L().Debug("making Nuon API request", zap.String("url", url))
 
 	// Make the request
 	client := &http.Client{}
@@ -234,9 +238,11 @@ func (c *Client) GetInstallWorkflowsByType(ctx context.Context, installID string
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		fmt.Printf("NUON CLIENT ERROR: API returned status %d: %s\n", resp.StatusCode, string(body))
+		zap.L().Error("Nuon API returned non-OK status",
+			zap.Int("status", resp.StatusCode),
+		)
 		// Fallback to original method if direct API call fails
-		fmt.Printf("NUON CLIENT: Falling back to standard GetWorkflows method\n")
+		zap.L().Warn("falling back to standard GetWorkflows method")
 		return c.client.GetWorkflows(ctx, installID, &models.GetPaginatedQuery{
 			Offset: offset,
 			Limit:  limit,
@@ -249,32 +255,9 @@ func (c *Client) GetInstallWorkflowsByType(ctx context.Context, installID string
 		return nil, false, fmt.Errorf("failed to parse workflows: %w", err)
 	}
 
-	fmt.Printf("NUON CLIENT SUCCESS: Raw API returned %d workflows with planonly=false\n", len(workflows))
-	if len(workflows) > 0 {
-		fmt.Printf("NUON CLIENT: First workflow ID=%s, Steps count=%d\n", workflows[0].ID, len(workflows[0].Steps))
-		if len(workflows[0].Steps) > 0 {
-			fmt.Printf("NUON CLIENT: First step - ID=%s, ExecutionType=%s, Approval present=%v\n",
-				workflows[0].Steps[0].ID, workflows[0].Steps[0].ExecutionType, workflows[0].Steps[0].Approval != nil)
-			// Check all steps for approval data and execution types
-			approvalCount := 0
-			approvalTypeCount := 0
-			for i, step := range workflows[0].Steps {
-				if step.Approval != nil {
-					approvalCount++
-				}
-				if step.ExecutionType == "approval" {
-					approvalTypeCount++
-				}
-				// Log first 3 steps in detail
-				if i < 3 {
-					fmt.Printf("NUON CLIENT: Step %d - ID=%s, ExecutionType=%s, Name=%s, Approval=%v\n",
-						i, step.ID, step.ExecutionType, step.Name, step.Approval != nil)
-				}
-			}
-			fmt.Printf("NUON CLIENT: Found %d steps with Approval object, %d steps with ExecutionType=approval out of %d total steps\n",
-				approvalCount, approvalTypeCount, len(workflows[0].Steps))
-		}
-	}
+	zap.L().Debug("fetched workflows from API",
+		zap.Int("count", len(workflows)),
+	)
 
 	// TODO: Determine hasMore from response headers or pagination info
 	hasMore := len(workflows) == limit

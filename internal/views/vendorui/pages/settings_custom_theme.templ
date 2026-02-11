@@ -5,7 +5,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // CustomThemeSettingsPageProps for the custom theme settings page
@@ -20,7 +20,7 @@ type CustomThemeSettingsPageProps struct {
 templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.PortalSubnav(partials.PortalSubnavProps{
+			@components.PortalSubnav(components.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "custom-theme",
 				BasePath:      props.BasePath,
@@ -33,7 +33,7 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="max-w-4xl space-y-6">
+					<div class="space-y-6">
 						@customThemeGitHubSection(props.GitHubConfig, props.Templates, props.Assets)
 						@customThemeSyncedFilesSection(props.GitHubConfig, props.Templates, props.Assets)
 					</div>

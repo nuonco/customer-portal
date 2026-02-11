@@ -82,10 +82,14 @@ func GetTemplateOverride(db *gorm.DB, orgID, pageName string) (*TemplateOverride
 }
 
 // GetEnabledTemplateOverride returns the template override if it exists and is enabled.
+// Returns (nil, nil) when no override is found, avoiding GORM's "record not found" log noise.
 func GetEnabledTemplateOverride(db *gorm.DB, orgID, pageName string) (*TemplateOverride, error) {
 	var override TemplateOverride
-	if err := db.Where("org_id = ? AND page_name = ? AND is_enabled = ?", orgID, pageName, true).First(&override).Error; err != nil {
+	if err := db.Where("org_id = ? AND page_name = ? AND is_enabled = ?", orgID, pageName, true).Limit(1).Find(&override).Error; err != nil {
 		return nil, err
+	}
+	if override.ID == "" {
+		return nil, nil
 	}
 	return &override, nil
 }

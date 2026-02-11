@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
@@ -11,10 +12,12 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/a-h/templ"
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
@@ -102,6 +105,7 @@ type Handler struct {
 	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
 	templateRenderer    *overrides.TemplateRenderer       // Template renderer for customer page overrides
 	subdomainBaseDomain string                            // Base domain for workspace subdomains (e.g., "portal.nuon.co")
+	logger              *zap.Logger
 }
 
 // PaginationData holds pagination metadata for templates
@@ -129,7 +133,7 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string, logger *zap.Logger) *Handler {
 	return &Handler{
 		db:                  db,
 		auth:                jwtAuth,
@@ -137,13 +141,14 @@ func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.Au
 		customerBaseURL:     customerBaseURL,
 		nuonAPIURL:          nuonAPIURL,
 		basePath:            basePath,
-		templateRenderer:    overrides.NewTemplateRenderer(db),
+		templateRenderer:    overrides.NewTemplateRenderer(db, logger),
 		subdomainBaseDomain: subdomainBaseDomain,
+		logger:              logger,
 	}
 }
 
 // NewHandlerWithCustomerAuth creates a handler with customer authentication support
-func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string) *Handler {
+func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string, logger *zap.Logger) *Handler {
 	return &Handler{
 		db:                  db,
 		auth:                jwtAuth,
@@ -151,9 +156,48 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 		customerBaseURL:     customerBaseURL,
 		nuonAPIURL:          nuonAPIURL,
 		basePath:            basePath,
-		templateRenderer:    overrides.NewTemplateRenderer(db),
+		templateRenderer:    overrides.NewTemplateRenderer(db, logger),
 		subdomainBaseDomain: subdomainBaseDomain,
+		logger:              logger,
 	}
+}
+
+// schemeFromBaseURL returns the URL scheme ("http://" or "https://") based on the customerBaseURL.
+func (h *Handler) schemeFromBaseURL() string {
+	if strings.HasPrefix(h.customerBaseURL, "http://") {
+		return "http://"
+	}
+	return "https://"
+}
+
+// checkOrgStatus validates API connectivity for the given org.
+// Returns status ("active" or "error") and a human-readable message.
+func (h *Handler) checkOrgStatus(ctx context.Context, org *models.NuonOrg) (string, string) {
+	if org == nil || org.APIToken == "" {
+		return "error", "No API token configured"
+	}
+
+	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+
+	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		return "error", "Unable to reach Nuon API"
+	}
+
+	if err := client.ValidateOrgAccess(checkCtx); err != nil {
+		return "error", "Unable to reach Nuon API"
+	}
+
+	return "active", "Connected"
+}
+
+// enrichLayoutWithOrgStatus sets OrgStatus and OrgStatusMessage on the layout props
+// by checking live API connectivity for the current org.
+func (h *Handler) enrichLayoutWithOrgStatus(ctx context.Context, layout *vendorui.LayoutProps) {
+	status, msg := h.checkOrgStatus(ctx, layout.CurrentOrg)
+	layout.OrgStatus = status
+	layout.OrgStatusMessage = msg
 }
 
 // GetUserOrgs returns all active organizations for a user
@@ -216,13 +260,15 @@ func (h *Handler) getCustomCSSPath(orgID string) string {
 // tryRenderOverride attempts to render a template override for the given page
 // Returns true if an override was rendered, false if fallback to default template is needed
 func (h *Handler) tryRenderOverride(c *gin.Context, orgID, pageName string, ctx *overrides.TemplateContext) bool {
-	// Debug: Log the org ID being used
 	subdomain, _ := c.Get("subdomain")
-	fmt.Printf("[DEBUG] tryRenderOverride: pageName=%s, orgID=%s, subdomain=%v\n",
-		pageName, orgID, subdomain)
+	h.logger.Debug("tryRenderOverride",
+		zap.String("page", pageName),
+		zap.String("org_id", orgID),
+		zap.Any("subdomain", subdomain),
+	)
 
 	if orgID == "" {
-		fmt.Printf("[DEBUG] tryRenderOverride: orgID is empty, skipping override\n")
+		h.logger.Debug("tryRenderOverride: skipping, orgID empty")
 		return false
 	}
 
@@ -231,11 +277,17 @@ func (h *Handler) tryRenderOverride(c *gin.Context, orgID, pageName string, ctx 
 
 	result := h.templateRenderer.TryRender(c, orgID, pageName, ctx)
 
-	// Debug: Log the result
-	fmt.Printf("[DEBUG] tryRenderOverride: rendered=%v, error=%v\n", result.Rendered, result.Error)
+	h.logger.Debug("tryRenderOverride result",
+		zap.Bool("rendered", result.Rendered),
+		zap.Error(result.Error),
+	)
 
 	if result.Error != nil {
-		fmt.Printf("Template override error for org %s, page %s: %v\n", orgID, pageName, result.Error)
+		h.logger.Error("template override error",
+			zap.String("org_id", orgID),
+			zap.String("page", pageName),
+			zap.Error(result.Error),
+		)
 	}
 	return result.Rendered
 }
@@ -243,17 +295,21 @@ func (h *Handler) tryRenderOverride(c *gin.Context, orgID, pageName string, ctx 
 // HandlePostLoginRedirect handles org selection logic after successful authentication
 // This is called from both LocalLogin and AuthCallback handlers
 func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
-	fmt.Printf("HandlePostLoginRedirect: user=%s (%s), role=%s\n", user.ID, user.Email, user.Role)
+	h.logger.Debug("HandlePostLoginRedirect",
+		zap.String("user_id", user.ID),
+		zap.String("email", user.Email),
+		zap.String("role", string(user.Role)),
+	)
 
 	// Check for return_url cookie (set by invitation flow)
 	if returnURL, err := c.Cookie("return_url"); err == nil && returnURL != "" {
-		fmt.Printf("HandlePostLoginRedirect: found return_url cookie=%s, redirecting\n", returnURL)
+		h.logger.Debug("HandlePostLoginRedirect: found return_url cookie, redirecting", zap.String("return_url", returnURL))
 		// Clear the cookie
 		c.SetCookie("return_url", "", -1, "/", "", false, true)
 		c.Redirect(http.StatusFound, returnURL)
 		return
 	}
-	fmt.Printf("HandlePostLoginRedirect: no return_url cookie found\n")
+	h.logger.Debug("HandlePostLoginRedirect: no return_url cookie found")
 
 	// Only apply org logic for vendor users
 	if user.Role != models.RoleVendor {
@@ -803,18 +859,21 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 	// No orgs - render the OrgsPage template with empty state
 	props := vendorpages.OrgsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       "Organizations",
-			ActivePage:  "orgs",
-			User:        user,
-			CurrentOrg:  nil,
-			Orgs:        orgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            "Organizations",
+			ActivePage:       "orgs",
+			User:             user,
+			CurrentOrg:       nil,
+			Orgs:             orgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Orgs: orgs,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.OrgsPage(props))
 }
 
@@ -836,18 +895,21 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 
 	props := vendorpages.OrgSettingsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       org.Name + " - Settings",
-			ActivePage:  "settings",
-			User:        user,
-			CurrentOrg:  org,
-			Orgs:        allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            org.Name + " - Settings",
+			ActivePage:       "settings",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             allOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org: *org,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.OrgSettingsPage(props))
 }
 
@@ -937,14 +999,16 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 
 	props := vendorpages.OrgDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       org.Name + " - Install Links",
-			ActivePage:  "install-links",
-			User:        user,
-			CurrentOrg:  org,
-			Orgs:        allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            org.Name + " - Install Links",
+			ActivePage:       "install-links",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             allOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:   *org,
 		Links: links,
@@ -965,6 +1029,7 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 		},
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.OrgDetailPage(props))
 }
 
@@ -1024,7 +1089,7 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 	nuonAvailable, err := nuonClient.IsInstallNameAvailable(c.Request.Context(), req.AppID, normalizedName)
 	if err != nil {
 		// Log error but don't fail - Nuon API check is best-effort
-		fmt.Printf("Warning: Failed to check Nuon API for install name availability: %v\n", err)
+		h.logger.Warn("failed to check Nuon API for install name availability", zap.Error(err))
 	} else if !nuonAvailable {
 		c.JSON(http.StatusConflict, gin.H{"error": "An install with this name already exists"})
 		return
@@ -1063,7 +1128,10 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 		healthCheckIDs := healthConfig.GetHealthCheckActionIDs()
 		if len(healthCheckIDs) > 0 {
 			link.SetHealthCheckActionIDs(healthCheckIDs)
-			fmt.Printf("Auto-applied %d health checks from app config for app %s\n", len(healthCheckIDs), req.AppID)
+			h.logger.Info("auto-applied health checks from app config",
+				zap.Int("count", len(healthCheckIDs)),
+				zap.String("app_id", req.AppID),
+			)
 		}
 	}
 
@@ -1121,20 +1189,23 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 
 	props := vendorpages.LinkDetailPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       "Install - " + link.AppName,
-			ActivePage:  "install-links",
-			User:        user,
-			CurrentOrg:  org,
-			Orgs:        userOrgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            "Install - " + link.AppName,
+			ActivePage:       "install-links",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             userOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Link:                        &link,
 		InstallURL:                  installURL,
 		CustomerDashboardInstallURL: customerDashboardInstallURL,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.LinkDetailPage(props))
 }
 
@@ -1575,16 +1646,23 @@ func (h *Handler) DebugUserOrgs(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 	org := middleware.GetCurrentOrg(c)
 
-	fmt.Printf("DebugUserOrgs: Request from user %s (%s) in workspace %s\n", user.ID, user.Email, org.ID)
+	h.logger.Debug("DebugUserOrgs",
+		zap.String("user_id", user.ID),
+		zap.String("email", user.Email),
+		zap.String("org_id", org.ID),
+	)
 
 	var orgs []models.NuonOrg
 	if err := h.db.Where("org_id = ?", org.ID).Find(&orgs).Error; err != nil {
-		fmt.Printf("DebugUserOrgs: Error querying orgs: %v\n", err)
+		h.logger.Error("DebugUserOrgs: error querying orgs", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	fmt.Printf("DebugUserOrgs: Found %d organizations for workspace %s\n", len(orgs), org.ID)
+	h.logger.Debug("DebugUserOrgs: found organizations",
+		zap.Int("count", len(orgs)),
+		zap.String("org_id", org.ID),
+	)
 
 	// Format debug response
 	debugOrgs := make([]gin.H, len(orgs))
@@ -1705,19 +1783,22 @@ func (h *Handler) AppsPage(c *gin.Context) {
 
 	props := vendorpages.AppsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       org.Name + " - Apps",
-			ActivePage:  "apps",
-			User:        user,
-			CurrentOrg:  org,
-			Orgs:        allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            org.Name + " - Apps",
+			ActivePage:       "apps",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             allOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:  *org,
 		Apps: templApps,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppsPage(props))
 }
 
@@ -1910,8 +1991,10 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
 				{Text: "Inputs", Path: "", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:   *org,
 		AppID: appID,
@@ -1922,6 +2005,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 		InputGroups: inputGroups,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppInputsPage(props))
 }
 
@@ -2047,8 +2131,10 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
 				{Text: "Health Checks", Path: "", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org: *org,
 		App: vendorpages.AppInfo{
@@ -2059,6 +2145,7 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 		SelectedIDs: selectedIDs,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppHealthChecksPage(props))
 }
 
@@ -2122,7 +2209,7 @@ func (h *Handler) UpdateAppHealthChecks(c *gin.Context) {
 		Where("app_id = ?", appID).
 		Update("health_check_action_ids", healthCheckIDsStr).Error; err != nil {
 		// Log warning but don't fail - the config was saved successfully
-		fmt.Printf("Warning: Failed to update existing install links with health checks: %v\n", err)
+		h.logger.Warn("failed to update existing install links with health checks", zap.Error(err))
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -2165,13 +2252,16 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Login", Path: portalBasePath + "/login", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Config: config,
 		Theme:  theme,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.LoginSettingsPage(props))
 }
 
@@ -2498,20 +2588,23 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 
 	props := vendorpages.CustomersPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:       org.Name + " - Customers",
-			ActivePage:  "customers",
-			User:        user,
-			CurrentOrg:  org,
-			Orgs:        allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
-			BasePath:    h.basePath,
-			CSSPath:     assets.VendorCSSPath(),
+			Title:            org.Name + " - Customers",
+			ActivePage:       "customers",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             allOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:         *org,
 		Customers:   customers,
 		SearchQuery: searchQuery,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.CustomersPage(props))
 }
 
@@ -2625,13 +2718,16 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 				{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: false},
 				{Text: customer.Name, Path: fmt.Sprintf("%s/orgs/%s/customers/%s", h.basePath, org.ID, customer.ID), Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:      *org,
 		Customer: &customer,
 		Installs: customerInstalls,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerDetailPage(props))
 }

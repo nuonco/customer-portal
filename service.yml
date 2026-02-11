@@ -26,7 +26,7 @@ tests:
 color: green
 
 health_checks:
-  - http://localhost:8080/health
+  - http://localhost:8080/livez
 
 env:
   PORT: 8080

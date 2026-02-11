@@ -278,6 +278,10 @@ html.sidebar-collapsed .stratus-sidebar .sidebar-text {
   @apply bg-green-600 dark:bg-green-500;
 }
 
+.stratus-status-dot.error {
+  @apply bg-red-600 dark:bg-red-500;
+}
+
 .stratus-org-avatar-sm {
   @apply w-6 h-6 rounded bg-primary-100 text-primary-700 flex items-center justify-center;
   @apply text-xs font-semibold uppercase flex-shrink-0;
@@ -597,83 +601,6 @@ html.sidebar-collapsed .stratus-sidebar .sidebar-text {
   @apply flex items-center justify-end gap-3 px-6 py-4;
   @apply border-t border-cool-grey-200 flex-shrink-0;
   @apply dark:border-dark-grey-500;
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════════
- * SUB-NAV COMPONENT - Stratus Design System
- * Replicates styling from /services/dashboard-ui/src/components/navigation/SubNav.tsx
- * ═══════════════════════════════════════════════════════════════════════════════ */
-
-.stratus-subnav {
-  @apply w-56 flex-shrink-0 border-r relative;
-  @apply transition-[width] duration-150 ease-in-out;
-  /* Transparent - inherits page background */
-  border-color: var(--border-color);
-}
-
-/* Sub-nav collapsed state */
-.stratus-subnav.collapsed {
-  @apply w-[4.5rem];
-}
-
-.stratus-subnav.collapsed .subnav-text {
-  @apply opacity-0 w-0 overflow-hidden whitespace-nowrap;
-  transition: opacity 150ms ease-in-out, width 150ms ease-in-out;
-}
-
-.stratus-subnav.collapsed .subnav-header {
-  @apply hidden;
-}
-
-.stratus-subnav.collapsed .stratus-subnav-link {
-  @apply justify-center px-2;
-}
-
-.stratus-subnav-link {
-  @apply flex items-center gap-4 px-3 py-2.5 rounded-md transition-colors w-full;
-  @apply text-sm h-9;
-  @apply text-cool-grey-800 hover:bg-black/5;
-  @apply dark:text-cool-grey-400 dark:hover:bg-white/10;
-}
-
-.stratus-subnav-link.active {
-  @apply bg-primary-200 text-primary-800;
-  @apply dark:bg-primary-600/25 dark:text-primary-400;
-}
-
-.stratus-subnav-link svg {
-  @apply w-5 h-5 flex-shrink-0;
-  /* Icon inherits color from parent text */
-}
-
-.stratus-subnav-link.active svg {
-  @apply text-primary-800 dark:text-primary-400;
-}
-
-/* Sub-nav handle element */
-.stratus-subnav-handle {
-  @apply hidden md:flex absolute right-[-1rem] w-4 h-full cursor-pointer;
-  @apply border-l border-transparent transition-[border-color] duration-150 ease-in-out;
-}
-
-.stratus-subnav-handle:hover {
-  @apply border-primary-600;
-}
-
-.stratus-subnav-handle-button {
-  @apply absolute left-[-0.875rem] top-1/2 -translate-y-1/2;
-  @apply opacity-0 p-1 rounded-lg shadow-md border border-cool-grey-200 bg-white;
-  @apply transition-opacity duration-150 ease-in-out cursor-pointer;
-  @apply dark:bg-dark-grey-300 dark:border-dark-grey-500;
-}
-
-.stratus-subnav-handle-button svg {
-  @apply w-4 h-4 text-cool-grey-600;
-  @apply dark:text-cool-grey-300;
-}
-
-.stratus-subnav-handle:hover .stratus-subnav-handle-button {
-  @apply opacity-100;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"net/http"
 	"net/url"
@@ -13,6 +12,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
@@ -663,6 +663,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	for _, install := range allInstalls {
 		hasPendingApprovals := h.checkHasPendingApprovals(c, &install)
 		isUpdating := h.checkIsUpdating(c, &install)
+		hasActiveProvision := h.checkHasActiveProvision(c, &install)
 
 		// Get health check status
 		hasHealthChecks := false
@@ -712,7 +713,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		// 1. Needs Attention: pending approvals OR unhealthy health checks
 		// 2. Updating: in-progress workflow without approvals
 		// 3. Healthy: everything else
-		needsAttention := hasPendingApprovals || (hasHealthChecks && (failed > 0 || pending > 0))
+		needsAttention := hasPendingApprovals || hasActiveProvision || (hasHealthChecks && (failed > 0 || pending > 0))
 
 		if needsAttention {
 			needsAttentionInstalls = append(needsAttentionInstalls, installWithStatus)
@@ -1280,11 +1281,18 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 	for _, pair := range healthCheckPairs {
 		// RunInstallAction expects the ActionWorkflowConfigID
 		if err := client.RunInstallAction(c.Request.Context(), install.NuonInstallID, pair.ConfigID); err != nil {
-			log.Printf("Failed to trigger health check (config=%s, workflow=%s): %v", pair.ConfigID, pair.WorkflowID, err)
+			h.logger.Error("failed to trigger health check",
+				zap.String("config_id", pair.ConfigID),
+				zap.String("workflow_id", pair.WorkflowID),
+				zap.Error(err),
+			)
 			errors = append(errors, fmt.Sprintf("Action %s: %v", pair.ConfigID, err))
 		} else {
 			triggered++
-			log.Printf("Triggered health check (config=%s) for install %s", pair.ConfigID, install.ID)
+			h.logger.Info("triggered health check",
+				zap.String("config_id", pair.ConfigID),
+				zap.String("install_id", install.ID),
+			)
 		}
 	}
 
@@ -1303,7 +1311,7 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 		ctx := context.Background()
 		bgHealthStatuses, overallHealthStatus, err := background.CheckInstallHealthStatus(ctx, client, install)
 		if err != nil {
-			log.Printf("Failed to fetch health check status after trigger: %v", err)
+			h.logger.Error("failed to fetch health check status after trigger", zap.Error(err))
 		}
 
 		// Convert to templ data type
@@ -1452,6 +1460,38 @@ func (h *Handler) checkIsUpdating(c *gin.Context, install *models.Install) bool 
 	return false
 }
 
+// checkHasActiveProvision checks if an install has an active provision workflow (pending, in-progress, or approval-awaiting)
+func (h *Handler) checkHasActiveProvision(c *gin.Context, install *models.Install) bool {
+	// NuonOrg should already be preloaded by InstallsPage query
+	if install.InstallLink.NuonOrg.ID == "" {
+		return false
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		return false
+	}
+
+	ctx := c.Request.Context()
+	provisionTypes := []string{"provision", "provision_sandbox"}
+	for _, wfType := range provisionTypes {
+		workflows, _, err := nuonClient.GetInstallWorkflowsByType(ctx, install.NuonInstallID, 0, 1, wfType)
+		if err != nil || len(workflows) == 0 {
+			continue
+		}
+		wf := workflows[0]
+		if wf.Status == nil {
+			continue
+		}
+		status := string(wf.Status.Status)
+		if status == "pending" || status == "in-progress" || status == "approval-awaiting" {
+			return true
+		}
+	}
+
+	return false
+}
+
 // InstallDetailPanel renders the install detail content for the sliding panel (no layout wrapper)
 func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
@@ -1469,15 +1509,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		return
 	}
 
-	// Fetch recent workflows for embedded display
-	var recentWorkflows []partials.WorkflowDataPanel
-	if workflows, err := h.fetchRecentWorkflows(c, install); err == nil {
-		recentWorkflows = convertWorkflowsToPanelData(workflows)
-	}
-
 	// Fetch health check status if configured
 	var healthCheckStatuses []partials.HealthCheckStatusDataPanel
 	var overallHealthStatus string
+	var healthPassed, healthFailed, healthPending int
 	healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
 
 	if len(healthCheckIDs) > 0 && install.InstallLink.NuonOrg.APIToken != "" {
@@ -1492,6 +1527,127 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 			if err == nil {
 				overallHealthStatus = status
 				healthCheckStatuses = convertHealthCheckStatusesToPanel(bgHealthStatuses)
+				for _, s := range bgHealthStatuses {
+					switch s.Status {
+					case "Passing":
+						healthPassed++
+					case "Failing":
+						healthFailed++
+					default:
+						healthPending++
+					}
+				}
+			}
+		}
+	}
+
+	// Fetch app config version info
+	var appConfigVersion int64
+	var appConfigUpdatedAt string
+	var installConfigVersion int64
+	var installConfigUpdatedAt string
+	if install.InstallLink.NuonOrg.APIToken != "" {
+		appClient, err := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if err == nil {
+			app, err := appClient.GetApp(context.Background(), install.InstallLink.AppID)
+			if err == nil && len(app.AppConfigs) > 0 {
+				appConfigVersion = app.AppConfigs[0].Version
+				appConfigUpdatedAt = app.AppConfigs[0].UpdatedAt
+
+				// Get install's current config version by matching AppConfigID
+				nuonInstall, instErr := appClient.GetInstall(context.Background(), install.NuonInstallID)
+				if instErr == nil && nuonInstall.AppConfigID != "" {
+					for _, cfg := range app.AppConfigs {
+						if cfg.ID == nuonInstall.AppConfigID {
+							installConfigVersion = cfg.Version
+							installConfigUpdatedAt = cfg.UpdatedAt
+							break
+						}
+					}
+				}
+			}
+		}
+	}
+
+	// Fetch active provision workflow (provision or provision_sandbox)
+	var activeProvisionWorkflow *partials.WorkflowDataPanel
+	var cloudFormationLink string
+	if install.InstallLink.NuonOrg.APIToken != "" {
+		provClient, provErr := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if provErr == nil {
+			ctx := c.Request.Context()
+			provisionTypes := []string{"provision", "provision_sandbox"}
+			for _, wfType := range provisionTypes {
+				workflows, _, err := provClient.GetInstallWorkflowsByType(ctx, install.NuonInstallID, 0, 1, wfType)
+				if err != nil || len(workflows) == 0 {
+					continue
+				}
+				wf := workflows[0]
+				if wf.Status == nil {
+					continue
+				}
+				status := string(wf.Status.Status)
+				if status != "in-progress" && status != "approval-awaiting" && status != "pending" {
+					continue
+				}
+				processed := processWorkflowForCustomer(wf)
+				panel := ginHToWorkflowDataPanel(processed)
+				activeProvisionWorkflow = &panel
+
+				// Check if the "await install stack" step is active (pending, in-progress, or approval-awaiting)
+				if wf.Steps != nil {
+					for _, step := range wf.Steps {
+						if step.Name != "await install stack" {
+							continue
+						}
+						stepStatus := ""
+						if step.Status != nil {
+							stepStatus = string(step.Status.Status)
+						}
+						if stepStatus == "" || stepStatus == "pending" || stepStatus == "in-progress" || stepStatus == "approval-awaiting" {
+							// Fetch CloudFormation link
+							stack, stackErr := provClient.GetInstallStack(ctx, install.NuonInstallID)
+							if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+								if stack.Versions[0].QuickLinkURL != "" {
+									cloudFormationLink = stack.Versions[0].QuickLinkURL
+								}
+							}
+							// Append customer inputs to CF URL
+							if cloudFormationLink != "" {
+								inputConfig, inputErr := provClient.GetAppInputConfig(ctx, install.InstallLink.AppID)
+								if inputErr == nil && inputConfig != nil {
+									var configMap map[string]interface{}
+									jsonBytes, jerr := json.Marshal(inputConfig)
+									if jerr == nil {
+										if json.Unmarshal(jsonBytes, &configMap) == nil {
+											inputMappings := extractCustomerInputMappings(configMap)
+											if len(inputMappings) > 0 {
+												currentInputs, ciErr := provClient.GetInstallCurrentInputs(ctx, install.NuonInstallID)
+												if ciErr == nil && currentInputs != nil && currentInputs.Values != nil {
+													cloudFormationLink = appendInputsToCloudFormationURL(
+														cloudFormationLink,
+														currentInputs.Values,
+														inputMappings,
+													)
+												}
+											}
+										}
+									}
+								}
+							}
+							break
+						}
+					}
+				}
+				break
 			}
 		}
 	}
@@ -1503,52 +1659,24 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	secondaryColor, _ := GetPrimaryColors(theme.SecondaryColor)
 
 	props := partials.InstallDetailPanelProps{
-		Install:             install,
-		RecentWorkflows:     recentWorkflows,
-		HealthCheckStatuses: healthCheckStatuses,
-		OverallHealthStatus: overallHealthStatus,
-		HasHealthChecks:     len(healthCheckIDs) > 0,
-		BasePath:            h.basePath,
-		PrimaryColor:        primaryColor,
-		SecondaryColor:      secondaryColor,
+		Install:                 install,
+		HealthCheckStatuses:     healthCheckStatuses,
+		OverallHealthStatus:     overallHealthStatus,
+		HasHealthChecks:         len(healthCheckIDs) > 0,
+		HealthChecksPassed:      healthPassed,
+		HealthChecksFailed:      healthFailed,
+		HealthChecksPending:     healthPending,
+		BasePath:                h.basePath,
+		PrimaryColor:            primaryColor,
+		SecondaryColor:          secondaryColor,
+		AppConfigVersion:        appConfigVersion,
+		AppConfigUpdatedAt:      appConfigUpdatedAt,
+		InstallConfigVersion:    installConfigVersion,
+		InstallConfigUpdatedAt:  installConfigUpdatedAt,
+		ActiveProvisionWorkflow: activeProvisionWorkflow,
+		CloudFormationLink:      cloudFormationLink,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
-}
-
-// convertWorkflowsToPanelData converts gin.H workflow data to partials.WorkflowDataPanel
-func convertWorkflowsToPanelData(workflows []gin.H) []partials.WorkflowDataPanel {
-	result := make([]partials.WorkflowDataPanel, 0, len(workflows))
-	for _, wf := range workflows {
-		data := partials.WorkflowDataPanel{
-			ID:                       getString(wf, "id"),
-			Name:                     getString(wf, "name"),
-			Status:                   getString(wf, "status"),
-			StatusClass:              getString(wf, "status_class"),
-			CanApprove:               getBool(wf, "can_approve"),
-			CanApproveAll:            getBool(wf, "can_approve_all"),
-			CanCancel:                getBool(wf, "can_cancel"),
-			ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
-			ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
-			CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
-		}
-
-		if t, ok := wf["created_at"].(time.Time); ok {
-			data.CreatedAt = t
-		}
-		if t, ok := wf["finished_at"].(time.Time); ok {
-			data.FinishedAt = t
-		}
-
-		if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
-			data.ApprovalStep = &partials.ApprovalStepDataPanel{
-				StepID:     getString(step, "step_id"),
-				ApprovalID: getString(step, "approval_id"),
-			}
-		}
-
-		result = append(result, data)
-	}
-	return result
 }
 
 // convertHealthCheckStatusesToPanel converts background.HealthCheckStatus to partials.HealthCheckStatusDataPanel

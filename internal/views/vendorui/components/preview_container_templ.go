@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 // PreviewContainerProps for the reusable preview component
 type PreviewContainerProps struct {
 	Title          string // e.g. "Live Preview"
-	Description    string // e.g. "This is how your customer portal will appear."
+	Description    string // e.g. "This is your customers will see."
 	InitialMode    string // "light" or "dark" (default: "light")
 	InitialSize    string // "desktop", "tablet", or "mobile" (default: "desktop")
 	PrimaryColor   string // CSS hex color for --preview-primary

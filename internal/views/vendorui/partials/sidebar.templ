@@ -8,11 +8,15 @@ import (
 
 // SidebarProps for the sidebar navigation
 type SidebarProps struct {
-	ActivePage string
-	CurrentOrg *models.NuonOrg
-	Orgs       []models.NuonOrg
-	BasePath   string
-	LogoBase64 string
+	ActivePage       string
+	CurrentOrg       *models.NuonOrg
+	Orgs             []models.NuonOrg
+	BasePath         string
+	LogoBase64       string
+	PortalScheme     string // e.g., "https://"
+	PortalBaseDomain string // e.g., "portal.nuon.co"
+	OrgStatus        string // "active" | "error"
+	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
 }
 
 // Sidebar renders the vendor sidebar navigation
@@ -35,8 +39,13 @@ templ Sidebar(props SidebarProps) {
 						<div class="sidebar-text flex-1 min-w-0 flex flex-col text-left">
 							<span class="text-xs font-semibold truncate text-cool-grey-900 dark:text-white">{ props.CurrentOrg.Name }</span>
 							<span class="stratus-status text-cool-grey-950 dark:text-white">
-								<span class="stratus-status-dot success"></span>
-								<span>Active</span>
+								if props.OrgStatus == "error" {
+									<span class="stratus-status-dot error"></span>
+									<span>Disconnected</span>
+								} else {
+									<span class="stratus-status-dot success"></span>
+									<span>Active</span>
+								}
 							</span>
 						</div>
 					} else {
@@ -48,6 +57,34 @@ templ Sidebar(props SidebarProps) {
 					@caretUpDownIcon()
 				</button>
 				<div id="org-dropdown" class="stratus-org-dropdown hidden">
+					if props.CurrentOrg != nil && props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "" {
+						<div class="px-3 py-2 border-b border-cool-grey-200 dark:border-dark-grey-600">
+							<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Customer portal</div>
+							<a
+								href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain) }
+								target="_blank"
+								rel="noopener noreferrer"
+								class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 truncate"
+							>
+								<span class="truncate">{ props.CurrentOrg.Subdomain }.{ props.PortalBaseDomain }</span>
+								@portalExternalLinkIcon()
+							</a>
+						</div>
+					}
+					if props.CurrentOrg != nil {
+						<div class="px-3 py-2 border-b border-cool-grey-200 dark:border-dark-grey-600">
+							<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Org status</div>
+							<div class="flex items-center gap-1.5">
+								if props.OrgStatus == "error" {
+									<span class="stratus-status-dot error"></span>
+									<span class="text-xs text-red-600 dark:text-red-400">{ props.OrgStatusMessage }</span>
+								} else {
+									<span class="stratus-status-dot success"></span>
+									<span class="text-xs text-green-600 dark:text-green-400">Connected</span>
+								}
+							</div>
+						</div>
+					}
 					if len(props.Orgs) > 0 {
 						if len(props.Orgs) > 6 {
 							<input type="text" placeholder="Search orgs..." class="stratus-search-input" oninput="filterOrgs(this.value)"/>
@@ -295,6 +332,12 @@ templ globeIcon() {
 
 templ externalLinkSmallIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="sidebar-text w-4 h-4 ml-auto opacity-50">
+		<path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"></path>
+	</svg>
+}
+
+templ portalExternalLinkIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="w-3 h-3 flex-shrink-0 opacity-50">
 		<path d="M224,104a8,8,0,0,1-16,0V59.32l-66.33,66.34a8,8,0,0,1-11.32-11.32L196.68,48H152a8,8,0,0,1,0-16h64a8,8,0,0,1,8,8Zm-40,24a8,8,0,0,0-8,8v72H48V80h72a8,8,0,0,0,0-16H48A16,16,0,0,0,32,80V208a16,16,0,0,0,16,16H176a16,16,0,0,0,16-16V136A8,8,0,0,0,184,128Z"></path>
 	</svg>
 }

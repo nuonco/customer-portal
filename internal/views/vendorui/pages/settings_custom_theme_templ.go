@@ -13,7 +13,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // CustomThemeSettingsPageProps for the custom theme settings page
@@ -62,7 +62,7 @@ func CustomThemeSettingsPage(props CustomThemeSettingsPageProps) templ.Component
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = partials.PortalSubnav(partials.PortalSubnavProps{
+			templ_7745c5c3_Err = components.PortalSubnav(components.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "custom-theme",
 				BasePath:      props.BasePath,
@@ -70,7 +70,7 @@ func CustomThemeSettingsPage(props CustomThemeSettingsPageProps) templ.Component
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Custom Theme</h1><p class=\"stratus-page-subtitle\">Connect a GitHub repository to customize customer-facing pages.</p></div></div><div class=\"stratus-page-section\"><div class=\"max-w-4xl space-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Custom Theme</h1><p class=\"stratus-page-subtitle\">Connect a GitHub repository to customize customer-facing pages.</p></div></div><div class=\"stratus-page-section\"><div class=\"space-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

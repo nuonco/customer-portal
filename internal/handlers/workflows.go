@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/nuon-go/models"
+	"go.uber.org/zap"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -25,13 +25,16 @@ func (h *Handler) WorkflowsPanel(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
-		fmt.Printf("ERROR: Install not found in context\n")
+		h.logger.Error("install not found in context")
 		c.String(http.StatusNotFound, "Install not found")
 		return
 	}
 
 	install := installInterface.(*localModels.Install)
-	fmt.Printf("WorkflowsPanel: Install loaded: ID=%s, NuonInstallID=%s\n", install.ID, install.NuonInstallID)
+	h.logger.Debug("WorkflowsPanel: install loaded",
+		zap.String("install_id", install.ID),
+		zap.String("nuon_install_id", install.NuonInstallID),
+	)
 
 	// Get pagination parameters
 	offsetParam := c.DefaultQuery("offset", "0")
@@ -49,43 +52,6 @@ func (h *Handler) WorkflowsPanel(c *gin.Context) {
 		return
 	}
 
-	// Try to get CloudFormation link from install stack
-	var cloudFormationLink string
-
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
-	if err == nil {
-		stack, err := nuonClient.GetInstallStack(c.Request.Context(), install.NuonInstallID)
-		if err == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
-			if stack.Versions[0].QuickLinkURL != "" {
-				cloudFormationLink = stack.Versions[0].QuickLinkURL
-			}
-		}
-
-		// Append customer inputs to CloudFormation URL if available
-		if cloudFormationLink != "" {
-			inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
-			if err == nil && inputConfig != nil {
-				var configMap map[string]interface{}
-				jsonBytes, err := json.Marshal(inputConfig)
-				if err == nil {
-					if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
-						inputMappings := extractCustomerInputMappings(configMap)
-						if len(inputMappings) > 0 {
-							currentInputs, err := nuonClient.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID)
-							if err == nil && currentInputs != nil && currentInputs.Values != nil {
-								cloudFormationLink = appendInputsToCloudFormationURL(
-									cloudFormationLink,
-									currentInputs.Values,
-									inputMappings,
-								)
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
 	// Group workflows by date and sort in descending order - convert to panel types
 	orderedWorkflowGroups := groupAndSortWorkflowsByDatePanel(processedWorkflows)
 
@@ -95,17 +61,16 @@ func (h *Handler) WorkflowsPanel(c *gin.Context) {
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
 	props := partials.WorkflowsPanelProps{
-		Install:            install,
-		WorkflowGroups:     orderedWorkflowGroups,
-		CloudFormationLink: cloudFormationLink,
-		CurrentOffset:      offset,
-		Limit:              limit,
-		HasNext:            hasMoreFromAPI,
-		HasPrev:            offset > 0,
-		NextOffset:         offset + limit,
-		PrevOffset:         max(0, offset-limit),
-		BasePath:           h.basePath,
-		PrimaryColor:       primaryColor,
+		Install:        install,
+		WorkflowGroups: orderedWorkflowGroups,
+		CurrentOffset:  offset,
+		Limit:          limit,
+		HasNext:        hasMoreFromAPI,
+		HasPrev:        offset > 0,
+		NextOffset:     offset + limit,
+		PrevOffset:     max(0, offset-limit),
+		BasePath:       h.basePath,
+		PrimaryColor:   primaryColor,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.WorkflowsPanel(props))
 }
@@ -203,12 +168,17 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 
 	// Approve the workflow step
 	if err := nuonClient.ApproveWorkflowStep(c.Request.Context(), workflowID, stepID, approvalID); err != nil {
-		fmt.Printf("Failed to approve workflow step: %v\n", err)
+		h.logger.Error("failed to approve workflow step", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to approve workflow step"})
 		return
 	}
 
-	fmt.Printf("User %s (%s) approved workflow step %s in workflow %s\n", user.Email, user.ID, stepID, workflowID)
+	h.logger.Info("workflow step approved",
+		zap.String("email", user.Email),
+		zap.String("user_id", user.ID),
+		zap.String("step_id", stepID),
+		zap.String("workflow_id", workflowID),
+	)
 
 	// For HTMX requests, return the updated workflow card partial
 	if isHTMXRequest(c) {
@@ -250,12 +220,16 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 
 	// Cancel the workflow
 	if err := nuonClient.CancelWorkflow(c.Request.Context(), workflowID); err != nil {
-		fmt.Printf("Failed to cancel workflow: %v\n", err)
+		h.logger.Error("failed to cancel workflow", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to cancel workflow"})
 		return
 	}
 
-	fmt.Printf("User %s (%s) cancelled workflow %s\n", user.Email, user.ID, workflowID)
+	h.logger.Info("workflow cancelled",
+		zap.String("email", user.Email),
+		zap.String("user_id", user.ID),
+		zap.String("workflow_id", workflowID),
+	)
 
 	// For HTMX requests, return the updated workflow card partial
 	if isHTMXRequest(c) {
@@ -282,48 +256,61 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 	install := installInterface.(*localModels.Install)
 	workflowID := c.Param("workflow_id")
 
-	fmt.Printf("=== ApproveAllWorkflowSteps DEBUG START ===\n")
-	fmt.Printf("User: %s (%s), Install ID: %s, Workflow ID: %s\n", user.Email, user.ID, install.ID, workflowID)
+	h.logger.Debug("approving all workflow steps",
+		zap.String("email", user.Email),
+		zap.String("user_id", user.ID),
+		zap.String("install_id", install.ID),
+		zap.String("workflow_id", workflowID),
+	)
 
 	// Load install link to get org info
 	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		fmt.Printf("ERROR: Failed to load install details: %v\n", err)
+		h.logger.Error("failed to load install details", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
 	// Handle NuonOrg loading with fallback strategies (same as WorkflowsPage)
 	if install.InstallLink.NuonOrg.ID == "" {
-		fmt.Printf("NuonOrg not loaded via preload, trying manual loading for OrgID=%s\n", install.InstallLink.OrgID)
+		h.logger.Debug("NuonOrg not loaded via preload, trying manual loading", zap.String("org_id", install.InstallLink.OrgID))
 		var nuonOrg localModels.NuonOrg
 		if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-			fmt.Printf("Manual NuonOrg loading failed: %v\n", err)
+			h.logger.Error("manual NuonOrg loading failed", zap.Error(err))
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization information not found"})
 			return
 		}
 		install.InstallLink.NuonOrg = nuonOrg
-		fmt.Printf("Successfully loaded NuonOrg manually: ID=%s, NuonOrgID=%s\n", nuonOrg.ID, nuonOrg.NuonOrgID)
+		h.logger.Debug("loaded NuonOrg manually",
+			zap.String("id", nuonOrg.ID),
+			zap.String("nuon_org_id", nuonOrg.NuonOrgID),
+		)
 	}
 
-	fmt.Printf("Org info loaded: OrgID=%s, APIToken length=%d\n", install.InstallLink.NuonOrg.NuonOrgID, len(install.InstallLink.NuonOrg.APIToken))
+	h.logger.Debug("org info loaded",
+		zap.String("org_id", install.InstallLink.NuonOrg.NuonOrgID),
+		zap.Int("api_token_length", len(install.InstallLink.NuonOrg.APIToken)),
+	)
 
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		fmt.Printf("ERROR: Failed to initialize Nuon client: %v\n", err)
+		h.logger.Error("failed to initialize Nuon client", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
 	}
 
 	// Set approve-all on the workflow
 	if err := nuonClient.ApproveAllWorkflowSteps(c.Request.Context(), workflowID); err != nil {
-		fmt.Printf("Failed to set workflow approve-all: %v\n", err)
+		h.logger.Error("failed to set workflow approve-all", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to set workflow approve-all"})
 		return
 	}
 
-	fmt.Printf("User %s (%s) set approve-all on workflow %s\n", user.Email, user.ID, workflowID)
-	fmt.Printf("=== ApproveAllWorkflowSteps DEBUG END ===\n")
+	h.logger.Info("workflow approve-all set",
+		zap.String("email", user.Email),
+		zap.String("user_id", user.ID),
+		zap.String("workflow_id", workflowID),
+	)
 
 	// For HTMX requests, return the updated workflow card partial
 	if isHTMXRequest(c) {
@@ -365,14 +352,9 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 				// Check ExecutionType for approval steps
 				if step.ExecutionType == "approval" {
 					hasApprovalSteps = true
-					fmt.Printf("WORKFLOW %s: Found approval step - ID=%s, ExecutionType=%s\n",
-						workflow.ID, step.ID, step.ExecutionType)
 					break
 				}
 			}
-			// Log debug info about steps
-			fmt.Printf("WORKFLOW %s: Checked %d steps, hasApprovalSteps=%v\n",
-				workflow.ID, len(workflow.Steps), hasApprovalSteps)
 		}
 
 		// Check if workflow needs approval or can be cancelled
@@ -387,10 +369,8 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 			// Approve All is available if there are approval steps, even when running
 			if hasApprovalSteps {
 				canApproveAll = true
-				fmt.Printf("WORKFLOW %s: Has approval steps - enabling Approve All button\n", workflow.ID)
 			} else {
 				approveAllDisabledReason = "No approval steps in this workflow"
-				fmt.Printf("WORKFLOW %s: No approval steps detected - disabling Approve All\n", workflow.ID)
 			}
 		case "completed":
 			approveDisabledReason = "Workflow has already completed"
@@ -521,6 +501,7 @@ func getStatusClass(status string) string {
 		"approved":          "bg-green-100 text-green-800",
 		"in-progress":       "bg-blue-100 text-blue-800",
 		"approval-awaiting": "bg-yellow-100 text-yellow-800",
+		"pending":           "bg-yellow-100 text-yellow-800",
 		"approval-denied":   "bg-red-100 text-red-800",
 		"error":             "bg-red-100 text-red-800",
 		"cancelled":         "bg-orange-100 text-orange-800",
@@ -613,12 +594,7 @@ func groupAndSortWorkflowsByDate(workflows []gin.H) []WorkflowGroup {
 	// First, group workflows by date
 	grouped := make(map[string][]gin.H)
 
-	fmt.Printf("GROUPING DEBUG: Processing %d workflows for date grouping\n", len(workflows))
-
-	for i, workflow := range workflows {
-		createdAtRaw := workflow["created_at"]
-		fmt.Printf("GROUPING DEBUG %d: created_at raw value=%+v (Type: %T)\n", i, createdAtRaw, createdAtRaw)
-
+	for _, workflow := range workflows {
 		var dateKey string
 		var success bool
 
@@ -627,34 +603,22 @@ func groupAndSortWorkflowsByDate(workflows []gin.H) []WorkflowGroup {
 			if !createdAt.IsZero() {
 				dateKey = createdAt.Format("2006-01-02")
 				success = true
-				fmt.Printf("GROUPING DEBUG %d: Successfully parsed time.Time, dateKey=%s\n", i, dateKey)
-			} else {
-				fmt.Printf("GROUPING DEBUG %d: time.Time is zero value, skipping\n", i)
 			}
 		} else if createdAtPtr, ok := workflow["created_at"].(*time.Time); ok && createdAtPtr != nil {
 			// Try *time.Time
 			if !createdAtPtr.IsZero() {
 				dateKey = createdAtPtr.Format("2006-01-02")
 				success = true
-				fmt.Printf("GROUPING DEBUG %d: Successfully parsed *time.Time, dateKey=%s\n", i, dateKey)
-			} else {
-				fmt.Printf("GROUPING DEBUG %d: *time.Time is zero value, skipping\n", i)
 			}
 		} else if createdAtStr, ok := workflow["created_at"].(string); ok {
 			// Try string parsing (ISO format)
 			if parsedTime, err := time.Parse(time.RFC3339, createdAtStr); err == nil {
 				dateKey = parsedTime.Format("2006-01-02")
 				success = true
-				fmt.Printf("GROUPING DEBUG %d: Successfully parsed string as RFC3339, dateKey=%s\n", i, dateKey)
 			} else if parsedTime, err := time.Parse("2006-01-02T15:04:05Z", createdAtStr); err == nil {
 				dateKey = parsedTime.Format("2006-01-02")
 				success = true
-				fmt.Printf("GROUPING DEBUG %d: Successfully parsed string as alternative format, dateKey=%s\n", i, dateKey)
-			} else {
-				fmt.Printf("GROUPING DEBUG %d: Failed to parse string time format: %s, error: %v\n", i, createdAtStr, err)
 			}
-		} else {
-			fmt.Printf("GROUPING DEBUG %d: All type assertions failed, workflow dropped from grouping\n", i)
 		}
 
 		if success && dateKey != "" {
@@ -688,10 +652,10 @@ func groupAndSortWorkflowsByDate(workflows []gin.H) []WorkflowGroup {
 		})
 	}
 
-	fmt.Printf("GROUPING RESULT: Created %d date groups in descending order\n", len(orderedGroups))
-	for i, group := range orderedGroups {
-		fmt.Printf("GROUPING RESULT %d: Date %s (%s) has %d workflows\n", i, group.Date, group.DisplayDate, len(group.Workflows))
-	}
+	zap.L().Debug("grouped workflows by date",
+		zap.Int("group_count", len(orderedGroups)),
+		zap.Int("workflow_count", len(workflows)),
+	)
 
 	return orderedGroups
 }
@@ -790,7 +754,7 @@ func (h *Handler) fetchWorkflowData(c *gin.Context, install *localModels.Install
 	for i := 0; i < len(customerVisibleWorkflowTypes); i++ {
 		result := <-resultChan
 		if result.err != nil {
-			fmt.Printf("Error fetching workflow type: %v\n", result.err)
+			h.logger.Error("error fetching workflow type", zap.Error(result.err))
 			continue
 		}
 		allWorkflows = append(allWorkflows, result.workflows...)
@@ -860,7 +824,10 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 	// Fetch the updated workflow from the API
 	workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
 	if err != nil {
-		fmt.Printf("Failed to fetch workflow %s for partial render: %v\n", workflowID, err)
+		h.logger.Error("failed to fetch workflow for partial render",
+			zap.String("workflow_id", workflowID),
+			zap.Error(err),
+		)
 		// Render error state workflow card
 		errorProps := components.WorkflowCardProps{
 			Workflow: customerui.WorkflowData{
@@ -966,7 +933,7 @@ func (h *Handler) fetchRecentWorkflows(c *gin.Context, install *localModels.Inst
 		result := <-resultChan
 		if result.err != nil {
 			// Log but continue - we want to show whatever we can get
-			fmt.Printf("Error fetching workflow type: %v\n", result.err)
+			h.logger.Error("error fetching workflow type", zap.Error(result.err))
 			continue
 		}
 		if result.workflow != nil {
@@ -1035,7 +1002,6 @@ func extractCustomerInputMappings(inputConfig interface{}) map[string]string {
 				} else {
 					mappings[name] = name
 				}
-				fmt.Printf("DEBUG: Input mapping: %s -> %s\n", name, mappings[name])
 			}
 		}
 	}
@@ -1063,7 +1029,6 @@ func appendInputsToCloudFormationURL(cfURL string, inputs map[string]string, inp
 				url.QueryEscape(cfParamName),
 				url.QueryEscape(value))
 			params = append(params, param)
-			fmt.Printf("DEBUG: Adding CF param: %s (from input %s = %s)\n", param, inputName, value)
 		}
 	}
 

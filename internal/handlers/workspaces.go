@@ -8,6 +8,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	gojwt "github.com/golang-jwt/jwt/v4"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -539,7 +540,7 @@ func (h *Handler) AcceptOrgInvitationPage(c *gin.Context) {
 		// Not authenticated - store return URL in cookie and redirect to login
 		// URL-encode the token in case it contains special characters
 		returnURL := h.basePath + "/invite?token=" + url.QueryEscape(token)
-		fmt.Printf("AcceptOrgInvitationPage: user not authenticated, setting return_url=%s and redirecting to login\n", returnURL)
+		h.logger.Debug("AcceptOrgInvitationPage: user not authenticated, redirecting to login", zap.String("return_url", returnURL))
 		c.SetCookie("return_url", returnURL, 3600, "/", "", false, true)
 		c.Redirect(http.StatusFound, h.basePath+"/login/")
 		return
@@ -590,43 +591,41 @@ func (h *Handler) tryGetCurrentUser(c *gin.Context) *models.User {
 	// Get the JWT token from cookie
 	tokenCookie, err := c.Cookie("jwt")
 	if err != nil || tokenCookie == "" {
-		fmt.Printf("tryGetCurrentUser: no JWT cookie found (err=%v, empty=%v)\n", err, tokenCookie == "")
+		h.logger.Debug("tryGetCurrentUser: no JWT cookie found")
 		return nil
 	}
-
-	fmt.Printf("tryGetCurrentUser: found JWT cookie, attempting to parse (len=%d)\n", len(tokenCookie))
 
 	// Use the JWT middleware to parse and validate the token
 	token, err := h.auth.ParseTokenString(tokenCookie)
 	if err != nil {
-		fmt.Printf("tryGetCurrentUser: failed to parse JWT: %v\n", err)
+		h.logger.Warn("tryGetCurrentUser: failed to parse JWT", zap.Error(err))
 		return nil
 	}
 
 	// Extract claims from the token
 	claims, ok := token.Claims.(gojwt.MapClaims)
 	if !ok || !token.Valid {
-		fmt.Printf("tryGetCurrentUser: invalid token claims (ok=%v, valid=%v)\n", ok, token.Valid)
+		h.logger.Warn("tryGetCurrentUser: invalid token claims")
 		return nil
 	}
 
 	// Extract user ID from claims
 	userID, ok := claims["user_id"].(string)
 	if !ok || userID == "" {
-		fmt.Printf("tryGetCurrentUser: no user_id in claims (ok=%v, userID=%q)\n", ok, userID)
+		h.logger.Warn("tryGetCurrentUser: no user_id in claims")
 		return nil
 	}
 
-	fmt.Printf("tryGetCurrentUser: found user_id=%s, loading from DB\n", userID)
+	h.logger.Debug("tryGetCurrentUser: loading user from DB", zap.String("user_id", userID))
 
 	// Load user from database
 	var user models.User
 	if err := h.db.First(&user, "id = ?", userID).Error; err != nil {
-		fmt.Printf("tryGetCurrentUser: failed to load user from DB: %v\n", err)
+		h.logger.Warn("tryGetCurrentUser: failed to load user from DB", zap.Error(err))
 		return nil
 	}
 
-	fmt.Printf("tryGetCurrentUser: successfully loaded user %s (%s)\n", user.ID, user.Email)
+	h.logger.Debug("tryGetCurrentUser: loaded user", zap.String("user_id", user.ID), zap.String("email", user.Email))
 	return &user
 }
 

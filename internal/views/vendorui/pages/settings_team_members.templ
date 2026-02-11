@@ -5,7 +5,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // TeamMembersPageProps for the team members page
@@ -19,7 +19,7 @@ type TeamMembersPageProps struct {
 templ TeamMembersPage(props TeamMembersPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.TeamSubnav(partials.TeamSubnavProps{
+			@components.TeamSubnav(components.TeamSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "members",
 				BasePath:      props.BasePath,
@@ -32,9 +32,7 @@ templ TeamMembersPage(props TeamMembersPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="max-w-4xl">
-						@teamMembersList(props.Members, props.LayoutProps.User)
-					</div>
+					@teamMembersList(props.Members, props.LayoutProps.User)
 				</div>
 			</div>
 		</div>

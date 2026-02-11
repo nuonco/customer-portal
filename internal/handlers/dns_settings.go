@@ -40,13 +40,17 @@ func (h *Handler) DNSSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "DNS", Path: portalBasePath + "/dns", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:        currentOrg,
 		BaseDomain: h.subdomainBaseDomain,
+		Scheme:     h.schemeFromBaseURL(),
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.DNSSettingsPage(props))
 }
 
@@ -95,7 +99,7 @@ func (h *Handler) UpdateDNSSettings(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"success":   true,
 		"subdomain": req.Subdomain,
-		"url":       fmt.Sprintf("https://%s.%s", req.Subdomain, h.subdomainBaseDomain),
+		"url":       fmt.Sprintf("%s%s.%s", h.schemeFromBaseURL(), req.Subdomain, h.subdomainBaseDomain),
 	})
 }
 

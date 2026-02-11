@@ -4,7 +4,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
 // BrandingSettingsPageProps for the branding settings page
@@ -17,7 +16,7 @@ type BrandingSettingsPageProps struct {
 templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.PortalSubnav(partials.PortalSubnavProps{
+			@components.PortalSubnav(components.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "branding",
 				BasePath:      props.BasePath,
@@ -30,7 +29,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+					<div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-start">
 						<!-- Left Column: Settings -->
 						<div class="space-y-6">
 							@installerSettingsModeToggle()
@@ -56,11 +55,11 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 								<div id="installerErrorMessage" class="hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg"></div>
 							</div>
 						</div>
-						<!-- Right Column: Live Preview (sticky) -->
+						<!-- Right Column: Preview (sticky) -->
 						<div>
 							@components.PreviewContainer(components.PreviewContainerProps{
-								Title:          "Live Preview",
-								Description:    "This is how your customer portal will appear.",
+								Title:          "Preview",
+								Description:    "This is what your customers will see.",
 								InitialMode:    "light",
 								InitialSize:    "desktop",
 								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),

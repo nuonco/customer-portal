@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // AppInputInfo represents an input field for display
@@ -92,7 +92,7 @@ func AppInputsPage(props AppInputsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = partials.AppSubnav(partials.AppSubnavProps{
+			templ_7745c5c3_Err = components.AppSubnav(components.AppSubnavProps{
 				OrgID:         props.Org.ID,
 				AppID:         props.App.ID,
 				ActiveSubPage: "inputs",

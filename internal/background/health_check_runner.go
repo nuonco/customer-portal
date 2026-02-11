@@ -3,9 +3,9 @@ package background
 import (
 	"context"
 	"fmt"
-	"log"
 	"time"
 
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -17,29 +17,31 @@ type HealthCheckRunner struct {
 	db         *gorm.DB
 	interval   time.Duration
 	nuonAPIURL string
+	logger     *zap.Logger
 	stopCh     chan struct{}
 }
 
 // NewHealthCheckRunner creates a new health check runner
-func NewHealthCheckRunner(db *gorm.DB, interval time.Duration, nuonAPIURL string) *HealthCheckRunner {
+func NewHealthCheckRunner(db *gorm.DB, interval time.Duration, nuonAPIURL string, logger *zap.Logger) *HealthCheckRunner {
 	return &HealthCheckRunner{
 		db:         db,
 		interval:   interval,
 		nuonAPIURL: nuonAPIURL,
+		logger:     logger,
 		stopCh:     make(chan struct{}),
 	}
 }
 
 // Start begins the background health check monitoring loop
 func (r *HealthCheckRunner) Start() {
-	log.Printf("Health check runner started, polling every %v", r.interval)
+	r.logger.Info("health check runner started", zap.Duration("interval", r.interval))
 	go r.run()
 }
 
 // Stop stops the background health check monitoring loop
 func (r *HealthCheckRunner) Stop() {
 	close(r.stopCh)
-	log.Println("Health check runner stopped")
+	r.logger.Info("health check runner stopped")
 }
 
 func (r *HealthCheckRunner) run() {
@@ -71,7 +73,7 @@ func (r *HealthCheckRunner) checkInProgressInstalls() {
 		Find(&installs).Error
 
 	if err != nil {
-		log.Printf("Health check runner: error fetching in-progress installs: %v", err)
+		r.logger.Error("error fetching in-progress installs", zap.Error(err))
 		return
 	}
 
@@ -79,7 +81,7 @@ func (r *HealthCheckRunner) checkInProgressInstalls() {
 		return
 	}
 
-	log.Printf("Health check runner: checking %d in-progress installs", len(installs))
+	r.logger.Debug("checking in-progress installs", zap.Int("count", len(installs)))
 
 	for _, install := range installs {
 		r.checkAndUpdateInstall(ctx, &install)
@@ -91,7 +93,10 @@ func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *
 	// Get install link
 	var link models.InstallLink
 	if err := r.db.First(&link, "id = ?", install.InstallLinkID).Error; err != nil {
-		log.Printf("Health check runner: failed to load install link %s: %v", install.InstallLinkID, err)
+		r.logger.Error("failed to load install link",
+			zap.String("install_link_id", install.InstallLinkID),
+			zap.Error(err),
+		)
 		return
 	}
 	install.InstallLink = link
@@ -99,28 +104,41 @@ func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *
 	// Get org info directly by ID
 	var org models.NuonOrg
 	if err := r.db.First(&org, "id = ?", link.OrgID).Error; err != nil {
-		log.Printf("Health check runner: failed to load org %s for install %s: %v", link.OrgID, install.ID, err)
+		r.logger.Error("failed to load org for install",
+			zap.String("org_id", link.OrgID),
+			zap.String("install_id", install.ID),
+			zap.Error(err),
+		)
 		return
 	}
 	install.InstallLink.NuonOrg = org
 
 	if org.APIToken == "" {
-		log.Printf("Health check runner: install %s has no org API token (link=%s, orgID=%s)",
-			install.ID, install.InstallLinkID, link.OrgID)
+		r.logger.Warn("install has no org API token",
+			zap.String("install_id", install.ID),
+			zap.String("install_link_id", install.InstallLinkID),
+			zap.String("org_id", link.OrgID),
+		)
 		return
 	}
 
 	// Create Nuon client using global API URL
 	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, r.nuonAPIURL)
 	if err != nil {
-		log.Printf("Health check runner: failed to create Nuon client for install %s: %v", install.ID, err)
+		r.logger.Error("failed to create Nuon client",
+			zap.String("install_id", install.ID),
+			zap.Error(err),
+		)
 		return
 	}
 
 	// Get install status from Nuon API
 	nuonInstall, err := client.GetInstall(ctx, install.NuonInstallID)
 	if err != nil {
-		log.Printf("Health check runner: failed to get Nuon install %s: %v", install.NuonInstallID, err)
+		r.logger.Error("failed to get Nuon install",
+			zap.String("nuon_install_id", install.NuonInstallID),
+			zap.Error(err),
+		)
 		return
 	}
 
@@ -129,9 +147,15 @@ func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *
 	case "active", "deprecated":
 		// "deprecated" means the install is running but on an old app version - treat as active
 		if install.Status != models.StatusActive {
-			log.Printf("Health check runner: install %s is now active (nuon status=%s), updating status and triggering health checks", install.ID, nuonInstall.Status)
+			r.logger.Info("install is now active, triggering health checks",
+				zap.String("install_id", install.ID),
+				zap.String("nuon_status", nuonInstall.Status),
+			)
 			if err := r.db.Model(install).Update("status", models.StatusActive).Error; err != nil {
-				log.Printf("Health check runner: failed to update install %s status: %v", install.ID, err)
+				r.logger.Error("failed to update install status",
+					zap.String("install_id", install.ID),
+					zap.Error(err),
+				)
 				return
 			}
 			// Trigger health checks when transitioning to active
@@ -140,22 +164,34 @@ func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *
 
 	case "provisioning", "queued":
 		if install.Status == models.StatusPending {
-			log.Printf("Health check runner: install %s is now provisioning, updating status", install.ID)
+			r.logger.Info("install is now provisioning", zap.String("install_id", install.ID))
 			if err := r.db.Model(install).Update("status", models.StatusProvisioning).Error; err != nil {
-				log.Printf("Health check runner: failed to update install %s status: %v", install.ID, err)
+				r.logger.Error("failed to update install status",
+					zap.String("install_id", install.ID),
+					zap.Error(err),
+				)
 			}
 		} else {
-			log.Printf("Health check runner: install %s still %s", install.ID, nuonInstall.Status)
+			r.logger.Debug("install still in progress",
+				zap.String("install_id", install.ID),
+				zap.String("status", nuonInstall.Status),
+			)
 		}
 
 	case "error", "failed":
-		log.Printf("Health check runner: install %s has failed, updating status", install.ID)
+		r.logger.Info("install has failed, updating status", zap.String("install_id", install.ID))
 		if err := r.db.Model(install).Update("status", models.StatusFailed).Error; err != nil {
-			log.Printf("Health check runner: failed to update install %s status: %v", install.ID, err)
+			r.logger.Error("failed to update install status",
+				zap.String("install_id", install.ID),
+				zap.Error(err),
+			)
 		}
 
 	default:
-		log.Printf("Health check runner: install %s has status %s (no transition needed)", install.ID, nuonInstall.Status)
+		r.logger.Debug("install status unchanged",
+			zap.String("install_id", install.ID),
+			zap.String("status", nuonInstall.Status),
+		)
 	}
 }
 
@@ -165,19 +201,29 @@ func (r *HealthCheckRunner) triggerHealthChecks(ctx context.Context, client *nuo
 	healthCheckPairs := install.InstallLink.GetHealthCheckIDPairs()
 
 	if len(healthCheckPairs) == 0 {
-		log.Printf("Health check runner: no health checks configured for install %s", install.ID)
+		r.logger.Warn("no health checks configured for install", zap.String("install_id", install.ID))
 		return
 	}
 
-	log.Printf("Health check runner: triggering %d health checks for install %s", len(healthCheckPairs), install.ID)
+	r.logger.Debug("triggering health checks",
+		zap.String("install_id", install.ID),
+		zap.Int("count", len(healthCheckPairs)),
+	)
 
 	for _, pair := range healthCheckPairs {
 		// RunInstallAction expects the ActionWorkflowConfigID (not WorkflowID)
 		err := client.RunInstallAction(ctx, install.NuonInstallID, pair.ConfigID)
 		if err != nil {
-			log.Printf("Health check runner: failed to trigger action (config=%s) on install %s: %v", pair.ConfigID, install.ID, err)
+			r.logger.Error("failed to trigger health check action",
+				zap.String("config_id", pair.ConfigID),
+				zap.String("install_id", install.ID),
+				zap.Error(err),
+			)
 		} else {
-			log.Printf("Health check runner: triggered action (config=%s) on install %s", pair.ConfigID, install.ID)
+			r.logger.Debug("triggered health check action",
+				zap.String("config_id", pair.ConfigID),
+				zap.String("install_id", install.ID),
+			)
 		}
 	}
 }
@@ -203,24 +249,33 @@ func CheckInstallHealthStatus(ctx context.Context, client *nuon.Client, install 
 			Status:   "Pending",
 		}
 
-		log.Printf("CheckInstallHealthStatus: Checking action workflow %s (config=%s) for install %s", pair.WorkflowID, pair.ConfigID, install.NuonInstallID)
+		zap.L().Debug("checking action workflow",
+			zap.String("workflow_id", pair.WorkflowID),
+			zap.String("config_id", pair.ConfigID),
+			zap.String("install_id", install.NuonInstallID),
+		)
 
 		// Get action info and recent runs using WorkflowID (not ConfigID)
 		// GetInstallActionRuns expects the ActionWorkflowID
 		actionRuns, err := client.GetInstallActionRuns(ctx, install.NuonInstallID, pair.WorkflowID)
 		if err != nil {
-			log.Printf("Failed to get action runs for %s: %v", pair.WorkflowID, err)
+			zap.L().Error("failed to get action runs",
+				zap.String("workflow_id", pair.WorkflowID),
+				zap.Error(err),
+			)
 			status.StatusMessage = fmt.Sprintf("Error: %v", err)
 			anyPending = true
 		} else if actionRuns != nil && actionRuns.ActionWorkflow != nil {
-			log.Printf("CheckInstallHealthStatus: Got %d runs for action %s", len(actionRuns.Runs), actionRuns.ActionWorkflow.Name)
+			zap.L().Debug("got action runs",
+				zap.Int("run_count", len(actionRuns.Runs)),
+				zap.String("action_name", actionRuns.ActionWorkflow.Name),
+			)
 			status.ActionName = actionRuns.ActionWorkflow.Name
 			status.ActionID = actionRuns.ActionWorkflow.ID
 
 			// Check most recent run status
 			if len(actionRuns.Runs) > 0 {
 				recentRun := actionRuns.Runs[0]
-				log.Printf("CheckInstallHealthStatus: Most recent run status=%s for action %s", recentRun.Status, actionRuns.ActionWorkflow.Name)
 				switch recentRun.Status {
 				case "completed", "succeeded", "active", "finished":
 					status.Status = "Passing"

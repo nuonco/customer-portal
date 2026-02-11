@@ -40,6 +40,14 @@ type LayoutProps struct {
 	BodyFontBase64     string
 	LogoBase64         string
 
+	// Portal URL components (for org dropdown link)
+	PortalScheme     string // e.g., "https://"
+	PortalBaseDomain string // e.g., "portal.nuon.co"
+
+	// Org status (live check against Nuon API)
+	OrgStatus        string // "active" | "error"
+	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
+
 	// Asset paths (cache-busted)
 	CSSPath string
 }
@@ -73,7 +81,7 @@ func Layout(props LayoutProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 46, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 54, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -86,7 +94,7 @@ func Layout(props LayoutProps) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 48, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 56, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -135,11 +143,15 @@ func Layout(props LayoutProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = partials.Sidebar(partials.SidebarProps{
-			ActivePage: props.ActivePage,
-			CurrentOrg: props.CurrentOrg,
-			Orgs:       props.Orgs,
-			BasePath:   props.BasePath,
-			LogoBase64: props.LogoBase64,
+			ActivePage:       props.ActivePage,
+			CurrentOrg:       props.CurrentOrg,
+			Orgs:             props.Orgs,
+			BasePath:         props.BasePath,
+			LogoBase64:       props.LogoBase64,
+			PortalScheme:     props.PortalScheme,
+			PortalBaseDomain: props.PortalBaseDomain,
+			OrgStatus:        props.OrgStatus,
+			OrgStatusMessage: props.OrgStatusMessage,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -405,7 +417,7 @@ func createOrgModal(basePath string) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 383, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 395, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {

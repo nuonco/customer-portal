@@ -49,13 +49,16 @@ func (h *Handler) TeamMembersPage(c *gin.Context) {
 				{Text: "Team", Path: teamBasePath},
 				{Text: "Members", Path: teamBasePath + "/members", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:     org,
 		Members: members,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.TeamMembersPage(props))
 }
 
@@ -94,13 +97,16 @@ func (h *Handler) TeamInvitesPage(c *gin.Context) {
 				{Text: "Team", Path: teamBasePath},
 				{Text: "Invites", Path: teamBasePath + "/invites", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Org:         org,
 		Invitations: invitations,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.TeamInvitesPage(props))
 }
 
@@ -133,12 +139,15 @@ func (h *Handler) BrandingSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Branding", Path: portalBasePath + "/branding", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		Theme: theme,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.BrandingSettingsPage(props))
 }
 
@@ -173,13 +182,16 @@ func (h *Handler) CustomThemeSettingsPage(c *gin.Context) {
 				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
 				{Text: "Custom Theme", Path: portalBasePath + "/custom-theme", Active: true},
 			},
-			BasePath: h.basePath,
-			CSSPath:  assets.VendorCSSPath(),
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
 		},
 		GitHubConfig: gitHubConfig,
 		Templates:    templateOverrides,
 		Assets:       assetOverrides,
 	}
 
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.CustomThemeSettingsPage(props))
 }

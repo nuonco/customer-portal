@@ -9,14 +9,17 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // TemplateRenderer handles rendering customer pages with optional template overrides.
 // It checks for org-specific template overrides and falls back to default Templ templates.
 type TemplateRenderer struct {
-	db *gorm.DB
+	db     *gorm.DB
+	logger *zap.Logger
 
 	// Template cache: map[orgID:pageName]*template.Template
 	cache   map[string]*template.Template
@@ -24,10 +27,11 @@ type TemplateRenderer struct {
 }
 
 // NewTemplateRenderer creates a new TemplateRenderer.
-func NewTemplateRenderer(db *gorm.DB) *TemplateRenderer {
+func NewTemplateRenderer(db *gorm.DB, logger *zap.Logger) *TemplateRenderer {
 	return &TemplateRenderer{
-		db:    db,
-		cache: make(map[string]*template.Template),
+		db:     db,
+		logger: logger,
+		cache:  make(map[string]*template.Template),
 	}
 }
 
@@ -50,17 +54,19 @@ func (r *TemplateRenderer) TryRender(c *gin.Context, orgID, pageName string, ctx
 
 	// Check for enabled override
 	override, err := models.GetEnabledTemplateOverride(r.db, orgID, pageName)
-	if err != nil {
-		// Debug: Log when no override is found
-		fmt.Printf("[DEBUG] TryRender: no override found for org=%s, page=%s, err=%v\n",
-			orgID, pageName, err)
-		// No override found - use default
+	if err != nil || override == nil {
+		r.logger.Debug("no template override found",
+			zap.String("org_id", orgID),
+			zap.String("page", pageName),
+		)
 		return RenderResult{Rendered: false}
 	}
 
-	// Debug: Log that override was found
-	fmt.Printf("[DEBUG] TryRender: found override for org=%s, page=%s, id=%s\n",
-		orgID, pageName, override.ID)
+	r.logger.Debug("template override found",
+		zap.String("org_id", orgID),
+		zap.String("page", pageName),
+		zap.String("override_id", override.ID),
+	)
 
 	// Get or parse the template
 	tmpl, err := r.getOrParseTemplate(orgID, pageName, override.Content)
@@ -90,8 +96,7 @@ func (r *TemplateRenderer) TryRenderWithStatus(c *gin.Context, status int, orgID
 
 	// Check for enabled override
 	override, err := models.GetEnabledTemplateOverride(r.db, orgID, pageName)
-	if err != nil {
-		// No override found - use default
+	if err != nil || override == nil {
 		return RenderResult{Rendered: false}
 	}
 
@@ -143,11 +148,17 @@ func (r *TemplateRenderer) getOrParseTemplate(orgID, pageName, content string) (
 			partialName := partial.PageName + ".html"
 			_, err := tmpl.New(partialName).Parse(partial.Content)
 			if err != nil {
-				fmt.Printf("[DEBUG] getOrParseTemplate: failed to parse partial %s: %v\n", partialName, err)
+				r.logger.Warn("failed to parse template partial",
+					zap.String("partial", partialName),
+					zap.Error(err),
+				)
 				// Continue with other partials - don't fail the whole template
 				continue
 			}
-			fmt.Printf("[DEBUG] getOrParseTemplate: loaded partial %s for org %s\n", partialName, orgID)
+			r.logger.Debug("loaded template partial",
+				zap.String("partial", partialName),
+				zap.String("org_id", orgID),
+			)
 		}
 	}
 

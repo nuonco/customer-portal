@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -10,6 +9,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
@@ -21,15 +21,25 @@ import (
 )
 
 func main() {
+	// Initialize structured logger
+	var logger *zap.Logger
+	if os.Getenv("LOG_LEVEL") == "DEBUG" {
+		logger, _ = zap.NewDevelopment()
+	} else {
+		logger, _ = zap.NewProduction()
+	}
+	defer logger.Sync()
+	zap.ReplaceGlobals(logger)
+
 	// Initialize asset manifest for cache-busting
 	if err := assets.Init("./static"); err != nil {
-		log.Printf("Warning: Failed to initialize asset manifest: %v", err)
+		logger.Warn("failed to initialize asset manifest", zap.Error(err))
 	}
 
 	// Initialize database (uses DATABASE_URL env var or local defaults)
 	db, err := models.InitDB()
 	if err != nil {
-		log.Fatal("Failed to connect to database:", err)
+		logger.Fatal("failed to connect to database", zap.Error(err))
 	}
 
 	// Get JWT secret from environment or use default
@@ -46,7 +56,7 @@ func main() {
 		BasePath:      "/admin",
 	})
 	if err != nil {
-		log.Fatal("Vendor JWT Error:", err.Error())
+		logger.Fatal("vendor JWT initialization failed", zap.Error(err))
 	}
 
 	// Initialize customer JWT middleware (no signup, redirects to /installs)
@@ -57,7 +67,7 @@ func main() {
 		BasePath:      "",
 	})
 	if err != nil {
-		log.Fatal("Customer JWT Error:", err.Error())
+		logger.Fatal("customer JWT initialization failed", zap.Error(err))
 	}
 
 	// Get port from environment (single server now)
@@ -100,13 +110,13 @@ func main() {
 		var err error
 		authProvider, err = auth.NewProvider(authConfig, db)
 		if err != nil {
-			log.Fatalf("Failed to initialize auth provider: %v", err)
+			logger.Fatal("failed to initialize auth provider", zap.Error(err))
 		}
-		log.Printf("Authentication provider enabled: %s", authProvider.Name())
+		logger.Info("authentication provider enabled", zap.String("provider", authProvider.Name()))
 	} else {
 		// No external IdP configured - fall back to local password authentication
 		authProvider = auth.NewFallbackLocalProvider(db)
-		log.Printf("Local password authentication enabled (no IdP configured)")
+		logger.Info("local password authentication enabled (no IdP configured)")
 	}
 
 	// Create single router with shared middleware
@@ -119,10 +129,10 @@ func main() {
 	router.Static("/static", "./static")
 
 	// Health check endpoints for Kubernetes probes (at root level)
-	router.GET("/health", func(c *gin.Context) {
+	router.GET("/livez", func(c *gin.Context) {
 		c.JSON(200, gin.H{"status": "ok"})
 	})
-	router.GET("/ready", func(c *gin.Context) {
+	router.GET("/readyz", func(c *gin.Context) {
 		if err := models.Ping(db); err != nil {
 			c.JSON(503, gin.H{"status": "not ready", "error": err.Error()})
 			return
@@ -131,36 +141,38 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain, logger)
 
 	// Create customer auth factory with env var OIDC as fallback
 	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
 	customerAuthFactory, err := auth.NewCustomerAuthProviderFactory(db, customerBaseURL, &authConfig)
 	if err != nil {
-		log.Fatalf("Failed to initialize customer authentication: %v", err)
+		logger.Fatal("failed to initialize customer authentication", zap.Error(err))
 	}
-	log.Printf("Customer authentication: %s", getCustomerAuthMode(customerAuthFactory))
+	logger.Info("customer authentication configured", zap.String("mode", getCustomerAuthMode(customerAuthFactory)))
 
 	// Set up customer routes at root level (no prefix)
-	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain)
+	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain, logger)
 
 	// Start background health check runner (needs Nuon API URL for status checks)
-	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL)
+	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL, logger)
 	healthCheckRunner.Start()
 
 	// Start the single server
-	log.Printf("Server starting on port %s", port)
-	log.Printf("  Admin UI:    http://localhost:%s/admin/", port)
-	log.Printf("  Customer UI: http://localhost:%s/", port)
+	logger.Info("server starting",
+		zap.String("port", port),
+		zap.String("admin_ui", "http://localhost:"+port+"/admin/"),
+		zap.String("customer_ui", "http://localhost:"+port+"/"),
+	)
 	if err := router.Run(":" + port); err != nil {
-		log.Fatalf("Server error: %v", err)
+		logger.Fatal("server error", zap.Error(err))
 	}
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain string) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain string, logger *zap.Logger) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", subdomainBaseDomain)
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", subdomainBaseDomain, logger)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -317,7 +329,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 }
 
 // setupCustomerRoutes configures customer-facing routes on the given router group
-func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain string) {
+func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, customerAuthFactory *auth.CustomerAuthProviderFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain string, logger *zap.Logger) {
 	// Add subdomain detection middleware to all routes
 	// This extracts subdomain from the host and stores it in context
 	rg.Use(middleware.SubdomainContext(subdomainBaseDomain))
@@ -327,7 +339,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	rg.Use(middleware.RedirectBaseDomainCustomerRoutes())
 
 	// Initialize handlers with customer auth factory (OIDC only, no local auth)
-	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", subdomainBaseDomain)
+	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", subdomainBaseDomain, logger)
 
 	// Root redirect to customer login (with subdomain) or admin login (without subdomain)
 	// The RedirectBaseDomainCustomerRoutes middleware handles the base domain case

@@ -7,9 +7,11 @@ import (
 	"strings"
 	"time"
 
+	"go.uber.org/zap"
+	"gorm.io/gorm"
+
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	"gorm.io/gorm"
 )
 
 // Syncer handles syncing template overrides from GitHub repositories.
@@ -67,7 +69,7 @@ func (s *Syncer) Sync(ctx context.Context, config *models.GitHubRepoConfig) (*Sy
 	commit, err = s.client.GetCommit(ctx, config.RepoOwner, config.RepoName, tree.SHA, config.AccessToken)
 	if err != nil {
 		// Log error but don't fail the sync - commit metadata is supplementary
-		fmt.Printf("Warning: failed to fetch commit details: %v\n", err)
+		zap.L().Warn("failed to fetch commit details", zap.Error(err))
 	}
 
 	// Discover files by convention

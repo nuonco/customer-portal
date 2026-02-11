@@ -15,45 +15,21 @@ type WorkflowGroupPanel struct {
 
 // WorkflowsPanelProps contains data needed for the workflows panel content
 type WorkflowsPanelProps struct {
-	Install            *models.Install
-	WorkflowGroups     []WorkflowGroupPanel
-	CloudFormationLink string
-	CurrentOffset      int
-	Limit              int
-	HasNext            bool
-	HasPrev            bool
-	NextOffset         int
-	PrevOffset         int
-	BasePath           string
-	PrimaryColor       string
+	Install        *models.Install
+	WorkflowGroups []WorkflowGroupPanel
+	CurrentOffset  int
+	Limit          int
+	HasNext        bool
+	HasPrev        bool
+	NextOffset     int
+	PrevOffset     int
+	BasePath       string
+	PrimaryColor   string
 }
 
 // WorkflowsPanel renders the workflow history content for the sliding panel
 templ WorkflowsPanel(props WorkflowsPanelProps) {
 	<div class="w-full">
-		<!-- CloudFormation Link if available -->
-		if props.CloudFormationLink != "" {
-			<div class="mb-6 p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
-				<div class="flex items-center justify-between">
-					<div>
-						<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
-						<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">View and manage your infrastructure in AWS Console</p>
-					</div>
-					<a
-						href={ templ.SafeURL(props.CloudFormationLink) }
-						target="_blank"
-						rel="noopener noreferrer"
-						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
-						style="border-radius: var(--theme-radius)"
-					>
-						Open in AWS
-						<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-						</svg>
-					</a>
-				</div>
-			</div>
-		}
 		<!-- Workflow Groups -->
 		if len(props.WorkflowGroups) == 0 {
 			<div class="text-center py-12">

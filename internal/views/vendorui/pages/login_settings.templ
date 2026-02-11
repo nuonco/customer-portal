@@ -6,7 +6,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
 // LoginSettingsPageProps for the login settings page
@@ -22,7 +21,7 @@ type LoginSettingsPageProps struct {
 templ LoginSettingsPage(props LoginSettingsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.PortalSubnav(partials.PortalSubnavProps{
+			@components.PortalSubnav(components.PortalSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "login",
 				BasePath:      props.BasePath,
@@ -35,7 +34,7 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-6 items-start">
+					<div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-start">
 						<!-- Left Column: Settings -->
 						<div class="space-y-6">
 							@loginPageAppearanceSection(props.Theme)
@@ -44,11 +43,11 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 							@loginFallbackInfoSection()
 							@loginSaveSection(props.PrimaryColor)
 						</div>
-						<!-- Right Column: Live Preview -->
+						<!-- Right Column: Preview -->
 						<div>
 							@components.PreviewContainer(components.PreviewContainerProps{
-								Title:          "Live Preview",
-								Description:    "This is how the customer login page will appear.",
+								Title:          "Preview",
+								Description:    "This is what your customers will see.",
 								InitialMode:    "light",
 								InitialSize:    "desktop",
 								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),

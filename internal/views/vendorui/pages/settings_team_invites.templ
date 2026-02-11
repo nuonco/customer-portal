@@ -6,7 +6,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // TeamInvitesPageProps for the team invites page
@@ -20,7 +20,7 @@ type TeamInvitesPageProps struct {
 templ TeamInvitesPage(props TeamInvitesPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="flex flex-1 overflow-hidden">
-			@partials.TeamSubnav(partials.TeamSubnavProps{
+			@components.TeamSubnav(components.TeamSubnavProps{
 				OrgID:         props.CurrentOrg.ID,
 				ActiveSubPage: "invites",
 				BasePath:      props.BasePath,
@@ -33,9 +33,7 @@ templ TeamInvitesPage(props TeamInvitesPageProps) {
 					</div>
 				</div>
 				<div class="stratus-page-section">
-					<div class="max-w-4xl">
-						@invitationsList(props.Invitations)
-					</div>
+					@invitationsList(props.Invitations)
 				</div>
 			</div>
 		</div>
