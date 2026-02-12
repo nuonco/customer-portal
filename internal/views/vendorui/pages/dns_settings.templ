@@ -42,6 +42,7 @@ templ DNSSettingsPage(props DNSSettingsPageProps) {
 					id="dns-settings-config"
 					class="hidden"
 					data-base-path={ props.BasePath }
+					data-org-id={ props.CurrentOrg.ID }
 					data-base-domain={ props.BaseDomain }
 					data-current-subdomain={ props.Org.Subdomain }
 					data-scheme={ props.Scheme }
@@ -157,6 +158,7 @@ templ dnsSettingsScript() {
 		(function() {
 			var config = document.getElementById('dns-settings-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 			var baseDomain = config.dataset.baseDomain;
 			var currentSubdomain = config.dataset.currentSubdomain;
 			var scheme = config.dataset.scheme;
@@ -207,7 +209,7 @@ templ dnsSettingsScript() {
 				statusDiv.innerHTML = '<div class="flex items-center text-cool-grey-500 dark:text-cool-grey-400"><svg class="animate-spin w-4 h-4 mr-2" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>Checking availability...</div>';
 
 				try {
-					var response = await fetch(basePath + '/settings/dns/check?subdomain=' + encodeURIComponent(subdomain), {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns/check?subdomain=' + encodeURIComponent(subdomain), {
 						credentials: 'same-origin'
 					});
 					var data = await response.json();
@@ -236,7 +238,7 @@ templ dnsSettingsScript() {
 				errorMessage.classList.add('hidden');
 
 				try {
-					var response = await fetch(basePath + '/settings/dns', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns', {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',

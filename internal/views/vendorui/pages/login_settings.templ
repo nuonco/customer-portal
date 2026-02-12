@@ -63,6 +63,7 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					id="login-settings-config"
 					class="hidden"
 					data-base-path={ props.BasePath }
+					data-org-id={ props.CurrentOrg.ID }
 					data-enabled={ loginBoolToString(props.Config.Enabled) }
 					data-has-secret={ loginBoolToString(props.Config.HasClientSecret()) }
 					data-primary-color={ getBrandingPrimaryColor(props.Theme.PrimaryColor) }
@@ -618,6 +619,7 @@ templ loginSettingsScript() {
 		(function() {
 			var config = document.getElementById('login-settings-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 			window._loginRightSideBase64 = '';
 
 			// Update preview function
@@ -764,7 +766,7 @@ templ loginSettingsScript() {
 
 				try {
 					// Save settings first
-					var saveResponse = await fetch(basePath + '/settings/login', {
+					var saveResponse = await fetch(basePath + '/orgs/' + orgId + '/settings/login', {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -776,7 +778,7 @@ templ loginSettingsScript() {
 					}
 
 					// Then test the connection
-					var response = await fetch(basePath + '/settings/login/test', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/login/test', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin'
@@ -873,7 +875,7 @@ templ loginSettingsScript() {
 				var formData = getFormData();
 
 				try {
-					var response = await fetch(basePath + '/settings/login', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/login', {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',

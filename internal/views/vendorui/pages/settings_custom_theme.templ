@@ -43,6 +43,7 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 					id="custom-theme-settings-config"
 					class="hidden"
 					data-base-path={ props.BasePath }
+					data-org-id={ props.CurrentOrg.ID }
 				></div>
 				@customThemeSettingsScript()
 			</div>
@@ -421,6 +422,7 @@ templ customThemeSettingsScript() {
 		(function() {
 			var config = document.getElementById('custom-theme-settings-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 
 			window.customThemeSaveGitHubConfig = async function() {
 				var successMsg = document.getElementById('customThemeGithubSuccessMessage');
@@ -449,7 +451,7 @@ templ customThemeSettingsScript() {
 				}
 
 				try {
-					var response = await fetch(basePath + '/settings/github', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -482,7 +484,7 @@ templ customThemeSettingsScript() {
 				syncButton.disabled = true;
 
 				try {
-					var response = await fetch(basePath + '/settings/github/sync', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github/sync', {
 						method: 'POST',
 						credentials: 'same-origin'
 					});
@@ -513,7 +515,7 @@ templ customThemeSettingsScript() {
 				errorMsg.classList.add('hidden');
 
 				try {
-					var response = await fetch(basePath + '/settings/github/templates/' + pageName, {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github/templates/' + pageName, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -543,7 +545,7 @@ templ customThemeSettingsScript() {
 				errorMsg.classList.add('hidden');
 
 				try {
-					var response = await fetch(basePath + '/settings/github', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github', {
 						method: 'DELETE',
 						credentials: 'same-origin'
 					});
@@ -574,7 +576,7 @@ templ customThemeSettingsScript() {
 				errorMsg.classList.add('hidden');
 
 				try {
-					var response = await fetch(basePath + '/settings/github/assets/' + assetPath, {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github/assets/' + assetPath, {
 						method: 'PUT',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',
@@ -636,7 +638,7 @@ templ customThemeSettingsScript() {
 				disableBtn.textContent = enabled ? 'Disable All' : 'Disabling...';
 
 				try {
-					var response = await fetch(basePath + '/settings/github/bulk-toggle', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/settings/github/bulk-toggle', {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						credentials: 'same-origin',

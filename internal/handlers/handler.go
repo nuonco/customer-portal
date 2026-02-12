@@ -341,9 +341,8 @@ func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
 		return
 	}
 
-	// Case 2: One or more orgs - auto-select the first one
-	// (The org selector on /orgs page allows switching between orgs)
-	middleware.SetOrgCookie(c, orgs[0].ID)
+	// Case 2: One or more orgs - redirect to org list page
+	// The /orgs page will redirect to the first org
 	c.Redirect(http.StatusFound, h.basePath+"/orgs")
 }
 

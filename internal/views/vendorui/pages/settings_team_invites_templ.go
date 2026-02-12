@@ -91,7 +91,20 @@ func TeamInvitesPage(props TeamInvitesPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" data-org-id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var4 string
+			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 45, Col: 29}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -125,12 +138,12 @@ func invitationsList(invitations []models.OrgInvitation) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -138,51 +151,51 @@ func invitationsList(invitations []models.OrgInvitation) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "Invitation Links <span class=\"text-cool-grey-500 dark:text-cool-grey-400 font-normal text-sm\">(")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "Invitation Links <span class=\"text-cool-grey-500 dark:text-cool-grey-400 font-normal text-sm\">(")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(invitations)))
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(invitations)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 55, Col: 118}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 56, Col: 118}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, ")</span></h3><div class=\"space-y-2 mb-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, ")</span></h3><div class=\"space-y-2 mb-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		for _, invite := range invitations {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg\"><div class=\"flex items-center justify-between mb-2\"><div class=\"flex items-center gap-2\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Email)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 62, Col: 90}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</span></div><div class=\"flex items-center gap-1\"><button type=\"button\" onclick=\"copyInviteLink(this)\" data-token=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg\"><div class=\"flex items-center justify-between mb-2\"><div class=\"flex items-center gap-2\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
-			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Token)
+			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Email)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 68, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 63, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"p-1.5 text-cool-grey-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors\" title=\"Copy invitation link\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></div><div class=\"flex items-center gap-1\"><button type=\"button\" onclick=\"copyInviteLink(this)\" data-token=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var8 string
+			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Token)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 69, Col: 33}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"p-1.5 text-cool-grey-400 hover:text-primary-600 dark:hover:text-primary-400 transition-colors\" title=\"Copy invitation link\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -190,20 +203,20 @@ func invitationsList(invitations []models.OrgInvitation) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</button> <button type=\"button\" onclick=\"deleteInvitation(this)\" data-invite-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</button> <button type=\"button\" onclick=\"deleteInvitation(this)\" data-invite-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 string
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(invite.ID)
+			var templ_7745c5c3_Var9 string
+			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(invite.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 77, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 78, Col: 34}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors\" title=\"Delete invitation\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors\" title=\"Delete invitation\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -211,61 +224,61 @@ func invitationsList(invitations []models.OrgInvitation) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</button></div></div><div class=\"flex items-center gap-3 text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</button></div></div><div class=\"flex items-center gap-3 text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if invite.ExpiresAt != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<span>Expires: ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<span>Expires: ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var9 string
-				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(formatInviteExpiration(*invite.ExpiresAt))
+				var templ_7745c5c3_Var10 string
+				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(formatInviteExpiration(*invite.ExpiresAt))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 87, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_team_invites.templ`, Line: 88, Col: 65}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<span>No expiration</span> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span>No expiration</span> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span>|</span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<span>|</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if invite.UsedCount > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<span>Used</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<span>Used</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<span>Available</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<span>Available</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if len(invitations) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<p class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 text-center py-4\">No active invitation links.</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<p class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 text-center py-4\">No active invitation links.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Generate Invitation Form --><div class=\"border-t border-cool-grey-200 dark:border-dark-grey-600 pt-4\"><h4 class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3\">Generate New Invitation</h4><form id=\"generateInviteForm\" class=\"space-y-3\"><div><label for=\"inviteEmail\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Email</label> <input type=\"email\" id=\"inviteEmail\" name=\"email\" required placeholder=\"Enter email address\" class=\"w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-cool-grey-400 dark:placeholder-cool-grey-500\"></div><div><label for=\"inviteExpires\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Expires In</label> <select id=\"inviteExpires\" name=\"expires\" class=\"w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500\"><option value=\"1\">1 day</option> <option value=\"7\" selected>7 days</option> <option value=\"30\">30 days</option></select></div><div class=\"flex justify-end pt-2\"><button type=\"submit\" id=\"generateInviteBtn\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"generateInviteBtnText\">Generate Link</span></button></div></form></div><!-- Status Messages --><div id=\"teamSuccessMessage\" class=\"hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg\"></div><div id=\"teamErrorMessage\" class=\"hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div><!-- Generate Invitation Form --><div class=\"border-t border-cool-grey-200 dark:border-dark-grey-600 pt-4\"><h4 class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3\">Generate New Invitation</h4><form id=\"generateInviteForm\" class=\"space-y-3\"><div><label for=\"inviteEmail\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Email</label> <input type=\"email\" id=\"inviteEmail\" name=\"email\" required placeholder=\"Enter email address\" class=\"w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-cool-grey-400 dark:placeholder-cool-grey-500\"></div><div><label for=\"inviteExpires\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">Expires In</label> <select id=\"inviteExpires\" name=\"expires\" class=\"w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500\"><option value=\"1\">1 day</option> <option value=\"7\" selected>7 days</option> <option value=\"30\">30 days</option></select></div><div class=\"flex justify-end pt-2\"><button type=\"submit\" id=\"generateInviteBtn\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"generateInviteBtnText\">Generate Link</span></button></div></form></div><!-- Status Messages --><div id=\"teamSuccessMessage\" class=\"hidden mt-4 p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-400 rounded-lg\"></div><div id=\"teamErrorMessage\" class=\"hidden mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded-lg\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -305,12 +318,12 @@ func teamInvitesScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('team-invites-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\n\t\t\tasync function copyInviteLink(btn) {\n\t\t\t\tvar token = btn.dataset.token;\n\t\t\t\tvar url = window.location.origin + '/admin/invite?token=' + token;\n\t\t\t\ttry {\n\t\t\t\t\tawait navigator.clipboard.writeText(url);\n\t\t\t\t\tshowToast('Invitation link copied to clipboard', 'success');\n\t\t\t\t} catch (err) {\n\t\t\t\t\tvar input = document.createElement('input');\n\t\t\t\t\tinput.value = url;\n\t\t\t\t\tdocument.body.appendChild(input);\n\t\t\t\t\tinput.select();\n\t\t\t\t\tdocument.execCommand('copy');\n\t\t\t\t\tdocument.body.removeChild(input);\n\t\t\t\t\tshowToast('Invitation link copied to clipboard', 'success');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tasync function deleteInvitation(btn) {\n\t\t\t\tvar inviteId = btn.dataset.inviteId;\n\t\t\t\tif (!confirm('Delete this invitation link? Anyone with this link will no longer be able to join.')) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/org/invitations/' + inviteId, {\n\t\t\t\t\t\tmethod: 'DELETE',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Invitation deleted', 'success');\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\t\tshowToast(data.error || 'Failed to delete invitation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.copyInviteLink = copyInviteLink;\n\t\t\twindow.deleteInvitation = deleteInvitation;\n\n\t\t\t// Generate invitation form submission\n\t\t\tdocument.getElementById('generateInviteForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar btn = document.getElementById('generateInviteBtn');\n\t\t\t\tvar btnText = document.getElementById('generateInviteBtnText');\n\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtnText.textContent = 'Generating...';\n\n\t\t\t\tvar email = document.getElementById('inviteEmail').value;\n\t\t\t\tvar expiresDays = document.getElementById('inviteExpires').value;\n\n\t\t\t\tvar expiresAt = null;\n\t\t\t\tif (expiresDays) {\n\t\t\t\t\tvar date = new Date();\n\t\t\t\t\tdate.setDate(date.getDate() + parseInt(expiresDays));\n\t\t\t\t\texpiresAt = date.toISOString();\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/org/invitations', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\temail: email,\n\t\t\t\t\t\t\texpires_at: expiresAt\n\t\t\t\t\t\t})\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Invitation link created', 'success');\n\t\t\t\t\t\tvar url = window.location.origin + '/admin/invite?token=' + data.token;\n\t\t\t\t\t\ttry {\n\t\t\t\t\t\t\tawait navigator.clipboard.writeText(url);\n\t\t\t\t\t\t\tshowToast('Link copied to clipboard', 'success');\n\t\t\t\t\t\t} catch (err) {\n\t\t\t\t\t\t\t// Ignore clipboard errors\n\t\t\t\t\t\t}\n\t\t\t\t\t\tdocument.getElementById('generateInviteForm').reset();\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast(data.error || 'Failed to create invitation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t} finally {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtnText.textContent = 'Generate Link';\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('team-invites-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\n\t\t\tasync function copyInviteLink(btn) {\n\t\t\t\tvar token = btn.dataset.token;\n\t\t\t\tvar url = window.location.origin + '/admin/invite?token=' + token;\n\t\t\t\ttry {\n\t\t\t\t\tawait navigator.clipboard.writeText(url);\n\t\t\t\t\tshowToast('Invitation link copied to clipboard', 'success');\n\t\t\t\t} catch (err) {\n\t\t\t\t\tvar input = document.createElement('input');\n\t\t\t\t\tinput.value = url;\n\t\t\t\t\tdocument.body.appendChild(input);\n\t\t\t\t\tinput.select();\n\t\t\t\t\tdocument.execCommand('copy');\n\t\t\t\t\tdocument.body.removeChild(input);\n\t\t\t\t\tshowToast('Invitation link copied to clipboard', 'success');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tasync function deleteInvitation(btn) {\n\t\t\t\tvar inviteId = btn.dataset.inviteId;\n\t\t\t\tif (!confirm('Delete this invitation link? Anyone with this link will no longer be able to join.')) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/invitations/' + inviteId, {\n\t\t\t\t\t\tmethod: 'DELETE',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Invitation deleted', 'success');\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\t\tshowToast(data.error || 'Failed to delete invitation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.copyInviteLink = copyInviteLink;\n\t\t\twindow.deleteInvitation = deleteInvitation;\n\n\t\t\t// Generate invitation form submission\n\t\t\tdocument.getElementById('generateInviteForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar btn = document.getElementById('generateInviteBtn');\n\t\t\t\tvar btnText = document.getElementById('generateInviteBtnText');\n\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtnText.textContent = 'Generating...';\n\n\t\t\t\tvar email = document.getElementById('inviteEmail').value;\n\t\t\t\tvar expiresDays = document.getElementById('inviteExpires').value;\n\n\t\t\t\tvar expiresAt = null;\n\t\t\t\tif (expiresDays) {\n\t\t\t\t\tvar date = new Date();\n\t\t\t\t\tdate.setDate(date.getDate() + parseInt(expiresDays));\n\t\t\t\t\texpiresAt = date.toISOString();\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/invitations', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\temail: email,\n\t\t\t\t\t\t\texpires_at: expiresAt\n\t\t\t\t\t\t})\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Invitation link created', 'success');\n\t\t\t\t\t\tvar url = window.location.origin + '/admin/invite?token=' + data.token;\n\t\t\t\t\t\ttry {\n\t\t\t\t\t\t\tawait navigator.clipboard.writeText(url);\n\t\t\t\t\t\t\tshowToast('Link copied to clipboard', 'success');\n\t\t\t\t\t\t} catch (err) {\n\t\t\t\t\t\t\t// Ignore clipboard errors\n\t\t\t\t\t\t}\n\t\t\t\t\t\tdocument.getElementById('generateInviteForm').reset();\n\t\t\t\t\t\tlocation.reload();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast(data.error || 'Failed to create invitation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t} finally {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtnText.textContent = 'Generate Link';\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -335,12 +348,12 @@ func teamInvitesLinkIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<svg class=\"w-5 h-5\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M137.54,186.36a8,8,0,0,1,0,11.31l-9.94,10A56,56,0,0,1,48.38,128.4L72.5,104.28A56,56,0,0,1,149.31,102a8,8,0,1,1-10.64,12,40,40,0,0,0-54.85,1.63L59.7,139.72a40,40,0,0,0,56.58,56.58l9.94-9.94A8,8,0,0,1,137.54,186.36Zm70.08-138a56.08,56.08,0,0,0-79.22,0l-9.94,9.95a8,8,0,0,0,11.32,11.31l9.94-9.94a40,40,0,0,1,56.58,56.58L172.18,140a40,40,0,0,1-54.85,1.63,8,8,0,1,0-10.64,12,56,56,0,0,0,76.81-2.13l24.12-24.12A56.08,56.08,0,0,0,207.62,48.38Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<svg class=\"w-5 h-5\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M137.54,186.36a8,8,0,0,1,0,11.31l-9.94,10A56,56,0,0,1,48.38,128.4L72.5,104.28A56,56,0,0,1,149.31,102a8,8,0,1,1-10.64,12,40,40,0,0,0-54.85,1.63L59.7,139.72a40,40,0,0,0,56.58,56.58l9.94-9.94A8,8,0,0,1,137.54,186.36Zm70.08-138a56.08,56.08,0,0,0-79.22,0l-9.94,9.95a8,8,0,0,0,11.32,11.31l9.94-9.94a40,40,0,0,1,56.58,56.58L172.18,140a40,40,0,0,1-54.85,1.63,8,8,0,1,0-10.64,12,56,56,0,0,0,76.81-2.13l24.12-24.12A56.08,56.08,0,0,0,207.62,48.38Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -364,12 +377,12 @@ func teamInvitesTrashIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var12 == nil {
-			templ_7745c5c3_Var12 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<svg class=\"w-4 h-4\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<svg class=\"w-4 h-4\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -393,12 +406,12 @@ func teamInvitesCopyIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var13 == nil {
-			templ_7745c5c3_Var13 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<svg class=\"w-4 h-4\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<svg class=\"w-4 h-4\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -207,46 +207,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	orgMgmtRoutes.Use(middleware.RequireRole(models.RoleVendor))
 	{
 		orgMgmtRoutes.POST("/org/create", h.CreateOrg) // Create new org
-		orgMgmtRoutes.POST("/org/switch", h.SwitchOrg) // Switch org context
-	}
-
-	// Organization management routes (org context required)
-	orgContextRoutes := rg.Group("/org")
-	orgContextRoutes.Use(jwtAuth.MiddlewareFunc())
-	orgContextRoutes.Use(middleware.RequireRole(models.RoleVendor))
-	orgContextRoutes.Use(middleware.RequireOrgContext(db))
-	{
-		orgContextRoutes.PUT("", h.UpdateOrg)
-		orgContextRoutes.POST("/invitations", h.GenerateOrgInvitation)
-		orgContextRoutes.DELETE("/invitations/:id", h.DeleteOrgInvitation)
-		orgContextRoutes.DELETE("/members/:user_id", h.RemoveOrgMember)
-	}
-
-	// Settings API endpoints (org-scoped, pages are under /orgs/:org_id/settings/)
-	settings := rg.Group("/settings")
-	settings.Use(jwtAuth.MiddlewareFunc())
-	settings.Use(middleware.RequireRole(models.RoleVendor))
-	settings.Use(middleware.RequireOrgContext(db))
-	{
-		settings.PUT("/", h.UpdateThemeSettings)
-
-		// Login settings API endpoints
-		settings.PUT("/login", h.UpdateLoginSettings)
-		settings.POST("/login/test", h.TestLoginConnection)
-
-		// DNS settings
-		settings.PUT("/dns", h.UpdateDNSSettings)
-		settings.GET("/dns/check", h.CheckSubdomainAvailability)
-
-		// GitHub template customization settings
-		settings.GET("/github", h.GetGitHubConfig)
-		settings.POST("/github", h.SaveGitHubConfig)
-		settings.POST("/github/sync", h.SyncGitHub)
-		settings.DELETE("/github", h.DeleteGitHubConfig)
-		settings.PUT("/github/templates/:page", h.ToggleTemplateOverride)
-		settings.DELETE("/github/templates/:page", h.DeleteTemplateOverride)
-		settings.PUT("/github/assets/*path", h.ToggleAssetOverride)
-		settings.POST("/github/bulk-toggle", h.BulkToggleOverrides)
 	}
 
 	// Profile settings (user can edit their own profile)
@@ -267,15 +227,34 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		// This allows users with no orgs to reach this route without redirect loop
 		orgs.GET("/", h.OrgsPage)
 
-		// Org-specific routes (require org context and access by param)
+		// Org-specific routes (require org access by param)
 		orgRoutes := orgs.Group("/:org_id")
-		orgRoutes.Use(middleware.RequireOrgContext(db))
 		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
 		{
 			orgRoutes.GET("/install-links", h.OrgDetailPage)
 			orgRoutes.GET("/connection", h.OrgSettingsPage)
 			orgRoutes.PUT("/", h.UpdateOrg)
 			orgRoutes.DELETE("/", h.DeleteOrg)
+
+			// Organization management (was /admin/org/*)
+			orgRoutes.POST("/invitations", h.GenerateOrgInvitation)
+			orgRoutes.DELETE("/invitations/:id", h.DeleteOrgInvitation)
+			orgRoutes.DELETE("/members/:user_id", h.RemoveOrgMember)
+
+			// Settings (was /admin/settings/*)
+			orgRoutes.PUT("/settings", h.UpdateThemeSettings)
+			orgRoutes.PUT("/settings/login", h.UpdateLoginSettings)
+			orgRoutes.POST("/settings/login/test", h.TestLoginConnection)
+			orgRoutes.PUT("/settings/dns", h.UpdateDNSSettings)
+			orgRoutes.GET("/settings/dns/check", h.CheckSubdomainAvailability)
+			orgRoutes.GET("/settings/github", h.GetGitHubConfig)
+			orgRoutes.POST("/settings/github", h.SaveGitHubConfig)
+			orgRoutes.POST("/settings/github/sync", h.SyncGitHub)
+			orgRoutes.DELETE("/settings/github", h.DeleteGitHubConfig)
+			orgRoutes.PUT("/settings/github/templates/:page", h.ToggleTemplateOverride)
+			orgRoutes.DELETE("/settings/github/templates/:page", h.DeleteTemplateOverride)
+			orgRoutes.PUT("/settings/github/assets/*path", h.ToggleAssetOverride)
+			orgRoutes.POST("/settings/github/bulk-toggle", h.BulkToggleOverrides)
 
 			// Apps - configuration pages
 			orgRoutes.GET("/apps", h.AppsPage)                                    // Apps list page (HTML)

@@ -148,9 +148,6 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 		return
 	}
 
-	// Set org cookie to the new org
-	middleware.SetOrgCookie(c, org.ID)
-
 	// Return success with redirect URL to the org's install links page
 	c.JSON(http.StatusOK, gin.H{
 		"id":          org.ID,
@@ -208,55 +205,6 @@ func (h *Handler) UpdateOrg(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Organization updated successfully",
 		"org":     *org,
-	})
-}
-
-// SwitchOrg changes the active organization for the user
-func (h *Handler) SwitchOrg(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-
-	var req struct {
-		OrgID string `json:"org_id" binding:"required"`
-	}
-
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid request: " + err.Error(),
-		})
-		return
-	}
-
-	// Validate org_id format
-	if !shortid.IsValid(req.OrgID) {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invalid organization ID format",
-		})
-		return
-	}
-
-	// Verify user is a member of the org
-	var member models.OrgMember
-	err := h.db.Where("org_id = ? AND user_id = ? AND status = ?",
-		req.OrgID, user.ID, models.MemberStatusActive).First(&member).Error
-	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusForbidden, gin.H{
-				"error": "Access denied to organization",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to verify organization membership",
-		})
-		return
-	}
-
-	// Set org cookie
-	middleware.SetOrgCookie(c, req.OrgID)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":     "Organization switched successfully",
-		"redirect_to": "/admin/orgs",
 	})
 }
 
@@ -466,11 +414,10 @@ func (h *Handler) AcceptOrgInvitation(c *gin.Context) {
 	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
 		First(&existingMember).Error
 	if err == nil {
-		// Already a member - just switch to this org
-		middleware.SetOrgCookie(c, invitation.OrgID)
+		// Already a member - redirect to org
 		c.JSON(http.StatusOK, gin.H{
 			"message":     "Already a member of this organization",
-			"redirect_to": "/admin/orgs",
+			"redirect_to": fmt.Sprintf("/admin/orgs/%s/apps", invitation.OrgID),
 		})
 		return
 	}
@@ -499,12 +446,9 @@ func (h *Handler) AcceptOrgInvitation(c *gin.Context) {
 	acceptedAt := time.Now()
 	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
 
-	// Set org cookie
-	middleware.SetOrgCookie(c, invitation.OrgID)
-
 	c.JSON(http.StatusOK, gin.H{
 		"message":     "Successfully joined organization",
-		"redirect_to": "/admin/orgs",
+		"redirect_to": fmt.Sprintf("/admin/orgs/%s/apps", invitation.OrgID),
 	})
 }
 
@@ -551,9 +495,8 @@ func (h *Handler) AcceptOrgInvitationPage(c *gin.Context) {
 	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
 		First(&existingMember).Error
 	if err == nil {
-		// Already a member - just switch to this org
-		middleware.SetOrgCookie(c, invitation.OrgID)
-		c.Redirect(http.StatusFound, h.basePath+"/orgs")
+		// Already a member - redirect to org
+		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, invitation.OrgID))
 		return
 	}
 
@@ -579,11 +522,8 @@ func (h *Handler) AcceptOrgInvitationPage(c *gin.Context) {
 	acceptedAt := time.Now()
 	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
 
-	// Set org cookie
-	middleware.SetOrgCookie(c, invitation.OrgID)
-
 	// Redirect to the org
-	c.Redirect(http.StatusFound, h.basePath+"/orgs")
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, invitation.OrgID))
 }
 
 // tryGetCurrentUser attempts to get the current user from the JWT cookie without requiring auth middleware
@@ -640,11 +580,6 @@ func (h *Handler) CreateWorkspace(c *gin.Context) {
 // UpdateWorkspace is deprecated - use UpdateOrg instead
 func (h *Handler) UpdateWorkspace(c *gin.Context) {
 	h.UpdateOrg(c)
-}
-
-// SwitchWorkspace is deprecated - use SwitchOrg instead
-func (h *Handler) SwitchWorkspace(c *gin.Context) {
-	h.SwitchOrg(c)
 }
 
 // GenerateInvitation is deprecated - use GenerateOrgInvitation instead

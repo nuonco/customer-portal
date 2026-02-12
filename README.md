@@ -292,10 +292,6 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/invite` - Accept team invitation
 - `POST /admin/org/create` - Create new organization
 - `POST /admin/org/switch` - Switch active organization context
-- `PUT /admin/org` - Update organization details
-- `POST /admin/org/invitations` - Generate organization invitations
-- `DELETE /admin/org/invitations/:id` - Revoke organization invitation
-- `DELETE /admin/org/members/:user_id` - Remove organization member
 - `GET /admin/profile/panel` - User profile panel
 - `PUT /admin/profile/` - Update user profile
 - `GET /admin/orgs/:org_id/customers` - List organization customers
@@ -303,14 +299,22 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/orgs/:org_id/team/members` - List team members
 - `GET /admin/orgs/:org_id/team/invites` - List pending invitations
 - `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
-- `GET /admin/settings/*` - Various settings endpoints
-- `PUT /admin/settings/` - Update general settings
-- `PUT /admin/settings/login` - Update login settings
-- `POST /admin/settings/login/test` - Test login configuration
-- `PUT /admin/settings/dns` - Update DNS settings
-- `GET /admin/settings/dns/check` - Verify DNS configuration
-- `GET /admin/settings/github` - GitHub integration settings
-- `POST /admin/settings/github` - Connect GitHub integration
+- `POST /admin/orgs/:org_id/invitations` - Generate organization invitations
+- `DELETE /admin/orgs/:org_id/invitations/:id` - Revoke organization invitation
+- `DELETE /admin/orgs/:org_id/members/:user_id` - Remove organization member
+- `PUT /admin/orgs/:org_id/settings` - Update general settings
+- `PUT /admin/orgs/:org_id/settings/login` - Update login settings
+- `POST /admin/orgs/:org_id/settings/login/test` - Test login configuration
+- `PUT /admin/orgs/:org_id/settings/dns` - Update DNS settings
+- `GET /admin/orgs/:org_id/settings/dns/check` - Verify DNS configuration
+- `GET /admin/orgs/:org_id/settings/github` - GitHub integration settings
+- `POST /admin/orgs/:org_id/settings/github` - Connect GitHub integration
+- `POST /admin/orgs/:org_id/settings/github/sync` - Sync GitHub repository
+- `DELETE /admin/orgs/:org_id/settings/github` - Remove GitHub integration
+- `PUT /admin/orgs/:org_id/settings/github/templates/:page` - Toggle template override
+- `DELETE /admin/orgs/:org_id/settings/github/templates/:page` - Delete template override
+- `PUT /admin/orgs/:org_id/settings/github/assets/*path` - Toggle asset override
+- `POST /admin/orgs/:org_id/settings/github/bulk-toggle` - Bulk enable/disable overrides
 - `GET /admin/debug/user-orgs` - Debug: View user organizations (development)
 
 ### Customer Routes (`/*`)

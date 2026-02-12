@@ -75,6 +75,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					id="installer-settings-config"
 					class="hidden"
 					data-base-path={ props.BasePath }
+					data-org-id={ props.CurrentOrg.ID }
 					data-logo-light-base64={ props.Theme.LogoLightBase64 }
 					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
 					data-heading-font={ props.Theme.HeadingFont }
@@ -524,6 +525,7 @@ templ installerPageScript() {
 		(function() {
 			var config = document.getElementById('installer-settings-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 			window._installerLogoBase64 = config.dataset.logoBase64 || '';
 			window._installerLoadedFonts = window._installerLoadedFonts || new Set();
 
@@ -733,7 +735,7 @@ templ installerPageScript() {
 				}
 
 				try {
-					var response = await fetch(basePath + "/settings", {
+					var response = await fetch(basePath + "/orgs/" + orgId + "/settings", {
 						method: "PUT",
 						headers: {
 							"Content-Type": "application/json"

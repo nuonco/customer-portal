@@ -42,6 +42,7 @@ templ TeamInvitesPage(props TeamInvitesPageProps) {
 			id="team-invites-config"
 			class="hidden"
 			data-base-path={ props.BasePath }
+			data-org-id={ props.Org.ID }
 		></div>
 		@teamInvitesScript()
 	}
@@ -172,6 +173,7 @@ templ teamInvitesScript() {
 		(function() {
 			var config = document.getElementById('team-invites-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 
 			async function copyInviteLink(btn) {
 				var token = btn.dataset.token;
@@ -197,7 +199,7 @@ templ teamInvitesScript() {
 				}
 
 				try {
-					var response = await fetch(basePath + '/org/invitations/' + inviteId, {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/invitations/' + inviteId, {
 						method: 'DELETE',
 						headers: {
 							'Content-Type': 'application/json'
@@ -240,7 +242,7 @@ templ teamInvitesScript() {
 				}
 
 				try {
-					var response = await fetch(basePath + '/org/invitations', {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/invitations', {
 						method: 'POST',
 						headers: {
 							'Content-Type': 'application/json'

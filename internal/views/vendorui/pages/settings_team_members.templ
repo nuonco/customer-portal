@@ -41,6 +41,7 @@ templ TeamMembersPage(props TeamMembersPageProps) {
 			id="team-members-config"
 			class="hidden"
 			data-base-path={ props.BasePath }
+			data-org-id={ props.Org.ID }
 		></div>
 		@teamMembersScript()
 	}
@@ -139,6 +140,7 @@ templ teamMembersScript() {
 		(function() {
 			var config = document.getElementById('team-members-config');
 			var basePath = config.dataset.basePath;
+			var orgId = config.dataset.orgId;
 
 			async function removeMember(btn) {
 				var userId = btn.dataset.userId;
@@ -148,7 +150,7 @@ templ teamMembersScript() {
 				}
 
 				try {
-					var response = await fetch(basePath + '/org/members/' + userId, {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/members/' + userId, {
 						method: 'DELETE',
 						headers: {
 							'Content-Type': 'application/json'
