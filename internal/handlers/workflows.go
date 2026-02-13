@@ -231,9 +231,29 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow card partial
+	// For HTMX requests, return the updated workflow status display
 	if isHTMXRequest(c) {
-		h.renderWorkflowCardPartial(c, install, workflowID, nuonClient)
+		// Fetch updated workflow
+		workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
+		if err == nil {
+			processed := processWorkflowForCustomer(workflow)
+			wf := ginHToWorkflowDataPanel(processed)
+
+			// Return just the status display HTML
+			statusHTML := fmt.Sprintf(`
+<div class="flex items-center justify-between mb-2">
+	<h4 class="font-medium text-cool-grey-900 dark:text-white">%s</h4>
+	<span class="text-xs px-2 py-1 rounded %s">%s</span>
+</div>
+<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
+	%s
+</div>
+`, wf.Name, wf.StatusClass, wf.Status, wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
+
+			c.Data(http.StatusOK, "text/html", []byte(statusHTML))
+			return
+		}
+		c.String(http.StatusOK, "")
 		return
 	}
 
@@ -312,9 +332,29 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow card partial
+	// For HTMX requests, return the updated workflow status display
 	if isHTMXRequest(c) {
-		h.renderWorkflowCardPartial(c, install, workflowID, nuonClient)
+		// Fetch updated workflow
+		workflows, _, err := nuonClient.GetInstallWorkflowsByType(c.Request.Context(), install.NuonInstallID, 0, 1, "provision")
+		if err == nil && len(workflows) > 0 {
+			processed := processWorkflowForCustomer(workflows[0])
+			wf := ginHToWorkflowDataPanel(processed)
+
+			// Return just the status display HTML
+			statusHTML := fmt.Sprintf(`
+<div class="flex items-center justify-between mb-2">
+	<h4 class="font-medium text-cool-grey-900 dark:text-white">%s</h4>
+	<span class="text-xs px-2 py-1 rounded %s">%s</span>
+</div>
+<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
+	%s
+</div>
+`, wf.Name, wf.StatusClass, wf.Status, wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
+
+			c.Data(http.StatusOK, "text/html", []byte(statusHTML))
+			return
+		}
+		c.String(http.StatusOK, "")
 		return
 	}
 
@@ -337,6 +377,8 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 	canApprove := false
 	canApproveAll := false
 	canCancel := false
+	hasApprovalSteps := false
+	hasPendingApprovalSteps := false
 	approveDisabledReason := ""
 	approveAllDisabledReason := ""
 	cancelDisabledReason := ""
@@ -346,13 +388,15 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		statusClass = getStatusClass(string(workflow.Status.Status))
 
 		// Check for approval steps in the workflow based on ExecutionType
-		hasApprovalSteps := false
 		if workflow.Steps != nil {
 			for _, step := range workflow.Steps {
 				// Check ExecutionType for approval steps
 				if step.ExecutionType == "approval" {
 					hasApprovalSteps = true
-					break
+					// Check if this approval step is still pending
+					if step.Status != nil && string(step.Status.Status) == "approval-awaiting" {
+						hasPendingApprovalSteps = true
+					}
 				}
 			}
 		}
@@ -361,14 +405,19 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		switch string(workflow.Status.Status) {
 		case "approval-awaiting":
 			canApprove = true
-			canApproveAll = hasApprovalSteps
+			canApproveAll = hasApprovalSteps && hasPendingApprovalSteps
+			if hasApprovalSteps && !hasPendingApprovalSteps {
+				approveAllDisabledReason = "All steps have been approved"
+			}
 			canCancel = true
 		case "in-progress":
 			canCancel = true
 			approveDisabledReason = "Workflow is currently running"
-			// Approve All is available if there are approval steps, even when running
-			if hasApprovalSteps {
+			// Approve All is available if there are pending approval steps
+			if hasApprovalSteps && hasPendingApprovalSteps {
 				canApproveAll = true
+			} else if hasApprovalSteps && !hasPendingApprovalSteps {
+				approveAllDisabledReason = "All steps have been approved"
 			} else {
 				approveAllDisabledReason = "No approval steps in this workflow"
 			}
@@ -386,8 +435,10 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 			cancelDisabledReason = "Workflow is already cancelled"
 		default:
 			approveDisabledReason = "Approval not available for this workflow status"
-			if hasApprovalSteps {
+			if hasApprovalSteps && hasPendingApprovalSteps {
 				canApproveAll = true
+			} else if hasApprovalSteps && !hasPendingApprovalSteps {
+				approveAllDisabledReason = "All steps have been approved"
 			} else {
 				approveAllDisabledReason = "No approval steps in this workflow"
 			}
@@ -427,6 +478,7 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		"can_approve":                 canApprove,
 		"can_approve_all":             canApproveAll,
 		"can_cancel":                  canCancel,
+		"has_approval_steps":          hasApprovalSteps,
 		"approval_step":               approvalStep,
 		"approve_disabled_reason":     approveDisabledReason,
 		"approve_all_disabled_reason": approveAllDisabledReason,
@@ -565,6 +617,7 @@ func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
 		CanApprove:               getBool(wf, "can_approve"),
 		CanApproveAll:            getBool(wf, "can_approve_all"),
 		CanCancel:                getBool(wf, "can_cancel"),
+		HasApprovalSteps:         getBool(wf, "has_approval_steps"),
 		ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
 		ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
 		CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),

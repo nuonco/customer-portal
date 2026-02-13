@@ -476,6 +476,60 @@ func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, star
 	return entries, nil
 }
 
+// ServiceReadme represents the install readme returned by the API
+type ServiceReadme struct {
+	Readme   string   `json:"readme"`
+	Original string   `json:"original"`
+	Warnings []string `json:"warnings"`
+}
+
+// GetInstallReadme fetches the install-specific readme rendered with install data
+func (c *Client) GetInstallReadme(ctx context.Context, installID string) (*ServiceReadme, error) {
+	// Build URL for the readme endpoint
+	url := fmt.Sprintf("%s/v1/installs/%s/readme", c.apiURL, installID)
+
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	// Add authentication headers
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	req.Header.Set("Content-Type", "application/json")
+
+	// Make the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	// Return nil for 404 - app may not have readme configured
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	// Parse the response
+	var readme ServiceReadme
+	if err := json.Unmarshal(body, &readme); err != nil {
+		return nil, fmt.Errorf("failed to parse readme: %w", err)
+	}
+
+	return &readme, nil
+}
+
 // IsInstallNameAvailable checks if an install name is available for an app via the Nuon API.
 // It queries existing installs and checks for exact name matches (case-insensitive).
 // Returns true if the name is available (no existing install with that name).

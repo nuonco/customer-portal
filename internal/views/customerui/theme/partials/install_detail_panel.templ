@@ -19,6 +19,7 @@ type WorkflowDataPanel struct {
 	CanApprove               bool
 	CanApproveAll            bool
 	CanCancel                bool
+	HasApprovalSteps         bool
 	ApproveDisabledReason    string
 	ApproveAllDisabledReason string
 	CancelDisabledReason     string
@@ -84,7 +85,15 @@ type InstallDetailPanelProps struct {
 	InstallConfigVersion     int64
 	InstallConfigUpdatedAt   string
 	ActiveProvisionWorkflow  *WorkflowDataPanel
+	InstallReadme            *ReadmeDataPanel
 	CloudFormationLink       string
+}
+
+// ReadmeDataPanel represents install readme data for the panel
+type ReadmeDataPanel struct {
+	Readme   string
+	Original string
+	Warnings []string
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -138,19 +147,21 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		</div>
 	}
 	<div class="space-y-4 mt-4">
-		<!-- Active Provision Banner -->
-		if props.ActiveProvisionWorkflow != nil {
-			@activeProvisionBanner(*props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
-		}
+		<!-- Active Provision Banner (polls and shows when workflow is active) -->
+		@ActiveProvisionBanner(props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
 		<!-- App Config + Platform (side by side) -->
 		<div class="grid grid-cols-2 gap-4">
 			@appConfigCard(props)
 			@platformCard(platform, props.Install.Region)
 		</div>
 		<!-- Health Status (full width) -->
-		<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
-			@healthStatusPanel(props)
-		</div>
+		if props.HasHealthChecks {
+			<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+				@healthStatusPanel(props)
+			</div>
+		}
+		<!-- App Readme Card (polls and shows when NO active workflow) -->
+		@AppReadmeCard(props.InstallReadme, props.Install.ID, props.BasePath)
 	</div>
 	<!-- Edit Inputs Modal -->
 	@editInputsModalPanel()
@@ -200,30 +211,76 @@ templ platformCard(platform string, region string) {
 	</div>
 }
 
-// activeProvisionBanner renders a banner for an active provision workflow at the top of the overview
-templ activeProvisionBanner(workflow WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
-	<div class="space-y-4">
-		@workflowCardPanel(workflow, installID, basePath, primaryColor)
-		if cloudFormationLink != "" {
-			<div class="p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
-				<div class="flex items-center justify-between">
-					<div>
-						<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
-						<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">Complete your infrastructure setup in AWS Console</p>
+// ActiveProvisionBanner renders a banner for an active provision workflow at the top of the overview
+templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
+	<div
+		id="active-provision-banner"
+		hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
+		hx-trigger="every 5s"
+		hx-swap="outerHTML"
+		if workflow != nil {
+			data-workflow-status={ workflow.Status }
+		}
+	>
+		if workflow != nil && workflow.ID != "" {
+			<div class="space-y-4">
+				@workflowCardPanel(*workflow, installID, basePath, primaryColor)
+				if cloudFormationLink != "" {
+					<div class="p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
+						<div class="flex items-center justify-between">
+							<div>
+								<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
+								<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">Complete your infrastructure setup in AWS Console</p>
+							</div>
+							<a
+								href={ templ.SafeURL(cloudFormationLink) }
+								target="_blank"
+								rel="noopener noreferrer"
+								class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
+								style="border-radius: var(--theme-radius)"
+							>
+								Open in AWS
+								<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+								</svg>
+							</a>
+						</div>
 					</div>
-					<a
-						href={ templ.SafeURL(cloudFormationLink) }
-						target="_blank"
-						rel="noopener noreferrer"
-						class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
-						style="border-radius: var(--theme-radius)"
-					>
-						Open in AWS
-						<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-						</svg>
-					</a>
+				}
+			</div>
+		}
+	</div>
+}
+
+// AppReadmeCard renders the app readme when no active provision workflow
+// Includes HTMX polling to automatically show/hide as workflows start/complete
+templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) {
+	<div
+		id="readme-card-container"
+		hx-get={ basePath + "/installs/" + installID + "/readme-status" }
+		hx-trigger="every 5s"
+		hx-swap="outerHTML"
+	>
+		if readme != nil && readme.Readme != "" {
+			<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+				<div class="flex items-center justify-between mb-4">
+					<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">Getting Started</h3>
 				</div>
+				<div class="prose prose-sm dark:prose-invert max-w-none text-cool-grey-600 dark:text-cool-grey-400 overflow-x-auto">
+					@templ.Raw(readme.Readme)
+				</div>
+				if len(readme.Warnings) > 0 {
+					<div class="mt-4 space-y-2">
+						for _, warning := range readme.Warnings {
+							<div class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800" style="border-radius: var(--theme-radius)">
+								<svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+								</svg>
+								<p class="text-sm text-amber-800 dark:text-amber-300">{ warning }</p>
+							</div>
+						}
+					</div>
+				}
 			</div>
 		}
 	</div>
@@ -349,40 +406,46 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 		class="bg-white dark:bg-dark-grey-800 p-4 shadow-sm border border-cool-grey-200 dark:border-dark-grey-600 mb-4"
 		style="border-radius: var(--theme-radius)"
 	>
-		<div class="flex items-center justify-between mb-2">
-			<h4 class="font-medium text-cool-grey-900 dark:text-white">{ workflow.Name }</h4>
-			<span class={ "text-xs px-2 py-1 rounded", workflow.StatusClass }>
-				{ workflow.Status }
-			</span>
-		</div>
-		<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
-			{ workflow.CreatedAt.Format("Jan 2, 2006 3:04 PM") }
+		<!-- Wrapper for status display - this is the HTMX target -->
+		<div id="workflow-status-display">
+			<div class="flex items-center justify-between mb-2">
+				<h4 class="font-medium text-cool-grey-900 dark:text-white">{ workflow.Name }</h4>
+				<span class={ "text-xs px-2 py-1 rounded", workflow.StatusClass }>
+					{ workflow.Status }
+				</span>
+			</div>
+			<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
+				{ workflow.CreatedAt.Format("Jan 2, 2006 3:04 PM") }
+			</div>
 		</div>
 		<!-- Action buttons -->
-		if workflow.CanApproveAll || workflow.CanCancel {
+		if workflow.HasApprovalSteps || workflow.CanCancel {
 			<div class="flex gap-2">
-				if workflow.CanApproveAll {
-					<button
-						type="button"
-						onclick="confirmApproveAll(this)"
-						hx-post={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-						hx-target={ "#workflow-" + workflow.ID }
-						hx-swap="outerHTML"
-						hx-trigger="confirmed"
-						class="px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
-					>
-						Approve All
-					</button>
+				if workflow.HasApprovalSteps {
+					if workflow.CanApproveAll {
+						<button
+							type="button"
+							class="workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
+						>
+							Approve All
+						</button>
+					} else {
+						<button
+							type="button"
+							disabled
+							class="px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed"
+							title={ workflow.ApproveAllDisabledReason }
+						>
+							Approve All
+						</button>
+					}
 				}
 				if workflow.CanCancel {
 					<button
 						type="button"
-						onclick="confirmCancelWorkflow(this)"
-						hx-post={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
-						hx-target={ "#workflow-" + workflow.ID }
-						hx-swap="outerHTML"
-						hx-trigger="confirmed"
-						class="px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded"
+						class="workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded"
+						data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
 					>
 						Cancel
 					</button>
@@ -512,34 +575,89 @@ templ installDetailPanelScripts() {
 				}
 			};
 
-			// Workflow action confirmations
-			window.confirmApproveAll = async function(button) {
-				var confirmed = await showConfirmModal({
-					title: 'Approve Update?',
-					message: 'Are you sure you want to approve this update? This will automatically approve all steps.',
-					variant: 'primary',
-					confirmText: 'Approve',
-					cancelText: 'Cancel'
-				});
+			// Workflow action modal - dynamically sets HTMX attributes on modal's Confirm button
+			window.showWorkflowActionModal = function(options) {
+				var confirmBtn = document.getElementById('confirm-ok');
+				var cancelBtn = document.getElementById('confirm-cancel');
+				var modal = document.getElementById('confirm-modal');
 
-				if (confirmed) {
-					htmx.trigger(button, 'confirmed');
-				}
+				// Set modal content
+				document.getElementById('confirm-title').textContent = options.title || 'Confirm Action';
+				document.getElementById('confirm-message').textContent = options.message || 'Are you sure?';
+				confirmBtn.textContent = options.confirmText || 'Confirm';
+				cancelBtn.textContent = options.cancelText || 'Cancel';
+
+				// Set HTMX attributes on the Confirm button
+				confirmBtn.setAttribute('hx-post', options.endpoint);
+				confirmBtn.setAttribute('hx-target', options.target || '#workflow-status-display');
+				confirmBtn.setAttribute('hx-swap', options.swap || 'innerHTML');
+
+				// Initialize HTMX on the button (processes the new attributes)
+				htmx.process(confirmBtn);
+
+				// Show modal
+				modal.classList.remove('hidden');
+
+				// Cancel button just closes modal
+				cancelBtn.onclick = function() {
+					modal.classList.add('hidden');
+					// Clean up HTMX attributes to prevent accidental reuse
+					confirmBtn.removeAttribute('hx-post');
+					confirmBtn.removeAttribute('hx-target');
+					confirmBtn.removeAttribute('hx-swap');
+				};
+
+				// Also handle modal close via backdrop or ESC key
+				modal.onclick = function(e) {
+					if (e.target === modal) {
+						cancelBtn.click();
+					}
+				};
 			};
 
-			window.confirmCancelWorkflow = async function(button) {
-				var confirmed = await showConfirmModal({
-					title: 'Cancel Update?',
-					message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
-					variant: 'danger',
-					confirmText: 'Cancel Update',
-					cancelText: 'Keep Running'
-				});
+			// Handle HTMX response - close modal after successful request
+			document.body.addEventListener('htmx:afterRequest', function(evt) {
+				// Close modal if the request came from the confirm button
+				if (evt.detail.elt.id === 'confirm-ok') {
+					var modal = document.getElementById('confirm-modal');
+					modal.classList.add('hidden');
 
-				if (confirmed) {
-					htmx.trigger(button, 'confirmed');
+					// Clean up HTMX attributes
+					evt.detail.elt.removeAttribute('hx-post');
+					evt.detail.elt.removeAttribute('hx-target');
+					evt.detail.elt.removeAttribute('hx-swap');
 				}
-			};
+			});
+
+			// Attach event listeners to workflow action buttons using event delegation
+			document.body.addEventListener('click', function(e) {
+				// Handle Approve All button
+				if (e.target.classList.contains('workflow-approve-all-btn')) {
+					var endpoint = e.target.getAttribute('data-endpoint');
+					showWorkflowActionModal({
+						endpoint: endpoint,
+						target: '#workflow-status-display',
+						swap: 'innerHTML',
+						title: 'Approve Update?',
+						message: 'Are you sure you want to approve this update? This will automatically approve all steps.',
+						confirmText: 'Approve',
+						cancelText: 'Cancel'
+					});
+				}
+				// Handle Cancel button
+				else if (e.target.classList.contains('workflow-cancel-btn')) {
+					var endpoint = e.target.getAttribute('data-endpoint');
+					showWorkflowActionModal({
+						endpoint: endpoint,
+						target: '#workflow-status-display',
+						swap: 'innerHTML',
+						title: 'Cancel Update?',
+						message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
+						confirmText: 'Cancel Update',
+						cancelText: 'Keep Running'
+					});
+				}
+			});
 
 			// Handle HTMX response errors
 			document.body.addEventListener('htmx:responseError', function(evt) {

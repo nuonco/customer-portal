@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -97,8 +98,10 @@ func NewJWTMiddleware(db *gorm.DB, jwtSecret string, opts AuthOptions) (*jwt.Gin
 			// Check if this is an HTML request (browser) or API request
 			accept := c.GetHeader("Accept")
 			if strings.Contains(accept, "text/html") {
+				// Capture the original request URL for post-login redirect
+				redirectURL := c.Request.URL.RequestURI()
 				// Redirect HTML requests to login page (using BasePath prefix)
-				c.Redirect(http.StatusFound, opts.BasePath+"/login")
+				c.Redirect(http.StatusFound, opts.BasePath+"/login?redirect="+url.QueryEscape(redirectURL))
 			} else {
 				// Return JSON for API requests
 				c.JSON(code, gin.H{
