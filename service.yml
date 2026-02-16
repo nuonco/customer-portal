@@ -60,10 +60,10 @@ watch_ignore:
   - '_templ\.go$'
 
 local_startup_cmds:
-  - nuonctl scripts exec customer-dashboard-setup
 
 local_build_cmds:
-  - ./scripts/build.sh
+  - go generate ./...
+  - go build -o ./tmp/main .
 
 local_cmds:
   - ./tmp/main
