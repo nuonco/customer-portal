@@ -11,7 +11,8 @@ import (
 // InstallsPageProps for the installs list page
 type InstallsPageProps struct {
 	customerui.LayoutProps
-	Pagination customerui.InstallPaginationData
+	Pagination       customerui.InstallPaginationData
+	InitialInstallID string // ID of install to auto-open
 }
 
 // InstallsPage renders the customer installs page with table layout and sliding panel
@@ -238,17 +239,22 @@ templ installTab(tabID, label, currentTab string, count int64, primaryColor stri
 templ installTableRow(install customerui.InstallWithApprovalStatus, basePath string) {
 	{{
 		platform := components.PlatformFromRegion(install.Region)
+		panelURL := basePath + "/installs/" + install.ID + "/panel"
 		detailURL := basePath + "/installs/" + install.ID
 		// Escape single quotes in names for JavaScript
 		escapedName := strings.ReplaceAll(install.Name, "'", "\\'")
-		onClickCall := fmt.Sprintf("openInstallPanel('%s', '%s', '%s')", install.ID, escapedName, detailURL)
+		beforeRequestCall := fmt.Sprintf("preparePanel(this, '%s', '%s')", install.ID, escapedName)
 	}}
 	<tr
 		class="install-row"
 		data-install-id={ install.ID }
 		data-install-name={ install.Name }
-		data-detail-url={ detailURL }
-		onclick={ templ.ComponentScript{Call: onClickCall} }
+		hx-get={ panelURL }
+		hx-target="#panel-content-overview"
+		hx-swap="innerHTML show:no-scroll"
+		hx-push-url={ detailURL }
+		hx-on::before-request={ templ.ComponentScript{Call: beforeRequestCall} }
+		hx-on::after-settle="finalizePanelLoad()"
 	>
 		<td>
 			<span class="install-name-link">{ install.Name }</span>
@@ -297,42 +303,49 @@ templ installsPanelScripts() {
 			var historyLoaded = false;
 			var auditLoaded = false;
 
-			// Open panel for an install
-			window.openInstallPanel = function(installId, installName, detailUrl) {
+			// Prepare panel state before HTMX loads content
+			window.preparePanel = function(rowElement, installId, installName) {
+				// Store current install context
 				currentInstallId = installId;
 				historyLoaded = false;
 				auditLoaded = false;
 
-				// Update panel title
+				// Update panel header with provided values (from HTMX call)
 				document.getElementById('panel-install-name').textContent = installName;
-
-				// Clear install ID until panel content loads
-				document.getElementById('panel-install-id').textContent = '';
+				document.getElementById('panel-install-id').textContent = installId;
 
 				// Clear actions container until panel content loads
 				document.getElementById('panel-actions-container').innerHTML = '';
 
-				// Reset to Overview tab
-				switchPanelTab('overview');
-
-				// Show panel
-				document.getElementById('detail-panel-overlay').classList.add('open');
-				document.getElementById('detail-panel').classList.add('open');
-
-				// Highlight active row
+				// Highlight the active row
 				document.querySelectorAll('.install-row').forEach(function(row) {
 					row.classList.remove('active');
 				});
-				var activeRow = document.querySelector('[data-install-id="' + installId + '"]');
-				if (activeRow) {
-					activeRow.classList.add('active');
-				}
+				rowElement.classList.add('active');
 
-				// Load overview content from panel endpoint
-				loadPanelContent('overview', basePath + '/installs/' + installId + '/panel');
-
-				// Prevent body scroll
+				// Show the panel and overlay
+				document.getElementById('detail-panel-overlay').classList.add('open');
+				document.getElementById('detail-panel').classList.add('open');
 				document.body.style.overflow = 'hidden';
+
+				// Ensure overview tab is active
+				switchPanelTab('overview');
+
+				// Show loading spinner in the container (HTMX will replace it)
+				document.getElementById('panel-content-overview').innerHTML =
+					'<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+			};
+
+			// Finalize panel after HTMX loads and settles content
+			window.finalizePanelLoad = function() {
+				// HTMX has already injected the content and processed all HTMX attributes
+				// The banner polling is now active!
+
+				// Enable panel expand button
+				var expandBtn = document.getElementById('panel-expand-btn');
+				if (expandBtn) {
+					expandBtn.disabled = false;
+				}
 			};
 
 			// Close panel
@@ -344,6 +357,15 @@ templ installsPanelScripts() {
 				document.querySelectorAll('.install-row').forEach(function(row) {
 					row.classList.remove('active');
 				});
+
+				// Push new URL state when closing panel
+				var currentPath = window.location.pathname;
+				// Only push state if we're currently on an install detail URL
+				if (currentPath.match(/\/installs\/[^\/]+/)) {
+					var params = new URLSearchParams(window.location.search);
+					var newUrl = basePath + '/installs' + (params.toString() ? '?' + params.toString() : '');
+					history.pushState({panelClosed: true}, '', newUrl);
+				}
 
 				// Reset state
 				currentInstallId = null;
@@ -393,48 +415,28 @@ templ installsPanelScripts() {
 				document.getElementById('tab-history').classList.toggle('active', tabName === 'history');
 				document.getElementById('tab-audit').classList.toggle('active', tabName === 'audit');
 
-				// Lazy load history tab
+				// Lazy load history tab using HTMX
 				if (tabName === 'history' && !historyLoaded && currentInstallId) {
-					loadPanelContent('history', basePath + '/installs/' + currentInstallId + '/panel/history');
+					if (typeof htmx !== 'undefined') {
+						htmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/history', {
+							target: '#panel-content-history',
+							swap: 'innerHTML'
+						});
+					}
 					historyLoaded = true;
 				}
 
-				// Lazy load audit tab
+				// Lazy load audit tab using HTMX
 				if (tabName === 'audit' && !auditLoaded && currentInstallId) {
-					loadPanelContent('audit', basePath + '/installs/' + currentInstallId + '/panel/audit');
+					if (typeof htmx !== 'undefined') {
+						htmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/audit', {
+							target: '#panel-content-audit',
+							swap: 'innerHTML'
+						});
+					}
 					auditLoaded = true;
 				}
 			};
-
-			// Load content into panel (panel endpoints return just the content, no layout wrapper)
-			function loadPanelContent(tab, url) {
-				var containerId = 'panel-content-' + tab;
-				var container = document.getElementById(containerId);
-
-				// Show loading
-				container.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"><\/div><\/div>';
-
-				fetch(url)
-					.then(function(response) {
-						if (!response.ok) throw new Error('Failed to load');
-						return response.text();
-					})
-					.then(function(html) {
-						// Panel endpoints return just the content, inject directly
-						container.innerHTML = html;
-
-						// Re-run any scripts that were in the content
-						var scripts = container.querySelectorAll('script');
-						scripts.forEach(function(script) {
-							var newScript = document.createElement('script');
-							newScript.textContent = script.textContent;
-							script.parentNode.replaceChild(newScript, script);
-						});
-					})
-					.catch(function(error) {
-						container.innerHTML = '<div class="text-center py-8 text-red-500">Failed to load content. <button onclick="location.reload()" class="underline">Retry<\/button><\/div>';
-					});
-			}
 
 			// Close on ESC key
 			document.addEventListener('keydown', function(e) {
@@ -450,20 +452,42 @@ templ installsPanelScripts() {
 				}
 			});
 
-			// Check for auto-open parameter (used after accepting install link)
-			var urlParams = new URLSearchParams(window.location.search);
-			var autoOpenId = urlParams.get('open');
-			if (autoOpenId) {
-				// Find the row with this install ID
-				var row = document.querySelector('[data-install-id="' + autoOpenId + '"]');
-				if (row) {
-					var name = row.dataset.installName;
-					var detailUrl = basePath + '/installs/' + autoOpenId + '/panel';
-					openInstallPanel(autoOpenId, name, detailUrl);
+			// Check if we're on /installs/:install_id route (used after accepting install link)
+			// Wrapped in DOMContentLoaded to ensure table rows are rendered
+			document.addEventListener('DOMContentLoaded', function() {
+				var pathMatch = window.location.pathname.match(/\/installs\/([^\/\?]+)/);
+				if (pathMatch && pathMatch[1]) {
+					var installId = pathMatch[1];
+					var row = document.querySelector('[data-install-id="' + installId + '"]');
+					if (row) {
+						// Trigger HTMX request to load panel
+						if (typeof htmx !== 'undefined') {
+							htmx.trigger(row, 'click');
+						}
+					}
 				}
-				// Clean up URL (remove the param)
-				history.replaceState({}, '', basePath + '/installs');
-			}
+			});
+
+			// Handle back/forward button navigation
+			window.addEventListener('popstate', function(event) {
+				var pathMatch = window.location.pathname.match(/\/installs\/([^\/\?]+)/);
+
+				if (pathMatch && pathMatch[1]) {
+					// URL has install ID - open panel
+					var installId = pathMatch[1];
+					var row = document.querySelector('[data-install-id="' + installId + '"]');
+					if (row && currentInstallId !== installId) {
+						if (typeof htmx !== 'undefined') {
+							htmx.trigger(row, 'click');
+						}
+					}
+				} else {
+					// URL is just /installs - close panel
+					if (currentInstallId) {
+						closeInstallPanel();
+					}
+				}
+			});
 		})();
 	</script>
 }

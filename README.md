@@ -324,8 +324,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /login` - Customer authentication (existing accounts only)
 - `GET /install-link?sha=<sha>` - Install link acceptance page
 - `POST /install-link` - Accept link and create account/install
-- `GET /installs` - Customer installations
-- `GET /installs/:install_id` - Install details
+- `GET /installs` - Customer installations list
+- `GET /installs/:install_id` - Installs list with specific install panel open
 - `PUT /installs/:install_id` - Update install
 - `DELETE /installs/:install_id` - Deprovision install
 - `POST /installs/:install_id/forget` - Remove install from local DB

@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/nuon-go/client/operations"
 )
 
 // FilterType represents the type of input filtering to apply
@@ -636,6 +638,21 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 func (h *Handler) InstallsPage(c *gin.Context) {
 	user := h.GetFreshUser(c) // Load from DB for topbar display
 
+	// Get optional install_id from path for detail view with panel open
+	installIDParam := c.Param("install_id")
+	var initialInstallID string
+
+	if installIDParam != "" {
+		// Validate install exists and belongs to user
+		var install models.Install
+		if err := h.db.Where("id = ? AND user_id = ?", installIDParam, user.ID).First(&install).Error; err != nil {
+			// Install not found or doesn't belong to user - redirect to list
+			c.Redirect(http.StatusFound, h.basePath+"/installs")
+			return
+		}
+		initialInstallID = installIDParam
+	}
+
 	// Tab and pagination parameters
 	const installsPerPage = 10
 	currentTab := c.DefaultQuery("tab", "needs-attention")
@@ -892,8 +909,9 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 
 	// Fall back to default Templ template
 	props := customerpages.InstallsPageProps{
-		LayoutProps: h.buildCustomerLayoutProps("Your Installs", user, theme),
-		Pagination:  pagination,
+		LayoutProps:      h.buildCustomerLayoutProps("Your Installs", user, theme),
+		Pagination:       pagination,
+		InitialInstallID: initialInstallID,
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallsPage(props))
 }
@@ -939,6 +957,17 @@ func getBool(m gin.H, key string) bool {
 		return v
 	}
 	return false
+}
+
+// getInt safely gets an int value from a gin.H map
+func getInt(m gin.H, key string) int {
+	if v, ok := m[key].(int); ok {
+		return v
+	}
+	if v, ok := m[key].(float64); ok {
+		return int(v)
+	}
+	return 0
 }
 
 // UpdateInstall handles customer install updates
@@ -1510,6 +1539,30 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		return
 	}
 
+	// Check if install still exists in Nuon API
+	var apiDeletedError bool
+	if install.InstallLink.NuonOrg.APIToken != "" {
+		checkClient, checkErr := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if checkErr == nil {
+			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
+			if apiErr != nil {
+				// Check if error is specifically a 404 NotFound
+				var notFoundErr *operations.GetInstallNotFound
+				if errors.As(apiErr, &notFoundErr) {
+					apiDeletedError = true
+					h.logger.Warn("install deleted from API but exists locally",
+						zap.String("install_id", install.ID),
+						zap.String("nuon_install_id", install.NuonInstallID),
+					)
+				}
+			}
+		}
+	}
+
 	// Fetch health check status if configured
 	var healthCheckStatuses []partials.HealthCheckStatusDataPanel
 	var overallHealthStatus string
@@ -1710,6 +1763,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	props := partials.InstallDetailPanelProps{
 		Install:                 install,
+		APIDeletedError:         apiDeletedError,
 		HealthCheckStatuses:     healthCheckStatuses,
 		OverallHealthStatus:     overallHealthStatus,
 		HasHealthChecks:         len(healthCheckIDs) > 0,
@@ -1731,6 +1785,9 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 }
 
 // InstallWorkflowStatus returns the active provision workflow banner for HTMX polling
+// This endpoint is called by HTMX polling every 5 seconds
+// It must return HTML (ActiveProvisionBanner template) for HTMX to swap
+// Authentication is handled by JWT middleware which returns HX-Trigger: auth-error on failure
 func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
@@ -1745,6 +1802,26 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
+	}
+
+	// Check if install still exists in API
+	if install.InstallLink.NuonOrg.APIToken != "" {
+		checkClient, checkErr := nuon.NewClientWithURL(
+			install.InstallLink.NuonOrg.APIToken,
+			install.InstallLink.NuonOrg.NuonOrgID,
+			h.nuonAPIURL,
+		)
+		if checkErr == nil {
+			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
+			var notFoundErr *operations.GetInstallNotFound
+			if errors.As(apiErr, &notFoundErr) {
+				// Install deleted from API - return empty state
+				theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
+				primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
+				h.RenderTempl(c, http.StatusOK, partials.ActiveProvisionBanner(nil, "", install.ID, h.basePath, primaryColor))
+				return
+			}
+		}
 	}
 
 	// Fetch active provision workflow (provision or provision_sandbox)

@@ -134,9 +134,9 @@ templ workflowsPanelScripts() {
 
 			window.confirmApproveAll = window.confirmApproveAll || function(btn) {
 				showConfirmModal({
-					title: 'Approve All Steps',
+					title: 'Approve Installation',
 					message: 'This will automatically approve all future approval steps in this workflow. Are you sure?',
-					confirmText: 'Approve All',
+					confirmText: 'Approve Installation',
 					cancelText: 'Cancel'
 				}).then(function(confirmed) {
 					if (confirmed) {

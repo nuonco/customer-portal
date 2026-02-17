@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"cmp"
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -363,6 +365,20 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 	})
 }
 
+// formatStepName converts "await_install_stack" to "Await install stack"
+func formatStepName(stepName string) string {
+	if stepName == "" {
+		return ""
+	}
+	// Replace underscores with spaces
+	formatted := strings.ReplaceAll(stepName, "_", " ")
+	// Capitalize only the first letter
+	if len(formatted) > 0 {
+		formatted = strings.ToUpper(formatted[:1]) + formatted[1:]
+	}
+	return formatted
+}
+
 // processWorkflowForCustomer converts technical workflow data to customer-friendly format
 func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 	// Convert technical workflow types to customer-friendly names
@@ -468,6 +484,72 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 	createdAt := parseWorkflowTime(workflow.CreatedAt)
 	finishedAt := parseWorkflowTime(workflow.FinishedAt)
 
+	// Find the current or next step to display (three-pass algorithm)
+	var currentStepName string
+	var currentStepStatus string
+	var currentStepType string
+	var currentStepNumber int = 0
+	var totalSteps int
+
+	slices.SortFunc(workflow.Steps, func(a, b *models.AppWorkflowStep) int {
+		return cmp.Compare(a.Idx, b.Idx)
+	})
+
+	if workflow.Steps != nil {
+		totalSteps = len(workflow.Steps)
+		currentStepNumber = 1
+
+		// First pass: Look for active or approval-awaiting steps (priority)
+		for i, step := range workflow.Steps {
+			stepStatus := ""
+			if step.Status != nil {
+				stepStatus = string(step.Status.Status)
+			}
+
+			if stepStatus == "in-progress" {
+				currentStepName = formatStepName(step.Name)
+				currentStepStatus = stepStatus
+				currentStepType = "in-progress"
+				currentStepNumber += i
+				break
+			} else if stepStatus == "approval-awaiting" {
+				currentStepName = formatStepName(step.Name)
+				currentStepStatus = stepStatus
+				currentStepType = "approval-awaiting"
+				currentStepNumber += i
+				break
+			}
+		}
+
+		// Second pass: If no active step found and workflow is pending/in-progress,
+		// show the first pending step as "waiting to start"
+		if currentStepName == "" && (status == "pending" || status == "in-progress") {
+			for i, step := range workflow.Steps {
+				stepStatus := ""
+				if step.Status != nil {
+					stepStatus = string(step.Status.Status)
+				}
+
+				// Find first pending or uninitialized step
+				if stepStatus == "pending" || stepStatus == "" {
+					currentStepName = formatStepName(step.Name)
+					currentStepType = "pending"
+					currentStepNumber += i
+					break
+				}
+			}
+		}
+	}
+
+	// Third pass: Placeholder step name while waiting for workflow steps to be created
+	// This handles the case where workflow is active but Steps array is empty/nil
+	if currentStepName == "" && (status == "pending" || status == "in-progress") {
+		currentStepName = "Creating provision workflow..."
+		currentStepType = "initializing"
+		currentStepStatus = status
+		// currentStepNumber remains 0 (no progress indicator)
+	}
+
 	return gin.H{
 		"id":                          workflow.ID,
 		"name":                        workflowName,
@@ -483,6 +565,11 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		"approve_disabled_reason":     approveDisabledReason,
 		"approve_all_disabled_reason": approveAllDisabledReason,
 		"cancel_disabled_reason":      cancelDisabledReason,
+		"current_step_name":           currentStepName,
+		"current_step_status":         currentStepStatus,
+		"current_step_type":           currentStepType,
+		"current_step_number":         currentStepNumber,
+		"total_steps":                 totalSteps,
 	}
 }
 
@@ -621,6 +708,11 @@ func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
 		ApproveDisabledReason:    getString(wf, "approve_disabled_reason"),
 		ApproveAllDisabledReason: getString(wf, "approve_all_disabled_reason"),
 		CancelDisabledReason:     getString(wf, "cancel_disabled_reason"),
+		CurrentStepName:          getString(wf, "current_step_name"),
+		CurrentStepStatus:        getString(wf, "current_step_status"),
+		CurrentStepType:          getString(wf, "current_step_type"),
+		CurrentStepNumber:        getInt(wf, "current_step_number"),
+		TotalSteps:               getInt(wf, "total_steps"),
 	}
 
 	// Handle time fields

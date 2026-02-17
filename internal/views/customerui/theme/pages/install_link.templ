@@ -350,7 +350,7 @@ templ installLinkScript() {
 						successDiv.innerHTML = '<p class="font-semibold">Installation accepted successfully!<\/p><p class="text-sm mt-2">Redirecting to your install...<\/p>';
 						successDiv.classList.remove('hidden');
 						setTimeout(function() {
-							window.location.href = basePath + '/installs?open=' + data.install.id;
+							window.location.href = basePath + '/installs/' + data.install.id;
 						}, 2000);
 					} else {
 						errorDiv.textContent = data.error || 'Failed to accept installation';

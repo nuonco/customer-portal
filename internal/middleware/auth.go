@@ -18,6 +18,11 @@ type LoginCredentials struct {
 	Email string `json:"email" binding:"required"`
 }
 
+// isHTMXRequest checks if the request is from HTMX
+func isHTMXRequest(c *gin.Context) bool {
+	return c.GetHeader("HX-Request") == "true"
+}
+
 // AuthOptions configures JWT middleware behavior for different user types
 type AuthOptions struct {
 	AllowSignup   bool            // true for vendor (auto-create accounts), false for customer
@@ -95,20 +100,36 @@ func NewJWTMiddleware(db *gorm.DB, jwtSecret string, opts AuthOptions) (*jwt.Gin
 		},
 
 		Unauthorized: func(c *gin.Context, code int, message string) {
-			// Check if this is an HTML request (browser) or API request
 			accept := c.GetHeader("Accept")
-			if strings.Contains(accept, "text/html") {
-				// Capture the original request URL for post-login redirect
-				redirectURL := c.Request.URL.RequestURI()
-				// Redirect HTML requests to login page (using BasePath prefix)
-				c.Redirect(http.StatusFound, opts.BasePath+"/login?redirect="+url.QueryEscape(redirectURL))
-			} else {
-				// Return JSON for API requests
-				c.JSON(code, gin.H{
-					"code":    code,
-					"message": message,
-				})
+
+			// Check if this is an HTMX request
+			if isHTMXRequest(c) {
+				// For HTMX polling requests, return empty HTML that triggers re-authentication
+				// HTMX will swap this empty content, and we can add an event listener to handle it
+				c.Header("HX-Trigger", "auth-error")
+				c.Data(http.StatusUnauthorized, "text/html; charset=utf-8", []byte(""))
+				c.Abort()
+				return
 			}
+
+			// For HTML requests (browser navigation), redirect to login
+			if strings.Contains(accept, "text/html") {
+				redirectURL := opts.BasePath + "/login"
+				currentURL := c.Request.URL.String()
+				if currentURL != "/" && currentURL != "/login" {
+					redirectURL += "?redirect=" + url.QueryEscape(currentURL)
+				}
+				c.Redirect(http.StatusFound, redirectURL)
+				c.Abort()
+				return
+			}
+
+			// For all other requests (API, JSON), return JSON error
+			c.JSON(code, gin.H{
+				"code":    code,
+				"message": message,
+			})
+			c.Abort()
 		},
 
 		TokenLookup: "header: Authorization, query: token, cookie: jwt",

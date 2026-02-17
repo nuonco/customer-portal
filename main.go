@@ -368,6 +368,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	installs.Use(middleware.RequireRole(models.RoleCustomer))
 	{
 		installs.GET("/", h.InstallsPage)
+		installs.GET("/:install_id", h.InstallsPage) // Detail view with panel open
 
 		// Routes that require install ownership verification
 		installOwnership := installs.Group("/:install_id")

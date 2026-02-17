@@ -24,6 +24,11 @@ type WorkflowDataPanel struct {
 	ApproveAllDisabledReason string
 	CancelDisabledReason     string
 	ApprovalStep             *ApprovalStepDataPanel
+	CurrentStepName          string // Name of the currently executing step
+	CurrentStepStatus        string // Status of the current step (in-progress, approval-awaiting)
+	CurrentStepType          string // Type of current step: "pending", "in-progress", "approval-awaiting", or "initializing"
+	CurrentStepNumber        int    // 1-indexed position of current step (1, 2, 3...)
+	TotalSteps               int    // Total number of steps in workflow
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -71,6 +76,7 @@ func platformLabel(platform string) string {
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
 	Install                  *models.Install
+	APIDeletedError          bool
 	HealthCheckStatuses      []HealthCheckStatusDataPanel
 	OverallHealthStatus      string
 	HasHealthChecks          bool
@@ -102,7 +108,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		platform := platformFromRegion(props.Install.Region)
 	}}
 	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
-	if props.Install.Status != "deprovisioning" {
+	if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
 		<div id="panel-actions-source" class="hidden">
 			<div class="relative" id="actionsDropdown">
 				<button
@@ -147,21 +153,58 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		</div>
 	}
 	<div class="space-y-4 mt-4">
+		<!-- API Deletion Warning Banner -->
+		if props.APIDeletedError {
+			<div class="p-4 border bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800" style="border-radius: var(--theme-radius)">
+				<div class="flex items-start">
+					<div class="flex-shrink-0 mr-3 text-amber-500">
+						<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+							<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+						</svg>
+					</div>
+					<div class="flex-1">
+						<h3 class="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Install Deleted from API</h3>
+						<p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
+							This install was deleted from the Nuon control plane but still exists in your local portal.
+							You are viewing cached data only. Live features (health checks, workflows, updates) are unavailable.
+						</p>
+						<p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
+							<strong>Action required:</strong> Use the "Forget" button to remove this install from your portal.
+						</p>
+						<button
+							type="button"
+							onclick="forgetInstall()"
+							class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-900 dark:text-amber-100 bg-amber-100 dark:bg-amber-800 hover:bg-amber-200 dark:hover:bg-amber-700 border border-amber-300 dark:border-amber-600"
+							style="border-radius: var(--theme-radius)"
+						>
+							<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+							</svg>
+							Forget Install
+						</button>
+					</div>
+				</div>
+			</div>
+		}
 		<!-- Active Provision Banner (polls and shows when workflow is active) -->
-		@ActiveProvisionBanner(props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
+		if !props.APIDeletedError {
+			@ActiveProvisionBanner(props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
+		}
 		<!-- App Config + Platform (side by side) -->
 		<div class="grid grid-cols-2 gap-4">
 			@appConfigCard(props)
 			@platformCard(platform, props.Install.Region)
 		</div>
 		<!-- Health Status (full width) -->
-		if props.HasHealthChecks {
+		if props.HasHealthChecks && !props.APIDeletedError {
 			<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
 				@healthStatusPanel(props)
 			</div>
 		}
 		<!-- App Readme Card (polls and shows when NO active workflow) -->
-		@AppReadmeCard(props.InstallReadme, props.Install.ID, props.BasePath)
+		if !props.APIDeletedError {
+			@AppReadmeCard(props.InstallReadme, props.Install.ID, props.BasePath)
+		}
 	</div>
 	<!-- Edit Inputs Modal -->
 	@editInputsModalPanel()
@@ -409,11 +452,51 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 		<!-- Wrapper for status display - this is the HTMX target -->
 		<div id="workflow-status-display">
 			<div class="flex items-center justify-between mb-2">
-				<h4 class="font-medium text-cool-grey-900 dark:text-white">{ workflow.Name }</h4>
+				<div class="flex-1">
+					<h4 class="font-medium text-cool-grey-900 dark:text-white">{ workflow.Name }</h4>
+					<!-- Show spinner if workflow is active OR if step name exists -->
+					if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
+						<div class="flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400">
+							<!-- Animated loading spinner -->
+							<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							<span>
+								if workflow.TotalSteps > 0 {
+									<span class="font-medium">Step { fmt.Sprintf("%d", workflow.CurrentStepNumber) } of { fmt.Sprintf("%d", workflow.TotalSteps) }:</span>
+									{ " " }
+								}
+								if workflow.CurrentStepName != "" {
+									if workflow.CurrentStepType == "pending" {
+										Waiting to start: { workflow.CurrentStepName }
+									} else if workflow.CurrentStepType == "approval-awaiting" {
+										Awaiting approval: { workflow.CurrentStepName }
+									} else if workflow.CurrentStepType == "initializing" {
+										{ workflow.CurrentStepName }
+									} else {
+										{ workflow.CurrentStepName }
+									}
+								} else {
+									<!-- Fallback message if no step data available -->
+									Workflow starting...
+								}
+							</span>
+						</div>
+					}
+				</div>
 				<span class={ "text-xs px-2 py-1 rounded", workflow.StatusClass }>
 					{ workflow.Status }
 				</span>
 			</div>
+			<!-- Progress bar (only show when we have step data) -->
+			if workflow.TotalSteps > 0 && workflow.CurrentStepNumber > 0 {
+				@templ.Raw(fmt.Sprintf(`<div class="mb-2">
+					<div class="w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-cool-grey-400 dark:border-cool-grey-600">
+						<div class="h-full bg-blue-600 dark:bg-blue-500 rounded-sm transition-all duration-300 ease-in-out" style="width: %d%%;"></div>
+					</div>
+				</div>`, (workflow.CurrentStepNumber * 100) / workflow.TotalSteps))
+			}
 			<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
 				{ workflow.CreatedAt.Format("Jan 2, 2006 3:04 PM") }
 			</div>
@@ -428,7 +511,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 							class="workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 						>
-							Approve All
+							Approve Installation
 						</button>
 					} else {
 						<button
@@ -437,7 +520,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 							class="px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed"
 							title={ workflow.ApproveAllDisabledReason }
 						>
-							Approve All
+							Approve Installation
 						</button>
 					}
 				}
@@ -631,7 +714,7 @@ templ installDetailPanelScripts() {
 
 			// Attach event listeners to workflow action buttons using event delegation
 			document.body.addEventListener('click', function(e) {
-				// Handle Approve All button
+				// Handle Approve Installation button
 				if (e.target.classList.contains('workflow-approve-all-btn')) {
 					var endpoint = e.target.getAttribute('data-endpoint');
 					showWorkflowActionModal({
@@ -864,6 +947,38 @@ templ installDetailPanelScripts() {
 				}
 			});
 		})();
+
+		// Handle HTMX authentication errors
+		document.body.addEventListener('auth-error', function(event) {
+			console.warn('Authentication expired during HTMX polling, redirecting to login...');
+
+			// Show a toast notification (if toast functionality exists)
+			if (typeof showToast === 'function') {
+				showToast('Your session has expired. Redirecting to login...', 'warning');
+			}
+
+			// Redirect to login after a short delay
+			setTimeout(function() {
+				const currentPath = window.location.pathname;
+				window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
+			}, 2000);
+		});
+
+		// Optional: Log HTMX errors for debugging
+		document.body.addEventListener('htmx:responseError', function(event) {
+			console.error('HTMX request failed:', {
+				url: event.detail.pathInfo.requestPath,
+				status: event.detail.xhr.status,
+				statusText: event.detail.xhr.statusText
+			});
+		});
+
+		// Optional: Log successful HTMX swaps for debugging
+		document.body.addEventListener('htmx:afterSwap', function(event) {
+			if (event.detail.target.id === 'active-provision-banner') {
+				console.log('Workflow status banner updated via HTMX');
+			}
+		});
 	</script>
 }
 
