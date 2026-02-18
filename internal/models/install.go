@@ -26,7 +26,9 @@ type Install struct {
 	InstallLinkID     *string        `json:"install_link_id"`                         // Nullable: nil for published-app installs
 	NuonAppID         string         `gorm:"default:''" json:"nuon_app_id,omitempty"` // Set for published-app installs; empty for install-link installs
 	NuonInstallID     string         `gorm:"not null" json:"nuon_install_id"`
-	Name              string         `gorm:"default:''" json:"name"` // Human-readable install name
+	Name              string         `gorm:"default:''" json:"name"`     // Human-readable install name
+	AppID             string         `gorm:"default:''" json:"app_id"`   // Nuon app ID (set for imported installs)
+	AppName           string         `gorm:"default:''" json:"app_name"` // App display name (set for imported installs)
 	Status            InstallStatus  `gorm:"type:varchar(30);default:'pending_customer'" json:"status"`
 	Region            string         `json:"region,omitempty"`
 	CreatedAt         time.Time      `json:"created_at"`

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -593,6 +594,45 @@ func (c *Client) GetAppSandboxLatestConfig(ctx context.Context, appID string) (*
 		return nil, fmt.Errorf("failed to get sandbox config: %w", err)
 	}
 	return cfg, nil
+}
+
+// ListAppInstalls searches installs for a given app by query string.
+// Returns up to limit results matching the query.
+func (c *Client) ListAppInstalls(ctx context.Context, appID, query string) ([]*models.AppInstall, error) {
+	reqURL := fmt.Sprintf("%s/v1/apps/%s/installs?q=%s&limit=20",
+		c.apiURL, appID, url.QueryEscape(query))
+
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	req.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var installs []*models.AppInstall
+	if err := json.Unmarshal(body, &installs); err != nil {
+		return nil, fmt.Errorf("failed to parse installs: %w", err)
+	}
+
+	return installs, nil
 }
 
 // IsInstallNameAvailable checks if an install name is available for an app via the Nuon API.

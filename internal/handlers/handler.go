@@ -2813,3 +2813,374 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerDetailPage(props))
 }
+
+// CustomerInstallsPage displays all installs tracked in the portal for an org.
+func (h *Handler) CustomerInstallsPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, "Organization context not found")
+		return
+	}
+
+	filterEmail := c.Query("email")
+	filterApp := c.Query("app")
+	filterPlatform := c.Query("platform")
+
+	// Build query for installs joined with their owning user
+	type InstallRow struct {
+		ID                 string
+		NuonInstallID      string
+		NuonOrgID          string
+		Name               string
+		UserID             string
+		CustomerEmail      string
+		CustomerName       string
+		AppID              string
+		AppName            string
+		Status             string
+		Region             string
+		CreatedAt          time.Time
+		InstallLinkID      string
+		InstallLinkAppID   string
+		InstallLinkAppName string
+	}
+
+	query := h.db.Table("installs").
+		Select(`installs.id, installs.nuon_install_id, installs.user_id,
+			installs.name, installs.app_id, installs.app_name,
+			installs.status, installs.region, installs.created_at,
+			COALESCE(installs.install_link_id::text, '') as install_link_id,
+			users.email as customer_email, users.name as customer_name,
+			COALESCE(install_links.app_id, '') as install_link_app_id,
+			COALESCE(install_links.app_name, '') as install_link_app_name`).
+		Joins("JOIN users ON users.id = installs.user_id").
+		Joins("LEFT JOIN install_links ON install_links.id = installs.install_link_id").
+		Where("installs.org_id = ? AND installs.deleted_at IS NULL", org.ID).
+		Order("installs.created_at DESC")
+
+	if filterEmail != "" {
+		query = query.Where("users.email ILIKE ?", "%"+filterEmail+"%")
+	}
+	if filterApp != "" {
+		pattern := "%" + filterApp + "%"
+		query = query.Where("(installs.app_name ILIKE ? OR install_links.app_name ILIKE ?)", pattern, pattern)
+	}
+
+	var rows []InstallRow
+	if err := query.Find(&rows).Error; err != nil {
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch installs: %v", err))
+		return
+	}
+
+	// Fetch apps from Nuon API to build platform map
+	platformMap := make(map[string]string)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err == nil {
+		apps, appsErr := nuonClient.ListApps(c.Request.Context())
+		if appsErr == nil {
+			for _, app := range apps {
+				platform := "aws"
+				if app.RunnerConfig != nil && string(app.RunnerConfig.AppRunnerType) == "azure" {
+					platform = "azure"
+				}
+				platformMap[app.ID] = platform
+			}
+		}
+	}
+
+	// Convert rows to AdminInstall, applying platform filter in Go
+	adminInstalls := make([]vendorpages.AdminInstall, 0, len(rows))
+	for _, row := range rows {
+		// Resolve app ID and name
+		effectiveAppID := row.AppID
+		if effectiveAppID == "" {
+			effectiveAppID = row.InstallLinkAppID
+		}
+		effectiveAppName := row.AppName
+		if effectiveAppName == "" {
+			effectiveAppName = row.InstallLinkAppName
+		}
+		if effectiveAppName == "" {
+			effectiveAppName = "Unknown App"
+		}
+
+		// Resolve platform
+		platform := "aws"
+		if p, ok := platformMap[effectiveAppID]; ok {
+			platform = p
+		}
+
+		// Apply platform filter
+		if filterPlatform != "" && platform != filterPlatform {
+			continue
+		}
+
+		adminInstalls = append(adminInstalls, vendorpages.AdminInstall{
+			ID:            row.ID,
+			NuonInstallID: row.NuonInstallID,
+			NuonOrgID:     org.NuonOrgID,
+			Name:          row.Name,
+			CustomerID:    row.UserID,
+			CustomerEmail: row.CustomerEmail,
+			CustomerName:  row.CustomerName,
+			AppID:         effectiveAppID,
+			AppName:       effectiveAppName,
+			Platform:      platform,
+			Status:        row.Status,
+			InstallLinkID: row.InstallLinkID,
+			CreatedAt:     row.CreatedAt.Format("Jan 2, 2006"),
+		})
+	}
+
+	// Return partial for HTMX filter requests
+	if isHTMXRequest(c) {
+		h.RenderTempl(c, http.StatusOK, vendorpages.InstallsTableBody(adminInstalls, org.ID, h.basePath, org.NuonOrgID))
+		return
+	}
+
+	allOrgs := h.GetUserOrgs(user.ID)
+
+	props := vendorpages.CustomerInstallsPageProps{
+		LayoutProps: vendorui.LayoutProps{
+			Title:      org.Name + " - Installs",
+			ActivePage: "installs",
+			User:       user,
+			CurrentOrg: org,
+			Orgs:       allOrgs,
+			Breadcrumbs: []partials.Breadcrumb{
+				{Text: "Installs", Path: fmt.Sprintf("%s/orgs/%s/installs", h.basePath, org.ID), Active: true},
+			},
+			BasePath:         h.basePath,
+			PortalScheme:     h.schemeFromBaseURL(),
+			PortalBaseDomain: h.subdomainBaseDomain,
+			CSSPath:          assets.VendorCSSPath(),
+		},
+		Org:            *org,
+		Installs:       adminInstalls,
+		FilterEmail:    filterEmail,
+		FilterApp:      filterApp,
+		FilterPlatform: filterPlatform,
+	}
+
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+	h.RenderTempl(c, http.StatusOK, vendorpages.CustomerInstallsPage(props))
+}
+
+// SearchNuonInstalls searches the Nuon API for installs matching a query string.
+// Returns an HTMX HTML fragment of result rows for the import modal.
+func (h *Handler) SearchNuonInstalls(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.String(http.StatusBadRequest, "Organization context not found")
+		return
+	}
+
+	q := strings.TrimSpace(c.Query("q"))
+	if len(q) < 3 {
+		c.String(http.StatusOK, "")
+		return
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to initialize Nuon client")
+		return
+	}
+
+	apps, err := nuonClient.ListApps(c.Request.Context())
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch apps")
+		return
+	}
+
+	type searchResult struct {
+		InstallID   string
+		InstallName string
+		AppID       string
+		AppName     string
+		Status      string
+		Region      string
+	}
+
+	var results []searchResult
+	for _, app := range apps {
+		if len(results) >= 20 {
+			break
+		}
+		installs, err := nuonClient.ListAppInstalls(c.Request.Context(), app.ID, q)
+		if err != nil {
+			zap.L().Warn("failed to search installs for app",
+				zap.String("app_id", app.ID),
+				zap.Error(err),
+			)
+			continue
+		}
+		for _, install := range installs {
+			if len(results) >= 20 {
+				break
+			}
+			installName := install.Name
+			status := install.Status
+			region := ""
+			if install.AwsAccount != nil && install.AwsAccount.Region != "" {
+				region = install.AwsAccount.Region
+			} else if install.AzureAccount != nil && install.AzureAccount.Location != "" {
+				region = install.AzureAccount.Location
+			}
+			results = append(results, searchResult{
+				InstallID:   install.ID,
+				InstallName: installName,
+				AppID:       app.ID,
+				AppName:     app.Name,
+				Status:      status,
+				Region:      region,
+			})
+		}
+	}
+
+	// Build HTML fragment
+	if len(results) == 0 {
+		c.Data(http.StatusOK, "text/html", []byte(`<div class="px-4 py-3 text-sm text-cool-grey-500 dark:text-cool-grey-400">No installs found.</div>`))
+		return
+	}
+
+	html := ""
+	for _, r := range results {
+		displayText := r.InstallName + "  •  " + r.AppName
+		if r.Status != "" {
+			displayText += "  •  " + r.Status
+		}
+		html += fmt.Sprintf(`<div class="px-4 py-3 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+			<div class="flex items-center justify-between gap-3">
+				<div>
+					<div class="text-sm font-medium text-cool-grey-900 dark:text-white">%s</div>
+					<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400">%s &middot; %s</div>
+				</div>
+				<button
+					type="button"
+					onclick="selectImportInstall(%q, %q, %q)"
+					class="shrink-0 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
+				>
+					Select &rarr;
+				</button>
+			</div>
+		</div>`,
+			r.InstallName, r.AppName, r.Region,
+			r.InstallID, r.AppID, displayText,
+		)
+	}
+
+	c.Data(http.StatusOK, "text/html", []byte(html))
+}
+
+// ImportInstall imports an existing Nuon install into the portal and assigns it to a customer.
+func (h *Handler) ImportInstall(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.String(http.StatusBadRequest, "Organization context not found")
+		return
+	}
+
+	vendor := h.GetFreshUser(c)
+
+	nuonInstallID := strings.TrimSpace(c.PostForm("nuon_install_id"))
+	appID := strings.TrimSpace(c.PostForm("app_id"))
+	customerEmail := strings.TrimSpace(c.PostForm("customer_email"))
+
+	if nuonInstallID == "" || customerEmail == "" {
+		c.String(http.StatusBadRequest, "Install ID and customer email are required.")
+		return
+	}
+
+	// Check if already imported
+	var existing models.Install
+	if err := h.db.Where("nuon_install_id = ? AND org_id = ?", nuonInstallID, org.ID).First(&existing).Error; err == nil {
+		c.String(http.StatusConflict, "This install has already been imported.")
+		return
+	}
+
+	// Fetch install from Nuon API
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to initialize Nuon client.")
+		return
+	}
+
+	nuonInstall, err := nuonClient.GetInstall(c.Request.Context(), nuonInstallID)
+	if err != nil {
+		c.String(http.StatusBadRequest, fmt.Sprintf("Install not found in Nuon API: %v", err))
+		return
+	}
+
+	// Fetch app name from Nuon API
+	appName := ""
+	if appID != "" {
+		nuonApp, appErr := nuonClient.GetApp(c.Request.Context(), appID)
+		if appErr == nil {
+			appName = nuonApp.Name
+		}
+	}
+
+	// Resolve install name, region and status
+	installName := nuonInstall.Name
+	region := ""
+	if nuonInstall.AwsAccount != nil && nuonInstall.AwsAccount.Region != "" {
+		region = nuonInstall.AwsAccount.Region
+	} else if nuonInstall.AzureAccount != nil && nuonInstall.AzureAccount.Location != "" {
+		region = nuonInstall.AzureAccount.Location
+	}
+	installStatus := models.StatusActive
+	switch nuonInstall.Status {
+	case "provisioning":
+		installStatus = models.StatusProvisioning
+	case "failed":
+		installStatus = models.StatusFailed
+	case "deprovisioning":
+		installStatus = models.StatusDeprovisioning
+	}
+
+	// Find or create customer user
+	var customerUser models.User
+	if err := h.db.Where("email = ?", customerEmail).First(&customerUser).Error; err != nil {
+		// Create new customer record
+		customerUser = models.User{
+			Email: customerEmail,
+			Name:  customerEmail,
+			Role:  models.RoleCustomer,
+		}
+		if createErr := h.db.Create(&customerUser).Error; createErr != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to create customer: %v", createErr))
+			return
+		}
+	}
+
+	// Create local install record
+	vendorID := vendor.ID
+	install := models.Install{
+		OrgID:             org.ID,
+		UserID:            customerUser.ID,
+		CreatedByVendorID: &vendorID,
+		InstallLinkID:     nil,
+		NuonInstallID:     nuonInstallID,
+		AppID:             appID,
+		AppName:           appName,
+		Name:              installName,
+		Status:            installStatus,
+		Region:            region,
+	}
+	if err := h.db.Create(&install).Error; err != nil {
+		c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to save install: %v", err))
+		return
+	}
+
+	// Redirect to installs page
+	redirectURL := fmt.Sprintf("%s/orgs/%s/installs", h.basePath, org.ID)
+	if isHTMXRequest(c) {
+		c.Header("HX-Redirect", redirectURL)
+		c.Status(http.StatusOK)
+		return
+	}
+	c.Redirect(http.StatusFound, redirectURL)
+}

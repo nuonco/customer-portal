@@ -113,6 +113,13 @@ templ Sidebar(props SidebarProps) {
 			<nav class="stratus-sidebar-nav">
 				if props.CurrentOrg != nil {
 					<a
+						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
+						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
+					>
+						@usersIcon()
+						<span class="sidebar-text">Customers</span>
+					</a>
+					<a
 						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/apps") }
 						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "apps") }
 					>
@@ -127,13 +134,17 @@ templ Sidebar(props SidebarProps) {
 						<span class="sidebar-text">Install Links</span>
 					</a>
 					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
+						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/installs") }
+						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "installs") }
 					>
-						@usersIcon()
-						<span class="sidebar-text">Customers</span>
+						@packageIcon()
+						<span class="sidebar-text">Installs</span>
 					</a>
 				} else {
+					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+						@usersIcon()
+						<span class="sidebar-text">Customers</span>
+					</span>
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@cubeIcon()
 						<span class="sidebar-text">App Catalog</span>
@@ -143,8 +154,8 @@ templ Sidebar(props SidebarProps) {
 						<span class="sidebar-text">Install Links</span>
 					</span>
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-						@usersIcon()
-						<span class="sidebar-text">Customers</span>
+						@packageIcon()
+						<span class="sidebar-text">Installs</span>
 					</span>
 				}
 			</nav>
@@ -363,5 +374,11 @@ templ codeIcon() {
 templ keyIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176a15.86,15.86,0,0,0-4.69,11.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A80,80,0,0,0,216.57,39.43ZM224,96a63.65,63.65,0,0,1-21.41,47.66L192,129.24V112a8,8,0,0,0-2.34-5.66l-48-48A8,8,0,0,0,136,56H118.76L108.34,45.57A64,64,0,0,1,224,96ZM71.31,216H40V184.69l55.22-55.22,32,32ZM144,80a16,16,0,1,1,16,16A16,16,0,0,1,144,80Z"></path>
+	</svg>
+}
+
+templ packageIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm96,129.57V133.82L216,90v85.78Z"></path>
 	</svg>
 }

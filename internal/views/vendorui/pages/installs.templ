@@ -1,0 +1,402 @@
+package pages
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
+)
+
+// AdminInstall represents an install entry in the admin installs view.
+type AdminInstall struct {
+	ID            string
+	NuonInstallID string
+	NuonOrgID     string
+	Name          string
+	CustomerID    string
+	CustomerEmail string
+	CustomerName  string
+	AppID         string
+	AppName       string
+	Platform      string // "aws" or "azure"
+	Status        string
+	InstallLinkID string
+	CreatedAt     string
+}
+
+// CustomerInstallsPageProps for the admin customer installs list page.
+type CustomerInstallsPageProps struct {
+	vendorui.LayoutProps
+	Org            models.NuonOrg
+	Installs       []AdminInstall
+	FilterEmail    string
+	FilterApp      string
+	FilterPlatform string
+}
+
+// CustomerInstallsPage renders the admin view of all customer installs.
+templ CustomerInstallsPage(props CustomerInstallsPageProps) {
+	@vendorui.Layout(props.LayoutProps) {
+		<div class="stratus-page-content overflow-auto">
+			<div class="stratus-page-header">
+				<div class="stratus-heading-group">
+					<h1 class="stratus-page-title">Installs</h1>
+					<p class="stratus-page-subtitle">Installs owned by your customers and tracked by the customer portal.</p>
+				</div>
+				<div class="stratus-page-actions">
+					@components.Button(components.ButtonProps{
+						Text:    "Import Install",
+						Variant: "primary",
+						OnClick: "document.getElementById('import-install-modal').classList.remove('hidden')",
+					})
+				</div>
+			</div>
+			<div class="stratus-page-section">
+				<!-- Filter bar -->
+				<div class="flex gap-4" id="installs-filter-bar">
+					<!-- Owner -->
+					<div class="flex items-center flex-1 overflow-hidden rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-600 focus-within:ring-2 focus-within:ring-primary-500 dark:focus-within:ring-primary-400">
+						<label class="px-3 py-2 text-sm font-medium text-cool-grey-600 dark:text-cool-grey-400 bg-cool-grey-50 dark:bg-dark-grey-800 border-r border-cool-grey-300 dark:border-dark-grey-600 whitespace-nowrap">Owner</label>
+						<input
+							type="text"
+							name="email"
+							value={ props.FilterEmail }
+							class="flex-1 px-3 py-2 text-sm bg-white dark:bg-dark-grey-900 text-cool-grey-900 dark:text-white focus:outline-none"
+							hx-get={ fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID) }
+							hx-trigger="keyup changed delay:400ms"
+							hx-target="#installs-table-body"
+							hx-include="#installs-filter-bar"
+						/>
+					</div>
+					<!-- App -->
+					<div class="flex items-center flex-1 overflow-hidden rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-600 focus-within:ring-2 focus-within:ring-primary-500 dark:focus-within:ring-primary-400">
+						<label class="px-3 py-2 text-sm font-medium text-cool-grey-600 dark:text-cool-grey-400 bg-cool-grey-50 dark:bg-dark-grey-800 border-r border-cool-grey-300 dark:border-dark-grey-600 whitespace-nowrap">App</label>
+						<input
+							type="text"
+							name="app"
+							value={ props.FilterApp }
+							class="flex-1 px-3 py-2 text-sm bg-white dark:bg-dark-grey-900 text-cool-grey-900 dark:text-white focus:outline-none"
+							hx-get={ fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID) }
+							hx-trigger="keyup changed delay:400ms"
+							hx-target="#installs-table-body"
+							hx-include="#installs-filter-bar"
+						/>
+					</div>
+					<!-- Platform -->
+					<div class="flex items-center overflow-hidden rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-600 focus-within:ring-2 focus-within:ring-primary-500 dark:focus-within:ring-primary-400">
+						<label class="px-3 py-2 text-sm font-medium text-cool-grey-600 dark:text-cool-grey-400 bg-cool-grey-50 dark:bg-dark-grey-800 border-r border-cool-grey-300 dark:border-dark-grey-600 whitespace-nowrap">Platform</label>
+						<div class="relative">
+							<select
+								name="platform"
+								class="pl-3 pr-8 py-2 text-sm bg-white dark:bg-dark-grey-900 text-cool-grey-900 dark:text-white focus:outline-none appearance-none"
+								hx-get={ fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID) }
+								hx-trigger="change"
+								hx-target="#installs-table-body"
+								hx-include="#installs-filter-bar"
+							>
+								<option value="" selected?={ props.FilterPlatform == "" }>All</option>
+								<option value="aws" selected?={ props.FilterPlatform == "aws" }>AWS</option>
+								<option value="azure" selected?={ props.FilterPlatform == "azure" }>Azure</option>
+							</select>
+							<div class="pointer-events-none absolute inset-y-0 right-2 flex items-center">
+								<svg class="h-4 w-4 text-cool-grey-500 dark:text-cool-grey-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+									<path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"></path>
+								</svg>
+							</div>
+						</div>
+					</div>
+				</div>
+				if len(props.Installs) > 0 || props.FilterEmail != "" || props.FilterApp != "" || props.FilterPlatform != "" {
+					<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden">
+						<div class="overflow-x-auto">
+							<table class="min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
+								<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
+									<tr>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Name
+										</th>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Owner
+										</th>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											App
+										</th>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Platform
+										</th>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Status
+										</th>
+										<th scope="col" class="px-4 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Created
+										</th>
+										<th scope="col" class="px-3 py-3 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Link
+										</th>
+										<th scope="col" class="px-3 py-3 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Portal
+										</th>
+										<th scope="col" class="px-3 py-3 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+											Dash
+										</th>
+									</tr>
+								</thead>
+								<tbody id="installs-table-body" class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
+									@InstallsTableBody(props.Installs, props.Org.ID, props.BasePath, props.Org.NuonOrgID)
+								</tbody>
+							</table>
+						</div>
+					</div>
+				} else {
+					@emptyInstallsState()
+				}
+			</div>
+		</div>
+		@importInstallModal(props.BasePath, props.Org.ID)
+	}
+}
+
+// InstallsTableBody renders just the table body rows (used for HTMX filter updates).
+templ InstallsTableBody(installs []AdminInstall, orgID, basePath, nuonOrgID string) {
+	if len(installs) > 0 {
+		for _, install := range installs {
+			@adminInstallTableRow(install, orgID, basePath, nuonOrgID)
+		}
+	} else {
+		<tr>
+			<td colspan="8" class="px-6 py-8 text-center">
+				<p class="text-cool-grey-500 dark:text-cool-grey-400">No installs found matching your filters.</p>
+			</td>
+		</tr>
+	}
+}
+
+templ adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID string) {
+	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+		<td class="px-4 py-3 whitespace-nowrap">
+			<div class="text-sm font-medium text-cool-grey-900 dark:text-white">{ install.Name }</div>
+			<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">{ install.ID }</div>
+		</td>
+		<td class="px-4 py-3 whitespace-nowrap">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/customers/%s", basePath, orgID, install.CustomerID)) }
+				class="text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline block"
+			>
+				{ install.CustomerEmail }
+			</a>
+			if install.CustomerName != "" && install.CustomerName != install.CustomerEmail {
+				<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400">{ install.CustomerName }</div>
+			}
+		</td>
+		<td class="px-4 py-3 whitespace-nowrap">
+			if install.AppID != "" {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, install.AppID)) }
+					class="text-sm text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:underline"
+				>
+					{ install.AppName }
+				</a>
+			} else {
+				<span class="text-sm text-cool-grey-400 dark:text-cool-grey-600">unknown</span>
+			}
+		</td>
+		<td class="px-4 py-3 whitespace-nowrap">
+			@platformBadge(install.Platform)
+		</td>
+		<td class="px-4 py-3 whitespace-nowrap">
+			@statusBadge(install.Status)
+		</td>
+		<td class="px-4 py-3 whitespace-nowrap">
+			<div class="text-sm text-cool-grey-900 dark:text-white">{ install.CreatedAt }</div>
+		</td>
+		<td class="px-3 py-3 whitespace-nowrap text-center">
+			if install.InstallLinkID != "" {
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/links/%s", basePath, orgID, install.InstallLinkID)) }
+					class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+					title="View Install Link"
+				>
+					@linkIcon()
+				</a>
+			} else {
+				<span class="inline-flex items-center text-cool-grey-300 dark:text-dark-grey-600 cursor-not-allowed" title="No install link">
+					@linkIcon()
+				</span>
+			}
+		</td>
+		<td class="px-3 py-3 whitespace-nowrap text-center">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("/installs/%s", install.ID)) }
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+				title="View in Customer Portal"
+			>
+				@eyeIcon()
+			</a>
+		</td>
+		<td class="px-3 py-3 whitespace-nowrap text-center">
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("https://app.nuon.co/%s/installs/%s", nuonOrgID, install.NuonInstallID)) }
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
+				title="View in Nuon Dashboard"
+			>
+				@externalLinkIcon()
+			</a>
+		</td>
+	</tr>
+}
+
+templ emptyInstallsState() {
+	<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center">
+		<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
+			<svg class="h-8 w-8 text-cool-grey-500 dark:text-cool-grey-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+				<path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+			</svg>
+		</div>
+		<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Installs Yet</h3>
+		<p class="text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto mb-6">
+			No installs are tracked in the portal yet. Customers create installs via install links, or you can import an existing install below.
+		</p>
+		@components.Button(components.ButtonProps{
+			Text:    "Import Install",
+			Variant: "primary",
+			OnClick: "document.getElementById('import-install-modal').classList.remove('hidden')",
+		})
+	</div>
+}
+
+// importInstallModal renders the two-step import modal.
+templ importInstallModal(basePath, orgID string) {
+	<div id="import-install-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+		<div class="bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-cool-grey-200 dark:border-dark-grey-600">
+			<!-- Step 1: Search -->
+			<div id="import-step-1">
+				<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700">
+					<h2 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Import Install</h2>
+					<button type="button" onclick="closeImportModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+				<div class="px-6 py-4">
+					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+						Search for an install in the Nuon API to import it into the customer portal.
+					</p>
+					<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+						Search installs
+					</label>
+					<input
+						type="text"
+						id="import-search-input"
+						placeholder="Type an install name..."
+						class="w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+						hx-get={ fmt.Sprintf("%s/orgs/%s/installs/search-nuon", basePath, orgID) }
+						hx-trigger="keyup changed delay:400ms[this.value.length >= 3]"
+						hx-target="#import-search-results"
+						hx-include="this"
+						name="q"
+					/>
+					<div id="import-search-results" class="mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden">
+					</div>
+				</div>
+			</div>
+			<!-- Step 2: Assign to customer -->
+			<div id="import-step-2" class="hidden">
+				<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700">
+					<h2 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Import Install</h2>
+					<button type="button" onclick="closeImportModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
+						<svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+						</svg>
+					</button>
+				</div>
+				<div class="px-6 py-4">
+					<p class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Selected install:</p>
+					<div id="import-selected-display" class="px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4">
+					</div>
+					<form
+						id="import-install-form"
+						hx-post={ fmt.Sprintf("%s/orgs/%s/installs/import", basePath, orgID) }
+						hx-target="#import-form-error"
+						hx-swap="innerHTML"
+					>
+						<input type="hidden" name="nuon_install_id" id="import-nuon-install-id"/>
+						<input type="hidden" name="app_id" id="import-app-id"/>
+						<div id="import-form-error" class="mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden"></div>
+						<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							Assign to customer
+						</label>
+						<input
+							type="email"
+							name="customer_email"
+							placeholder="customer@example.com"
+							required
+							class="w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+						/>
+						<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+							Enter the customer&#39;s email. A new account will be created if this email isn&#39;t already in the portal.
+						</p>
+						<div class="flex items-center justify-between mt-6">
+							@components.Button(components.ButtonProps{
+								Text:    "← Back",
+								Variant: "secondary",
+								OnClick: "showImportStep1()",
+							})
+							@components.Button(components.ButtonProps{
+								Text:    "Import Install",
+								Variant: "primary",
+								Type:    "submit",
+							})
+						</div>
+					</form>
+				</div>
+			</div>
+		</div>
+	</div>
+	<script>
+		function closeImportModal() {
+			document.getElementById('import-install-modal').classList.add('hidden');
+			// Reset to step 1
+			showImportStep1();
+			document.getElementById('import-search-input').value = '';
+			document.getElementById('import-search-results').innerHTML = '';
+			document.getElementById('import-form-error').innerHTML = '';
+		}
+
+		function showImportStep1() {
+			document.getElementById('import-step-1').classList.remove('hidden');
+			document.getElementById('import-step-2').classList.add('hidden');
+		}
+
+		function selectImportInstall(nuonInstallID, appID, displayText) {
+			document.getElementById('import-nuon-install-id').value = nuonInstallID;
+			document.getElementById('import-app-id').value = appID;
+			document.getElementById('import-selected-display').textContent = displayText;
+			document.getElementById('import-step-1').classList.add('hidden');
+			document.getElementById('import-step-2').classList.remove('hidden');
+		}
+
+		// Close modal on backdrop click
+		document.getElementById('import-install-modal').addEventListener('click', function(e) {
+			if (e.target === this) closeImportModal();
+		});
+
+		// Handle HTMX redirect after successful import
+		document.body.addEventListener('htmx:responseError', function(evt) {
+			// Error handling is done via hx-target="#import-form-error"
+		});
+
+		// Listen for HX-Redirect header
+		document.body.addEventListener('htmx:afterRequest', function(evt) {
+			var redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');
+			if (redirect) {
+				window.location.href = redirect;
+			}
+		});
+	</script>
+}

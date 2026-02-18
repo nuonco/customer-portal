@@ -300,6 +300,9 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /admin/org/switch` - Switch active organization context
 - `GET /admin/profile/panel` - User profile panel
 - `PUT /admin/profile/` - Update user profile
+- `GET /admin/orgs/:org_id/installs` - List all customer installs tracked in the portal
+- `GET /admin/orgs/:org_id/installs/search-nuon` - Search Nuon API for installs to import (HTMX)
+- `POST /admin/orgs/:org_id/installs/import` - Import an existing Nuon install and assign to a customer
 - `GET /admin/orgs/:org_id/customers` - List organization customers
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
 - `GET /admin/orgs/:org_id/team/members` - List team members
