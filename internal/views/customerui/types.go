@@ -9,6 +9,7 @@ import (
 // InstallWithApprovalStatus extends Install with approval and health check info
 type InstallWithApprovalStatus struct {
 	models.Install
+	AppName             string `json:"app_name"` // Fetched from Nuon API at runtime
 	HasPendingApprovals bool   `json:"has_pending_approvals"`
 	IsUpdating          bool   `json:"is_updating"` // has in-progress workflow without approval steps
 	HasHealthChecks     bool   `json:"has_health_checks"`
@@ -121,6 +122,10 @@ type LayoutProps struct {
 
 	// Asset paths (cache-busted)
 	CSSPath string
+
+	// Navigation
+	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
+	ActiveNav        string // "apps" or "installs" — highlights the current nav item
 }
 
 // GetSupportContact returns the support contact from theme or empty string

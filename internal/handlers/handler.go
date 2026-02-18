@@ -1700,6 +1700,13 @@ type ActionForHealthCheck struct {
 	Description       string `json:"description"`
 }
 
+// orgHasPublishedApps checks if an org has any published apps
+func (h *Handler) orgHasPublishedApps(orgID string) bool {
+	var count int64
+	h.db.Model(&models.PublishedApp{}).Where("org_id = ?", orgID).Count(&count)
+	return count > 0
+}
+
 // AppsPage displays the apps list with health check configuration status
 func (h *Handler) AppsPage(c *gin.Context) {
 	user := h.GetFreshUser(c) // Load from DB for topbar display
@@ -1737,6 +1744,14 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	configMap := make(map[string]*models.AppHealthCheckConfig)
 	for i := range healthConfigs {
 		configMap[healthConfigs[i].AppID] = &healthConfigs[i]
+	}
+
+	// Get all published apps for this org
+	var publishedApps []models.PublishedApp
+	h.db.Where("org_id = ?", org.ID).Find(&publishedApps)
+	publishedAppIDs := make(map[string]bool)
+	for _, pa := range publishedApps {
+		publishedAppIDs[pa.AppID] = true
 	}
 
 	// Build app list with health check status
@@ -1793,12 +1808,71 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
-		Org:  *org,
-		Apps: templApps,
+		Org:             *org,
+		Apps:            templApps,
+		PublishedAppIDs: publishedAppIDs,
 	}
 
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.AppsPage(props))
+}
+
+// PublishApp publishes an app so customers can discover and install it without a link
+func (h *Handler) PublishApp(c *gin.Context) {
+	appID := c.Param("app_id")
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
+		return
+	}
+
+	// Verify app exists in Nuon API
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		return
+	}
+
+	_, err = nuonClient.GetApp(c.Request.Context(), appID)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "App not found"})
+		return
+	}
+
+	// Find or create the PublishedApp record (idempotent)
+	var publishedApp models.PublishedApp
+	result := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp)
+	if result.Error != nil {
+		// Not found - create new
+		publishedApp = models.PublishedApp{
+			OrgID: org.ID,
+			AppID: appID,
+		}
+		if err := h.db.Create(&publishedApp).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to publish app"})
+			return
+		}
+	}
+
+	c.JSON(http.StatusOK, publishedApp)
+}
+
+// UnpublishApp removes a published app so customers can no longer discover it
+func (h *Handler) UnpublishApp(c *gin.Context) {
+	appID := c.Param("app_id")
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
+		return
+	}
+
+	// Soft-delete the PublishedApp record
+	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).Delete(&models.PublishedApp{}).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unpublish app"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "App unpublished successfully"})
 }
 
 // AppDetailRedirect redirects app detail to inputs page
@@ -2659,8 +2733,9 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 		return
 	}
 
-	// Build platform map for quick lookup
+	// Build platform and name maps for quick lookup
 	platformMap := make(map[string]string)
+	nameMap := make(map[string]string)
 	for _, app := range apps {
 		platform := "aws" // default
 		if app.RunnerConfig != nil {
@@ -2670,14 +2745,18 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			}
 		}
 		platformMap[app.ID] = platform
+		nameMap[app.ID] = app.Name
 	}
 
 	// Convert to template type
 	customerInstalls := make([]vendorpages.CustomerInstall, len(installs))
 	for i, install := range installs {
-		appName := "Unknown App"
-		if install.InstallLink.AppName != "" {
+		appName := nameMap[install.InstallLink.AppID]
+		if appName == "" {
 			appName = install.InstallLink.AppName
+		}
+		if appName == "" {
+			appName = "Unknown App"
 		}
 
 		nuonOrgID := install.InstallLink.NuonOrg.NuonOrgID
@@ -2688,9 +2767,13 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			platform = p
 		}
 
+		installLinkIDStr := ""
+		if install.InstallLinkID != nil {
+			installLinkIDStr = *install.InstallLinkID
+		}
 		customerInstalls[i] = vendorpages.CustomerInstall{
 			ID:            install.ID,
-			InstallLinkID: install.InstallLinkID,
+			InstallLinkID: installLinkIDStr,
 			NuonInstallID: install.NuonInstallID,
 			NuonOrgID:     nuonOrgID,
 			AppID:         install.InstallLink.AppID,

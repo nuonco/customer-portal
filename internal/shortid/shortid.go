@@ -78,3 +78,7 @@ func NewTemplateOverrideID() string {
 func NewAssetOverrideID() string {
 	return New("aov")
 }
+
+func NewPublishedAppID() string {
+	return New("pap")
+}

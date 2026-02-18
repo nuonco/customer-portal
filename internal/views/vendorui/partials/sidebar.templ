@@ -117,7 +117,7 @@ templ Sidebar(props SidebarProps) {
 						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "apps") }
 					>
 						@cubeIcon()
-						<span class="sidebar-text">Apps</span>
+						<span class="sidebar-text">App Catalog</span>
 					</a>
 					<a
 						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
@@ -136,7 +136,7 @@ templ Sidebar(props SidebarProps) {
 				} else {
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@cubeIcon()
-						<span class="sidebar-text">Apps</span>
+						<span class="sidebar-text">App Catalog</span>
 					</span>
 					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 						@linkIcon()

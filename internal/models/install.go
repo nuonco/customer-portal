@@ -20,10 +20,11 @@ const (
 
 type Install struct {
 	ID                string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	OrgID             string         `gorm:"index" json:"org_id"`                  // Vendor org that owns this install
-	UserID            string         `gorm:"not null" json:"user_id"`              // Current owner (vendor initially, then customer)
-	CreatedByVendorID string         `gorm:"not null" json:"created_by_vendor_id"` // Original vendor who created the install
-	InstallLinkID     string         `gorm:"not null" json:"install_link_id"`
+	OrgID             string         `gorm:"index" json:"org_id"`                     // Vendor org that owns this install
+	UserID            string         `gorm:"not null" json:"user_id"`                 // Current owner (vendor initially, then customer)
+	CreatedByVendorID *string        `json:"created_by_vendor_id"`                    // Original vendor who created the install (nil for published-app installs)
+	InstallLinkID     *string        `json:"install_link_id"`                         // Nullable: nil for published-app installs
+	NuonAppID         string         `gorm:"default:''" json:"nuon_app_id,omitempty"` // Set for published-app installs; empty for install-link installs
 	NuonInstallID     string         `gorm:"not null" json:"nuon_install_id"`
 	Name              string         `gorm:"default:''" json:"name"` // Human-readable install name
 	Status            InstallStatus  `gorm:"type:varchar(30);default:'pending_customer'" json:"status"`
@@ -42,6 +43,29 @@ type Install struct {
 func (i *Install) BeforeCreate(tx *gorm.DB) error {
 	if i.ID == "" {
 		i.ID = shortid.NewInstallID()
+	}
+	return nil
+}
+
+// GetAppID returns the Nuon app ID for this install.
+// For install-link installs, returns InstallLink.AppID.
+// For published-app installs (InstallLinkID == nil), returns NuonAppID.
+func (i *Install) GetAppID() string {
+	if i.InstallLinkID != nil {
+		return i.InstallLink.AppID
+	}
+	return i.NuonAppID
+}
+
+// GetNuonOrg returns the NuonOrg for this install.
+// For install-link based installs, returns the org from the install link.
+// For published-app installs (no install link), returns the org directly from OrgID relationship.
+func (i *Install) GetNuonOrg() *NuonOrg {
+	if i.InstallLinkID != nil && i.InstallLink.NuonOrg.ID != "" {
+		return &i.InstallLink.NuonOrg
+	}
+	if i.Org.ID != "" {
+		return &i.Org
 	}
 	return nil
 }

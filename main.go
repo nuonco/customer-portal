@@ -263,6 +263,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/apps/:app_id/health-checks", h.AppHealthChecksPage)   // Health checks config page
 			orgRoutes.PUT("/apps/:app_id/health-checks", h.UpdateAppHealthChecks) // Update health checks
 
+			// Apps - publish/unpublish for customer portal catalog
+			orgRoutes.POST("/apps/:app_id/publish", h.PublishApp)     // Publish app to customer catalog
+			orgRoutes.DELETE("/apps/:app_id/publish", h.UnpublishApp) // Remove app from customer catalog
+
 			// Apps - API endpoints (JSON, used by create link modal)
 			orgRoutes.GET("/apps-api", h.GetOrgApps)
 			orgRoutes.GET("/apps-api/:app_id/input-config", h.GetAppInputConfig)
@@ -361,6 +365,19 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// JWT refresh endpoint
 	rg.POST("/refresh_token", jwtAuth.RefreshHandler)
+
+	// Published app config endpoint (unauthenticated - same pattern as install-link app-config)
+	rg.GET("/apps/:app_id/config", h.GetPublishedAppConfig)
+
+	// Protected customer routes for published apps
+	customerApps := rg.Group("/apps")
+	customerApps.Use(jwtAuth.MiddlewareFunc())
+	customerApps.Use(middleware.RequireRole(models.RoleCustomer))
+	{
+		customerApps.GET("/", h.CustomerAppsPage)
+		customerApps.GET("/:app_id/install", h.CustomerAppInstallPage)
+		customerApps.POST("/:app_id/install", h.CreateInstallFromApp)
+	}
 
 	// Protected customer routes
 	installs := rg.Group("/installs")

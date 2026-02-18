@@ -487,9 +487,9 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(install.InstallLink.AppName)
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 262, Col: 35}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 262, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {

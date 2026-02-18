@@ -140,12 +140,14 @@ type InstallOptions struct {
 
 // NewTestInstall creates a test install with sensible defaults.
 func NewTestInstall(opts ...InstallOptions) *models.Install {
+	defaultLinkID := RandomInstallLinkID()
+	defaultVendorID := RandomUserID()
 	install := &models.Install{
 		ID:                RandomInstallID(),
 		OrgID:             RandomOrgID(),
 		UserID:            RandomUserID(),
-		CreatedByVendorID: RandomUserID(),
-		InstallLinkID:     RandomInstallLinkID(),
+		CreatedByVendorID: &defaultVendorID,
+		InstallLinkID:     &defaultLinkID,
 		NuonInstallID:     "nuon-install-" + RandomString(12),
 		Name:              "Test Install",
 		Status:            models.StatusPending,
@@ -166,10 +168,12 @@ func NewTestInstall(opts ...InstallOptions) *models.Install {
 			install.UserID = opt.UserID
 		}
 		if opt.CreatedByVendorID != "" {
-			install.CreatedByVendorID = opt.CreatedByVendorID
+			vendorID := opt.CreatedByVendorID
+			install.CreatedByVendorID = &vendorID
 		}
 		if opt.InstallLinkID != "" {
-			install.InstallLinkID = opt.InstallLinkID
+			linkID := opt.InstallLinkID
+			install.InstallLinkID = &linkID
 		}
 		if opt.NuonInstallID != "" {
 			install.NuonInstallID = opt.NuonInstallID

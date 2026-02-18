@@ -52,6 +52,64 @@ func TestInstallStatus_Constants(t *testing.T) {
 	}
 }
 
+func TestInstall_GetNuonOrg(t *testing.T) {
+	linkID := "ilktest123456789012345"
+	orgFromLink := NuonOrg{ID: "org-from-link", APIToken: "token-link", NuonOrgID: "nuon-link"}
+	orgDirect := NuonOrg{ID: "org-direct", APIToken: "token-direct", NuonOrgID: "nuon-direct"}
+
+	tests := []struct {
+		name    string
+		install Install
+		wantID  string
+	}{
+		{
+			name: "returns install link org when link is set",
+			install: Install{
+				InstallLinkID: &linkID,
+				InstallLink:   InstallLink{NuonOrg: orgFromLink},
+				Org:           orgDirect,
+			},
+			wantID: orgFromLink.ID,
+		},
+		{
+			name: "returns direct org when install link ID is nil",
+			install: Install{
+				InstallLinkID: nil,
+				Org:           orgDirect,
+			},
+			wantID: orgDirect.ID,
+		},
+		{
+			name: "returns direct org when install link org is empty",
+			install: Install{
+				InstallLinkID: &linkID,
+				InstallLink:   InstallLink{},
+				Org:           orgDirect,
+			},
+			wantID: orgDirect.ID,
+		},
+		{
+			name: "returns nil when no org available",
+			install: Install{
+				InstallLinkID: nil,
+			},
+			wantID: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.install.GetNuonOrg()
+			if tt.wantID == "" {
+				assert.Nil(t, result)
+			} else {
+				assert.NotNil(t, result)
+				assert.Equal(t, tt.wantID, result.ID)
+			}
+		})
+	}
+}
+
 func TestInstallStatus_Transitions(t *testing.T) {
 	// Document the valid status transitions
 	// This helps ensure status flow is understood

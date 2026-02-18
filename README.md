@@ -54,6 +54,7 @@ General vendor journeys.
 - Install link creation with SHA-based security
 - Install link management (create, view, delete)
 - Organization dashboard with link listing
+- **Publish App**: Vendors can publish apps to a customer-facing catalog (`POST /admin/orgs/:org_id/apps/:app_id/publish`). Published apps appear on the customer `/apps` page without requiring an install link.
 
 ✅ **Customer Features**
 
@@ -62,6 +63,8 @@ General vendor journeys.
 - Install creation flow
 - Install management dashboard
 - Install status tracking
+- **App Catalog** (`/apps`): When an org has published apps, customers can browse and install them without a link. Redirects to `/installs` if no published apps exist.
+- **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 
 ✅ **User Interface**
 
@@ -128,7 +131,8 @@ General vendor journeys.
 - **User** - Email, role (vendor/customer), timestamps
 - **NuonOrg** - Connected organizations with API credentials
 - **InstallLink** - Shareable links with SHA-based security
-- **Install** - Customer installations with status tracking
+- **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs)
+- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable)
 
 **Configuration Models:**
 - **AppInputConfig** - App-specific input field configurations
@@ -283,6 +287,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `PUT /admin/orgs/:org_id/apps/:app_id/inputs` - Update app input configuration
 - `GET /admin/orgs/:org_id/apps/:app_id/health-checks` - App health configuration
 - `PUT /admin/orgs/:org_id/apps/:app_id/health-checks` - Update app health configuration
+- `POST /admin/orgs/:org_id/apps/:app_id/publish` - Publish app to customer catalog
+- `DELETE /admin/orgs/:org_id/apps/:app_id/publish` - Remove app from customer catalog
 - `GET /admin/orgs/:org_id/links` - Organization install links
 - `POST /admin/orgs/:org_id/links` - Create install link
 - `GET /admin/orgs/:org_id/links/:link_id` - View link details
@@ -332,6 +338,10 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /installs/:install_id/workflows` - Workflow history
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link
+- `GET /apps` - Customer app catalog (redirects to `/installs` if no published apps)
+- `GET /apps/:app_id/install` - Install form for a published app
+- `POST /apps/:app_id/install` - Create install from a published app
+- `GET /apps/:app_id/config` - Get app config for a published app (unauthenticated)
 - `GET /custom/css/:org_id` - Serve organization-specific CSS
 - `GET /custom/assets/:org_id/*path` - Serve organization-specific assets
 - `GET /installs/:install_id/panel` - Install detail panel (HTMX)

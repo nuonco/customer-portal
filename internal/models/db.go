@@ -85,6 +85,16 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("install link name preparation failed: %w", err)
 	}
 
+	// Run install_link_id nullable migration (make install_link_id nullable for published-app installs)
+	if err := runInstallLinkIDNullableMigration(db); err != nil {
+		return nil, fmt.Errorf("install_link_id nullable migration failed: %w", err)
+	}
+
+	// Run created_by_vendor_id nullable migration (make it nullable for published-app installs)
+	if err := runCreatedByVendorIDNullableMigration(db); err != nil {
+		return nil, fmt.Errorf("created_by_vendor_id nullable migration failed: %w", err)
+	}
+
 	// Auto-migrate all models
 	err = db.AutoMigrate(
 		&User{},
@@ -93,6 +103,7 @@ func InitDB() (*gorm.DB, error) {
 		&OrgInvitation{},
 		&InstallLink{},
 		&Install{},
+		&PublishedApp{},
 		&AppTheme{},
 		&AppHealthCheckConfig{},
 		&CustomerAuthConfig{},
@@ -594,6 +605,87 @@ func prepareInstallLinkNameColumn(db *gorm.DB) error {
 		WHERE (name IS NULL OR name = '') AND deleted_at IS NULL
 	`).Error; err != nil {
 		return fmt.Errorf("failed to populate install link names: %w", err)
+	}
+
+	return nil
+}
+
+// runInstallLinkIDNullableMigration makes the install_link_id column nullable on installs.
+// This is needed for published-app installs that don't have an install link.
+// This is idempotent - safe to run multiple times.
+func runInstallLinkIDNullableMigration(db *gorm.DB) error {
+	// Check if installs table exists
+	var tableExists bool
+	err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.tables
+			WHERE table_name = 'installs'
+		)
+	`).Scan(&tableExists).Error
+	if err != nil {
+		return fmt.Errorf("failed to check for installs table: %w", err)
+	}
+
+	// If installs table doesn't exist, nothing to do - AutoMigrate will create it
+	if !tableExists {
+		return nil
+	}
+
+	// Check if install_link_id column is NOT NULL
+	var isNotNull bool
+	err = db.Raw(`
+		SELECT is_nullable = 'NO'
+		FROM information_schema.columns
+		WHERE table_name = 'installs' AND column_name = 'install_link_id'
+	`).Scan(&isNotNull).Error
+	if err != nil {
+		return fmt.Errorf("failed to check install_link_id nullable status: %w", err)
+	}
+
+	// If column is already nullable, nothing to do
+	if !isNotNull {
+		return nil
+	}
+
+	// Make install_link_id nullable
+	if err := db.Exec(`ALTER TABLE installs ALTER COLUMN install_link_id DROP NOT NULL`).Error; err != nil {
+		return fmt.Errorf("failed to make install_link_id nullable: %w", err)
+	}
+
+	return nil
+}
+
+// runCreatedByVendorIDNullableMigration makes the created_by_vendor_id column nullable on installs.
+// This is needed for published-app installs that don't have a vendor.
+// This is idempotent - safe to run multiple times.
+func runCreatedByVendorIDNullableMigration(db *gorm.DB) error {
+	var tableExists bool
+	if err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.tables
+			WHERE table_name = 'installs'
+		)
+	`).Scan(&tableExists).Error; err != nil {
+		return fmt.Errorf("failed to check for installs table: %w", err)
+	}
+	if !tableExists {
+		return nil
+	}
+
+	var isNotNull bool
+	if err := db.Raw(`
+		SELECT is_nullable = 'NO'
+		FROM information_schema.columns
+		WHERE table_name = 'installs' AND column_name = 'created_by_vendor_id'
+	`).Scan(&isNotNull).Error; err != nil {
+		return fmt.Errorf("failed to check created_by_vendor_id nullable status: %w", err)
+	}
+	if !isNotNull {
+		return nil
+	}
+
+	if err := db.Exec(`ALTER TABLE installs ALTER COLUMN created_by_vendor_id DROP NOT NULL`).Error; err != nil {
+		return fmt.Errorf("failed to make created_by_vendor_id nullable: %w", err)
 	}
 
 	return nil

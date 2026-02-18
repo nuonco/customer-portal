@@ -26,6 +26,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	"github.com/nuonco/nuon-go/client/operations"
+	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
 // FilterType represents the type of input filtering to apply
@@ -597,11 +598,12 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	}
 
 	// Create local Install record with customer as owner
+	linkID := link.ID
 	install := &models.Install{
-		OrgID:             link.OrgID,  // Link to vendor's org
-		UserID:            customer.ID, // Customer owns the install
-		CreatedByVendorID: link.UserID, // Track original vendor
-		InstallLinkID:     link.ID,
+		OrgID:             link.OrgID,   // Link to vendor's org
+		UserID:            customer.ID,  // Customer owns the install
+		CreatedByVendorID: &link.UserID, // Track original vendor
+		InstallLinkID:     &linkID,
 		NuonInstallID:     nuonInstall.ID,
 		Name:              installName,
 		Status:            models.StatusPending,
@@ -661,7 +663,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 
 	// Get all installs owned by this user
 	var allInstalls []models.Install
-	query := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Order("created_at DESC")
+	query := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Preload("Org").Order("created_at DESC")
 	query = query.Where("user_id = ?", user.ID)
 	if err := query.Find(&allInstalls).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
@@ -692,10 +694,10 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		if len(healthCheckIDs) > 0 {
 			hasHealthChecks = true
 			// Fetch health status via Nuon API if org has credentials
-			if install.InstallLink.NuonOrg.APIToken != "" {
+			if org := install.GetNuonOrg(); org != nil && org.APIToken != "" {
 				client, err := nuon.NewClientWithURL(
-					install.InstallLink.NuonOrg.APIToken,
-					install.InstallLink.NuonOrg.NuonOrgID,
+					org.APIToken,
+					org.NuonOrgID,
 					h.nuonAPIURL,
 				)
 				if err == nil {
@@ -746,6 +748,24 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	needsAttentionCount := int64(len(needsAttentionInstalls))
 	healthyCount := int64(len(healthyInstalls))
 	updatingCount := int64(len(updatingInstalls))
+
+	// If navigating directly to a specific install, switch to the tab that contains it
+	if initialInstallID != "" && c.Query("tab") == "" {
+		for _, inst := range updatingInstalls {
+			if inst.Install.ID == initialInstallID {
+				currentTab = "updating"
+				break
+			}
+		}
+		if currentTab == "needs-attention" {
+			for _, inst := range healthyInstalls {
+				if inst.Install.ID == initialInstallID {
+					currentTab = "healthy"
+					break
+				}
+			}
+		}
+	}
 
 	// Select the appropriate list based on current tab
 	var filteredInstalls []customerui.InstallWithApprovalStatus
@@ -837,36 +857,64 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
-	// Fetch platform information for all installs
-	// Build a map of AppID -> Platform by fetching apps from Nuon API
+	// Fetch platform and app name information for all installs
+	// Build maps of AppID -> Platform and AppID -> AppName by fetching apps from Nuon API
 	platformMap := make(map[string]string)
+	appNameMap := make(map[string]string)
 	for _, inst := range paginatedInstalls {
-		appID := inst.Install.InstallLink.AppID
+		appID := inst.Install.GetAppID()
 		if _, exists := platformMap[appID]; !exists {
 			// Initialize Nuon client with the org's credentials
+			org := inst.Install.GetNuonOrg()
+			if org == nil || org.APIToken == "" {
+				platformMap[appID] = ""
+				// Fallback for install-link installs when API is unavailable
+				if inst.Install.InstallLinkID != nil && appNameMap[appID] == "" {
+					appNameMap[appID] = inst.Install.InstallLink.AppName
+				}
+				continue
+			}
 			nuonClient, err := nuon.NewClientWithURL(
-				inst.Install.InstallLink.NuonOrg.APIToken,
-				inst.Install.InstallLink.NuonOrg.NuonOrgID,
+				org.APIToken,
+				org.NuonOrgID,
 				h.nuonAPIURL,
 			)
 			if err == nil {
-				// Fetch app details to get platform
+				// Fetch app details to get platform and name
 				app, err := nuonClient.GetApp(c.Request.Context(), appID)
-				if err == nil && app != nil && app.RunnerConfig != nil {
-					platformMap[appID] = string(app.RunnerConfig.AppRunnerType)
+				if err == nil && app != nil {
+					appNameMap[appID] = app.Name
+					if app.RunnerConfig != nil {
+						platformMap[appID] = string(app.RunnerConfig.AppRunnerType)
+					} else {
+						platformMap[appID] = ""
+					}
 				} else {
 					platformMap[appID] = "" // Default to empty if fetch fails
+					// Fallback for install-link installs when API call fails
+					if inst.Install.InstallLinkID != nil {
+						appNameMap[appID] = inst.Install.InstallLink.AppName
+					}
 				}
 			} else {
 				platformMap[appID] = "" // Default to empty if client init fails
+				// Fallback for install-link installs when client init fails
+				if inst.Install.InstallLinkID != nil {
+					appNameMap[appID] = inst.Install.InstallLink.AppName
+				}
 			}
 		}
+	}
+
+	// Set AppName on each paginated install from the fetched map
+	for i, inst := range paginatedInstalls {
+		paginatedInstalls[i].AppName = appNameMap[inst.Install.GetAppID()]
 	}
 
 	// Try template override first
 	installsData := make([]overrides.InstallData, 0, len(paginatedInstalls))
 	for _, inst := range paginatedInstalls {
-		appID := inst.Install.InstallLink.AppID
+		appID := inst.Install.GetAppID()
 		platform := platformMap[appID]
 
 		installsData = append(installsData, overrides.InstallData{
@@ -875,7 +923,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 			Status:              string(inst.Install.Status),
 			Region:              inst.Install.Region,
 			Platform:            platform,
-			AppName:             inst.Install.InstallLink.AppName,
+			AppName:             appNameMap[appID],
 			CreatedAt:           inst.Install.CreatedAt.Format("Jan 2, 2006"),
 			HasHealthChecks:     inst.HasHealthChecks,
 			HealthChecksPassed:  inst.HealthChecksPassed,
@@ -908,8 +956,11 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Fall back to default Templ template
+	installsLayoutProps := h.buildCustomerLayoutProps("Your Installs", user, theme)
+	installsLayoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
+	installsLayoutProps.ActiveNav = "installs"
 	props := customerpages.InstallsPageProps{
-		LayoutProps:      h.buildCustomerLayoutProps("Your Installs", user, theme),
+		LayoutProps:      installsLayoutProps,
 		Pagination:       pagination,
 		InitialInstallID: initialInstallID,
 	}
@@ -1017,14 +1068,20 @@ func (h *Handler) DeleteInstall(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with org relationships
+	if err := h.db.Preload("InstallLink.NuonOrg").Preload("Org").Where("id = ?", install.ID).First(install).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
+	nuonOrgDep := install.GetNuonOrg()
+	if nuonOrgDep == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization information not found"})
+		return
+	}
+
 	// Initialize Nuon client to deprovision the install using global API URL
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrgDep.APIToken, nuonOrgDep.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -1072,6 +1129,13 @@ func (h *Handler) ForgetInstall(c *gin.Context) {
 	})
 }
 
+// loadInstallWithOrg reloads install with both InstallLink.NuonOrg and Org preloaded,
+// required for published-app installs where InstallLinkID is nil.
+func (h *Handler) loadInstallWithOrg(install *models.Install) error {
+	return h.db.Preload("InstallLink.NuonOrg").Preload("Org").
+		Where("id = ?", install.ID).First(install).Error
+}
+
 // GetInstallInputs returns the current inputs and input config for an install
 func (h *Handler) GetInstallInputs(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
@@ -1083,40 +1147,20 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load install link to get org info and app ID
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
-	// Handle NuonOrg loading with fallback strategies (nested preload sometimes fails)
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load organization"})
-				return
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
-	}
-
 	// Create Nuon client using org credentials
-	org := install.InstallLink.NuonOrg
-	if org.APIToken == "" {
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
 		return
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -1131,7 +1175,7 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 		currentInputs = nil
 	}
 	// Fetch app input config for field definitions
-	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.InstallLink.AppID)
+	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.GetAppID())
 	if err != nil {
 		// Input config may not exist, that's okay - return empty
 		inputConfig = nil
@@ -1139,7 +1183,11 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 
 	// Fetch local customer input config for this app
 	var localConfig models.AppInputConfig
-	h.db.Where("org_id = ? AND app_id = ?", install.InstallLink.OrgID, install.InstallLink.AppID).First(&localConfig)
+	localOrgID := install.OrgID
+	if install.InstallLinkID != nil {
+		localOrgID = install.InstallLink.OrgID
+	}
+	h.db.Where("org_id = ? AND app_id = ?", localOrgID, install.GetAppID()).First(&localConfig)
 	customerInputNames := localConfig.GetCustomerInputNames()
 	groupOrder := localConfig.GetGroupOrder()
 	inputOrder := localConfig.GetInputOrder()
@@ -1193,40 +1241,20 @@ func (h *Handler) UpdateInstallInputs(c *gin.Context) {
 		return
 	}
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
-	// Handle NuonOrg loading with fallback strategies (nested preload sometimes fails)
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load organization"})
-				return
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
-	}
-
 	// Create Nuon client using org credentials
-	org := install.InstallLink.NuonOrg
-	if org.APIToken == "" {
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
 		return
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -1257,31 +1285,10 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load install link with NuonOrg
-	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").
-		Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
-	}
-
-	// Handle NuonOrg loading with fallback strategies (nested preload sometimes fails)
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load organization"})
-				return
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
 	}
 
 	// Check if health checks are configured
@@ -1293,13 +1300,13 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 	}
 
 	// Create Nuon client using global API URL
-	org := install.InstallLink.NuonOrg
-	if org.APIToken == "" {
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
 		return
 	}
 
-	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	client, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Nuon client"})
 		return
@@ -1366,32 +1373,17 @@ func (h *Handler) TriggerHealthChecks(c *gin.Context) {
 
 // checkHasPendingApprovals checks if an install has workflows waiting for approval
 func (h *Handler) checkHasPendingApprovals(c *gin.Context, install *models.Install) bool {
-	// Load install link to get org info with fallback strategies
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
-		return false // Return false if we can't load install details
+	if err := h.loadInstallWithOrg(install); err != nil {
+		return false
 	}
 
-	// Handle NuonOrg loading with fallback strategies (same as in workflows.go)
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				return false // Return false if we can't find org info
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		return false
 	}
 
 	// Initialize Nuon client using global API URL
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		return false // Return false if we can't initialize the client
 	}
@@ -1430,32 +1422,17 @@ func (h *Handler) checkHasPendingApprovals(c *gin.Context, install *models.Insta
 // checkIsUpdating checks if an install has in-progress workflows without approval steps
 // This is used to categorize installs into the "Updating" tab
 func (h *Handler) checkIsUpdating(c *gin.Context, install *models.Install) bool {
-	// Load install link to get org info with fallback strategies
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	if err := h.loadInstallWithOrg(install); err != nil {
 		return false
 	}
 
-	// Handle NuonOrg loading with fallback strategies (same as in checkHasPendingApprovals)
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				return false
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		return false
 	}
 
 	// Initialize Nuon client using global API URL
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		return false
 	}
@@ -1492,12 +1469,13 @@ func (h *Handler) checkIsUpdating(c *gin.Context, install *models.Install) bool 
 
 // checkHasActiveProvision checks if an install has an active provision workflow (pending, in-progress, or approval-awaiting)
 func (h *Handler) checkHasActiveProvision(c *gin.Context, install *models.Install) bool {
-	// NuonOrg should already be preloaded by InstallsPage query
-	if install.InstallLink.NuonOrg.ID == "" {
+	// NuonOrg should already be preloaded by InstallsPage query (via InstallLink.NuonOrg or Org)
+	org := install.GetNuonOrg()
+	if org == nil || org.ID == "" {
 		return false
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		return false
 	}
@@ -1533,18 +1511,20 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load the install link with NuonOrg for display and health checks
-	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
 	}
 
+	nuonOrg := install.GetNuonOrg()
+
 	// Check if install still exists in Nuon API
 	var apiDeletedError bool
-	if install.InstallLink.NuonOrg.APIToken != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		checkClient, checkErr := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if checkErr == nil {
@@ -1569,10 +1549,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	var healthPassed, healthFailed, healthPending int
 	healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
 
-	if len(healthCheckIDs) > 0 && install.InstallLink.NuonOrg.APIToken != "" {
+	if len(healthCheckIDs) > 0 && nuonOrg != nil && nuonOrg.APIToken != "" {
 		client, err := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if err == nil {
@@ -1595,31 +1575,35 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		}
 	}
 
-	// Fetch app config version info
+	// Fetch app config version info and app name
+	var appName string
 	var appConfigVersion int64
 	var appConfigUpdatedAt string
 	var installConfigVersion int64
 	var installConfigUpdatedAt string
-	if install.InstallLink.NuonOrg.APIToken != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		appClient, err := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if err == nil {
-			app, err := appClient.GetApp(context.Background(), install.InstallLink.AppID)
-			if err == nil && len(app.AppConfigs) > 0 {
-				appConfigVersion = app.AppConfigs[0].Version
-				appConfigUpdatedAt = app.AppConfigs[0].UpdatedAt
+			app, err := appClient.GetApp(context.Background(), install.GetAppID())
+			if err == nil && app != nil {
+				appName = app.Name
+				if len(app.AppConfigs) > 0 {
+					appConfigVersion = app.AppConfigs[0].Version
+					appConfigUpdatedAt = app.AppConfigs[0].UpdatedAt
 
-				// Get install's current config version by matching AppConfigID
-				nuonInstall, instErr := appClient.GetInstall(context.Background(), install.NuonInstallID)
-				if instErr == nil && nuonInstall.AppConfigID != "" {
-					for _, cfg := range app.AppConfigs {
-						if cfg.ID == nuonInstall.AppConfigID {
-							installConfigVersion = cfg.Version
-							installConfigUpdatedAt = cfg.UpdatedAt
-							break
+					// Get install's current config version by matching AppConfigID
+					nuonInstall, instErr := appClient.GetInstall(context.Background(), install.NuonInstallID)
+					if instErr == nil && nuonInstall.AppConfigID != "" {
+						for _, cfg := range app.AppConfigs {
+							if cfg.ID == nuonInstall.AppConfigID {
+								installConfigVersion = cfg.Version
+								installConfigUpdatedAt = cfg.UpdatedAt
+								break
+							}
 						}
 					}
 				}
@@ -1630,10 +1614,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	// Fetch active provision workflow (provision or provision_sandbox)
 	var activeProvisionWorkflow *partials.WorkflowDataPanel
 	var cloudFormationLink string
-	if install.InstallLink.NuonOrg.APIToken != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		provClient, provErr := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if provErr == nil {
@@ -1676,7 +1660,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 							}
 							// Append customer inputs to CF URL
 							if cloudFormationLink != "" {
-								inputConfig, inputErr := provClient.GetAppInputConfig(ctx, install.InstallLink.AppID)
+								inputConfig, inputErr := provClient.GetAppInputConfig(ctx, install.GetAppID())
 								if inputErr == nil && inputConfig != nil {
 									var configMap map[string]interface{}
 									jsonBytes, jerr := json.Marshal(inputConfig)
@@ -1709,10 +1693,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	// Fetch install readme only if no active provision workflow
 	var installReadme *partials.ReadmeDataPanel
 	if activeProvisionWorkflow == nil {
-		if install.InstallLink.NuonOrg.APIToken != "" {
+		if nuonOrg != nil && nuonOrg.APIToken != "" {
 			readmeClient, readmeErr := nuon.NewClientWithURL(
-				install.InstallLink.NuonOrg.APIToken,
-				install.InstallLink.NuonOrg.NuonOrgID,
+				nuonOrg.APIToken,
+				nuonOrg.NuonOrgID,
 				h.nuonAPIURL,
 			)
 			if readmeErr == nil {
@@ -1763,6 +1747,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	props := partials.InstallDetailPanelProps{
 		Install:                 install,
+		AppName:                 appName,
 		APIDeletedError:         apiDeletedError,
 		HealthCheckStatuses:     healthCheckStatuses,
 		OverallHealthStatus:     overallHealthStatus,
@@ -1798,17 +1783,19 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load the install link with NuonOrg for workflow fetching
-	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
 	}
 
+	nuonOrg := install.GetNuonOrg()
+
 	// Check if install still exists in API
-	if install.InstallLink.NuonOrg.APIToken != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		checkClient, checkErr := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if checkErr == nil {
@@ -1827,10 +1814,10 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	// Fetch active provision workflow (provision or provision_sandbox)
 	var activeProvisionWorkflow *partials.WorkflowDataPanel
 	var cloudFormationLink string
-	if install.InstallLink.NuonOrg.APIToken != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		provClient, provErr := nuon.NewClientWithURL(
-			install.InstallLink.NuonOrg.APIToken,
-			install.InstallLink.NuonOrg.NuonOrgID,
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
 		if provErr == nil {
@@ -1873,7 +1860,7 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 							}
 							// Append customer inputs to CF URL
 							if cloudFormationLink != "" {
-								inputConfig, inputErr := provClient.GetAppInputConfig(ctx, install.InstallLink.AppID)
+								inputConfig, inputErr := provClient.GetAppInputConfig(ctx, install.GetAppID())
 								if inputErr == nil && inputConfig != nil {
 									var configMap map[string]interface{}
 									jsonBytes, jerr := json.Marshal(inputConfig)
@@ -1945,24 +1932,20 @@ func (h *Handler) InstallReadmeStatus(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with org relationships
+	if err := h.db.Preload("InstallLink.NuonOrg").Preload("Org").Where("id = ?", install.ID).First(install).Error; err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
 	}
 
-	// Handle NuonOrg loading with fallback
-	if install.InstallLink.NuonOrg.ID == "" {
-		var nuonOrg models.NuonOrg
-		if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-			c.String(http.StatusInternalServerError, "Organization information not found")
-			return
-		}
-		install.InstallLink.NuonOrg = nuonOrg
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		c.String(http.StatusInternalServerError, "Organization information not found")
+		return
 	}
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to initialize Nuon client")
 		return
@@ -2051,30 +2034,13 @@ func (h *Handler) AuditLogsPanel(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	// Load install link with NuonOrg
-	if err := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
 	}
 
-	// Handle NuonOrg loading with fallback strategies
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg models.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg models.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				c.String(http.StatusInternalServerError, "Failed to load organization")
-				return
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
-	}
+	nuonOrg := install.GetNuonOrg()
 
 	// Parse time range parameters
 	now := time.Now()
@@ -2113,9 +2079,8 @@ func (h *Handler) AuditLogsPanel(c *gin.Context) {
 
 	// Fetch audit logs via Nuon client
 	var auditEntries []partials.AuditLogEntryPanel
-	org := install.InstallLink.NuonOrg
-	if org.APIToken != "" {
-		client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
+		client, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 		if err == nil {
 			entries, err := client.GetInstallAuditLogs(c.Request.Context(), install.NuonInstallID, startTime, endTime)
 			if err == nil {
@@ -2139,4 +2104,378 @@ func (h *Handler) AuditLogsPanel(c *gin.Context) {
 		BasePath:  h.basePath,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.AuditLogsPanel(props))
+}
+
+// getOrgForCustomerPage looks up the NuonOrg using the subdomain in the gin context.
+// Returns an error if the subdomain is not set or the org is not found.
+func (h *Handler) getOrgForCustomerPage(c *gin.Context) (*models.NuonOrg, error) {
+	orgID := h.getOrgIDForTheme(c)
+	if orgID == "" {
+		return nil, fmt.Errorf("org not found for this subdomain")
+	}
+	var org models.NuonOrg
+	if err := h.db.Where("id = ?", orgID).First(&org).Error; err != nil {
+		return nil, fmt.Errorf("org not found: %w", err)
+	}
+	return &org, nil
+}
+
+// GetPublishedAppConfig returns app config for a published app (unauthenticated endpoint)
+func (h *Handler) GetPublishedAppConfig(c *gin.Context) {
+	appID := c.Param("app_id")
+	if appID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Missing app_id parameter"})
+		return
+	}
+
+	filterParam := c.Query("filter")
+
+	org, err := h.getOrgForCustomerPage(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
+		return
+	}
+
+	// Verify app is published for this org
+	var publishedApp models.PublishedApp
+	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "App not found or not published"})
+		return
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize client"})
+		return
+	}
+
+	app, err := nuonClient.GetApp(c.Request.Context(), appID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch app details"})
+		return
+	}
+
+	var platform string
+	if app.RunnerConfig != nil {
+		platform = string(app.RunnerConfig.AppRunnerType)
+	}
+
+	appName := ""
+	if app.Name != "" {
+		appName = app.Name
+	}
+
+	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), appID)
+	if err != nil {
+		inputConfig = nil
+	}
+
+	var localConfig models.AppInputConfig
+	h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&localConfig)
+	customerInputNames := localConfig.GetCustomerInputNames()
+	groupOrder := localConfig.GetGroupOrder()
+	inputOrder := localConfig.GetInputOrder()
+
+	if filterParam == "vendor" || filterParam == "customer" {
+		jsonBytes, err := json.Marshal(inputConfig)
+		if err == nil {
+			var configMap map[string]interface{}
+			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
+				if filterParam == "vendor" {
+					inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeVendor)
+				} else {
+					inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeCustomer)
+				}
+				inputConfig = applyInputOrdering(inputConfig, groupOrder, inputOrder)
+			}
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"platform":         platform,
+		"input_config":     inputConfig,
+		"app_name":         appName,
+		"collapsed_groups": localConfig.GetCollapsedGroups(),
+	})
+}
+
+// CustomerAppsPage renders the customer-facing app catalog
+func (h *Handler) CustomerAppsPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
+
+	org, err := h.getOrgForCustomerPage(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, h.basePath+"/installs")
+		return
+	}
+
+	var publishedApps []models.PublishedApp
+	if err := h.db.Where("org_id = ?", org.ID).Find(&publishedApps).Error; err != nil || len(publishedApps) == 0 {
+		c.Redirect(http.StatusFound, h.basePath+"/installs")
+		return
+	}
+
+	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
+
+	appDisplays := make([]customerpages.PublishedAppDisplay, 0, len(publishedApps))
+	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	for _, pa := range publishedApps {
+		display := customerpages.PublishedAppDisplay{
+			AppID:    pa.AppID,
+			AppName:  pa.AppID, // fallback to AppID if name can't be fetched
+			Platform: "unknown",
+		}
+		if nuonClientErr == nil {
+			app, err := nuonClient.GetApp(c.Request.Context(), pa.AppID)
+			if err == nil && app != nil {
+				if app.Name != "" {
+					display.AppName = app.Name
+				}
+				if app.RunnerConfig != nil {
+					display.Platform = string(app.RunnerConfig.AppRunnerType)
+				}
+				display.Description = app.Description
+			}
+
+			// Fetch components
+			if comps, err := nuonClient.GetAppComponents(c.Request.Context(), pa.AppID); err != nil {
+				zap.L().Warn("failed to fetch app components", zap.String("app_id", pa.AppID), zap.Error(err))
+			} else {
+				for _, comp := range comps {
+					display.Components = append(display.Components, customerpages.ComponentDisplay{
+						Name: comp.Name,
+						Type: string(comp.Type),
+					})
+				}
+			}
+
+			// Fetch sandbox config
+			if sbCfg, err := nuonClient.GetAppSandboxLatestConfig(c.Request.Context(), pa.AppID); err != nil {
+				zap.L().Warn("failed to fetch app sandbox config", zap.String("app_id", pa.AppID), zap.Error(err))
+			} else if sbCfg != nil {
+				// cloud_platform is a computed "after query" field that may be empty;
+				// fall back to the platform already fetched from the app's runner config.
+				display.SandboxPlatform = sbCfg.CloudPlatform
+				if display.SandboxPlatform == "" {
+					display.SandboxPlatform = display.Platform
+				}
+				display.SandboxTFVersion = sbCfg.TerraformVersion
+				display.SandboxDrift = sbCfg.DriftSchedule
+			}
+
+			// Fetch permissions config
+			if permCfg, err := nuonClient.GetLatestAppPermissionsConfig(c.Request.Context(), pa.AppID); err != nil {
+				zap.L().Warn("failed to fetch app permissions config", zap.String("app_id", pa.AppID), zap.Error(err))
+			} else if permCfg != nil {
+				addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
+					if role == nil || role.Name == "" {
+						return
+					}
+					name := role.DisplayName
+					if name == "" {
+						name = role.Name
+					}
+					display.Permissions = append(display.Permissions, customerpages.IAMRoleDisplay{
+						Label:       label,
+						Name:        name,
+						Description: role.Description,
+					})
+				}
+				if permCfg.ProvisionAwsIamRole.Name != "" {
+					prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
+					addRole(&prov, "Provision")
+				}
+				addRole(permCfg.DeprovisionAwsIamRole, "Deprovision")
+				addRole(permCfg.MaintenanceAwsIamRole, "Maintenance")
+				addRole(permCfg.BreakGlassAwsIamRole, "Break Glass")
+				for _, r := range permCfg.AwsIamRoles {
+					label := r.DisplayName
+					if label == "" {
+						label = r.Name
+					}
+					addRole(r, label)
+				}
+			}
+
+			// Fetch policies config (raw HTTP — SDK model omits the policies array)
+			if policies, err := nuonClient.GetLatestAppPoliciesConfigFull(c.Request.Context(), pa.AppID); err != nil {
+				zap.L().Warn("failed to fetch app policies config", zap.String("app_id", pa.AppID), zap.Error(err))
+			} else {
+				for _, p := range policies {
+					display.Policies = append(display.Policies, customerpages.PolicyDisplay{
+						Name:        p.Name,
+						Type:        p.Type,
+						Engine:      p.Engine,
+						Description: p.Description,
+					})
+				}
+			}
+		}
+		appDisplays = append(appDisplays, display)
+	}
+
+	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme)
+	layoutProps.HasPublishedApps = true
+	layoutProps.ActiveNav = "apps"
+
+	props := customerpages.CustomerAppsPageProps{
+		LayoutProps: layoutProps,
+		Apps:        appDisplays,
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.CustomerAppsPage(props))
+}
+
+// CustomerAppInstallPage renders the install form for a published app
+func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
+	appID := c.Param("app_id")
+
+	// Require authentication
+	loggedInUser := h.tryGetLoggedInUser(c)
+	if loggedInUser == nil {
+		redirectURL := url.QueryEscape(h.basePath + "/apps/" + appID + "/install")
+		c.Redirect(http.StatusFound, h.basePath+"/login?redirect="+redirectURL)
+		return
+	}
+
+	org, err := h.getOrgForCustomerPage(c)
+	if err != nil {
+		theme, _ := models.GetOrCreateAppTheme(h.db, "")
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme),
+			Error:       "Organization not found",
+		}
+		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
+		return
+	}
+
+	// Verify app is published for this org
+	var publishedApp models.PublishedApp
+	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+		theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
+		props := customerpages.ErrorPageProps{
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme),
+			Error:       "App not found or not published",
+		}
+		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
+		return
+	}
+
+	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
+
+	appName := appID
+	orgName := org.NuonOrgID // fallback
+	nuonClient, clientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if clientErr == nil {
+		app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
+		if appErr == nil && app != nil && app.Name != "" {
+			appName = app.Name
+		}
+		apiOrg, orgErr := nuonClient.GetOrg(c.Request.Context())
+		if orgErr == nil && apiOrg != nil && apiOrg.Name != "" {
+			orgName = apiOrg.Name
+		}
+	}
+
+	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme)
+	layoutProps.HasPublishedApps = true
+
+	props := customerpages.AppInstallPageProps{
+		LayoutProps:  layoutProps,
+		AppID:        appID,
+		AppName:      appName,
+		OrgName:      orgName,
+		LoggedInUser: loggedInUser,
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.AppInstallPage(props))
+}
+
+// CreateInstallFromApp creates an install from a published app
+func (h *Handler) CreateInstallFromApp(c *gin.Context) {
+	customer := h.tryGetLoggedInUser(c)
+	if customer == nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please log in first"})
+		return
+	}
+
+	appID := c.Param("app_id")
+
+	var req struct {
+		Name     string            `json:"name" binding:"required"`
+		Region   string            `json:"region"`
+		Location string            `json:"location"`
+		Inputs   map[string]string `json:"inputs"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	org, err := h.getOrgForCustomerPage(c)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
+		return
+	}
+
+	// Verify app is published for this org
+	var publishedApp models.PublishedApp
+	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "App not found or not published"})
+		return
+	}
+
+	region := req.Region
+	location := req.Location
+	if region == "" && location == "" {
+		region = "us-east-1"
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to initialize Nuon client: %v", err)})
+		return
+	}
+
+	// Get app name for the API call
+	appName := appID
+	app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
+	if appErr == nil && app != nil && app.Name != "" {
+		appName = app.Name
+	}
+
+	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, req.Inputs)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
+		return
+	}
+
+	// Create local Install record with no install link
+	install := &models.Install{
+		OrgID:             org.ID,
+		UserID:            customer.ID,
+		CreatedByVendorID: nil, // no vendor for published-app installs
+		InstallLinkID:     nil,
+		NuonAppID:         appID,
+		NuonInstallID:     nuonInstall.ID,
+		Name:              req.Name,
+		Status:            models.StatusPending,
+		Region:            region,
+	}
+
+	if err := h.db.Create(install).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store install locally"})
+		return
+	}
+
+	token, _, err := h.auth.TokenGenerator(customer)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Install created successfully",
+		"token":   token,
+		"install": install,
+	})
 }

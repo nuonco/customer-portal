@@ -90,11 +90,16 @@ func (r *HealthCheckRunner) checkInProgressInstalls() {
 
 // checkAndUpdateInstall checks a single install's status and triggers health checks if active
 func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *models.Install) {
+	// Skip installs without an install link (published-app installs do not use health check configs)
+	if install.InstallLinkID == nil {
+		return
+	}
+
 	// Get install link
 	var link models.InstallLink
-	if err := r.db.First(&link, "id = ?", install.InstallLinkID).Error; err != nil {
+	if err := r.db.First(&link, "id = ?", *install.InstallLinkID).Error; err != nil {
 		r.logger.Error("failed to load install link",
-			zap.String("install_link_id", install.InstallLinkID),
+			zap.String("install_link_id", *install.InstallLinkID),
 			zap.Error(err),
 		)
 		return
@@ -116,7 +121,7 @@ func (r *HealthCheckRunner) checkAndUpdateInstall(ctx context.Context, install *
 	if org.APIToken == "" {
 		r.logger.Warn("install has no org API token",
 			zap.String("install_id", install.ID),
-			zap.String("install_link_id", install.InstallLinkID),
+			zap.String("install_link_id", *install.InstallLinkID),
 			zap.String("org_id", link.OrgID),
 		)
 		return

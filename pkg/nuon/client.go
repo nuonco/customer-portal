@@ -530,6 +530,71 @@ func (c *Client) GetInstallReadme(ctx context.Context, installID string) (*Servi
 	return &readme, nil
 }
 
+// GetAppComponents retrieves all components for an app
+func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.AppComponent, error) {
+	components, _, err := c.client.GetAppComponents(ctx, appID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get app components: %w", err)
+	}
+	return components, nil
+}
+
+// appPoliciesConfigFull is the raw response shape for the policies config endpoint.
+// The nuon-go generated model omits the Policies array, so we decode it manually.
+type appPoliciesConfigFull struct {
+	Policies []AppPoliciesConfigPolicy `json:"policies"`
+}
+
+// AppPoliciesConfigPolicy is an individual policy from the app policies config.
+type AppPoliciesConfigPolicy struct {
+	Name        string `json:"name"`
+	Type        string `json:"type"`
+	Engine      string `json:"engine"`
+	Description string `json:"description"`
+}
+
+// GetLatestAppPermissionsConfig fetches the latest permissions config for an app.
+func (c *Client) GetLatestAppPermissionsConfig(ctx context.Context, appID string) (*models.AppAppPermissionsConfig, error) {
+	return c.client.GetLatestAppPermissionsConfig(ctx, appID)
+}
+
+// GetLatestAppPoliciesConfigFull fetches the latest policies config, including the
+// Policies array with names and types (the SDK-generated model drops this field).
+func (c *Client) GetLatestAppPoliciesConfigFull(ctx context.Context, appID string) ([]AppPoliciesConfigPolicy, error) {
+	url := fmt.Sprintf("%s/v1/apps/%s/latest-policies-config", c.apiURL, appID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result appPoliciesConfigFull
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return result.Policies, nil
+}
+
+// GetAppSandboxLatestConfig retrieves the latest sandbox config for an app
+func (c *Client) GetAppSandboxLatestConfig(ctx context.Context, appID string) (*models.AppAppSandboxConfig, error) {
+	cfg, err := c.client.GetAppSandboxLatestConfig(ctx, appID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get sandbox config: %w", err)
+	}
+	return cfg, nil
+}
+
 // IsInstallNameAvailable checks if an install name is available for an app via the Nuon API.
 // It queries existing installs and checks for exact name matches (case-insensitive).
 // Returns true if the name is available (no existing install with that name).

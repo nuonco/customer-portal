@@ -1,0 +1,344 @@
+package pages
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+)
+
+// AppInstallPageProps for the published-app install page
+type AppInstallPageProps struct {
+	customerui.LayoutProps
+	AppID        string
+	AppName      string
+	OrgName      string
+	LoggedInUser *models.User
+}
+
+// AppInstallPage renders the install form for a published app
+templ AppInstallPage(props AppInstallPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		<form id="installForm" class="max-w-2xl mx-auto mt-10 space-y-6">
+			<input type="hidden" id="appId" value={ props.AppID }/>
+			<!-- Card 1: Header + Account + Name + Region -->
+			<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+				<div class="mb-6 text-center">
+					<h3 class="text-xl text-cool-grey-800 dark:text-cool-grey-200">{ props.AppName }</h3>
+					<p class="text-cool-grey-600 dark:text-cool-grey-400">provided by { props.OrgName }</p>
+				</div>
+				<!-- Account Info -->
+				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4 mb-4">
+					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
+					<div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+						<div class="flex items-center justify-between">
+							<div>
+								<p class="text-sm text-green-700 dark:text-green-300">
+									Installing as <strong class="font-semibold">{ props.LoggedInUser.Email }</strong>
+								</p>
+								if props.LoggedInUser.Name != "" {
+									<p class="text-xs text-green-600 dark:text-green-400 mt-1">{ props.LoggedInUser.Name }</p>
+								}
+							</div>
+							<a href={ templ.SafeURL(props.BasePath + "/login") } class="text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 underline">
+								Switch account
+							</a>
+						</div>
+					</div>
+				</div>
+				<!-- Install Name -->
+				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4 mb-4">
+					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Install Name</h4>
+					<input
+						type="text"
+						id="installName"
+						name="name"
+						required
+						placeholder="my-install"
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+					/>
+					<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">A name to identify this installation.</p>
+				</div>
+				<!-- Region Selection -->
+				<div id="regionSection">
+					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
+					<div id="regionContainer">
+						<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading regions...</p>
+					</div>
+				</div>
+			</div>
+			<!-- Input Group Cards -->
+			<div id="appInputsContainer" class="space-y-6">
+				<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+					<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading configuration options...</p>
+				</div>
+			</div>
+			<!-- Submit Section -->
+			<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+				<button
+					type="submit"
+					class="w-full text-white py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-400 font-semibold rounded-lg bg-theme-primary hover:bg-theme-primary-hover"
+				>
+					Create install
+				</button>
+				<div id="error" class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden rounded-lg"></div>
+				<div id="success" class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 hidden rounded-lg"></div>
+			</div>
+		</form>
+		<!-- Config data for JavaScript -->
+		<div id="app-install-config" class="hidden" data-base-path={ props.BasePath } data-app-id={ props.AppID }></div>
+		@appInstallScript()
+	}
+}
+
+templ appInstallScript() {
+	<script>
+		(function() {
+			var config = document.getElementById('app-install-config');
+			var basePath = config.dataset.basePath;
+			var appId = config.dataset.appId;
+			var currentAppConfig = null;
+
+			// Fetch app config on page load
+			async function loadAppConfig() {
+				try {
+					var response = await fetch(basePath + '/apps/' + appId + '/config?filter=customer');
+					if (response.ok) {
+						currentAppConfig = await response.json();
+						renderRegionSelector(currentAppConfig.platform);
+						renderInputFields(currentAppConfig.input_config, currentAppConfig.collapsed_groups || []);
+					} else {
+						document.getElementById('appInputsContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Failed to load configuration<\/p>';
+						document.getElementById('regionContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Failed to load regions<\/p>';
+					}
+				} catch (error) {
+					document.getElementById('appInputsContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Error loading configuration<\/p>';
+					document.getElementById('regionContainer').innerHTML = '<p class="text-red-600 dark:text-red-400">Error loading regions<\/p>';
+				}
+			}
+
+			function renderRegionSelector(platform) {
+				var container = document.getElementById('regionContainer');
+				var html = '';
+
+				if (platform === 'azure_aks') {
+					html = '<label for="azureLocation" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Azure Location *<\/label>' +
+						'<select id="azureLocation" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+							'<option value="eastus">East US<\/option>' +
+							'<option value="eastus2">East US 2<\/option>' +
+							'<option value="westus">West US<\/option>' +
+							'<option value="westus2">West US 2<\/option>' +
+							'<option value="westeurope">West Europe<\/option>' +
+							'<option value="northeurope">North Europe<\/option>' +
+						'<\/select>';
+				} else {
+					html = '<label for="awsRegion" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">AWS Region *<\/label>' +
+						'<select id="awsRegion" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+							'<option value="us-east-1">US East (N. Virginia) - us-east-1<\/option>' +
+							'<option value="us-east-2">US East (Ohio) - us-east-2<\/option>' +
+							'<option value="us-west-1">US West (N. California) - us-west-1<\/option>' +
+							'<option value="us-west-2">US West (Oregon) - us-west-2<\/option>' +
+							'<option value="eu-west-1">Europe (Ireland) - eu-west-1<\/option>' +
+							'<option value="eu-central-1">Europe (Frankfurt) - eu-central-1<\/option>' +
+							'<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1<\/option>' +
+							'<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1<\/option>' +
+						'<\/select>';
+				}
+
+				container.innerHTML = html;
+			}
+
+			function renderInputFields(inputConfig, collapsedGroups) {
+				var container = document.getElementById('appInputsContainer');
+				collapsedGroups = collapsedGroups || [];
+
+				var collapsedSet = {};
+				collapsedGroups.forEach(function(name) { collapsedSet[name] = true; });
+
+				if (!inputConfig || !inputConfig.input_groups) {
+					container.style.display = 'none';
+					return;
+				}
+
+				var html = '';
+				var hasInputs = false;
+
+				inputConfig.input_groups.forEach(function(group) {
+					if (group.app_inputs && group.app_inputs.length > 0) {
+						hasInputs = true;
+						var isCollapsed = collapsedSet[group.name] || false;
+						html += renderInputGroup(group, group.app_inputs, isCollapsed);
+					}
+				});
+
+				if (!hasInputs) {
+					container.style.display = 'none';
+				} else {
+					container.innerHTML = html;
+				}
+			}
+
+			function renderInputGroup(group, inputs, isCollapsed) {
+				var groupId = 'group-' + (group.name || 'default').replace(/[^a-z0-9]/gi, '-').toLowerCase();
+				var html = '<div class="input-group-card bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500">';
+				html += '<div class="input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors" ';
+				html += 'onclick="toggleInputGroup(\'' + groupId + '\')" ';
+				html += 'role="button" tabindex="0" aria-expanded="' + (!isCollapsed) + '" aria-controls="' + groupId + '-content" ';
+				html += 'onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();toggleInputGroup(\'' + groupId + '\');}">';
+				html += '<div>';
+				html += '<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
+				if (group.description) {
+					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1">' + group.description + '<\/p>';
+				}
+				html += '<\/div>';
+				html += '<svg class="input-group-chevron h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4' + (isCollapsed ? '' : ' rotate-180') + '" ';
+				html += 'viewBox="0 0 20 20" fill="currentColor">';
+				html += '<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"><\/path>';
+				html += '<\/svg>';
+				html += '<\/div>';
+				var maxHeight = isCollapsed ? '0' : '2000px';
+				var opacity = isCollapsed ? '0' : '1';
+				html += '<div id="' + groupId + '-content" class="input-group-content" ';
+				html += 'style="max-height: ' + maxHeight + '; opacity: ' + opacity + '; overflow: hidden;">';
+				html += '<div class="px-4 pb-4 space-y-4">';
+				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
+				inputs.forEach(function(input) {
+					html += renderSingleInput(input);
+				});
+				html += '<\/div><\/div><\/div>';
+				return html;
+			}
+
+			window.toggleInputGroup = window.toggleInputGroup || function(groupId) {
+				var content = document.getElementById(groupId + '-content');
+				var header = content.previousElementSibling;
+				var chevron = header.querySelector('.input-group-chevron');
+				var isCurrentlyCollapsed = content.style.maxHeight === '0px';
+				if (isCurrentlyCollapsed) {
+					content.style.maxHeight = content.scrollHeight + 'px';
+					content.style.opacity = '1';
+					chevron.classList.add('rotate-180');
+					header.setAttribute('aria-expanded', 'true');
+				} else {
+					content.style.maxHeight = '0px';
+					content.style.opacity = '0';
+					chevron.classList.remove('rotate-180');
+					header.setAttribute('aria-expanded', 'false');
+				}
+			};
+
+			function renderSingleInput(input) {
+				var inputName = 'inputs:' + input.name;
+				var isRequired = input.required ? ' *' : '';
+				var requiredAttr = input.required ? ' required' : '';
+
+				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
+					var html = '<div class="flex items-start space-x-3">';
+					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
+					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
+					if (input.default === 'true') html += ' checked';
+					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+					html += '<div class="flex-1">';
+					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					if (input.description) html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					html += '<\/div><\/div>';
+					return html;
+				}
+
+				if (input.type === 'json') {
+					var html = '<div>';
+					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
+					html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+					html += (input.default || '') + '<\/textarea>';
+					if (input.description) html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					html += '<\/div>';
+					return html;
+				}
+
+				var inputType = 'text';
+				if (input.type === 'number') inputType = 'number';
+				else if (input.sensitive) inputType = 'password';
+
+				var html = '<div>';
+				html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
+				if (inputType === 'password') html += ' autocomplete="off"';
+				html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+				if (input.description) html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+				html += '<\/div>';
+				return html;
+			}
+
+			document.getElementById('installForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				var errorDiv = document.getElementById('error');
+				var successDiv = document.getElementById('success');
+				var submitButton = e.target.querySelector('button[type="submit"]');
+
+				errorDiv.classList.add('hidden');
+				successDiv.classList.add('hidden');
+				submitButton.textContent = 'Creating install...';
+				submitButton.disabled = true;
+
+				var region = '';
+				var location = '';
+				var awsRegionEl = document.getElementById('awsRegion');
+				var azureLocationEl = document.getElementById('azureLocation');
+
+				if (awsRegionEl) region = awsRegionEl.value;
+				if (azureLocationEl) location = azureLocationEl.value;
+
+				var formData = {
+					name: document.getElementById('installName').value,
+					region: region,
+					location: location,
+					inputs: {}
+				};
+
+				var inputFields = document.querySelectorAll('#appInputsContainer input[name^="inputs:"], #appInputsContainer select[name^="inputs:"], #appInputsContainer textarea[name^="inputs:"]');
+				inputFields.forEach(function(input) {
+					var fieldName = input.name.substring(7);
+					if (input.type === 'checkbox') {
+						if (input.checked) {
+							formData.inputs[fieldName] = input.value === 'true' ? 'true' : input.value;
+						} else if (!formData.inputs.hasOwnProperty(fieldName)) {
+							formData.inputs[fieldName] = 'false';
+						}
+					} else if (input.type !== 'hidden' && input.value) {
+						formData.inputs[fieldName] = input.value;
+					}
+				});
+
+				try {
+					var response = await fetch(basePath + '/apps/' + appId + '/install', {
+						method: 'POST',
+						headers: { 'Content-Type': 'application/json' },
+						body: JSON.stringify(formData)
+					});
+
+					var data = await response.json();
+
+					if (response.ok) {
+						document.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24);
+						successDiv.innerHTML = '<p class="font-semibold">Installation created successfully!<\/p><p class="text-sm mt-2">Redirecting to your install...<\/p>';
+						successDiv.classList.remove('hidden');
+						setTimeout(function() {
+							window.location.href = basePath + '/installs/' + data.install.id;
+						}, 2000);
+					} else {
+						errorDiv.textContent = data.error || 'Failed to create installation';
+						errorDiv.classList.remove('hidden');
+					}
+				} catch (error) {
+					errorDiv.textContent = 'Network error. Please try again.';
+					errorDiv.classList.remove('hidden');
+				} finally {
+					submitButton.textContent = 'Create install';
+					submitButton.disabled = false;
+				}
+			});
+
+			loadAppConfig();
+		})();
+	</script>
+}

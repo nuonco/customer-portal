@@ -76,6 +76,7 @@ func platformLabel(platform string) string {
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
 	Install                  *models.Install
+	AppName                  string // Fetched from Nuon API at runtime
 	APIDeletedError          bool
 	HealthCheckStatuses      []HealthCheckStatusDataPanel
 	OverallHealthStatus      string
@@ -333,7 +334,7 @@ templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) 
 templ appConfigCard(props InstallDetailPanelProps) {
 	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
 		<div class="flex items-center gap-2 mb-3">
-			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.Install.InstallLink.AppName }</h3>
+			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.AppName }</h3>
 			if props.AppConfigVersion > 0 {
 				if props.InstallConfigVersion < props.AppConfigVersion {
 					<span class="inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">update available</span>

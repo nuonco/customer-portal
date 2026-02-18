@@ -155,14 +155,20 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 		return
 	}
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with org info (handles both install-link and published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization not found"})
+		return
+	}
+
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -207,14 +213,20 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 	install := installInterface.(*localModels.Install)
 	workflowID := c.Param("workflow_id")
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with org info (handles both install-link and published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization not found"})
+		return
+	}
+
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -285,36 +297,27 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// Load install link to get org info
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	// Load install with org info (handles both install-link and published-app installs)
+	if err := h.loadInstallWithOrg(install); err != nil {
 		h.logger.Error("failed to load install details", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
 		return
 	}
 
-	// Handle NuonOrg loading with fallback strategies (same as WorkflowsPage)
-	if install.InstallLink.NuonOrg.ID == "" {
-		h.logger.Debug("NuonOrg not loaded via preload, trying manual loading", zap.String("org_id", install.InstallLink.OrgID))
-		var nuonOrg localModels.NuonOrg
-		if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-			h.logger.Error("manual NuonOrg loading failed", zap.Error(err))
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization information not found"})
-			return
-		}
-		install.InstallLink.NuonOrg = nuonOrg
-		h.logger.Debug("loaded NuonOrg manually",
-			zap.String("id", nuonOrg.ID),
-			zap.String("nuon_org_id", nuonOrg.NuonOrgID),
-		)
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		h.logger.Error("organization not found for install", zap.String("install_id", install.ID))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization not found"})
+		return
 	}
 
 	h.logger.Debug("org info loaded",
-		zap.String("org_id", install.InstallLink.NuonOrg.NuonOrgID),
-		zap.Int("api_token_length", len(install.InstallLink.NuonOrg.APIToken)),
+		zap.String("org_id", nuonOrg.NuonOrgID),
+		zap.Int("api_token_length", len(nuonOrg.APIToken)),
 	)
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		h.logger.Error("failed to initialize Nuon client", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
@@ -839,37 +842,16 @@ func min(a, b int) int {
 // fetchWorkflowData is a helper function to fetch and process workflow data for an install.
 // This version fetches only customer-visible workflow types using parallel API calls.
 func (h *Handler) fetchWorkflowData(c *gin.Context, install *localModels.Install, offset, limit int) ([]gin.H, bool, error) {
-	// Load install link to get org info with fallback strategies
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	if err := h.loadInstallWithOrg(install); err != nil {
 		return nil, false, fmt.Errorf("failed to load install details: %w", err)
 	}
 
-	// Handle NuonOrg loading with fallback strategies
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg localModels.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		// If still not loaded, try manual loading
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg localModels.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				return nil, false, fmt.Errorf("organization information not found (InstallLink.OrgID=%s, no matching NuonOrg)", install.InstallLink.OrgID)
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		return nil, false, fmt.Errorf("organization information not found")
 	}
 
-	// Initialize Nuon client with fallback for legacy organizations
-	apiURL := h.nuonAPIURL
-	if apiURL == "" {
-		// Fallback for legacy organizations created before API URL support
-		apiURL = "https://api.nuon.co"
-	}
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, apiURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to initialize Nuon client: %w", err)
 	}
@@ -1014,35 +996,16 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 // It makes parallel API calls for each customer-visible workflow type (fetching 1 per type),
 // then returns the single most recent workflow across all types.
 func (h *Handler) fetchRecentWorkflows(c *gin.Context, install *localModels.Install) ([]gin.H, error) {
-	// Load install link to get org info with fallback strategies
-	if err := h.db.Preload("InstallLink.NuonOrg").Where("id = ?", install.ID).First(install).Error; err != nil {
+	if err := h.loadInstallWithOrg(install); err != nil {
 		return nil, fmt.Errorf("failed to load install details: %w", err)
 	}
 
-	// Handle NuonOrg loading with fallback strategies
-	if install.InstallLink.NuonOrg.ID == "" {
-		var installLinkWithOrg localModels.InstallLink
-		if err := h.db.Preload("NuonOrg").Where("id = ?", install.InstallLink.ID).First(&installLinkWithOrg).Error; err == nil {
-			if installLinkWithOrg.NuonOrg.ID != "" {
-				install.InstallLink.NuonOrg = installLinkWithOrg.NuonOrg
-			}
-		}
-
-		if install.InstallLink.NuonOrg.ID == "" {
-			var nuonOrg localModels.NuonOrg
-			if err := h.db.Where("id = ?", install.InstallLink.OrgID).First(&nuonOrg).Error; err != nil {
-				return nil, fmt.Errorf("organization information not found")
-			}
-			install.InstallLink.NuonOrg = nuonOrg
-		}
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		return nil, fmt.Errorf("organization information not found")
 	}
 
-	// Initialize Nuon client
-	apiURL := h.nuonAPIURL
-	if apiURL == "" {
-		apiURL = "https://api.nuon.co"
-	}
-	nuonClient, err := nuon.NewClientWithURL(install.InstallLink.NuonOrg.APIToken, install.InstallLink.NuonOrg.NuonOrgID, apiURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Nuon client: %w", err)
 	}

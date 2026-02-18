@@ -38,9 +38,11 @@ templ Layout(props LayoutProps) {
 
 			<!-- Header -->
 			@partials.Header(partials.HeaderProps{
-				Theme: convertPropsToTheme(props),
-				User: props.User,
-				BasePath: props.BasePath,
+				Theme:            convertPropsToTheme(props),
+				User:             props.User,
+				BasePath:         props.BasePath,
+				HasPublishedApps: props.HasPublishedApps,
+				ActiveNav:        props.ActiveNav,
 			})
 
 			<!-- Main wrapper for panel support -->

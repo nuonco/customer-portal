@@ -6,17 +6,19 @@ import (
 
 // HeaderProps contains props for the customer header component
 type HeaderProps struct {
-	Theme    *models.AppTheme
-	User     *models.User
-	BasePath string
+	Theme            *models.AppTheme
+	User             *models.User
+	BasePath         string
+	HasPublishedApps bool
+	ActiveNav        string // "apps" or "installs"
 }
 
 // Header renders the customer header with logo and user menu dropdown.
 templ Header(props HeaderProps) {
 	<header class="w-full max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
 		<div class="flex items-center justify-between">
-			<!-- Left side: Logo -->
-			<div class="flex items-center gap-4">
+			<!-- Left side: Logo + Navigation -->
+			<div class="flex items-center gap-6">
 				if props.Theme != nil {
 					if props.Theme.LogoDarkBase64 != "" {
 						<!-- Both logos available - show appropriate one based on dark mode -->
@@ -26,6 +28,40 @@ templ Header(props HeaderProps) {
 						<!-- Only light logo available - show in both modes -->
 						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>
 					}
+				}
+				if props.HasPublishedApps {
+					<nav class="flex items-center gap-1">
+						if props.ActiveNav == "apps" {
+							<a
+								href={ templ.SafeURL(props.BasePath + "/apps") }
+								class="px-4 py-2 text-sm font-medium text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-700 rounded-md transition-colors"
+							>
+								App Catalog
+							</a>
+						} else {
+							<a
+								href={ templ.SafeURL(props.BasePath + "/apps") }
+								class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:text-cool-grey-900 dark:hover:text-white hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700 rounded-md transition-colors"
+							>
+								App Catalog
+							</a>
+						}
+						if props.ActiveNav == "installs" {
+							<a
+								href={ templ.SafeURL(props.BasePath + "/installs") }
+								class="px-4 py-2 text-sm font-medium text-cool-grey-900 dark:text-white bg-cool-grey-100 dark:bg-dark-grey-700 rounded-md transition-colors"
+							>
+								My Installs
+							</a>
+						} else {
+							<a
+								href={ templ.SafeURL(props.BasePath + "/installs") }
+								class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:text-cool-grey-900 dark:hover:text-white hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700 rounded-md transition-colors"
+							>
+								My Installs
+							</a>
+						}
+					</nav>
 				}
 			</div>
 			<!-- Right side: User Menu Dropdown -->

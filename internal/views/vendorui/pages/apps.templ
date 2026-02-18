@@ -19,8 +19,9 @@ type AppWithHealthCheckStatus struct {
 // AppsPageProps for the apps list page
 type AppsPageProps struct {
 	vendorui.LayoutProps
-	Org  models.NuonOrg
-	Apps []AppWithHealthCheckStatus
+	Org             models.NuonOrg
+	Apps            []AppWithHealthCheckStatus
+	PublishedAppIDs map[string]bool // Set of app IDs that are currently published
 }
 
 // AppsPage renders the apps list page
@@ -30,7 +31,7 @@ templ AppsPage(props AppsPageProps) {
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
 					<h1 class="stratus-page-title">Apps</h1>
-					<p class="stratus-page-subtitle">Configure health checks for your applications.</p>
+					<p class="stratus-page-subtitle">Configure health checks and publish apps for your customer portal.</p>
 				</div>
 			</div>
 			<div class="stratus-page-section">
@@ -40,7 +41,7 @@ templ AppsPage(props AppsPageProps) {
 							<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
 								<tr>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-										App Name
+										Name
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Platform
@@ -48,14 +49,14 @@ templ AppsPage(props AppsPageProps) {
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Health Checks
 									</th>
-									<th scope="col" class="relative px-6 py-3">
-										<span class="sr-only">Actions</span>
+									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+										Published
 									</th>
 								</tr>
 							</thead>
 							<tbody class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
 								for _, app := range props.Apps {
-									@appTableRow(app, props.Org.ID, props.BasePath)
+									@appTableRow(app, props.Org.ID, props.BasePath, props.PublishedAppIDs[app.ID])
 								}
 							</tbody>
 						</table>
@@ -68,21 +69,16 @@ templ AppsPage(props AppsPageProps) {
 	}
 }
 
-templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) {
-	<tr
-		class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 cursor-pointer"
-		onclick={ templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/apps/%s/inputs'", basePath, orgID, app.ID)} }
-	>
+templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, isPublished bool) {
+	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
 		<td class="px-6 py-4 whitespace-nowrap">
-			<div class="flex items-center">
-				<div class="flex-shrink-0 h-10 w-10 rounded-lg bg-cool-grey-100 dark:bg-dark-grey-700 flex items-center justify-center">
-					@cubeIcon()
-				</div>
-				<div class="ml-4">
-					<div class="text-sm font-medium text-cool-grey-900 dark:text-white">{ app.Name }</div>
-					<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400">{ app.ID }</div>
-				</div>
-			</div>
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
+				class="group"
+			>
+				<div class="text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">{ app.Name }</div>
+				<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400">{ app.ID }</div>
+			</a>
 		</td>
 		<td class="px-6 py-4 whitespace-nowrap">
 			@platformBadge(app.Platform)
@@ -90,15 +86,45 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string) {
 		<td class="px-6 py-4 whitespace-nowrap">
 			@healthCheckBadge(app.HasHealthChecks, app.HealthCheckCount)
 		</td>
-		<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
-				class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-			>
-				Configure &rarr;
-			</a>
+		<td class="px-6 py-4 whitespace-nowrap">
+			@publishToggle(isPublished, basePath, orgID, app.ID)
 		</td>
 	</tr>
+}
+
+// publishToggle renders an on/off toggle for publishing an app to the customer catalog
+templ publishToggle(isPublished bool, basePath, orgID, appID string) {
+	<button
+		type="button"
+		role="switch"
+		aria-checked={ fmt.Sprintf("%t", isPublished) }
+		onclick={ togglePublish(basePath, orgID, appID, isPublished) }
+		class={ "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+			templ.KV("bg-primary-600", isPublished),
+			templ.KV("bg-cool-grey-200 dark:bg-dark-grey-600", !isPublished) }
+	>
+		<span class="sr-only">
+			if isPublished {
+				Remove from catalog
+			} else {
+				Add to catalog
+			}
+		</span>
+		<span
+			aria-hidden="true"
+			class={ "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
+				templ.KV("translate-x-5", isPublished),
+				templ.KV("translate-x-0", !isPublished) }
+		></span>
+	</button>
+}
+
+script togglePublish(basePath, orgID, appID string, isPublished bool) {
+	var method = isPublished ? 'DELETE' : 'POST';
+	var action = isPublished ? 'unpublish' : 'publish';
+	fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/publish', {method: method})
+		.then(function(r) { if (r.ok) { window.location.reload(); } else { alert('Failed to ' + action + ' app'); } })
+		.catch(function() { alert('Failed to ' + action + ' app'); });
 }
 
 templ platformBadge(platform string) {
