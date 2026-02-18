@@ -844,17 +844,8 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		UpdatingCount:       updatingCount,
 	}
 
-	// Get global app theme for customer UI
-	// Get org ID from installs (customers view installs from a vendor's org)
-	// Try from paginated installs first, then all installs, then context
-	var orgID string
-	if len(paginatedInstalls) > 0 && paginatedInstalls[0].Install.OrgID != "" {
-		orgID = paginatedInstalls[0].Install.OrgID
-	} else if len(allInstalls) > 0 && allInstalls[0].OrgID != "" {
-		orgID = allInstalls[0].OrgID
-	} else {
-		orgID = h.getOrgIDForTheme(c)
-	}
+	// Always use the subdomain's org for theme — it is the authoritative org context
+	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	// Fetch platform and app name information for all installs
@@ -2339,7 +2330,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 
 	org, err := h.getOrgForCustomerPage(c)
 	if err != nil {
-		theme, _ := models.GetOrCreateAppTheme(h.db, "")
+		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme),
 			Error:       "Organization not found",
