@@ -1,5 +1,11 @@
 package components
 
+// PreviewPageOption represents a page option in the preview page selector
+type PreviewPageOption struct {
+	Value string
+	Label string
+}
+
 // PreviewContainerProps for the reusable preview component
 type PreviewContainerProps struct {
 	Title          string // e.g. "Live Preview"
@@ -8,6 +14,7 @@ type PreviewContainerProps struct {
 	InitialSize    string // "desktop", "tablet", or "mobile" (default: "desktop")
 	PrimaryColor   string // CSS hex color for --preview-primary
 	SecondaryColor string // CSS hex color for --preview-secondary
+	PageOptions    []PreviewPageOption // optional page selector options
 }
 
 func (p PreviewContainerProps) getInitialMode() string {
@@ -64,6 +71,18 @@ templ PreviewContainer(props PreviewContainerProps) {
 				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400">{ props.Description }</p>
 			</div>
 			<div class="flex items-center space-x-2">
+				<!-- Page Selector (optional) -->
+				if len(props.PageOptions) > 0 {
+					<select
+						id="previewPageSelect"
+						onchange="setPreviewPage(this.value)"
+						class="text-sm bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg px-2 py-1.5 text-cool-grey-700 dark:text-cool-grey-300 border-0 cursor-pointer focus:ring-2 focus:ring-primary-400"
+					>
+						for _, opt := range props.PageOptions {
+							<option value={ opt.Value }>{ opt.Label }</option>
+						}
+					</select>
+				}
 				<!-- Device Size Toggle -->
 				<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
 					<button
@@ -242,6 +261,8 @@ templ previewContainerStyles() {
 			align-items: flex-start;
 			gap: 0.5rem;
 		}
+	/* Ensure page section wrappers fill the full scaler height */
+	.preview-page-section { height: 100%; }
 	</style>
 }
 
@@ -321,6 +342,13 @@ templ previewContainerScript() {
 				// Call page-specific callback if it exists
 				if (typeof window.onPreviewSizeChange === 'function') {
 					window.onPreviewSizeChange(size);
+				}
+			};
+
+			window.setPreviewPage = function(page) {
+				window._previewPage = page;
+				if (typeof window.onPreviewPageChange === 'function') {
+					window.onPreviewPageChange(page);
 				}
 			};
 		})();

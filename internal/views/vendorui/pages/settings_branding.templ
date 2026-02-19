@@ -64,8 +64,29 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 								InitialSize:    "desktop",
 								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
 								SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+								PageOptions: []components.PreviewPageOption{
+									{Value: "install-detail",   Label: "Install Detail"},
+									{Value: "installs-list",    Label: "Installs List"},
+									{Value: "install-creation", Label: "Install Creation"},
+									{Value: "app-catalog",      Label: "App Catalog"},
+									{Value: "login",            Label: "Login Screen"},
+								},
 							}) {
-								@brandingPreviewContent(props.Theme)
+								<div id="preview-page-install-detail" class="preview-page-section">
+									@brandingPreviewInstallDetail(props.Theme)
+								</div>
+								<div id="preview-page-installs-list" class="preview-page-section hidden">
+									@brandingPreviewInstallsList(props.Theme)
+								</div>
+								<div id="preview-page-install-creation" class="preview-page-section hidden">
+									@brandingPreviewInstallCreation(props.Theme)
+								</div>
+								<div id="preview-page-app-catalog" class="preview-page-section hidden">
+									@brandingPreviewApps(props.Theme)
+								</div>
+								<div id="preview-page-login" class="preview-page-section hidden">
+									@brandingPreviewLogin(props.Theme)
+								</div>
 							}
 						</div>
 					</div>
@@ -91,127 +112,167 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 	}
 }
 
-templ brandingPreviewContent(theme *models.AppTheme) {
-	<div class="preview-page-bg h-full pb-6">
-		<!-- Header -->
-		<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
-			<div class="flex items-center justify-between">
-				<div class="flex items-center gap-3">
-					if theme.LogoLightBase64 != "" {
-						<img id="installerPreviewLogoLight" src={ theme.LogoLightBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain preview-logo-light"/>
-					} else {
-						<img id="installerPreviewLogoLight" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light"/>
-					}
-					if theme.LogoDarkBase64 != "" {
-						<img id="installerPreviewLogoDark" src={ theme.LogoDarkBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
-					} else {
-						<img id="installerPreviewLogoDark" src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
-					}
-					<span id="installerPreviewEmail" class="text-sm preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>user@example.com</span>
-				</div>
-				<span class="text-sm preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>Logout</span>
+templ brandingPreviewInstallDetail(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full flex flex-col overflow-hidden">
+		<!-- Page Header -->
+		<header class="px-6 py-3 flex items-center justify-between flex-shrink-0 preview-card" style="border-left: none; border-right: none; border-top: none; border-radius: 0;">
+			<div class="flex items-center gap-3">
+				if theme.LogoLightBase64 != "" {
+					<img src={ theme.LogoLightBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain preview-logo-light"/>
+				} else {
+					<img src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light"/>
+				}
+				if theme.LogoDarkBase64 != "" {
+					<img src={ theme.LogoDarkBase64 } alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
+				} else {
+					<img src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
+				}
 			</div>
+			<span class="text-sm preview-text-muted preview-body-font">user@example.com</span>
 		</header>
-		<!-- Main Content -->
-		<main class="mx-auto px-6 pt-4 w-full max-w-4xl">
-			<!-- Back Link -->
-			<div class="mb-4">
-				<a id="installerPreviewBackLink" href="#" class="text-sm hover:underline" style={ "color: var(--preview-secondary); " + getBrandingFontStyle(theme.BodyFont) }>
-					← Back to My Installs
-				</a>
+		<!-- Main: Table + Sliding Panel -->
+		<div class="relative flex-1 overflow-hidden">
+			<!-- Left: Installs List (matches Installs List preview layout) -->
+			<div class="absolute inset-0 overflow-hidden">
+				<main class="mx-auto px-6 pt-4 w-full max-w-4xl">
+					<h1 class="text-xl font-semibold preview-text-heading preview-heading-font mb-4">My Installs</h1>
+					<!-- Tabs -->
+					<div class="flex border-b border-current mb-4 text-sm">
+						<button class="px-4 py-2 font-medium preview-body-font" style="color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary);">Needs Attention</button>
+						<button class="px-4 py-2 preview-text-muted preview-body-font">Updating</button>
+						<button class="px-4 py-2 preview-text-muted preview-body-font">Healthy</button>
+					</div>
+					<!-- Table -->
+					<div class="preview-card rounded-lg overflow-hidden">
+						<table class="w-full text-sm">
+							<thead>
+								<tr class="preview-status-bg">
+									<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Name</th>
+									<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">App</th>
+									<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Status</th>
+									<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Region</th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr class="border-t preview-status-border" style="background-color: color-mix(in srgb, var(--preview-primary) 8%, transparent);">
+									<td class="px-4 py-3 preview-text-body preview-body-font font-medium" style="color: var(--preview-primary);">my-production</td>
+									<td class="px-4 py-3 preview-text-body preview-body-font">Acme App</td>
+									<td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">Needs Attention</span></td>
+									<td class="px-4 py-3 preview-text-muted preview-body-font">us-east-1</td>
+								</tr>
+								<tr class="border-t preview-status-border">
+									<td class="px-4 py-3 preview-text-body preview-body-font font-medium" style="color: var(--preview-primary);">my-staging</td>
+									<td class="px-4 py-3 preview-text-body preview-body-font">Acme App</td>
+									<td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Healthy</span></td>
+									<td class="px-4 py-3 preview-text-muted preview-body-font">eu-west-1</td>
+								</tr>
+							</tbody>
+						</table>
+					</div>
+				</main>
 			</div>
-			<!-- Main Card -->
-			<div class="preview-card p-5 shadow-md rounded-lg">
-				<div class="flex gap-6">
-					<!-- Left: Install Details -->
-					<div class="flex-1">
-						<h3 id="installerPreviewDetailsTitle" class="text-base font-medium preview-text-heading mb-2" style={ getBrandingFontStyle(theme.HeadingFont) }>Install Details</h3>
-						<div class="space-y-1.5 text-sm">
-							<div>
-								<span class="font-medium preview-text-muted">App:</span>
-								<span id="installerPreviewAppName" class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>Acme App</span>
+			<!-- Overlay -->
+			<div class="absolute inset-0" style="background-color: rgba(0,0,0,0.3);"></div>
+			<!-- Right: Detail Panel (overlays table content) -->
+			<div class="absolute top-0 right-0 bottom-0 flex flex-col overflow-hidden preview-card" style="width: 64%; border-radius: 0; border-top: none; border-right: none; border-bottom: none;">
+				<!-- Panel Header -->
+				<div class="px-4 py-3 flex items-center justify-between flex-shrink-0" style="border-bottom: 1px solid #e5e7eb;">
+					<div class="min-w-0 flex-1">
+						<h2 class="text-sm font-semibold preview-text-heading preview-heading-font truncate">my-production</h2>
+						<span class="text-xs font-mono preview-text-muted">a1b2c3d4-e5f6-7890</span>
+					</div>
+					<div class="flex items-center gap-2 ml-3 flex-shrink-0">
+						<button class="flex items-center gap-1 text-xs px-2.5 py-1 preview-text-body preview-body-font preview-card" style="border-radius: 4px;">
+							Actions
+							<svg class="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
+						</button>
+						<button class="p-1 preview-text-muted">
+							<svg class="w-4 h-4" viewBox="0 0 256 256" fill="currentColor"><path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path></svg>
+						</button>
+						<button class="text-lg leading-none preview-text-muted px-1">&times;</button>
+					</div>
+				</div>
+				<!-- Tab Headers -->
+				<div class="flex text-sm flex-shrink-0" style="border-bottom: 1px solid #e5e7eb;">
+					<button class="px-4 py-2.5 preview-body-font font-medium" style="color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary); margin-bottom: -1px;">Overview</button>
+					<button class="px-4 py-2.5 preview-text-muted preview-body-font">History</button>
+					<button class="px-4 py-2.5 preview-text-muted preview-body-font">Audit Log</button>
+				</div>
+				<!-- Panel Body -->
+				<div class="p-4 space-y-3 overflow-hidden flex-1">
+					<!-- Workflow Card -->
+					<div class="preview-card p-4 rounded shadow-sm">
+						<div class="flex items-center gap-2 mb-1">
+							<h4 class="text-sm font-medium preview-text-heading preview-heading-font">Deploy</h4>
+							<span class="text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800">in-progress</span>
+						</div>
+						<div class="flex items-center gap-2 text-xs preview-text-muted preview-body-font mb-1.5">
+							<svg class="animate-spin h-3 w-3 flex-shrink-0" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+							<span><span class="font-medium">Step 2 of 5:</span> Installing dependencies</span>
+						</div>
+						<!-- Progress bar -->
+						<div class="w-full h-1 rounded-sm overflow-hidden preview-status-bg mb-2">
+							<div class="h-full bg-blue-500 rounded-sm" style="width: 40%;"></div>
+						</div>
+						<p class="text-xs preview-text-muted preview-body-font mb-2">Jan 15, 2025 2:30 PM</p>
+						<button class="text-xs text-white px-3 py-1.5 rounded" style="background-color: var(--preview-primary);">Approve Installation</button>
+					</div>
+					<!-- App Config + Platform Grid -->
+					<div class="grid grid-cols-2 gap-3">
+						<!-- App Config Card -->
+						<div class="preview-card p-4 rounded shadow-sm">
+							<div class="flex items-center gap-2 mb-2">
+								<h3 class="text-sm font-medium preview-text-heading preview-heading-font">Acme App</h3>
+								<span class="text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800">update available</span>
 							</div>
-							<div>
-								<span class="font-medium preview-text-muted">Region:</span>
-								<span class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>us-west-2</span>
-							</div>
-							<div>
-								<span class="font-medium preview-text-muted">Created:</span>
-								<span class="ml-1 preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>Jan 15, 2025</span>
+							<div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+								<div>
+									<p class="preview-text-muted preview-body-font">Installed Version</p>
+									<p class="font-medium text-amber-600 preview-body-font">v3</p>
+								</div>
+								<div>
+									<p class="preview-text-muted preview-body-font">Latest Version</p>
+									<p class="font-medium preview-text-body preview-body-font">v4</p>
+								</div>
+								<div>
+									<p class="preview-text-muted preview-body-font">Last Updated</p>
+									<p class="font-medium preview-text-body preview-body-font">Jan 10, 2025</p>
+								</div>
+								<div>
+									<p class="preview-text-muted preview-body-font">Published</p>
+									<p class="font-medium preview-text-body preview-body-font">Jan 15, 2025</p>
+								</div>
 							</div>
 						</div>
-					</div>
-					<!-- Right: Health Status -->
-					<div class="flex-1">
-						<h3 class="text-base font-medium preview-text-heading mb-2" style={ getBrandingFontStyle(theme.HeadingFont) }>Health Status</h3>
-						<div class="flex items-center gap-2">
-							<div class="w-2.5 h-2.5 rounded-full bg-green-500"></div>
-							<span class="text-sm preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>1 check passing</span>
+						<!-- Platform Card -->
+						<div class="preview-card p-4 rounded shadow-sm">
+							<h3 class="text-sm font-medium preview-text-heading preview-heading-font mb-3">Platform</h3>
+							<div class="space-y-2 text-xs">
+								<div>
+									<p class="preview-text-muted preview-body-font">Name</p>
+									<p class="font-medium preview-text-body preview-body-font">AWS</p>
+								</div>
+								<div>
+									<p class="preview-text-muted preview-body-font">Region</p>
+									<p class="font-medium preview-text-body preview-body-font">us-east-1</p>
+								</div>
+							</div>
 						</div>
 					</div>
 				</div>
 			</div>
-			<!-- Latest Update Section -->
-			<div class="mt-5">
-				<h3 id="installerPreviewUpdateTitle" class="text-base preview-text-heading mb-3" style={ getBrandingFontStyle(theme.HeadingFont) }>Latest Update</h3>
-				<!-- Workflow Card -->
-				<div class="preview-card p-5 shadow-md rounded-lg">
-					<div class="flex justify-between items-start">
-						<div class="flex-grow">
-							<div class="flex items-center space-x-2 mb-1">
-								<h4 id="installerPreviewWorkflowName" class="text-lg preview-text-body" style={ getBrandingFontStyle(theme.HeadingFont) }>Deploy</h4>
-								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800">In Progress</span>
-							</div>
-							<p class="text-xs preview-text-muted" style={ getBrandingFontStyle(theme.BodyFont) }>Started: 2:30 PM</p>
-						</div>
-						<div class="flex space-x-2">
-							<button
-								id="installerPreviewApproveBtn"
-								class="text-white px-3 py-1.5 text-xs rounded-lg"
-								style="background-color: var(--preview-primary);"
-							>
-								Approve
-							</button>
-							<button
-								class="text-white px-3 py-1.5 text-xs rounded-lg"
-								style="background-color: var(--preview-secondary);"
-							>
-								Cancel
-							</button>
-						</div>
-					</div>
-					<!-- Status message -->
-					<div class="mt-3 p-3 preview-status-bg preview-status-border rounded-lg">
-						<div class="flex items-center space-x-2">
-							<div class="animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600"></div>
-							<p class="text-xs preview-text-body" style={ getBrandingFontStyle(theme.BodyFont) }>
-								<strong>In Progress:</strong> This update is currently running.
-							</p>
-						</div>
-					</div>
-				</div>
-				<!-- View History Button -->
-				<div class="mt-3 text-center">
-					<button
-						id="installerPreviewHistoryBtn"
-						class="text-white px-4 py-2 text-sm rounded-lg"
-						style="background-color: var(--preview-primary);"
-					>
-						View Update History
-					</button>
-				</div>
-			</div>
-		</main>
-		<!-- Footer -->
-		<footer class="w-full max-w-4xl mx-auto px-6 pt-8 pb-4 mt-auto">
-			<div
-				id="installerPreviewFooter"
-				class={ "text-center text-sm preview-text-muted", templ.KV("hidden", theme.SupportContact == "") }
-				style={ getBrandingFontStyle(theme.BodyFont) }
-			>
-				Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style="color: var(--preview-secondary);">support</a>
-			</div>
-		</footer>
+		</div>
+		<!-- Support Footer -->
+		<div
+			id="installerPreviewFooter"
+			class={ "text-center text-xs py-3 preview-text-muted preview-body-font preview-card", templ.KV("hidden", theme.SupportContact == "") }
+			style="border-left: none; border-right: none; border-bottom: none; border-radius: 0;"
+		>
+			Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style="color: var(--preview-secondary);">support</a>
+		</div>
 	</div>
 }
 
@@ -481,6 +542,166 @@ templ installerPageSupportSection(theme *models.AppTheme) {
 	</div>
 }
 
+
+templ brandingPreviewInstallsList(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full">
+		<!-- Header -->
+		<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+				</div>
+				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
+			</div>
+		</header>
+		<!-- Main Content -->
+		<main class="mx-auto px-6 pt-2 w-full max-w-4xl">
+			<h1 class="text-xl font-semibold preview-text-heading preview-heading-font mb-4">My Installs</h1>
+			<!-- Tabs -->
+			<div class="flex border-b border-current mb-4 text-sm">
+				<button class="px-4 py-2 font-medium preview-body-font" style="color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary);">Needs Attention</button>
+				<button class="px-4 py-2 preview-text-muted preview-body-font">Updating</button>
+				<button class="px-4 py-2 preview-text-muted preview-body-font">Healthy</button>
+			</div>
+			<!-- Table -->
+			<div class="preview-card rounded-lg overflow-hidden">
+				<table class="w-full text-sm">
+					<thead>
+						<tr class="preview-status-bg">
+							<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Name</th>
+							<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">App</th>
+							<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Status</th>
+							<th class="px-4 py-3 text-left preview-text-muted preview-body-font font-medium">Region</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr class="border-t preview-status-border">
+							<td class="px-4 py-3 preview-text-body preview-body-font font-medium" style="color: var(--preview-primary);">my-production</td>
+							<td class="px-4 py-3 preview-text-body preview-body-font">Acme App</td>
+							<td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800">Needs Attention</span></td>
+							<td class="px-4 py-3 preview-text-muted preview-body-font">us-east-1</td>
+						</tr>
+						<tr class="border-t preview-status-border">
+							<td class="px-4 py-3 preview-text-body preview-body-font font-medium" style="color: var(--preview-primary);">my-staging</td>
+							<td class="px-4 py-3 preview-text-body preview-body-font">Acme App</td>
+							<td class="px-4 py-3"><span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800">Healthy</span></td>
+							<td class="px-4 py-3 preview-text-muted preview-body-font">eu-west-1</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		</main>
+	</div>
+}
+
+templ brandingPreviewInstallCreation(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full">
+		<!-- Header -->
+		<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+				</div>
+				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
+			</div>
+		</header>
+		<!-- Centered form -->
+		<main class="mx-auto px-6 pt-4 w-full max-w-lg">
+			<div class="preview-card p-6 rounded-lg shadow-md">
+				<h2 class="text-lg font-semibold preview-text-heading preview-heading-font mb-1">Create New Install</h2>
+				<p class="text-sm preview-text-muted preview-body-font mb-5">Set up a new instance of this app in your cloud account.</p>
+				<!-- App info -->
+				<div class="mb-4 p-3 preview-status-bg preview-status-border rounded-lg">
+					<span class="text-xs preview-text-muted preview-body-font">App</span>
+					<p class="text-sm font-medium preview-text-body preview-body-font">Acme App</p>
+				</div>
+				<!-- Install name -->
+				<div class="mb-4">
+					<label class="block text-sm font-medium preview-text-heading preview-body-font mb-1">Install Name</label>
+					<input type="text" placeholder="my-production" class="w-full px-3 py-2 text-sm preview-card preview-text-body preview-body-font rounded-md border" style="border-color: var(--preview-primary); outline: none;" disabled/>
+				</div>
+				<!-- Region -->
+				<div class="mb-6">
+					<label class="block text-sm font-medium preview-text-heading preview-body-font mb-1">Region</label>
+					<select class="w-full px-3 py-2 text-sm preview-card preview-text-body preview-body-font rounded-md border" style="border-color: var(--preview-primary);" disabled>
+						<option>us-east-1 (N. Virginia)</option>
+					</select>
+				</div>
+				<!-- Submit -->
+				<button class="w-full text-white py-2.5 text-sm font-medium rounded-lg" style="background-color: var(--preview-primary);">
+					Create Install
+				</button>
+			</div>
+		</main>
+	</div>
+}
+
+templ brandingPreviewApps(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full">
+		<!-- Header -->
+		<header class="w-full max-w-4xl mx-auto px-6 pb-4 pt-6">
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-3">
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
+					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+				</div>
+				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
+			</div>
+		</header>
+		<!-- Main -->
+		<main class="mx-auto px-6 pt-2 w-full max-w-4xl">
+			<h1 class="text-xl font-semibold preview-text-heading preview-heading-font mb-6">App Catalog</h1>
+			<div class="grid grid-cols-2 gap-4">
+				<!-- App Card 1 -->
+				<div class="preview-card p-5 rounded-lg shadow-sm">
+					<h3 class="text-base font-semibold preview-text-heading preview-heading-font mb-1">Acme App</h3>
+					<p class="text-xs preview-text-muted preview-body-font mb-4">Deploy Acme App to your own cloud account in minutes.</p>
+					<button class="text-white px-4 py-1.5 text-xs rounded-lg" style="background-color: var(--preview-primary);">More Info</button>
+				</div>
+				<!-- App Card 2 -->
+				<div class="preview-card p-5 rounded-lg shadow-sm">
+					<h3 class="text-base font-semibold preview-text-heading preview-heading-font mb-1">Acme Analytics</h3>
+					<p class="text-xs preview-text-muted preview-body-font mb-4">Self-hosted analytics for your organization's data.</p>
+					<button class="text-white px-4 py-1.5 text-xs rounded-lg" style="background-color: var(--preview-primary);">More Info</button>
+				</div>
+			</div>
+		</main>
+	</div>
+}
+
+templ brandingPreviewLogin(theme *models.AppTheme) {
+	<div class="preview-page-bg h-full flex">
+		<!-- Left panel -->
+		<div class="flex-1 flex flex-col items-center justify-center px-12 py-10">
+			<div class="w-full max-w-xs">
+				<div class="flex items-center gap-2 mb-8">
+					<img class="h-8 w-auto max-w-32 object-contain hidden preview-logo-light" src="" alt="Logo"/>
+					<img class="h-8 w-auto max-w-32 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+				</div>
+				<h1 class="text-2xl font-bold preview-text-heading preview-heading-font mb-2">Welcome back</h1>
+				<p class="text-sm preview-text-muted preview-body-font mb-8">Sign in to manage your installs.</p>
+				<button class="w-full text-white py-2.5 text-sm font-medium rounded-lg mb-3" style="background-color: var(--preview-primary);">
+					Sign in with SSO
+				</button>
+				<button class="w-full py-2.5 text-sm font-medium rounded-lg preview-text-heading preview-body-font" style="border: 1px solid var(--preview-primary);">
+					Sign in with email
+				</button>
+			</div>
+		</div>
+		<!-- Right panel -->
+		<div class="w-2/5 flex-shrink-0 relative overflow-hidden" style="background-color: var(--preview-primary);">
+			<!-- Grid pattern overlay -->
+			<div class="absolute inset-0 opacity-20" style="background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px); background-size: 32px 32px;"></div>
+			<div class="relative z-10 flex flex-col items-center justify-center h-full px-8 text-white text-center">
+				<p class="text-base font-semibold preview-heading-font opacity-90">Deploy anywhere.</p>
+				<p class="text-sm preview-body-font opacity-75 mt-2">Your own cloud, your own rules.</p>
+			</div>
+		</div>
+	</div>
+}
+
 func getBrandingPrimaryColor(color string) string {
 	if color == "" {
 		return "#8040BF"
@@ -571,6 +792,15 @@ templ installerPageScript() {
 				setSettingsMode(mode, true);
 			};
 
+			window.onPreviewPageChange = function(page) {
+				document.querySelectorAll('.preview-page-section').forEach(function(el) {
+					el.classList.add('hidden');
+				});
+				var el = document.getElementById('preview-page-' + page);
+				if (el) el.classList.remove('hidden');
+				updatePreview();
+			};
+
 			window.updatePreview = function() {
 				var isDarkMode = window._previewMode === 'dark';
 				var primaryColor, secondaryColor;
@@ -600,10 +830,6 @@ templ installerPageScript() {
 				container.style.setProperty('--preview-primary', primaryColor);
 				container.style.setProperty('--preview-secondary', secondaryColor);
 
-				// Update logo visibility based on mode
-				var previewLogoLight = document.getElementById("installerPreviewLogoLight");
-				var previewLogoDark = document.getElementById("installerPreviewLogoDark");
-
 				// Get current logo values
 				var lightLogoSrc = window._installerLogoLightBase64 || config.dataset.logoLightBase64 || '';
 				var darkLogoSrc = window._installerLogoDarkBase64 || config.dataset.logoDarkBase64 || '';
@@ -612,73 +838,62 @@ templ installerPageScript() {
 				if (lightLogoSrc === 'REMOVE') lightLogoSrc = '';
 				if (darkLogoSrc === 'REMOVE') darkLogoSrc = '';
 
-				// Update light logo
-				if (lightLogoSrc) {
-					previewLogoLight.src = lightLogoSrc;
-					previewLogoLight.classList.remove('hidden');
-				} else {
-					previewLogoLight.classList.add('hidden');
-				}
+				// Update all light logos across all pages (class-based)
+				document.querySelectorAll('#previewContainer .preview-logo-light').forEach(function(el) {
+					if (lightLogoSrc) {
+						el.src = lightLogoSrc;
+						el.classList.remove('hidden');
+					} else {
+						el.classList.add('hidden');
+					}
+				});
 
-				// Update dark logo
-				if (darkLogoSrc) {
-					previewLogoDark.src = darkLogoSrc;
-					previewLogoDark.classList.remove('hidden');
-				} else if (lightLogoSrc) {
-					// Fall back to light logo for dark mode if no dark logo
-					previewLogoDark.src = lightLogoSrc;
-					previewLogoDark.classList.remove('hidden');
-				} else {
-					previewLogoDark.classList.add('hidden');
-				}
+				// Update all dark logos across all pages (class-based, fall back to light logo)
+				var darkSrc = darkLogoSrc || lightLogoSrc;
+				document.querySelectorAll('#previewContainer .preview-logo-dark').forEach(function(el) {
+					if (darkSrc) {
+						el.src = darkSrc;
+						el.classList.remove('hidden');
+					} else {
+						el.classList.add('hidden');
+					}
+				});
 
-				// Update secondary color links
+				// Update secondary color links (install detail page)
 				var backLink = document.getElementById("installerPreviewBackLink");
 				var supportLink = document.getElementById("installerPreviewSupportLink");
 				if (backLink) backLink.style.color = secondaryColor;
 				if (supportLink) supportLink.style.color = secondaryColor;
 
-				// Update primary color buttons
+				// Update primary color buttons (install detail page)
 				var approveBtn = document.getElementById("installerPreviewApproveBtn");
 				var historyBtn = document.getElementById("installerPreviewHistoryBtn");
 				if (approveBtn) approveBtn.style.backgroundColor = primaryColor;
 				if (historyBtn) historyBtn.style.backgroundColor = primaryColor;
 
-				// Update footer visibility
+				// Update footer visibility (install detail page)
 				var previewFooter = document.getElementById("installerPreviewFooter");
 				if (previewFooter) {
 					previewFooter.classList.toggle("hidden", !supportContact);
 				}
 
-				// Update heading fonts
+				// Update heading fonts across all pages (class-based)
 				var headingFontStyle = headingFont
 					? "'" + headingFont + "', ui-sans-serif, system-ui, sans-serif"
 					: "ui-sans-serif, system-ui, sans-serif";
-				var headingElements = [
-					'installerPreviewDetailsTitle',
-					'installerPreviewUpdateTitle',
-					'installerPreviewWorkflowName'
-				];
-				headingElements.forEach(function(id) {
-					var el = document.getElementById(id);
-					if (el) el.style.fontFamily = headingFontStyle;
+				document.querySelectorAll('#previewContainer .preview-heading-font').forEach(function(el) {
+					el.style.fontFamily = headingFontStyle;
 				});
 
-				// Update body fonts
+				// Update body fonts across all pages (class-based)
 				var bodyFontStyle = bodyFont
 					? "'" + bodyFont + "', ui-sans-serif, system-ui, sans-serif"
 					: "ui-sans-serif, system-ui, sans-serif";
-				var bodyElements = [
-					'installerPreviewEmail',
-					'installerPreviewBackLink',
-					'installerPreviewAppName'
-				];
-				bodyElements.forEach(function(id) {
-					var el = document.getElementById(id);
-					if (el) el.style.fontFamily = bodyFontStyle;
+				document.querySelectorAll('#previewContainer .preview-body-font').forEach(function(el) {
+					el.style.fontFamily = bodyFontStyle;
 				});
 
-				// Update footer font
+				// Update footer font (install detail page)
 				if (previewFooter) {
 					previewFooter.style.fontFamily = bodyFontStyle;
 				}

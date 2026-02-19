@@ -8,14 +8,21 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
+// PreviewPageOption represents a page option in the preview page selector
+type PreviewPageOption struct {
+	Value string
+	Label string
+}
+
 // PreviewContainerProps for the reusable preview component
 type PreviewContainerProps struct {
-	Title          string // e.g. "Live Preview"
-	Description    string // e.g. "This is your customers will see."
-	InitialMode    string // "light" or "dark" (default: "light")
-	InitialSize    string // "desktop", "tablet", or "mobile" (default: "desktop")
-	PrimaryColor   string // CSS hex color for --preview-primary
-	SecondaryColor string // CSS hex color for --preview-secondary
+	Title          string              // e.g. "Live Preview"
+	Description    string              // e.g. "This is your customers will see."
+	InitialMode    string              // "light" or "dark" (default: "light")
+	InitialSize    string              // "desktop", "tablet", or "mobile" (default: "desktop")
+	PrimaryColor   string              // CSS hex color for --preview-primary
+	SecondaryColor string              // CSS hex color for --preview-secondary
+	PageOptions    []PreviewPageOption // optional page selector options
 }
 
 func (p PreviewContainerProps) getInitialMode() string {
@@ -92,7 +99,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 63, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 70, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -105,48 +112,70 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 64, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 71, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></div><div class=\"flex items-center space-x-2\"><!-- Device Size Toggle --><div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></div><div class=\"flex items-center space-x-2\"><!-- Page Selector (optional) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 = []any{"p-1.5 rounded-md transition-colors",
-			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "mobile"),
-			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "mobile")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if len(props.PageOptions) > 0 {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<select id=\"previewPageSelect\" onchange=\"setPreviewPage(this.value)\" class=\"text-sm bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg px-2 py-1.5 text-cool-grey-700 dark:text-cool-grey-300 border-0 cursor-pointer focus:ring-2 focus:ring-primary-400\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, opt := range props.PageOptions {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<option value=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var4 string
+				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Value)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 82, Col: 32}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 82, Col: 46}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</option>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</select>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<button type=\"button\" id=\"previewMobileBtn\" onclick=\"setPreviewSize('mobile')\" title=\"Mobile\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var5 string
-		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var4).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><!-- Smartphone icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\" ry=\"2\"></rect> <line x1=\"12\" y1=\"18\" x2=\"12.01\" y2=\"18\"></line></svg></button> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Device Size Toggle --><div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 = []any{"p-1.5 rounded-md transition-colors",
-			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "tablet"),
-			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "tablet")}
+			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "mobile"),
+			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "mobile")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var6...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<button type=\"button\" id=\"previewTabletBtn\" onclick=\"setPreviewSize('tablet')\" title=\"Tablet\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" id=\"previewMobileBtn\" onclick=\"setPreviewSize('mobile')\" title=\"Mobile\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -159,18 +188,18 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\"><!-- Tablet icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\" ry=\"2\"></rect> <line x1=\"12\" y1=\"18\" x2=\"12.01\" y2=\"18\"></line></svg></button> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><!-- Smartphone icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"5\" y=\"2\" width=\"14\" height=\"20\" rx=\"2\" ry=\"2\"></rect> <line x1=\"12\" y1=\"18\" x2=\"12.01\" y2=\"18\"></line></svg></button> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 = []any{"p-1.5 rounded-md transition-colors",
-			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "desktop"),
-			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "desktop")}
+			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "tablet"),
+			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "tablet")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<button type=\"button\" id=\"previewDesktopBtn\" onclick=\"setPreviewSize('desktop')\" title=\"Desktop\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<button type=\"button\" id=\"previewTabletBtn\" onclick=\"setPreviewSize('tablet')\" title=\"Tablet\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -183,18 +212,18 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"><!-- Monitor icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\" ry=\"2\"></rect> <line x1=\"8\" y1=\"21\" x2=\"16\" y2=\"21\"></line> <line x1=\"12\" y1=\"17\" x2=\"12\" y2=\"21\"></line></svg></button></div><!-- Light/Dark Mode Toggle --><div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><!-- Tablet icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"4\" y=\"2\" width=\"16\" height=\"20\" rx=\"2\" ry=\"2\"></rect> <line x1=\"12\" y1=\"18\" x2=\"12.01\" y2=\"18\"></line></svg></button> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 = []any{"p-1.5 rounded-md transition-colors",
-			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialMode() == "light"),
-			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialMode() != "light")}
+			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialSize() == "desktop"),
+			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialSize() != "desktop")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var10...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" id=\"previewLightModeBtn\" onclick=\"setPreviewMode('light')\" title=\"Light mode\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<button type=\"button\" id=\"previewDesktopBtn\" onclick=\"setPreviewSize('desktop')\" title=\"Desktop\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -207,18 +236,18 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"><!-- Sun icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"></circle> <line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"></line> <line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"></line> <line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"></line> <line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"></line> <line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"></line> <line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"></line> <line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"></line> <line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"></line></svg></button> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"><!-- Monitor icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"2\" y=\"3\" width=\"20\" height=\"14\" rx=\"2\" ry=\"2\"></rect> <line x1=\"8\" y1=\"21\" x2=\"16\" y2=\"21\"></line> <line x1=\"12\" y1=\"17\" x2=\"12\" y2=\"21\"></line></svg></button></div><!-- Light/Dark Mode Toggle --><div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 = []any{"p-1.5 rounded-md transition-colors",
-			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialMode() == "dark"),
-			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialMode() != "dark")}
+			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialMode() == "light"),
+			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialMode() != "light")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var12...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<button type=\"button\" id=\"previewDarkModeBtn\" onclick=\"setPreviewMode('dark')\" title=\"Dark mode\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<button type=\"button\" id=\"previewLightModeBtn\" onclick=\"setPreviewMode('light')\" title=\"Light mode\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -231,16 +260,18 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\"><!-- Moon icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"></path></svg></button></div></div></div><!-- Preview Container with scaling --><div class=\"w-fit border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><!-- Sun icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"5\"></circle> <line x1=\"12\" y1=\"1\" x2=\"12\" y2=\"3\"></line> <line x1=\"12\" y1=\"21\" x2=\"12\" y2=\"23\"></line> <line x1=\"4.22\" y1=\"4.22\" x2=\"5.64\" y2=\"5.64\"></line> <line x1=\"18.36\" y1=\"18.36\" x2=\"19.78\" y2=\"19.78\"></line> <line x1=\"1\" y1=\"12\" x2=\"3\" y2=\"12\"></line> <line x1=\"21\" y1=\"12\" x2=\"23\" y2=\"12\"></line> <line x1=\"4.22\" y1=\"19.78\" x2=\"5.64\" y2=\"18.36\"></line> <line x1=\"18.36\" y1=\"5.64\" x2=\"19.78\" y2=\"4.22\"></line></svg></button> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 = []any{props.getModeClass(), props.getContainerClass()}
+		var templ_7745c5c3_Var14 = []any{"p-1.5 rounded-md transition-colors",
+			templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm", props.getInitialMode() == "dark"),
+			templ.KV("text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600", props.getInitialMode() != "dark")}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var14...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div id=\"previewContainer\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<button type=\"button\" id=\"previewDarkModeBtn\" onclick=\"setPreviewMode('dark')\" title=\"Dark mode\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -253,42 +284,64 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\"><!-- Moon icon --><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"16\" height=\"16\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z\"></path></svg></button></div></div></div><!-- Preview Container with scaling --><div class=\"w-fit border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + ";")
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 162, Col: 121}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		var templ_7745c5c3_Var16 = []any{props.getModeClass(), props.getContainerClass()}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var16...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><!-- Scaled preview frame -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div id=\"previewContainer\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 = []any{"origin-top-left", props.getSizeClass()}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
+		var templ_7745c5c3_Var17 string
+		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var16).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div id=\"previewScaler\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" style=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + ";")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 181, Col: 121}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"><!-- Scaled preview frame -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var19 = []any{"origin-top-left", props.getSizeClass()}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var19...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div id=\"previewScaler\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var20 string
+		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var19).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -296,7 +349,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></div></div><!-- Preview styles -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div></div><!-- Preview styles -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -304,7 +357,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -332,12 +385,12 @@ func previewContainerStyles() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<style>\n\t\t/* Light mode preview */\n\t\t.preview-light .preview-page-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-card { background-color: #ffffff; border: 1px solid #d1d5db; }\n\t\t.preview-light .preview-text-heading { color: #374151; }\n\t\t.preview-light .preview-text-body { color: #1f2937; }\n\t\t.preview-light .preview-text-muted { color: #6b7280; }\n\t\t.preview-light .preview-status-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-status-border { border: 1px solid #e5e7eb; }\n\t\t.preview-light .preview-logo-light { display: block; }\n\t\t.preview-light .preview-logo-dark { display: none !important; }\n\n\t\t/* Dark mode preview */\n\t\t.preview-dark .preview-page-bg { background-color: #0f172a; }\n\t\t.preview-dark .preview-card { background-color: #1e293b; border: 1px solid #334155; }\n\t\t.preview-dark .preview-text-heading { color: #e2e8f0; }\n\t\t.preview-dark .preview-text-body { color: #f8fafc; }\n\t\t.preview-dark .preview-text-muted { color: #94a3b8; }\n\t\t.preview-dark .preview-status-bg { background-color: #1e293b; }\n\t\t.preview-dark .preview-status-border { border: 1px solid #334155; }\n\t\t.preview-dark .preview-logo-light { display: none !important; }\n\t\t.preview-dark .preview-logo-dark { display: block; }\n\n\t\t/* Desktop: 1280x800 viewport, scaled to 832x520 displayed */\n\t\t.preview-size-desktop {\n\t\t\ttransform: scale(0.65);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 1280px;\n\t\t\theight: 800px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Tablet: 768x1024 viewport (iPad portrait), scaled to 576x768 displayed */\n\t\t.preview-size-tablet {\n\t\t\ttransform: scale(0.75);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 768px;\n\t\t\theight: 1024px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Mobile: 375x667 viewport (iPhone), scaled to 319x567 displayed */\n\t\t.preview-size-mobile {\n\t\t\ttransform: scale(0.85);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 375px;\n\t\t\theight: 667px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Container sizes to match scaled output */\n\t\t.preview-container-desktop { width: 832px; height: 520px; overflow: hidden; }\n\t\t.preview-container-tablet { width: 576px; height: 768px; overflow: hidden; }\n\t\t.preview-container-mobile { width: 319px; height: 567px; overflow: hidden; }\n\n\t\t/* Mobile preview responsive adjustments */\n\t\t.preview-size-mobile .preview-card .flex.gap-6 {\n\t\t\tflex-direction: column;\n\t\t\tgap: 1rem;\n\t\t}\n\t\t.preview-size-mobile .preview-text-muted {\n\t\t\tfont-size: 0.7rem;\n\t\t}\n\t\t.preview-size-mobile header .flex.items-center.justify-between {\n\t\t\tflex-direction: column;\n\t\t\talign-items: flex-start;\n\t\t\tgap: 0.5rem;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<style>\n\t\t/* Light mode preview */\n\t\t.preview-light .preview-page-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-card { background-color: #ffffff; border: 1px solid #d1d5db; }\n\t\t.preview-light .preview-text-heading { color: #374151; }\n\t\t.preview-light .preview-text-body { color: #1f2937; }\n\t\t.preview-light .preview-text-muted { color: #6b7280; }\n\t\t.preview-light .preview-status-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-status-border { border: 1px solid #e5e7eb; }\n\t\t.preview-light .preview-logo-light { display: block; }\n\t\t.preview-light .preview-logo-dark { display: none !important; }\n\n\t\t/* Dark mode preview */\n\t\t.preview-dark .preview-page-bg { background-color: #0f172a; }\n\t\t.preview-dark .preview-card { background-color: #1e293b; border: 1px solid #334155; }\n\t\t.preview-dark .preview-text-heading { color: #e2e8f0; }\n\t\t.preview-dark .preview-text-body { color: #f8fafc; }\n\t\t.preview-dark .preview-text-muted { color: #94a3b8; }\n\t\t.preview-dark .preview-status-bg { background-color: #1e293b; }\n\t\t.preview-dark .preview-status-border { border: 1px solid #334155; }\n\t\t.preview-dark .preview-logo-light { display: none !important; }\n\t\t.preview-dark .preview-logo-dark { display: block; }\n\n\t\t/* Desktop: 1280x800 viewport, scaled to 832x520 displayed */\n\t\t.preview-size-desktop {\n\t\t\ttransform: scale(0.65);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 1280px;\n\t\t\theight: 800px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Tablet: 768x1024 viewport (iPad portrait), scaled to 576x768 displayed */\n\t\t.preview-size-tablet {\n\t\t\ttransform: scale(0.75);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 768px;\n\t\t\theight: 1024px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Mobile: 375x667 viewport (iPhone), scaled to 319x567 displayed */\n\t\t.preview-size-mobile {\n\t\t\ttransform: scale(0.85);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 375px;\n\t\t\theight: 667px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Container sizes to match scaled output */\n\t\t.preview-container-desktop { width: 832px; height: 520px; overflow: hidden; }\n\t\t.preview-container-tablet { width: 576px; height: 768px; overflow: hidden; }\n\t\t.preview-container-mobile { width: 319px; height: 567px; overflow: hidden; }\n\n\t\t/* Mobile preview responsive adjustments */\n\t\t.preview-size-mobile .preview-card .flex.gap-6 {\n\t\t\tflex-direction: column;\n\t\t\tgap: 1rem;\n\t\t}\n\t\t.preview-size-mobile .preview-text-muted {\n\t\t\tfont-size: 0.7rem;\n\t\t}\n\t\t.preview-size-mobile header .flex.items-center.justify-between {\n\t\t\tflex-direction: column;\n\t\t\talign-items: flex-start;\n\t\t\tgap: 0.5rem;\n\t\t}\n\t/* Ensure page section wrappers fill the full scaler height */\n\t.preview-page-section { height: 100%; }\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -361,12 +414,12 @@ func previewContainerScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\n\t\t(function() {\n\t\t\t// Initialize preview state from DOM\n\t\t\tvar container = document.getElementById('previewContainer');\n\t\t\tvar scaler = document.getElementById('previewScaler');\n\n\t\t\t// Extract initial state from class names\n\t\t\twindow._previewMode = container.classList.contains('preview-dark') ? 'dark' : 'light';\n\t\t\twindow._previewSize = 'desktop';\n\t\t\tif (container.classList.contains('preview-container-tablet')) {\n\t\t\t\twindow._previewSize = 'tablet';\n\t\t\t} else if (container.classList.contains('preview-container-mobile')) {\n\t\t\t\twindow._previewSize = 'mobile';\n\t\t\t}\n\n\t\t\twindow.setPreviewMode = function(mode, skipCallback) {\n\t\t\t\twindow._previewMode = mode;\n\t\t\t\tvar container = document.getElementById('previewContainer');\n\t\t\t\tvar lightBtn = document.getElementById('previewLightModeBtn');\n\t\t\t\tvar darkBtn = document.getElementById('previewDarkModeBtn');\n\n\t\t\t\t// Update container class (preserve size class)\n\t\t\t\tvar sizeClass = 'preview-container-' + window._previewSize;\n\t\t\t\tif (mode === 'light') {\n\t\t\t\t\tcontainer.className = 'preview-light ' + sizeClass;\n\t\t\t\t\tlightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tlightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tdarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tdarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.className = 'preview-dark ' + sizeClass;\n\t\t\t\t\tdarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tdarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tlightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tlightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t}\n\n\t\t\t\t// Call page-specific callback if it exists\n\t\t\t\tif (!skipCallback && typeof window.onPreviewModeChange === 'function') {\n\t\t\t\t\twindow.onPreviewModeChange(mode);\n\t\t\t\t}\n\n\t\t\t\t// Call updatePreview if it exists\n\t\t\t\tif (typeof window.updatePreview === 'function') {\n\t\t\t\t\twindow.updatePreview();\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.setPreviewSize = function(size) {\n\t\t\t\twindow._previewSize = size;\n\t\t\t\tvar scaler = document.getElementById('previewScaler');\n\t\t\t\tvar container = document.getElementById('previewContainer');\n\n\t\t\t\t// Update scaler class based on size\n\t\t\t\tscaler.className = 'origin-top-left preview-size-' + size;\n\n\t\t\t\t// Update container class for correct height (preserve light/dark mode class)\n\t\t\t\tvar modeClass = window._previewMode === 'dark' ? 'preview-dark' : 'preview-light';\n\t\t\t\tcontainer.className = modeClass + ' preview-container-' + size;\n\n\t\t\t\t// Update button active states\n\t\t\t\t['mobile', 'tablet', 'desktop'].forEach(function(s) {\n\t\t\t\t\tvar btn = document.getElementById('preview' + s.charAt(0).toUpperCase() + s.slice(1) + 'Btn');\n\t\t\t\t\tif (s === size) {\n\t\t\t\t\t\tbtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\t\tbtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tbtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\t\tbtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Call page-specific callback if it exists\n\t\t\t\tif (typeof window.onPreviewSizeChange === 'function') {\n\t\t\t\t\twindow.onPreviewSizeChange(size);\n\t\t\t\t}\n\t\t\t};\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<script>\n\t\t(function() {\n\t\t\t// Initialize preview state from DOM\n\t\t\tvar container = document.getElementById('previewContainer');\n\t\t\tvar scaler = document.getElementById('previewScaler');\n\n\t\t\t// Extract initial state from class names\n\t\t\twindow._previewMode = container.classList.contains('preview-dark') ? 'dark' : 'light';\n\t\t\twindow._previewSize = 'desktop';\n\t\t\tif (container.classList.contains('preview-container-tablet')) {\n\t\t\t\twindow._previewSize = 'tablet';\n\t\t\t} else if (container.classList.contains('preview-container-mobile')) {\n\t\t\t\twindow._previewSize = 'mobile';\n\t\t\t}\n\n\t\t\twindow.setPreviewMode = function(mode, skipCallback) {\n\t\t\t\twindow._previewMode = mode;\n\t\t\t\tvar container = document.getElementById('previewContainer');\n\t\t\t\tvar lightBtn = document.getElementById('previewLightModeBtn');\n\t\t\t\tvar darkBtn = document.getElementById('previewDarkModeBtn');\n\n\t\t\t\t// Update container class (preserve size class)\n\t\t\t\tvar sizeClass = 'preview-container-' + window._previewSize;\n\t\t\t\tif (mode === 'light') {\n\t\t\t\t\tcontainer.className = 'preview-light ' + sizeClass;\n\t\t\t\t\tlightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tlightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tdarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tdarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.className = 'preview-dark ' + sizeClass;\n\t\t\t\t\tdarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tdarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tlightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tlightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t}\n\n\t\t\t\t// Call page-specific callback if it exists\n\t\t\t\tif (!skipCallback && typeof window.onPreviewModeChange === 'function') {\n\t\t\t\t\twindow.onPreviewModeChange(mode);\n\t\t\t\t}\n\n\t\t\t\t// Call updatePreview if it exists\n\t\t\t\tif (typeof window.updatePreview === 'function') {\n\t\t\t\t\twindow.updatePreview();\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.setPreviewSize = function(size) {\n\t\t\t\twindow._previewSize = size;\n\t\t\t\tvar scaler = document.getElementById('previewScaler');\n\t\t\t\tvar container = document.getElementById('previewContainer');\n\n\t\t\t\t// Update scaler class based on size\n\t\t\t\tscaler.className = 'origin-top-left preview-size-' + size;\n\n\t\t\t\t// Update container class for correct height (preserve light/dark mode class)\n\t\t\t\tvar modeClass = window._previewMode === 'dark' ? 'preview-dark' : 'preview-light';\n\t\t\t\tcontainer.className = modeClass + ' preview-container-' + size;\n\n\t\t\t\t// Update button active states\n\t\t\t\t['mobile', 'tablet', 'desktop'].forEach(function(s) {\n\t\t\t\t\tvar btn = document.getElementById('preview' + s.charAt(0).toUpperCase() + s.slice(1) + 'Btn');\n\t\t\t\t\tif (s === size) {\n\t\t\t\t\t\tbtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\t\tbtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tbtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\t\tbtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Call page-specific callback if it exists\n\t\t\t\tif (typeof window.onPreviewSizeChange === 'function') {\n\t\t\t\t\twindow.onPreviewSizeChange(size);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.setPreviewPage = function(page) {\n\t\t\t\twindow._previewPage = page;\n\t\t\t\tif (typeof window.onPreviewPageChange === 'function') {\n\t\t\t\t\twindow.onPreviewPageChange(page);\n\t\t\t\t}\n\t\t\t};\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

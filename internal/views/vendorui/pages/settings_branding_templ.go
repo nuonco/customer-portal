@@ -126,7 +126,47 @@ func BrandingSettingsPage(props BrandingSettingsPageProps) templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = brandingPreviewContent(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"preview-page-install-detail\" class=\"preview-page-section\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = brandingPreviewInstallDetail(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><div id=\"preview-page-installs-list\" class=\"preview-page-section hidden\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = brandingPreviewInstallsList(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><div id=\"preview-page-install-creation\" class=\"preview-page-section hidden\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = brandingPreviewInstallCreation(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div><div id=\"preview-page-app-catalog\" class=\"preview-page-section hidden\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = brandingPreviewApps(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><div id=\"preview-page-login\" class=\"preview-page-section hidden\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = brandingPreviewLogin(props.Theme).Render(ctx, templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -139,141 +179,148 @@ func BrandingSettingsPage(props BrandingSettingsPageProps) templ.Component {
 				InitialSize:    "desktop",
 				PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
 				SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+				PageOptions: []components.PreviewPageOption{
+					{Value: "install-detail", Label: "Install Detail"},
+					{Value: "installs-list", Label: "Installs List"},
+					{Value: "install-creation", Label: "Install Creation"},
+					{Value: "app-catalog", Label: "App Catalog"},
+					{Value: "login", Label: "Login Screen"},
+				},
 			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></div><!-- Config data for JavaScript --><div id=\"installer-settings-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div></div></div><!-- Config data for JavaScript --><div id=\"installer-settings-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 77, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 98, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-org-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" data-org-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.CurrentOrg.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 78, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 99, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" data-logo-light-base64=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" data-logo-light-base64=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoLightBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 79, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 100, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" data-logo-dark-base64=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" data-logo-dark-base64=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoDarkBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 80, Col: 55}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 101, Col: 55}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" data-heading-font=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" data-heading-font=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.HeadingFont)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 81, Col: 48}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 102, Col: 48}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" data-body-font=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" data-body-font=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.BodyFont)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 82, Col: 42}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 103, Col: 42}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" data-primary-color=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" data-primary-color=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.PrimaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 83, Col: 50}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 104, Col: 50}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" data-secondary-color=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" data-secondary-color=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.SecondaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 84, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 105, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" data-primary-color-dark=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" data-primary-color-dark=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.PrimaryColorDark)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 85, Col: 59}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 106, Col: 59}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" data-secondary-color-dark=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" data-secondary-color-dark=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.SecondaryColorDark)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 86, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 107, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -281,7 +328,7 @@ func BrandingSettingsPage(props BrandingSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -295,7 +342,7 @@ func BrandingSettingsPage(props BrandingSettingsPageProps) templ.Component {
 	})
 }
 
-func brandingPreviewContent(theme *models.AppTheme) templ.Component {
+func brandingPreviewInstallDetail(theme *models.AppTheme) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -316,263 +363,81 @@ func brandingPreviewContent(theme *models.AppTheme) templ.Component {
 			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"preview-page-bg h-full pb-6\"><!-- Header --><header class=\"w-full max-w-4xl mx-auto px-6 pb-4 pt-6\"><div class=\"flex items-center justify-between\"><div class=\"flex items-center gap-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"preview-page-bg h-full flex flex-col overflow-hidden\"><!-- Page Header --><header class=\"px-6 py-3 flex items-center justify-between flex-shrink-0 preview-card\" style=\"border-left: none; border-right: none; border-top: none; border-radius: 0;\"><div class=\"flex items-center gap-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if theme.LogoLightBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<img id=\"installerPreviewLogoLight\" src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<img src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoLightBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 101, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 121, Col: 37}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain preview-logo-light\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain preview-logo-light\"> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<img id=\"installerPreviewLogoLight\" src=\"\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-light\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<img src=\"\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-light\"> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if theme.LogoDarkBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<img id=\"installerPreviewLogoDark\" src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<img src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoDarkBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 106, Col: 67}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 126, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<img id=\"installerPreviewLogoDark\" src=\"\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\"> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<img src=\"\" alt=\"Logo\" class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<span id=\"installerPreviewEmail\" class=\"text-sm preview-text-muted\" style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</div><span class=\"text-sm preview-text-muted preview-body-font\">user@example.com</span></header><!-- Main: Table + Sliding Panel --><div class=\"relative flex-1 overflow-hidden\"><!-- Left: Installs List (matches Installs List preview layout) --><div class=\"absolute inset-0 overflow-hidden\"><main class=\"mx-auto px-6 pt-4 w-full max-w-4xl\"><h1 class=\"text-xl font-semibold preview-text-heading preview-heading-font mb-4\">My Installs</h1><!-- Tabs --><div class=\"flex border-b border-current mb-4 text-sm\"><button class=\"px-4 py-2 font-medium preview-body-font\" style=\"color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary);\">Needs Attention</button> <button class=\"px-4 py-2 preview-text-muted preview-body-font\">Updating</button> <button class=\"px-4 py-2 preview-text-muted preview-body-font\">Healthy</button></div><!-- Table --><div class=\"preview-card rounded-lg overflow-hidden\"><table class=\"w-full text-sm\"><thead><tr class=\"preview-status-bg\"><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Name</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">App</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Status</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Region</th></tr></thead> <tbody><tr class=\"border-t preview-status-border\" style=\"background-color: color-mix(in srgb, var(--preview-primary) 8%, transparent);\"><td class=\"px-4 py-3 preview-text-body preview-body-font font-medium\" style=\"color: var(--preview-primary);\">my-production</td><td class=\"px-4 py-3 preview-text-body preview-body-font\">Acme App</td><td class=\"px-4 py-3\"><span class=\"px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800\">Needs Attention</span></td><td class=\"px-4 py-3 preview-text-muted preview-body-font\">us-east-1</td></tr><tr class=\"border-t preview-status-border\"><td class=\"px-4 py-3 preview-text-body preview-body-font font-medium\" style=\"color: var(--preview-primary);\">my-staging</td><td class=\"px-4 py-3 preview-text-body preview-body-font\">Acme App</td><td class=\"px-4 py-3\"><span class=\"px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800\">Healthy</span></td><td class=\"px-4 py-3 preview-text-muted preview-body-font\">eu-west-1</td></tr></tbody></table></div></main></div><!-- Overlay --><div class=\"absolute inset-0\" style=\"background-color: rgba(0,0,0,0.3);\"></div><!-- Right: Detail Panel (overlays table content) --><div class=\"absolute top-0 right-0 bottom-0 flex flex-col overflow-hidden preview-card\" style=\"width: 64%; border-radius: 0; border-top: none; border-right: none; border-bottom: none;\"><!-- Panel Header --><div class=\"px-4 py-3 flex items-center justify-between flex-shrink-0\" style=\"border-bottom: 1px solid #e5e7eb;\"><div class=\"min-w-0 flex-1\"><h2 class=\"text-sm font-semibold preview-text-heading preview-heading-font truncate\">my-production</h2><span class=\"text-xs font-mono preview-text-muted\">a1b2c3d4-e5f6-7890</span></div><div class=\"flex items-center gap-2 ml-3 flex-shrink-0\"><button class=\"flex items-center gap-1 text-xs px-2.5 py-1 preview-text-body preview-body-font preview-card\" style=\"border-radius: 4px;\">Actions <svg class=\"h-3 w-3\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M19 9l-7 7-7-7\"></path></svg></button> <button class=\"p-1 preview-text-muted\"><svg class=\"w-4 h-4\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z\"></path></svg></button> <button class=\"text-lg leading-none preview-text-muted px-1\">&times;</button></div></div><!-- Tab Headers --><div class=\"flex text-sm flex-shrink-0\" style=\"border-bottom: 1px solid #e5e7eb;\"><button class=\"px-4 py-2.5 preview-body-font font-medium\" style=\"color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary); margin-bottom: -1px;\">Overview</button> <button class=\"px-4 py-2.5 preview-text-muted preview-body-font\">History</button> <button class=\"px-4 py-2.5 preview-text-muted preview-body-font\">Audit Log</button></div><!-- Panel Body --><div class=\"p-4 space-y-3 overflow-hidden flex-1\"><!-- Workflow Card --><div class=\"preview-card p-4 rounded shadow-sm\"><div class=\"flex items-center gap-2 mb-1\"><h4 class=\"text-sm font-medium preview-text-heading preview-heading-font\">Deploy</h4><span class=\"text-xs px-2 py-0.5 rounded bg-blue-100 text-blue-800\">in-progress</span></div><div class=\"flex items-center gap-2 text-xs preview-text-muted preview-body-font mb-1.5\"><svg class=\"animate-spin h-3 w-3 flex-shrink-0\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg> <span><span class=\"font-medium\">Step 2 of 5:</span> Installing dependencies</span></div><!-- Progress bar --><div class=\"w-full h-1 rounded-sm overflow-hidden preview-status-bg mb-2\"><div class=\"h-full bg-blue-500 rounded-sm\" style=\"width: 40%;\"></div></div><p class=\"text-xs preview-text-muted preview-body-font mb-2\">Jan 15, 2025 2:30 PM</p><button class=\"text-xs text-white px-3 py-1.5 rounded\" style=\"background-color: var(--preview-primary);\">Approve Installation</button></div><!-- App Config + Platform Grid --><div class=\"grid grid-cols-2 gap-3\"><!-- App Config Card --><div class=\"preview-card p-4 rounded shadow-sm\"><div class=\"flex items-center gap-2 mb-2\"><h3 class=\"text-sm font-medium preview-text-heading preview-heading-font\">Acme App</h3><span class=\"text-xs px-1.5 py-0.5 rounded-full bg-amber-100 text-amber-800\">update available</span></div><div class=\"grid grid-cols-2 gap-x-3 gap-y-2 text-xs\"><div><p class=\"preview-text-muted preview-body-font\">Installed Version</p><p class=\"font-medium text-amber-600 preview-body-font\">v3</p></div><div><p class=\"preview-text-muted preview-body-font\">Latest Version</p><p class=\"font-medium preview-text-body preview-body-font\">v4</p></div><div><p class=\"preview-text-muted preview-body-font\">Last Updated</p><p class=\"font-medium preview-text-body preview-body-font\">Jan 10, 2025</p></div><div><p class=\"preview-text-muted preview-body-font\">Published</p><p class=\"font-medium preview-text-body preview-body-font\">Jan 15, 2025</p></div></div></div><!-- Platform Card --><div class=\"preview-card p-4 rounded shadow-sm\"><h3 class=\"text-sm font-medium preview-text-heading preview-heading-font mb-3\">Platform</h3><div class=\"space-y-2 text-xs\"><div><p class=\"preview-text-muted preview-body-font\">Name</p><p class=\"font-medium preview-text-body preview-body-font\">AWS</p></div><div><p class=\"preview-text-muted preview-body-font\">Region</p><p class=\"font-medium preview-text-body preview-body-font\">us-east-1</p></div></div></div></div></div></div></div><!-- Support Footer -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 110, Col: 117}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		var templ_7745c5c3_Var17 = []any{"text-center text-xs py-3 preview-text-muted preview-body-font preview-card", templ.KV("hidden", theme.SupportContact == "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\">user@example.com</span></div><span class=\"text-sm preview-text-muted\" style=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<div id=\"installerPreviewFooter\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 112, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\">Logout</span></div></header><!-- Main Content --><main class=\"mx-auto px-6 pt-4 w-full max-w-4xl\"><!-- Back Link --><div class=\"mb-4\"><a id=\"installerPreviewBackLink\" href=\"#\" class=\"text-sm hover:underline\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var19 string
-		templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("color: var(--preview-secondary); " + getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 119, Col: 160}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\">← Back to My Installs</a></div><!-- Main Card --><div class=\"preview-card p-5 shadow-md rounded-lg\"><div class=\"flex gap-6\"><!-- Left: Install Details --><div class=\"flex-1\"><h3 id=\"installerPreviewDetailsTitle\" class=\"text-base font-medium preview-text-heading mb-2\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var20 string
-		templ_7745c5c3_Var20, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.HeadingFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 128, Col: 147}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\">Install Details</h3><div class=\"space-y-1.5 text-sm\"><div><span class=\"font-medium preview-text-muted\">App:</span> <span id=\"installerPreviewAppName\" class=\"ml-1 preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var21 string
-		templ_7745c5c3_Var21, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 132, Col: 118}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\">Acme App</span></div><div><span class=\"font-medium preview-text-muted\">Region:</span> <span class=\"ml-1 preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var22 string
-		templ_7745c5c3_Var22, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 136, Col: 89}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\">us-west-2</span></div><div><span class=\"font-medium preview-text-muted\">Created:</span> <span class=\"ml-1 preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var23 string
-		templ_7745c5c3_Var23, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 140, Col: 89}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\">Jan 15, 2025</span></div></div></div><!-- Right: Health Status --><div class=\"flex-1\"><h3 class=\"text-base font-medium preview-text-heading mb-2\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var24 string
-		templ_7745c5c3_Var24, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.HeadingFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 146, Col: 113}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\">Health Status</h3><div class=\"flex items-center gap-2\"><div class=\"w-2.5 h-2.5 rounded-full bg-green-500\"></div><span class=\"text-sm preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var25 string
-		templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 149, Col: 91}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\">1 check passing</span></div></div></div></div><!-- Latest Update Section --><div class=\"mt-5\"><h3 id=\"installerPreviewUpdateTitle\" class=\"text-base preview-text-heading mb-3\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.HeadingFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 156, Col: 132}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\">Latest Update</h3><!-- Workflow Card --><div class=\"preview-card p-5 shadow-md rounded-lg\"><div class=\"flex justify-between items-start\"><div class=\"flex-grow\"><div class=\"flex items-center space-x-2 mb-1\"><h4 id=\"installerPreviewWorkflowName\" class=\"text-lg preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.HeadingFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 162, Col: 127}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\">Deploy</h4><span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-800\">In Progress</span></div><p class=\"text-xs preview-text-muted\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 165, Col: 89}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\">Started: 2:30 PM</p></div><div class=\"flex space-x-2\"><button id=\"installerPreviewApproveBtn\" class=\"text-white px-3 py-1.5 text-xs rounded-lg\" style=\"background-color: var(--preview-primary);\">Approve</button> <button class=\"text-white px-3 py-1.5 text-xs rounded-lg\" style=\"background-color: var(--preview-secondary);\">Cancel</button></div></div><!-- Status message --><div class=\"mt-3 p-3 preview-status-bg preview-status-border rounded-lg\"><div class=\"flex items-center space-x-2\"><div class=\"animate-spin rounded-full h-3 w-3 border-b-2 border-primary-600\"></div><p class=\"text-xs preview-text-body\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var29 string
-		templ_7745c5c3_Var29, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 187, Col: 88}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\"><strong>In Progress:</strong> This update is currently running.</p></div></div></div><!-- View History Button --><div class=\"mt-3 text-center\"><button id=\"installerPreviewHistoryBtn\" class=\"text-white px-4 py-2 text-sm rounded-lg\" style=\"background-color: var(--preview-primary);\">View Update History</button></div></div></main><!-- Footer --><footer class=\"w-full max-w-4xl mx-auto px-6 pt-8 pb-4 mt-auto\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var30 = []any{"text-center text-sm preview-text-muted", templ.KV("hidden", theme.SupportContact == "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var30...)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<div id=\"installerPreviewFooter\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var31 string
-		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var30).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" style=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var32 string
-		templ_7745c5c3_Var32, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(getBrandingFontStyle(theme.BodyFont))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 210, Col: 48}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\">Need help? Contact <a id=\"installerPreviewSupportLink\" href=\"#\" class=\"hover:underline\" style=\"color: var(--preview-secondary);\">support</a></div></footer></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" style=\"border-left: none; border-right: none; border-bottom: none; border-radius: 0;\">Need help? Contact <a id=\"installerPreviewSupportLink\" href=\"#\" class=\"hover:underline\" style=\"color: var(--preview-secondary);\">support</a></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -596,12 +461,12 @@ func installerSettingsModeToggle() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var33 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var33 == nil {
-			templ_7745c5c3_Var33 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\"><button type=\"button\" id=\"settingsLightModeBtn\" onclick=\"setSettingsMode('light')\" class=\"flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm\">Light Mode</button> <button type=\"button\" id=\"settingsDarkModeBtn\" onclick=\"setSettingsMode('dark')\" class=\"flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600\">Dark Mode</button></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1\"><button type=\"button\" id=\"settingsLightModeBtn\" onclick=\"setSettingsMode('light')\" class=\"flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm\">Light Mode</button> <button type=\"button\" id=\"settingsDarkModeBtn\" onclick=\"setSettingsMode('dark')\" class=\"flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600\">Dark Mode</button></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -625,80 +490,80 @@ func installerPageBrandingSectionLight(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var34 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var34 == nil {
-			templ_7745c5c3_Var34 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Logo</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">This logo will be displayed when the customer portal is in light mode.</p><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0 w-32 h-32 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Logo</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">This logo will be displayed when the customer portal is in light mode.</p><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0 w-32 h-32 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if theme.LogoLightBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<img id=\"installerLogoLightPreview\" src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<img id=\"installerLogoLightPreview\" src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var35 string
-			templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoLightBase64)
+			var templ_7745c5c3_Var21 string
+			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoLightBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 248, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 309, Col: 68}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" alt=\"Light logo preview\" class=\"max-w-full max-h-full object-contain\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" alt=\"Light logo preview\" class=\"max-w-full max-h-full object-contain\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<img id=\"installerLogoLightPreview\" src=\"\" alt=\"Light logo preview\" class=\"max-w-full max-h-full object-contain hidden\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<img id=\"installerLogoLightPreview\" src=\"\" alt=\"Light logo preview\" class=\"max-w-full max-h-full object-contain hidden\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var36 = []any{"text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.LogoLightBase64 != "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var36...)
+		var templ_7745c5c3_Var22 = []any{"text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.LogoLightBase64 != "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var22...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<div id=\"installerLogoLightPlaceholder\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<div id=\"installerLogoLightPlaceholder\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var37 string
-		templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var36).String())
+		var templ_7745c5c3_Var23 string
+		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var22).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"><span>No logo</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"installerLogoLightUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\"><span>No logo</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"installerLogoLightUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var38 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var38...)
+		var templ_7745c5c3_Var24 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var24...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<button type=\"button\" id=\"installerRemoveLogoLight\" onclick=\"installerRemoveLogoLight()\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<button type=\"button\" id=\"installerRemoveLogoLight\" onclick=\"installerRemoveLogoLight()\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var39 string
-		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var38).String())
+		var templ_7745c5c3_Var25 string
+		templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var24).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\">Remove logo</button></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\">Remove logo</button></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -722,80 +587,80 @@ func installerPageBrandingSectionDark(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var40 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var40 == nil {
-			templ_7745c5c3_Var40 = templ.NopComponent
+		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var26 == nil {
+			templ_7745c5c3_Var26 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Dark Mode Logo</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">This logo will be displayed when the customer portal is in dark mode. If not provided, the light mode logo will be used.</p><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0 w-32 h-32 bg-dark-grey-900 border-2 border-dark-grey-700 rounded flex items-center justify-center p-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Dark Mode Logo</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">This logo will be displayed when the customer portal is in dark mode. If not provided, the light mode logo will be used.</p><div class=\"flex items-center space-x-4\"><div class=\"flex-shrink-0 w-32 h-32 bg-dark-grey-900 border-2 border-dark-grey-700 rounded flex items-center justify-center p-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if theme.LogoDarkBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<img id=\"installerLogoDarkPreview\" src=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<img id=\"installerLogoDarkPreview\" src=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var41 string
-			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoDarkBase64)
+			var templ_7745c5c3_Var27 string
+			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(theme.LogoDarkBase64)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 281, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 342, Col: 66}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "\" alt=\"Dark logo preview\" class=\"max-w-full max-h-full object-contain\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" alt=\"Dark logo preview\" class=\"max-w-full max-h-full object-contain\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<img id=\"installerLogoDarkPreview\" src=\"\" alt=\"Dark logo preview\" class=\"max-w-full max-h-full object-contain hidden\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<img id=\"installerLogoDarkPreview\" src=\"\" alt=\"Dark logo preview\" class=\"max-w-full max-h-full object-contain hidden\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var42 = []any{"text-cool-grey-500 text-xs text-center", templ.KV("hidden", theme.LogoDarkBase64 != "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var42...)
+		var templ_7745c5c3_Var28 = []any{"text-cool-grey-500 text-xs text-center", templ.KV("hidden", theme.LogoDarkBase64 != "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<div id=\"installerLogoDarkPlaceholder\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<div id=\"installerLogoDarkPlaceholder\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var43 string
-		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var42).String())
+		var templ_7745c5c3_Var29 string
+		templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var28).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "\"><span>No logo</span><br><span class=\"text-[10px]\">(will use light logo)</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"installerLogoDarkUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "\"><span>No logo</span><br><span class=\"text-[10px]\">(will use light logo)</span></div></div><div class=\"flex-1\"><input type=\"file\" id=\"installerLogoDarkUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var44 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "")}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var44...)
+		var templ_7745c5c3_Var30 = []any{"mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "")}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var30...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<button type=\"button\" id=\"installerRemoveLogoDark\" onclick=\"installerRemoveLogoDark()\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<button type=\"button\" id=\"installerRemoveLogoDark\" onclick=\"installerRemoveLogoDark()\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var45 string
-		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var44).String())
+		var templ_7745c5c3_Var31 string
+		templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var30).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\">Remove logo</button></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "\">Remove logo</button></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -819,64 +684,64 @@ func installerPageColorsSectionLight(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var46 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var46 == nil {
-			templ_7745c5c3_Var46 = templ.NopComponent
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Colors</h3><!-- Primary Color --><div class=\"mb-5\"><label for=\"installerPrimaryColorLight\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Primary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerPrimaryColorLight\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Colors</h3><!-- Primary Color --><div class=\"mb-5\"><label for=\"installerPrimaryColorLight\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Primary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerPrimaryColorLight\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var47 string
-		templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingPrimaryColor(theme.PrimaryColor))
+		var templ_7745c5c3_Var33 string
+		templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingPrimaryColor(theme.PrimaryColor))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 316, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 377, Col: 56}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerPrimaryColorLightText\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var48 string
-		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingPrimaryColor(theme.PrimaryColor))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 322, Col: 56}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerPrimaryColorLightText\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"#8040BF\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for navigation bar and primary buttons.</p></div><!-- Secondary Color --><div><label for=\"installerSecondaryColorLight\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Secondary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerSecondaryColorLight\" value=\"")
+		var templ_7745c5c3_Var34 string
+		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingPrimaryColor(theme.PrimaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 383, Col: 56}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var49 string
-		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingSecondaryColor(theme.SecondaryColor))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 337, Col: 60}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"#8040BF\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for navigation bar and primary buttons.</p></div><!-- Secondary Color --><div><label for=\"installerSecondaryColorLight\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Secondary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerSecondaryColorLight\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerSecondaryColorLightText\" value=\"")
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingSecondaryColor(theme.SecondaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 398, Col: 60}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var50 string
-		templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingSecondaryColor(theme.SecondaryColor))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 343, Col: 60}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerSecondaryColorLightText\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"#8040BF\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for links, accents, and secondary elements.</p></div></div>")
+		var templ_7745c5c3_Var36 string
+		templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingSecondaryColor(theme.SecondaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 404, Col: 60}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"#8040BF\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for links, accents, and secondary elements.</p></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -900,64 +765,64 @@ func installerPageColorsSectionDark(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var51 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var51 == nil {
-			templ_7745c5c3_Var51 = templ.NopComponent
+		templ_7745c5c3_Var37 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var37 == nil {
+			templ_7745c5c3_Var37 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Dark Mode Colors</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">If not set, colors will fall back to the light mode colors.</p><!-- Primary Color Dark --><div class=\"mb-5\"><label for=\"installerPrimaryColorDark\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Primary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerPrimaryColorDark\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Dark Mode Colors</h3><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">If not set, colors will fall back to the light mode colors.</p><!-- Primary Color Dark --><div class=\"mb-5\"><label for=\"installerPrimaryColorDark\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Primary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerPrimaryColorDark\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var52 string
-		templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColor(theme.PrimaryColorDark, theme.PrimaryColor))
+		var templ_7745c5c3_Var38 string
+		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColor(theme.PrimaryColorDark, theme.PrimaryColor))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 367, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 428, Col: 77}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerPrimaryColorDarkText\" value=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var53 string
-		templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColorText(theme.PrimaryColorDark))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 373, Col: 61}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerPrimaryColorDarkText\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"(uses light mode)\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for navigation bar and primary buttons in dark mode.</p></div><!-- Secondary Color Dark --><div><label for=\"installerSecondaryColorDark\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Secondary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerSecondaryColorDark\" value=\"")
+		var templ_7745c5c3_Var39 string
+		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColorText(theme.PrimaryColorDark))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 434, Col: 61}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var54 string
-		templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColor(theme.SecondaryColorDark, theme.SecondaryColor))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 388, Col: 81}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"(uses light mode)\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for navigation bar and primary buttons in dark mode.</p></div><!-- Secondary Color Dark --><div><label for=\"installerSecondaryColorDark\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Secondary Color</label><div class=\"flex items-center space-x-3\"><input type=\"color\" id=\"installerSecondaryColorDark\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerSecondaryColorDarkText\" value=\"")
+		var templ_7745c5c3_Var40 string
+		templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColor(theme.SecondaryColorDark, theme.SecondaryColor))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 449, Col: 81}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var55 string
-		templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColorText(theme.SecondaryColorDark))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 394, Col: 63}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "\" class=\"h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer\"> <input type=\"text\" id=\"installerSecondaryColorDarkText\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"(uses light mode)\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for links, accents, and secondary elements in dark mode.</p></div></div>")
+		var templ_7745c5c3_Var41 string
+		templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(getBrandingDarkColorText(theme.SecondaryColorDark))
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 455, Col: 63}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\" placeholder=\"(uses light mode)\" pattern=\"^#[0-9A-Fa-f]{6}$\"></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for links, accents, and secondary elements in dark mode.</p></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -981,272 +846,272 @@ func installerPageTypographySection(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var56 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var56 == nil {
-			templ_7745c5c3_Var56 = templ.NopComponent
+		templ_7745c5c3_Var42 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var42 == nil {
+			templ_7745c5c3_Var42 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Typography</h3><div class=\"space-y-4\"><!-- Heading Font --><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Heading Font</label> <select id=\"installerHeadingFont\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"\">System Default</option> <optgroup label=\"Modern Sans-Serif\"><option value=\"Inter\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Typography</h3><div class=\"space-y-4\"><!-- Heading Font --><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Heading Font</label> <select id=\"installerHeadingFont\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"\">System Default</option> <optgroup label=\"Modern Sans-Serif\"><option value=\"Inter\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if theme.HeadingFont == "Inter" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 64, ">Inter</option> <option value=\"DM Sans\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if theme.HeadingFont == "DM Sans" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 65, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 66, ">DM Sans</option> <option value=\"Plus Jakarta Sans\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if theme.HeadingFont == "Plus Jakarta Sans" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 67, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 68, ">Plus Jakarta Sans</option> <option value=\"Outfit\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if theme.HeadingFont == "Outfit" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 69, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 70, ">Outfit</option> <option value=\"Figtree\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if theme.HeadingFont == "Figtree" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 71, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, ">Inter</option> <option value=\"DM Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 72, ">Figtree</option> <option value=\"Manrope\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "DM Sans" {
+		if theme.HeadingFont == "Manrope" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 73, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, ">DM Sans</option> <option value=\"Plus Jakarta Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 74, ">Manrope</option></optgroup> <optgroup label=\"Classic Sans-Serif\"><option value=\"Roboto\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Plus Jakarta Sans" {
+		if theme.HeadingFont == "Roboto" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 75, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, ">Plus Jakarta Sans</option> <option value=\"Outfit\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 76, ">Roboto</option> <option value=\"Open Sans\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Outfit" {
+		if theme.HeadingFont == "Open Sans" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 77, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, ">Outfit</option> <option value=\"Figtree\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 78, ">Open Sans</option> <option value=\"Lato\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Figtree" {
+		if theme.HeadingFont == "Lato" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, ">Figtree</option> <option value=\"Manrope\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, ">Lato</option> <option value=\"Montserrat\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Manrope" {
+		if theme.HeadingFont == "Montserrat" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 81, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, ">Manrope</option></optgroup> <optgroup label=\"Classic Sans-Serif\"><option value=\"Roboto\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 82, ">Montserrat</option></optgroup> <optgroup label=\"Friendly & Rounded\"><option value=\"Poppins\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Roboto" {
+		if theme.HeadingFont == "Poppins" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 83, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, ">Roboto</option> <option value=\"Open Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 84, ">Poppins</option> <option value=\"Nunito\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Open Sans" {
+		if theme.HeadingFont == "Nunito" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 85, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, ">Open Sans</option> <option value=\"Lato\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 86, ">Nunito</option> <option value=\"Quicksand\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Lato" {
+		if theme.HeadingFont == "Quicksand" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 87, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, ">Lato</option> <option value=\"Montserrat\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 88, ">Quicksand</option></optgroup></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for titles and headings.</p></div><!-- Body Font --><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Body Font</label> <select id=\"installerBodyFont\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"\">System Default</option> <optgroup label=\"Modern Sans-Serif\"><option value=\"Inter\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Montserrat" {
+		if theme.BodyFont == "Inter" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 89, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, ">Montserrat</option></optgroup> <optgroup label=\"Friendly & Rounded\"><option value=\"Poppins\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 90, ">Inter</option> <option value=\"DM Sans\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Poppins" {
+		if theme.BodyFont == "DM Sans" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 91, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, ">Poppins</option> <option value=\"Nunito\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 92, ">DM Sans</option> <option value=\"Plus Jakarta Sans\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Nunito" {
+		if theme.BodyFont == "Plus Jakarta Sans" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 93, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, ">Nunito</option> <option value=\"Quicksand\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 94, ">Plus Jakarta Sans</option> <option value=\"Outfit\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.HeadingFont == "Quicksand" {
+		if theme.BodyFont == "Outfit" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 95, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, ">Quicksand</option></optgroup></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for titles and headings.</p></div><!-- Body Font --><div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Body Font</label> <select id=\"installerBodyFont\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white\"><option value=\"\">System Default</option> <optgroup label=\"Modern Sans-Serif\"><option value=\"Inter\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 96, ">Outfit</option> <option value=\"Figtree\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Inter" {
+		if theme.BodyFont == "Figtree" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 97, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, ">Inter</option> <option value=\"DM Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, ">Figtree</option> <option value=\"Manrope\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "DM Sans" {
+		if theme.BodyFont == "Manrope" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, ">DM Sans</option> <option value=\"Plus Jakarta Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, ">Manrope</option></optgroup> <optgroup label=\"Classic Sans-Serif\"><option value=\"Roboto\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Plus Jakarta Sans" {
+		if theme.BodyFont == "Roboto" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, ">Plus Jakarta Sans</option> <option value=\"Outfit\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, ">Roboto</option> <option value=\"Open Sans\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Outfit" {
+		if theme.BodyFont == "Open Sans" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, ">Outfit</option> <option value=\"Figtree\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, ">Open Sans</option> <option value=\"Lato\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Figtree" {
+		if theme.BodyFont == "Lato" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, ">Figtree</option> <option value=\"Manrope\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, ">Lato</option> <option value=\"Montserrat\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Manrope" {
+		if theme.BodyFont == "Montserrat" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, ">Manrope</option></optgroup> <optgroup label=\"Classic Sans-Serif\"><option value=\"Roboto\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, ">Montserrat</option></optgroup> <optgroup label=\"Friendly & Rounded\"><option value=\"Poppins\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Roboto" {
+		if theme.BodyFont == "Poppins" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, ">Roboto</option> <option value=\"Open Sans\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, ">Poppins</option> <option value=\"Nunito\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Open Sans" {
+		if theme.BodyFont == "Nunito" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, ">Open Sans</option> <option value=\"Lato\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, ">Nunito</option> <option value=\"Quicksand\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if theme.BodyFont == "Lato" {
+		if theme.BodyFont == "Quicksand" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, ">Lato</option> <option value=\"Montserrat\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if theme.BodyFont == "Montserrat" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, ">Montserrat</option></optgroup> <optgroup label=\"Friendly & Rounded\"><option value=\"Poppins\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if theme.BodyFont == "Poppins" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, ">Poppins</option> <option value=\"Nunito\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if theme.BodyFont == "Nunito" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, ">Nunito</option> <option value=\"Quicksand\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if theme.BodyFont == "Quicksand" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, ">Quicksand</option></optgroup></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for paragraphs and body text.</p></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, ">Quicksand</option></optgroup></select><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Used for paragraphs and body text.</p></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1270,25 +1135,141 @@ func installerPageSupportSection(theme *models.AppTheme) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var57 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var57 == nil {
-			templ_7745c5c3_Var57 = templ.NopComponent
+		templ_7745c5c3_Var43 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var43 == nil {
+			templ_7745c5c3_Var43 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Support</h3><div><label for=\"installerSupportContact\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Support Contact</label> <input type=\"text\" id=\"installerSupportContact\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Support</h3><div><label for=\"installerSupportContact\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Support Contact</label> <input type=\"text\" id=\"installerSupportContact\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var58 string
-		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(theme.SupportContact)
+		var templ_7745c5c3_Var44 string
+		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(theme.SupportContact)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 475, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/settings_branding.templ`, Line: 536, Col: 32}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "\" placeholder=\"support@yourcompany.com or https://support.yourcompany.com\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Email address or URL shown to customers for help.</p></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "\" placeholder=\"support@yourcompany.com or https://support.yourcompany.com\" class=\"block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Email address or URL shown to customers for help.</p></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func brandingPreviewInstallsList(theme *models.AppTheme) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var45 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var45 == nil {
+			templ_7745c5c3_Var45 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "<div class=\"preview-page-bg h-full\"><!-- Header --><header class=\"w-full max-w-4xl mx-auto px-6 pb-4 pt-6\"><div class=\"flex items-center justify-between\"><div class=\"flex items-center gap-3\"><img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-light\" src=\"\" alt=\"Logo\"> <img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\" src=\"\" alt=\"Logo\"></div><span class=\"text-sm preview-text-muted preview-body-font\">Logout</span></div></header><!-- Main Content --><main class=\"mx-auto px-6 pt-2 w-full max-w-4xl\"><h1 class=\"text-xl font-semibold preview-text-heading preview-heading-font mb-4\">My Installs</h1><!-- Tabs --><div class=\"flex border-b border-current mb-4 text-sm\"><button class=\"px-4 py-2 font-medium preview-body-font\" style=\"color: var(--preview-primary); border-bottom: 2px solid var(--preview-primary);\">Needs Attention</button> <button class=\"px-4 py-2 preview-text-muted preview-body-font\">Updating</button> <button class=\"px-4 py-2 preview-text-muted preview-body-font\">Healthy</button></div><!-- Table --><div class=\"preview-card rounded-lg overflow-hidden\"><table class=\"w-full text-sm\"><thead><tr class=\"preview-status-bg\"><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Name</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">App</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Status</th><th class=\"px-4 py-3 text-left preview-text-muted preview-body-font font-medium\">Region</th></tr></thead> <tbody><tr class=\"border-t preview-status-border\"><td class=\"px-4 py-3 preview-text-body preview-body-font font-medium\" style=\"color: var(--preview-primary);\">my-production</td><td class=\"px-4 py-3 preview-text-body preview-body-font\">Acme App</td><td class=\"px-4 py-3\"><span class=\"px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-800\">Needs Attention</span></td><td class=\"px-4 py-3 preview-text-muted preview-body-font\">us-east-1</td></tr><tr class=\"border-t preview-status-border\"><td class=\"px-4 py-3 preview-text-body preview-body-font font-medium\" style=\"color: var(--preview-primary);\">my-staging</td><td class=\"px-4 py-3 preview-text-body preview-body-font\">Acme App</td><td class=\"px-4 py-3\"><span class=\"px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-800\">Healthy</span></td><td class=\"px-4 py-3 preview-text-muted preview-body-font\">eu-west-1</td></tr></tbody></table></div></main></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func brandingPreviewInstallCreation(theme *models.AppTheme) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var46 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var46 == nil {
+			templ_7745c5c3_Var46 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "<div class=\"preview-page-bg h-full\"><!-- Header --><header class=\"w-full max-w-4xl mx-auto px-6 pb-4 pt-6\"><div class=\"flex items-center justify-between\"><div class=\"flex items-center gap-3\"><img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-light\" src=\"\" alt=\"Logo\"> <img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\" src=\"\" alt=\"Logo\"></div><span class=\"text-sm preview-text-muted preview-body-font\">Logout</span></div></header><!-- Centered form --><main class=\"mx-auto px-6 pt-4 w-full max-w-lg\"><div class=\"preview-card p-6 rounded-lg shadow-md\"><h2 class=\"text-lg font-semibold preview-text-heading preview-heading-font mb-1\">Create New Install</h2><p class=\"text-sm preview-text-muted preview-body-font mb-5\">Set up a new instance of this app in your cloud account.</p><!-- App info --><div class=\"mb-4 p-3 preview-status-bg preview-status-border rounded-lg\"><span class=\"text-xs preview-text-muted preview-body-font\">App</span><p class=\"text-sm font-medium preview-text-body preview-body-font\">Acme App</p></div><!-- Install name --><div class=\"mb-4\"><label class=\"block text-sm font-medium preview-text-heading preview-body-font mb-1\">Install Name</label> <input type=\"text\" placeholder=\"my-production\" class=\"w-full px-3 py-2 text-sm preview-card preview-text-body preview-body-font rounded-md border\" style=\"border-color: var(--preview-primary); outline: none;\" disabled></div><!-- Region --><div class=\"mb-6\"><label class=\"block text-sm font-medium preview-text-heading preview-body-font mb-1\">Region</label> <select class=\"w-full px-3 py-2 text-sm preview-card preview-text-body preview-body-font rounded-md border\" style=\"border-color: var(--preview-primary);\" disabled><option>us-east-1 (N. Virginia)</option></select></div><!-- Submit --><button class=\"w-full text-white py-2.5 text-sm font-medium rounded-lg\" style=\"background-color: var(--preview-primary);\">Create Install</button></div></main></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func brandingPreviewApps(theme *models.AppTheme) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var47 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var47 == nil {
+			templ_7745c5c3_Var47 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "<div class=\"preview-page-bg h-full\"><!-- Header --><header class=\"w-full max-w-4xl mx-auto px-6 pb-4 pt-6\"><div class=\"flex items-center justify-between\"><div class=\"flex items-center gap-3\"><img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-light\" src=\"\" alt=\"Logo\"> <img class=\"h-6 w-auto max-w-24 object-contain hidden preview-logo-dark\" src=\"\" alt=\"Logo\"></div><span class=\"text-sm preview-text-muted preview-body-font\">Logout</span></div></header><!-- Main --><main class=\"mx-auto px-6 pt-2 w-full max-w-4xl\"><h1 class=\"text-xl font-semibold preview-text-heading preview-heading-font mb-6\">App Catalog</h1><div class=\"grid grid-cols-2 gap-4\"><!-- App Card 1 --><div class=\"preview-card p-5 rounded-lg shadow-sm\"><h3 class=\"text-base font-semibold preview-text-heading preview-heading-font mb-1\">Acme App</h3><p class=\"text-xs preview-text-muted preview-body-font mb-4\">Deploy Acme App to your own cloud account in minutes.</p><button class=\"text-white px-4 py-1.5 text-xs rounded-lg\" style=\"background-color: var(--preview-primary);\">More Info</button></div><!-- App Card 2 --><div class=\"preview-card p-5 rounded-lg shadow-sm\"><h3 class=\"text-base font-semibold preview-text-heading preview-heading-font mb-1\">Acme Analytics</h3><p class=\"text-xs preview-text-muted preview-body-font mb-4\">Self-hosted analytics for your organization's data.</p><button class=\"text-white px-4 py-1.5 text-xs rounded-lg\" style=\"background-color: var(--preview-primary);\">More Info</button></div></div></main></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func brandingPreviewLogin(theme *models.AppTheme) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var48 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var48 == nil {
+			templ_7745c5c3_Var48 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "<div class=\"preview-page-bg h-full flex\"><!-- Left panel --><div class=\"flex-1 flex flex-col items-center justify-center px-12 py-10\"><div class=\"w-full max-w-xs\"><div class=\"flex items-center gap-2 mb-8\"><img class=\"h-8 w-auto max-w-32 object-contain hidden preview-logo-light\" src=\"\" alt=\"Logo\"> <img class=\"h-8 w-auto max-w-32 object-contain hidden preview-logo-dark\" src=\"\" alt=\"Logo\"></div><h1 class=\"text-2xl font-bold preview-text-heading preview-heading-font mb-2\">Welcome back</h1><p class=\"text-sm preview-text-muted preview-body-font mb-8\">Sign in to manage your installs.</p><button class=\"w-full text-white py-2.5 text-sm font-medium rounded-lg mb-3\" style=\"background-color: var(--preview-primary);\">Sign in with SSO</button> <button class=\"w-full py-2.5 text-sm font-medium rounded-lg preview-text-heading preview-body-font\" style=\"border: 1px solid var(--preview-primary);\">Sign in with email</button></div></div><!-- Right panel --><div class=\"w-2/5 flex-shrink-0 relative overflow-hidden\" style=\"background-color: var(--preview-primary);\"><!-- Grid pattern overlay --><div class=\"absolute inset-0 opacity-20\" style=\"background-image: linear-gradient(rgba(255,255,255,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.3) 1px, transparent 1px); background-size: 32px 32px;\"></div><div class=\"relative z-10 flex flex-col items-center justify-center h-full px-8 text-white text-center\"><p class=\"text-base font-semibold preview-heading-font opacity-90\">Deploy anywhere.</p><p class=\"text-sm preview-body-font opacity-75 mt-2\">Your own cloud, your own rules.</p></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1351,12 +1332,12 @@ func installerPageScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var59 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var59 == nil {
-			templ_7745c5c3_Var59 = templ.NopComponent
+		templ_7745c5c3_Var49 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var49 == nil {
+			templ_7745c5c3_Var49 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('installer-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\twindow._installerLogoBase64 = config.dataset.logoBase64 || '';\n\t\t\twindow._installerLoadedFonts = window._installerLoadedFonts || new Set();\n\n\t\t\tfunction loadGoogleFont(fontFamily) {\n\t\t\t\tif (!fontFamily || window._installerLoadedFonts.has(fontFamily)) return;\n\t\t\t\tvar link = document.createElement(\"link\");\n\t\t\t\tlink.rel = \"stylesheet\";\n\t\t\t\tlink.href = \"https://fonts.googleapis.com/css2?family=\" + encodeURIComponent(fontFamily) + \":wght@400;500;600;700&display=swap\";\n\t\t\t\tdocument.head.appendChild(link);\n\t\t\t\twindow._installerLoadedFonts.add(fontFamily);\n\t\t\t}\n\n\t\t\twindow.setSettingsMode = function(mode, skipPreviewSync) {\n\t\t\t\tvar lightSettings = document.getElementById('lightModeSettings');\n\t\t\t\tvar darkSettings = document.getElementById('darkModeSettings');\n\t\t\t\tvar settingsLightBtn = document.getElementById('settingsLightModeBtn');\n\t\t\t\tvar settingsDarkBtn = document.getElementById('settingsDarkModeBtn');\n\n\t\t\t\tif (mode === 'light') {\n\t\t\t\t\tlightSettings.classList.remove('hidden');\n\t\t\t\t\tdarkSettings.classList.add('hidden');\n\t\t\t\t\tsettingsLightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsLightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tsettingsDarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsDarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t} else {\n\t\t\t\t\tlightSettings.classList.add('hidden');\n\t\t\t\t\tdarkSettings.classList.remove('hidden');\n\t\t\t\t\tsettingsDarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsDarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tsettingsLightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsLightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t}\n\n\t\t\t\t// Sync preview mode (unless called from setPreviewMode to avoid loop)\n\t\t\t\tif (!skipPreviewSync) {\n\t\t\t\t\tsetPreviewMode(mode, true);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Hook into preview mode changes to sync settings panel\n\t\t\twindow.onPreviewModeChange = function(mode) {\n\t\t\t\tsetSettingsMode(mode, true);\n\t\t\t};\n\n\t\t\twindow.updatePreview = function() {\n\t\t\t\tvar isDarkMode = window._previewMode === 'dark';\n\t\t\t\tvar primaryColor, secondaryColor;\n\n\t\t\t\t// Get colors based on current preview mode\n\t\t\t\tif (isDarkMode) {\n\t\t\t\t\t// Dark mode: use dark colors, fall back to light colors\n\t\t\t\t\tvar darkPrimary = document.getElementById(\"installerPrimaryColorDarkText\").value;\n\t\t\t\t\tvar darkSecondary = document.getElementById(\"installerSecondaryColorDarkText\").value;\n\t\t\t\t\tvar lightPrimary = document.getElementById(\"installerPrimaryColorLight\").value;\n\t\t\t\t\tvar lightSecondary = document.getElementById(\"installerSecondaryColorLight\").value;\n\n\t\t\t\t\tprimaryColor = darkPrimary || lightPrimary;\n\t\t\t\t\tsecondaryColor = darkSecondary || lightSecondary;\n\t\t\t\t} else {\n\t\t\t\t\t// Light mode: use light colors\n\t\t\t\t\tprimaryColor = document.getElementById(\"installerPrimaryColorLight\").value;\n\t\t\t\t\tsecondaryColor = document.getElementById(\"installerSecondaryColorLight\").value;\n\t\t\t\t}\n\n\t\t\t\tvar supportContact = document.getElementById(\"installerSupportContact\").value;\n\t\t\t\tvar headingFont = document.getElementById(\"installerHeadingFont\").value;\n\t\t\t\tvar bodyFont = document.getElementById(\"installerBodyFont\").value;\n\n\t\t\t\t// Update CSS variables on preview container\n\t\t\t\tvar container = document.getElementById(\"previewContainer\");\n\t\t\t\tcontainer.style.setProperty('--preview-primary', primaryColor);\n\t\t\t\tcontainer.style.setProperty('--preview-secondary', secondaryColor);\n\n\t\t\t\t// Update logo visibility based on mode\n\t\t\t\tvar previewLogoLight = document.getElementById(\"installerPreviewLogoLight\");\n\t\t\t\tvar previewLogoDark = document.getElementById(\"installerPreviewLogoDark\");\n\n\t\t\t\t// Get current logo values\n\t\t\t\tvar lightLogoSrc = window._installerLogoLightBase64 || config.dataset.logoLightBase64 || '';\n\t\t\t\tvar darkLogoSrc = window._installerLogoDarkBase64 || config.dataset.logoDarkBase64 || '';\n\n\t\t\t\t// Handle \"REMOVE\" marker\n\t\t\t\tif (lightLogoSrc === 'REMOVE') lightLogoSrc = '';\n\t\t\t\tif (darkLogoSrc === 'REMOVE') darkLogoSrc = '';\n\n\t\t\t\t// Update light logo\n\t\t\t\tif (lightLogoSrc) {\n\t\t\t\t\tpreviewLogoLight.src = lightLogoSrc;\n\t\t\t\t\tpreviewLogoLight.classList.remove('hidden');\n\t\t\t\t} else {\n\t\t\t\t\tpreviewLogoLight.classList.add('hidden');\n\t\t\t\t}\n\n\t\t\t\t// Update dark logo\n\t\t\t\tif (darkLogoSrc) {\n\t\t\t\t\tpreviewLogoDark.src = darkLogoSrc;\n\t\t\t\t\tpreviewLogoDark.classList.remove('hidden');\n\t\t\t\t} else if (lightLogoSrc) {\n\t\t\t\t\t// Fall back to light logo for dark mode if no dark logo\n\t\t\t\t\tpreviewLogoDark.src = lightLogoSrc;\n\t\t\t\t\tpreviewLogoDark.classList.remove('hidden');\n\t\t\t\t} else {\n\t\t\t\t\tpreviewLogoDark.classList.add('hidden');\n\t\t\t\t}\n\n\t\t\t\t// Update secondary color links\n\t\t\t\tvar backLink = document.getElementById(\"installerPreviewBackLink\");\n\t\t\t\tvar supportLink = document.getElementById(\"installerPreviewSupportLink\");\n\t\t\t\tif (backLink) backLink.style.color = secondaryColor;\n\t\t\t\tif (supportLink) supportLink.style.color = secondaryColor;\n\n\t\t\t\t// Update primary color buttons\n\t\t\t\tvar approveBtn = document.getElementById(\"installerPreviewApproveBtn\");\n\t\t\t\tvar historyBtn = document.getElementById(\"installerPreviewHistoryBtn\");\n\t\t\t\tif (approveBtn) approveBtn.style.backgroundColor = primaryColor;\n\t\t\t\tif (historyBtn) historyBtn.style.backgroundColor = primaryColor;\n\n\t\t\t\t// Update footer visibility\n\t\t\t\tvar previewFooter = document.getElementById(\"installerPreviewFooter\");\n\t\t\t\tif (previewFooter) {\n\t\t\t\t\tpreviewFooter.classList.toggle(\"hidden\", !supportContact);\n\t\t\t\t}\n\n\t\t\t\t// Update heading fonts\n\t\t\t\tvar headingFontStyle = headingFont\n\t\t\t\t\t? \"'\" + headingFont + \"', ui-sans-serif, system-ui, sans-serif\"\n\t\t\t\t\t: \"ui-sans-serif, system-ui, sans-serif\";\n\t\t\t\tvar headingElements = [\n\t\t\t\t\t'installerPreviewDetailsTitle',\n\t\t\t\t\t'installerPreviewUpdateTitle',\n\t\t\t\t\t'installerPreviewWorkflowName'\n\t\t\t\t];\n\t\t\t\theadingElements.forEach(function(id) {\n\t\t\t\t\tvar el = document.getElementById(id);\n\t\t\t\t\tif (el) el.style.fontFamily = headingFontStyle;\n\t\t\t\t});\n\n\t\t\t\t// Update body fonts\n\t\t\t\tvar bodyFontStyle = bodyFont\n\t\t\t\t\t? \"'\" + bodyFont + \"', ui-sans-serif, system-ui, sans-serif\"\n\t\t\t\t\t: \"ui-sans-serif, system-ui, sans-serif\";\n\t\t\t\tvar bodyElements = [\n\t\t\t\t\t'installerPreviewEmail',\n\t\t\t\t\t'installerPreviewBackLink',\n\t\t\t\t\t'installerPreviewAppName'\n\t\t\t\t];\n\t\t\t\tbodyElements.forEach(function(id) {\n\t\t\t\t\tvar el = document.getElementById(id);\n\t\t\t\t\tif (el) el.style.fontFamily = bodyFontStyle;\n\t\t\t\t});\n\n\t\t\t\t// Update footer font\n\t\t\t\tif (previewFooter) {\n\t\t\t\t\tpreviewFooter.style.fontFamily = bodyFontStyle;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.installerRemoveLogoLight = function() {\n\t\t\t\twindow._installerLogoLightBase64 = \"REMOVE\";\n\t\t\t\tdocument.getElementById(\"installerLogoLightPreview\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoLightPlaceholder\").classList.remove(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoLightUpload\").value = \"\";\n\t\t\t\tdocument.getElementById(\"installerRemoveLogoLight\").classList.add(\"hidden\");\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\twindow.installerRemoveLogoDark = function() {\n\t\t\t\twindow._installerLogoDarkBase64 = \"REMOVE\";\n\t\t\t\tdocument.getElementById(\"installerLogoDarkPreview\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoDarkPlaceholder\").classList.remove(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoDarkUpload\").value = \"\";\n\t\t\t\tdocument.getElementById(\"installerRemoveLogoDark\").classList.add(\"hidden\");\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\twindow.saveInstallerSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById(\"installerSaveButton\");\n\t\t\t\tvar successMessage = document.getElementById(\"installerSuccessMessage\");\n\t\t\t\tvar errorMessage = document.getElementById(\"installerErrorMessage\");\n\n\t\t\t\tsaveButton.textContent = \"Saving...\";\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add(\"hidden\");\n\t\t\t\terrorMessage.classList.add(\"hidden\");\n\n\t\t\t\tvar formData = {\n\t\t\t\t\tprimary_color: document.getElementById(\"installerPrimaryColorLight\").value,\n\t\t\t\t\tsecondary_color: document.getElementById(\"installerSecondaryColorLight\").value,\n\t\t\t\t\tprimary_color_dark: document.getElementById(\"installerPrimaryColorDarkText\").value || \"\",\n\t\t\t\t\tsecondary_color_dark: document.getElementById(\"installerSecondaryColorDarkText\").value || \"\",\n\t\t\t\t\tsupport_contact: document.getElementById(\"installerSupportContact\").value,\n\t\t\t\t\theading_font: document.getElementById(\"installerHeadingFont\").value,\n\t\t\t\t\tbody_font: document.getElementById(\"installerBodyFont\").value\n\t\t\t\t};\n\n\t\t\t\t// Handle light mode logo\n\t\t\t\tvar originalLogoLight = config.dataset.logoLightBase64 || '';\n\t\t\t\tif (window._installerLogoLightBase64 && window._installerLogoLightBase64 !== originalLogoLight) {\n\t\t\t\t\tformData.logo_light_base64 = window._installerLogoLightBase64;\n\t\t\t\t}\n\n\t\t\t\t// Handle dark mode logo\n\t\t\t\tvar originalLogoDark = config.dataset.logoDarkBase64 || '';\n\t\t\t\tif (window._installerLogoDarkBase64 && window._installerLogoDarkBase64 !== originalLogoDark) {\n\t\t\t\t\tformData.logo_dark_base64 = window._installerLogoDarkBase64;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + \"/orgs/\" + orgId + \"/settings\", {\n\t\t\t\t\t\tmethod: \"PUT\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\tcredentials: \"same-origin\",\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove(\"hidden\");\n\t\t\t\t\t\tshowToast(\"Installer settings saved!\", \"success\");\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\tsuccessMessage.classList.add(\"hidden\");\n\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t}, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.textContent = data.error || \"Failed to save settings\";\n\t\t\t\t\t\terrorMessage.classList.remove(\"hidden\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.textContent = \"Network error. Please try again.\";\n\t\t\t\t\terrorMessage.classList.remove(\"hidden\");\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = \"Save Changes\";\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\n\t\t\t// Event listeners for light mode color inputs\n\t\t\tdocument.getElementById(\"installerPrimaryColorLight\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tdocument.getElementById(\"installerPrimaryColorLightText\").value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerPrimaryColorLightText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorLight\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorLight\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tdocument.getElementById(\"installerSecondaryColorLightText\").value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorLightText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorLight\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Event listeners for dark mode color inputs\n\t\t\tdocument.getElementById(\"installerPrimaryColorDark\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar textInput = document.getElementById(\"installerPrimaryColorDarkText\");\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerPrimaryColorDarkText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar lightColor = document.getElementById(\"installerPrimaryColorLight\").value || '#8040BF';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Reset color picker to light mode fallback when cleared\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorDark\").value = lightColor;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorDark\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorDark\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar textInput = document.getElementById(\"installerSecondaryColorDarkText\");\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorDarkText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar lightColor = document.getElementById(\"installerSecondaryColorLight\").value || '#8040BF';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Reset color picker to light mode fallback when cleared\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorDark\").value = lightColor;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorDark\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSupportContact\")?.addEventListener(\"input\", updatePreview);\n\n\t\t\tdocument.getElementById(\"installerHeadingFont\")?.addEventListener(\"change\", function(e) {\n\t\t\t\tloadGoogleFont(e.target.value);\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerBodyFont\")?.addEventListener(\"change\", function(e) {\n\t\t\t\tloadGoogleFont(e.target.value);\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\t// Load initial fonts\n\t\t\tvar headingFont = config.dataset.headingFont;\n\t\t\tvar bodyFont = config.dataset.bodyFont;\n\t\t\tif (headingFont) loadGoogleFont(headingFont);\n\t\t\tif (bodyFont) loadGoogleFont(bodyFont);\n\n\t\t\t// Initial preview update\n\t\t\tupdatePreview();\n\n\t\t\t// Light mode logo upload handler\n\t\t\tdocument.getElementById(\"installerLogoLightUpload\")?.addEventListener(\"change\", async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast(\"Logo file must be under 500KB\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = [\"image/png\", \"image/jpeg\", \"image/svg+xml\", \"image/gif\"];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast(\"Please upload a PNG, JPG, SVG, or GIF image\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._installerLogoLightBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById(\"installerLogoLightPreview\");\n\t\t\t\t\tvar placeholder = document.getElementById(\"installerLogoLightPlaceholder\");\n\t\t\t\t\tvar removeBtn = document.getElementById(\"installerRemoveLogoLight\");\n\n\t\t\t\t\tpreview.src = window._installerLogoLightBase64;\n\t\t\t\t\tpreview.classList.remove(\"hidden\");\n\t\t\t\t\tplaceholder.classList.add(\"hidden\");\n\t\t\t\t\tremoveBtn.classList.remove(\"hidden\");\n\t\t\t\t\tupdatePreview();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\n\t\t\t// Dark mode logo upload handler\n\t\t\tdocument.getElementById(\"installerLogoDarkUpload\")?.addEventListener(\"change\", async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast(\"Logo file must be under 500KB\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = [\"image/png\", \"image/jpeg\", \"image/svg+xml\", \"image/gif\"];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast(\"Please upload a PNG, JPG, SVG, or GIF image\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._installerLogoDarkBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById(\"installerLogoDarkPreview\");\n\t\t\t\t\tvar placeholder = document.getElementById(\"installerLogoDarkPlaceholder\");\n\t\t\t\t\tvar removeBtn = document.getElementById(\"installerRemoveLogoDark\");\n\n\t\t\t\t\tpreview.src = window._installerLogoDarkBase64;\n\t\t\t\t\tpreview.classList.remove(\"hidden\");\n\t\t\t\t\tplaceholder.classList.add(\"hidden\");\n\t\t\t\t\tremoveBtn.classList.remove(\"hidden\");\n\t\t\t\t\tupdatePreview();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('installer-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\twindow._installerLogoBase64 = config.dataset.logoBase64 || '';\n\t\t\twindow._installerLoadedFonts = window._installerLoadedFonts || new Set();\n\n\t\t\tfunction loadGoogleFont(fontFamily) {\n\t\t\t\tif (!fontFamily || window._installerLoadedFonts.has(fontFamily)) return;\n\t\t\t\tvar link = document.createElement(\"link\");\n\t\t\t\tlink.rel = \"stylesheet\";\n\t\t\t\tlink.href = \"https://fonts.googleapis.com/css2?family=\" + encodeURIComponent(fontFamily) + \":wght@400;500;600;700&display=swap\";\n\t\t\t\tdocument.head.appendChild(link);\n\t\t\t\twindow._installerLoadedFonts.add(fontFamily);\n\t\t\t}\n\n\t\t\twindow.setSettingsMode = function(mode, skipPreviewSync) {\n\t\t\t\tvar lightSettings = document.getElementById('lightModeSettings');\n\t\t\t\tvar darkSettings = document.getElementById('darkModeSettings');\n\t\t\t\tvar settingsLightBtn = document.getElementById('settingsLightModeBtn');\n\t\t\t\tvar settingsDarkBtn = document.getElementById('settingsDarkModeBtn');\n\n\t\t\t\tif (mode === 'light') {\n\t\t\t\t\tlightSettings.classList.remove('hidden');\n\t\t\t\t\tdarkSettings.classList.add('hidden');\n\t\t\t\t\tsettingsLightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsLightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tsettingsDarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsDarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t} else {\n\t\t\t\t\tlightSettings.classList.add('hidden');\n\t\t\t\t\tdarkSettings.classList.remove('hidden');\n\t\t\t\t\tsettingsDarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsDarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t\tsettingsLightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');\n\t\t\t\t\tsettingsLightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');\n\t\t\t\t}\n\n\t\t\t\t// Sync preview mode (unless called from setPreviewMode to avoid loop)\n\t\t\t\tif (!skipPreviewSync) {\n\t\t\t\t\tsetPreviewMode(mode, true);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Hook into preview mode changes to sync settings panel\n\t\t\twindow.onPreviewModeChange = function(mode) {\n\t\t\t\tsetSettingsMode(mode, true);\n\t\t\t};\n\n\t\t\twindow.onPreviewPageChange = function(page) {\n\t\t\t\tdocument.querySelectorAll('.preview-page-section').forEach(function(el) {\n\t\t\t\t\tel.classList.add('hidden');\n\t\t\t\t});\n\t\t\t\tvar el = document.getElementById('preview-page-' + page);\n\t\t\t\tif (el) el.classList.remove('hidden');\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\twindow.updatePreview = function() {\n\t\t\t\tvar isDarkMode = window._previewMode === 'dark';\n\t\t\t\tvar primaryColor, secondaryColor;\n\n\t\t\t\t// Get colors based on current preview mode\n\t\t\t\tif (isDarkMode) {\n\t\t\t\t\t// Dark mode: use dark colors, fall back to light colors\n\t\t\t\t\tvar darkPrimary = document.getElementById(\"installerPrimaryColorDarkText\").value;\n\t\t\t\t\tvar darkSecondary = document.getElementById(\"installerSecondaryColorDarkText\").value;\n\t\t\t\t\tvar lightPrimary = document.getElementById(\"installerPrimaryColorLight\").value;\n\t\t\t\t\tvar lightSecondary = document.getElementById(\"installerSecondaryColorLight\").value;\n\n\t\t\t\t\tprimaryColor = darkPrimary || lightPrimary;\n\t\t\t\t\tsecondaryColor = darkSecondary || lightSecondary;\n\t\t\t\t} else {\n\t\t\t\t\t// Light mode: use light colors\n\t\t\t\t\tprimaryColor = document.getElementById(\"installerPrimaryColorLight\").value;\n\t\t\t\t\tsecondaryColor = document.getElementById(\"installerSecondaryColorLight\").value;\n\t\t\t\t}\n\n\t\t\t\tvar supportContact = document.getElementById(\"installerSupportContact\").value;\n\t\t\t\tvar headingFont = document.getElementById(\"installerHeadingFont\").value;\n\t\t\t\tvar bodyFont = document.getElementById(\"installerBodyFont\").value;\n\n\t\t\t\t// Update CSS variables on preview container\n\t\t\t\tvar container = document.getElementById(\"previewContainer\");\n\t\t\t\tcontainer.style.setProperty('--preview-primary', primaryColor);\n\t\t\t\tcontainer.style.setProperty('--preview-secondary', secondaryColor);\n\n\t\t\t\t// Get current logo values\n\t\t\t\tvar lightLogoSrc = window._installerLogoLightBase64 || config.dataset.logoLightBase64 || '';\n\t\t\t\tvar darkLogoSrc = window._installerLogoDarkBase64 || config.dataset.logoDarkBase64 || '';\n\n\t\t\t\t// Handle \"REMOVE\" marker\n\t\t\t\tif (lightLogoSrc === 'REMOVE') lightLogoSrc = '';\n\t\t\t\tif (darkLogoSrc === 'REMOVE') darkLogoSrc = '';\n\n\t\t\t\t// Update all light logos across all pages (class-based)\n\t\t\t\tdocument.querySelectorAll('#previewContainer .preview-logo-light').forEach(function(el) {\n\t\t\t\t\tif (lightLogoSrc) {\n\t\t\t\t\t\tel.src = lightLogoSrc;\n\t\t\t\t\t\tel.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tel.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Update all dark logos across all pages (class-based, fall back to light logo)\n\t\t\t\tvar darkSrc = darkLogoSrc || lightLogoSrc;\n\t\t\t\tdocument.querySelectorAll('#previewContainer .preview-logo-dark').forEach(function(el) {\n\t\t\t\t\tif (darkSrc) {\n\t\t\t\t\t\tel.src = darkSrc;\n\t\t\t\t\t\tel.classList.remove('hidden');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tel.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\t// Update secondary color links (install detail page)\n\t\t\t\tvar backLink = document.getElementById(\"installerPreviewBackLink\");\n\t\t\t\tvar supportLink = document.getElementById(\"installerPreviewSupportLink\");\n\t\t\t\tif (backLink) backLink.style.color = secondaryColor;\n\t\t\t\tif (supportLink) supportLink.style.color = secondaryColor;\n\n\t\t\t\t// Update primary color buttons (install detail page)\n\t\t\t\tvar approveBtn = document.getElementById(\"installerPreviewApproveBtn\");\n\t\t\t\tvar historyBtn = document.getElementById(\"installerPreviewHistoryBtn\");\n\t\t\t\tif (approveBtn) approveBtn.style.backgroundColor = primaryColor;\n\t\t\t\tif (historyBtn) historyBtn.style.backgroundColor = primaryColor;\n\n\t\t\t\t// Update footer visibility (install detail page)\n\t\t\t\tvar previewFooter = document.getElementById(\"installerPreviewFooter\");\n\t\t\t\tif (previewFooter) {\n\t\t\t\t\tpreviewFooter.classList.toggle(\"hidden\", !supportContact);\n\t\t\t\t}\n\n\t\t\t\t// Update heading fonts across all pages (class-based)\n\t\t\t\tvar headingFontStyle = headingFont\n\t\t\t\t\t? \"'\" + headingFont + \"', ui-sans-serif, system-ui, sans-serif\"\n\t\t\t\t\t: \"ui-sans-serif, system-ui, sans-serif\";\n\t\t\t\tdocument.querySelectorAll('#previewContainer .preview-heading-font').forEach(function(el) {\n\t\t\t\t\tel.style.fontFamily = headingFontStyle;\n\t\t\t\t});\n\n\t\t\t\t// Update body fonts across all pages (class-based)\n\t\t\t\tvar bodyFontStyle = bodyFont\n\t\t\t\t\t? \"'\" + bodyFont + \"', ui-sans-serif, system-ui, sans-serif\"\n\t\t\t\t\t: \"ui-sans-serif, system-ui, sans-serif\";\n\t\t\t\tdocument.querySelectorAll('#previewContainer .preview-body-font').forEach(function(el) {\n\t\t\t\t\tel.style.fontFamily = bodyFontStyle;\n\t\t\t\t});\n\n\t\t\t\t// Update footer font (install detail page)\n\t\t\t\tif (previewFooter) {\n\t\t\t\t\tpreviewFooter.style.fontFamily = bodyFontStyle;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.installerRemoveLogoLight = function() {\n\t\t\t\twindow._installerLogoLightBase64 = \"REMOVE\";\n\t\t\t\tdocument.getElementById(\"installerLogoLightPreview\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoLightPlaceholder\").classList.remove(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoLightUpload\").value = \"\";\n\t\t\t\tdocument.getElementById(\"installerRemoveLogoLight\").classList.add(\"hidden\");\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\twindow.installerRemoveLogoDark = function() {\n\t\t\t\twindow._installerLogoDarkBase64 = \"REMOVE\";\n\t\t\t\tdocument.getElementById(\"installerLogoDarkPreview\").classList.add(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoDarkPlaceholder\").classList.remove(\"hidden\");\n\t\t\t\tdocument.getElementById(\"installerLogoDarkUpload\").value = \"\";\n\t\t\t\tdocument.getElementById(\"installerRemoveLogoDark\").classList.add(\"hidden\");\n\t\t\t\tupdatePreview();\n\t\t\t};\n\n\t\t\twindow.saveInstallerSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById(\"installerSaveButton\");\n\t\t\t\tvar successMessage = document.getElementById(\"installerSuccessMessage\");\n\t\t\t\tvar errorMessage = document.getElementById(\"installerErrorMessage\");\n\n\t\t\t\tsaveButton.textContent = \"Saving...\";\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add(\"hidden\");\n\t\t\t\terrorMessage.classList.add(\"hidden\");\n\n\t\t\t\tvar formData = {\n\t\t\t\t\tprimary_color: document.getElementById(\"installerPrimaryColorLight\").value,\n\t\t\t\t\tsecondary_color: document.getElementById(\"installerSecondaryColorLight\").value,\n\t\t\t\t\tprimary_color_dark: document.getElementById(\"installerPrimaryColorDarkText\").value || \"\",\n\t\t\t\t\tsecondary_color_dark: document.getElementById(\"installerSecondaryColorDarkText\").value || \"\",\n\t\t\t\t\tsupport_contact: document.getElementById(\"installerSupportContact\").value,\n\t\t\t\t\theading_font: document.getElementById(\"installerHeadingFont\").value,\n\t\t\t\t\tbody_font: document.getElementById(\"installerBodyFont\").value\n\t\t\t\t};\n\n\t\t\t\t// Handle light mode logo\n\t\t\t\tvar originalLogoLight = config.dataset.logoLightBase64 || '';\n\t\t\t\tif (window._installerLogoLightBase64 && window._installerLogoLightBase64 !== originalLogoLight) {\n\t\t\t\t\tformData.logo_light_base64 = window._installerLogoLightBase64;\n\t\t\t\t}\n\n\t\t\t\t// Handle dark mode logo\n\t\t\t\tvar originalLogoDark = config.dataset.logoDarkBase64 || '';\n\t\t\t\tif (window._installerLogoDarkBase64 && window._installerLogoDarkBase64 !== originalLogoDark) {\n\t\t\t\t\tformData.logo_dark_base64 = window._installerLogoDarkBase64;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + \"/orgs/\" + orgId + \"/settings\", {\n\t\t\t\t\t\tmethod: \"PUT\",\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t\"Content-Type\": \"application/json\"\n\t\t\t\t\t\t},\n\t\t\t\t\t\tcredentials: \"same-origin\",\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove(\"hidden\");\n\t\t\t\t\t\tshowToast(\"Installer settings saved!\", \"success\");\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\tsuccessMessage.classList.add(\"hidden\");\n\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t}, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.textContent = data.error || \"Failed to save settings\";\n\t\t\t\t\t\terrorMessage.classList.remove(\"hidden\");\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.textContent = \"Network error. Please try again.\";\n\t\t\t\t\terrorMessage.classList.remove(\"hidden\");\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = \"Save Changes\";\n\t\t\t\tsaveButton.disabled = false;\n\t\t\t};\n\n\t\t\t// Event listeners for light mode color inputs\n\t\t\tdocument.getElementById(\"installerPrimaryColorLight\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tdocument.getElementById(\"installerPrimaryColorLightText\").value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerPrimaryColorLightText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorLight\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorLight\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tdocument.getElementById(\"installerSecondaryColorLightText\").value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorLightText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tif (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorLight\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Event listeners for dark mode color inputs\n\t\t\tdocument.getElementById(\"installerPrimaryColorDark\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar textInput = document.getElementById(\"installerPrimaryColorDarkText\");\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerPrimaryColorDarkText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar lightColor = document.getElementById(\"installerPrimaryColorLight\").value || '#8040BF';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Reset color picker to light mode fallback when cleared\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorDark\").value = lightColor;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerPrimaryColorDark\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorDark\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar textInput = document.getElementById(\"installerSecondaryColorDarkText\");\n\t\t\t\ttextInput.value = e.target.value.toUpperCase();\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSecondaryColorDarkText\")?.addEventListener(\"input\", function(e) {\n\t\t\t\tvar value = e.target.value;\n\t\t\t\tvar lightColor = document.getElementById(\"installerSecondaryColorLight\").value || '#8040BF';\n\t\t\t\tif (value === '') {\n\t\t\t\t\t// Reset color picker to light mode fallback when cleared\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorDark\").value = lightColor;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {\n\t\t\t\t\tdocument.getElementById(\"installerSecondaryColorDark\").value = value;\n\t\t\t\t\tupdatePreview();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerSupportContact\")?.addEventListener(\"input\", updatePreview);\n\n\t\t\tdocument.getElementById(\"installerHeadingFont\")?.addEventListener(\"change\", function(e) {\n\t\t\t\tloadGoogleFont(e.target.value);\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\tdocument.getElementById(\"installerBodyFont\")?.addEventListener(\"change\", function(e) {\n\t\t\t\tloadGoogleFont(e.target.value);\n\t\t\t\tupdatePreview();\n\t\t\t});\n\n\t\t\t// Load initial fonts\n\t\t\tvar headingFont = config.dataset.headingFont;\n\t\t\tvar bodyFont = config.dataset.bodyFont;\n\t\t\tif (headingFont) loadGoogleFont(headingFont);\n\t\t\tif (bodyFont) loadGoogleFont(bodyFont);\n\n\t\t\t// Initial preview update\n\t\t\tupdatePreview();\n\n\t\t\t// Light mode logo upload handler\n\t\t\tdocument.getElementById(\"installerLogoLightUpload\")?.addEventListener(\"change\", async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast(\"Logo file must be under 500KB\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = [\"image/png\", \"image/jpeg\", \"image/svg+xml\", \"image/gif\"];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast(\"Please upload a PNG, JPG, SVG, or GIF image\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._installerLogoLightBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById(\"installerLogoLightPreview\");\n\t\t\t\t\tvar placeholder = document.getElementById(\"installerLogoLightPlaceholder\");\n\t\t\t\t\tvar removeBtn = document.getElementById(\"installerRemoveLogoLight\");\n\n\t\t\t\t\tpreview.src = window._installerLogoLightBase64;\n\t\t\t\t\tpreview.classList.remove(\"hidden\");\n\t\t\t\t\tplaceholder.classList.add(\"hidden\");\n\t\t\t\t\tremoveBtn.classList.remove(\"hidden\");\n\t\t\t\t\tupdatePreview();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\n\t\t\t// Dark mode logo upload handler\n\t\t\tdocument.getElementById(\"installerLogoDarkUpload\")?.addEventListener(\"change\", async function(e) {\n\t\t\t\tvar file = e.target.files[0];\n\t\t\t\tif (!file) return;\n\n\t\t\t\tif (file.size > 500 * 1024) {\n\t\t\t\t\tshowToast(\"Logo file must be under 500KB\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar validTypes = [\"image/png\", \"image/jpeg\", \"image/svg+xml\", \"image/gif\"];\n\t\t\t\tif (!validTypes.includes(file.type)) {\n\t\t\t\t\tshowToast(\"Please upload a PNG, JPG, SVG, or GIF image\", \"error\");\n\t\t\t\t\te.target.value = \"\";\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\twindow._installerLogoDarkBase64 = reader.result;\n\t\t\t\t\tvar preview = document.getElementById(\"installerLogoDarkPreview\");\n\t\t\t\t\tvar placeholder = document.getElementById(\"installerLogoDarkPlaceholder\");\n\t\t\t\t\tvar removeBtn = document.getElementById(\"installerRemoveLogoDark\");\n\n\t\t\t\t\tpreview.src = window._installerLogoDarkBase64;\n\t\t\t\t\tpreview.classList.remove(\"hidden\");\n\t\t\t\t\tplaceholder.classList.add(\"hidden\");\n\t\t\t\t\tremoveBtn.classList.remove(\"hidden\");\n\t\t\t\t\tupdatePreview();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
