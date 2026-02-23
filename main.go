@@ -374,10 +374,8 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	// Published app config endpoint (unauthenticated - same pattern as install-link app-config)
 	rg.GET("/apps/:app_id/config", h.GetPublishedAppConfig)
 
-	// Protected customer routes for published apps
+	// Public customer routes for published apps (auth handled in handlers)
 	customerApps := rg.Group("/apps")
-	customerApps.Use(jwtAuth.MiddlewareFunc())
-	customerApps.Use(middleware.RequireRole(models.RoleCustomer))
 	{
 		customerApps.GET("/", h.CustomerAppsPage)
 		customerApps.GET("/:app_id/install", h.CustomerAppInstallPage)

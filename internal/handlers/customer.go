@@ -2192,7 +2192,7 @@ func (h *Handler) GetPublishedAppConfig(c *gin.Context) {
 
 // CustomerAppsPage renders the customer-facing app catalog
 func (h *Handler) CustomerAppsPage(c *gin.Context) {
-	user := h.GetFreshUser(c)
+	user := h.tryGetLoggedInUser(c)
 
 	org, err := h.getOrgForCustomerPage(c)
 	if err != nil {
