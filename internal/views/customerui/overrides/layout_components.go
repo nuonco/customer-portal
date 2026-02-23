@@ -30,8 +30,7 @@ const logoutScript = `<script>
 function logout() {
 	var config = document.getElementById('customer-layout-config');
 	var basePath = config.dataset.basePath;
-	document.cookie = "jwt=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
-	window.location.href = basePath + "/login/";
+	window.location.href = basePath + "/logout";
 }
 </script>`
 

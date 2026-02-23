@@ -638,7 +638,21 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 
 // InstallsPage renders the customer installs page with tab-based pagination
 func (h *Handler) InstallsPage(c *gin.Context) {
-	user := h.GetFreshUser(c) // Load from DB for topbar display
+	user := h.tryGetLoggedInUser(c) // Returns nil if not logged in
+
+	// For unauthenticated visitors, render empty page with login CTA
+	if user == nil {
+		orgID := h.getOrgIDForTheme(c)
+		theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
+		layoutProps := h.buildCustomerLayoutProps("Your Installs", nil, theme)
+		layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
+		layoutProps.ActiveNav = "installs"
+		props := customerpages.InstallsPageProps{
+			LayoutProps: layoutProps,
+		}
+		h.RenderTempl(c, http.StatusOK, customerpages.InstallsPage(props))
+		return
+	}
 
 	// Get optional install_id from path for detail view with panel open
 	installIDParam := c.Param("install_id")

@@ -739,6 +739,18 @@ func (h *Handler) VendorLogout(c *gin.Context) {
 	c.Redirect(http.StatusFound, h.basePath+"/login/")
 }
 
+// CustomerLogout handles logout for customer users
+func (h *Handler) CustomerLogout(c *gin.Context) {
+	// Clear the JWT cookie server-side (same params as when it was set)
+	c.SetCookie("jwt", "", -1, "/", "", false, true)
+
+	// Clear the session cookie if present
+	c.SetCookie("auth_session", "", -1, "/", "", false, true)
+
+	// Redirect to customer login
+	c.Redirect(http.StatusFound, "/login")
+}
+
 // LocalLogin handles POST /admin/login/ for email/password authentication
 func (h *Handler) LocalLogin(c *gin.Context) {
 	localProvider, ok := h.authProvider.(*auth.LocalProvider)
@@ -1721,14 +1733,50 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
+		allOrgs := h.GetUserOrgs(user.ID)
+		props := vendorpages.AppsPageProps{
+			LayoutProps: vendorui.LayoutProps{
+				Title:            org.Name + " - Apps",
+				ActivePage:       "apps",
+				User:             user,
+				CurrentOrg:       org,
+				Orgs:             allOrgs,
+				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:         h.basePath,
+				PortalScheme:     h.schemeFromBaseURL(),
+				PortalBaseDomain: h.subdomainBaseDomain,
+				CSSPath:          assets.VendorCSSPath(),
+				NuonAPIError:     "Your API token may be expired or invalid.",
+			},
+			Org: *org,
+		}
+		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+		h.RenderTempl(c, http.StatusOK, vendorpages.AppsPage(props))
 		return
 	}
 
 	// Fetch apps from Nuon API
 	apps, err := nuonClient.ListApps(c.Request.Context())
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch apps: %v", err))
+		allOrgs := h.GetUserOrgs(user.ID)
+		props := vendorpages.AppsPageProps{
+			LayoutProps: vendorui.LayoutProps{
+				Title:            org.Name + " - Apps",
+				ActivePage:       "apps",
+				User:             user,
+				CurrentOrg:       org,
+				Orgs:             allOrgs,
+				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:         h.basePath,
+				PortalScheme:     h.schemeFromBaseURL(),
+				PortalBaseDomain: h.subdomainBaseDomain,
+				CSSPath:          assets.VendorCSSPath(),
+				NuonAPIError:     "Your API token may be expired or invalid.",
+			},
+			Org: *org,
+		}
+		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+		h.RenderTempl(c, http.StatusOK, vendorpages.AppsPage(props))
 		return
 	}
 
@@ -1898,14 +1946,54 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
+		allOrgs := h.GetUserOrgs(user.ID)
+		props := vendorpages.AppInputsPageProps{
+			LayoutProps: vendorui.LayoutProps{
+				Title:            "App - Inputs",
+				ActivePage:       "apps",
+				User:             user,
+				CurrentOrg:       org,
+				Orgs:             allOrgs,
+				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:         h.basePath,
+				PortalScheme:     h.schemeFromBaseURL(),
+				PortalBaseDomain: h.subdomainBaseDomain,
+				CSSPath:          assets.VendorCSSPath(),
+				NuonAPIError:     "Your API token may be expired or invalid.",
+			},
+			Org:   *org,
+			AppID: appID,
+			App:   vendorpages.AppInfo{ID: appID},
+		}
+		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+		h.RenderTempl(c, http.StatusOK, vendorpages.AppInputsPage(props))
 		return
 	}
 
 	// Fetch app details from Nuon API
 	app, err := nuonClient.GetApp(c.Request.Context(), appID)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch app: %v", err))
+		allOrgs := h.GetUserOrgs(user.ID)
+		props := vendorpages.AppInputsPageProps{
+			LayoutProps: vendorui.LayoutProps{
+				Title:            "App - Inputs",
+				ActivePage:       "apps",
+				User:             user,
+				CurrentOrg:       org,
+				Orgs:             allOrgs,
+				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:         h.basePath,
+				PortalScheme:     h.schemeFromBaseURL(),
+				PortalBaseDomain: h.subdomainBaseDomain,
+				CSSPath:          assets.VendorCSSPath(),
+				NuonAPIError:     "Your API token may be expired or invalid.",
+			},
+			Org:   *org,
+			AppID: appID,
+			App:   vendorpages.AppInfo{ID: appID},
+		}
+		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+		h.RenderTempl(c, http.StatusOK, vendorpages.AppInputsPage(props))
 		return
 	}
 
@@ -2127,24 +2215,48 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 		return
 	}
 
+	// renderHealthChecksAPIError is a local helper for Nuon API failures on this page
+	renderHealthChecksAPIError := func() {
+		allOrgs := h.GetUserOrgs(user.ID)
+		props := vendorpages.AppHealthChecksPageProps{
+			LayoutProps: vendorui.LayoutProps{
+				Title:            "App - Health Checks",
+				ActivePage:       "apps",
+				User:             user,
+				CurrentOrg:       org,
+				Orgs:             allOrgs,
+				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:         h.basePath,
+				PortalScheme:     h.schemeFromBaseURL(),
+				PortalBaseDomain: h.subdomainBaseDomain,
+				CSSPath:          assets.VendorCSSPath(),
+				NuonAPIError:     "Your API token may be expired or invalid.",
+			},
+			Org: *org,
+			App: vendorpages.AppInfo{ID: appID},
+		}
+		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
+		h.RenderTempl(c, http.StatusOK, vendorpages.AppHealthChecksPage(props))
+	}
+
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
+		renderHealthChecksAPIError()
 		return
 	}
 
 	// Fetch app details from Nuon API
 	app, err := nuonClient.GetApp(c.Request.Context(), appID)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch app: %v", err))
+		renderHealthChecksAPIError()
 		return
 	}
 
 	// Fetch available actions for this app
 	rawActions, err := nuonClient.GetAppActionWorkflows(c.Request.Context(), appID)
 	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch app actions: %v", err))
+		renderHealthChecksAPIError()
 		return
 	}
 
@@ -2719,33 +2831,30 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 		return
 	}
 
-	// Initialize Nuon client to fetch app information
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to initialize Nuon client")
-		return
-	}
-
-	// Fetch apps from Nuon API to get platform information
-	apps, err := nuonClient.ListApps(c.Request.Context())
-	if err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch apps: %v", err))
-		return
-	}
-
-	// Build platform and name maps for quick lookup
+	// Fetch apps from Nuon API to build platform and name maps; degrade gracefully on failure
 	platformMap := make(map[string]string)
 	nameMap := make(map[string]string)
-	for _, app := range apps {
-		platform := "aws" // default
-		if app.RunnerConfig != nil {
-			runnerType := string(app.RunnerConfig.AppRunnerType)
-			if runnerType == "azure" {
-				platform = "azure"
+	var customerDetailNuonAPIError string
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		customerDetailNuonAPIError = "Your API token may be expired or invalid."
+	} else {
+		apps, appsErr := nuonClient.ListApps(c.Request.Context())
+		if appsErr != nil {
+			customerDetailNuonAPIError = "Your API token may be expired or invalid."
+		} else {
+			for _, app := range apps {
+				platform := "aws" // default
+				if app.RunnerConfig != nil {
+					runnerType := string(app.RunnerConfig.AppRunnerType)
+					if runnerType == "azure" {
+						platform = "azure"
+					}
+				}
+				platformMap[app.ID] = platform
+				nameMap[app.ID] = app.Name
 			}
 		}
-		platformMap[app.ID] = platform
-		nameMap[app.ID] = app.Name
 	}
 
 	// Convert to template type
@@ -2804,6 +2913,7 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			PortalScheme:     h.schemeFromBaseURL(),
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			NuonAPIError:     customerDetailNuonAPIError,
 		},
 		Org:      *org,
 		Customer: &customer,

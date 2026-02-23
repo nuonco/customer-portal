@@ -60,15 +60,26 @@ templ Sidebar(props SidebarProps) {
 					if props.CurrentOrg != nil && props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "" {
 						<div class="px-3 py-2 border-b border-cool-grey-200 dark:border-dark-grey-600">
 							<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Customer portal</div>
-							<a
-								href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain) }
-								target="_blank"
-								rel="noopener noreferrer"
-								class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1 truncate"
-							>
-								<span class="truncate">{ props.CurrentOrg.Subdomain }.{ props.PortalBaseDomain }</span>
-								@portalExternalLinkIcon()
-							</a>
+							<div class="flex flex-col gap-1">
+								<a
+									href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain + "/apps") }
+									target="_blank"
+									rel="noopener noreferrer"
+									class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+								>
+									App catalog
+									@portalExternalLinkIcon()
+								</a>
+								<a
+									href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain + "/login") }
+									target="_blank"
+									rel="noopener noreferrer"
+									class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
+								>
+									Customer login
+									@portalExternalLinkIcon()
+								</a>
+							</div>
 						</div>
 					}
 					if props.CurrentOrg != nil {

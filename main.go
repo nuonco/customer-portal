@@ -349,9 +349,10 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	// Subdomain completion endpoint (sets JWT cookie on subdomain after base domain auth)
 	rg.GET("/auth/complete", h.CompleteSubdomainAuth)
 
-	// Public routes - customer login (OIDC only)
+	// Public routes - customer login and logout (OIDC only)
 	rg.GET("/login", h.CustomerLoginPageTempl)
 	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
+	rg.GET("/logout", h.CustomerLogout)
 
 	// Registration disabled - redirect to login
 	rg.GET("/register", h.CustomerRegisterPage)
@@ -382,14 +383,15 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		customerApps.POST("/:app_id/install", h.CreateInstallFromApp)
 	}
 
+	// Public install list routes (auth is optional — unauthenticated visitors see login CTA)
+	rg.GET("/installs", h.InstallsPage)
+	rg.GET("/installs/:install_id", h.InstallsPage) // Detail view with panel open
+
 	// Protected customer routes
 	installs := rg.Group("/installs")
 	installs.Use(jwtAuth.MiddlewareFunc())
 	installs.Use(middleware.RequireRole(models.RoleCustomer))
 	{
-		installs.GET("/", h.InstallsPage)
-		installs.GET("/:install_id", h.InstallsPage) // Detail view with panel open
-
 		// Routes that require install ownership verification
 		installOwnership := installs.Group("/:install_id")
 		installOwnership.Use(middleware.RequireInstallOwnership(db))
