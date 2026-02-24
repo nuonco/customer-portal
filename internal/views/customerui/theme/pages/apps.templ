@@ -72,10 +72,9 @@ type CustomerAppsPageProps struct {
 // CustomerAppsPage renders the customer-facing app catalog
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="max-w-5xl mx-auto px-6 lg:px-8 py-8">
+		<div>
 			<div class="mb-8">
-				<h1 class="text-2xl font-bold text-cool-grey-900 dark:text-white">App Catalog</h1>
-				<p class="text-cool-grey-600 dark:text-cool-grey-400 mt-1">Browse and install available applications.</p>
+				<p class="text-cool-grey-600 dark:text-cool-grey-400">Browse and install apps.</p>
 			</div>
 			if len(props.Apps) == 1 {
 				@appFullWidthCard(props.Apps[0], props.BasePath, "")
@@ -107,7 +106,7 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 					}
 				</script>
 			} else {
-				<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center">
+				<div class="card-base text-center">
 					<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
 						<svg class="h-8 w-8 text-cool-grey-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
 							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"></path>
@@ -124,7 +123,7 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 }
 
 templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string) {
-	<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-8">
+	<div class="card-lg">
 		// ── Header ──────────────────────────────────────────────────────────
 		<div class="flex items-start justify-between mb-8">
 			<h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white">{ app.AppName }</h2>
@@ -136,13 +135,13 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string)
 			<div class="space-y-6">
 				if app.Description != "" {
 					<div>
-						<h3 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400 mb-3">Description</h3>
+						<h3 class="text-section-label">Description</h3>
 						<p class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ app.Description }</p>
 					</div>
 				}
 				if app.SandboxPlatform != "" || app.SandboxTFVersion != "" || app.SandboxDrift != "" {
 					<div>
-						<h3 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400 mb-3">Sandbox</h3>
+						<h3 class="text-section-label">Sandbox</h3>
 						<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
 							if app.SandboxPlatform != "" {
 								<dt class="text-cool-grey-500 dark:text-cool-grey-400">Cloud</dt>
@@ -162,10 +161,10 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string)
 			</div>
 			// Right – three-tab panel
 			<div class="app-catalog-tabs">
-				<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
-					<button class="panel-tab-button active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
-					<button class="panel-tab-button" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
-					<button class="panel-tab-button" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
+				<div class="tabs-divider flex mb-4">
+					<button class="nav-item active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
+					<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
+					<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
 				</div>
 				// Components pane
 				<div id={ "act-" + app.AppID + "-comp" } class="panel-tab-pane active">
@@ -191,7 +190,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string)
 							for _, role := range app.Permissions {
 								<li class="text-sm">
 									<div class="flex items-center gap-2 mb-0.5">
-										<span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-300">{ role.Label }</span>
+										<span class="chip-sm-neutral">{ role.Label }</span>
 										<span class="font-medium text-cool-grey-900 dark:text-white">{ role.Name }</span>
 									</div>
 									if role.Description != "" {
@@ -212,9 +211,9 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string)
 								<li class="text-sm">
 									<div class="flex items-center gap-2 flex-wrap mb-0.5">
 										<span class="font-medium text-cool-grey-900 dark:text-white">{ pol.Name }</span>
-										<span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-300">{ formatPolicyType(pol.Type) }</span>
+										<span class="chip-sm-neutral">{ formatPolicyType(pol.Type) }</span>
 										if pol.Engine != "" {
-											<span class="inline-block text-xs font-medium px-2 py-0.5 rounded bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-600 dark:text-cool-grey-300">{ pol.Engine }</span>
+											<span class="chip-sm-neutral">{ pol.Engine }</span>
 										}
 									</div>
 									if pol.Description != "" {
@@ -230,7 +229,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string)
 				if (!window.switchAppCatalogTab) {
 					window.switchAppCatalogTab = function(btn, tabId) {
 						var container = btn.closest('.app-catalog-tabs');
-						container.querySelectorAll('.panel-tab-button').forEach(function(b) { b.classList.remove('active'); });
+						container.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
 						container.querySelectorAll('.panel-tab-pane').forEach(function(p) { p.classList.remove('active'); });
 						btn.classList.add('active');
 						container.querySelector('#' + tabId).classList.add('active');
@@ -288,7 +287,7 @@ templ componentTypeIcon(componentType string) {
 }
 
 templ appCatalogCard(app PublishedAppDisplay, basePath string) {
-	<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 flex flex-col">
+	<div class="card-base flex flex-col">
 		<div class="mb-4">
 			<div class="flex items-start justify-between">
 				<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white truncate">{ app.AppName }</h3>

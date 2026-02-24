@@ -26,6 +26,20 @@
   --spacing-element-gap: 16px;
   --spacing-input-padding-y: 12px;
   --spacing-input-padding-x: 16px;
+
+  /* Light-mode surface tones derived from --theme-white */
+  --theme-surface-subtle:  color-mix(in srgb, var(--theme-white, #ffffff) 97%, black);  /* ~cool-grey-50  hover/table-header tint */
+  --theme-surface-raised:  color-mix(in srgb, var(--theme-white, #ffffff) 93%, black);  /* ~cool-grey-100 chips/badges/tab-tray  */
+  --theme-border-subtle:   color-mix(in srgb, var(--theme-white, #ffffff) 91%, black);  /* ~cool-grey-200 card/panel borders     */
+  --theme-border:          color-mix(in srgb, var(--theme-white, #ffffff) 87%, black);  /* ~cool-grey-300 input/button borders   */
+}
+
+/* Dark-mode surface tokens — derived from --theme-black by lightening */
+.dark {
+  --theme-surface-subtle:  color-mix(in srgb, var(--theme-black, #121212) 96%, white);
+  --theme-surface-raised:  color-mix(in srgb, var(--theme-black, #121212) 92%, white);
+  --theme-border-subtle:   color-mix(in srgb, var(--theme-black, #121212) 82%, white);
+  --theme-border:          color-mix(in srgb, var(--theme-black, #121212) 75%, white);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -132,13 +146,19 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .input-theme {
-  @apply w-full border border-cool-grey-300 bg-white;
-  @apply dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white;
+  @apply w-full dark:text-white;
   @apply focus:outline-none focus:ring-2;
   @apply placeholder-cool-grey-400 dark:placeholder-cool-grey-500;
   @apply transition-colors duration-150;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
   padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
   border-radius: var(--theme-radius);
+}
+
+.dark .input-theme {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle);
 }
 
 .input-theme:focus {
@@ -147,8 +167,12 @@
 }
 
 .input-theme:disabled {
-  @apply bg-cool-grey-100 cursor-not-allowed;
-  @apply dark:bg-dark-grey-700;
+  @apply cursor-not-allowed;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .input-theme:disabled {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -178,13 +202,20 @@
 }
 
 .btn-theme-secondary {
-  @apply inline-flex items-center justify-center font-medium;
-  @apply bg-cool-grey-100 text-cool-grey-700 hover:bg-cool-grey-200;
-  @apply dark:bg-dark-grey-700 dark:text-cool-grey-300 dark:hover:bg-dark-grey-600;
-  @apply focus:outline-none focus:ring-2 focus:ring-cool-grey-400 focus:ring-offset-2;
+  @apply inline-flex items-center justify-center font-medium text-white;
+  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply transition-colors duration-150;
+  background-color: var(--theme-secondary, var(--theme-primary, #3b82f6));
   padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
   border-radius: var(--theme-radius);
+}
+
+.btn-theme-secondary:hover {
+  background-color: var(--theme-secondary-hover, var(--theme-primary-hover, #2563eb));
+}
+
+.btn-theme-secondary:focus {
+  --tw-ring-color: var(--theme-secondary, var(--theme-primary, #3b82f6));
 }
 
 .btn-theme-secondary:disabled {
@@ -193,17 +224,25 @@
 
 .btn-theme-outline {
   @apply inline-flex items-center justify-center font-medium;
-  @apply border border-cool-grey-300 bg-transparent text-cool-grey-700;
-  @apply hover:bg-cool-grey-50;
-  @apply dark:border-dark-grey-500 dark:text-cool-grey-300 dark:hover:bg-dark-grey-800;
+  @apply bg-transparent text-cool-grey-700;
+  @apply dark:text-cool-grey-300 dark:hover:bg-dark-grey-800;
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply transition-colors duration-150;
+  border: 1px solid var(--theme-border);
   padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
   border-radius: var(--theme-radius);
 }
 
+.btn-theme-outline:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
 .btn-theme-outline:focus {
   --tw-ring-color: var(--theme-primary);
+}
+
+.dark .btn-theme-outline {
+  border-color: transparent;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -241,8 +280,13 @@
 }
 
 .badge-neutral {
-  @apply bg-cool-grey-100 text-cool-grey-700;
-  @apply dark:bg-dark-grey-700 dark:text-cool-grey-400;
+  @apply text-cool-grey-700;
+  @apply dark:text-cool-grey-400;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .badge-neutral {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -284,9 +328,13 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .tabs-container {
-  @apply inline-flex p-1 bg-cool-grey-100;
-  @apply dark:bg-dark-grey-800;
+  @apply inline-flex p-1;
+  background-color: var(--theme-surface-raised);
   border-radius: var(--theme-radius);
+}
+
+.dark .tabs-container {
+  background-color: var(--theme-surface-subtle);
 }
 
 .tab-item {
@@ -298,8 +346,13 @@
 }
 
 .tab-item.active {
-  @apply bg-white text-cool-grey-900 shadow-sm;
-  @apply dark:bg-dark-grey-700 dark:text-white;
+  @apply text-cool-grey-900 shadow-sm;
+  @apply dark:text-white;
+  background-color: var(--theme-white, #ffffff);
+}
+
+.dark .tab-item.active {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -308,9 +361,13 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .customer-header {
-  @apply sticky top-0 bg-white/95 backdrop-blur-sm;
-  @apply dark:bg-dark-grey-900/95;
+  @apply sticky top-0 backdrop-blur-sm;
+  background-color: color-mix(in srgb, var(--theme-white, #ffffff) 95%, transparent);
   z-index: 40;
+}
+
+.dark .customer-header {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 85%, black);
 }
 
 .customer-main {
@@ -325,10 +382,23 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .customer-card {
-  @apply bg-white border border-cool-grey-200;
-  @apply dark:bg-dark-grey-800 dark:border-dark-grey-600;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border-subtle);
   padding: var(--spacing-card-padding);
   border-radius: var(--theme-radius);
+}
+
+.dark .customer-card {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.theme-card-bg {
+  background-color: var(--theme-white, #ffffff);
+}
+
+.dark .theme-card-bg {
+  background-color: var(--theme-black, #1e2433);
 }
 
 .customer-card.interactive {
@@ -337,16 +407,17 @@
 }
 
 .dark .customer-card.interactive {
+  background-color: var(--theme-surface-raised);
   box-shadow: 0 1px 3px rgb(0 0 0 / 0.2), 0 2px 6px rgb(0 0 0 / 0.15);
 }
 
 .customer-card.interactive:hover {
-  @apply border-cool-grey-300;
+  border-color: var(--theme-border);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.06), 0 2px 4px rgb(0 0 0 / 0.04);
 }
 
 .dark .customer-card.interactive:hover {
-  @apply border-dark-grey-500;
+  background-color: color-mix(in srgb, var(--theme-black, #121212) 88%, white);
   box-shadow: 0 4px 12px rgb(0 0 0 / 0.3), 0 2px 4px rgb(0 0 0 / 0.2);
 }
 
@@ -381,8 +452,12 @@
 
 .empty-state-icon {
   @apply mx-auto h-12 w-12 mb-4 flex items-center justify-center;
-  @apply rounded-full bg-cool-grey-100;
-  @apply dark:bg-dark-grey-700;
+  @apply rounded-full;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .empty-state-icon {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 .empty-state-icon svg {
@@ -406,8 +481,15 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .input-group-card {
-  @apply overflow-hidden;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+  @apply shadow-md overflow-hidden;
   border-radius: var(--theme-radius);
+}
+
+.dark .input-group-card {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
 }
 
 .input-group-header {
@@ -453,22 +535,35 @@
 
 .installs-table th {
   @apply text-left text-xs font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide;
-  @apply px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600;
-  @apply bg-cool-grey-50 dark:bg-dark-grey-800/50;
+  @apply px-4 py-3;
+  background-color: var(--theme-surface-subtle);
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+.dark .installs-table th {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 50%, transparent);
 }
 
 .installs-table td {
   @apply px-4 py-4 text-sm text-cool-grey-700 dark:text-cool-grey-300;
-  @apply border-b border-cool-grey-100 dark:border-dark-grey-700;
+  border-bottom: 1px solid var(--theme-surface-raised);
 }
 
 .install-row {
   @apply cursor-pointer transition-colors duration-150;
-  @apply bg-white dark:bg-dark-grey-800;
+  background-color: var(--theme-white, #ffffff);
+}
+
+.dark .install-row {
+  background-color: var(--theme-black, #1e2433);
 }
 
 .install-row:hover {
-  @apply bg-cool-grey-50 dark:bg-dark-grey-700;
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .install-row:hover {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 .install-row.active {
@@ -514,11 +609,18 @@
 }
 
 .platform-chip-unknown {
-  @apply bg-cool-grey-100 text-cool-grey-700 dark:bg-dark-grey-700 dark:text-cool-grey-300;
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  background-color: var(--theme-surface-raised);
 }
 
 .platform-chip-region {
-  @apply bg-cool-grey-100 text-cool-grey-700 dark:bg-dark-grey-700 dark:text-cool-grey-300;
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .platform-chip-unknown,
+.dark .platform-chip-region {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -543,7 +645,12 @@
 }
 
 .health-pill-pending {
-  @apply bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-700 dark:text-cool-grey-400;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .health-pill-pending {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -562,13 +669,18 @@
 }
 
 .detail-panel {
-  @apply fixed top-0 right-0 h-full bg-white dark:bg-dark-grey-800;
-  @apply border-l border-cool-grey-200 dark:border-dark-grey-600;
+  @apply fixed top-0 right-0 h-full;
+  background-color: var(--theme-white, #ffffff);
   @apply transform translate-x-full transition-transform duration-300 ease-out;
   @apply flex flex-col;
+  border-left: 1px solid var(--theme-border-subtle);
   width: 70%;
   max-width: 900px;
   z-index: 51;
+}
+
+.dark .detail-panel {
+  background-color: var(--theme-black, #1e2433);
 }
 
 .detail-panel.open {
@@ -595,10 +707,14 @@
 
 .panel-header {
   @apply flex items-center justify-between gap-4 px-6 py-4;
-  @apply border-b border-cool-grey-200 dark:border-dark-grey-600;
-  @apply bg-white dark:bg-dark-grey-800;
+  background-color: var(--theme-white, #ffffff);
   @apply sticky top-0;
+  border-bottom: 1px solid var(--theme-border-subtle);
   z-index: 1;
+}
+
+.dark .panel-header {
+  background-color: var(--theme-black, #1e2433);
 }
 
 .panel-header h2 {
@@ -608,10 +724,14 @@
 .panel-close-btn {
   @apply flex items-center justify-center w-8 h-8 rounded-full;
   @apply text-cool-grey-500 hover:text-cool-grey-700 dark:text-cool-grey-400 dark:hover:text-white;
-  @apply hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700;
+  @apply dark:hover:bg-dark-grey-700;
   @apply transition-colors duration-150;
   font-size: 24px;
   line-height: 1;
+}
+
+.panel-close-btn:hover {
+  background-color: var(--theme-surface-raised);
 }
 
 /* Header action button (expand/collapse) */
@@ -619,8 +739,12 @@
   @apply flex items-center justify-center w-8 h-8 rounded-md;
   @apply text-cool-grey-500 hover:text-cool-grey-700;
   @apply dark:text-cool-grey-400 dark:hover:text-cool-grey-200;
-  @apply hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700;
+  @apply dark:hover:bg-dark-grey-700;
   @apply transition-colors duration-150;
+}
+
+.panel-header-btn:hover {
+  background-color: var(--theme-surface-raised);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -642,9 +766,14 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .panel-tab-headers {
-  @apply flex border-b border-cool-grey-200 dark:border-dark-grey-600;
-  @apply bg-cool-grey-50 dark:bg-dark-grey-900;
+  @apply flex;
   @apply px-6;
+  background-color: var(--theme-surface-subtle);
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+.dark .panel-tab-headers {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 85%, black);
 }
 
 .panel-tab-button {
@@ -679,7 +808,8 @@
 }
 
 .panel-loading-spinner {
-  @apply w-8 h-8 border-2 border-cool-grey-200 dark:border-dark-grey-600 rounded-full;
+  @apply w-8 h-8 border-2 rounded-full;
+  border-color: var(--theme-border-subtle);
   border-top-color: var(--theme-primary, #3b82f6);
   animation: spin 0.8s linear infinite;
 }
@@ -694,8 +824,8 @@
  * ───────────────────────────────────────────────────────────────────────────── */
 
 .overview-header {
-  @apply pb-4 mb-4 border-b border-cool-grey-200;
-  @apply dark:border-dark-grey-600;
+  @apply pb-4 mb-4;
+  border-bottom: 1px solid var(--theme-border-subtle);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -738,7 +868,7 @@
 
 .panel-actions {
   @apply flex flex-wrap gap-2 mt-4 pt-4;
-  @apply border-t border-cool-grey-200 dark:border-dark-grey-600;
+  border-top: 1px solid var(--theme-border-subtle);
 }
 
 .panel-action-btn {
@@ -757,16 +887,32 @@
 
 .panel-action-btn-secondary {
   @apply text-cool-grey-700 dark:text-cool-grey-300;
-  @apply bg-white dark:bg-dark-grey-700;
-  @apply border-cool-grey-300 dark:border-dark-grey-500;
-  @apply hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600;
+  background-color: var(--theme-white, #ffffff);
+  border-color: var(--theme-border);
+}
+
+.panel-action-btn-secondary:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .panel-action-btn-secondary {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+  border-color: transparent;
+}
+
+.dark .panel-action-btn-secondary:hover {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 94%, white);
 }
 
 .panel-action-btn-danger {
   @apply text-red-600 dark:text-red-400;
-  @apply bg-white dark:bg-dark-grey-700;
+  background-color: var(--theme-white, #ffffff);
   @apply border-red-300 dark:border-red-800;
   @apply hover:bg-red-50 dark:hover:bg-red-900/20;
+}
+
+.dark .panel-action-btn-danger {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -775,10 +921,15 @@
  * ───────────────────────────────────────────────────────────────────────────── */
 
 .table-wrapper {
-  @apply bg-white dark:bg-dark-grey-800;
-  @apply border border-cool-grey-200 dark:border-dark-grey-600;
+  background-color: var(--theme-white, #ffffff);
   @apply overflow-hidden;
+  border: 1px solid var(--theme-border-subtle);
   border-radius: var(--theme-radius);
+}
+
+.dark .table-wrapper {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
 }
 
 .table-wrapper .installs-table th:first-child {
@@ -787,4 +938,350 @@
 
 .table-wrapper .installs-table th:last-child {
   border-top-right-radius: var(--theme-radius);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PAGE BACKGROUND
+ * Vendor-customizable page background colors
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+body {
+  background-color: var(--theme-white, #fafafa);
+}
+
+.dark body {
+  background-color: var(--theme-black, #121212);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * CARD VARIANTS
+ * Shadow cards with theme-aware border and radius
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+/* Standard card: var(--spacing-card-padding) = 24px padding */
+.card-base {
+  background-color: var(--theme-white, #ffffff);
+  @apply shadow-md;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+  padding: var(--spacing-card-padding);
+}
+
+.dark .card-base {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+/* Large card: 32px padding (install/form pages) */
+.card-lg {
+  background-color: var(--theme-white, #ffffff);
+  @apply shadow-md;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+  padding: 32px;
+}
+
+.dark .card-lg {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+/* Divider section within a card */
+.card-section-divider {
+  @apply pb-4 mb-4;
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * COMPACT FORM FIELDS
+ * Distinct from .input-theme (large login-page input)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.field-input {
+  @apply block w-full px-3 py-2;
+  @apply dark:text-white;
+  @apply focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+}
+
+.dark .field-input {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle);
+}
+
+.field-label {
+  @apply block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1;
+}
+
+.field-hint {
+  @apply text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1;
+}
+
+.field-checkbox {
+  @apply mt-1 h-4 w-4 text-primary-600 rounded;
+  @apply focus:ring-primary-400;
+  border-color: var(--theme-border);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TYPOGRAPHY HELPERS
+ * Dark-mode content color pairs
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.text-primary-content   { @apply text-cool-grey-900 dark:text-white; }
+.text-secondary-content { @apply text-cool-grey-700 dark:text-cool-grey-300; }
+.text-muted-content     { @apply text-cool-grey-500 dark:text-cool-grey-400; }
+.text-section-label {
+  @apply text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400 mb-3;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * DROPDOWN MENU
+ * Theme-aware dropdown components
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.dropdown-trigger {
+  background-color: var(--theme-white, #ffffff);
+  @apply inline-flex items-center px-3 py-1.5 text-sm font-medium;
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  @apply dark:hover:bg-dark-grey-700 transition-colors;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+}
+
+.dropdown-trigger:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .dropdown-trigger {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.dropdown-menu {
+  background-color: var(--theme-white, #ffffff);
+  @apply absolute right-0 mt-2 w-48;
+  @apply shadow-lg z-10;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+}
+
+.dark .dropdown-menu {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.dropdown-item {
+  @apply block w-full text-left px-4 py-2 text-sm;
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  @apply dark:hover:bg-dark-grey-700;
+}
+
+.dropdown-item:hover {
+  background-color: var(--theme-surface-raised);
+}
+
+.dropdown-item-danger {
+  @apply block w-full text-left px-4 py-2 text-sm;
+  @apply text-red-600 dark:text-red-400;
+  @apply dark:hover:bg-dark-grey-700;
+}
+
+.dropdown-item-danger:hover {
+  background-color: var(--theme-surface-raised);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PAGINATION BUTTONS
+ * Theme-aware pagination controls
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.pagination-btn {
+  background-color: var(--theme-white, #ffffff);
+  @apply relative inline-flex items-center px-2 py-2;
+  @apply text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400;
+  @apply dark:hover:bg-dark-grey-700;
+  border: 1px solid var(--theme-border);
+}
+
+.pagination-btn:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .pagination-btn {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.pagination-btn-disabled {
+  @apply relative inline-flex items-center px-2 py-2;
+  @apply text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 cursor-not-allowed;
+  background-color: var(--theme-surface-raised);
+  border: 1px solid var(--theme-border);
+}
+
+.dark .pagination-btn-disabled {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+  border-color: transparent;
+}
+
+.pagination-nav-btn {
+  background-color: var(--theme-white, #ffffff);
+  @apply inline-flex items-center px-4 py-2 text-sm font-medium;
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  @apply dark:hover:bg-dark-grey-700;
+  border: 1px solid var(--theme-border);
+  border-radius: var(--theme-radius);
+}
+
+.pagination-nav-btn:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .pagination-nav-btn {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * STATUS CHIPS
+ * Small inline status indicators (distinct from .badge-* pill-shaped badges)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.chip-sm-warning {
+  @apply inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs;
+  @apply bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300;
+}
+
+.chip-sm-success {
+  @apply inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs;
+  @apply bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300;
+}
+
+.chip-sm-neutral {
+  @apply inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs;
+  @apply text-cool-grey-600 dark:text-cool-grey-300;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .chip-sm-neutral {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * ACCOUNT INFO BOX
+ * Green confirmation box used in install flow
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.account-info-box {
+  @apply bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * NEUTRAL BUTTON
+ * Muted button for secondary/inactive actions
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.btn-neutral {
+  @apply text-cool-grey-700 dark:text-cool-grey-300;
+  @apply transition-colors;
+  background-color: var(--theme-surface-raised);
+}
+
+.btn-neutral:hover {
+  background-color: var(--theme-border-subtle);
+}
+
+.dark .btn-neutral {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+}
+
+.dark .btn-neutral:hover {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 94%, white);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * USER MENU COMPONENTS
+ * Trigger button and avatar for user menu
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.user-menu-trigger {
+  @apply flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer;
+  @apply dark:hover:bg-dark-grey-700 transition-colors;
+  border: 1px solid var(--theme-border-subtle);
+}
+
+.user-menu-trigger:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .user-menu-trigger {
+  border-color: transparent;
+}
+
+.user-avatar {
+  @apply w-8 h-8 rounded-md flex items-center justify-center text-sm font-semibold uppercase;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+  background-color: var(--theme-border-subtle);
+}
+
+.dark .user-avatar {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 94%, white);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * STATUS CARD
+ * Nested content block inside workflow cards and similar containers
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.status-card {
+  background-color: var(--theme-surface-subtle);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--theme-radius);
+}
+
+.dark .status-card {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * TABS DIVIDER
+ * Tab navigation underline wrapper
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.tabs-divider {
+  border-bottom: 1px solid var(--theme-border-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * HR DIVIDER
+ * <hr> styled separator using theme border token
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.hr-divider {
+  border-color: var(--theme-border-subtle);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * NAV ITEM
+ * Main customer portal nav link — bottom-border active indicator
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.nav-item {
+  @apply px-4 py-2 text-sm font-medium;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+  @apply border-b-2 border-transparent;
+  @apply transition-colors duration-150 ease-linear;
+  margin-bottom: -1px;
+}
+
+.nav-item:hover {
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+.nav-item.active {
+  @apply text-cool-grey-900 dark:text-white;
+  border-color: var(--theme-primary, #3b82f6);
 }

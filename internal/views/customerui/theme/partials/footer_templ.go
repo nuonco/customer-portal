@@ -14,34 +14,10 @@ import (
 
 // FooterProps contains props for the customer footer component
 type FooterProps struct {
-	Theme          *models.AppTheme
-	SupportContact string
+	Theme *models.AppTheme
 }
 
-// GetSupportContact returns the support contact from theme or the provided contact
-func (p *FooterProps) GetSupportContact() string {
-	if p.SupportContact != "" {
-		return p.SupportContact
-	}
-	if p.Theme != nil && p.Theme.SupportContact != "" {
-		return p.Theme.SupportContact
-	}
-	return ""
-}
-
-// GetSupportHref returns the support href (mailto: or http://)
-func (p *FooterProps) GetSupportHref() string {
-	contact := p.GetSupportContact()
-	if contact == "" {
-		return ""
-	}
-	if len(contact) > 4 && contact[:4] == "http" {
-		return contact
-	}
-	return "mailto:" + contact
-}
-
-// Footer renders the customer footer with support contact link.
+// Footer renders the customer footer.
 func Footer(props FooterProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -63,52 +39,7 @@ func Footer(props FooterProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<footer class=\"max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto\"><div class=\"text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if props.GetSupportContact() != "" {
-			var templ_7745c5c3_Var2 string
-			templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/footer.templ`, Line: 41, Col: 8}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "·")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var3 string
-			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/footer.templ`, Line: 41, Col: 15}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, " <a href=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 templ.SafeURL
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.GetSupportHref()))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/footer.templ`, Line: 42, Col: 51}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors\">Contact Support</a>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></footer>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<footer class=\"max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto\"><div class=\"text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body\"></div></footer>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -1,0 +1,21 @@
+package partials
+
+// LogoHeroProps contains props for the logo hero component
+type LogoHeroProps struct {
+	LogoLightBase64 string
+	LogoDarkBase64  string
+}
+
+// LogoHero renders a right-aligned logo block. Renders nothing when no logo is set.
+templ LogoHero(props LogoHeroProps) {
+	if props.LogoLightBase64 != "" || props.LogoDarkBase64 != "" {
+		<div class="flex justify-start px-6 lg:px-8 py-4">
+			if props.LogoDarkBase64 != "" {
+				<img src={ props.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain dark:hidden"/>
+				<img src={ props.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain hidden dark:block"/>
+			} else {
+				<img src={ props.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain"/>
+			}
+		</div>
+	}
+}

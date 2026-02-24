@@ -18,16 +18,25 @@ type AppTheme struct {
 	SecondaryColorDark        string    `json:"secondary_color_dark"`      // Hex color for links and accents (dark mode)
 	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`
 	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`
+	FaviconBase64             string    `json:"favicon_base64,omitempty"`
 	SupportContact            string    `json:"support_contact"`
 	HeadingFont               string    `json:"heading_font"`
 	BodyFont                  string    `json:"body_font"`
 	HeadingFontBase64         string    `json:"heading_font_base64"`
 	BodyFontBase64            string    `json:"body_font_base64"`
+	HeadingFontName           string    `json:"heading_font_name"` // Original filename of uploaded heading font
+	BodyFontName              string    `json:"body_font_name"`    // Original filename of uploaded body font
+	WhiteColor                string    `json:"white_color"`       // Background color for light mode (pages, panels, cards)
+	BlackColor                string    `json:"black_color"`       // Background color for dark mode (pages, panels, cards)
+	WhiteColorDark            string    `json:"white_color_dark"`  // Optional: --theme-white override for dark mode
+	BlackColorLight           string    `json:"black_color_light"` // Optional: --theme-black override for light mode
 	BorderRadius              string    `json:"border_radius"`
+	ThemeMode                 string    `json:"theme_mode"` // "auto" (default), "light", "dark"
 	LoginTitle                string    `json:"login_title"`
 	LoginSubtitle             string    `json:"login_subtitle"`
 	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`
 	LoginRightSideGradient    string    `json:"login_right_side_gradient"`
+	CustomCSS                 string    `json:"custom_css"` // Vendor-injected CSS for the customer portal
 	CreatedAt                 time.Time `json:"created_at"`
 	UpdatedAt                 time.Time `json:"updated_at"`
 
@@ -58,6 +67,27 @@ const (
 
 // ValidBorderRadiusValues are the allowed values for BorderRadius
 var ValidBorderRadiusValues = []string{"sharp", "subtle", "rounded", "very-rounded"}
+
+// ValidThemeModeValues are the allowed values for ThemeMode
+var ValidThemeModeValues = []string{"auto", "light", "dark"}
+
+// IsValidThemeMode checks if a value is a valid theme mode option
+func IsValidThemeMode(value string) bool {
+	for _, v := range ValidThemeModeValues {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+// GetThemeMode returns the theme mode, defaulting to "auto" if empty.
+func (t *AppTheme) GetThemeMode() string {
+	if t.ThemeMode == "" {
+		return "auto"
+	}
+	return t.ThemeMode
+}
 
 // IsValidBorderRadius checks if a value is a valid border radius option
 func IsValidBorderRadius(value string) bool {

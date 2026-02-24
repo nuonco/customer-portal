@@ -15,7 +15,7 @@
 
   /* Border colors */
   --border-color-light: #dee3e7;
-  --border-color-dark: #27252a;
+  --border-color-dark: #282828;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * PRIMARY - Purple (Stratus brand color)
@@ -110,16 +110,16 @@
   /* ─────────────────────────────────────────────────────────────────────────────
    * DARK GREY - Dark mode neutrals
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-dark-grey-50: #3E3D41;
-  --color-dark-grey-100: #3A383C;
-  --color-dark-grey-200: #353337;
-  --color-dark-grey-300: #302E33;
-  --color-dark-grey-400: #2C2A2E;
-  --color-dark-grey-500: #27252A;
-  --color-dark-grey-600: #222025;
-  --color-dark-grey-700: #1D1B20;
-  --color-dark-grey-800: #19171C;
-  --color-dark-grey-900: #141217;
+  --color-dark-grey-50: #3F3F3F;
+  --color-dark-grey-100: #3A3A3A;
+  --color-dark-grey-200: #363636;
+  --color-dark-grey-300: #303030;
+  --color-dark-grey-400: #2C2C2C;
+  --color-dark-grey-500: #282828;
+  --color-dark-grey-600: #232323;
+  --color-dark-grey-700: #1E1E1E;
+  --color-dark-grey-800: #1A1A1A;
+  --color-dark-grey-900: #151515;
   --color-dark-grey-950: #121212;
 
   /* ─────────────────────────────────────────────────────────────────────────────

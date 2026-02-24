@@ -22,6 +22,8 @@ type PreviewContainerProps struct {
 	InitialSize    string              // "desktop", "tablet", or "mobile" (default: "desktop")
 	PrimaryColor   string              // CSS hex color for --preview-primary
 	SecondaryColor string              // CSS hex color for --preview-secondary
+	WhiteColor     string              // CSS hex color for --preview-white (light background)
+	BlackColor     string              // CSS hex color for --preview-black (dark background)
 	PageOptions    []PreviewPageOption // optional page selector options
 }
 
@@ -70,6 +72,20 @@ func (p PreviewContainerProps) getSecondaryColor() string {
 	return p.SecondaryColor
 }
 
+func (p PreviewContainerProps) getWhiteColor() string {
+	if p.WhiteColor == "" {
+		return "#f8fafc"
+	}
+	return p.WhiteColor
+}
+
+func (p PreviewContainerProps) getBlackColor() string {
+	if p.BlackColor == "" {
+		return "#121212"
+	}
+	return p.BlackColor
+}
+
 // PreviewContainer renders a reusable preview container with device size and light/dark mode toggles
 func PreviewContainer(props PreviewContainerProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -99,7 +115,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 70, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 86, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -112,7 +128,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 71, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 87, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -135,7 +151,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 82, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 98, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -148,7 +164,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 82, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 98, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -311,9 +327,9 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + ";")
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 181, Col: 121}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 197, Col: 217}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -390,7 +406,7 @@ func previewContainerStyles() templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<style>\n\t\t/* Light mode preview */\n\t\t.preview-light .preview-page-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-card { background-color: #ffffff; border: 1px solid #d1d5db; }\n\t\t.preview-light .preview-text-heading { color: #374151; }\n\t\t.preview-light .preview-text-body { color: #1f2937; }\n\t\t.preview-light .preview-text-muted { color: #6b7280; }\n\t\t.preview-light .preview-status-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-status-border { border: 1px solid #e5e7eb; }\n\t\t.preview-light .preview-logo-light { display: block; }\n\t\t.preview-light .preview-logo-dark { display: none !important; }\n\n\t\t/* Dark mode preview */\n\t\t.preview-dark .preview-page-bg { background-color: #0f172a; }\n\t\t.preview-dark .preview-card { background-color: #1e293b; border: 1px solid #334155; }\n\t\t.preview-dark .preview-text-heading { color: #e2e8f0; }\n\t\t.preview-dark .preview-text-body { color: #f8fafc; }\n\t\t.preview-dark .preview-text-muted { color: #94a3b8; }\n\t\t.preview-dark .preview-status-bg { background-color: #1e293b; }\n\t\t.preview-dark .preview-status-border { border: 1px solid #334155; }\n\t\t.preview-dark .preview-logo-light { display: none !important; }\n\t\t.preview-dark .preview-logo-dark { display: block; }\n\n\t\t/* Desktop: 1280x800 viewport, scaled to 832x520 displayed */\n\t\t.preview-size-desktop {\n\t\t\ttransform: scale(0.65);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 1280px;\n\t\t\theight: 800px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Tablet: 768x1024 viewport (iPad portrait), scaled to 576x768 displayed */\n\t\t.preview-size-tablet {\n\t\t\ttransform: scale(0.75);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 768px;\n\t\t\theight: 1024px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Mobile: 375x667 viewport (iPhone), scaled to 319x567 displayed */\n\t\t.preview-size-mobile {\n\t\t\ttransform: scale(0.85);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 375px;\n\t\t\theight: 667px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Container sizes to match scaled output */\n\t\t.preview-container-desktop { width: 832px; height: 520px; overflow: hidden; }\n\t\t.preview-container-tablet { width: 576px; height: 768px; overflow: hidden; }\n\t\t.preview-container-mobile { width: 319px; height: 567px; overflow: hidden; }\n\n\t\t/* Mobile preview responsive adjustments */\n\t\t.preview-size-mobile .preview-card .flex.gap-6 {\n\t\t\tflex-direction: column;\n\t\t\tgap: 1rem;\n\t\t}\n\t\t.preview-size-mobile .preview-text-muted {\n\t\t\tfont-size: 0.7rem;\n\t\t}\n\t\t.preview-size-mobile header .flex.items-center.justify-between {\n\t\t\tflex-direction: column;\n\t\t\talign-items: flex-start;\n\t\t\tgap: 0.5rem;\n\t\t}\n\t/* Ensure page section wrappers fill the full scaler height */\n\t.preview-page-section { height: 100%; }\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<style>\n\t\t/* Light mode preview */\n\t\t.preview-light .preview-page-bg { background-color: var(--preview-white, #f8fafc); }\n\t\t.preview-light .preview-card { background-color: var(--preview-white, #ffffff); border: 1px solid #d1d5db; }\n\t\t.preview-light .preview-text-heading { color: #374151; }\n\t\t.preview-light .preview-text-body { color: #1f2937; }\n\t\t.preview-light .preview-text-muted { color: #6b7280; }\n\t\t.preview-light .preview-status-bg { background-color: #f8fafc; }\n\t\t.preview-light .preview-status-border { border: 1px solid #e5e7eb; }\n\t\t.preview-light .preview-logo-light { display: block; }\n\t\t.preview-light .preview-logo-dark { display: none !important; }\n\n\t\t/* Dark mode preview */\n\t\t.preview-dark .preview-page-bg { background-color: var(--preview-black, #121212); }\n\t\t.preview-dark .preview-card { background-color: var(--preview-black, #1a1a1a); border: 1px solid #232323; }\n\t\t.preview-dark .preview-text-heading { color: #ffffff; }\n\t\t.preview-dark .preview-text-body { color: #ffffff; }\n\t\t.preview-dark .preview-text-muted { color: #9ea8b3; }\n\t\t.preview-dark .preview-status-bg { background-color: #1a1a1a; }\n\t\t.preview-dark .preview-status-border { border: 1px solid #232323; }\n\t\t.preview-dark .preview-logo-light { display: none !important; }\n\t\t.preview-dark .preview-logo-dark { display: block; }\n\n\t\t/* Desktop: 1280x800 viewport, scaled to 832x520 displayed */\n\t\t.preview-size-desktop {\n\t\t\ttransform: scale(0.65);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 1280px;\n\t\t\theight: 800px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Tablet: 768x1024 viewport (iPad portrait), scaled to 576x768 displayed */\n\t\t.preview-size-tablet {\n\t\t\ttransform: scale(0.75);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 768px;\n\t\t\theight: 1024px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Mobile: 375x667 viewport (iPhone), scaled to 319x567 displayed */\n\t\t.preview-size-mobile {\n\t\t\ttransform: scale(0.85);\n\t\t\ttransform-origin: top left;\n\t\t\twidth: 375px;\n\t\t\theight: 667px;\n\t\t\toverflow: hidden;\n\t\t}\n\n\t\t/* Container sizes to match scaled output */\n\t\t.preview-container-desktop { width: 832px; height: 520px; overflow: hidden; }\n\t\t.preview-container-tablet { width: 576px; height: 768px; overflow: hidden; }\n\t\t.preview-container-mobile { width: 319px; height: 567px; overflow: hidden; }\n\n\t\t/* Mobile preview responsive adjustments */\n\t\t.preview-size-mobile .preview-card .flex.gap-6 {\n\t\t\tflex-direction: column;\n\t\t\tgap: 1rem;\n\t\t}\n\t\t.preview-size-mobile .preview-text-muted {\n\t\t\tfont-size: 0.7rem;\n\t\t}\n\t\t.preview-size-mobile header .flex.items-center.justify-between {\n\t\t\tflex-direction: column;\n\t\t\talign-items: flex-start;\n\t\t\tgap: 0.5rem;\n\t\t}\n\t/* Ensure page section wrappers fill the full scaler height */\n\t.preview-page-section { height: 100%; }\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

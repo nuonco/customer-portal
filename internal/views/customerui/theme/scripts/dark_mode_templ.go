@@ -8,12 +8,10 @@ package scripts
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-// DarkMode adds dark mode detection and toggle functionality.
-// This script:
-// - Detects the user's system dark mode preference
-// - Automatically applies dark mode class to the document
-// - Listens for system theme changes and updates accordingly
-func DarkMode() templ.Component {
+// DarkMode adds dark mode detection for auto mode only.
+// For "light" and "dark" modes, the class is baked into the <html> tag at render time,
+// so no JS is needed. For "auto" (default), JS follows the system preference.
+func DarkMode(themeMode string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -34,9 +32,11 @@ func DarkMode() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n\t\t(function() {\n\t\t\t// Check if user prefers dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\n\t\t\t// Listen for changes to the system theme preference\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\t\t})();\n\t</script>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if themeMode == "auto" || themeMode == "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<script>\n\t\t\t(function() {\n\t\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t\t}\n\t\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t\t});\n\t\t\t})();\n\t\t</script>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
 		return nil
 	})

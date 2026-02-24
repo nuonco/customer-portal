@@ -55,6 +55,7 @@ templ Layout(props LayoutProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
+			<link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
 			<!-- Stratus Design System - Vendor CSS -->
 			<link href={ props.CSSPath } rel="stylesheet"/>
 			<!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->
@@ -95,7 +96,7 @@ templ Layout(props LayoutProps) {
 					OrgStatusMessage: props.OrgStatusMessage,
 				})
 				<!-- Main Content Area -->
-				<div class="flex-1 flex flex-col h-full overflow-hidden">
+				<div class="flex-1 flex flex-col h-full">
 					<!-- Topbar with Breadcrumbs -->
 					@partials.Topbar(partials.TopbarProps{
 						Breadcrumbs:      props.Breadcrumbs,

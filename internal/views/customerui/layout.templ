@@ -11,17 +11,23 @@ import (
 // Layout renders the customer layout with header, content area, and footer
 templ Layout(props LayoutProps) {
 	<!DOCTYPE html>
-	<html lang="en" class="h-full">
+	<html lang="en" class={ "h-full", templ.KV("dark", props.ThemeMode == "dark"), templ.KV("light", props.ThemeMode == "light") } data-theme-mode={ props.ThemeMode }>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
+			if props.FaviconBase64 != "" {
+				<link rel="icon" href={ props.FaviconBase64 }/>
+			}
 
 			<!-- Customer CSS -->
 			<link href={ props.CSSPath } rel="stylesheet"/>
+			if props.CustomCSSPath != "" {
+				<link href={ props.CustomCSSPath } rel="stylesheet"/>
+			}
 
 			<!-- Dark mode detection -->
-			@scripts.DarkMode()
+			@scripts.DarkMode(props.ThemeMode)
 
 			<!-- Font loading -->
 			@fontLinks(props)
@@ -55,7 +61,6 @@ templ Layout(props LayoutProps) {
 				<!-- Footer -->
 				@partials.Footer(partials.FooterProps{
 					Theme: convertPropsToTheme(props),
-					SupportContact: props.SupportContact,
 				})
 			</div>
 
@@ -76,25 +81,7 @@ templ fontLinks(props LayoutProps) {
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 
-	<!-- Custom fonts -->
-	if props.HeadingFontBase64 != "" {
-		<style>
-			@font-face {
-				font-family: 'CustomHeading';
-				src: url({ props.HeadingFontBase64 }) format('woff2');
-				font-display: swap;
-			}
-		</style>
-	}
-	if props.BodyFontBase64 != "" {
-		<style>
-			@font-face {
-				font-family: 'CustomBody';
-				src: url({ props.BodyFontBase64 }) format('woff2');
-				font-display: swap;
-			}
-		</style>
-	}
+	<!-- Custom font @font-face declarations are emitted by themeStyles() via buildThemeCSS() -->
 
 	<!-- Google Fonts -->
 	if (props.HeadingFont != "" && props.HeadingFontBase64 == "") || (props.BodyFont != "" && props.BodyFontBase64 == "") {
@@ -115,6 +102,17 @@ templ themeStyles(props LayoutProps) {
 
 // buildThemeCSS builds the theme CSS from LayoutProps
 func buildThemeCSS(props LayoutProps) string {
+	// Build @font-face for custom uploaded fonts using Go string concatenation.
+	// This cannot be done in a templ <style> block because templ does not
+	// interpolate { expr } expressions inside style element content.
+	fontFaceCSS := ""
+	if props.HeadingFontBase64 != "" {
+		fontFaceCSS += "@font-face{font-family:'CustomHeading';src:url(" + props.HeadingFontBase64 + ") format('woff2');font-display:swap;}"
+	}
+	if props.BodyFontBase64 != "" {
+		fontFaceCSS += "@font-face{font-family:'CustomBody';src:url(" + props.BodyFontBase64 + ") format('woff2');font-display:swap;}"
+	}
+
 	css := ""
 	if props.PrimaryColor != "" {
 		css += "--theme-primary: " + props.PrimaryColor + ";"
@@ -123,6 +121,16 @@ func buildThemeCSS(props LayoutProps) string {
 	if props.SecondaryColor != "" {
 		css += "--theme-secondary: " + props.SecondaryColor + ";"
 		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
+	}
+	if props.WhiteColor != "" {
+		css += "--theme-white: " + props.WhiteColor + ";"
+	}
+	blackForRoot := props.BlackColor
+	if props.BlackColorLight != "" {
+		blackForRoot = props.BlackColorLight
+	}
+	if blackForRoot != "" {
+		css += "--theme-black: " + blackForRoot + ";"
 	}
 	if props.HeadingFontBase64 != "" {
 		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
@@ -134,16 +142,29 @@ func buildThemeCSS(props LayoutProps) string {
 	} else if props.BodyFont != "" {
 		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	}
-	if css == "" {
+	if fontFaceCSS == "" && css == "" {
 		return ""
 	}
-	return "<style>:root{" + css + "}</style>"
+	darkCSS := ""
+	if props.WhiteColorDark != "" {
+		darkCSS += "--theme-white: " + props.WhiteColorDark + ";"
+	}
+	if props.BlackColor != "" {
+		darkCSS += "--theme-black: " + props.BlackColor + ";"
+	}
+	if css != "" && darkCSS != "" {
+		return "<style>" + fontFaceCSS + ":root{" + css + "}.dark{" + darkCSS + "}</style>"
+	}
+	if css != "" {
+		return "<style>" + fontFaceCSS + ":root{" + css + "}</style>"
+	}
+	return "<style>" + fontFaceCSS + "</style>"
 }
 
 // convertPropsToTheme converts LayoutProps to a minimal AppTheme for components
 func convertPropsToTheme(props LayoutProps) *models.AppTheme {
 	return &models.AppTheme{
 		LogoLightBase64: props.LogoBase64,
-		SupportContact:  props.SupportContact,
+		LogoDarkBase64:  props.LogoDarkBase64,
 	}
 }

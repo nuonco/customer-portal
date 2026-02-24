@@ -32,6 +32,21 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 		css += "--theme-secondary-hover:" + DarkenColor(theme.PrimaryColor, 20) + ";"
 	}
 
+	// White/Black background colors
+	if theme != nil && theme.WhiteColor != "" {
+		css += "--theme-white:" + theme.WhiteColor + ";"
+	}
+	blackForRoot := ""
+	if theme != nil {
+		blackForRoot = theme.BlackColor
+		if theme.BlackColorLight != "" {
+			blackForRoot = theme.BlackColorLight
+		}
+	}
+	if blackForRoot != "" {
+		css += "--theme-black:" + blackForRoot + ";"
+	}
+
 	// Heading font
 	if theme != nil && theme.HeadingFontBase64 != "" {
 		css += "--font-heading:'CustomHeading','Inter',ui-sans-serif,system-ui,sans-serif;"
@@ -70,6 +85,18 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 
 	if css == ":root{}" {
 		return ""
+	}
+
+	// Append .dark{} block for dark-mode overrides
+	darkCSS := ""
+	if theme != nil && theme.WhiteColorDark != "" {
+		darkCSS += "--theme-white:" + theme.WhiteColorDark + ";"
+	}
+	if theme != nil && theme.BlackColor != "" {
+		darkCSS += "--theme-black:" + theme.BlackColor + ";"
+	}
+	if darkCSS != "" {
+		return "<style>" + css + ".dark{" + darkCSS + "}</style>"
 	}
 
 	return "<style>" + css + "</style>"

@@ -159,7 +159,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10\" style=\"border-radius: var(--theme-radius)\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</h1></div></div></nav><main class=\"container mx-auto p-4\"><div class=\"max-w-md mx-auto card-base mt-10\"><h2 class=\"text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -177,7 +177,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.Error != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300\" style=\"border-radius: var(--theme-radius)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<div class=\"mb-4 alert-error\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -195,7 +195,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<form id=\"registerForm\" class=\"space-y-4\"><div><label for=\"name\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your name\"></div><div><label for=\"email\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Email</label> <input type=\"email\" id=\"email\" name=\"email\" required class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your email\"></div><div><label for=\"password\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Password</label> <input type=\"password\" id=\"password\" name=\"password\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Enter your password (min 8 characters)\"></div><div><label for=\"confirmPassword\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300\">Confirm Password</label> <input type=\"password\" id=\"confirmPassword\" name=\"confirmPassword\" required minlength=\"8\" class=\"mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" style=\"border-radius: var(--theme-radius)\" placeholder=\"Confirm your password\"></div><button type=\"submit\" class=\"w-full bg-theme-primary hover:bg-theme-primary-hover text-white py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500\" style=\"border-radius: var(--theme-radius)\">Create Account</button></form><p class=\"mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center\">Already have an account? ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<form id=\"registerForm\" class=\"space-y-4\"><div><label for=\"name\" class=\"field-label\">Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 field-input\" placeholder=\"Enter your name\"></div><div><label for=\"email\" class=\"field-label\">Email</label> <input type=\"email\" id=\"email\" name=\"email\" required class=\"mt-1 field-input\" placeholder=\"Enter your email\"></div><div><label for=\"password\" class=\"field-label\">Password</label> <input type=\"password\" id=\"password\" name=\"password\" required minlength=\"8\" class=\"mt-1 field-input\" placeholder=\"Enter your password (min 8 characters)\"></div><div><label for=\"confirmPassword\" class=\"field-label\">Confirm Password</label> <input type=\"password\" id=\"confirmPassword\" name=\"confirmPassword\" required minlength=\"8\" class=\"mt-1 field-input\" placeholder=\"Confirm your password\"></div><button type=\"submit\" class=\"w-full btn-theme-primary\">Create Account</button></form><p class=\"mt-4 text-sm text-cool-grey-600 dark:text-cool-grey-400 text-center\">Already have an account? ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -207,7 +207,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 			var templ_7745c5c3_Var10 templ.SafeURL
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login?redirect=" + props.RedirectURL))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 127, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 122, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +225,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 			var templ_7745c5c3_Var11 templ.SafeURL
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 129, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 124, Col: 57}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -236,14 +236,14 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p><div id=\"error\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden\" style=\"border-radius: var(--theme-radius)\"></div></div></main><!-- Config data for JavaScript --><div id=\"register-config\" class=\"hidden\" data-register-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p><div id=\"error\" class=\"mt-4 alert-error hidden\"></div></div></main><!-- Config data for JavaScript --><div id=\"register-config\" class=\"hidden\" data-register-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/register")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 140, Col: 92}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 131, Col: 92}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -256,7 +256,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/login")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 140, Col: 137}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 131, Col: 137}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
@@ -269,7 +269,7 @@ func RegisterPage(props RegisterPageProps) templ.Component {
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.RedirectURL)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 140, Col: 177}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/register.templ`, Line: 131, Col: 177}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {

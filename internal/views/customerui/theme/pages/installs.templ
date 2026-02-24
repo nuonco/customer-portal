@@ -18,11 +18,14 @@ type InstallsPageProps struct {
 // InstallsPage renders the customer installs page with table layout and sliding panel
 templ InstallsPage(props InstallsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
+		<div class="mb-8">
+			<p class="text-cool-grey-600 dark:text-cool-grey-400">Manage your installs.</p>
+		</div>
 		if props.Pagination.NeedsAttentionCount+props.Pagination.UpdatingCount+props.Pagination.HealthyCount > 0 {
 			<!-- Tab Interface -->
 			<div class="mb-6">
-				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-					<nav class="-mb-px flex space-x-8">
+				<div class="tabs-divider">
+					<nav class="flex">
 						@installTab("needs-attention", "Needs Attention", props.Pagination.CurrentTab, props.Pagination.NeedsAttentionCount, props.PrimaryColor)
 						@installTab("updating", "Updating", props.Pagination.CurrentTab, props.Pagination.UpdatingCount, props.PrimaryColor)
 						@installTab("healthy", "Healthy", props.Pagination.CurrentTab, props.Pagination.HealthyCount, props.PrimaryColor)
@@ -158,14 +161,18 @@ templ InstallsPage(props InstallsPageProps) {
 							<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
 						</svg>
 					</button>
-					<button class="panel-close-btn" onclick="closeInstallPanel()" aria-label="Close panel">&times;</button>
+					<button class="panel-close-btn" onclick="closeInstallPanel()" aria-label="Close panel">
+					<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+						<path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
+					</svg>
+				</button>
 				</div>
 			</div>
 			<!-- Tab Headers -->
 			<div class="panel-tab-headers">
-				<button id="tab-overview-btn" class="panel-tab-button active" onclick="switchPanelTab('overview')">Overview</button>
-				<button id="tab-history-btn" class="panel-tab-button" onclick="switchPanelTab('history')">History</button>
-				<button id="tab-audit-btn" class="panel-tab-button" onclick="switchPanelTab('audit')">Audit Log</button>
+				<button id="tab-overview-btn" class="nav-item active" onclick="switchPanelTab('overview')">Overview</button>
+				<button id="tab-history-btn" class="nav-item" onclick="switchPanelTab('history')">History</button>
+				<button id="tab-audit-btn" class="nav-item" onclick="switchPanelTab('audit')">Audit Log</button>
 			</div>
 			<div class="panel-content">
 				<!-- Overview Tab -->
@@ -211,29 +218,6 @@ templ installTab(tabID, label, currentTab string, count int64, primaryColor stri
 	{{
 		isActive := currentTab == tabID || (tabID == "needs-attention" && currentTab == "")
 
-		// Determine tab colors
-		borderClass := "border-transparent"
-		textClass := "text-cool-grey-500 hover:text-cool-grey-700 dark:hover:text-cool-grey-300 hover:border-cool-grey-300 dark:hover:border-dark-grey-500"
-
-		if isActive {
-			switch tabID {
-			case "needs-attention":
-				borderClass = "border-orange-500"
-				textClass = "text-orange-600"
-			case "updating":
-				if primaryColor != "" {
-					borderClass = "border-theme-primary"
-					textClass = "text-theme-primary"
-				} else {
-					borderClass = "border-primary-600"
-					textClass = "text-primary-600"
-				}
-			case "healthy":
-				borderClass = "border-green-500"
-				textClass = "text-green-600"
-			}
-		}
-
 		// Badge colors
 		badgeBgClass := "bg-cool-grey-100 dark:bg-dark-grey-700"
 		badgeTextClass := "text-cool-grey-900 dark:text-cool-grey-300"
@@ -252,15 +236,21 @@ templ installTab(tabID, label, currentTab string, count int64, primaryColor stri
 			}
 		}
 	}}
-	<a
-		href={ templ.SafeURL("?tab=" + tabID) }
-		class={ "whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm", borderClass, textClass }
-	>
-		{ label }
-		<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
-			{ fmt.Sprintf("%d", count) }
-		</span>
-	</a>
+	if isActive {
+		<a href={ templ.SafeURL("?tab=" + tabID) } class="nav-item active">
+			{ label }
+			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
+				{ fmt.Sprintf("%d", count) }
+			</span>
+		</a>
+	} else {
+		<a href={ templ.SafeURL("?tab=" + tabID) } class="nav-item">
+			{ label }
+			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
+				{ fmt.Sprintf("%d", count) }
+			</span>
+		</a>
+	}
 }
 
 templ installTableRow(install customerui.InstallWithApprovalStatus, basePath string) {

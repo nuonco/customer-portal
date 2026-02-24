@@ -293,7 +293,6 @@ type ThemeOptions struct {
 	OrgID          string
 	PrimaryColor   string
 	SecondaryColor string
-	SupportContact string
 }
 
 // NewTestTheme creates a test app theme with sensible defaults.
@@ -319,9 +318,6 @@ func NewTestTheme(opts ...ThemeOptions) *models.AppTheme {
 		}
 		if opt.SecondaryColor != "" {
 			theme.SecondaryColor = opt.SecondaryColor
-		}
-		if opt.SupportContact != "" {
-			theme.SupportContact = opt.SupportContact
 		}
 	}
 

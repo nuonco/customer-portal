@@ -391,7 +391,12 @@ func (h *Handler) ServeCustomCSS(c *gin.Context) {
 
 	// Get all enabled CSS overrides for this org
 	cssAssets, err := models.GetCSSOverrides(h.db, orgID)
-	if err != nil || len(cssAssets) == 0 {
+
+	// Also check for theme custom CSS
+	theme, themeErr := models.GetOrCreateAppTheme(h.db, orgID)
+	hasThemeCSS := themeErr == nil && theme.CustomCSS != ""
+
+	if (err != nil || len(cssAssets) == 0) && !hasThemeCSS {
 		c.Status(http.StatusNotFound)
 		return
 	}
@@ -405,6 +410,12 @@ func (h *Handler) ServeCustomCSS(c *gin.Context) {
 		c.Writer.Write([]byte("/* " + asset.SourcePath + " */\n"))
 		c.Writer.Write(asset.Content)
 		c.Writer.Write([]byte("\n\n"))
+	}
+
+	if hasThemeCSS {
+		c.Writer.Write([]byte("/* custom css */\n"))
+		c.Writer.Write([]byte(theme.CustomCSS))
+		c.Writer.Write([]byte("\n"))
 	}
 }
 

@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
 )
 
 // CustomerLoginPageProps for the themed customer login page
@@ -16,22 +17,22 @@ type CustomerLoginPageProps struct {
 // CustomerLoginPage renders the customer login page with vendor theming
 templ CustomerLoginPage(props CustomerLoginPageProps) {
 	<!DOCTYPE html>
-	<html lang="en">
+	<html lang="en" class={ templ.KV("dark", getThemeMode(props.Theme) == "dark"), templ.KV("light", getThemeMode(props.Theme) == "light") }>
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ getLoginTitle(props.Theme) }</title>
 			<link href={ props.CSSPath } rel="stylesheet"/>
-			@customerLoginDarkModeScript()
+			@scripts.DarkMode(getThemeMode(props.Theme))
 			@customerLoginFontLinks(props.Theme)
 			@customerLoginThemeStyles(props.Theme)
 		</head>
-		<body class="bg-cool-grey-50 dark:bg-dark-grey-950">
+		<body>
 			<div class="flex h-screen w-full">
 				<!-- Left Side - Content -->
-				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] bg-cool-grey-50 dark:bg-dark-grey-950 px-8 md:px-20 py-16">
+				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] px-8 md:px-20 py-16">
 					<!-- Card -->
-					<div class="bg-white dark:bg-dark-grey-800 border border-cool-grey-500/25 dark:border-dark-grey-500 shadow-sm px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8" style="border-radius: var(--theme-radius)">
+					<div class="card-base px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8">
 						<!-- Logo -->
 						if props.Theme != nil {
 							if props.Theme.LogoDarkBase64 != "" {
@@ -54,20 +55,19 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						</div>
 						<!-- Error message -->
 						if props.Error != "" {
-							<div class="p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300" style="border-radius: var(--theme-radius)">
+							<div class="alert-error">
 								{ props.Error }
 							</div>
 						}
 						<!-- Sign Up Button (Primary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
-							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors"
-							style="border-radius: var(--theme-radius)"
+							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors rounded-theme"
 						>
 							Sign up
 						</a>
 						<!-- Divider -->
-						<hr class="border-cool-grey-300 dark:border-dark-grey-500"/>
+						<hr class="hr-divider"/>
 						<!-- Already have account section -->
 						<h2 class="text-2xl leading-[30px] tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white">
 							Already have an account?
@@ -75,8 +75,8 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						<!-- Sign In Button (Secondary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
-							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border bg-white dark:bg-dark-grey-700 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors"
-							style={ "border-radius: var(--theme-radius); border-color: var(--theme-primary); color: var(--theme-primary)" }
+							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme"
+							style={ "border-color: var(--theme-primary); color: var(--theme-primary)" }
 						>
 							Sign in
 						</a>
@@ -127,17 +127,11 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 	</html>
 }
 
-templ customerLoginDarkModeScript() {
-	<script>
-		(function() {
-			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-				document.documentElement.classList.add('dark');
-			}
-			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-				document.documentElement.classList.toggle('dark', e.matches);
-			});
-		})();
-	</script>
+func getThemeMode(theme *models.AppTheme) string {
+	if theme != nil {
+		return theme.GetThemeMode()
+	}
+	return "auto"
 }
 
 templ customerLoginFontLinks(theme *models.AppTheme) {
@@ -189,6 +183,14 @@ func buildCustomerLoginThemeCSS(theme *models.AppTheme) string {
 	// Secondary color
 	if theme != nil && theme.SecondaryColor != "" {
 		css += "--theme-secondary: " + theme.SecondaryColor + ";"
+	}
+
+	// Background colors
+	if theme != nil && theme.WhiteColor != "" {
+		css += "--theme-white: " + theme.WhiteColor + ";"
+	}
+	if theme != nil && theme.BlackColor != "" {
+		css += "--theme-black: " + theme.BlackColor + ";"
 	}
 
 	// Heading font

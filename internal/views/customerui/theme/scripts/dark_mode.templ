@@ -1,22 +1,19 @@
 package scripts
 
-// DarkMode adds dark mode detection and toggle functionality.
-// This script:
-// - Detects the user's system dark mode preference
-// - Automatically applies dark mode class to the document
-// - Listens for system theme changes and updates accordingly
-templ DarkMode() {
-	<script>
-		(function() {
-			// Check if user prefers dark mode
-			if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-				document.documentElement.classList.add('dark');
-			}
-
-			// Listen for changes to the system theme preference
-			window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
-				document.documentElement.classList.toggle('dark', e.matches);
-			});
-		})();
-	</script>
+// DarkMode adds dark mode detection for auto mode only.
+// For "light" and "dark" modes, the class is baked into the <html> tag at render time,
+// so no JS is needed. For "auto" (default), JS follows the system preference.
+templ DarkMode(themeMode string) {
+	if themeMode == "auto" || themeMode == "" {
+		<script>
+			(function() {
+				if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+					document.documentElement.classList.add('dark');
+				}
+				window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {
+					document.documentElement.classList.toggle('dark', e.matches);
+				});
+			})();
+		</script>
+	}
 }

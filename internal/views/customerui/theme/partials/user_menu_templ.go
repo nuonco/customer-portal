@@ -9,8 +9,6 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"strings"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -42,33 +40,20 @@ func UserMenu(props UserMenuProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"relative\" id=\"customerUserMenuContainer\"><button type=\"button\" onclick=\"toggleCustomerUserMenu()\" class=\"flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer border border-cool-grey-200 dark:border-dark-grey-600 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors\" id=\"customerUserMenuButton\"><!-- Avatar --><div class=\"w-8 h-8 rounded-md flex items-center justify-center text-sm font-semibold uppercase bg-cool-grey-200 text-cool-grey-600 dark:bg-dark-grey-600 dark:text-cool-grey-400\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"relative\" id=\"customerUserMenuContainer\"><button type=\"button\" onclick=\"toggleCustomerUserMenu()\" class=\"user-menu-trigger\" id=\"customerUserMenuButton\"><!-- Email --><span class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(getUserInitial(props.User.Email))
+		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/user_menu.templ`, Line: 26, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/user_menu.templ`, Line: 24, Col: 22}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</div><!-- Email --><span class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/user_menu.templ`, Line: 30, Col: 22}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</span><!-- Caret down icon --><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-4 h-4 text-cool-grey-400 dark:text-cool-grey-500 flex-shrink-0\"><path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z\"></path></svg></button><!-- Dropdown Menu --><div id=\"customerUserDropdown\" class=\"absolute right-0 mt-2 w-48 py-1 z-50 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg shadow-lg hidden\"><!-- Log out Button --><button type=\"button\" onclick=\"logout()\" class=\"w-full flex items-center justify-between px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer\"><span>Log out</span><!-- Arrow right icon --><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-4 h-4\"><path d=\"M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69l-58.35-58.34a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z\"></path></svg></button></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</span><!-- Caret down icon --><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-4 h-4 text-cool-grey-400 dark:text-cool-grey-500 flex-shrink-0\"><path d=\"M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80A8,8,0,0,1,53.66,90.34L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z\"></path></svg></button><!-- Dropdown Menu --><div id=\"customerUserDropdown\" class=\"dropdown-menu py-1 z-50 hidden\"><!-- Log out Button --><button type=\"button\" onclick=\"logout()\" class=\"w-full flex items-center justify-between px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer\"><span>Log out</span><!-- Arrow right icon --><svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-4 h-4\"><path d=\"M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69l-58.35-58.34a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z\"></path></svg></button></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -78,13 +63,6 @@ func UserMenu(props UserMenuProps) templ.Component {
 		}
 		return nil
 	})
-}
-
-func getUserInitial(email string) string {
-	if email == "" {
-		return "U"
-	}
-	return strings.ToUpper(string(email[0]))
 }
 
 func userMenuScript() templ.Component {
@@ -103,12 +81,12 @@ func userMenuScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var4 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var4 == nil {
-			templ_7745c5c3_Var4 = templ.NopComponent
+		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var3 == nil {
+			templ_7745c5c3_Var3 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script>\n\t\tfunction toggleCustomerUserMenu() {\n\t\t\tconst dropdown = document.getElementById('customerUserDropdown');\n\t\t\tdropdown.classList.toggle('hidden');\n\t\t}\n\n\t\t// Close dropdown when clicking outside\n\t\tdocument.addEventListener('click', function(event) {\n\t\t\tconst container = document.getElementById('customerUserMenuContainer');\n\t\t\tconst dropdown = document.getElementById('customerUserDropdown');\n\t\t\tif (container && dropdown && !container.contains(event.target)) {\n\t\t\t\tdropdown.classList.add('hidden');\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<script>\n\t\tfunction toggleCustomerUserMenu() {\n\t\t\tconst dropdown = document.getElementById('customerUserDropdown');\n\t\t\tdropdown.classList.toggle('hidden');\n\t\t}\n\n\t\t// Close dropdown when clicking outside\n\t\tdocument.addEventListener('click', function(event) {\n\t\t\tconst container = document.getElementById('customerUserMenuContainer');\n\t\t\tconst dropdown = document.getElementById('customerUserDropdown');\n\t\t\tif (container && dropdown && !container.contains(event.target)) {\n\t\t\t\tdropdown.classList.add('hidden');\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

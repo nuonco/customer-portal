@@ -33,7 +33,13 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 						<!-- Left Column: Settings -->
 						<div class="space-y-6">
 							@installerSettingsModeToggle()
-							<div id="lightModeSettings" class="space-y-6">
+							<div id="globalSettings" class="space-y-6">
+								@installerPageFaviconSection(props.Theme)
+								@installerPageColorSchemeSection(props.Theme)
+								@installerPageTypographySection(props.Theme)
+								@installerPageCustomCSSSection(props.Theme)
+							</div>
+							<div id="lightModeSettings" class="hidden space-y-6">
 								@installerPageBrandingSectionLight(props.Theme)
 								@installerPageColorsSectionLight(props.Theme)
 							</div>
@@ -41,8 +47,6 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 								@installerPageBrandingSectionDark(props.Theme)
 								@installerPageColorsSectionDark(props.Theme)
 							</div>
-							@installerPageTypographySection(props.Theme)
-							@installerPageSupportSection(props.Theme)
 							<!-- Save Button -->
 							<div class="flex flex-col space-y-3">
 								<button type="button" id="installerSaveButton" onclick="saveInstallerSettings()" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700">
@@ -64,6 +68,8 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 								InitialSize:    "desktop",
 								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
 								SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
+								WhiteColor:     getBrandingWhiteColor(props.Theme.WhiteColor),
+								BlackColor:     getBrandingBlackColor(props.Theme.BlackColor),
 								PageOptions: []components.PreviewPageOption{
 									{Value: "install-detail",   Label: "Install Detail"},
 									{Value: "installs-list",    Label: "Installs List"},
@@ -99,12 +105,21 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					data-org-id={ props.CurrentOrg.ID }
 					data-logo-light-base64={ props.Theme.LogoLightBase64 }
 					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
+					data-favicon-base64={ props.Theme.FaviconBase64 }
 					data-heading-font={ props.Theme.HeadingFont }
 					data-body-font={ props.Theme.BodyFont }
+					data-heading-font-base64={ props.Theme.HeadingFontBase64 }
+					data-body-font-base64={ props.Theme.BodyFontBase64 }
+					data-heading-font-name={ props.Theme.HeadingFontName }
+					data-body-font-name={ props.Theme.BodyFontName }
 					data-primary-color={ props.Theme.PrimaryColor }
 					data-secondary-color={ props.Theme.SecondaryColor }
 					data-primary-color-dark={ props.Theme.PrimaryColorDark }
 					data-secondary-color-dark={ props.Theme.SecondaryColorDark }
+					data-white-color={ props.Theme.WhiteColor }
+					data-black-color={ props.Theme.BlackColor }
+					data-white-color-dark={ props.Theme.WhiteColorDark }
+					data-black-color-light={ props.Theme.BlackColorLight }
 				></div>
 				@installerPageScript()
 			</div>
@@ -265,13 +280,28 @@ templ brandingPreviewInstallDetail(theme *models.AppTheme) {
 				</div>
 			</div>
 		</div>
-		<!-- Support Footer -->
-		<div
-			id="installerPreviewFooter"
-			class={ "text-center text-xs py-3 preview-text-muted preview-body-font preview-card", templ.KV("hidden", theme.SupportContact == "") }
-			style="border-left: none; border-right: none; border-bottom: none; border-radius: 0;"
-		>
-			Need help? Contact <a id="installerPreviewSupportLink" href="#" class="hover:underline" style="color: var(--preview-secondary);">support</a>
+	</div>
+}
+
+templ installerPageColorSchemeSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-1 text-cool-grey-800 dark:text-white">Color Scheme</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Control whether customers see the portal in light mode, dark mode, or their system preference.
+		</p>
+		<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
+			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "auto"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "auto") }>
+				<input type="radio" name="themeMode" value="auto" class="sr-only" checked?={ theme.GetThemeMode() == "auto" } onchange="updateThemeModeUI()"/>
+				<span class="block px-3 py-1.5 text-sm font-medium">System</span>
+			</label>
+			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "light"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "light") }>
+				<input type="radio" name="themeMode" value="light" class="sr-only" checked?={ theme.GetThemeMode() == "light" } onchange="updateThemeModeUI()"/>
+				<span class="block px-3 py-1.5 text-sm font-medium">Light</span>
+			</label>
+			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "dark"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "dark") }>
+				<input type="radio" name="themeMode" value="dark" class="sr-only" checked?={ theme.GetThemeMode() == "dark" } onchange="updateThemeModeUI()"/>
+				<span class="block px-3 py-1.5 text-sm font-medium">Dark</span>
+			</label>
 		</div>
 	</div>
 }
@@ -280,9 +310,17 @@ templ installerSettingsModeToggle() {
 	<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
 		<button
 			type="button"
+			id="settingsGlobalBtn"
+			onclick="setSettingsMode('global')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm"
+		>
+			Global
+		</button>
+		<button
+			type="button"
 			id="settingsLightModeBtn"
 			onclick="setSettingsMode('light')"
-			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
 		>
 			Light Mode
 		</button>
@@ -389,7 +427,7 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons.</p>
 		</div>
 		<!-- Secondary Color -->
-		<div>
+		<div class="mb-5">
 			<label for="installerSecondaryColorLight" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
 			<div class="flex items-center space-x-3">
 				<input
@@ -408,6 +446,48 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 				/>
 			</div>
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements.</p>
+		</div>
+		<!-- White (Background) Color -->
+		<div>
+			<label for="installerWhiteColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">White</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerWhiteColor"
+					value={ getBrandingWhiteColor(theme.WhiteColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerWhiteColorText"
+					value={ getBrandingWhiteColor(theme.WhiteColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#ffffff"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Background color for pages, panels, and cards in light mode.</p>
+		</div>
+		<!-- Black Color (Light Mode) -->
+		<div class="mt-5">
+			<label for="installerBlackColorLight" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Black</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerBlackColorLight"
+					value={ getBrandingBlackColorLight(theme.BlackColorLight) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerBlackColorLightText"
+					value={ getBrandingDarkColorText(theme.BlackColorLight) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="#121212"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Dark surfaces used in light mode (panels, overlays).</p>
 		</div>
 	</div>
 }
@@ -440,7 +520,7 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons in dark mode.</p>
 		</div>
 		<!-- Secondary Color Dark -->
-		<div>
+		<div class="mb-5">
 			<label for="installerSecondaryColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
 			<div class="flex items-center space-x-3">
 				<input
@@ -459,6 +539,48 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 				/>
 			</div>
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements in dark mode.</p>
+		</div>
+		<!-- White Color (Dark Mode) -->
+		<div class="mb-5">
+			<label for="installerWhiteColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">White</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerWhiteColorDark"
+					value={ getBrandingDarkColor(theme.WhiteColorDark, theme.WhiteColor) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerWhiteColorDarkText"
+					value={ getBrandingDarkColorText(theme.WhiteColorDark) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="(uses light mode setting)"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Light background surfaces in dark mode (cards, panels). Defaults to the light mode background.</p>
+		</div>
+		<!-- Black (Background) Color Dark -->
+		<div>
+			<label for="installerBlackColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Black</label>
+			<div class="flex items-center space-x-3">
+				<input
+					type="color"
+					id="installerBlackColorDark"
+					value={ getBrandingBlackColorDark(theme.BlackColor, theme.BlackColorLight) }
+					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+				/>
+				<input
+					type="text"
+					id="installerBlackColorDarkText"
+					value={ getBrandingDarkColorText(theme.BlackColor) }
+					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+					placeholder="(uses light mode setting)"
+					pattern="^#[0-9A-Fa-f]{6}$"
+				/>
+			</div>
+			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Background color for pages, panels, and cards in dark mode. Defaults to the light mode black.</p>
 		</div>
 	</div>
 }
@@ -493,6 +615,37 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 					</optgroup>
 				</select>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for titles and headings.</p>
+				<!-- Custom Heading Font Upload -->
+				<div class="mt-3">
+					<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-2">Or upload a custom font file (overrides the selection above):</p>
+					<!-- Font-loaded card: shown when base64 is saved -->
+					<div
+						id="installerHeadingFontCard"
+						class={ templ.KV("hidden", theme.HeadingFontBase64 == ""), "flex items-center gap-3 py-2 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded border border-cool-grey-200 dark:border-dark-grey-600" }
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+						</svg>
+						<span id="installerHeadingFontLabel" class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-200 flex-1 truncate">
+							if theme.HeadingFontName != "" {
+								{ theme.HeadingFontName }
+							} else {
+								Custom font
+							}
+						</span>
+						<button type="button" onclick="installerChangeHeadingFont()" class="text-xs text-primary-600 hover:underline">Change</button>
+						<button type="button" onclick="installerRemoveHeadingFont()" class="text-xs text-red-600 hover:underline">Remove</button>
+					</div>
+					<!-- Upload input: shown when no font is saved -->
+					<input
+						type="file"
+						id="installerHeadingFontUpload"
+						accept=".woff2,.woff,font/woff2,font/woff"
+						class={ templ.KV("hidden", theme.HeadingFontBase64 != ""), "block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800" }
+					/>
+					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">WOFF2 or WOFF format. Max 280KB.</p>
+					<p id="installerHeadingFontStatus" class="mt-1 text-xs text-green-600 dark:text-green-400 hidden">Custom font loaded.</p>
+				</div>
 			</div>
 			<!-- Body Font -->
 			<div>
@@ -520,28 +673,92 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 					</optgroup>
 				</select>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for paragraphs and body text.</p>
+				<!-- Custom Body Font Upload -->
+				<div class="mt-3">
+					<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-2">Or upload a custom font file (overrides the selection above):</p>
+					<!-- Font-loaded card: shown when base64 is saved -->
+					<div
+						id="installerBodyFontCard"
+						class={ templ.KV("hidden", theme.BodyFontBase64 == ""), "flex items-center gap-3 py-2 px-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded border border-cool-grey-200 dark:border-dark-grey-600" }
+					>
+						<svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+						</svg>
+						<span id="installerBodyFontLabel" class="text-sm font-medium text-cool-grey-700 dark:text-cool-grey-200 flex-1 truncate">
+							if theme.BodyFontName != "" {
+								{ theme.BodyFontName }
+							} else {
+								Custom font
+							}
+						</span>
+						<button type="button" onclick="installerChangeBodyFont()" class="text-xs text-primary-600 hover:underline">Change</button>
+						<button type="button" onclick="installerRemoveBodyFont()" class="text-xs text-red-600 hover:underline">Remove</button>
+					</div>
+					<!-- Upload input: shown when no font is saved -->
+					<input
+						type="file"
+						id="installerBodyFontUpload"
+						accept=".woff2,.woff,font/woff2,font/woff"
+						class={ templ.KV("hidden", theme.BodyFontBase64 != ""), "block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800" }
+					/>
+					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">WOFF2 or WOFF format. Max 280KB.</p>
+					<p id="installerBodyFontStatus" class="mt-1 text-xs text-green-600 dark:text-green-400 hidden">Custom font loaded.</p>
+				</div>
 			</div>
 		</div>
 	</div>
 }
 
-templ installerPageSupportSection(theme *models.AppTheme) {
+templ installerPageFaviconSection(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Support</h3>
-		<div>
-			<label for="installerSupportContact" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Support Contact</label>
-			<input
-				type="text"
-				id="installerSupportContact"
-				value={ theme.SupportContact }
-				placeholder="support@yourcompany.com or https://support.yourcompany.com"
-				class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
-			/>
-			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Email address or URL shown to customers for help.</p>
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Favicon</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Upload a favicon to display in browser tabs when customers visit the portal.
+		</p>
+		<div class="flex items-center space-x-4">
+			<div class="flex-shrink-0 w-16 h-16 bg-white border-2 border-cool-grey-300 rounded flex items-center justify-center p-2">
+				if theme.FaviconBase64 != "" {
+					<img id="installerFaviconPreview" src={ theme.FaviconBase64 } alt="Favicon preview" class="max-w-full max-h-full object-contain"/>
+				} else {
+					<img id="installerFaviconPreview" src="" alt="Favicon preview" class="max-w-full max-h-full object-contain hidden"/>
+				}
+				<div id="installerFaviconPlaceholder" class={ "text-cool-grey-400 text-xs text-center", templ.KV("hidden", theme.FaviconBase64 != "") }>
+					<span>No favicon</span>
+				</div>
+			</div>
+			<div class="flex-1">
+				<input
+					type="file"
+					id="installerFaviconUpload"
+					accept="image/x-icon,image/png,image/svg+xml"
+					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">ICO, PNG, or SVG. Max 100KB.</p>
+				<button type="button" id="installerRemoveFavicon" onclick="installerRemoveFavicon()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.FaviconBase64 == "") }>
+					Remove favicon
+				</button>
+			</div>
 		</div>
 	</div>
 }
 
+templ installerPageCustomCSSSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Custom CSS</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Add custom CSS rules that will be injected into the customer portal.
+		</p>
+		<textarea
+			id="installerCustomCSS"
+			rows="10"
+			class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md text-sm bg-white dark:bg-dark-grey-700 text-cool-grey-800 dark:text-white font-mono focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+			placeholder="/* Add your custom CSS here */&#10;.my-class { color: red; }"
+		>{ theme.CustomCSS }</textarea>
+		<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+			CSS is appended to the portal stylesheet after all theme variables are applied.
+		</p>
+	</div>
+}
 
 templ brandingPreviewInstallsList(theme *models.AppTheme) {
 	<div class="preview-page-bg h-full">
@@ -734,6 +951,34 @@ func getBrandingDarkColorText(color string) string {
 	return color
 }
 
+func getBrandingWhiteColor(color string) string {
+	if color == "" {
+		return "#ffffff"
+	}
+	return color
+}
+
+func getBrandingBlackColor(color string) string {
+	if color == "" {
+		return "#121212"
+	}
+	return color
+}
+
+func getBrandingBlackColorLight(color string) string {
+	if color == "" {
+		return "#121212"
+	}
+	return color
+}
+
+func getBrandingBlackColorDark(darkColor, lightColor string) string {
+	if darkColor != "" {
+		return darkColor
+	}
+	return getBrandingBlackColor(lightColor)
+}
+
 func getBrandingFontStyle(font string) string {
 	if font == "" {
 		return ""
@@ -759,36 +1004,64 @@ templ installerPageScript() {
 				window._installerLoadedFonts.add(fontFamily);
 			}
 
+			window.updateThemeModeUI = function() {
+				var labels = document.querySelectorAll('label:has(input[name="themeMode"])');
+				var checked = document.querySelector('input[name="themeMode"]:checked');
+				labels.forEach(function(label) {
+					var input = label.querySelector('input[name="themeMode"]');
+					var active = input === checked;
+					if (active) {
+						label.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm', 'rounded-md');
+						label.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400');
+					} else {
+						label.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm', 'rounded-md');
+						label.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400');
+					}
+				});
+			};
+
 			window.setSettingsMode = function(mode, skipPreviewSync) {
+				var globalSettings = document.getElementById('globalSettings');
 				var lightSettings = document.getElementById('lightModeSettings');
 				var darkSettings = document.getElementById('darkModeSettings');
+				var settingsGlobalBtn = document.getElementById('settingsGlobalBtn');
 				var settingsLightBtn = document.getElementById('settingsLightModeBtn');
 				var settingsDarkBtn = document.getElementById('settingsDarkModeBtn');
 
-				if (mode === 'light') {
-					lightSettings.classList.remove('hidden');
-					darkSettings.classList.add('hidden');
-					settingsLightBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					settingsLightBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-					settingsDarkBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					settingsDarkBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-				} else {
-					lightSettings.classList.add('hidden');
-					darkSettings.classList.remove('hidden');
-					settingsDarkBtn.classList.add('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					settingsDarkBtn.classList.remove('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-					settingsLightBtn.classList.remove('bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm');
-					settingsLightBtn.classList.add('text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600');
-				}
+				var activeClass = ['bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm'];
+				var inactiveClass = ['text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600'];
 
-				// Sync preview mode (unless called from setPreviewMode to avoid loop)
-				if (!skipPreviewSync) {
+				// Hide all panels, deactivate all buttons
+				[globalSettings, lightSettings, darkSettings].forEach(function(el) { el.classList.add('hidden'); });
+				[settingsGlobalBtn, settingsLightBtn, settingsDarkBtn].forEach(function(btn) {
+					activeClass.forEach(function(c) { btn.classList.remove(c); });
+					inactiveClass.forEach(function(c) { btn.classList.add(c); });
+				});
+
+				// Show the selected panel and activate its button
+				var contentEl, activeBtn;
+				if (mode === 'light') {
+					contentEl = lightSettings; activeBtn = settingsLightBtn;
+				} else if (mode === 'dark') {
+					contentEl = darkSettings; activeBtn = settingsDarkBtn;
+				} else {
+					contentEl = globalSettings; activeBtn = settingsGlobalBtn;
+				}
+				contentEl.classList.remove('hidden');
+				activeClass.forEach(function(c) { activeBtn.classList.add(c); });
+				inactiveClass.forEach(function(c) { activeBtn.classList.remove(c); });
+
+				// Sync preview mode for light/dark tabs only
+				if (!skipPreviewSync && (mode === 'light' || mode === 'dark')) {
 					setPreviewMode(mode, true);
 				}
 			};
 
 			// Hook into preview mode changes to sync settings panel
+			// Only switch away from Global tab if currently on light/dark tab
 			window.onPreviewModeChange = function(mode) {
+				var globalSettings = document.getElementById('globalSettings');
+				if (!globalSettings.classList.contains('hidden')) return;
 				setSettingsMode(mode, true);
 			};
 
@@ -821,7 +1094,6 @@ templ installerPageScript() {
 					secondaryColor = document.getElementById("installerSecondaryColorLight").value;
 				}
 
-				var supportContact = document.getElementById("installerSupportContact").value;
 				var headingFont = document.getElementById("installerHeadingFont").value;
 				var bodyFont = document.getElementById("installerBodyFont").value;
 
@@ -829,6 +1101,12 @@ templ installerPageScript() {
 				var container = document.getElementById("previewContainer");
 				container.style.setProperty('--preview-primary', primaryColor);
 				container.style.setProperty('--preview-secondary', secondaryColor);
+
+				// Update white/black background colors
+				var whiteColor = document.getElementById("installerWhiteColor")?.value || '#f8fafc';
+				var blackColor = document.getElementById("installerBlackColorDark")?.value || '#121212';
+				container.style.setProperty('--preview-white', whiteColor);
+				container.style.setProperty('--preview-black', blackColor);
 
 				// Get current logo values
 				var lightLogoSrc = window._installerLogoLightBase64 || config.dataset.logoLightBase64 || '';
@@ -861,9 +1139,7 @@ templ installerPageScript() {
 
 				// Update secondary color links (install detail page)
 				var backLink = document.getElementById("installerPreviewBackLink");
-				var supportLink = document.getElementById("installerPreviewSupportLink");
 				if (backLink) backLink.style.color = secondaryColor;
-				if (supportLink) supportLink.style.color = secondaryColor;
 
 				// Update primary color buttons (install detail page)
 				var approveBtn = document.getElementById("installerPreviewApproveBtn");
@@ -871,32 +1147,34 @@ templ installerPageScript() {
 				if (approveBtn) approveBtn.style.backgroundColor = primaryColor;
 				if (historyBtn) historyBtn.style.backgroundColor = primaryColor;
 
-				// Update footer visibility (install detail page)
-				var previewFooter = document.getElementById("installerPreviewFooter");
-				if (previewFooter) {
-					previewFooter.classList.toggle("hidden", !supportContact);
+				// Use custom font if uploaded, otherwise use Google Font selection
+				var headingFontStyle;
+				var customHeadingFont = window._installerHeadingFontBase64;
+				if (customHeadingFont && customHeadingFont !== 'REMOVE') {
+					headingFontStyle = "'CustomHeadingPreview', ui-sans-serif, system-ui, sans-serif";
+				} else if (headingFont) {
+					headingFontStyle = "'" + headingFont + "', ui-sans-serif, system-ui, sans-serif";
+				} else {
+					headingFontStyle = "ui-sans-serif, system-ui, sans-serif";
 				}
-
-				// Update heading fonts across all pages (class-based)
-				var headingFontStyle = headingFont
-					? "'" + headingFont + "', ui-sans-serif, system-ui, sans-serif"
-					: "ui-sans-serif, system-ui, sans-serif";
 				document.querySelectorAll('#previewContainer .preview-heading-font').forEach(function(el) {
 					el.style.fontFamily = headingFontStyle;
 				});
 
 				// Update body fonts across all pages (class-based)
-				var bodyFontStyle = bodyFont
-					? "'" + bodyFont + "', ui-sans-serif, system-ui, sans-serif"
-					: "ui-sans-serif, system-ui, sans-serif";
+				var bodyFontStyle;
+				var customBodyFont = window._installerBodyFontBase64;
+				if (customBodyFont && customBodyFont !== 'REMOVE') {
+					bodyFontStyle = "'CustomBodyPreview', ui-sans-serif, system-ui, sans-serif";
+				} else if (bodyFont) {
+					bodyFontStyle = "'" + bodyFont + "', ui-sans-serif, system-ui, sans-serif";
+				} else {
+					bodyFontStyle = "ui-sans-serif, system-ui, sans-serif";
+				}
 				document.querySelectorAll('#previewContainer .preview-body-font').forEach(function(el) {
 					el.style.fontFamily = bodyFontStyle;
 				});
 
-				// Update footer font (install detail page)
-				if (previewFooter) {
-					previewFooter.style.fontFamily = bodyFontStyle;
-				}
 			}
 
 			window.installerRemoveLogoLight = function() {
@@ -917,6 +1195,40 @@ templ installerPageScript() {
 				updatePreview();
 			};
 
+			window.installerRemoveFavicon = function() {
+				window._installerFaviconBase64 = "REMOVE";
+				document.getElementById("installerFaviconPreview").classList.add("hidden");
+				document.getElementById("installerFaviconPlaceholder").classList.remove("hidden");
+				document.getElementById("installerFaviconUpload").value = "";
+				document.getElementById("installerRemoveFavicon").classList.add("hidden");
+			};
+
+			window.installerRemoveHeadingFont = function() {
+				window._installerHeadingFontBase64 = "REMOVE";
+				document.getElementById("installerHeadingFontCard").classList.add("hidden");
+				document.getElementById("installerHeadingFontUpload").classList.remove("hidden");
+				document.getElementById("installerHeadingFontUpload").value = "";
+				updatePreview();
+			};
+
+			window.installerRemoveBodyFont = function() {
+				window._installerBodyFontBase64 = "REMOVE";
+				document.getElementById("installerBodyFontCard").classList.add("hidden");
+				document.getElementById("installerBodyFontUpload").classList.remove("hidden");
+				document.getElementById("installerBodyFontUpload").value = "";
+				updatePreview();
+			};
+
+			window.installerChangeHeadingFont = function() {
+				document.getElementById("installerHeadingFontCard").classList.add("hidden");
+				document.getElementById("installerHeadingFontUpload").classList.remove("hidden");
+			};
+
+			window.installerChangeBodyFont = function() {
+				document.getElementById("installerBodyFontCard").classList.add("hidden");
+				document.getElementById("installerBodyFontUpload").classList.remove("hidden");
+			};
+
 			window.saveInstallerSettings = async function() {
 				var saveButton = document.getElementById("installerSaveButton");
 				var successMessage = document.getElementById("installerSuccessMessage");
@@ -932,9 +1244,14 @@ templ installerPageScript() {
 					secondary_color: document.getElementById("installerSecondaryColorLight").value,
 					primary_color_dark: document.getElementById("installerPrimaryColorDarkText").value || "",
 					secondary_color_dark: document.getElementById("installerSecondaryColorDarkText").value || "",
-					support_contact: document.getElementById("installerSupportContact").value,
+					white_color: document.getElementById("installerWhiteColorText").value || "",
+					black_color: document.getElementById("installerBlackColorDarkText").value || "",
+					white_color_dark: document.getElementById("installerWhiteColorDarkText").value || "",
+					black_color_light: document.getElementById("installerBlackColorLightText").value || "",
 					heading_font: document.getElementById("installerHeadingFont").value,
-					body_font: document.getElementById("installerBodyFont").value
+					body_font: document.getElementById("installerBodyFont").value,
+					theme_mode: document.querySelector('input[name="themeMode"]:checked')?.value || 'auto',
+					custom_css: document.getElementById("installerCustomCSS").value
 				};
 
 				// Handle light mode logo
@@ -947,6 +1264,26 @@ templ installerPageScript() {
 				var originalLogoDark = config.dataset.logoDarkBase64 || '';
 				if (window._installerLogoDarkBase64 && window._installerLogoDarkBase64 !== originalLogoDark) {
 					formData.logo_dark_base64 = window._installerLogoDarkBase64;
+				}
+
+				// Handle favicon
+				var originalFavicon = config.dataset.faviconBase64 || '';
+				if (window._installerFaviconBase64 && window._installerFaviconBase64 !== originalFavicon) {
+					formData.favicon_base64 = window._installerFaviconBase64;
+				}
+
+				// Handle heading font custom upload
+				var originalHeadingFontBase64 = config.dataset.headingFontBase64 || '';
+				if (window._installerHeadingFontBase64 && window._installerHeadingFontBase64 !== originalHeadingFontBase64) {
+					formData.heading_font_base64 = window._installerHeadingFontBase64;
+					formData.heading_font_name = window._installerHeadingFontName || '';
+				}
+
+				// Handle body font custom upload
+				var originalBodyFontBase64 = config.dataset.bodyFontBase64 || '';
+				if (window._installerBodyFontBase64 && window._installerBodyFontBase64 !== originalBodyFontBase64) {
+					formData.body_font_base64 = window._installerBodyFontBase64;
+					formData.body_font_name = window._installerBodyFontName || '';
 				}
 
 				try {
@@ -1047,7 +1384,72 @@ templ installerPageScript() {
 				}
 			});
 
-			document.getElementById("installerSupportContact")?.addEventListener("input", updatePreview);
+			// Event listeners for white (light background) color
+			document.getElementById("installerWhiteColor")?.addEventListener("input", function(e) {
+				document.getElementById("installerWhiteColorText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerWhiteColorText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerWhiteColor").value = value;
+					updatePreview();
+				}
+			});
+
+			// Event listeners for black (dark background) color
+			document.getElementById("installerBlackColorDark")?.addEventListener("input", function(e) {
+				document.getElementById("installerBlackColorDarkText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerBlackColorDarkText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				if (value === '') {
+					var lightModeBlack = document.getElementById("installerBlackColorLight").value || '#121212';
+					document.getElementById("installerBlackColorDark").value = lightModeBlack;
+					updatePreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerBlackColorDark").value = value;
+					updatePreview();
+				}
+			});
+
+			// Event listeners for white color dark mode override
+			document.getElementById("installerWhiteColorDark")?.addEventListener("input", function(e) {
+				document.getElementById("installerWhiteColorDarkText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerWhiteColorDarkText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				var lightColor = document.getElementById("installerWhiteColor").value || '#ffffff';
+				if (value === '') {
+					document.getElementById("installerWhiteColorDark").value = lightColor;
+					updatePreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerWhiteColorDark").value = value;
+					updatePreview();
+				}
+			});
+
+			// Event listeners for black color light mode override
+			document.getElementById("installerBlackColorLight")?.addEventListener("input", function(e) {
+				document.getElementById("installerBlackColorLightText").value = e.target.value.toUpperCase();
+				updatePreview();
+			});
+
+			document.getElementById("installerBlackColorLightText")?.addEventListener("input", function(e) {
+				var value = e.target.value;
+				if (value === '') {
+					document.getElementById("installerBlackColorLight").value = '#121212';
+					updatePreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById("installerBlackColorLight").value = value;
+					updatePreview();
+				}
+			});
 
 			document.getElementById("installerHeadingFont")?.addEventListener("change", function(e) {
 				loadGoogleFont(e.target.value);
@@ -1064,6 +1466,59 @@ templ installerPageScript() {
 			var bodyFont = config.dataset.bodyFont;
 			if (headingFont) loadGoogleFont(headingFont);
 			if (bodyFont) loadGoogleFont(bodyFont);
+
+			// Load initial white/black color values from config
+			var savedWhiteColor = config.dataset.whiteColor;
+			var savedBlackColor = config.dataset.blackColor;
+			if (savedWhiteColor) {
+				var whiteInput = document.getElementById("installerWhiteColor");
+				var whiteText = document.getElementById("installerWhiteColorText");
+				if (whiteInput) whiteInput.value = savedWhiteColor;
+				if (whiteText) whiteText.value = savedWhiteColor.toUpperCase();
+			}
+			if (savedBlackColor) {
+				var blackInput = document.getElementById("installerBlackColorDark");
+				var blackText = document.getElementById("installerBlackColorDarkText");
+				if (blackInput) blackInput.value = savedBlackColor;
+				if (blackText) blackText.value = savedBlackColor.toUpperCase();
+			}
+
+			var savedWhiteColorDark = config.dataset.whiteColorDark;
+			var savedBlackColorLight = config.dataset.blackColorLight;
+			if (savedWhiteColorDark) {
+				var whiteDarkInput = document.getElementById("installerWhiteColorDark");
+				var whiteDarkText = document.getElementById("installerWhiteColorDarkText");
+				if (whiteDarkInput) whiteDarkInput.value = savedWhiteColorDark;
+				if (whiteDarkText) whiteDarkText.value = savedWhiteColorDark.toUpperCase();
+			}
+			if (savedBlackColorLight) {
+				var blackLightInput = document.getElementById("installerBlackColorLight");
+				var blackLightText = document.getElementById("installerBlackColorLightText");
+				if (blackLightInput) blackLightInput.value = savedBlackColorLight;
+				if (blackLightText) blackLightText.value = savedBlackColorLight.toUpperCase();
+			}
+
+			// Initialize custom fonts from saved config
+			var savedHeadingFontBase64 = config.dataset.headingFontBase64;
+			var savedBodyFontBase64 = config.dataset.bodyFontBase64;
+			var savedHeadingFontName = config.dataset.headingFontName || '';
+			window._installerHeadingFontName = savedHeadingFontName;
+			var savedBodyFontName = config.dataset.bodyFontName || '';
+			window._installerBodyFontName = savedBodyFontName;
+			if (savedHeadingFontBase64) {
+				window._installerHeadingFontBase64 = savedHeadingFontBase64;
+				var style = document.createElement('style');
+				style.id = 'customHeadingFontPreview';
+				style.textContent = "@font-face { font-family: 'CustomHeadingPreview'; src: url('" + savedHeadingFontBase64 + "'); }";
+				document.head.appendChild(style);
+			}
+			if (savedBodyFontBase64) {
+				window._installerBodyFontBase64 = savedBodyFontBase64;
+				var style = document.createElement('style');
+				style.id = 'customBodyFontPreview';
+				style.textContent = "@font-face { font-family: 'CustomBodyPreview'; src: url('" + savedBodyFontBase64 + "'); }";
+				document.head.appendChild(style);
+			}
 
 			// Initial preview update
 			updatePreview();
@@ -1131,6 +1586,111 @@ templ installerPageScript() {
 					preview.classList.remove("hidden");
 					placeholder.classList.add("hidden");
 					removeBtn.classList.remove("hidden");
+					updatePreview();
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Favicon upload handler
+			document.getElementById("installerFaviconUpload")?.addEventListener("change", async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+
+				if (file.size > 100 * 1024) {
+					showToast("Favicon file must be under 100KB", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var validTypes = ["image/x-icon", "image/png", "image/svg+xml"];
+				if (!validTypes.includes(file.type)) {
+					showToast("Please upload an ICO, PNG, or SVG image", "error");
+					e.target.value = "";
+					return;
+				}
+
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._installerFaviconBase64 = reader.result;
+					var preview = document.getElementById("installerFaviconPreview");
+					var placeholder = document.getElementById("installerFaviconPlaceholder");
+					var removeBtn = document.getElementById("installerRemoveFavicon");
+
+					preview.src = window._installerFaviconBase64;
+					preview.classList.remove("hidden");
+					placeholder.classList.add("hidden");
+					removeBtn.classList.remove("hidden");
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Heading font upload handler
+			document.getElementById("installerHeadingFontUpload")?.addEventListener("change", async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+				if (file.size > 280 * 1024) {
+					showToast("Font file must be under 280KB", "error");
+					e.target.value = "";
+					return;
+				}
+				var validTypes = ["font/woff2", "font/woff", "application/font-woff2", "application/font-woff", "application/octet-stream"];
+				var validExt = file.name.endsWith('.woff2') || file.name.endsWith('.woff');
+				if (!validTypes.includes(file.type) && !validExt) {
+					showToast("Please upload a WOFF2 or WOFF font file", "error");
+					e.target.value = "";
+					return;
+				}
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._installerHeadingFontBase64 = reader.result;
+					window._installerHeadingFontName = file.name;
+					var styleId = 'customHeadingFontPreview';
+					var existing = document.getElementById(styleId);
+					if (existing) existing.remove();
+					var style = document.createElement('style');
+					style.id = styleId;
+					style.textContent = "@font-face { font-family: 'CustomHeadingPreview'; src: url('" + reader.result + "'); }";
+					document.head.appendChild(style);
+					// Show card, hide input
+					document.getElementById("installerHeadingFontLabel").textContent = file.name;
+					document.getElementById("installerHeadingFontCard").classList.remove("hidden");
+					document.getElementById("installerHeadingFontUpload").classList.add("hidden");
+					updatePreview();
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Body font upload handler
+			document.getElementById("installerBodyFontUpload")?.addEventListener("change", async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+				if (file.size > 280 * 1024) {
+					showToast("Font file must be under 280KB", "error");
+					e.target.value = "";
+					return;
+				}
+				var validTypes = ["font/woff2", "font/woff", "application/font-woff2", "application/font-woff", "application/octet-stream"];
+				var validExt = file.name.endsWith('.woff2') || file.name.endsWith('.woff');
+				if (!validTypes.includes(file.type) && !validExt) {
+					showToast("Please upload a WOFF2 or WOFF font file", "error");
+					e.target.value = "";
+					return;
+				}
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._installerBodyFontBase64 = reader.result;
+					window._installerBodyFontName = file.name;
+					var styleId = 'customBodyFontPreview';
+					var existing = document.getElementById(styleId);
+					if (existing) existing.remove();
+					var style = document.createElement('style');
+					style.id = styleId;
+					style.textContent = "@font-face { font-family: 'CustomBodyPreview'; src: url('" + reader.result + "'); }";
+					document.head.appendChild(style);
+					// Show card, hide input
+					document.getElementById("installerBodyFontLabel").textContent = file.name;
+					document.getElementById("installerBodyFontCard").classList.remove("hidden");
+					document.getElementById("installerBodyFontUpload").classList.add("hidden");
 					updatePreview();
 				};
 				reader.readAsDataURL(file);

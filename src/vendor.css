@@ -97,6 +97,18 @@ html.sidebar-collapsed .stratus-sidebar .sidebar-text {
   @apply hidden;
 }
 
+/* Collapsed state: allow dropdown to overflow the narrow sidebar */
+/* Width matches expanded state: 17.5rem sidebar - 2rem (p-4 on each side) = 15.5rem */
+.stratus-sidebar.collapsed .stratus-org-dropdown {
+  width: 15.5rem;
+  right: auto;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-org-dropdown {
+  width: 15.5rem;
+  right: auto;
+}
+
 .stratus-sidebar.collapsed .stratus-sidebar-label {
   @apply hidden;
 }
@@ -202,7 +214,7 @@ html.sidebar-collapsed .stratus-sidebar .sidebar-text {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .stratus-topbar {
-  @apply h-14 px-6 border-b border-cool-grey-200 flex items-center justify-between bg-white;
+  @apply relative z-10 h-14 px-6 border-b border-cool-grey-200 flex items-center justify-between bg-white;
   @apply dark:bg-dark-grey-900 dark:border-dark-grey-500;
 }
 

@@ -96,7 +96,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 			templ_7745c5c3_Var2 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Time Range Selector --><div class=\"mb-6 p-4 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600\" style=\"border-radius: var(--theme-radius)\"><!-- Preset Buttons --><div class=\"flex flex-wrap items-center gap-2 mb-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<!-- Time Range Selector --><div class=\"customer-card mb-6\"><!-- Preset Buttons --><div class=\"flex flex-wrap items-center gap-2 mb-4\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -112,7 +112,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Custom Range Form --><form id=\"custom-range-form\" class=\"flex flex-wrap items-end gap-4\"><div class=\"flex-1 min-w-[200px]\"><label for=\"start-time\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">From</label> <input type=\"datetime-local\" id=\"start-time\" name=\"start\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div><!-- Custom Range Form --><form id=\"custom-range-form\" class=\"flex flex-wrap items-end gap-4\"><div class=\"flex-1 min-w-[200px]\"><label for=\"start-time\" class=\"field-label\">From</label> <input type=\"datetime-local\" id=\"start-time\" name=\"start\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -125,27 +125,27 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"w-full px-3 py-2 text-sm bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-600 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent\" style=\"border-radius: var(--theme-radius)\"></div><div class=\"flex-1 min-w-[200px]\"><label for=\"end-time\" class=\"block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1\">To</label> <input type=\"datetime-local\" id=\"end-time\" name=\"end\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"field-input\"></div><div class=\"flex-1 min-w-[200px]\"><label for=\"end-time\" class=\"field-label\">To</label> <input type=\"datetime-local\" id=\"end-time\" name=\"end\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.EndTime.Format("2006-01-02T15:04"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 65, Col: 53}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 64, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"w-full px-3 py-2 text-sm bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-600 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-theme-primary focus:border-transparent\" style=\"border-radius: var(--theme-radius)\"></div><button type=\"button\" onclick=\"applyCustomAuditRange()\" class=\"px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover\" style=\"border-radius: var(--theme-radius)\">Apply</button></form><!-- Current Range Display --><div class=\"mt-4 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600 flex items-center justify-between\"><div class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\"><span class=\"font-medium\">Showing:</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"field-input\"></div><button type=\"button\" onclick=\"applyCustomAuditRange()\" class=\"btn-theme-primary\">Apply</button></form><!-- Current Range Display --><div class=\"card-section-divider flex items-center justify-between mt-4\"><div class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\"><span class=\"font-medium\">Showing:</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.StartTime.Format("Jan 2, 2006 3:04 PM"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 84, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 81, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
@@ -158,7 +158,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.EndTime.Format("Jan 2, 2006 3:04 PM"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 84, Col: 103}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 81, Col: 103}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -171,7 +171,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		var templ_7745c5c3_Var7 string
 		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d entries", len(props.Entries)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 87, Col: 51}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 84, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 		if templ_7745c5c3_Err != nil {
@@ -182,7 +182,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if len(props.Entries) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"text-center py-12 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600\" style=\"border-radius: var(--theme-radius)\"><svg class=\"mx-auto h-12 w-12 text-cool-grey-400 dark:text-cool-grey-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"></path></svg><h3 class=\"mt-4 text-lg font-medium text-cool-grey-900 dark:text-white\">No audit logs for this time range</h3><p class=\"mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400\">Try selecting a different time range to view audit logs.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"customer-card text-center py-12\"><svg class=\"mx-auto h-12 w-12 text-cool-grey-400 dark:text-cool-grey-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z\"></path></svg><h3 class=\"mt-4 text-lg font-medium text-cool-grey-900 dark:text-white\">No audit logs for this time range</h3><p class=\"mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400\">Try selecting a different time range to view audit logs.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -209,7 +209,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 113, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 110, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -222,7 +222,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 114, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 111, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -259,9 +259,9 @@ func auditRangePresetButtonPanel(props AuditLogsPanelProps, rangeType, label str
 		}
 		ctx = templ.ClearChildren(ctx)
 		isActive := props.RangeType == rangeType
-		baseClasses := "px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer"
+		baseClasses := "px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer rounded-theme"
 		activeClasses := "bg-theme-primary text-white"
-		inactiveClasses := "bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
+		inactiveClasses := "btn-neutral"
 		var templ_7745c5c3_Var11 = []any{baseClasses, templ.KV(activeClasses, isActive), templ.KV(inactiveClasses, !isActive)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 		if templ_7745c5c3_Err != nil {
@@ -293,14 +293,14 @@ func auditRangePresetButtonPanel(props AuditLogsPanelProps, rangeType, label str
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" style=\"border-radius: var(--theme-radius)\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 132, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 128, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -336,7 +336,7 @@ func auditLogEntryPanel(entry AuditLogEntryPanel) templ.Component {
 			templ_7745c5c3_Var15 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"p-4 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600\" style=\"border-radius: var(--theme-radius)\"><div class=\"flex items-start gap-3\"><!-- Type Badge -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"customer-card\"><div class=\"flex items-start gap-3\"><!-- Type Badge -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -351,7 +351,7 @@ func auditLogEntryPanel(entry AuditLogEntryPanel) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(entry.TimeStamp.Format("Jan 2, 2006 3:04:05 PM"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 147, Col: 56}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 143, Col: 56}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -364,7 +364,7 @@ func auditLogEntryPanel(entry AuditLogEntryPanel) templ.Component {
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(entry.LogLine)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 150, Col: 141}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/audit_logs_panel.templ`, Line: 146, Col: 141}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {

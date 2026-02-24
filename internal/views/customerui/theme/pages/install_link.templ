@@ -18,7 +18,7 @@ templ InstallLinkPage(props InstallLinkPageProps) {
 		<form id="installForm" class="max-w-2xl mx-auto mt-10 space-y-6">
 			<input type="hidden" id="sha" value={ props.Link.SHA }/>
 			<!-- Card 1: Header + Account + Region -->
-			<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+			<div class="card-lg">
 				<div class="mb-6 text-center">
 					<h3 class="text-xl text-cool-grey-800 dark:text-cool-grey-200">{ props.Link.AppName }</h3>
 					<p class="text-cool-grey-600 dark:text-cool-grey-400">provided by { props.Link.NuonOrg.Name }</p>
@@ -27,9 +27,9 @@ templ InstallLinkPage(props InstallLinkPageProps) {
 					You've been invited to install this application. Please provide your details below.
 				</p>
 				<!-- Account Info - User is always authenticated -->
-				<div class="border-b border-cool-grey-200 dark:border-dark-grey-600 pb-4 mb-4">
+				<div class="card-section-divider">
 					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
-					<div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 p-4 rounded-lg">
+					<div class="account-info-box">
 						<div class="flex items-center justify-between">
 							<div>
 								<p class="text-sm text-green-700 dark:text-green-300">
@@ -55,20 +55,20 @@ templ InstallLinkPage(props InstallLinkPageProps) {
 			</div>
 			<!-- Input Group Cards (dynamically rendered by JS - each group is its own card) -->
 			<div id="appInputsContainer" class="space-y-6">
-				<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+				<div class="card-lg">
 					<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading configuration options...</p>
 				</div>
 			</div>
 			<!-- Card 3: Submit Section -->
-			<div class="bg-white dark:bg-dark-grey-800 p-8 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg">
+			<div class="card-lg">
 				<button
 					type="submit"
-					class="w-full text-white py-3 px-4 focus:outline-none focus:ring-2 focus:ring-primary-400 font-semibold rounded-lg bg-theme-primary hover:bg-theme-primary-hover"
+					class="w-full btn-theme-primary"
 				>
 					Create install
 				</button>
-				<div id="error" class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden rounded-lg"></div>
-				<div id="success" class="mt-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 hidden rounded-lg"></div>
+				<div id="error" class="mt-4 alert-error hidden"></div>
+				<div id="success" class="mt-4 alert-success hidden"></div>
 			</div>
 		</form>
 		<!-- Config data for JavaScript -->
@@ -109,8 +109,8 @@ templ installLinkScript() {
 				var html = '';
 
 				if (platform === 'azure_aks') {
-					html = '<label for="azureLocation" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Azure Location *<\/label>' +
-						'<select id="azureLocation" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+					html = '<label for="azureLocation" class="field-label">Azure Location *<\/label>' +
+						'<select id="azureLocation" required class="field-input">' +
 							'<option value="eastus">East US<\/option>' +
 							'<option value="eastus2">East US 2<\/option>' +
 							'<option value="westus">West US<\/option>' +
@@ -120,8 +120,8 @@ templ installLinkScript() {
 						'<\/select>';
 				} else {
 					// Default to AWS
-					html = '<label for="awsRegion" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">AWS Region *<\/label>' +
-						'<select id="awsRegion" required class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">' +
+					html = '<label for="awsRegion" class="field-label">AWS Region *<\/label>' +
+						'<select id="awsRegion" required class="field-input">' +
 							'<option value="us-east-1">US East (N. Virginia) - us-east-1<\/option>' +
 							'<option value="us-east-2">US East (Ohio) - us-east-2<\/option>' +
 							'<option value="us-west-1">US West (N. California) - us-west-1<\/option>' +
@@ -173,7 +173,7 @@ templ installLinkScript() {
 				var groupId = 'group-' + (group.name || 'default').replace(/[^a-z0-9]/gi, '-').toLowerCase();
 
 				// Card container with collapsible structure
-				var html = '<div class="input-group-card bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500">';
+				var html = '<div class="input-group-card">';
 
 				// Clickable header with chevron
 				html += '<div class="input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors" ';
@@ -245,11 +245,11 @@ templ installLinkScript() {
 					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
 					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
 					if (input.default === 'true') html += ' checked';
-					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+					html += ' class="field-checkbox" \/>';
 					html += '<div class="flex-1">';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+						html += '<p class="field-hint">' + input.description + '<\/p>';
 					}
 					html += '<\/div><\/div>';
 					return html;
@@ -257,12 +257,12 @@ templ installLinkScript() {
 
 				if (input.type === 'json') {
 					var html = '<div>';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
-					html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+					html += ' class="field-input">';
 					html += (input.default || '') + '<\/textarea>';
 					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+						html += '<p class="field-hint">' + input.description + '<\/p>';
 					}
 					html += '<\/div>';
 					return html;
@@ -276,12 +276,12 @@ templ installLinkScript() {
 				}
 
 				var html = '<div>';
-				html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+				html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + (input.default || '') + '"' + requiredAttr;
 				if (inputType === 'password') html += ' autocomplete="off"';
-				html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+				html += ' class="field-input" \/>';
 				if (input.description) {
-					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					html += '<p class="field-hint">' + input.description + '<\/p>';
 				}
 				html += '<\/div>';
 				return html;

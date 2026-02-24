@@ -90,8 +90,7 @@ type HeaderProps struct {
 
 // FooterProps contains props for the customer footer component
 type FooterProps struct {
-	Theme          *models.AppTheme
-	SupportContact string
+	Theme *models.AppTheme
 }
 
 // ThemeStylesProps contains props for theme CSS injection
@@ -110,43 +109,27 @@ type LayoutProps struct {
 	PrimaryColorDark   string
 	SecondaryColor     string
 	SecondaryColorDark string
+	WhiteColor         string
+	BlackColor         string
+	WhiteColorDark     string
+	BlackColorLight    string
 	HeadingFont        string
 	BodyFont           string
 	HeadingFontBase64  string
 	BodyFontBase64     string
 	LogoBase64         string
-	SupportContact     string
+	LogoDarkBase64     string
+	FaviconBase64      string
 
 	// Style variants
 	RadiusClass string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"
+	ThemeMode   string // "auto", "light", or "dark"
 
 	// Asset paths (cache-busted)
-	CSSPath string
+	CSSPath       string // main customer stylesheet (cache-busted)
+	CustomCSSPath string // org-specific custom CSS (empty when not configured)
 
 	// Navigation
 	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
 	ActiveNav        string // "apps" or "installs" — highlights the current nav item
-}
-
-// GetSupportContact returns the support contact from theme or empty string
-func (p *FooterProps) GetSupportContact() string {
-	if p.SupportContact != "" {
-		return p.SupportContact
-	}
-	if p.Theme != nil && p.Theme.SupportContact != "" {
-		return p.Theme.SupportContact
-	}
-	return ""
-}
-
-// GetSupportHref returns the support href (mailto: or http://)
-func (p *FooterProps) GetSupportHref() string {
-	contact := p.GetSupportContact()
-	if contact == "" {
-		return ""
-	}
-	if len(contact) > 4 && contact[:4] == "http" {
-		return contact
-	}
-	return "mailto:" + contact
 }

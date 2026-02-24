@@ -14,6 +14,8 @@ type PreviewContainerProps struct {
 	InitialSize    string // "desktop", "tablet", or "mobile" (default: "desktop")
 	PrimaryColor   string // CSS hex color for --preview-primary
 	SecondaryColor string // CSS hex color for --preview-secondary
+	WhiteColor     string // CSS hex color for --preview-white (light background)
+	BlackColor     string // CSS hex color for --preview-black (dark background)
 	PageOptions    []PreviewPageOption // optional page selector options
 }
 
@@ -60,6 +62,20 @@ func (p PreviewContainerProps) getSecondaryColor() string {
 		return "#8040BF"
 	}
 	return p.SecondaryColor
+}
+
+func (p PreviewContainerProps) getWhiteColor() string {
+	if p.WhiteColor == "" {
+		return "#f8fafc"
+	}
+	return p.WhiteColor
+}
+
+func (p PreviewContainerProps) getBlackColor() string {
+	if p.BlackColor == "" {
+		return "#121212"
+	}
+	return p.BlackColor
 }
 
 // PreviewContainer renders a reusable preview container with device size and light/dark mode toggles
@@ -178,7 +194,7 @@ templ PreviewContainer(props PreviewContainerProps) {
 			<div
 				id="previewContainer"
 				class={ props.getModeClass(), props.getContainerClass() }
-				style={ "--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + ";" }
+				style={ "--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";" }
 			>
 				<!-- Scaled preview frame -->
 				<div id="previewScaler" class={ "origin-top-left", props.getSizeClass() }>
@@ -195,8 +211,8 @@ templ PreviewContainer(props PreviewContainerProps) {
 templ previewContainerStyles() {
 	<style>
 		/* Light mode preview */
-		.preview-light .preview-page-bg { background-color: #f8fafc; }
-		.preview-light .preview-card { background-color: #ffffff; border: 1px solid #d1d5db; }
+		.preview-light .preview-page-bg { background-color: var(--preview-white, #f8fafc); }
+		.preview-light .preview-card { background-color: var(--preview-white, #ffffff); border: 1px solid #d1d5db; }
 		.preview-light .preview-text-heading { color: #374151; }
 		.preview-light .preview-text-body { color: #1f2937; }
 		.preview-light .preview-text-muted { color: #6b7280; }
@@ -206,13 +222,13 @@ templ previewContainerStyles() {
 		.preview-light .preview-logo-dark { display: none !important; }
 
 		/* Dark mode preview */
-		.preview-dark .preview-page-bg { background-color: #0f172a; }
-		.preview-dark .preview-card { background-color: #1e293b; border: 1px solid #334155; }
-		.preview-dark .preview-text-heading { color: #e2e8f0; }
-		.preview-dark .preview-text-body { color: #f8fafc; }
-		.preview-dark .preview-text-muted { color: #94a3b8; }
-		.preview-dark .preview-status-bg { background-color: #1e293b; }
-		.preview-dark .preview-status-border { border: 1px solid #334155; }
+		.preview-dark .preview-page-bg { background-color: var(--preview-black, #121212); }
+		.preview-dark .preview-card { background-color: var(--preview-black, #1a1a1a); border: 1px solid #232323; }
+		.preview-dark .preview-text-heading { color: #ffffff; }
+		.preview-dark .preview-text-body { color: #ffffff; }
+		.preview-dark .preview-text-muted { color: #9ea8b3; }
+		.preview-dark .preview-status-bg { background-color: #1a1a1a; }
+		.preview-dark .preview-status-border { border: 1px solid #232323; }
 		.preview-dark .preview-logo-light { display: none !important; }
 		.preview-dark .preview-logo-dark { display: block; }
 

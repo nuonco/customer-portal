@@ -60,8 +60,7 @@ templ WorkflowsPanel(props WorkflowsPanelProps) {
 							<button
 								type="button"
 								onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadWorkflowsPage(%d)", props.PrevOffset)} }
-								class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-600 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-								style="border-radius: var(--theme-radius)"
+								class="pagination-nav-btn"
 							>
 								<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
@@ -75,8 +74,7 @@ templ WorkflowsPanel(props WorkflowsPanelProps) {
 							<button
 								type="button"
 								onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadWorkflowsPage(%d)", props.NextOffset)} }
-								class="inline-flex items-center px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-600 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-								style="border-radius: var(--theme-radius)"
+								class="pagination-nav-btn"
 							>
 								Next
 								<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

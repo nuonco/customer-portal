@@ -240,34 +240,7 @@ func TestRenderFooter(t *testing.T) {
 		{
 			name:     "basic footer",
 			ctx:      &TemplateContext{},
-			contains: []string{"<footer>", "</footer>"},
-		},
-		{
-			name: "footer with email support",
-			ctx: &TemplateContext{
-				Theme: &ThemeData{
-					SupportContact: "support@example.com",
-				},
-			},
-			contains: []string{
-				"Contact Support",
-				`href="mailto:support@example.com"`,
-			},
-		},
-		{
-			name: "footer with URL support",
-			ctx: &TemplateContext{
-				Theme: &ThemeData{
-					SupportContact: "https://support.example.com",
-				},
-			},
-			contains: []string{
-				"Contact Support",
-				`href="https://support.example.com"`,
-			},
-			notContains: []string{
-				"mailto:",
-			},
+			contains: []string{"<footer ", "</footer>"},
 		},
 	}
 
@@ -357,7 +330,7 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 			name:     "footer in template",
 			tmplStr:  `{{ footer . }}`,
 			ctx:      &TemplateContext{},
-			contains: []string{"<footer>"},
+			contains: []string{"<footer "},
 		},
 		{
 			name:    "scripts in template",
@@ -385,9 +358,8 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				BasePath: "/app",
 				User:     &UserData{Email: "test@example.com"},
 				Theme: &ThemeData{
-					PrimaryColor:   "#123456",
-					RadiusClass:    "radius-rounded",
-					SupportContact: "help@example.com",
+					PrimaryColor: "#123456",
+					RadiusClass:  "radius-rounded",
 				},
 			},
 			contains: []string{
@@ -396,7 +368,6 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				"--theme-primary: #123456",
 				"radius-rounded",
 				"test@example.com",
-				"mailto:help@example.com",
 				"showToast",
 			},
 		},

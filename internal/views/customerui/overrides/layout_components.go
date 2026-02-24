@@ -322,6 +322,16 @@ func buildThemeCSS(theme *ThemeData) string {
 		css.WriteString(theme.SecondaryColorDark)
 		css.WriteString(";")
 	}
+	if theme.WhiteColor != "" {
+		css.WriteString("--theme-white: ")
+		css.WriteString(theme.WhiteColor)
+		css.WriteString(";")
+	}
+	if theme.BlackColor != "" {
+		css.WriteString("--theme-black: ")
+		css.WriteString(theme.BlackColor)
+		css.WriteString(";")
+	}
 	if theme.HeadingFontBase64 != "" {
 		css.WriteString("--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;")
 	} else if theme.HeadingFont != "" {
@@ -433,24 +443,10 @@ func RenderFooter(ctx *TemplateContext, renderer *TemplateRenderer) template.HTM
 	b.WriteString(`<footer class="max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">`)
 	b.WriteString(`<div class="text-center text-sm text-cool-grey-500 dark:text-cool-grey-400 font-body">`)
 
-	if ctx.Theme != nil && ctx.Theme.SupportContact != "" {
-		b.WriteString(` · <a href="`)
-		b.WriteString(layoutGetSupportHref(ctx.Theme.SupportContact))
-		b.WriteString(`" class="hover:text-cool-grey-700 dark:hover:text-cool-grey-300 transition-colors">Contact Support</a>`)
-	}
-
 	b.WriteString(`</div>`)
 	b.WriteString(`</footer>`)
 
 	return template.HTML(b.String())
-}
-
-// layoutGetSupportHref returns the href for a support contact (mailto: or direct URL).
-func layoutGetSupportHref(contact string) string {
-	if len(contact) > 4 && contact[:4] == "http" {
-		return contact
-	}
-	return "mailto:" + contact
 }
 
 // RenderScripts generates all utility scripts including:

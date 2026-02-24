@@ -15,14 +15,14 @@ package partials
 templ ConfirmModal() {
 	<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden z-[100] overflow-y-auto">
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+			<div class="theme-card-bg rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="confirm-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
 				<div class="flex justify-end space-x-3">
-					<button id="confirm-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">
+					<button id="confirm-cancel" class="btn-theme-outline">
 						Cancel
 					</button>
-					<button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">
+					<button id="confirm-ok" class="btn-theme-secondary">
 						Confirm
 					</button>
 				</div>
@@ -69,21 +69,21 @@ templ ConfirmModal() {
 templ PromptModal() {
 	<div id="prompt-modal" class="fixed inset-0 bg-black/50 hidden z-[100] overflow-y-auto">
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
+			<div class="theme-card-bg rounded-lg shadow-xl max-w-md w-full p-6 my-8">
 				<h3 id="prompt-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
 				<p id="prompt-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-4"></p>
 				<input
 					type="text"
 					id="prompt-input"
-					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500 mb-2"
+					class="field-input mb-2"
 					placeholder=""
 				/>
 				<p id="prompt-error" class="text-red-600 dark:text-red-400 text-sm mb-4 hidden"></p>
 				<div class="flex justify-end space-x-3">
-					<button id="prompt-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">
+					<button id="prompt-cancel" class="btn-theme-outline">
 						Cancel
 					</button>
-					<button id="prompt-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">
+					<button id="prompt-ok" class="btn-theme-secondary">
 						Confirm
 					</button>
 				</div>

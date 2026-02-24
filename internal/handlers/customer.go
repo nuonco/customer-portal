@@ -303,14 +303,21 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		PrimaryColorDark:   primaryColorDark,
 		SecondaryColor:     secondaryColor,
 		SecondaryColorDark: secondaryColorDark,
+		WhiteColor:         theme.WhiteColor,
+		BlackColor:         theme.BlackColor,
+		WhiteColorDark:     theme.WhiteColorDark,
+		BlackColorLight:    theme.BlackColorLight,
 		HeadingFont:        theme.HeadingFont,
 		BodyFont:           theme.BodyFont,
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
 		LogoBase64:         theme.LogoLightBase64,
-		SupportContact:     theme.SupportContact,
+		LogoDarkBase64:     theme.LogoDarkBase64,
+		FaviconBase64:      theme.FaviconBase64,
 		RadiusClass:        theme.GetRadiusClass(),
+		ThemeMode:          theme.GetThemeMode(),
 		CSSPath:            assets.CustomerCSSPath(),
+		CustomCSSPath:      h.getCustomCSSPath(theme.OrgID),
 	}
 }
 

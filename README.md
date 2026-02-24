@@ -41,7 +41,7 @@ General vendor journeys.
 
 - Go module with all required dependencies
 - PostgreSQL database with GORM models
-  - Supports DATABASE_URL or individual DB_* environment variables
+  - Supports DATABASE*URL or individual DB*\* environment variables
   - AWS RDS IAM authentication support
 - Gin web server with role-based routing
 - JWT authentication with vendor/customer roles
@@ -109,6 +109,45 @@ General vendor journeys.
    - Manage your installs
    - Note: Customers cannot sign up directly - they must accept an install link first
 
+## Development Guide
+
+When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
+
+A high-level design principal is that this app has two sections. The first is the customer portal that customer users log into and interact with. The second is an admin section, that vendors log into so they can configure the customer portal. While we use the same libraries and design patterns across both, the two sections are kept separate. Each has it's own set of Gin routes, gin handlers, Templ templates, and Tailwind styles.
+
+### Backend
+
+The backend is implemented using Gin, the Nuon Golang SDK, and Gorm on top of Postgres.
+
+#### Gin
+
+The customer and vendor sections of the app each have their own collection of gin routes and handlers. The customer routes can only be accessed from an org subdomain. The vendor routes are hosted under `/admin` at the root domain.
+
+The handlers read and write data from the database, and render it into UI templates. Often, the handlers also read and write data from the Nuon API using the SDK. We should avoid copying Nuon API data into the DB, so we don't have to worry about keeping the data in sync over time.
+
+Each section has it's own login page. By default, they both use the same auth provider, but the customer login can be configured to use a separate one.
+
+### Frontend
+
+The frontend is implemented using Templ, Tailwind, and HTMX.
+
+#### Templ
+
+Templ is used to define the UI. We maintain separate sets of UI elements for the vendor views and the customer views. Each set is comprised of:
+
+- layout: the top-level wrapper used on all pages.
+- pages: the pages of the app, used by the handlers to render pages.
+- partials: sections of a page, which may be re-used across pages.
+- components: modular, re-usable UI elements used to assemble partials and pages.
+
+#### Tailwind
+
+Tailwind allows us to define styles directly in the Templ templates using utility classes. We should avoid writing custom CSS, either one-off styles or custom classes, as much as possible.
+
+#### HTMX
+
+We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like udpating page content, updating the browser history, and polling for updates.
+
 ## Architecture
 
 ### Backend
@@ -128,6 +167,7 @@ General vendor journeys.
 ### Models
 
 **Core Models:**
+
 - **User** - Email, role (vendor/customer), timestamps
 - **NuonOrg** - Connected organizations with API credentials
 - **InstallLink** - Shareable links with SHA-based security
@@ -135,15 +175,17 @@ General vendor journeys.
 - **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable)
 
 **Configuration Models:**
+
 - **AppInputConfig** - App-specific input field configurations
 - **AppHealthCheckConfig** - Health check definitions per app
-- **AppTheme** - Custom theming and branding per org
+- **AppTheme** - Custom theming and branding per org (colors, logos, favicon, fonts, login page, color scheme lock, custom CSS). Vendors can upload a custom favicon via Branding settings; it is stored as a base64 data URI in `FaviconBase64` and rendered in the customer portal `<head>`. The `ThemeMode` field (`"auto"`, `"light"`, `"dark"`) controls whether the customer portal follows the system preference or is locked to a specific color scheme. The `CustomCSS` field allows vendors to inject arbitrary CSS into the customer portal; it is appended to the portal stylesheet after all theme variables are applied and served via the `/custom/css/:org_id.css` endpoint. The vendor logo (`LogoLightBase64`, `LogoDarkBase64`) is **not** shown in the header nav — it appears as a centered hero block (`h-16 max-w-xs`) at the top of each main customer page (`/installs`, `/apps`, install link, app install).
 - **CustomerAuthConfig** - Customer-specific OIDC/SAML settings
 - **GitHubRepoConfig** - GitHub integration settings
 - **AssetOverride** - Custom asset uploads (logos, icons)
 - **TemplateOverride** - Custom email/notification templates
 
 **Organization Models:**
+
 - **OrgInvitation** - Pending team member invitations
 - **OrgMember** - Organization membership and roles
 
@@ -214,18 +256,18 @@ This flow solves the problem of cookies being scoped to subdomains. By authentic
 
 ## Environment Variables
 
-| Variable                | Default                                | Description                                          |
-| ----------------------- | -------------------------------------- | ---------------------------------------------------- |
-| `PORT`                  | `8080`                                 | Server port                                          |
-| `CUSTOMER_BASE_URL`     | `http://localhost:8080`                | Base URL for install links (override for production) |
-| `SUBDOMAIN_BASE_DOMAIN` | `localhost:8080`                       | Base domain for org subdomains                       |
-| `JWT_SECRET`            | `your-secret-key`                      | JWT signing secret (required for production)         |
-| `NUON_API_URL`          | `https://api.nuon.co`                  | Nuon API URL                                         |
+| Variable                | Default                                | Description                                                                                      |
+| ----------------------- | -------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `PORT`                  | `8080`                                 | Server port                                                                                      |
+| `CUSTOMER_BASE_URL`     | `http://localhost:8080`                | Base URL for install links (override for production)                                             |
+| `SUBDOMAIN_BASE_DOMAIN` | `localhost:8080`                       | Base domain for org subdomains                                                                   |
+| `JWT_SECRET`            | `your-secret-key`                      | JWT signing secret (required for production)                                                     |
+| `NUON_API_URL`          | `https://api.nuon.co`                  | Nuon API URL                                                                                     |
 | `AUTH_PROVIDER`         | -                                      | OIDC auth provider type (e.g., google, okta, auth0) - falls back to local auth if not configured |
-| `AUTH_OIDC_ISSUER_URL`  | -                                      | Issuer URL for the auth provider                     |
-| `AUTH_CLIENT_ID`        | -                                      | Auth provider client ID                              |
-| `AUTH_REDIRECT_URI`     | `http://localhost:8080/admin/callback` | Auth callback URL the provider will use              |
-| `DATABASE_URL`          | -                                      | PostgreSQL connection string                         |
+| `AUTH_OIDC_ISSUER_URL`  | -                                      | Issuer URL for the auth provider                                                                 |
+| `AUTH_CLIENT_ID`        | -                                      | Auth provider client ID                                                                          |
+| `AUTH_REDIRECT_URI`     | `http://localhost:8080/admin/callback` | Auth callback URL the provider will use                                                          |
+| `DATABASE_URL`          | -                                      | PostgreSQL connection string                                                                     |
 
 ### OIDC Configuration (environment fallback)
 
@@ -239,36 +281,36 @@ This flow solves the problem of cookies being scoped to subdomains. By authentic
 ### Additional Configuration Variables
 
 **Logging:**
-| Variable    | Default | Description              |
+| Variable | Default | Description |
 |-------------|---------|--------------------------|
-| `LOG_LEVEL` | `INFO`  | Logging verbosity level (DEBUG, INFO, WARN, ERROR) |
+| `LOG_LEVEL` | `INFO` | Logging verbosity level (DEBUG, INFO, WARN, ERROR) |
 
 **Database (PostgreSQL):**
-| Variable       | Description                            |
+| Variable | Description |
 |----------------|----------------------------------------|
-| `DB_HOST`      | Database host                          |
-| `DB_NAME`      | Database name                          |
-| `DB_USER`      | Database username                      |
-| `DB_PORT`      | Database port                          |
-| `DB_SSL_MODE`  | SSL mode (disable, require, verify-ca) |
-| `DB_REGION`    | AWS region for RDS                     |
-| `DB_USE_IAM`   | Enable AWS RDS IAM authentication      |
+| `DB_HOST` | Database host |
+| `DB_NAME` | Database name |
+| `DB_USER` | Database username |
+| `DB_PORT` | Database port |
+| `DB_SSL_MODE` | SSL mode (disable, require, verify-ca) |
+| `DB_REGION` | AWS region for RDS |
+| `DB_USE_IAM` | Enable AWS RDS IAM authentication |
 
 **Authentication (Extended):**
-| Variable                         | Description                           |
+| Variable | Description |
 |----------------------------------|---------------------------------------|
-| `AUTH_CLIENT_SECRET`             | OIDC client secret (required)         |
-| `AUTH_POST_LOGOUT_REDIRECT_URI`  | Post-logout redirect URL              |
-| `AUTH_OIDC_SCOPES`               | Custom OIDC scopes (space-separated)  |
+| `AUTH_CLIENT_SECRET` | OIDC client secret (required) |
+| `AUTH_POST_LOGOUT_REDIRECT_URI` | Post-logout redirect URL |
+| `AUTH_OIDC_SCOPES` | Custom OIDC scopes (space-separated) |
 
 **SAML Configuration:**
-| Variable                  | Description                    |
+| Variable | Description |
 |---------------------------|--------------------------------|
-| `AUTH_SAML_IDP_METADATA_URL` | SAML IdP metadata URL       |
-| `AUTH_SAML_ENTITY_ID`     | SAML service provider entity ID |
-| `AUTH_SAML_ACS_URL`       | SAML assertion consumer URL    |
-| `AUTH_SAML_CERTIFICATE`   | SAML signing certificate       |
-| `AUTH_SAML_PRIVATE_KEY`   | SAML private key               |
+| `AUTH_SAML_IDP_METADATA_URL` | SAML IdP metadata URL |
+| `AUTH_SAML_ENTITY_ID` | SAML service provider entity ID |
+| `AUTH_SAML_ACS_URL` | SAML assertion consumer URL |
+| `AUTH_SAML_CERTIFICATE` | SAML signing certificate |
+| `AUTH_SAML_PRIVATE_KEY` | SAML private key |
 
 Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for database configuration.
 

@@ -115,8 +115,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				<button
 					type="button"
 					onclick="toggleActionsDropdown()"
-					class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-					style="border-radius: var(--theme-radius)"
+					class="dropdown-trigger"
 				>
 					Actions
 					<svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,27 +124,26 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				</button>
 				<div
 					id="actionsDropdownMenu"
-					class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-dark-grey-800 border border-cool-grey-300 dark:border-dark-grey-500 shadow-lg z-10"
-					style="border-radius: var(--theme-radius)"
+					class="hidden dropdown-menu"
 				>
 					<button
 						type="button"
 						onclick="openEditInputsModal(); toggleActionsDropdown();"
-						class="block w-full text-left px-4 py-2 text-sm text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						class="dropdown-item"
 					>
 						Edit Inputs
 					</button>
 					<button
 						type="button"
 						onclick="confirmDeprovision(); toggleActionsDropdown();"
-						class="block w-full text-left px-4 py-2 text-sm text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						class="dropdown-item"
 					>
 						Deprovision
 					</button>
 					<button
 						type="button"
 						onclick="forgetInstall(); toggleActionsDropdown();"
-						class="block w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700"
+						class="dropdown-item-danger"
 					>
 						Forget
 					</button>
@@ -156,7 +154,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 	<div class="space-y-4 mt-4">
 		<!-- API Deletion Warning Banner -->
 		if props.APIDeletedError {
-			<div class="p-4 border bg-amber-50 dark:bg-amber-900/30 border-amber-200 dark:border-amber-800" style="border-radius: var(--theme-radius)">
+			<div class="alert-warning">
 				<div class="flex items-start">
 					<div class="flex-shrink-0 mr-3 text-amber-500">
 						<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -175,8 +173,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 						<button
 							type="button"
 							onclick="forgetInstall()"
-							class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-amber-900 dark:text-amber-100 bg-amber-100 dark:bg-amber-800 hover:bg-amber-200 dark:hover:bg-amber-700 border border-amber-300 dark:border-amber-600"
-							style="border-radius: var(--theme-radius)"
+							class="btn-warning-sm"
 						>
 							<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
@@ -198,7 +195,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		</div>
 		<!-- Health Status (full width) -->
 		if props.HasHealthChecks && !props.APIDeletedError {
-			<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+			<div class="card-base">
 				@healthStatusPanel(props)
 			</div>
 		}
@@ -238,7 +235,7 @@ templ overviewPlatformChip(platform string) {
 
 // platformCard renders the platform information card
 templ platformCard(platform string, region string) {
-	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+	<div class="card-base">
 		<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Platform</h3>
 		<div class="space-y-3 text-sm">
 			<div>
@@ -306,7 +303,7 @@ templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) 
 		hx-swap="outerHTML"
 	>
 		if readme != nil && readme.Readme != "" {
-			<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+			<div class="card-base">
 				<div class="flex items-center justify-between mb-4">
 					<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">Getting Started</h3>
 				</div>
@@ -316,7 +313,7 @@ templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) 
 				if len(readme.Warnings) > 0 {
 					<div class="mt-4 space-y-2">
 						for _, warning := range readme.Warnings {
-							<div class="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800" style="border-radius: var(--theme-radius)">
+							<div class="flex items-start gap-2 alert-warning">
 								<svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
 								</svg>
@@ -332,14 +329,14 @@ templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) 
 
 // appConfigCard renders the app configuration card
 templ appConfigCard(props InstallDetailPanelProps) {
-	<div class="bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500" style="border-radius: var(--theme-radius)">
+	<div class="card-base">
 		<div class="flex items-center gap-2 mb-3">
 			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.AppName }</h3>
 			if props.AppConfigVersion > 0 {
 				if props.InstallConfigVersion < props.AppConfigVersion {
-					<span class="inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300">update available</span>
+					<span class="chip-sm-warning">update available</span>
 				} else {
-					<span class="inline-flex items-center rounded-full font-medium px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">up to date</span>
+					<span class="chip-sm-success">up to date</span>
 				}
 			}
 		</div>
@@ -447,8 +444,7 @@ func healthStatusClass(status string) string {
 templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primaryColor string) {
 	<div
 		id={ "workflow-" + workflow.ID }
-		class="bg-white dark:bg-dark-grey-800 p-4 shadow-sm border border-cool-grey-200 dark:border-dark-grey-600 mb-4"
-		style="border-radius: var(--theme-radius)"
+		class="card-base mb-4"
 	>
 		<!-- Wrapper for status display - this is the HTMX target -->
 		<div id="workflow-status-display">
@@ -615,7 +611,7 @@ templ installDetailPanelScripts() {
 					title: 'Important Warning',
 					message: 'Only use "Forget" after you have successfully deprovisioned the install and removed the CloudFormation stack.\n\n"Forget" only removes this install from your list - it does NOT deprovision any infrastructure.\n\nAre you sure you want to forget this installation?',
 					variant: 'warning',
-					confirmText: 'Continue',
+					confirmText: 'Forget',
 					cancelText: 'Cancel'
 				});
 
@@ -851,11 +847,11 @@ templ installDetailPanelScripts() {
 					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
 					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
 					if (isChecked) html += ' checked';
-					html += ' class="mt-1 h-4 w-4 text-primary-600 border-cool-grey-300 dark:border-dark-grey-500 rounded focus:ring-primary-400" \/>';
+					html += ' class="field-checkbox" \/>';
 					html += '<div class="flex-1">';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+						html += '<p class="field-hint">' + input.description + '<\/p>';
 					}
 					html += '<\/div><\/div>';
 					return html;
@@ -863,12 +859,12 @@ templ installDetailPanelScripts() {
 
 				if (input.type === 'json') {
 					var html = '<div>';
-					html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
-					html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600">';
+					html += ' class="field-input">';
 					html += value + '<\/textarea>';
 					if (input.description) {
-						html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+						html += '<p class="field-hint">' + input.description + '<\/p>';
 					}
 					html += '<\/div>';
 					return html;
@@ -882,12 +878,12 @@ templ installDetailPanelScripts() {
 				}
 
 				var html = '<div>';
-				html += '<label for="' + input.name + '" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">' + (input.display_name || input.name) + isRequired + '<\/label>';
+				html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
 				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + value + '"' + requiredAttr;
 				if (inputType === 'password') html += ' autocomplete="off"';
-				html += ' class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600" \/>';
+				html += ' class="field-input" \/>';
 				if (input.description) {
-					html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">' + input.description + '<\/p>';
+					html += '<p class="field-hint">' + input.description + '<\/p>';
 				}
 				html += '<\/div>';
 				return html;
@@ -991,7 +987,7 @@ templ editInputsModalPanel() {
 		onclick="if (event.target === this) closeEditInputsModal();"
 	>
 		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-800 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
+			<div class="card-lg w-full max-w-2xl my-8">
 				<div class="mb-4">
 					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Edit Inputs</h3>
 				</div>
@@ -1001,7 +997,7 @@ templ editInputsModalPanel() {
 				</div>
 				<form id="editInputsForm" class="hidden space-y-4">
 					<div id="editInputsFields" class="space-y-4"></div>
-					<div class="flex space-x-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600">
+					<div class="card-section-divider flex space-x-3">
 						<button
 							type="submit"
 							class="flex-1 bg-theme-primary text-white py-2 px-4 rounded-md hover:bg-theme-primary-hover focus:ring-2 focus:ring-primary-400 font-medium"

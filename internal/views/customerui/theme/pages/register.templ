@@ -47,16 +47,16 @@ templ RegisterPage(props RegisterPageProps) {
 				</div>
 			</nav>
 			<main class="container mx-auto p-4">
-				<div class="max-w-md mx-auto bg-white dark:bg-dark-grey-800 shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-6 mt-10" style="border-radius: var(--theme-radius)">
+				<div class="max-w-md mx-auto card-base mt-10">
 					<h2 class="text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white">{ props.Title }</h2>
 					if props.Error != "" {
-						<div class="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300" style="border-radius: var(--theme-radius)">
+						<div class="mb-4 alert-error">
 							{ props.Error }
 						</div>
 					}
 					<form id="registerForm" class="space-y-4">
 						<div>
-							<label for="name" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
+							<label for="name" class="field-label">
 								Name
 							</label>
 							<input
@@ -64,13 +64,12 @@ templ RegisterPage(props RegisterPageProps) {
 								id="name"
 								name="name"
 								required
-								class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								style="border-radius: var(--theme-radius)"
+								class="mt-1 field-input"
 								placeholder="Enter your name"
 							/>
 						</div>
 						<div>
-							<label for="email" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
+							<label for="email" class="field-label">
 								Email
 							</label>
 							<input
@@ -78,13 +77,12 @@ templ RegisterPage(props RegisterPageProps) {
 								id="email"
 								name="email"
 								required
-								class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								style="border-radius: var(--theme-radius)"
+								class="mt-1 field-input"
 								placeholder="Enter your email"
 							/>
 						</div>
 						<div>
-							<label for="password" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
+							<label for="password" class="field-label">
 								Password
 							</label>
 							<input
@@ -93,13 +91,12 @@ templ RegisterPage(props RegisterPageProps) {
 								name="password"
 								required
 								minlength="8"
-								class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								style="border-radius: var(--theme-radius)"
+								class="mt-1 field-input"
 								placeholder="Enter your password (min 8 characters)"
 							/>
 						</div>
 						<div>
-							<label for="confirmPassword" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300">
+							<label for="confirmPassword" class="field-label">
 								Confirm Password
 							</label>
 							<input
@@ -108,15 +105,13 @@ templ RegisterPage(props RegisterPageProps) {
 								name="confirmPassword"
 								required
 								minlength="8"
-								class="mt-1 block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-								style="border-radius: var(--theme-radius)"
+								class="mt-1 field-input"
 								placeholder="Confirm your password"
 							/>
 						</div>
 						<button
 							type="submit"
-							class="w-full bg-theme-primary hover:bg-theme-primary-hover text-white py-2 px-4 focus:outline-none focus:ring-2 focus:ring-primary-500"
-							style="border-radius: var(--theme-radius)"
+							class="w-full btn-theme-primary"
 						>
 							Create Account
 						</button>
@@ -129,11 +124,7 @@ templ RegisterPage(props RegisterPageProps) {
 							<a href={ templ.SafeURL(props.BasePath + "/login") } class="text-primary-600 hover:text-primary-700 dark:text-primary-400">Sign in</a>
 						}
 					</p>
-					<div
-						id="error"
-						class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 hidden"
-						style="border-radius: var(--theme-radius)"
-					></div>
+					<div id="error" class="mt-4 alert-error hidden"></div>
 				</div>
 			</main>
 			<!-- Config data for JavaScript -->

@@ -34,6 +34,10 @@ type ThemeData struct {
 	PrimaryColorDark   string `json:"primary_color_dark"`
 	SecondaryColor     string `json:"secondary_color"`
 	SecondaryColorDark string `json:"secondary_color_dark"`
+	WhiteColor         string `json:"white_color,omitempty"`       // Background color for light mode
+	BlackColor         string `json:"black_color,omitempty"`       // Background color for dark mode
+	WhiteColorDark     string `json:"white_color_dark,omitempty"`  // Optional: --theme-white override for dark mode
+	BlackColorLight    string `json:"black_color_light,omitempty"` // Optional: --theme-black override for light mode
 	LogoBase64         string `json:"logo_base64,omitempty"`       // Backward compatibility (alias for LogoLightBase64)
 	LogoLightBase64    string `json:"logo_light_base64,omitempty"` // Light mode logo
 	LogoDarkBase64     string `json:"logo_dark_base64,omitempty"`  // Dark mode logo
@@ -42,7 +46,6 @@ type ThemeData struct {
 	HeadingFontBase64  string `json:"heading_font_base64,omitempty"`
 	BodyFontBase64     string `json:"body_font_base64,omitempty"`
 	BorderRadius       string `json:"border_radius"`
-	SupportContact     string `json:"support_contact,omitempty"`
 	LoginTitle         string `json:"login_title"`
 	LoginSubtitle      string `json:"login_subtitle"`
 	RadiusClass        string `json:"radius_class"`
@@ -210,6 +213,10 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		PrimaryColorDark:   darkenColor(primaryColor),
 		SecondaryColor:     secondaryColor,
 		SecondaryColorDark: darkenColor(secondaryColor),
+		WhiteColor:         theme.WhiteColor,
+		BlackColor:         theme.BlackColor,
+		WhiteColorDark:     theme.WhiteColorDark,
+		BlackColorLight:    theme.BlackColorLight,
 		LogoBase64:         theme.LogoLightBase64, // Backward compatibility
 		LogoLightBase64:    theme.LogoLightBase64,
 		LogoDarkBase64:     theme.LogoDarkBase64,
@@ -218,7 +225,6 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		HeadingFontBase64:  theme.HeadingFontBase64,
 		BodyFontBase64:     theme.BodyFontBase64,
 		BorderRadius:       theme.BorderRadius,
-		SupportContact:     theme.SupportContact,
 		LoginTitle:         theme.GetLoginTitle(),
 		LoginSubtitle:      theme.GetLoginSubtitle(),
 		RadiusClass:        theme.GetRadiusClass(),

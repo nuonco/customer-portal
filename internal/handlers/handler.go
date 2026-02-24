@@ -251,7 +251,13 @@ func (h *Handler) getCustomCSSPath(orgID string) string {
 	}
 	// Check if org has any enabled CSS overrides
 	cssAssets, err := models.GetCSSOverrides(h.db, orgID)
-	if err != nil || len(cssAssets) == 0 {
+	hasOverrides := err == nil && len(cssAssets) > 0
+
+	// Also check for theme custom CSS
+	theme, themeErr := models.GetOrCreateAppTheme(h.db, orgID)
+	hasThemeCSS := themeErr == nil && theme.CustomCSS != ""
+
+	if !hasOverrides && !hasThemeCSS {
 		return ""
 	}
 	return h.basePath + "/custom/css/" + orgID + ".css"
@@ -1451,16 +1457,24 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		LogoBase64                string `json:"logo_base64"`          // Kept for backward compatibility (maps to LogoLightBase64)
 		LogoLightBase64           string `json:"logo_light_base64"`    // Light mode logo
 		LogoDarkBase64            string `json:"logo_dark_base64"`     // Dark mode logo
-		SupportContact            string `json:"support_contact"`
+		FaviconBase64             string `json:"favicon_base64"`
 		HeadingFont               string `json:"heading_font"`
 		BodyFont                  string `json:"body_font"`
 		HeadingFontBase64         string `json:"heading_font_base64"`
 		BodyFontBase64            string `json:"body_font_base64"`
+		HeadingFontName           string `json:"heading_font_name"`
+		BodyFontName              string `json:"body_font_name"`
+		WhiteColor                string `json:"white_color"`
+		BlackColor                string `json:"black_color"`
+		WhiteColorDark            string `json:"white_color_dark"`
+		BlackColorLight           string `json:"black_color_light"`
 		BorderRadius              string `json:"border_radius"`
+		ThemeMode                 string `json:"theme_mode"`
 		LoginTitle                string `json:"login_title"`
 		LoginSubtitle             string `json:"login_subtitle"`
 		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
 		LoginRightSideGradient    string `json:"login_right_side_gradient"`
+		CustomCSS                 string `json:"custom_css"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1513,6 +1527,28 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		theme.SecondaryColorDark = ""
 	}
 
+	// White/Black background colors: valid hex sets them, empty/invalid clears them
+	if isValidHexColor(req.WhiteColor) {
+		theme.WhiteColor = req.WhiteColor
+	} else {
+		theme.WhiteColor = ""
+	}
+	if isValidHexColor(req.BlackColor) {
+		theme.BlackColor = req.BlackColor
+	} else {
+		theme.BlackColor = ""
+	}
+	if isValidHexColor(req.WhiteColorDark) {
+		theme.WhiteColorDark = req.WhiteColorDark
+	} else {
+		theme.WhiteColorDark = ""
+	}
+	if isValidHexColor(req.BlackColorLight) {
+		theme.BlackColorLight = req.BlackColorLight
+	} else {
+		theme.BlackColorLight = ""
+	}
+
 	// Handle light mode logo - "REMOVE" clears, valid data URI sets
 	if req.LogoLightBase64 != "" {
 		if req.LogoLightBase64 == "REMOVE" {
@@ -1540,8 +1576,14 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		}
 	}
 
-	// SupportContact can be set to empty string intentionally
-	theme.SupportContact = req.SupportContact
+	// Handle favicon - "REMOVE" clears, valid image data URI sets
+	if req.FaviconBase64 != "" {
+		if req.FaviconBase64 == "REMOVE" {
+			theme.FaviconBase64 = ""
+		} else if strings.HasPrefix(req.FaviconBase64, "data:image/") {
+			theme.FaviconBase64 = req.FaviconBase64
+		}
+	}
 
 	// Fonts can be set to empty string to use default system fonts
 	theme.HeadingFont = req.HeadingFont
@@ -1560,18 +1602,22 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	// HeadingFontBase64: "REMOVE" clears, valid data URI sets
 	if req.HeadingFontBase64 == "REMOVE" {
 		theme.HeadingFontBase64 = ""
+		theme.HeadingFontName = ""
 	} else if len(req.HeadingFontBase64) > 0 && isValidFontDataURI(req.HeadingFontBase64) {
-		if len(req.HeadingFontBase64) <= 280000 {
+		if len(req.HeadingFontBase64) <= 400000 {
 			theme.HeadingFontBase64 = req.HeadingFontBase64
+			theme.HeadingFontName = req.HeadingFontName
 		}
 	}
 
 	// BodyFontBase64: "REMOVE" clears, valid data URI sets
 	if req.BodyFontBase64 == "REMOVE" {
 		theme.BodyFontBase64 = ""
+		theme.BodyFontName = ""
 	} else if len(req.BodyFontBase64) > 0 && isValidFontDataURI(req.BodyFontBase64) {
-		if len(req.BodyFontBase64) <= 280000 {
+		if len(req.BodyFontBase64) <= 400000 {
 			theme.BodyFontBase64 = req.BodyFontBase64
+			theme.BodyFontName = req.BodyFontName
 		}
 	}
 
@@ -1580,6 +1626,13 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		if models.IsValidBorderRadius(req.BorderRadius) {
 			theme.BorderRadius = req.BorderRadius
 		}
+	}
+
+	// ThemeMode: "auto", "light", "dark"; empty string clears to auto
+	if models.IsValidThemeMode(req.ThemeMode) {
+		theme.ThemeMode = req.ThemeMode
+	} else {
+		theme.ThemeMode = ""
 	}
 
 	// Update login page text - allow setting to empty to use defaults
@@ -1603,6 +1656,9 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 			theme.LoginRightSideGradient = req.LoginRightSideGradient
 		}
 	}
+
+	// CustomCSS: any string value sets it (including empty to clear)
+	theme.CustomCSS = req.CustomCSS
 
 	if err := h.db.Save(theme).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save theme settings"})

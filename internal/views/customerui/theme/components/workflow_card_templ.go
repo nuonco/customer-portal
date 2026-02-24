@@ -55,7 +55,7 @@ func WorkflowCard(props WorkflowCardProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"bg-white dark:bg-dark-grey-800 p-6 shadow-md border border-cool-grey-300 dark:border-dark-grey-500\" style=\"border-radius: var(--theme-radius)\"><div class=\"flex justify-between items-start\"><div class=\"flex-grow\"><div class=\"flex items-center space-x-3 mb-2\"><h4 class=\"text-xl text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"card-base\"><div class=\"flex justify-between items-start\"><div class=\"flex-grow\"><div class=\"flex items-center space-x-3 mb-2\"><h4 class=\"text-xl text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -224,7 +224,7 @@ func approveAllButton(props WorkflowCardProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmApproveAll(this)\" class=\"text-white px-4 py-2 text-sm bg-theme-primary hover:bg-theme-primary-hover\" style=\"border-radius: var(--theme-radius)\"><span class=\"htmx-indicator\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmApproveAll(this)\" class=\"btn-theme-primary\"><span class=\"htmx-indicator\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -237,14 +237,14 @@ func approveAllButton(props WorkflowCardProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed\" style=\"border-radius: var(--theme-radius)\">Approve</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed rounded-theme\">Approve</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workflow.ApproveAllDisabledReason)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 71, Col: 45}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 69, Col: 45}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
@@ -288,7 +288,7 @@ func cancelButton(props WorkflowCardProps) templ.Component {
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.Workflow.ID + "/cancel")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 80, Col: 108}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 78, Col: 108}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -301,13 +301,13 @@ func cancelButton(props WorkflowCardProps) templ.Component {
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs("#workflow-" + props.Workflow.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 81, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 79, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" class=\"bg-theme-secondary text-white px-4 py-2 hover:bg-theme-secondary-hover text-sm\" style=\"border-radius: var(--theme-radius)\"><span class=\"htmx-indicator\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" class=\"btn-theme-secondary\"><span class=\"htmx-indicator\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -320,14 +320,14 @@ func cancelButton(props WorkflowCardProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed\" style=\"border-radius: var(--theme-radius)\">Cancel</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed rounded-theme\">Cancel</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workflow.CancelDisabledReason)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 104, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/workflow_card.templ`, Line: 100, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -393,27 +393,27 @@ func workflowStatusMessage(status string) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if status == "approval-awaiting" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"mt-4 p-4 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800\" style=\"border-radius: var(--theme-radius)\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Approval Required:</strong> This update is waiting for your approval to proceed.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Approval Required:</strong> This update is waiting for your approval to proceed.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "in-progress" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<div class=\"mt-4 p-4 bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600\" style=\"border-radius: var(--theme-radius)\"><div class=\"flex items-center space-x-2\"><div class=\"animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600\"></div><p class=\"text-sm text-cool-grey-800 dark:text-cool-grey-300\"><strong>In Progress:</strong> This update is currently running.</p></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<div class=\"status-card mt-4 p-4\"><div class=\"flex items-center space-x-2\"><div class=\"animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600\"></div><p class=\"text-sm text-cool-grey-800 dark:text-cool-grey-300\"><strong>In Progress:</strong> This update is currently running.</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "error" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800\" style=\"border-radius: var(--theme-radius)\"><p class=\"text-sm text-red-800 dark:text-red-300\"><strong>Failed:</strong> This update encountered an error.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"mt-4 alert-error\"><p class=\"text-sm text-red-800 dark:text-red-300\"><strong>Failed:</strong> This update encountered an error.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "cancelled" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"mt-4 p-4 bg-orange-50 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800\" style=\"border-radius: var(--theme-radius)\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Cancelled:</strong> This update was cancelled.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Cancelled:</strong> This update was cancelled.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "success" || status == "approved" || status == "active" || status == "completed" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"mt-4 p-4 bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800\" style=\"border-radius: var(--theme-radius)\"><p class=\"text-sm text-green-800 dark:text-green-300\"><strong>Completed:</strong> This update completed successfully.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"mt-4 alert-success\"><p class=\"text-sm text-green-800 dark:text-green-300\"><strong>Completed:</strong> This update completed successfully.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

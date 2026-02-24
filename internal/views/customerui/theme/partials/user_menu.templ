@@ -1,8 +1,6 @@
 package partials
 
 import (
-	"strings"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -18,13 +16,9 @@ templ UserMenu(props UserMenuProps) {
 		<button
 			type="button"
 			onclick="toggleCustomerUserMenu()"
-			class="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer border border-cool-grey-200 dark:border-dark-grey-600 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors"
+			class="user-menu-trigger"
 			id="customerUserMenuButton"
 		>
-			<!-- Avatar -->
-			<div class="w-8 h-8 rounded-md flex items-center justify-center text-sm font-semibold uppercase bg-cool-grey-200 text-cool-grey-600 dark:bg-dark-grey-600 dark:text-cool-grey-400">
-				{ getUserInitial(props.User.Email) }
-			</div>
 			<!-- Email -->
 			<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">
 				{ props.User.Email }
@@ -35,7 +29,7 @@ templ UserMenu(props UserMenuProps) {
 			</svg>
 		</button>
 		<!-- Dropdown Menu -->
-		<div id="customerUserDropdown" class="absolute right-0 mt-2 w-48 py-1 z-50 bg-white dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg shadow-lg hidden">
+		<div id="customerUserDropdown" class="dropdown-menu py-1 z-50 hidden">
 			<!-- Log out Button -->
 			<button
 				type="button"
@@ -51,13 +45,6 @@ templ UserMenu(props UserMenuProps) {
 		</div>
 	</div>
 	@userMenuScript()
-}
-
-func getUserInitial(email string) string {
-	if email == "" {
-		return "U"
-	}
-	return strings.ToUpper(string(email[0]))
 }
 
 templ userMenuScript() {
