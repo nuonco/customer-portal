@@ -22,6 +22,9 @@ templ RegisterPage(props RegisterPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
+			if props.Theme != nil && props.Theme.FaviconBase64 != "" {
+				<link rel="icon" href={ templ.SafeURL(props.Theme.FaviconBase64) }/>
+			}
 			<link href={ props.CSSPath } rel="stylesheet"/>
 			@registerDarkModeScript()
 			@registerFontLinks(props.Theme)

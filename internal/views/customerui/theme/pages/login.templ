@@ -22,6 +22,9 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ getLoginTitle(props.Theme) }</title>
+			if props.Theme != nil && props.Theme.FaviconBase64 != "" {
+				<link rel="icon" href={ templ.SafeURL(props.Theme.FaviconBase64) }/>
+			}
 			<link href={ props.CSSPath } rel="stylesheet"/>
 			@scripts.DarkMode(getThemeMode(props.Theme))
 			@customerLoginFontLinks(props.Theme)

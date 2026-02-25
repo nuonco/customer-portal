@@ -111,9 +111,6 @@ type CustomerAppDetailPageProps struct {
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
 		<div>
-			<div class="mb-8">
-				<p class="text-cool-grey-600 dark:text-cool-grey-400">Browse and install apps.</p>
-			</div>
 			if len(props.Apps) > 0 {
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					for _, app := range props.Apps {
@@ -438,12 +435,12 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 				<p class="text-xs text-cool-grey-700 dark:text-cool-grey-300 mt-2">{ app.Description }</p>
 			}
 		</div>
-		<div class="mt-auto pt-4">
+		<div class="mt-auto pt-4 flex justify-end">
 			<a
 				href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s", basePath, app.AppID)) }
-				class="block w-full text-center text-white py-2 px-4 font-semibold rounded-lg bg-theme-primary hover:bg-theme-primary-hover focus:outline-none focus:ring-2 focus:ring-primary-400"
+				class="text-sm font-medium text-theme-primary hover:underline"
 			>
-				View
+				View &gt;
 			</a>
 		</div>
 	</div>

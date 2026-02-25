@@ -17,7 +17,7 @@ templ Layout(props LayoutProps) {
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 			<title>{ props.Title }</title>
 			if props.FaviconBase64 != "" {
-				<link rel="icon" href={ props.FaviconBase64 }/>
+				<link rel="icon" href={ templ.SafeURL(props.FaviconBase64) }/>
 			}
 
 			<!-- Customer CSS -->
