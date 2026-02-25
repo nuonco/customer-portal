@@ -28,15 +28,9 @@ templ VendorAdminBar(props VendorAdminBarProps) {
 			</svg>
 			Back to Admin
 		</a>
-		if props.OrgName != "" {
-			<div class="vendor-admin-bar-org">
-				<span class="vendor-admin-bar-org-name">{ props.OrgName }</span>
-				if props.PortalDomain != "" {
-					<span class="vendor-admin-bar-org-sep">·</span>
-					<span class="vendor-admin-bar-org-domain">{ props.PortalDomain }</span>
-				}
-			</div>
-		}
+		<div class="vendor-admin-bar-org">
+			<span class="vendor-admin-bar-org-name">You are previewing your customer portal</span>
+		</div>
 		<div class="vendor-admin-bar-user">
 			if props.User.Name != "" {
 				<span class="vendor-admin-bar-name">{ props.User.Name }</span>
