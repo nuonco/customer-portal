@@ -317,6 +317,9 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 	}
 
 	adminURL := h.customerBaseURL + "/admin/orgs"
+	if org != nil {
+		adminURL = h.customerBaseURL + "/admin/orgs/" + org.ID
+	}
 
 	return customerui.LayoutProps{
 		Title:                  title,
