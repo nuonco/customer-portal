@@ -14,7 +14,7 @@ type LogoHeroProps struct {
 	LogoDarkBase64  string
 }
 
-// LogoHero renders a right-aligned logo block. Renders nothing when no logo is set.
+// LogoHero renders a centered logo hero block. Renders nothing when no logo is set.
 func LogoHero(props LogoHeroProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -37,7 +37,7 @@ func LogoHero(props LogoHeroProps) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if props.LogoLightBase64 != "" || props.LogoDarkBase64 != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex justify-start px-6 lg:px-8 py-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mx-auto px-6 lg:px-8 py-6 w-full max-w-5xl\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -55,7 +55,7 @@ func LogoHero(props LogoHeroProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-[160px] object-contain dark:hidden\"> <img src=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" alt=\"Logo\" class=\"h-16 w-auto max-w-xs object-contain dark:hidden\"> <img src=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -68,7 +68,7 @@ func LogoHero(props LogoHeroProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-[160px] object-contain hidden dark:block\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" alt=\"Logo\" class=\"h-16 w-auto max-w-xs object-contain hidden dark:block\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -86,7 +86,7 @@ func LogoHero(props LogoHeroProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" alt=\"Logo\" class=\"h-8 w-auto max-w-[160px] object-contain\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" alt=\"Logo\" class=\"h-16 w-auto max-w-xs object-contain\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

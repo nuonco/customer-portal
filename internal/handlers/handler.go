@@ -2509,16 +2509,18 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 // UpdateLoginSettings handles PUT request to update login settings
 func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 	var req struct {
-		Enabled                   bool   `json:"enabled"`
-		ProviderName              string `json:"provider_name"`
-		ClientID                  string `json:"client_id"`
-		ClientSecret              string `json:"client_secret"`
-		IssuerURL                 string `json:"issuer_url"`
-		Scopes                    string `json:"scopes"`
-		LoginTitle                string `json:"login_title"`
-		LoginSubtitle             string `json:"login_subtitle"`
-		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
-		LoginRightSideGradient    string `json:"login_right_side_gradient"`
+		Enabled                       bool   `json:"enabled"`
+		ProviderName                  string `json:"provider_name"`
+		ClientID                      string `json:"client_id"`
+		ClientSecret                  string `json:"client_secret"`
+		IssuerURL                     string `json:"issuer_url"`
+		Scopes                        string `json:"scopes"`
+		LoginTitle                    string `json:"login_title"`
+		LoginSubtitle                 string `json:"login_subtitle"`
+		LoginRightSideImageBase64     string `json:"login_right_side_image_base64"`
+		LoginRightSideGradient        string `json:"login_right_side_gradient"`
+		LoginRightSideImageBase64Dark string `json:"login_right_side_image_base64_dark"`
+		LoginRightSideGradientDark    string `json:"login_right_side_gradient_dark"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -2579,6 +2581,22 @@ func (h *Handler) UpdateLoginSettings(c *gin.Context) {
 		} else {
 			// Clear gradient (falls back to primary/secondary colors)
 			theme.LoginRightSideGradient = ""
+		}
+
+		// Handle dark mode login right side image
+		if req.LoginRightSideImageBase64Dark != "" {
+			if req.LoginRightSideImageBase64Dark == "REMOVE" {
+				theme.LoginRightSideImageBase64Dark = ""
+			} else if strings.HasPrefix(req.LoginRightSideImageBase64Dark, "data:image/") {
+				theme.LoginRightSideImageBase64Dark = req.LoginRightSideImageBase64Dark
+			}
+		}
+
+		// Handle dark mode login right side gradient
+		if req.LoginRightSideGradientDark != "" && strings.HasPrefix(req.LoginRightSideGradientDark, "linear-gradient") {
+			theme.LoginRightSideGradientDark = req.LoginRightSideGradientDark
+		} else {
+			theme.LoginRightSideGradientDark = ""
 		}
 
 		h.db.Save(theme)

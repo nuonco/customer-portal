@@ -192,6 +192,18 @@ func filterInputConfigByLocalConfig(inputConfig interface{}, customerInputNames 
 	return result
 }
 
+// strVal extracts a string value from a map.
+func strVal(m map[string]interface{}, key string) string {
+	v, _ := m[key].(string)
+	return v
+}
+
+// boolVal extracts a bool value from a map.
+func boolVal(m map[string]interface{}, key string) bool {
+	v, _ := m[key].(bool)
+	return v
+}
+
 // applyInputOrdering sorts input groups and inputs within them based on saved ordering
 func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder map[string][]string) interface{} {
 	if inputConfig == nil {
@@ -296,28 +308,30 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
 	return customerui.LayoutProps{
-		Title:              title,
-		User:               user,
-		BasePath:           h.basePath,
-		PrimaryColor:       primaryColor,
-		PrimaryColorDark:   primaryColorDark,
-		SecondaryColor:     secondaryColor,
-		SecondaryColorDark: secondaryColorDark,
-		WhiteColor:         theme.WhiteColor,
-		BlackColor:         theme.BlackColor,
-		WhiteColorDark:     theme.WhiteColorDark,
-		BlackColorLight:    theme.BlackColorLight,
-		HeadingFont:        theme.HeadingFont,
-		BodyFont:           theme.BodyFont,
-		HeadingFontBase64:  theme.HeadingFontBase64,
-		BodyFontBase64:     theme.BodyFontBase64,
-		LogoBase64:         theme.LogoLightBase64,
-		LogoDarkBase64:     theme.LogoDarkBase64,
-		FaviconBase64:      theme.FaviconBase64,
-		RadiusClass:        theme.GetRadiusClass(),
-		ThemeMode:          theme.GetThemeMode(),
-		CSSPath:            assets.CustomerCSSPath(),
-		CustomCSSPath:      h.getCustomCSSPath(theme.OrgID),
+		Title:                  title,
+		User:                   user,
+		BasePath:               h.basePath,
+		PrimaryColor:           primaryColor,
+		PrimaryColorDark:       primaryColorDark,
+		SecondaryColor:         secondaryColor,
+		SecondaryColorDark:     secondaryColorDark,
+		PrimaryColorDarkMode:   theme.PrimaryColorDark,
+		SecondaryColorDarkMode: theme.SecondaryColorDark,
+		WhiteColor:             theme.WhiteColor,
+		BlackColor:             theme.BlackColor,
+		WhiteColorDark:         theme.WhiteColorDark,
+		BlackColorLight:        theme.BlackColorLight,
+		HeadingFont:            theme.HeadingFont,
+		BodyFont:               theme.BodyFont,
+		HeadingFontBase64:      theme.HeadingFontBase64,
+		BodyFontBase64:         theme.BodyFontBase64,
+		LogoBase64:             theme.LogoLightBase64,
+		LogoDarkBase64:         theme.LogoDarkBase64,
+		FaviconBase64:          theme.FaviconBase64,
+		RadiusClass:            theme.GetRadiusClass(),
+		ThemeMode:              theme.GetThemeMode(),
+		CSSPath:                assets.CustomerCSSPath(),
+		CustomCSSPath:          h.getCustomCSSPath(theme.OrgID),
 	}
 }
 
@@ -2232,97 +2246,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	appDisplays := make([]customerpages.PublishedAppDisplay, 0, len(publishedApps))
 	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	for _, pa := range publishedApps {
-		display := customerpages.PublishedAppDisplay{
-			AppID:    pa.AppID,
-			AppName:  pa.AppID, // fallback to AppID if name can't be fetched
-			Platform: "unknown",
-		}
-		if nuonClientErr == nil {
-			app, err := nuonClient.GetApp(c.Request.Context(), pa.AppID)
-			if err == nil && app != nil {
-				if app.Name != "" {
-					display.AppName = app.Name
-				}
-				if app.RunnerConfig != nil {
-					display.Platform = string(app.RunnerConfig.AppRunnerType)
-				}
-				display.Description = app.Description
-			}
-
-			// Fetch components
-			if comps, err := nuonClient.GetAppComponents(c.Request.Context(), pa.AppID); err != nil {
-				zap.L().Warn("failed to fetch app components", zap.String("app_id", pa.AppID), zap.Error(err))
-			} else {
-				for _, comp := range comps {
-					display.Components = append(display.Components, customerpages.ComponentDisplay{
-						Name: comp.Name,
-						Type: string(comp.Type),
-					})
-				}
-			}
-
-			// Fetch sandbox config
-			if sbCfg, err := nuonClient.GetAppSandboxLatestConfig(c.Request.Context(), pa.AppID); err != nil {
-				zap.L().Warn("failed to fetch app sandbox config", zap.String("app_id", pa.AppID), zap.Error(err))
-			} else if sbCfg != nil {
-				// cloud_platform is a computed "after query" field that may be empty;
-				// fall back to the platform already fetched from the app's runner config.
-				display.SandboxPlatform = sbCfg.CloudPlatform
-				if display.SandboxPlatform == "" {
-					display.SandboxPlatform = display.Platform
-				}
-				display.SandboxTFVersion = sbCfg.TerraformVersion
-				display.SandboxDrift = sbCfg.DriftSchedule
-			}
-
-			// Fetch permissions config
-			if permCfg, err := nuonClient.GetLatestAppPermissionsConfig(c.Request.Context(), pa.AppID); err != nil {
-				zap.L().Warn("failed to fetch app permissions config", zap.String("app_id", pa.AppID), zap.Error(err))
-			} else if permCfg != nil {
-				addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
-					if role == nil || role.Name == "" {
-						return
-					}
-					name := role.DisplayName
-					if name == "" {
-						name = role.Name
-					}
-					display.Permissions = append(display.Permissions, customerpages.IAMRoleDisplay{
-						Label:       label,
-						Name:        name,
-						Description: role.Description,
-					})
-				}
-				if permCfg.ProvisionAwsIamRole.Name != "" {
-					prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
-					addRole(&prov, "Provision")
-				}
-				addRole(permCfg.DeprovisionAwsIamRole, "Deprovision")
-				addRole(permCfg.MaintenanceAwsIamRole, "Maintenance")
-				addRole(permCfg.BreakGlassAwsIamRole, "Break Glass")
-				for _, r := range permCfg.AwsIamRoles {
-					label := r.DisplayName
-					if label == "" {
-						label = r.Name
-					}
-					addRole(r, label)
-				}
-			}
-
-			// Fetch policies config (raw HTTP — SDK model omits the policies array)
-			if policies, err := nuonClient.GetLatestAppPoliciesConfigFull(c.Request.Context(), pa.AppID); err != nil {
-				zap.L().Warn("failed to fetch app policies config", zap.String("app_id", pa.AppID), zap.Error(err))
-			} else {
-				for _, p := range policies {
-					display.Policies = append(display.Policies, customerpages.PolicyDisplay{
-						Name:        p.Name,
-						Type:        p.Type,
-						Engine:      p.Engine,
-						Description: p.Description,
-					})
-				}
-			}
-		}
+		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
 		appDisplays = append(appDisplays, display)
 	}
 
@@ -2335,6 +2259,217 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		Apps:        appDisplays,
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.CustomerAppsPage(props))
+}
+
+// buildAppDisplay builds a PublishedAppDisplay for a single app, fetching details from the Nuon API.
+func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nuonClient *nuon.Client, nuonClientErr error) customerpages.PublishedAppDisplay {
+	display := customerpages.PublishedAppDisplay{
+		AppID:    appID,
+		AppName:  appID, // fallback to AppID if name can't be fetched
+		Platform: "unknown",
+	}
+	if nuonClientErr != nil {
+		return display
+	}
+
+	app, err := nuonClient.GetApp(c.Request.Context(), appID)
+	if err == nil && app != nil {
+		if app.Name != "" {
+			display.AppName = app.Name
+		}
+		if app.RunnerConfig != nil {
+			display.Platform = string(app.RunnerConfig.AppRunnerType)
+		}
+		display.Description = app.Description
+	}
+
+	// Fetch components
+	if comps, err := nuonClient.GetAppComponents(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app components", zap.String("app_id", appID), zap.Error(err))
+	} else {
+		for _, comp := range comps {
+			display.Components = append(display.Components, customerpages.ComponentDisplay{
+				Name: comp.Name,
+				Type: string(comp.Type),
+			})
+		}
+	}
+
+	// Fetch sandbox config
+	if sbCfg, err := nuonClient.GetAppSandboxLatestConfig(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app sandbox config", zap.String("app_id", appID), zap.Error(err))
+	} else if sbCfg != nil {
+		display.SandboxPlatform = sbCfg.CloudPlatform
+		if display.SandboxPlatform == "" {
+			display.SandboxPlatform = display.Platform
+		}
+		display.SandboxTFVersion = sbCfg.TerraformVersion
+		display.SandboxDrift = sbCfg.DriftSchedule
+		if sbCfg.PublicGitVcsConfig != nil {
+			display.SandboxRepoIsPublic = true
+			display.SandboxRepoURL = sbCfg.PublicGitVcsConfig.Repo
+			display.SandboxRepoBranch = sbCfg.PublicGitVcsConfig.Branch
+			display.SandboxRepoDir = sbCfg.PublicGitVcsConfig.Directory
+		}
+	}
+
+	// Fetch permissions config
+	if permCfg, err := nuonClient.GetLatestAppPermissionsConfig(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app permissions config", zap.String("app_id", appID), zap.Error(err))
+	} else if permCfg != nil {
+		addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
+			if role == nil || role.Name == "" {
+				return
+			}
+			name := role.DisplayName
+			if name == "" {
+				name = role.Name
+			}
+			display.Permissions = append(display.Permissions, customerpages.IAMRoleDisplay{
+				Label:       label,
+				Name:        name,
+				Description: role.Description,
+			})
+		}
+		if permCfg.ProvisionAwsIamRole.Name != "" {
+			prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
+			addRole(&prov, "Provision")
+		}
+		addRole(permCfg.DeprovisionAwsIamRole, "Deprovision")
+		addRole(permCfg.MaintenanceAwsIamRole, "Maintenance")
+		addRole(permCfg.BreakGlassAwsIamRole, "Break Glass")
+		for _, r := range permCfg.AwsIamRoles {
+			label := r.DisplayName
+			if label == "" {
+				label = r.Name
+			}
+			addRole(r, label)
+		}
+	}
+
+	// Fetch policies config (raw HTTP — SDK model omits the policies array)
+	if policies, err := nuonClient.GetLatestAppPoliciesConfigFull(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app policies config", zap.String("app_id", appID), zap.Error(err))
+	} else {
+		for _, p := range policies {
+			display.Policies = append(display.Policies, customerpages.PolicyDisplay{
+				Name:        p.Name,
+				Type:        p.Type,
+				Engine:      p.Engine,
+				Description: p.Description,
+			})
+		}
+	}
+
+	// Fetch secrets config for Secrets tab
+	if secretsCfg, err := nuonClient.GetAppSecretsConfig(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app secrets config", zap.String("app_id", appID), zap.Error(err))
+	} else if secretsCfg != nil && len(secretsCfg.Secrets) > 0 {
+		for _, s := range secretsCfg.Secrets {
+			display.Secrets = append(display.Secrets, customerpages.SecretDisplay{
+				Name:         s.Name,
+				DisplayName:  s.DisplayName,
+				Description:  s.Description,
+				AutoGenerate: s.AutoGenerate,
+			})
+		}
+	}
+
+	// Fetch input config for Inputs tab
+	if inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), appID); err != nil {
+		zap.L().Warn("failed to fetch app input config", zap.String("app_id", appID), zap.Error(err))
+	} else if inputConfig != nil {
+		// Determine which inputs are customer-facing
+		var localConfig models.AppInputConfig
+		h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+		customerInputNames := localConfig.GetCustomerInputNames()
+
+		// If local config specifies customer inputs, filter to those; otherwise show all
+		customerInputSet := make(map[string]bool)
+		hasFilter := len(customerInputNames) > 0
+		for _, name := range customerInputNames {
+			customerInputSet[name] = true
+		}
+
+		// Marshal/unmarshal to work with the untyped config
+		jsonBytes, _ := json.Marshal(inputConfig)
+		var configMap map[string]interface{}
+		if json.Unmarshal(jsonBytes, &configMap) == nil {
+			if inputGroups, ok := configMap["input_groups"].([]interface{}); ok {
+				for _, group := range inputGroups {
+					groupMap, ok := group.(map[string]interface{})
+					if !ok {
+						continue
+					}
+					appInputs, ok := groupMap["app_inputs"].([]interface{})
+					if !ok {
+						continue
+					}
+					gd := customerpages.InputGroupDisplay{
+						Name:        strVal(groupMap, "name"),
+						DisplayName: strVal(groupMap, "display_name"),
+					}
+					for _, input := range appInputs {
+						inputMap, ok := input.(map[string]interface{})
+						if !ok {
+							continue
+						}
+						inputName := strVal(inputMap, "name")
+						if hasFilter && !customerInputSet[inputName] {
+							continue
+						}
+						gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
+							Name:        inputName,
+							DisplayName: strVal(inputMap, "display_name"),
+							Description: strVal(inputMap, "description"),
+							Type:        strVal(inputMap, "input_type"),
+							Required:    boolVal(inputMap, "required"),
+							Sensitive:   boolVal(inputMap, "sensitive"),
+							Default:     strVal(inputMap, "default"),
+						})
+					}
+					if len(gd.Inputs) > 0 {
+						display.InputGroups = append(display.InputGroups, gd)
+					}
+				}
+			}
+		}
+	}
+
+	return display
+}
+
+// CustomerAppDetailPage renders the detail page for a single published app.
+func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
+	appID := c.Param("app_id")
+	user := h.tryGetLoggedInUser(c)
+
+	org, err := h.getOrgForCustomerPage(c)
+	if err != nil {
+		c.Redirect(http.StatusFound, h.basePath+"/installs")
+		return
+	}
+
+	var publishedApp models.PublishedApp
+	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+		c.Redirect(http.StatusFound, h.basePath+"/apps")
+		return
+	}
+
+	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
+
+	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
+
+	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme)
+	layoutProps.HasPublishedApps = true
+	layoutProps.ActiveNav = "apps"
+
+	props := customerpages.CustomerAppDetailPageProps{
+		LayoutProps: layoutProps,
+		App:         display,
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.CustomerAppDetailPage(props))
 }
 
 // CustomerAppInstallPage renders the install form for a published app

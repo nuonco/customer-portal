@@ -28,6 +28,32 @@ type PolicyDisplay struct {
 	Description string
 }
 
+// InputGroupDisplay holds display info for an input group
+type InputGroupDisplay struct {
+	Name        string
+	DisplayName string
+	Inputs      []InputDisplay
+}
+
+// InputDisplay holds display info for a single input field
+type InputDisplay struct {
+	Name        string
+	DisplayName string
+	Description string
+	Type        string
+	Required    bool
+	Sensitive   bool
+	Default     string
+}
+
+// SecretDisplay holds display info for a single secret field
+type SecretDisplay struct {
+	Name         string
+	DisplayName  string
+	Description  string
+	AutoGenerate bool
+}
+
 // PublishedAppDisplay holds display info for a published app
 type PublishedAppDisplay struct {
 	AppID            string
@@ -37,9 +63,15 @@ type PublishedAppDisplay struct {
 	Components       []ComponentDisplay
 	Permissions      []IAMRoleDisplay
 	Policies         []PolicyDisplay
-	SandboxPlatform  string // e.g. "aws"
-	SandboxTFVersion string // e.g. "1.5.0"
-	SandboxDrift     string // cron expression or empty
+	InputGroups      []InputGroupDisplay
+	Secrets          []SecretDisplay
+	SandboxPlatform     string // e.g. "aws"
+	SandboxTFVersion    string // e.g. "1.5.0"
+	SandboxDrift        string // cron expression or empty
+	SandboxRepoURL      string // public git repo URL; empty if private or not set
+	SandboxRepoBranch   string // git branch
+	SandboxRepoDir      string // subdirectory within repo
+	SandboxRepoIsPublic bool   // true = show repo links; false = hide repo section
 }
 
 func formatPolicyType(t string) string {
@@ -69,6 +101,12 @@ type CustomerAppsPageProps struct {
 	Apps []PublishedAppDisplay
 }
 
+// CustomerAppDetailPageProps for the single app detail page
+type CustomerAppDetailPageProps struct {
+	customerui.LayoutProps
+	App PublishedAppDisplay
+}
+
 // CustomerAppsPage renders the customer-facing app catalog
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
@@ -76,35 +114,12 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 			<div class="mb-8">
 				<p class="text-cool-grey-600 dark:text-cool-grey-400">Browse and install apps.</p>
 			</div>
-			if len(props.Apps) == 1 {
-				@appFullWidthCard(props.Apps[0], props.BasePath, "")
-			} else if len(props.Apps) > 1 {
+			if len(props.Apps) > 0 {
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					for _, app := range props.Apps {
 						@appCatalogCard(app, props.BasePath)
 					}
 				</div>
-				for _, app := range props.Apps {
-					@appDetailModal(app, props.BasePath)
-				}
-				<script>
-					if (!window.openAppModal) {
-						window.openAppModal = function(appId) {
-							document.getElementById('app-detail-modal-' + appId).classList.remove('hidden');
-							document.body.style.overflow = 'hidden';
-						};
-						window.closeAppModal = function(appId) {
-							document.getElementById('app-detail-modal-' + appId).classList.add('hidden');
-							document.body.style.overflow = '';
-						};
-						window.handleAppModalBackdropClick = function(event) {
-							if (event.target === event.currentTarget) {
-								event.currentTarget.classList.add('hidden');
-								document.body.style.overflow = '';
-							}
-						};
-					}
-				</script>
 			} else {
 				<div class="card-base text-center">
 					<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
@@ -122,129 +137,255 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 	}
 }
 
-templ appFullWidthCard(app PublishedAppDisplay, basePath string, closeID string) {
+templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 	<div class="card-lg">
 		// ── Header ──────────────────────────────────────────────────────────
 		<div class="flex items-start justify-between mb-8">
 			<h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white">{ app.AppName }</h2>
 			@components.PlatformChip(app.Platform)
 		</div>
-		// ── Two-column body ─────────────────────────────────────────────────
-		<div class="grid grid-cols-2 gap-10">
-			// Left – description + sandbox info
-			<div class="space-y-6">
+		// ── Tabbed body ─────────────────────────────────────────────────────
+		<div class="app-catalog-tabs">
+			<div class="tabs-divider flex mb-4">
+				<button class="nav-item active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-overview')"} }>Overview</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-config')"} }>Inputs</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-secrets')"} }>Secrets</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-sandbox')"} }>Sandbox</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
+				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
+			</div>
+			// Overview pane
+			<div id={ "act-" + app.AppID + "-overview" } class="panel-tab-pane active">
 				if app.Description != "" {
-					<div>
-						<h3 class="text-section-label">Description</h3>
-						<p class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ app.Description }</p>
-					</div>
-				}
-				if app.SandboxPlatform != "" || app.SandboxTFVersion != "" || app.SandboxDrift != "" {
-					<div>
-						<h3 class="text-section-label">Sandbox</h3>
-						<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-							if app.SandboxPlatform != "" {
-								<dt class="text-cool-grey-500 dark:text-cool-grey-400">Cloud</dt>
-								<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxPlatform }</dd>
-							}
-							if app.SandboxTFVersion != "" {
-								<dt class="text-cool-grey-500 dark:text-cool-grey-400">Terraform</dt>
-								<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxTFVersion }</dd>
-							}
-							if app.SandboxDrift != "" {
-								<dt class="text-cool-grey-500 dark:text-cool-grey-400">Drift check</dt>
-								<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxDrift }</dd>
-							}
-						</dl>
-					</div>
+					<p class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ app.Description }</p>
+				} else {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No description available.</p>
 				}
 			</div>
-			// Right – three-tab panel
-			<div class="app-catalog-tabs">
-				<div class="tabs-divider flex mb-4">
-					<button class="nav-item active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
-					<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
-					<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
-				</div>
-				// Components pane
-				<div id={ "act-" + app.AppID + "-comp" } class="panel-tab-pane active">
-					if len(app.Components) == 0 {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No components found.</p>
-					} else {
-						<ul class="space-y-3">
-							for _, comp := range app.Components {
-								<li class="flex items-center gap-3 text-sm text-cool-grey-800 dark:text-cool-grey-200">
-									@componentTypeIcon(comp.Type)
-									{ comp.Name }
-								</li>
-							}
-						</ul>
-					}
-				</div>
-				// Permissions pane
-				<div id={ "act-" + app.AppID + "-perms" } class="panel-tab-pane">
-					if len(app.Permissions) == 0 {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No permissions configured.</p>
-					} else {
-						<ul class="space-y-3">
-							for _, role := range app.Permissions {
-								<li class="text-sm">
-									<div class="flex items-center gap-2 mb-0.5">
-										<span class="chip-sm-neutral">{ role.Label }</span>
-										<span class="font-medium text-cool-grey-900 dark:text-white">{ role.Name }</span>
-									</div>
-									if role.Description != "" {
-										<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 pl-1">{ role.Description }</p>
+			// Configuration pane
+			<div id={ "act-" + app.AppID + "-config" } class="panel-tab-pane">
+				if len(app.InputGroups) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No inputs configured.</p>
+				} else {
+					<div class="space-y-6">
+						for _, group := range app.InputGroups {
+							<div>
+								<h4 class="text-sm font-semibold text-cool-grey-900 dark:text-white mb-2">
+									if group.DisplayName != "" {
+										{ group.DisplayName }
+									} else {
+										{ group.Name }
 									}
-								</li>
-							}
-						</ul>
-					}
-				</div>
-				// Policies pane
-				<div id={ "act-" + app.AppID + "-pols" } class="panel-tab-pane">
-					if len(app.Policies) == 0 {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured.</p>
-					} else {
-						<ul class="space-y-3">
-							for _, pol := range app.Policies {
-								<li class="text-sm">
-									<div class="flex items-center gap-2 flex-wrap mb-0.5">
-										<span class="font-medium text-cool-grey-900 dark:text-white">{ pol.Name }</span>
-										<span class="chip-sm-neutral">{ formatPolicyType(pol.Type) }</span>
-										if pol.Engine != "" {
-											<span class="chip-sm-neutral">{ pol.Engine }</span>
+								</h4>
+								<table class="w-full table-fixed text-sm text-left">
+									<thead>
+										<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+											<th class="w-1/5 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Required</th>
+											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Default</th>
+											<th class="py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Description</th>
+										</tr>
+									</thead>
+									<tbody>
+										for _, input := range group.Inputs {
+											<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
+												<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">
+													if input.DisplayName != "" {
+														{ input.DisplayName }
+													} else {
+														{ input.Name }
+													}
+													if input.Sensitive {
+														<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">sensitive</span>
+													}
+												</td>
+												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">{ input.Type }</td>
+												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+													if input.Required {
+														Yes
+													} else {
+														No
+													}
+												</td>
+												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+													if input.Default != "" {
+														<code class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 px-1.5 py-0.5 rounded">{ input.Default }</code>
+													} else {
+														<span class="text-cool-grey-400 dark:text-cool-grey-500">—</span>
+													}
+												</td>
+												<td class="py-2 text-cool-grey-600 dark:text-cool-grey-300">{ input.Description }</td>
+											</tr>
 										}
-									</div>
-									if pol.Description != "" {
-										<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 pl-1">{ pol.Description }</p>
-									}
-								</li>
-							}
-						</ul>
-					}
-				</div>
-			</div>
-			<script>
-				if (!window.switchAppCatalogTab) {
-					window.switchAppCatalogTab = function(btn, tabId) {
-						var container = btn.closest('.app-catalog-tabs');
-						container.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
-						container.querySelectorAll('.panel-tab-pane').forEach(function(p) { p.classList.remove('active'); });
-						btn.classList.add('active');
-						container.querySelector('#' + tabId).classList.add('active');
-					};
+									</tbody>
+								</table>
+							</div>
+						}
+					</div>
 				}
-			</script>
+			</div>
+			// Secrets pane
+			<div id={ "act-" + app.AppID + "-secrets" } class="panel-tab-pane">
+				if len(app.Secrets) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No secrets configured.</p>
+				} else {
+					<table class="w-full table-fixed text-sm text-left">
+						<thead>
+							<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+								<th class="w-1/4 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+								<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Auto-generate</th>
+								<th class="py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Description</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, secret := range app.Secrets {
+								<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
+									<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">
+										if secret.DisplayName != "" {
+											{ secret.DisplayName }
+										} else {
+											{ secret.Name }
+										}
+									</td>
+									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+										if secret.AutoGenerate {
+											Yes
+										} else {
+											No
+										}
+									</td>
+									<td class="py-2 text-cool-grey-600 dark:text-cool-grey-300">{ secret.Description }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+			// Sandbox pane
+			<div id={ "act-" + app.AppID + "-sandbox" } class="panel-tab-pane">
+				if app.SandboxPlatform != "" || app.SandboxTFVersion != "" || app.SandboxDrift != "" || app.SandboxRepoIsPublic {
+					<dl class="grid grid-cols-2 gap-x-4 gap-y-2 text-sm max-w-md">
+						if app.SandboxPlatform != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Cloud</dt>
+							<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxPlatform }</dd>
+						}
+						if app.SandboxTFVersion != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Terraform</dt>
+							<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxTFVersion }</dd>
+						}
+						if app.SandboxDrift != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Drift check</dt>
+							<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxDrift }</dd>
+						}
+						if app.SandboxRepoIsPublic && app.SandboxRepoURL != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Repository</dt>
+							<dd class="font-medium break-all">
+								<a href={ templ.URL(app.SandboxRepoURL) } target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">{ app.SandboxRepoURL }</a>
+							</dd>
+						}
+						if app.SandboxRepoIsPublic && app.SandboxRepoBranch != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Branch</dt>
+							<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxRepoBranch }</dd>
+						}
+						if app.SandboxRepoIsPublic && app.SandboxRepoDir != "" {
+							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Directory</dt>
+							<dd class="text-cool-grey-900 dark:text-white font-medium">{ app.SandboxRepoDir }</dd>
+						}
+					</dl>
+				} else {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No sandbox information available.</p>
+				}
+			</div>
+			// Components pane
+			<div id={ "act-" + app.AppID + "-comp" } class="panel-tab-pane">
+				if len(app.Components) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No components found.</p>
+				} else {
+					<table class="w-full table-fixed text-sm text-left">
+						<thead>
+							<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+								<th class="w-1/3 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+								<th class="w-1/4 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, comp := range app.Components {
+								<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
+									<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">{ comp.Name }</td>
+									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">{ comp.Type }</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
+			// Permissions pane
+			<div id={ "act-" + app.AppID + "-perms" } class="panel-tab-pane">
+				if len(app.Permissions) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No permissions configured.</p>
+				} else {
+					<ul class="space-y-3">
+						for _, role := range app.Permissions {
+							<li class="text-sm">
+								<div class="flex items-center gap-2 mb-0.5">
+									<span class="chip-sm-neutral">{ role.Label }</span>
+									<span class="font-medium text-cool-grey-900 dark:text-white">{ role.Name }</span>
+								</div>
+								if role.Description != "" {
+									<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 pl-1">{ role.Description }</p>
+								}
+							</li>
+						}
+					</ul>
+				}
+			</div>
+			// Policies pane
+			<div id={ "act-" + app.AppID + "-pols" } class="panel-tab-pane">
+				if len(app.Policies) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured.</p>
+				} else {
+					<table class="w-full table-fixed text-sm text-left">
+						<thead>
+							<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+								<th class="w-1/4 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+								<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+								<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Engine</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, pol := range app.Policies {
+								<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
+									<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">{ pol.Name }</td>
+									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">{ formatPolicyType(pol.Type) }</td>
+									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+										if pol.Engine != "" {
+											{ pol.Engine }
+										} else {
+											<span class="text-cool-grey-400 dark:text-cool-grey-500">—</span>
+										}
+									</td>
+									</tr>
+							}
+						</tbody>
+					</table>
+				}
+			</div>
 		</div>
-		// ── Footer ──────────────────────────────────────────────────────────
-		<div class="mt-8 flex justify-end space-x-3">
-			if closeID != "" {
-				<button
-					onclick={ templ.ComponentScript{Call: "closeAppModal('" + closeID + "')"} }
-					class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700 rounded-lg"
-				>Close</button>
+		<script>
+			if (!window.switchAppCatalogTab) {
+				window.switchAppCatalogTab = function(btn, tabId) {
+					var container = btn.closest('.app-catalog-tabs');
+					container.querySelectorAll('.nav-item').forEach(function(b) { b.classList.remove('active'); });
+					container.querySelectorAll('.panel-tab-pane').forEach(function(p) { p.classList.remove('active'); });
+					btn.classList.add('active');
+					container.querySelector('#' + tabId).classList.add('active');
+				};
 			}
+		</script>
+		// ── Footer ──────────────────────────────────────────────────────────
+		<div class="mt-8 flex justify-end">
 			<a
 				href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) }
 				class="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover focus:outline-none focus:ring-2 focus:ring-primary-400 rounded-lg"
@@ -298,26 +439,29 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 			}
 		</div>
 		<div class="mt-auto pt-4">
-			<button
-				onclick={ templ.ComponentScript{Call: "openAppModal('" + app.AppID + "')"} }
+			<a
+				href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s", basePath, app.AppID)) }
 				class="block w-full text-center text-white py-2 px-4 font-semibold rounded-lg bg-theme-primary hover:bg-theme-primary-hover focus:outline-none focus:ring-2 focus:ring-primary-400"
 			>
-				More Info
-			</button>
+				View
+			</a>
 		</div>
 	</div>
 }
 
-templ appDetailModal(app PublishedAppDisplay, basePath string) {
-	<div
-		id={ "app-detail-modal-" + app.AppID }
-		class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto"
-		onclick="handleAppModalBackdropClick(event)"
-	>
-		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="max-w-4xl w-full">
-				@appFullWidthCard(app, basePath, app.AppID)
+// CustomerAppDetailPage renders the full detail view for a single published app.
+templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		<div>
+			<div class="mb-6">
+				<a href={ templ.SafeURL(props.BasePath + "/apps") } class="inline-flex items-center text-sm text-cool-grey-500 dark:text-cool-grey-400 hover:text-cool-grey-700 dark:hover:text-cool-grey-200">
+					<svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+						<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
+					</svg>
+					Back to catalog
+				</a>
 			</div>
+			@appFullWidthCard(props.App, props.BasePath)
 		</div>
-	</div>
+	}
 }

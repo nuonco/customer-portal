@@ -10,35 +10,37 @@ import (
 // AppTheme stores theme settings for an org's customer-facing installer app.
 // Each org has its own theme configuration.
 type AppTheme struct {
-	ID                        string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	OrgID                     string    `gorm:"uniqueIndex" json:"org_id"` // One theme per org
-	PrimaryColor              string    `json:"primary_color"`             // Hex color for navigation and primary buttons (light mode)
-	SecondaryColor            string    `json:"secondary_color"`           // Hex color for links and accents (light mode)
-	PrimaryColorDark          string    `json:"primary_color_dark"`        // Hex color for navigation and primary buttons (dark mode)
-	SecondaryColorDark        string    `json:"secondary_color_dark"`      // Hex color for links and accents (dark mode)
-	LogoLightBase64           string    `json:"logo_light_base64,omitempty"`
-	LogoDarkBase64            string    `json:"logo_dark_base64,omitempty"`
-	FaviconBase64             string    `json:"favicon_base64,omitempty"`
-	SupportContact            string    `json:"support_contact"`
-	HeadingFont               string    `json:"heading_font"`
-	BodyFont                  string    `json:"body_font"`
-	HeadingFontBase64         string    `json:"heading_font_base64"`
-	BodyFontBase64            string    `json:"body_font_base64"`
-	HeadingFontName           string    `json:"heading_font_name"` // Original filename of uploaded heading font
-	BodyFontName              string    `json:"body_font_name"`    // Original filename of uploaded body font
-	WhiteColor                string    `json:"white_color"`       // Background color for light mode (pages, panels, cards)
-	BlackColor                string    `json:"black_color"`       // Background color for dark mode (pages, panels, cards)
-	WhiteColorDark            string    `json:"white_color_dark"`  // Optional: --theme-white override for dark mode
-	BlackColorLight           string    `json:"black_color_light"` // Optional: --theme-black override for light mode
-	BorderRadius              string    `json:"border_radius"`
-	ThemeMode                 string    `json:"theme_mode"` // "auto" (default), "light", "dark"
-	LoginTitle                string    `json:"login_title"`
-	LoginSubtitle             string    `json:"login_subtitle"`
-	LoginRightSideImageBase64 string    `json:"login_right_side_image_base64"`
-	LoginRightSideGradient    string    `json:"login_right_side_gradient"`
-	CustomCSS                 string    `json:"custom_css"` // Vendor-injected CSS for the customer portal
-	CreatedAt                 time.Time `json:"created_at"`
-	UpdatedAt                 time.Time `json:"updated_at"`
+	ID                            string    `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
+	OrgID                         string    `gorm:"uniqueIndex" json:"org_id"` // One theme per org
+	PrimaryColor                  string    `json:"primary_color"`             // Hex color for navigation and primary buttons (light mode)
+	SecondaryColor                string    `json:"secondary_color"`           // Hex color for links and accents (light mode)
+	PrimaryColorDark              string    `json:"primary_color_dark"`        // Hex color for navigation and primary buttons (dark mode)
+	SecondaryColorDark            string    `json:"secondary_color_dark"`      // Hex color for links and accents (dark mode)
+	LogoLightBase64               string    `json:"logo_light_base64,omitempty"`
+	LogoDarkBase64                string    `json:"logo_dark_base64,omitempty"`
+	FaviconBase64                 string    `json:"favicon_base64,omitempty"`
+	SupportContact                string    `json:"support_contact"`
+	HeadingFont                   string    `json:"heading_font"`
+	BodyFont                      string    `json:"body_font"`
+	HeadingFontBase64             string    `json:"heading_font_base64"`
+	BodyFontBase64                string    `json:"body_font_base64"`
+	HeadingFontName               string    `json:"heading_font_name"` // Original filename of uploaded heading font
+	BodyFontName                  string    `json:"body_font_name"`    // Original filename of uploaded body font
+	WhiteColor                    string    `json:"white_color"`       // Background color for light mode (pages, panels, cards)
+	BlackColor                    string    `json:"black_color"`       // Background color for dark mode (pages, panels, cards)
+	WhiteColorDark                string    `json:"white_color_dark"`  // Optional: --theme-white override for dark mode
+	BlackColorLight               string    `json:"black_color_light"` // Optional: --theme-black override for light mode
+	BorderRadius                  string    `json:"border_radius"`
+	ThemeMode                     string    `json:"theme_mode"` // "auto" (default), "light", "dark"
+	LoginTitle                    string    `json:"login_title"`
+	LoginSubtitle                 string    `json:"login_subtitle"`
+	LoginRightSideImageBase64     string    `json:"login_right_side_image_base64"`
+	LoginRightSideGradient        string    `json:"login_right_side_gradient"`
+	LoginRightSideImageBase64Dark string    `json:"login_right_side_image_base64_dark"`
+	LoginRightSideGradientDark    string    `json:"login_right_side_gradient_dark"`
+	CustomCSS                     string    `json:"custom_css"` // Vendor-injected CSS for the customer portal
+	CreatedAt                     time.Time `json:"created_at"`
+	UpdatedAt                     time.Time `json:"updated_at"`
 
 	// Relationships
 	Org NuonOrg `gorm:"foreignKey:OrgID" json:"org,omitempty"`
@@ -131,6 +133,16 @@ func (t *AppTheme) GetLoginRightSideImage() string {
 // GetLoginRightSideGradient returns the customer login page right side gradient CSS
 func (t *AppTheme) GetLoginRightSideGradient() string {
 	return t.LoginRightSideGradient
+}
+
+// GetLoginRightSideImageDark returns the customer login page right side image for dark mode (base64 data URI)
+func (t *AppTheme) GetLoginRightSideImageDark() string {
+	return t.LoginRightSideImageBase64Dark
+}
+
+// GetLoginRightSideGradientDark returns the customer login page right side gradient CSS for dark mode
+func (t *AppTheme) GetLoginRightSideGradientDark() string {
+	return t.LoginRightSideGradientDark
 }
 
 // GetLogoForMode returns the appropriate logo based on the color scheme.

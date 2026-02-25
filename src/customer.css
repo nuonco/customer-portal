@@ -1061,10 +1061,9 @@ body {
 
 .dropdown-menu {
   background-color: var(--theme-white, #ffffff);
-  @apply absolute right-0 mt-2 w-48;
+  @apply absolute right-0;
   @apply shadow-lg z-10;
   border: 1px solid var(--theme-border);
-  border-radius: var(--theme-radius);
 }
 
 .dark .dropdown-menu {

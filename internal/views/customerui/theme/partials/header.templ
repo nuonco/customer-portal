@@ -15,40 +15,42 @@ type HeaderProps struct {
 
 // Header renders the customer header with navigation links and user menu dropdown.
 templ Header(props HeaderProps) {
-	<header class="w-full max-w-5xl mx-auto px-6 lg:px-8 pb-6 pt-8 mt-auto">
-		<div class="flex items-center justify-between">
-			<!-- Left side: Logo + Navigation -->
-			<div class="flex items-center gap-6">
-				if props.Theme != nil && (props.Theme.LogoLightBase64 != "" || props.Theme.LogoDarkBase64 != "") {
+	<header class="w-full bg-[var(--theme-white)] dark:bg-[var(--theme-surface-raised)] shadow-md border-b border-[var(--theme-border)] dark:border-transparent">
+		<div class="px-6 lg:px-8 pt-4 w-full flex flex-col gap-3">
+			<!-- Logo row -->
+			if props.Theme != nil && (props.Theme.LogoLightBase64 != "" || props.Theme.LogoDarkBase64 != "") {
+				<div>
 					if props.Theme.LogoDarkBase64 != "" {
-						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain dark:hidden"/>
-						<img src={ props.Theme.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain hidden dark:block"/>
+						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-16 w-auto max-w-xs object-contain dark:hidden"/>
+						<img src={ props.Theme.LogoDarkBase64 } alt="Logo" class="h-16 w-auto max-w-xs object-contain hidden dark:block"/>
 					} else {
-						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[160px] object-contain"/>
+						<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-16 w-auto max-w-xs object-contain"/>
 					}
-				}
-				if props.HasPublishedApps {
-					<nav class="flex items-center">
-						if props.ActiveNav == "apps" {
-							<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item active">App Catalog</a>
-						} else {
-							<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item">App Catalog</a>
-						}
-						if props.ActiveNav == "installs" {
-							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item active">My Installs</a>
-						} else {
-							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item">My Installs</a>
-						}
-					</nav>
-				}
-			</div>
-			<!-- Right side: User Menu Dropdown -->
-			if props.User != nil {
+				</div>
+			}
+			<!-- Nav row -->
+			<div class="flex items-center justify-between">
+				<div class="flex items-center gap-6">
+					if props.HasPublishedApps {
+						<nav class="flex items-center">
+							if props.ActiveNav == "apps" {
+								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item active">App Catalog</a>
+							} else {
+								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item">App Catalog</a>
+							}
+							if props.ActiveNav == "installs" {
+								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item active">My Installs</a>
+							} else {
+								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item">My Installs</a>
+							}
+						</nav>
+					}
+				</div>
 				@UserMenu(UserMenuProps{
 					User:     props.User,
 					BasePath: props.BasePath,
 				})
-			}
+			</div>
 		</div>
 	</header>
 }

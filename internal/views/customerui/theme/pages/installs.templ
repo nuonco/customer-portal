@@ -18,9 +18,6 @@ type InstallsPageProps struct {
 // InstallsPage renders the customer installs page with table layout and sliding panel
 templ InstallsPage(props InstallsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="mb-8">
-			<p class="text-cool-grey-600 dark:text-cool-grey-400">Manage your installs.</p>
-		</div>
 		if props.Pagination.NeedsAttentionCount+props.Pagination.UpdatingCount+props.Pagination.HealthyCount > 0 {
 			<!-- Tab Interface -->
 			<div class="mb-6">
@@ -87,19 +84,19 @@ templ InstallsPage(props InstallsPageProps) {
 				<!-- Empty State for Current Tab -->
 				if props.Pagination.CurrentTab == "healthy" {
 					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No Healthy Installs",
+						Title:   "No healthy installs",
 						Message: "All your installs currently need attention or are being updated.",
 						Icon:    "check-circle",
 					})
 				} else if props.Pagination.CurrentTab == "updating" {
 					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No Updates In Progress",
+						Title:   "No updates in progress",
 						Message: "There are no installs currently being updated.",
 						Icon:    "refresh",
 					})
 				} else {
 					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No Installs Needing Attention",
+						Title:   "No installs need attention",
 						Message: "All your installs are running smoothly with passing health checks!",
 						Icon:    "check-circle",
 					})
@@ -125,8 +122,8 @@ templ InstallsPage(props InstallsPageProps) {
 			} else {
 				<!-- No Installs At All (logged in) -->
 				@components.EmptyState(components.EmptyStateProps{
-					Title:   "No Installs Yet",
-					Message: "Browse the app catalog to get started with your first installation.",
+					Title:   "No installs yet",
+					Message: "Select an app from the App Catalog to get started.",
 					Icon:    "inbox",
 				})
 				<div class="text-center mt-4">
@@ -135,7 +132,7 @@ templ InstallsPage(props InstallsPageProps) {
 						class="inline-flex items-center justify-center text-sm h-9 px-4 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors"
 						style="border-radius: var(--theme-radius)"
 					>
-						Browse App Catalog
+						Go to App Catalog
 					</a>
 				</div>
 			}

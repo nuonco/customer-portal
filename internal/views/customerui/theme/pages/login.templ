@@ -83,48 +83,66 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 					</div>
 				</div>
 				<!-- Right Side - Themed Background, Gradient, or Image -->
-				if props.Theme != nil && props.Theme.GetLoginRightSideImage() != "" {
-					<!-- Priority 1: Custom right side image -->
-					<div class="hidden lg:flex relative flex-1 overflow-hidden">
-						<img
-							src={ props.Theme.GetLoginRightSideImage() }
-							alt="Login background"
-							class="w-full h-full object-cover"
-						/>
-					</div>
-				} else if props.Theme != nil && props.Theme.GetLoginRightSideGradient() != "" {
-					<!-- Priority 2: Custom gradient -->
-					<div class="hidden lg:flex relative flex-1 overflow-hidden" style={ templ.SafeCSS("background: " + props.Theme.GetLoginRightSideGradient() + ";") }>
-						<!-- Optional decorative pattern overlay -->
-						<div class="absolute inset-0 opacity-10">
-							<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-								<defs>
-									<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-										<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
-									</pattern>
-								</defs>
-								<rect width="100" height="100" fill="url(#grid)"/>
-							</svg>
-						</div>
-					</div>
-				} else {
-					<!-- Priority 3: Default themed background -->
-					<div class="hidden lg:flex relative flex-1 overflow-hidden bg-theme-primary">
-						<div class="absolute inset-0 opacity-10">
-							<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-								<defs>
-									<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
-										<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
-									</pattern>
-								</defs>
-								<rect width="100" height="100" fill="url(#grid)"/>
-							</svg>
-						</div>
-					</div>
-				}
+				@customerLoginRightPanel(props.Theme)
 			</div>
 		</body>
 	</html>
+}
+
+// customerLoginRightPanel renders the right-side panel with light and dark mode support
+templ customerLoginRightPanel(theme *models.AppTheme) {
+	@templ.Raw(buildLoginRightPanelCSS(theme))
+	<div id="login-right-panel" class="hidden lg:flex relative flex-1 overflow-hidden bg-theme-primary">
+		<div class="absolute inset-0 opacity-10">
+			<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+				<defs>
+					<pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse">
+						<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"/>
+					</pattern>
+				</defs>
+				<rect width="100" height="100" fill="url(#grid)"/>
+			</svg>
+		</div>
+	</div>
+}
+
+func buildLoginRightPanelCSS(theme *models.AppTheme) string {
+	if theme == nil {
+		return ""
+	}
+
+	lightImage := theme.GetLoginRightSideImage()
+	lightGradient := theme.GetLoginRightSideGradient()
+	darkImage := theme.GetLoginRightSideImageDark()
+	darkGradient := theme.GetLoginRightSideGradientDark()
+
+	lightRule := ""
+	if lightImage != "" {
+		lightRule = "background-image: url(" + lightImage + "); background-size: cover; background-position: center;"
+	} else if lightGradient != "" {
+		lightRule = "background: " + lightGradient + ";"
+	}
+
+	darkRule := ""
+	if darkImage != "" {
+		darkRule = "background-image: url(" + darkImage + "); background-size: cover; background-position: center; background-color: transparent;"
+	} else if darkGradient != "" {
+		darkRule = "background: " + darkGradient + ";"
+	}
+
+	if lightRule == "" && darkRule == "" {
+		return ""
+	}
+
+	css := "<style>"
+	if lightRule != "" {
+		css += "#login-right-panel { " + lightRule + " }"
+	}
+	if darkRule != "" {
+		css += ".dark #login-right-panel { " + darkRule + " }"
+	}
+	css += "</style>"
+	return css
 }
 
 func getThemeMode(theme *models.AppTheme) string {
@@ -227,7 +245,28 @@ func buildCustomerLoginThemeCSS(theme *models.AppTheme) string {
 		css += "--theme-radius: 8px;"
 	}
 
-	css += "}</style>"
+	css += "}"
+
+	// Dark mode overrides
+	darkCSS := ""
+	if theme != nil && theme.PrimaryColorDark != "" {
+		darkCSS += "--theme-primary: " + theme.PrimaryColorDark + ";"
+		darkCSS += "--theme-primary-hover: " + theme.PrimaryColorDark + ";"
+	}
+	if theme != nil && theme.SecondaryColorDark != "" {
+		darkCSS += "--theme-secondary: " + theme.SecondaryColorDark + ";"
+	}
+	if theme != nil && theme.WhiteColorDark != "" {
+		darkCSS += "--theme-white: " + theme.WhiteColorDark + ";"
+	}
+	if theme != nil && theme.BlackColor != "" {
+		darkCSS += "--theme-black: " + theme.BlackColor + ";"
+	}
+	if darkCSS != "" {
+		css += ".dark{" + darkCSS + "}"
+	}
+
+	css += "</style>"
 	return css
 }
 

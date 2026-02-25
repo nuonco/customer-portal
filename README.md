@@ -384,6 +384,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link
 - `GET /apps` - Customer app catalog (redirects to `/installs` if no published apps)
+- `GET /apps/:app_id` - App detail page (full info, components, permissions, policies)
 - `GET /apps/:app_id/install` - Install form for a published app
 - `POST /apps/:app_id/install` - Create install from a published app
 - `GET /apps/:app_id/config` - Get app config for a published app (unauthenticated)

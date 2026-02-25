@@ -121,6 +121,34 @@ func (c *Client) GetAppInputConfig(ctx context.Context, appID string) (interface
 	return inputCfg, nil
 }
 
+// GetAppSecretsConfig retrieves the secrets configuration for an app.
+// Uses a direct HTTP call because the SDK path doesn't match the ctl-api route.
+func (c *Client) GetAppSecretsConfig(ctx context.Context, appID string) (*models.AppAppSecretsConfig, error) {
+	url := fmt.Sprintf("%s/v1/apps/%s/latest-secrets-config", c.apiURL, appID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result models.AppAppSecretsConfig
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return &result, nil
+}
+
 // GenerateInstallName creates a unique install name
 func GenerateInstallName(appName string) string {
 	timestamp := strconv.FormatInt(time.Now().Unix(), 10)
@@ -555,8 +583,31 @@ type AppPoliciesConfigPolicy struct {
 }
 
 // GetLatestAppPermissionsConfig fetches the latest permissions config for an app.
+// Uses a direct HTTP call to avoid the SDK TextConsumer deserialization error.
 func (c *Client) GetLatestAppPermissionsConfig(ctx context.Context, appID string) (*models.AppAppPermissionsConfig, error) {
-	return c.client.GetLatestAppPermissionsConfig(ctx, appID)
+	url := fmt.Sprintf("%s/v1/apps/%s/latest-app-permissions-config", c.apiURL, appID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := (&http.Client{}).Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result models.AppAppPermissionsConfig
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return &result, nil
 }
 
 // GetLatestAppPoliciesConfigFull fetches the latest policies config, including the

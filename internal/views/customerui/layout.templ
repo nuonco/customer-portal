@@ -146,19 +146,30 @@ func buildThemeCSS(props LayoutProps) string {
 		return ""
 	}
 	darkCSS := ""
+	if props.PrimaryColorDarkMode != "" {
+		darkCSS += "--theme-primary: " + props.PrimaryColorDarkMode + ";"
+	}
+	if props.SecondaryColorDarkMode != "" {
+		darkCSS += "--theme-secondary: " + props.SecondaryColorDarkMode + ";"
+	}
 	if props.WhiteColorDark != "" {
 		darkCSS += "--theme-white: " + props.WhiteColorDark + ";"
 	}
 	if props.BlackColor != "" {
 		darkCSS += "--theme-black: " + props.BlackColor + ";"
 	}
-	if css != "" && darkCSS != "" {
-		return "<style>" + fontFaceCSS + ":root{" + css + "}.dark{" + darkCSS + "}</style>"
-	}
+	result := "<style>" + fontFaceCSS
 	if css != "" {
-		return "<style>" + fontFaceCSS + ":root{" + css + "}</style>"
+		result += ":root{" + css + "}"
 	}
-	return "<style>" + fontFaceCSS + "</style>"
+	if darkCSS != "" {
+		result += ".dark{" + darkCSS + "}"
+	}
+	result += "</style>"
+	if result == "<style></style>" {
+		return ""
+	}
+	return result
 }
 
 // convertPropsToTheme converts LayoutProps to a minimal AppTheme for components

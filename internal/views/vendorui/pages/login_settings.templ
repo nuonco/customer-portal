@@ -37,10 +37,19 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					<div class="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-start">
 						<!-- Left Column: Settings -->
 						<div class="space-y-6">
-							@loginPageAppearanceSection(props.Theme)
-							@loginEnableToggleSection(props.Config)
-							@loginOidcConfigSection(props.Config)
-							@loginFallbackInfoSection()
+							@loginSettingsModeToggle()
+							<div id="globalSettings" class="space-y-6">
+								@loginPageTextSection(props.Theme)
+								@loginEnableToggleSection(props.Config)
+								@loginOidcConfigSection(props.Config)
+								@loginFallbackInfoSection()
+							</div>
+							<div id="lightModeSettings" class="hidden space-y-6">
+								@loginPageAppearanceSection(props.Theme)
+							</div>
+							<div id="darkModeSettings" class="hidden space-y-6">
+								@loginPageDarkAppearanceSection(props.Theme)
+							</div>
 							@loginSaveSection(props.PrimaryColor)
 						</div>
 						<!-- Right Column: Preview -->
@@ -72,6 +81,8 @@ templ LoginSettingsPage(props LoginSettingsPageProps) {
 					data-logo-dark-base64={ props.Theme.LogoDarkBase64 }
 					data-login-right-side-image={ props.Theme.GetLoginRightSideImage() }
 					data-login-right-side-gradient={ props.Theme.GetLoginRightSideGradient() }
+					data-login-right-side-image-dark={ props.Theme.GetLoginRightSideImageDark() }
+					data-login-right-side-gradient-dark={ props.Theme.GetLoginRightSideGradientDark() }
 				></div>
 				@loginSettingsScript()
 			</div>
@@ -86,9 +97,38 @@ func loginBoolToString(b bool) string {
 	return "false"
 }
 
-templ loginPageAppearanceSection(theme *models.AppTheme) {
+templ loginSettingsModeToggle() {
+	<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
+		<button
+			type="button"
+			id="settingsGlobalBtn"
+			onclick="setSettingsMode('global')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm"
+		>
+			Global
+		</button>
+		<button
+			type="button"
+			id="settingsLightModeBtn"
+			onclick="setSettingsMode('light')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
+		>
+			Light Mode
+		</button>
+		<button
+			type="button"
+			id="settingsDarkModeBtn"
+			onclick="setSettingsMode('dark')"
+			class="flex-1 px-3 py-1.5 text-sm font-medium rounded-md transition-colors text-cool-grey-600 dark:text-cool-grey-400 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600"
+		>
+			Dark Mode
+		</button>
+	</div>
+}
+
+templ loginPageTextSection(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Login Page Appearance</h3>
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Login Page Text</h3>
 		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the text displayed on the customer login page.</p>
 		<div class="space-y-4">
 			<div>
@@ -113,6 +153,15 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Descriptive text shown below the title.</p>
 			</div>
+		</div>
+	</div>
+}
+
+templ loginPageAppearanceSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Login Page Appearance</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Customize the right-side image and gradient for the light mode login page.</p>
+		<div class="space-y-4">
 			<div>
 				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Image</label>
 				<div class="flex items-center space-x-4">
@@ -198,6 +247,101 @@ templ loginPageAppearanceSection(theme *models.AppTheme) {
 					</div>
 				</div>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Configure a gradient background. Note: Image takes priority over gradient if both are set.</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ loginPageDarkAppearanceSection(theme *models.AppTheme) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Login Page Appearance (Dark)</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">Override the right-side image and gradient for dark mode. When not set, the light mode values are used.</p>
+		<div class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Image (Dark)</label>
+				<div class="flex items-center space-x-4">
+					<div class="flex-shrink-0">
+						if theme.GetLoginRightSideImageDark() != "" {
+							<img id="loginRightSideDarkPreview" src={ theme.GetLoginRightSideImageDark() } alt="Login right side dark preview" class="h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700"/>
+						} else {
+							<img id="loginRightSideDarkPreview" src="" alt="Login right side dark preview" class="h-24 w-auto max-w-32 object-cover border border-cool-grey-200 dark:border-dark-grey-600 rounded bg-white dark:bg-dark-grey-700 hidden"/>
+						}
+						<div id="loginRightSideDarkPlaceholder" class={ "h-24 w-32 bg-white dark:bg-dark-grey-700 border border-cool-grey-200 dark:border-dark-grey-600 rounded flex items-center justify-center", templ.KV("hidden", theme.GetLoginRightSideImageDark() != "") }>
+							<span class="text-cool-grey-400 dark:text-cool-grey-500 text-xs text-center px-2">Uses light mode</span>
+						</div>
+					</div>
+					<div class="flex-1">
+						<input
+							type="file"
+							id="loginRightSideDarkUpload"
+							accept="image/png,image/jpeg,image/svg+xml,image/gif"
+							class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
+						/>
+					</div>
+				</div>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB. Leave empty to use light mode image.</p>
+				<button type="button" id="removeLoginRightSideDark" onclick="removeLoginRightSideDark()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.GetLoginRightSideImageDark() == "") }>
+					Remove image
+				</button>
+			</div>
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Right Side Gradient (Dark, alternative to image)</label>
+				<div class="space-y-3">
+					<div>
+						<label for="gradientColor1Dark" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Start Color</label>
+						<div class="flex items-center space-x-2">
+							<input
+								type="color"
+								id="gradientColor1Dark"
+								value={ getGradientColor1ForPicker(theme.GetLoginRightSideGradientDark(), theme.PrimaryColor) }
+								class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+							/>
+							<input
+								type="text"
+								id="gradientColor1DarkText"
+								value={ getGradientColor1Text(theme.GetLoginRightSideGradientDark()) }
+								placeholder="(uses light mode)"
+								class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+								pattern="^#[0-9A-Fa-f]{6}$"
+							/>
+						</div>
+					</div>
+					<div>
+						<label for="gradientColor2Dark" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">End Color</label>
+						<div class="flex items-center space-x-2">
+							<input
+								type="color"
+								id="gradientColor2Dark"
+								value={ getGradientColor2ForPicker(theme.GetLoginRightSideGradientDark(), theme.SecondaryColor) }
+								class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
+							/>
+							<input
+								type="text"
+								id="gradientColor2DarkText"
+								value={ getGradientColor2Text(theme.GetLoginRightSideGradientDark()) }
+								placeholder="(uses light mode)"
+								class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white dark:placeholder-cool-grey-500"
+								pattern="^#[0-9A-Fa-f]{6}$"
+							/>
+						</div>
+					</div>
+					<div>
+						<label for="gradientDirectionDark" class="block text-xs font-medium text-cool-grey-600 dark:text-cool-grey-400 mb-1">Direction</label>
+						<select
+							id="gradientDirectionDark"
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
+						>
+							<option value="135deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradientDark()) == "135deg" }>Diagonal (↘)</option>
+							<option value="180deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradientDark()) == "180deg" }>Vertical (↓)</option>
+							<option value="90deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradientDark()) == "90deg" }>Horizontal (→)</option>
+							<option value="45deg" selected?={ getGradientDirection(theme.GetLoginRightSideGradientDark()) == "45deg" }>Diagonal (↗)</option>
+						</select>
+					</div>
+					<div>
+						<div id="gradientPreviewDark" class="h-24 w-32 border border-cool-grey-300 dark:border-dark-grey-500 rounded" style={ getGradientPreviewStyle(theme.GetLoginRightSideGradientDark(), theme.PrimaryColor, theme.SecondaryColor) }></div>
+					</div>
+				</div>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Configure a dark mode gradient. Leave empty to use the light mode gradient.</p>
 			</div>
 		</div>
 	</div>
@@ -524,7 +668,7 @@ templ loginFallbackInfoSection() {
 				<path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
 			</svg>
 			<div>
-				<h4 class="text-sm font-medium text-blue-800 dark:text-blue-300">Email/Password Fallback</h4>
+				<h4 class="text-sm font-medium text-blue-800 dark:text-blue-300">Customer Auth Fallback</h4>
 				<p class="mt-1 text-sm text-blue-700 dark:text-blue-400">
 					When no OIDC provider is configured, customer login will default to the same provider used for admin login.
 				</p>
@@ -621,6 +765,46 @@ templ loginSettingsScript() {
 			var basePath = config.dataset.basePath;
 			var orgId = config.dataset.orgId;
 			window._loginRightSideBase64 = '';
+			window._loginRightSideBase64Dark = '';
+			window._previewMode = 'light';
+
+			// Tab switching
+			window.setSettingsMode = function(mode) {
+				var globalSettings = document.getElementById('globalSettings');
+				var lightSettings = document.getElementById('lightModeSettings');
+				var darkSettings = document.getElementById('darkModeSettings');
+				var settingsGlobalBtn = document.getElementById('settingsGlobalBtn');
+				var settingsLightBtn = document.getElementById('settingsLightModeBtn');
+				var settingsDarkBtn = document.getElementById('settingsDarkModeBtn');
+
+				var activeClass = ['bg-white', 'dark:bg-dark-grey-600', 'text-cool-grey-800', 'dark:text-white', 'shadow-sm'];
+				var inactiveClass = ['text-cool-grey-600', 'dark:text-cool-grey-400', 'hover:bg-cool-grey-200', 'dark:hover:bg-dark-grey-600'];
+
+				[globalSettings, lightSettings, darkSettings].forEach(function(el) { if (el) el.classList.add('hidden'); });
+				[settingsGlobalBtn, settingsLightBtn, settingsDarkBtn].forEach(function(btn) {
+					if (!btn) return;
+					activeClass.forEach(function(c) { btn.classList.remove(c); });
+					inactiveClass.forEach(function(c) { btn.classList.add(c); });
+				});
+
+				var contentEl, activeBtn;
+				if (mode === 'light') {
+					contentEl = lightSettings; activeBtn = settingsLightBtn;
+				} else if (mode === 'dark') {
+					contentEl = darkSettings; activeBtn = settingsDarkBtn;
+				} else {
+					contentEl = globalSettings; activeBtn = settingsGlobalBtn;
+				}
+				if (contentEl) contentEl.classList.remove('hidden');
+				if (activeBtn) {
+					activeClass.forEach(function(c) { activeBtn.classList.add(c); });
+					inactiveClass.forEach(function(c) { activeBtn.classList.remove(c); });
+				}
+				if (mode === 'light' || mode === 'dark') {
+					window._previewMode = mode;
+					updatePreview();
+				}
+			};
 
 			// Update preview function
 			window.updatePreview = function() {
@@ -676,21 +860,34 @@ templ loginSettingsScript() {
 				var gridOverlay = document.getElementById('loginPreviewGridOverlay');
 
 				if (rightSide) {
-					// Check for custom image first (from upload or initial data)
-					var imageBase64 = window._loginRightSideBase64;
-					if (imageBase64 === 'REMOVE') {
-						imageBase64 = '';
-					} else if (!imageBase64) {
-						imageBase64 = config.dataset.loginRightSideImage || '';
-					}
+					var isDarkMode = window._previewMode === 'dark';
 
-					// Check for gradient
-					var gradient = window._gradientValue;
-					if (gradient === 'REMOVE') {
-						gradient = '';
-					} else if (!gradient) {
-						gradient = config.dataset.loginRightSideGradient || '';
+					// Image: prefer in-progress edit, then fall back to saved value for current mode
+					var imageBase64;
+					if (isDarkMode) {
+						imageBase64 = window._loginRightSideBase64Dark;
+						if (!imageBase64) imageBase64 = config.dataset.loginRightSideImageDark || '';
+						// Fall back to light if no dark value
+						if (!imageBase64) imageBase64 = window._loginRightSideBase64 || config.dataset.loginRightSideImage || '';
+					} else {
+						imageBase64 = window._loginRightSideBase64;
+						if (imageBase64 === 'REMOVE') imageBase64 = '';
+						else if (!imageBase64) imageBase64 = config.dataset.loginRightSideImage || '';
 					}
+					if (imageBase64 === 'REMOVE') imageBase64 = '';
+
+					// Gradient: prefer in-progress edit, then fall back to saved value for current mode
+					var gradient;
+					if (isDarkMode) {
+						gradient = window._gradientValueDark || config.dataset.loginRightSideGradientDark || '';
+						// Fall back to light if no dark value
+						if (!gradient) gradient = window._gradientValue || config.dataset.loginRightSideGradient || '';
+					} else {
+						gradient = window._gradientValue;
+						if (gradient === 'REMOVE') gradient = '';
+						else if (!gradient) gradient = config.dataset.loginRightSideGradient || '';
+					}
+					if (gradient === 'REMOVE') gradient = '';
 
 					// Priority: Image > Gradient > Primary Color
 					if (imageBase64) {
@@ -723,6 +920,12 @@ templ loginSettingsScript() {
 
 			// Hook into preview mode changes
 			window.onPreviewModeChange = function(mode) {
+				window._previewMode = mode;
+				// Sync the settings tab to match (skip if on Global tab)
+				var globalSettings = document.getElementById('globalSettings');
+				if (globalSettings && globalSettings.classList.contains('hidden')) {
+					setSettingsMode(mode);
+				}
 				updatePreview();
 			};
 
@@ -858,6 +1061,20 @@ templ loginSettingsScript() {
 					formData.login_right_side_gradient = '';
 				}
 
+				// Add dark mode login right side image if changed
+				if (window._loginRightSideBase64Dark) {
+					formData.login_right_side_image_base64_dark = window._loginRightSideBase64Dark;
+				}
+
+				// Dark gradient
+				var color1DarkText = document.getElementById('gradientColor1DarkText') ? document.getElementById('gradientColor1DarkText').value : '';
+				var color2DarkText = document.getElementById('gradientColor2DarkText') ? document.getElementById('gradientColor2DarkText').value : '';
+				if (color1DarkText || color2DarkText) {
+					formData.login_right_side_gradient_dark = window._gradientValueDark || '';
+				} else {
+					formData.login_right_side_gradient_dark = '';
+				}
+
 				return formData;
 			}
 
@@ -943,6 +1160,100 @@ templ loginSettingsScript() {
 				};
 				reader.readAsDataURL(file);
 			});
+
+			// Remove dark login right side image
+			window.removeLoginRightSideDark = function() {
+				window._loginRightSideBase64Dark = 'REMOVE';
+				document.getElementById('loginRightSideDarkPreview').classList.add('hidden');
+				document.getElementById('loginRightSideDarkPlaceholder').classList.remove('hidden');
+				document.getElementById('loginRightSideDarkUpload').value = '';
+				document.getElementById('removeLoginRightSideDark').classList.add('hidden');
+			};
+
+			// Dark login right side image upload handler
+			document.getElementById('loginRightSideDarkUpload')?.addEventListener('change', async function(e) {
+				var file = e.target.files[0];
+				if (!file) return;
+				if (file.size > 500 * 1024) {
+					showToast('Image file must be under 500KB', 'error');
+					e.target.value = '';
+					return;
+				}
+				var validTypes = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/gif'];
+				if (!validTypes.includes(file.type)) {
+					showToast('Please upload a PNG, JPG, SVG, or GIF image', 'error');
+					e.target.value = '';
+					return;
+				}
+				var reader = new FileReader();
+				reader.onload = function() {
+					window._loginRightSideBase64Dark = reader.result;
+					var preview = document.getElementById('loginRightSideDarkPreview');
+					var placeholder = document.getElementById('loginRightSideDarkPlaceholder');
+					var removeBtn = document.getElementById('removeLoginRightSideDark');
+					preview.src = window._loginRightSideBase64Dark;
+					preview.classList.remove('hidden');
+					placeholder.classList.add('hidden');
+					removeBtn.classList.remove('hidden');
+				};
+				reader.readAsDataURL(file);
+			});
+
+			// Dark gradient event listeners
+			function updateDarkGradientPreview() {
+				var primaryColor = config.dataset.primaryColor || '#8040BF';
+				var secondaryColor = config.dataset.secondaryColor || '#06B6D4';
+				var color1Text = document.getElementById('gradientColor1DarkText').value;
+				var color2Text = document.getElementById('gradientColor2DarkText').value;
+				var color1 = color1Text || primaryColor;
+				var color2 = color2Text || secondaryColor;
+				var direction = document.getElementById('gradientDirectionDark').value;
+				var gradient = 'linear-gradient(' + direction + ', ' + color1 + ', ' + color2 + ')';
+				document.getElementById('gradientPreviewDark').style.background = gradient;
+				if (color1Text || color2Text) {
+					window._gradientValueDark = gradient;
+				}
+				updatePreview();
+			}
+
+			document.getElementById('gradientColor1Dark')?.addEventListener('input', function(e) {
+				document.getElementById('gradientColor1DarkText').value = e.target.value.toUpperCase();
+				updateDarkGradientPreview();
+			});
+			document.getElementById('gradientColor1DarkText')?.addEventListener('input', function(e) {
+				var value = e.target.value;
+				if (value === '') {
+					document.getElementById('gradientColor1Dark').value = config.dataset.primaryColor || '#8040BF';
+					updateDarkGradientPreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById('gradientColor1Dark').value = value;
+					updateDarkGradientPreview();
+				}
+			});
+			document.getElementById('gradientColor2Dark')?.addEventListener('input', function(e) {
+				document.getElementById('gradientColor2DarkText').value = e.target.value.toUpperCase();
+				updateDarkGradientPreview();
+			});
+			document.getElementById('gradientColor2DarkText')?.addEventListener('input', function(e) {
+				var value = e.target.value;
+				if (value === '') {
+					document.getElementById('gradientColor2Dark').value = config.dataset.secondaryColor || '#06B6D4';
+					updateDarkGradientPreview();
+				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
+					document.getElementById('gradientColor2Dark').value = value;
+					updateDarkGradientPreview();
+				}
+			});
+			document.getElementById('gradientDirectionDark')?.addEventListener('change', updateDarkGradientPreview);
+
+			// Initialize dark gradient preview
+			if (document.getElementById('gradientColor1Dark')) {
+				var initialDarkGradient = config.dataset.loginRightSideGradientDark || '';
+				if (initialDarkGradient) {
+					window._gradientValueDark = initialDarkGradient;
+				}
+				updateDarkGradientPreview();
+			}
 
 			// Gradient color picker event listeners
 			document.getElementById('gradientColor1')?.addEventListener('input', function(e) {

@@ -379,6 +379,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	customerApps := rg.Group("/apps")
 	{
 		customerApps.GET("/", h.CustomerAppsPage)
+		customerApps.GET("/:app_id", h.CustomerAppDetailPage)
 		customerApps.GET("/:app_id/install", h.CustomerAppInstallPage)
 		customerApps.POST("/:app_id/install", h.CreateInstallFromApp)
 	}
