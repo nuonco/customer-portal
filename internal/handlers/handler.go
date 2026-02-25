@@ -102,6 +102,7 @@ type Handler struct {
 	customerAuthFactory *auth.CustomerAuthProviderFactory // Dynamic auth factory for customers
 	customerBaseURL     string                            // Base URL for customer-facing install links
 	nuonAPIURL          string                            // Global Nuon API URL for all orgs
+	dashboardURL        string                            // URL of the Nuon dashboard-ui (e.g., "https://app.nuon.co")
 	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
 	templateRenderer    *overrides.TemplateRenderer       // Template renderer for customer page overrides
 	subdomainBaseDomain string                            // Base domain for workspace subdomains (e.g., "portal.nuon.co")
@@ -133,13 +134,14 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, basePath, subdomainBaseDomain string, logger *zap.Logger) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, basePath, subdomainBaseDomain string, logger *zap.Logger) *Handler {
 	return &Handler{
 		db:                  db,
 		auth:                jwtAuth,
 		authProvider:        authProvider,
 		customerBaseURL:     customerBaseURL,
 		nuonAPIURL:          nuonAPIURL,
+		dashboardURL:        dashboardURL,
 		basePath:            basePath,
 		templateRenderer:    overrides.NewTemplateRenderer(db, logger),
 		subdomainBaseDomain: subdomainBaseDomain,
@@ -381,7 +383,7 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 
 	// Fall back to default Templ template
 	props := customerpages.ErrorPageProps{
-		LayoutProps: h.buildCustomerLayoutProps(title, user, theme),
+		LayoutProps: h.buildCustomerLayoutProps(title, user, theme, nil),
 		Error:       errorMsg,
 	}
 	h.RenderTempl(c, status, customerpages.ErrorPage(props))
@@ -407,6 +409,26 @@ func (h *Handler) getOrgIDForTheme(c *gin.Context) string {
 	// For routes without org context and no subdomain, return empty
 	// The GetOrCreateAppTheme function will need to handle empty org ID
 	return ""
+}
+
+// getOrgForLayout returns the NuonOrg for use in customer layout props (admin bar context).
+// Returns nil when no org context is available (e.g. auth error pages, base-domain routes).
+func (h *Handler) getOrgForLayout(c *gin.Context) *models.NuonOrg {
+	// Try vendor route middleware context first
+	if org := middleware.GetCurrentOrg(c); org != nil {
+		return org
+	}
+
+	// For customer-facing routes, resolve from subdomain
+	subdomain, exists := c.Get("subdomain")
+	if exists && subdomain != nil && subdomain.(string) != "" {
+		var org models.NuonOrg
+		if err := h.db.Where("subdomain = ?", subdomain.(string)).First(&org).Error; err == nil {
+			return &org
+		}
+	}
+
+	return nil
 }
 
 // BaseData returns a gin.H map with common template data including BasePath
@@ -867,9 +889,9 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 	// Get all orgs accessible to this user
 	orgs := h.GetUserOrgs(user.ID)
 
-	// If user has orgs, redirect to the first org's apps page
+	// If user has orgs, redirect to the first org's customers page
 	if len(orgs) > 0 {
-		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, orgs[0].ID))
+		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/customers", h.basePath, orgs[0].ID))
 		return
 	}
 
@@ -884,6 +906,7 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Organizations", Path: h.basePath + "/orgs", Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -920,6 +943,7 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Org Connection", Path: fmt.Sprintf("%s/orgs/%s/connection", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -928,6 +952,12 @@ func (h *Handler) OrgSettingsPage(c *gin.Context) {
 
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.OrgSettingsPage(props))
+}
+
+// OrgRedirect redirects /:org_id to the customers page.
+func (h *Handler) OrgRedirect(c *gin.Context) {
+	orgID := c.Param("org_id")
+	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/customers", h.basePath, orgID))
 }
 
 // OrgDetailPage renders the org detail page with paginated install links using Templ
@@ -1024,6 +1054,7 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -1214,6 +1245,7 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Install Links", Path: fmt.Sprintf("%s/orgs/%s/install-links", h.basePath, org.ID), Active: false}, {Text: breadcrumbText, Path: fmt.Sprintf("%s/orgs/%s/install-links/%s", h.basePath, org.ID, linkID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -1800,6 +1832,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
 				BasePath:         h.basePath,
 				PortalScheme:     h.schemeFromBaseURL(),
+				DashboardURL:     h.dashboardURL,
 				PortalBaseDomain: h.subdomainBaseDomain,
 				CSSPath:          assets.VendorCSSPath(),
 				NuonAPIError:     "Your API token may be expired or invalid.",
@@ -1825,6 +1858,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
 				BasePath:         h.basePath,
 				PortalScheme:     h.schemeFromBaseURL(),
+				DashboardURL:     h.dashboardURL,
 				PortalBaseDomain: h.subdomainBaseDomain,
 				CSSPath:          assets.VendorCSSPath(),
 				NuonAPIError:     "Your API token may be expired or invalid.",
@@ -1909,6 +1943,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -2013,6 +2048,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
 				BasePath:         h.basePath,
 				PortalScheme:     h.schemeFromBaseURL(),
+				DashboardURL:     h.dashboardURL,
 				PortalBaseDomain: h.subdomainBaseDomain,
 				CSSPath:          assets.VendorCSSPath(),
 				NuonAPIError:     "Your API token may be expired or invalid.",
@@ -2040,6 +2076,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
 				BasePath:         h.basePath,
 				PortalScheme:     h.schemeFromBaseURL(),
+				DashboardURL:     h.dashboardURL,
 				PortalBaseDomain: h.subdomainBaseDomain,
 				CSSPath:          assets.VendorCSSPath(),
 				NuonAPIError:     "Your API token may be expired or invalid.",
@@ -2210,6 +2247,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -2284,6 +2322,7 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
 				BasePath:         h.basePath,
 				PortalScheme:     h.schemeFromBaseURL(),
+				DashboardURL:     h.dashboardURL,
 				PortalBaseDomain: h.subdomainBaseDomain,
 				CSSPath:          assets.VendorCSSPath(),
 				NuonAPIError:     "Your API token may be expired or invalid.",
@@ -2374,6 +2413,7 @@ func (h *Handler) AppHealthChecksPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -2495,6 +2535,7 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -2855,6 +2896,7 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 			Breadcrumbs:      []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
@@ -2985,6 +3027,7 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 			NuonAPIError:     customerDetailNuonAPIError,
@@ -3138,6 +3181,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},

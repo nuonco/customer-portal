@@ -15,6 +15,7 @@ type SidebarProps struct {
 	LogoBase64       string
 	PortalScheme     string // e.g., "https://"
 	PortalBaseDomain string // e.g., "portal.nuon.co"
+	DashboardURL     string // e.g., "https://app.nuon.co"
 	OrgStatus        string // "active" | "error"
 	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
 }
@@ -57,31 +58,6 @@ templ Sidebar(props SidebarProps) {
 					@caretUpDownIcon()
 				</button>
 				<div id="org-dropdown" class="stratus-org-dropdown hidden">
-					if props.CurrentOrg != nil && props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "" {
-						<div class="px-3 py-2 border-b border-cool-grey-200 dark:border-dark-grey-600">
-							<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Customer portal</div>
-							<div class="flex flex-col gap-1">
-								<a
-									href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain + "/apps") }
-									target="_blank"
-									rel="noopener noreferrer"
-									class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-								>
-									App catalog
-									@portalExternalLinkIcon()
-								</a>
-								<a
-									href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain + "/login") }
-									target="_blank"
-									rel="noopener noreferrer"
-									class="text-xs text-primary-600 dark:text-primary-400 hover:underline flex items-center gap-1"
-								>
-									Customer login
-									@portalExternalLinkIcon()
-								</a>
-							</div>
-						</div>
-					}
 					if props.CurrentOrg != nil {
 						<div class="px-3 py-2 border-b border-cool-grey-200 dark:border-dark-grey-600">
 							<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Org status</div>
@@ -120,62 +96,91 @@ templ Sidebar(props SidebarProps) {
 					</div>
 				</div>
 			</div>
-			<!-- Main Navigation -->
-			<nav class="stratus-sidebar-nav">
-				if props.CurrentOrg != nil {
-					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
-					>
-						@usersIcon()
-						<span class="sidebar-text">Customers</span>
-					</a>
-					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/apps") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "apps") }
-					>
-						@cubeIcon()
-						<span class="sidebar-text">App Catalog</span>
-					</a>
-					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "install-links") }
-					>
-						@linkIcon()
-						<span class="sidebar-text">Install Links</span>
-					</a>
-					<a
-						href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/installs") }
-						class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "installs") }
-					>
-						@packageIcon()
-						<span class="sidebar-text">Installs</span>
-					</a>
-				} else {
-					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-						@usersIcon()
-						<span class="sidebar-text">Customers</span>
-					</span>
-					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-						@cubeIcon()
-						<span class="sidebar-text">App Catalog</span>
-					</span>
-					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-						@linkIcon()
-						<span class="sidebar-text">Install Links</span>
-					</span>
-					<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-						@packageIcon()
-						<span class="sidebar-text">Installs</span>
-					</span>
-				}
-			</nav>
+			<!-- Links Section -->
+			if props.CurrentOrg != nil && (props.DashboardURL != "" || (props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "")) {
+				<div class="stratus-sidebar-section">
+					<div class="stratus-sidebar-label">Links</div>
+					<nav class="stratus-sidebar-nav">
+						if props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "" {
+							<a
+								href={ templ.SafeURL(props.PortalScheme + props.CurrentOrg.Subdomain + "." + props.PortalBaseDomain) }
+								class="stratus-sidebar-link"
+							>
+								@globeIcon()
+								<span class="sidebar-text">View Portal</span>
+							</a>
+						}
+						if props.DashboardURL != "" {
+							<a
+								href={ templ.SafeURL(props.DashboardURL) }
+								target="_blank"
+								rel="noopener noreferrer"
+								class="stratus-sidebar-link"
+							>
+								@buildingIcon()
+								<span class="sidebar-text">View Org</span>
+								@externalLinkSmallIcon()
+							</a>
+						}
+					</nav>
+				</div>
+				<hr class="stratus-sidebar-divider"/>
+			}
+			<!-- Customer Management Section -->
+			<div class="stratus-sidebar-section">
+				<div class="stratus-sidebar-label">Customer Management</div>
+				<nav class="stratus-sidebar-nav">
+					if props.CurrentOrg != nil {
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
+						>
+							@usersIcon()
+							<span class="sidebar-text">Customers</span>
+						</a>
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "install-links") }
+						>
+							@linkIcon()
+							<span class="sidebar-text">Install Links</span>
+						</a>
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/installs") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "installs") }
+						>
+							@packageIcon()
+							<span class="sidebar-text">Installs</span>
+						</a>
+					} else {
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@usersIcon()
+							<span class="sidebar-text">Customers</span>
+						</span>
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@linkIcon()
+							<span class="sidebar-text">Install Links</span>
+						</span>
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@packageIcon()
+							<span class="sidebar-text">Installs</span>
+						</span>
+					}
+				</nav>
+			</div>
 			<hr class="stratus-sidebar-divider"/>
 			<!-- Settings Section -->
 			<div class="stratus-sidebar-section">
 				<div class="stratus-sidebar-label">Settings</div>
 				<nav class="stratus-sidebar-nav">
 					if props.CurrentOrg != nil {
+						<a
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/apps") }
+							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "apps") }
+						>
+							@cubeIcon()
+							<span class="sidebar-text">App Catalog</span>
+						</a>
 						<a
 							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/portal/branding") }
 							class={ "stratus-sidebar-link", templ.KV("active", isPortalPage(props.ActivePage)) }
@@ -198,6 +203,10 @@ templ Sidebar(props SidebarProps) {
 							<span class="sidebar-text">Org Connection</span>
 						</a>
 					} else {
+						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
+							@cubeIcon()
+							<span class="sidebar-text">App Catalog</span>
+						</span>
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 							@paintbrushIcon()
 							<span class="sidebar-text">Customer Portal</span>

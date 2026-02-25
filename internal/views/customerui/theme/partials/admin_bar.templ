@@ -1,0 +1,47 @@
+package partials
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/models"
+
+// VendorAdminBarProps contains props for the vendor admin bar component
+type VendorAdminBarProps struct {
+	User         *models.User
+	AdminURL     string
+	OrgName      string
+	PortalDomain string
+}
+
+templ nuonLogoMark() {
+	<svg width="20" height="20" viewBox="0 0 23.116 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+		<path d="M16.9922 0L10.8687 3.53672V9.26271L5.91167 6.3983H5.90884L0 9.81073V28.5876L5.90602 32H5.90884L12.2498 28.3362V22.8616L16.9922 25.5989L23.1157 22.0621V3.53672L16.9922 0ZM1.384 10.6102L5.90602 8H5.90884L10.8658 10.8616V20.4633L1.384 14.9887V10.6102ZM10.8658 27.5367L5.90602 30.3983L1.384 27.7881V16.5876L10.8658 22.0621V27.5367ZM21.7317 21.2599L16.9922 23.9972L12.2527 21.2627V11.661L21.7345 17.1356V21.2599H21.7317ZM21.7317 15.5367L12.2498 10.0621V4.33616L16.9922 1.59887L21.7317 4.33616V15.5367Z" fill="white"></path>
+	</svg>
+}
+
+// VendorAdminBar renders a fixed top bar visible only when a vendor is previewing the customer portal
+templ VendorAdminBar(props VendorAdminBarProps) {
+	<div class="vendor-admin-bar">
+		<div class="vendor-admin-bar-logo">
+			@nuonLogoMark()
+		</div>
+		<a href={ templ.SafeURL(props.AdminURL) } class="vendor-admin-bar-back">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+				<path fill-rule="evenodd" d="M9.78 4.22a.75.75 0 0 1 0 1.06L7.06 8l2.72 2.72a.75.75 0 1 1-1.06 1.06L5.47 8.53a.75.75 0 0 1 0-1.06l3.25-3.25a.75.75 0 0 1 1.06 0Z" clip-rule="evenodd"></path>
+			</svg>
+			Back to Admin
+		</a>
+		if props.OrgName != "" {
+			<div class="vendor-admin-bar-org">
+				<span class="vendor-admin-bar-org-name">{ props.OrgName }</span>
+				if props.PortalDomain != "" {
+					<span class="vendor-admin-bar-org-sep">·</span>
+					<span class="vendor-admin-bar-org-domain">{ props.PortalDomain }</span>
+				}
+			</div>
+		}
+		<div class="vendor-admin-bar-user">
+			if props.User.Name != "" {
+				<span class="vendor-admin-bar-name">{ props.User.Name }</span>
+			}
+			<span class="vendor-admin-bar-email">{ props.User.Email }</span>
+		</div>
+	</div>
+}

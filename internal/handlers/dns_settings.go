@@ -42,6 +42,7 @@ func (h *Handler) DNSSettingsPage(c *gin.Context) {
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
+			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},

@@ -134,4 +134,9 @@ type LayoutProps struct {
 	// Navigation
 	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
 	ActiveNav        string // "apps" or "installs" — highlights the current nav item
+
+	// Vendor admin bar context
+	OrgName      string // Human-readable org name shown in the vendor admin bar
+	PortalDomain string // Portal domain shown in the vendor admin bar (e.g. "acme.customers.nuon.co")
+	AdminURL     string // Absolute URL for the "Back to Admin" link (e.g. "https://customers.nuon.co/admin/orgs")
 }

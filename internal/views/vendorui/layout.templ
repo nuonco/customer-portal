@@ -35,6 +35,7 @@ type LayoutProps struct {
 	// Portal URL components (for org dropdown link)
 	PortalScheme     string // e.g., "https://"
 	PortalBaseDomain string // e.g., "portal.nuon.co"
+	DashboardURL     string // e.g., "https://app.nuon.co"
 
 	// Org status (live check against Nuon API)
 	OrgStatus        string // "active" | "error"
@@ -92,6 +93,7 @@ templ Layout(props LayoutProps) {
 					LogoBase64:       props.LogoBase64,
 					PortalScheme:     props.PortalScheme,
 					PortalBaseDomain: props.PortalBaseDomain,
+					DashboardURL:     props.DashboardURL,
 					OrgStatus:        props.OrgStatus,
 					OrgStatusMessage: props.OrgStatusMessage,
 				})

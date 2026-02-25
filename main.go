@@ -82,6 +82,12 @@ func main() {
 		nuonAPIURL = "https://api.nuon.co"
 	}
 
+	// Get Nuon dashboard URL for "View Org" links
+	dashboardURL := os.Getenv("DASHBOARD_URL")
+	if dashboardURL == "" {
+		dashboardURL = "https://app.nuon.co"
+	}
+
 	// Build customer base URL for install links
 	// Customer routes are now at root level (no /customer prefix)
 	customerBaseURL := os.Getenv("CUSTOMER_BASE_URL")
@@ -141,7 +147,7 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain, logger)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain, logger)
 
 	// Create customer auth factory with env var OIDC as fallback
 	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
@@ -170,9 +176,9 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, subdomainBaseDomain string, logger *zap.Logger) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain string, logger *zap.Logger) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, "/admin", subdomainBaseDomain, logger)
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, "/admin", subdomainBaseDomain, logger)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -231,6 +237,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		orgRoutes := orgs.Group("/:org_id")
 		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
 		{
+			orgRoutes.GET("/", h.OrgRedirect)
 			orgRoutes.GET("/install-links", h.OrgDetailPage)
 			orgRoutes.GET("/connection", h.OrgSettingsPage)
 			orgRoutes.PUT("/", h.UpdateOrg)
@@ -331,9 +338,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// Root redirect to customer login (with subdomain) or admin login (without subdomain)
 	// The RedirectBaseDomainCustomerRoutes middleware handles the base domain case
-	rg.GET("/", func(c *gin.Context) {
-		c.Redirect(302, "/login")
-	})
+	rg.GET("/", h.CustomerRootRedirect)
 
 	// Base domain auth routes (for OIDC flow without subdomain cookie issues)
 	// These handle the actual OIDC authentication on the base domain to avoid

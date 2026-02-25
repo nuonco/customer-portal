@@ -38,9 +38,19 @@ templ Layout(props LayoutProps) {
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 		</head>
-		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass }>
+		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
 			@scripts.Auth(props.BasePath)
+
+			<!-- Vendor admin bar (visible only when a vendor previews the customer portal) -->
+			if props.User != nil && props.User.Role == models.RoleVendor {
+				@partials.VendorAdminBar(partials.VendorAdminBarProps{
+					User:         props.User,
+					AdminURL:     props.AdminURL,
+					OrgName:      props.OrgName,
+					PortalDomain: props.PortalDomain,
+				})
+			}
 
 			<!-- Header -->
 			@partials.Header(partials.HeaderProps{

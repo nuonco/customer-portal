@@ -303,9 +303,20 @@ func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder
 }
 
 // buildCustomerLayoutProps builds the layout props for customer pages
-func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme) customerui.LayoutProps {
+func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme, org *models.NuonOrg) customerui.LayoutProps {
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
+
+	orgName := ""
+	portalDomain := ""
+	if org != nil {
+		orgName = org.Name
+		if org.Subdomain != "" {
+			portalDomain = org.Subdomain + "." + h.subdomainBaseDomain
+		}
+	}
+
+	adminURL := h.customerBaseURL + "/admin/orgs"
 
 	return customerui.LayoutProps{
 		Title:                  title,
@@ -332,6 +343,9 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		ThemeMode:              theme.GetThemeMode(),
 		CSSPath:                assets.CustomerCSSPath(),
 		CustomCSSPath:          h.getCustomCSSPath(theme.OrgID),
+		OrgName:                orgName,
+		PortalDomain:           portalDomain,
+		AdminURL:               adminURL,
 	}
 }
 
@@ -424,6 +438,15 @@ func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
 	})
 }
 
+// CustomerRootRedirect redirects to /installs for logged-in users, /apps for logged-out users.
+func (h *Handler) CustomerRootRedirect(c *gin.Context) {
+	if user := h.tryGetLoggedInUser(c); user != nil {
+		c.Redirect(http.StatusFound, "/installs")
+	} else {
+		c.Redirect(http.StatusFound, "/apps")
+	}
+}
+
 // tryGetLoggedInUser attempts to extract a logged-in user from JWT cookie
 // Returns nil if no valid JWT is present or if parsing fails
 func (h *Handler) tryGetLoggedInUser(c *gin.Context) *models.User {
@@ -465,7 +488,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if sha == "" {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
 			Error:       "Missing or invalid install link",
 		}
 		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
@@ -476,7 +499,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
 			Error:       "Install link not found or invalid",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -486,7 +509,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if link.Used {
 		theme, _ := models.GetOrCreateAppTheme(h.db, link.OrgID)
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
 			Error:       "This install link has already been used",
 		}
 		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
@@ -499,7 +522,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	theme, err := models.GetOrCreateAppTheme(h.db, orgID)
 	if err != nil {
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
 			Error:       "Failed to load theme settings",
 		}
 		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
@@ -536,7 +559,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 
 	// Fall back to default Templ template
 	props := customerpages.InstallLinkPageProps{
-		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme),
+		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme, h.getOrgForLayout(c)),
 		Link:         &link,
 		LoggedInUser: loggedInUser,
 	}
@@ -665,7 +688,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	if user == nil {
 		orgID := h.getOrgIDForTheme(c)
 		theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-		layoutProps := h.buildCustomerLayoutProps("Your Installs", nil, theme)
+		layoutProps := h.buildCustomerLayoutProps("Your Installs", nil, theme, h.getOrgForLayout(c))
 		layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 		layoutProps.ActiveNav = "installs"
 		props := customerpages.InstallsPageProps{
@@ -703,7 +726,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	if err := query.Find(&allInstalls).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme, h.getOrgForLayout(c)),
 			Error:       "Failed to load installs",
 		}
 		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
@@ -982,7 +1005,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Fall back to default Templ template
-	installsLayoutProps := h.buildCustomerLayoutProps("Your Installs", user, theme)
+	installsLayoutProps := h.buildCustomerLayoutProps("Your Installs", user, theme, h.getOrgForLayout(c))
 	installsLayoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 	installsLayoutProps.ActiveNav = "installs"
 	props := customerpages.InstallsPageProps{
@@ -2250,7 +2273,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		appDisplays = append(appDisplays, display)
 	}
 
-	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme)
+	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c))
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
 
@@ -2461,7 +2484,7 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
 
-	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme)
+	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c))
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
 
@@ -2488,7 +2511,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	if err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c)),
 			Error:       "Organization not found",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -2500,7 +2523,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme),
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c)),
 			Error:       "App not found or not published",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -2523,7 +2546,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 		}
 	}
 
-	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme)
+	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme, h.getOrgForLayout(c))
 	layoutProps.HasPublishedApps = true
 
 	props := customerpages.AppInstallPageProps{

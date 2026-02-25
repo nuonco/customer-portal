@@ -259,7 +259,7 @@ func (h *Handler) AuthErrorPage(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	props := pages.AuthErrorPageProps{
-		LayoutProps: h.buildCustomerLayoutProps("Authentication Error", nil, theme),
+		LayoutProps: h.buildCustomerLayoutProps("Authentication Error", nil, theme, nil),
 		Message:     message,
 	}
 
