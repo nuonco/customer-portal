@@ -206,12 +206,18 @@ func (r *TemplateRenderer) GetCustomCSSPath(orgID, basePath string) string {
 
 	// Check if any CSS overrides exist
 	cssAssets, err := models.GetCSSOverrides(r.db, orgID)
-	if err != nil || len(cssAssets) == 0 {
+	hasOverrides := err == nil && len(cssAssets) > 0
+
+	// Also check for theme custom CSS
+	theme, themeErr := models.GetOrCreateAppTheme(r.db, orgID)
+	hasThemeCSS := themeErr == nil && theme.CustomCSS != ""
+
+	if !hasOverrides && !hasThemeCSS {
 		return ""
 	}
 
-	// Return the path to serve custom CSS
-	return basePath + "/custom/css/" + orgID + ".css"
+	version := theme.UpdatedAt.Unix()
+	return fmt.Sprintf("%s/custom/css/%s.css?v=%d", basePath, orgID, version)
 }
 
 // ValidateTemplate validates a template string to ensure it parses correctly

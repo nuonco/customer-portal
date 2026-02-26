@@ -38,7 +38,7 @@ func TestRenderHead(t *testing.T) {
 			},
 			contains: []string{
 				`href="/static/main.css"`,
-				`href="/custom/css/workspace.css"`,
+				`href="/custom/css/workspace.css`,
 			},
 		},
 		{

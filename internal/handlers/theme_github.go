@@ -403,7 +403,7 @@ func (h *Handler) ServeCustomCSS(c *gin.Context) {
 
 	// Combine all CSS
 	c.Header("Content-Type", "text/css; charset=utf-8")
-	c.Header("Cache-Control", "public, max-age=3600") // Cache for 1 hour
+	c.Header("Cache-Control", "public, max-age=31536000, immutable")
 	c.Status(http.StatusOK)
 
 	for _, asset := range cssAssets {

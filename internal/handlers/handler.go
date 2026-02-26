@@ -262,7 +262,8 @@ func (h *Handler) getCustomCSSPath(orgID string) string {
 	if !hasOverrides && !hasThemeCSS {
 		return ""
 	}
-	return h.basePath + "/custom/css/" + orgID + ".css"
+	version := theme.UpdatedAt.Unix()
+	return fmt.Sprintf("%s/custom/css/%s.css?v=%d", h.basePath, orgID, version)
 }
 
 // tryRenderOverride attempts to render a template override for the given page
