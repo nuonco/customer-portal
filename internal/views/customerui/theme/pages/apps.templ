@@ -37,13 +37,14 @@ type InputGroupDisplay struct {
 
 // InputDisplay holds display info for a single input field
 type InputDisplay struct {
-	Name        string
-	DisplayName string
-	Description string
-	Type        string
-	Required    bool
-	Sensitive   bool
-	Default     string
+	Name         string
+	DisplayName  string
+	Description  string
+	Type         string
+	Required     bool
+	Sensitive    bool
+	Default      string
+	ConfiguredBy string // "vendor" or "customer"
 }
 
 // SecretDisplay holds display info for a single secret field
@@ -194,6 +195,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
 											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Required</th>
 											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Default</th>
+											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Provided by</th>
 											<th class="py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Description</th>
 										</tr>
 									</thead>
@@ -224,6 +226,9 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 													} else {
 														<span class="text-cool-grey-400 dark:text-cool-grey-500">—</span>
 													}
+												</td>
+												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+													<span class="chip-sm-neutral">{ input.ConfiguredBy }</span>
 												</td>
 												<td class="py-2 text-cool-grey-600 dark:text-cool-grey-300">{ input.Description }</td>
 											</tr>

@@ -88,9 +88,6 @@ templ CustomerDetailPage(props CustomerDetailPageProps) {
 											Platform
 										</th>
 										<th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-											Status
-										</th>
-										<th scope="col" class="px-4 py-2.5 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 											Created
 										</th>
 										<th scope="col" class="px-3 py-2.5 w-20 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
@@ -144,9 +141,6 @@ templ installTableRow(install CustomerInstall, orgID, basePath string) {
 		</td>
 		<td class="px-4 py-3 whitespace-nowrap">
 			@platformBadge(install.Platform)
-		</td>
-		<td class="px-4 py-3 whitespace-nowrap">
-			@statusBadge(install.Status)
 		</td>
 		<td class="px-4 py-3 whitespace-nowrap">
 			<div class="text-sm text-cool-grey-900 dark:text-white">{ install.CreatedAt }</div>

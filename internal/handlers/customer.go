@@ -2190,9 +2190,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
 		customerInputNames := localConfig.GetCustomerInputNames()
 
-		// If local config specifies customer inputs, filter to those; otherwise show all
 		customerInputSet := make(map[string]bool)
-		hasFilter := len(customerInputNames) > 0
 		for _, name := range customerInputNames {
 			customerInputSet[name] = true
 		}
@@ -2221,17 +2219,19 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 							continue
 						}
 						inputName := strVal(inputMap, "name")
-						if hasFilter && !customerInputSet[inputName] {
-							continue
+						configuredBy := "vendor"
+						if customerInputSet[inputName] {
+							configuredBy = "customer"
 						}
 						gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
-							Name:        inputName,
-							DisplayName: strVal(inputMap, "display_name"),
-							Description: strVal(inputMap, "description"),
-							Type:        strVal(inputMap, "input_type"),
-							Required:    boolVal(inputMap, "required"),
-							Sensitive:   boolVal(inputMap, "sensitive"),
-							Default:     strVal(inputMap, "default"),
+							Name:         inputName,
+							DisplayName:  strVal(inputMap, "display_name"),
+							Description:  strVal(inputMap, "description"),
+							Type:         strVal(inputMap, "input_type"),
+							Required:     boolVal(inputMap, "required"),
+							Sensitive:    boolVal(inputMap, "sensitive"),
+							Default:      strVal(inputMap, "default"),
+							ConfiguredBy: configuredBy,
 						})
 					}
 					if len(gd.Inputs) > 0 {

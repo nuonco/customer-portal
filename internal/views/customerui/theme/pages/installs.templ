@@ -53,7 +53,6 @@ templ InstallsPage(props InstallsPageProps) {
 								<th>Install</th>
 								<th>App</th>
 								<th>Platform</th>
-								<th>Status</th>
 								<th class="hide-mobile">Region</th>
 								<th class="hide-mobile">Created</th>
 							</tr>
@@ -274,13 +273,6 @@ templ installTableRow(install customerui.InstallWithApprovalStatus, basePath str
 		<td>{ install.AppName }</td>
 		<td>
 			@components.PlatformChip(platform)
-		</td>
-		<td>
-			@components.StatusBadge(components.StatusBadgeProps{
-				Status:  string(install.Status),
-				Variant: "install",
-				Size:    "sm",
-			})
 		</td>
 		<td class="hide-mobile">
 			if install.Region != "" {
