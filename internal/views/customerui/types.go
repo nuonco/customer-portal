@@ -6,17 +6,12 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// InstallWithApprovalStatus extends Install with approval and health check info
+// InstallWithApprovalStatus extends Install with approval status info
 type InstallWithApprovalStatus struct {
 	models.Install
 	AppName             string `json:"app_name"` // Fetched from Nuon API at runtime
 	HasPendingApprovals bool   `json:"has_pending_approvals"`
 	IsUpdating          bool   `json:"is_updating"` // has in-progress workflow without approval steps
-	HasHealthChecks     bool   `json:"has_health_checks"`
-	HealthChecksPending int    `json:"health_checks_pending"`
-	HealthChecksPassed  int    `json:"health_checks_passed"`
-	HealthChecksFailed  int    `json:"health_checks_failed"`
-	OverallHealthStatus string `json:"overall_health_status"` // "passing", "pending", "failing", ""
 }
 
 // InstallPaginationData holds pagination metadata for customer installs
@@ -60,16 +55,6 @@ type WorkflowData struct {
 type ApprovalStepData struct {
 	StepID     string
 	ApprovalID string
-}
-
-// HealthCheckStatusData holds health check status for display
-type HealthCheckStatusData struct {
-	ActionID      string
-	ActionName    string
-	Status        string
-	StatusClass   string
-	StatusMessage string
-	LastRunAt     time.Time
 }
 
 // AuditLogEntry holds audit log entry data for display

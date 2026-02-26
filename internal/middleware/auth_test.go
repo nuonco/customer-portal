@@ -47,9 +47,12 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		org_id TEXT,
 		user_id TEXT NOT NULL,
 		created_by_vendor_id TEXT NOT NULL,
-		install_link_id TEXT NOT NULL,
+		install_link_id TEXT,
+		nuon_app_id TEXT DEFAULT '',
 		nuon_install_id TEXT NOT NULL,
 		name TEXT DEFAULT '',
+		app_id TEXT DEFAULT '',
+		app_name TEXT DEFAULT '',
 		status TEXT DEFAULT 'pending_customer',
 		region TEXT,
 		created_at DATETIME,
@@ -255,95 +258,6 @@ func TestRequireInstallOwnership(t *testing.T) {
 				ctxInstall, exists := c.Get("install")
 				assert.True(t, exists, "install should be in context")
 				assert.NotNil(t, ctxInstall)
-			}
-		})
-	}
-}
-
-func TestRequireOrgContext(t *testing.T) {
-	db := setupTestDB(t)
-
-	// Create test user and org
-	user := testutil.NewTestVendor()
-	require.NoError(t, db.Create(user).Error)
-
-	org := testutil.NewTestOrg(testutil.OrgOptions{UserID: user.ID})
-	require.NoError(t, db.Create(org).Error)
-
-	member := testutil.NewTestOrgMember(testutil.OrgMemberOptions{
-		UserID: user.ID,
-		OrgID:  org.ID,
-		Status: models.MemberStatusActive,
-	})
-	require.NoError(t, db.Create(member).Error)
-
-	tests := []struct {
-		name             string
-		userRole         models.UserRole
-		orgCookie        string
-		expectedRedirect bool
-		expectedOrgID    string
-	}{
-		{
-			name:          "customer user skips org context",
-			userRole:      models.RoleCustomer,
-			orgCookie:     "",
-			expectedOrgID: "", // No org set for customers
-		},
-		{
-			name:          "vendor with valid org cookie loads org",
-			userRole:      models.RoleVendor,
-			orgCookie:     org.ID,
-			expectedOrgID: org.ID,
-		},
-		{
-			name:          "vendor without cookie auto-selects first org",
-			userRole:      models.RoleVendor,
-			orgCookie:     "",
-			expectedOrgID: org.ID,
-		},
-		{
-			name:             "vendor with invalid org cookie auto-selects",
-			userRole:         models.RoleVendor,
-			orgCookie:        "invalid-org-id",
-			expectedRedirect: false, // Should auto-select, not redirect
-			expectedOrgID:    org.ID,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			w := httptest.NewRecorder()
-			c, _ := gin.CreateTestContext(w)
-			c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
-			c.Request.Header.Set("Accept", "application/json")
-
-			// Set up JWT claims
-			setJWTClaims(c, map[string]interface{}{
-				"user_id": user.ID,
-				"email":   "test@example.com",
-				"role":    string(tt.userRole),
-			})
-
-			// Set org cookie if provided
-			if tt.orgCookie != "" {
-				c.Request.AddCookie(&http.Cookie{
-					Name:  "org_id",
-					Value: tt.orgCookie,
-				})
-			}
-
-			// Run middleware
-			middleware := RequireOrgContext(db)
-			middleware(c)
-
-			if tt.expectedRedirect {
-				assert.True(t, c.IsAborted())
-			} else if tt.expectedOrgID != "" {
-				// Verify org is in context
-				ctxOrg := GetCurrentOrg(c)
-				require.NotNil(t, ctxOrg, "org should be in context")
-				assert.Equal(t, tt.expectedOrgID, ctxOrg.ID)
 			}
 		})
 	}
@@ -565,42 +479,6 @@ func TestGetCurrentOrg(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestSetOrgCookie(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
-
-	orgID := "org-test-123"
-	SetOrgCookie(c, orgID)
-
-	// Check that cookie was set
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 1)
-
-	cookie := cookies[0]
-	assert.Equal(t, "org_id", cookie.Name)
-	assert.Equal(t, orgID, cookie.Value)
-	assert.Equal(t, "/", cookie.Path)
-	assert.True(t, cookie.HttpOnly)
-}
-
-func TestClearOrgCookie(t *testing.T) {
-	w := httptest.NewRecorder()
-	c, _ := gin.CreateTestContext(w)
-	c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
-
-	ClearOrgCookie(c)
-
-	// Check that cookie was cleared
-	cookies := w.Result().Cookies()
-	require.Len(t, cookies, 1)
-
-	cookie := cookies[0]
-	assert.Equal(t, "org_id", cookie.Name)
-	assert.Equal(t, "", cookie.Value)
-	assert.True(t, cookie.MaxAge < 0, "MaxAge should be negative to delete cookie")
 }
 
 func TestGetStringClaim(t *testing.T) {

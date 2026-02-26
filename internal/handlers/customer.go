@@ -16,12 +16,10 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
@@ -746,55 +744,17 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		isUpdating := h.checkIsUpdating(c, &install)
 		hasActiveProvision := h.checkHasActiveProvision(c, &install)
 
-		// Get health check status
-		hasHealthChecks := false
-		pending, passed, failed := 0, 0, 0
-		overallHealth := ""
-
-		healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
-		if len(healthCheckIDs) > 0 {
-			hasHealthChecks = true
-			// Fetch health status via Nuon API if org has credentials
-			if org := install.GetNuonOrg(); org != nil && org.APIToken != "" {
-				client, err := nuon.NewClientWithURL(
-					org.APIToken,
-					org.NuonOrgID,
-					h.nuonAPIURL,
-				)
-				if err == nil {
-					ctx := context.Background()
-					healthStatuses, overall, _ := background.CheckInstallHealthStatus(ctx, client, &install)
-					overallHealth = overall
-					for _, s := range healthStatuses {
-						switch s.Status {
-						case "Passing":
-							passed++
-						case "Pending":
-							pending++
-						case "Failing":
-							failed++
-						}
-					}
-				}
-			}
-		}
-
 		installWithStatus := customerui.InstallWithApprovalStatus{
 			Install:             install,
 			HasPendingApprovals: hasPendingApprovals,
 			IsUpdating:          isUpdating,
-			HasHealthChecks:     hasHealthChecks,
-			HealthChecksPending: pending,
-			HealthChecksPassed:  passed,
-			HealthChecksFailed:  failed,
-			OverallHealthStatus: overallHealth,
 		}
 
 		// Categorization logic (priority order):
-		// 1. Needs Attention: pending approvals OR unhealthy health checks
+		// 1. Needs Attention: pending approvals OR active provision
 		// 2. Updating: in-progress workflow without approvals
 		// 3. Healthy: everything else
-		needsAttention := hasPendingApprovals || hasActiveProvision || (hasHealthChecks && (failed > 0 || pending > 0))
+		needsAttention := hasPendingApprovals || hasActiveProvision
 
 		if needsAttention {
 			needsAttentionInstalls = append(needsAttentionInstalls, installWithStatus)
@@ -970,18 +930,14 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		platform := platformMap[appID]
 
 		installsData = append(installsData, overrides.InstallData{
-			ID:                  inst.Install.ID,
-			Name:                inst.Install.Name,
-			Status:              string(inst.Install.Status),
-			Region:              inst.Install.Region,
-			Platform:            platform,
-			AppName:             appNameMap[appID],
-			CreatedAt:           inst.Install.CreatedAt.Format("Jan 2, 2006"),
-			HasHealthChecks:     inst.HasHealthChecks,
-			HealthChecksPassed:  inst.HealthChecksPassed,
-			HealthChecksPending: inst.HealthChecksPending,
-			HealthChecksFailed:  inst.HealthChecksFailed,
-			HasPendingApproval:  inst.HasPendingApprovals,
+			ID:                 inst.Install.ID,
+			Name:               inst.Install.Name,
+			Status:             string(inst.Install.Status),
+			Region:             inst.Install.Region,
+			Platform:           platform,
+			AppName:            appNameMap[appID],
+			CreatedAt:          inst.Install.CreatedAt.Format("Jan 2, 2006"),
+			HasPendingApproval: inst.HasPendingApprovals,
 		})
 	}
 
@@ -1017,33 +973,6 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		InitialInstallID: initialInstallID,
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallsPage(props))
-}
-
-// countHealthCheckStatus counts health checks with the given status
-func countHealthCheckStatus(statuses []customerui.HealthCheckStatusData, status string) int {
-	count := 0
-	for _, s := range statuses {
-		if s.Status == status {
-			count++
-		}
-	}
-	return count
-}
-
-// convertHealthCheckStatuses converts background.HealthCheckStatus to customerui.HealthCheckStatusData
-func convertHealthCheckStatuses(statuses []background.HealthCheckStatus) []customerui.HealthCheckStatusData {
-	result := make([]customerui.HealthCheckStatusData, 0, len(statuses))
-	for _, s := range statuses {
-		result = append(result, customerui.HealthCheckStatusData{
-			ActionID:      s.ActionID,
-			ActionName:    s.ActionName,
-			Status:        s.Status,
-			StatusClass:   s.StatusClass,
-			StatusMessage: s.StatusMessage,
-			LastRunAt:     s.LastRunAt,
-		})
-	}
-	return result
 }
 
 // getString safely gets a string value from a gin.H map
@@ -1326,103 +1255,6 @@ func (h *Handler) UpdateInstallInputs(c *gin.Context) {
 	})
 }
 
-// TriggerHealthChecks handles POST request to manually trigger health checks
-func (h *Handler) TriggerHealthChecks(c *gin.Context) {
-	// Get install from middleware (RequireInstallOwnership sets this)
-	installInterface, exists := c.Get("install")
-	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Install not found"})
-		return
-	}
-
-	install := installInterface.(*models.Install)
-
-	// Load install with both InstallLink.NuonOrg and Org (handles published-app installs)
-	if err := h.loadInstallWithOrg(install); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
-		return
-	}
-
-	// Check if health checks are configured
-	// Use the new GetHealthCheckIDPairs to get parsed config/workflow IDs
-	healthCheckPairs := install.InstallLink.GetHealthCheckIDPairs()
-	if len(healthCheckPairs) == 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "No health checks configured for this install"})
-		return
-	}
-
-	// Create Nuon client using global API URL
-	nuonOrg := install.GetNuonOrg()
-	if nuonOrg == nil || nuonOrg.APIToken == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization credentials not configured"})
-		return
-	}
-
-	client, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create Nuon client"})
-		return
-	}
-
-	// Trigger each health check action using the ConfigID (not WorkflowID)
-	triggered := 0
-	var errors []string
-	for _, pair := range healthCheckPairs {
-		// RunInstallAction expects the ActionWorkflowConfigID
-		if err := client.RunInstallAction(c.Request.Context(), install.NuonInstallID, pair.ConfigID); err != nil {
-			h.logger.Error("failed to trigger health check",
-				zap.String("config_id", pair.ConfigID),
-				zap.String("workflow_id", pair.WorkflowID),
-				zap.Error(err),
-			)
-			errors = append(errors, fmt.Sprintf("Action %s: %v", pair.ConfigID, err))
-		} else {
-			triggered++
-			h.logger.Info("triggered health check",
-				zap.String("config_id", pair.ConfigID),
-				zap.String("install_id", install.ID),
-			)
-		}
-	}
-
-	if triggered == 0 && len(errors) > 0 {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "Failed to trigger health checks. The configured action(s) may no longer exist.",
-			"details": errors,
-		})
-		return
-	}
-
-	// For HTMX requests, return the updated health status partial
-	if isHTMXRequest(c) {
-		// Wait a moment for the health checks to start, then fetch status
-		// In practice, health checks are async, so we return current status
-		ctx := context.Background()
-		bgHealthStatuses, overallHealthStatus, err := background.CheckInstallHealthStatus(ctx, client, install)
-		if err != nil {
-			h.logger.Error("failed to fetch health check status after trigger", zap.Error(err))
-		}
-
-		// Convert to templ data type
-		healthCheckStatuses := convertHealthCheckStatuses(bgHealthStatuses)
-
-		props := components.HealthStatusProps{
-			InstallID:           install.ID,
-			HasHealthChecks:     true,
-			HealthCheckStatuses: healthCheckStatuses,
-			OverallHealthStatus: overallHealthStatus,
-			BasePath:            h.basePath,
-		}
-		h.RenderTempl(c, http.StatusOK, components.HealthStatus(props))
-		return
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":   fmt.Sprintf("Triggered %d health check(s)", triggered),
-		"triggered": triggered,
-	})
-}
-
 // checkHasPendingApprovals checks if an install has workflows waiting for approval
 func (h *Handler) checkHasPendingApprovals(c *gin.Context, install *models.Install) bool {
 	if err := h.loadInstallWithOrg(install); err != nil {
@@ -1590,38 +1422,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 						zap.String("install_id", install.ID),
 						zap.String("nuon_install_id", install.NuonInstallID),
 					)
-				}
-			}
-		}
-	}
-
-	// Fetch health check status if configured
-	var healthCheckStatuses []partials.HealthCheckStatusDataPanel
-	var overallHealthStatus string
-	var healthPassed, healthFailed, healthPending int
-	healthCheckIDs := install.InstallLink.GetHealthCheckActionIDs()
-
-	if len(healthCheckIDs) > 0 && nuonOrg != nil && nuonOrg.APIToken != "" {
-		client, err := nuon.NewClientWithURL(
-			nuonOrg.APIToken,
-			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
-		)
-		if err == nil {
-			ctx := context.Background()
-			bgHealthStatuses, status, err := background.CheckInstallHealthStatus(ctx, client, install)
-			if err == nil {
-				overallHealthStatus = status
-				healthCheckStatuses = convertHealthCheckStatusesToPanel(bgHealthStatuses)
-				for _, s := range bgHealthStatuses {
-					switch s.Status {
-					case "Passing":
-						healthPassed++
-					case "Failing":
-						healthFailed++
-					default:
-						healthPending++
-					}
 				}
 			}
 		}
@@ -1801,12 +1601,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		Install:                 install,
 		AppName:                 appName,
 		APIDeletedError:         apiDeletedError,
-		HealthCheckStatuses:     healthCheckStatuses,
-		OverallHealthStatus:     overallHealthStatus,
-		HasHealthChecks:         len(healthCheckIDs) > 0,
-		HealthChecksPassed:      healthPassed,
-		HealthChecksFailed:      healthFailed,
-		HealthChecksPending:     healthPending,
 		BasePath:                h.basePath,
 		PrimaryColor:            primaryColor,
 		SecondaryColor:          secondaryColor,
@@ -1955,22 +1749,6 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 		h.basePath,
 		primaryColor,
 	))
-}
-
-// convertHealthCheckStatusesToPanel converts background.HealthCheckStatus to partials.HealthCheckStatusDataPanel
-func convertHealthCheckStatusesToPanel(statuses []background.HealthCheckStatus) []partials.HealthCheckStatusDataPanel {
-	result := make([]partials.HealthCheckStatusDataPanel, 0, len(statuses))
-	for _, s := range statuses {
-		result = append(result, partials.HealthCheckStatusDataPanel{
-			ActionID:      s.ActionID,
-			ActionName:    s.ActionName,
-			Status:        s.Status,
-			StatusClass:   s.StatusClass,
-			StatusMessage: s.StatusMessage,
-			LastRunAt:     s.LastRunAt,
-		})
-	}
-	return result
 }
 
 // InstallReadmeStatus handles HTMX polling for readme display
@@ -2262,7 +2040,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	}
 
 	var publishedApps []models.PublishedApp
-	if err := h.db.Where("org_id = ?", org.ID).Find(&publishedApps).Error; err != nil || len(publishedApps) == 0 {
+	if err := h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil || len(publishedApps) == 0 {
 		c.Redirect(http.StatusFound, h.basePath+"/installs")
 		return
 	}
@@ -2273,6 +2051,8 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	for _, pa := range publishedApps {
 		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
+		display.LogoLightBase64 = pa.LogoLightBase64
+		display.LogoDarkBase64 = pa.LogoDarkBase64
 		appDisplays = append(appDisplays, display)
 	}
 
@@ -2486,6 +2266,8 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 
 	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
+	display.LogoLightBase64 = publishedApp.LogoLightBase64
+	display.LogoDarkBase64 = publishedApp.LogoDarkBase64
 
 	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c))
 	layoutProps.HasPublishedApps = true

@@ -54,7 +54,6 @@ templ InstallsPage(props InstallsPageProps) {
 								<th>App</th>
 								<th>Platform</th>
 								<th>Status</th>
-								<th>Health</th>
 								<th class="hide-mobile">Region</th>
 								<th class="hide-mobile">Created</th>
 							</tr>
@@ -282,14 +281,6 @@ templ installTableRow(install customerui.InstallWithApprovalStatus, basePath str
 				Status:  string(install.Status),
 				Variant: "install",
 				Size:    "sm",
-			})
-		</td>
-		<td>
-			@components.HealthPills(components.HealthPillsProps{
-				HasHealthChecks: install.HasHealthChecks,
-				Passed:          install.HealthChecksPassed,
-				Failed:          install.HealthChecksFailed,
-				Pending:         install.HealthChecksPending,
 			})
 		</td>
 		<td class="hide-mobile">

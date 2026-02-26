@@ -1169,20 +1169,6 @@ func (h *Handler) CreateInstallLink(c *gin.Context) {
 		}
 	}
 
-	// Auto-apply health checks from app config (if configured)
-	var healthConfig models.AppHealthCheckConfig
-	if err := h.db.Where("app_id = ?", req.AppID).First(&healthConfig).Error; err == nil {
-		// Found an app health check config, use those IDs
-		healthCheckIDs := healthConfig.GetHealthCheckActionIDs()
-		if len(healthCheckIDs) > 0 {
-			link.SetHealthCheckActionIDs(healthCheckIDs)
-			h.logger.Info("auto-applied health checks from app config",
-				zap.Int("count", len(healthCheckIDs)),
-				zap.String("app_id", req.AppID),
-			)
-		}
-	}
-
 	if err := h.db.Create(&link).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create install link"})
 		return
@@ -1416,34 +1402,6 @@ func (h *Handler) GetAppInputConfig(c *gin.Context) {
 		"platform":     platform,
 		"input_config": inputConfig,
 	})
-}
-
-// GetAppActions fetches available actions for an app (for health check selection)
-func (h *Handler) GetAppActions(c *gin.Context) {
-	appIDParam := c.Param("app_id")
-
-	// Get org from context (validated by RequireOrgAccess middleware)
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
-		return
-	}
-
-	// Initialize Nuon client with the org's credentials and global API URL
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
-		return
-	}
-
-	// Fetch app actions from Nuon API
-	actions, err := nuonClient.GetAppActionWorkflows(c.Request.Context(), appIDParam)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch app actions: %v", err)})
-		return
-	}
-
-	c.JSON(http.StatusOK, actions)
 }
 
 // DeleteInstallLink handles deleting an install link
@@ -1783,21 +1741,13 @@ func (h *Handler) DebugUserOrgs(c *gin.Context) {
 	})
 }
 
-// AppWithHealthCheckStatus represents an app with its health check configuration status
-type AppWithHealthCheckStatus struct {
-	ID               string `json:"id"`
-	Name             string `json:"name"`
-	Platform         string `json:"platform"` // "aws" or "azure"
-	HasHealthChecks  bool   `json:"has_health_checks"`
-	HealthCheckCount int    `json:"health_check_count"`
-}
-
-// ActionForHealthCheck represents a flattened action for the health checks template
-type ActionForHealthCheck struct {
-	ID                string `json:"id"`                   // Workflow ID
-	AppActionConfigID string `json:"app_action_config_id"` // Config ID from first config
-	Name              string `json:"name"`
-	Description       string `json:"description"`
+// AppInfo represents basic app information for the apps list
+type AppInfo struct {
+	ID              string `json:"id"`
+	Name            string `json:"name"`
+	Platform        string `json:"platform"` // "aws" or "azure"
+	LogoLightBase64 string `json:"logo_light_base64"`
+	LogoDarkBase64  string `json:"logo_dark_base64"`
 }
 
 // orgHasPublishedApps checks if an org has any published apps
@@ -1807,7 +1757,7 @@ func (h *Handler) orgHasPublishedApps(orgID string) bool {
 	return count > 0
 }
 
-// AppsPage displays the apps list with health check configuration status
+// AppsPage displays the vendor apps list
 func (h *Handler) AppsPage(c *gin.Context) {
 	user := h.GetFreshUser(c) // Load from DB for topbar display
 
@@ -1870,30 +1820,26 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		return
 	}
 
-	// Get all health check configs for these apps
-	var healthConfigs []models.AppHealthCheckConfig
-	appIDs := make([]string, len(apps))
-	for i, app := range apps {
-		appIDs[i] = app.ID
-	}
-	h.db.Where("app_id IN ?", appIDs).Find(&healthConfigs)
-
-	// Create a map for quick lookup
-	configMap := make(map[string]*models.AppHealthCheckConfig)
-	for i := range healthConfigs {
-		configMap[healthConfigs[i].AppID] = &healthConfigs[i]
-	}
-
 	// Get all published apps for this org
 	var publishedApps []models.PublishedApp
-	h.db.Where("org_id = ?", org.ID).Find(&publishedApps)
+	h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps)
 	publishedAppIDs := make(map[string]bool)
+	sortOrderMap := make(map[string]int)
+	logoLightMap := make(map[string]string)
+	logoDarkMap := make(map[string]string)
 	for _, pa := range publishedApps {
 		publishedAppIDs[pa.AppID] = true
+		sortOrderMap[pa.AppID] = pa.SortOrder
+		if pa.LogoLightBase64 != "" {
+			logoLightMap[pa.AppID] = pa.LogoLightBase64
+		}
+		if pa.LogoDarkBase64 != "" {
+			logoDarkMap[pa.AppID] = pa.LogoDarkBase64
+		}
 	}
 
-	// Build app list with health check status
-	appsWithStatus := make([]AppWithHealthCheckStatus, len(apps))
+	// Build app list
+	appsWithStatus := make([]AppInfo, len(apps))
 	for i, app := range apps {
 		// Extract platform from runner config (same as GetAppInputConfig)
 		platform := "aws" // default
@@ -1904,19 +1850,27 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			}
 		}
 
-		appStatus := AppWithHealthCheckStatus{
-			ID:       app.ID,
-			Name:     app.Name,
-			Platform: platform,
+		appsWithStatus[i] = AppInfo{
+			ID:              app.ID,
+			Name:            app.Name,
+			Platform:        platform,
+			LogoLightBase64: logoLightMap[app.ID],
+			LogoDarkBase64:  logoDarkMap[app.ID],
 		}
-
-		if config, ok := configMap[app.ID]; ok {
-			appStatus.HasHealthChecks = config.HasHealthChecks()
-			appStatus.HealthCheckCount = config.HealthCheckCount()
-		}
-
-		appsWithStatus[i] = appStatus
 	}
+
+	// Sort appsWithStatus by sort_order (published apps first, then unpublished)
+	sort.SliceStable(appsWithStatus, func(i, j int) bool {
+		oi, iHas := sortOrderMap[appsWithStatus[i].ID]
+		oj, jHas := sortOrderMap[appsWithStatus[j].ID]
+		if !iHas {
+			oi = math.MaxInt32
+		}
+		if !jHas {
+			oj = math.MaxInt32
+		}
+		return oi < oj
+	})
 
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
@@ -1925,11 +1879,11 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	templApps := make([]vendorpages.AppWithHealthCheckStatus, len(appsWithStatus))
 	for i, app := range appsWithStatus {
 		templApps[i] = vendorpages.AppWithHealthCheckStatus{
-			ID:               app.ID,
-			Name:             app.Name,
-			Platform:         app.Platform,
-			HasHealthChecks:  app.HasHealthChecks,
-			HealthCheckCount: app.HealthCheckCount,
+			ID:              app.ID,
+			Name:            app.Name,
+			Platform:        app.Platform,
+			LogoLightBase64: app.LogoLightBase64,
+			LogoDarkBase64:  app.LogoDarkBase64,
 		}
 	}
 
@@ -2012,6 +1966,47 @@ func (h *Handler) UnpublishApp(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "App unpublished successfully"})
+}
+
+// UpdateAppOrder updates the sort_order of published apps for an org
+func (h *Handler) UpdateAppOrder(c *gin.Context) {
+	org := middleware.GetCurrentOrg(c)
+	if org == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
+		return
+	}
+
+	var body struct {
+		AppIDs          []string `json:"app_ids"`
+		PublishedAppIDs []string `json:"published_app_ids"`
+	}
+	if err := c.ShouldBindJSON(&body); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	publishedSet := make(map[string]bool, len(body.PublishedAppIDs))
+	for _, id := range body.PublishedAppIDs {
+		publishedSet[id] = true
+	}
+
+	for i, appID := range body.AppIDs {
+		if publishedSet[appID] {
+			var pa models.PublishedApp
+			result := h.db.Unscoped().Where("org_id = ? AND app_id = ?", org.ID, appID).First(&pa)
+			updates := map[string]interface{}{"deleted_at": nil, "sort_order": i}
+			if result.Error != nil {
+				newPA := models.PublishedApp{OrgID: org.ID, AppID: appID, SortOrder: i}
+				h.db.Create(&newPA)
+			} else {
+				h.db.Unscoped().Model(&pa).Updates(updates)
+			}
+		} else {
+			h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).Delete(&models.PublishedApp{})
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "configuration updated"})
 }
 
 // AppDetailRedirect redirects app detail to inputs page
@@ -2297,206 +2292,102 @@ func getStringFromAny(v interface{}) string {
 	}
 }
 
-// AppHealthChecksPage displays the health check configuration for an app
-func (h *Handler) AppHealthChecksPage(c *gin.Context) {
-	user := h.GetFreshUser(c) // Load from DB for topbar display
+// AppLogoPage displays the app logo upload page
+func (h *Handler) AppLogoPage(c *gin.Context) {
+	user := h.GetFreshUser(c)
 	appID := c.Param("app_id")
 
-	// Get org from context (validated by RequireOrgAccess middleware)
 	org := middleware.GetCurrentOrg(c)
 	if org == nil {
 		h.RenderErrorPage(c, http.StatusInternalServerError, "Organization context not found")
 		return
 	}
 
-	// renderHealthChecksAPIError is a local helper for Nuon API failures on this page
-	renderHealthChecksAPIError := func() {
-		allOrgs := h.GetUserOrgs(user.ID)
-		props := vendorpages.AppHealthChecksPageProps{
-			LayoutProps: vendorui.LayoutProps{
-				Title:            "App - Health Checks",
-				ActivePage:       "apps",
-				User:             user,
-				CurrentOrg:       org,
-				Orgs:             allOrgs,
-				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
-				BasePath:         h.basePath,
-				PortalScheme:     h.schemeFromBaseURL(),
-				DashboardURL:     h.dashboardURL,
-				PortalBaseDomain: h.subdomainBaseDomain,
-				CSSPath:          assets.VendorCSSPath(),
-				NuonAPIError:     "Your API token may be expired or invalid.",
-			},
-			Org: *org,
-			App: vendorpages.AppInfo{ID: appID},
-		}
-		h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-		h.RenderTempl(c, http.StatusOK, vendorpages.AppHealthChecksPage(props))
-	}
-
-	// Initialize Nuon client
+	// Load app name from Nuon API (best effort)
+	appInfo := vendorpages.AppInfo{ID: appID}
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		renderHealthChecksAPIError()
-		return
-	}
-
-	// Fetch app details from Nuon API
-	app, err := nuonClient.GetApp(c.Request.Context(), appID)
-	if err != nil {
-		renderHealthChecksAPIError()
-		return
-	}
-
-	// Fetch available actions for this app
-	rawActions, err := nuonClient.GetAppActionWorkflows(c.Request.Context(), appID)
-	if err != nil {
-		renderHealthChecksAPIError()
-		return
-	}
-
-	// Transform actions to flatten the config ID for the template
-	// The API returns actions with nested configs, but we need AppActionConfigID at the top level
-	var actions []ActionForHealthCheck
-	for _, action := range rawActions {
-		// Skip actions without configs (they can't be run)
-		if action.Configs == nil || len(action.Configs) == 0 {
-			continue
+	if err == nil {
+		if app, err := nuonClient.GetApp(c.Request.Context(), appID); err == nil && app != nil {
+			appInfo.Name = app.Name
 		}
-		// Use the first (most recent) config's ID
-		configID := action.Configs[0].ID
-
-		flatAction := ActionForHealthCheck{
-			ID:                action.ID,
-			AppActionConfigID: configID,
-			Name:              action.Name,
-		}
-		actions = append(actions, flatAction)
 	}
 
-	// Load existing health check config (if any)
-	var healthConfig models.AppHealthCheckConfig
-	h.db.Where("app_id = ?", appID).First(&healthConfig)
+	// Load existing logos from PublishedApp record (may not exist yet)
+	var publishedApp models.PublishedApp
+	h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp)
 
-	// Create a set of selected action IDs for easy lookup
-	selectedIDs := make(map[string]bool)
-	for _, id := range healthConfig.GetHealthCheckActionIDs() {
-		selectedIDs[id] = true
-	}
-
-	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
-
-	// Convert actions to templ type
-	templActions := make([]vendorpages.ActionForHealthCheck, len(actions))
-	for i, a := range actions {
-		templActions[i] = vendorpages.ActionForHealthCheck{
-			ID:                a.ID,
-			AppActionConfigID: a.AppActionConfigID,
-			Name:              a.Name,
-			Description:       a.Description,
-		}
-	}
-
-	props := vendorpages.AppHealthChecksPageProps{
+	props := vendorpages.AppLogoPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:      app.Name + " - Health Checks",
-			ActivePage: "apps",
-			User:       user,
-			CurrentOrg: org,
-			Orgs:       allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{
-				{Text: org.Name, Path: fmt.Sprintf("%s/orgs/%s", h.basePath, org.ID), Active: false},
-				{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false},
-				{Text: app.Name, Path: fmt.Sprintf("%s/orgs/%s/apps/%s", h.basePath, org.ID, appID), Active: false},
-				{Text: "Health Checks", Path: "", Active: true},
-			},
+			Title:            "App - Logo",
+			ActivePage:       "apps",
+			User:             user,
+			CurrentOrg:       org,
+			Orgs:             allOrgs,
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
 		},
-		Org: *org,
-		App: vendorpages.AppInfo{
-			ID:   app.ID,
-			Name: app.Name,
-		},
-		Actions:     templActions,
-		SelectedIDs: selectedIDs,
+		Org:             *org,
+		App:             appInfo,
+		LogoLightBase64: publishedApp.LogoLightBase64,
+		LogoDarkBase64:  publishedApp.LogoDarkBase64,
 	}
-
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.AppHealthChecksPage(props))
+	h.RenderTempl(c, http.StatusOK, vendorpages.AppLogoPage(props))
 }
 
-// UpdateAppHealthChecks saves the health check configuration for an app
-func (h *Handler) UpdateAppHealthChecks(c *gin.Context) {
+// UpdateAppLogo saves light and dark logos for a published app
+func (h *Handler) UpdateAppLogo(c *gin.Context) {
 	appID := c.Param("app_id")
 
-	// Get org from context (validated by RequireOrgAccess middleware)
 	org := middleware.GetCurrentOrg(c)
 	if org == nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization context not found"})
 		return
 	}
 
-	// Initialize Nuon client to get app name
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
-		return
-	}
-
-	// Fetch app to get its name for caching
-	app, err := nuonClient.GetApp(c.Request.Context(), appID)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to fetch app: %v", err)})
-		return
-	}
-
 	var req struct {
-		HealthCheckActionIDs []string `json:"health_check_action_ids"`
+		LogoLightBase64 string `json:"logo_light_base64"`
+		LogoDarkBase64  string `json:"logo_dark_base64"`
 	}
-
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	// Find or create health check config
-	var healthConfig models.AppHealthCheckConfig
-	result := h.db.Where("app_id = ?", appID).First(&healthConfig)
+	// Find or create the PublishedApp record
+	var pa models.PublishedApp
+	result := h.db.Unscoped().Where("org_id = ? AND app_id = ?", org.ID, appID).First(&pa)
 	if result.Error != nil {
-		// Create new config
-		healthConfig = models.AppHealthCheckConfig{
-			AppID:   appID,
-			AppName: app.Name,
-		}
+		pa = models.PublishedApp{OrgID: org.ID, AppID: appID}
 	}
 
-	// Update the health check action IDs
-	healthConfig.SetHealthCheckActionIDs(req.HealthCheckActionIDs)
-	healthConfig.AppName = app.Name // Update name in case it changed
-
-	if err := h.db.Save(&healthConfig).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save health check configuration"})
-		return
+	if req.LogoLightBase64 == "REMOVE" {
+		pa.LogoLightBase64 = ""
+	} else if strings.HasPrefix(req.LogoLightBase64, "data:image/") {
+		pa.LogoLightBase64 = req.LogoLightBase64
 	}
 
-	// Retroactively update all existing InstallLinks for this app
-	healthCheckIDsStr := strings.Join(req.HealthCheckActionIDs, ",")
-	if err := h.db.Model(&models.InstallLink{}).
-		Where("app_id = ?", appID).
-		Update("health_check_action_ids", healthCheckIDsStr).Error; err != nil {
-		// Log warning but don't fail - the config was saved successfully
-		h.logger.Warn("failed to update existing install links with health checks", zap.Error(err))
+	if req.LogoDarkBase64 == "REMOVE" {
+		pa.LogoDarkBase64 = ""
+	} else if strings.HasPrefix(req.LogoDarkBase64, "data:image/") {
+		pa.LogoDarkBase64 = req.LogoDarkBase64
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"success": true,
-		"config":  healthConfig,
-	})
+	if result.Error != nil {
+		h.db.Create(&pa)
+	} else {
+		h.db.Unscoped().Model(&pa).Updates(map[string]interface{}{
+			"logo_light_base64": pa.LogoLightBase64,
+			"logo_dark_base64":  pa.LogoDarkBase64,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{"success": true})
 }
 
 // LoginSettingsPage renders the login settings page

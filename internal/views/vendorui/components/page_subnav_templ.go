@@ -277,10 +277,10 @@ func AppSubnav(props AppSubnavProps) templ.Component {
 					ActiveKey: "inputs",
 				},
 				{
-					URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/health-checks", props.BasePath, props.OrgID, props.AppID),
-					Label:     "Health Checks",
-					Icon:      healthChecksIcon(),
-					ActiveKey: "health-checks",
+					URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/logo", props.BasePath, props.OrgID, props.AppID),
+					Label:     "Logo",
+					Icon:      logoIcon(),
+					ActiveKey: "logo",
 				},
 			},
 		}).Render(ctx, templ_7745c5c3_Buffer)
@@ -497,7 +497,7 @@ func inputsIcon() templ.Component {
 	})
 }
 
-func healthChecksIcon() templ.Component {
+func logoIcon() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -518,7 +518,7 @@ func healthChecksIcon() templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M178,32c-20.65,0-38.73,8.88-50,23.89C116.73,40.88,98.65,32,78,32A62.07,62.07,0,0,0,16,94c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,220.66,240,164,240,94A62.07,62.07,0,0,0,178,32ZM128,206.8C109.74,196.16,32,147.69,32,94A46.06,46.06,0,0,1,78,48c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,147.61,146.24,196.15,128,206.8Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,16V158.75l-26.07-26.06a16,16,0,0,0-22.63,0l-20,20-44-44a16,16,0,0,0-22.62,0L40,149.37V56ZM40,200V172l52-52,44,44a8,8,0,0,0,11.31,0l24.25-24.25L216,184.37V200ZM96,104a8,8,0,1,1,8,8A8,8,0,0,1,96,104Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

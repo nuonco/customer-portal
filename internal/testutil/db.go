@@ -87,7 +87,6 @@ func runMigrations(db *gorm.DB) error {
 		&models.AppTheme{},
 		&models.CustomerAuthConfig{},
 		&models.AppInputConfig{},
-		&models.AppHealthCheckConfig{},
 		&models.GitHubRepoConfig{},
 		&models.TemplateOverride{},
 		&models.AssetOverride{},

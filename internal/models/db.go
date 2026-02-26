@@ -105,7 +105,6 @@ func InitDB() (*gorm.DB, error) {
 		&Install{},
 		&PublishedApp{},
 		&AppTheme{},
-		&AppHealthCheckConfig{},
 		&CustomerAuthConfig{},
 		&AppInputConfig{},
 		// GitHub template customization models
@@ -142,7 +141,33 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("install link name migration failed: %w", err)
 	}
 
+	// Drop health check tables/columns (health check feature removed)
+	if err := runDropAppHealthCheckConfigsMigration(db); err != nil {
+		return nil, fmt.Errorf("drop app_health_check_configs migration failed: %w", err)
+	}
+	if err := runDropHealthCheckActionIDsMigration(db); err != nil {
+		return nil, fmt.Errorf("drop health_check_action_ids migration failed: %w", err)
+	}
+
 	return db, nil
+}
+
+// runDropAppHealthCheckConfigsMigration drops the app_health_check_configs table if it exists.
+// Idempotent - safe to run multiple times.
+func runDropAppHealthCheckConfigsMigration(db *gorm.DB) error {
+	if db.Migrator().HasTable("app_health_check_configs") {
+		return db.Exec("DROP TABLE app_health_check_configs").Error
+	}
+	return nil
+}
+
+// runDropHealthCheckActionIDsMigration drops the health_check_action_ids column from install_links if it exists.
+// Idempotent - safe to run multiple times.
+func runDropHealthCheckActionIDsMigration(db *gorm.DB) error {
+	if db.Migrator().HasColumn(&InstallLink{}, "health_check_action_ids") {
+		return db.Exec("ALTER TABLE install_links DROP COLUMN health_check_action_ids").Error
+	}
+	return nil
 }
 
 // Ping checks the database connection health

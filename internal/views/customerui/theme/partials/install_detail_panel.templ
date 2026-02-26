@@ -37,16 +37,6 @@ type ApprovalStepDataPanel struct {
 	ApprovalID string
 }
 
-// HealthCheckStatusDataPanel for health check display
-type HealthCheckStatusDataPanel struct {
-	ActionID      string
-	ActionName    string
-	Status        string
-	StatusClass   string
-	StatusMessage string
-	LastRunAt     time.Time
-}
-
 // platformFromRegion determines cloud platform from a region string
 func platformFromRegion(region string) string {
 	if strings.Contains(region, "us-") || strings.Contains(region, "eu-") || strings.Contains(region, "ap-") {
@@ -78,12 +68,6 @@ type InstallDetailPanelProps struct {
 	Install                  *models.Install
 	AppName                  string // Fetched from Nuon API at runtime
 	APIDeletedError          bool
-	HealthCheckStatuses      []HealthCheckStatusDataPanel
-	OverallHealthStatus      string
-	HasHealthChecks          bool
-	HealthChecksPassed       int
-	HealthChecksFailed       int
-	HealthChecksPending      int
 	BasePath                 string
 	PrimaryColor             string
 	SecondaryColor           string
@@ -193,12 +177,6 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			@appConfigCard(props)
 			@platformCard(platform, props.Install.Region)
 		</div>
-		<!-- Health Status (full width) -->
-		if props.HasHealthChecks && !props.APIDeletedError {
-			<div class="card-base">
-				@healthStatusPanel(props)
-			</div>
-		}
 		<!-- App Readme Card (polls and shows when NO active workflow) -->
 		if !props.APIDeletedError {
 			@AppReadmeCard(props.InstallReadme, props.Install.ID, props.BasePath)
@@ -391,53 +369,6 @@ func formatConfigDate(dateStr string) string {
 		}
 	}
 	return dateStr
-}
-
-// healthStatusPanel renders health status for the panel
-templ healthStatusPanel(props InstallDetailPanelProps) {
-	<div id={ "health-status-" + props.Install.ID }>
-		<div class="flex items-center justify-between mb-3">
-			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">Health Status</h3>
-			if props.HasHealthChecks {
-				<button
-					type="button"
-					hx-post={ props.BasePath + "/installs/" + props.Install.ID + "/health-checks/run" }
-					hx-target={ "#health-status-" + props.Install.ID }
-					hx-swap="innerHTML"
-					class="text-sm text-theme-primary hover:text-theme-primary-hover"
-				>
-					Run Checks
-				</button>
-			}
-		</div>
-		if !props.HasHealthChecks {
-			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No health checks configured</p>
-		} else if len(props.HealthCheckStatuses) == 0 {
-			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No health check results yet</p>
-		} else {
-			<div class="space-y-2">
-				for _, status := range props.HealthCheckStatuses {
-					<div class="flex items-center justify-between p-2 bg-cool-grey-50 dark:bg-dark-grey-700 rounded">
-						<span class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ status.ActionName }</span>
-						<span class={ "text-xs px-2 py-1 rounded", healthStatusClass(status.Status) }>
-							{ status.Status }
-						</span>
-					</div>
-				}
-			</div>
-		}
-	</div>
-}
-
-func healthStatusClass(status string) string {
-	switch status {
-	case "Passing":
-		return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300"
-	case "Failing":
-		return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300"
-	default:
-		return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300"
-	}
 }
 
 // workflowCardPanel renders a workflow card for the panel

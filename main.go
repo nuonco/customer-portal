@@ -5,7 +5,6 @@ import (
 	"os"
 	"regexp"
 	"strings"
-	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -14,7 +13,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/background"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -160,10 +158,6 @@ func main() {
 	// Set up customer routes at root level (no prefix)
 	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain, logger)
 
-	// Start background health check runner (needs Nuon API URL for status checks)
-	healthCheckRunner := background.NewHealthCheckRunner(db, 30*time.Second, nuonAPIURL, logger)
-	healthCheckRunner.Start()
-
 	// Start the single server
 	logger.Info("server starting",
 		zap.String("port", port),
@@ -264,20 +258,20 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.POST("/settings/github/bulk-toggle", h.BulkToggleOverrides)
 
 			// Apps - configuration pages
-			orgRoutes.GET("/apps", h.AppsPage)                                    // Apps list page (HTML)
-			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)                   // Redirect to inputs
-			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage)                // Inputs config page
-			orgRoutes.GET("/apps/:app_id/health-checks", h.AppHealthChecksPage)   // Health checks config page
-			orgRoutes.PUT("/apps/:app_id/health-checks", h.UpdateAppHealthChecks) // Update health checks
+			orgRoutes.GET("/apps", h.AppsPage)                     // Apps list page (HTML)
+			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)    // Redirect to inputs
+			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage) // Inputs config page
+			orgRoutes.GET("/apps/:app_id/logo", h.AppLogoPage)     // Logo upload page
+			orgRoutes.PUT("/apps/:app_id/logo", h.UpdateAppLogo)   // Save app logos
 
 			// Apps - publish/unpublish for customer portal catalog
 			orgRoutes.POST("/apps/:app_id/publish", h.PublishApp)     // Publish app to customer catalog
 			orgRoutes.DELETE("/apps/:app_id/publish", h.UnpublishApp) // Remove app from customer catalog
+			orgRoutes.PUT("/apps/order", h.UpdateAppOrder)            // Update published app catalog order
 
 			// Apps - API endpoints (JSON, used by create link modal)
 			orgRoutes.GET("/apps-api", h.GetOrgApps)
 			orgRoutes.GET("/apps-api/:app_id/input-config", h.GetAppInputConfig)
-			orgRoutes.GET("/apps-api/:app_id/actions", h.GetAppActions)
 
 			// Local customer-facing input configuration
 			orgRoutes.GET("/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
@@ -409,10 +403,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus) // HTMX polling endpoint for active provision workflow
 			installOwnership.GET("/readme-status", h.InstallReadmeStatus)     // HTMX polling endpoint for readme display
 
-			installOwnership.PUT("/", h.UpdateInstall)                         // Customer can update their install
-			installOwnership.DELETE("/", h.DeleteInstall)                      // Customer can delete (deprovision) their install
-			installOwnership.POST("/forget", h.ForgetInstall)                  // Customer can forget (remove from DB) their install
-			installOwnership.POST("/health-checks/run", h.TriggerHealthChecks) // Customer can manually trigger health checks
+			installOwnership.PUT("/", h.UpdateInstall)        // Customer can update their install
+			installOwnership.DELETE("/", h.DeleteInstall)     // Customer can delete (deprovision) their install
+			installOwnership.POST("/forget", h.ForgetInstall) // Customer can forget (remove from DB) their install
 
 			// Input management
 			installOwnership.GET("/inputs", h.GetInstallInputs)    // Customer can view current inputs

@@ -60,6 +60,8 @@ type PublishedAppDisplay struct {
 	AppName          string
 	Platform         string
 	Description      string
+	LogoLightBase64  string // base64 data URI for light mode logo
+	LogoDarkBase64   string // base64 data URI for dark mode logo
 	Components       []ComponentDisplay
 	Permissions      []IAMRoleDisplay
 	Policies         []PolicyDisplay
@@ -138,7 +140,17 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 	<div class="card-lg">
 		// ── Header ──────────────────────────────────────────────────────────
 		<div class="flex items-start justify-between mb-8">
-			<h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white">{ app.AppName }</h2>
+			<div class="flex items-center gap-3 min-w-0">
+				if app.LogoLightBase64 != "" || app.LogoDarkBase64 != "" {
+					if app.LogoDarkBase64 != "" {
+						<img src={ app.LogoLightBase64 } class="w-10 h-10 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
+						<img src={ app.LogoDarkBase64 } class="w-10 h-10 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+					} else {
+						<img src={ app.LogoLightBase64 } class="w-10 h-10 rounded object-contain flex-shrink-0" alt=""/>
+					}
+				}
+				<h2 class="text-2xl font-bold text-cool-grey-900 dark:text-white">{ app.AppName }</h2>
+			</div>
 			@components.PlatformChip(app.Platform)
 		</div>
 		// ── Tabbed body ─────────────────────────────────────────────────────
@@ -428,7 +440,17 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 	<div class="card-base flex flex-col">
 		<div class="mb-4">
 			<div class="flex items-start justify-between">
-				<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white truncate">{ app.AppName }</h3>
+				<div class="flex items-center gap-2 min-w-0">
+					if app.LogoLightBase64 != "" || app.LogoDarkBase64 != "" {
+						if app.LogoDarkBase64 != "" {
+							<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
+							<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+						} else {
+							<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
+						}
+					}
+					<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white truncate">{ app.AppName }</h3>
+				</div>
 				@components.PlatformChip(app.Platform)
 			</div>
 			if app.Description != "" {

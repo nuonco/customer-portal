@@ -6,6 +6,12 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
+// AppInfo holds basic app identification info for vendor app pages
+type AppInfo struct {
+	ID   string
+	Name string
+}
+
 // AppInputInfo represents an input field for display
 type AppInputInfo struct {
 	Name           string
@@ -234,6 +240,7 @@ templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID stri
 			<button
 				id="saveConfigBtn"
 				onclick="saveCustomerInputConfig()"
+				disabled
 				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
 			>
 				<span id="saveConfigText">Save Configuration</span>
@@ -322,9 +329,31 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 			};
 		}
 
+		var initialConfigSnapshot = '';
+
+		function getConfigSnapshot() {
+			var customerInputNames = [];
+			document.querySelectorAll('.customer-facing-checkbox').forEach(function(cb) {
+				if (cb.checked) customerInputNames.push(cb.dataset.inputName);
+			});
+			var collapsedGroups = [];
+			document.querySelectorAll('.collapsed-by-default-checkbox').forEach(function(cb) {
+				if (cb.checked) collapsedGroups.push(cb.dataset.groupName);
+			});
+			return JSON.stringify({
+				customerInputNames: customerInputNames,
+				groupOrder: getGroupOrder(),
+				inputOrder: getInputOrder(),
+				collapsedGroups: collapsedGroups
+			});
+		}
+
+		function updateSaveBtn() {
+			document.getElementById('saveConfigBtn').disabled = (getConfigSnapshot() === initialConfigSnapshot);
+		}
+
 		// Initialize SortableJS for groups and inputs
 		function initSortable() {
-			// Make groups sortable
 			var groupsContainer = document.getElementById('inputGroupsContainer');
 			if (groupsContainer && typeof Sortable !== 'undefined') {
 				new Sortable(groupsContainer, {
@@ -332,7 +361,8 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 					handle: '.group-drag-handle',
 					draggable: '.sortable-group',
 					ghostClass: 'sortable-ghost',
-					chosenClass: 'sortable-chosen'
+					chosenClass: 'sortable-chosen',
+					onEnd: updateSaveBtn
 				});
 
 				// Make inputs within each group sortable
@@ -342,10 +372,19 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 						handle: '.input-drag-handle',
 						draggable: '.sortable-input',
 						ghostClass: 'sortable-ghost',
-						chosenClass: 'sortable-chosen'
+						chosenClass: 'sortable-chosen',
+						onEnd: updateSaveBtn
 					});
 				});
 			}
+
+			// Capture baseline after sortable is set up
+			initialConfigSnapshot = getConfigSnapshot();
+
+			// Listen for checkbox changes
+			document.querySelectorAll('.customer-facing-checkbox, .collapsed-by-default-checkbox').forEach(function(cb) {
+				cb.addEventListener('change', updateSaveBtn);
+			});
 		}
 
 		// Collect current group order from DOM
@@ -426,13 +465,14 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 			})
 			.then(function(data) {
 				showToast('Configuration saved successfully', 'success');
+				initialConfigSnapshot = getConfigSnapshot();
+				btn.disabled = true;
 			})
 			.catch(function(error) {
 				showToast('Failed to save configuration: ' + error.message, 'error');
+				btn.disabled = false;
 			})
 			.finally(function() {
-				// Re-enable button
-				btn.disabled = false;
 				text.textContent = 'Save Configuration';
 				spinner.classList.add('hidden');
 			});

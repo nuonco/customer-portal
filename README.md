@@ -55,6 +55,8 @@ General vendor journeys.
 - Install link management (create, view, delete)
 - Organization dashboard with link listing
 - **Publish App**: Vendors can publish apps to a customer-facing catalog (`POST /admin/orgs/:org_id/apps/:app_id/publish`). Published apps appear on the customer `/apps` page without requiring an install link.
+- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of published apps in the customer catalog. Clicking "Save Order" persists the order via `PUT /admin/orgs/:org_id/apps/order`.
+- **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
 
 ✅ **Customer Features**
 
@@ -172,12 +174,11 @@ We should avoid writing custom Javascript for client-side interactions and state
 - **NuonOrg** - Connected organizations with API credentials
 - **InstallLink** - Shareable links with SHA-based security
 - **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs)
-- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable)
+- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable). Has `LogoLightBase64` and `LogoDarkBase64` for per-app logos.
 
 **Configuration Models:**
 
 - **AppInputConfig** - App-specific input field configurations
-- **AppHealthCheckConfig** - Health check definitions per app
 - **AppTheme** - Custom theming and branding per org (colors, logos, favicon, fonts, login page, color scheme lock, custom CSS). Vendors can upload a custom favicon via Branding settings; it is stored as a base64 data URI in `FaviconBase64` and rendered in the customer portal `<head>`. The `ThemeMode` field (`"auto"`, `"light"`, `"dark"`) controls whether the customer portal follows the system preference or is locked to a specific color scheme. The `CustomCSS` field allows vendors to inject arbitrary CSS into the customer portal; it is appended to the portal stylesheet after all theme variables are applied and served via the `/custom/css/:org_id.css` endpoint. The vendor logo (`LogoLightBase64`, `LogoDarkBase64`) is **not** shown in the header nav — it appears as a centered hero block (`h-16 max-w-xs`) at the top of each main customer page (`/installs`, `/apps`, install link, app install).
 - **CustomerAuthConfig** - Customer-specific OIDC/SAML settings
 - **GitHubRepoConfig** - GitHub integration settings
@@ -195,7 +196,7 @@ We should avoid writing custom Javascript for client-side interactions and state
 internal/
 ├── assets/         # Asset manifest management (cache-busting)
 ├── auth/           # Authentication providers (OIDC, SAML, local)
-├── background/     # Background tasks (health check runner)
+├── background/     # Background tasks
 ├── config/         # Configuration management
 ├── github/         # GitHub integration
 ├── handlers/       # HTTP handlers
@@ -327,8 +328,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/orgs/:org_id/apps/:app_id` - Redirects to app input configuration page
 - `GET /admin/orgs/:org_id/apps/:app_id/inputs` - App input configuration
 - `PUT /admin/orgs/:org_id/apps/:app_id/inputs` - Update app input configuration
-- `GET /admin/orgs/:org_id/apps/:app_id/health-checks` - App health configuration
-- `PUT /admin/orgs/:org_id/apps/:app_id/health-checks` - Update app health configuration
+- `GET /admin/orgs/:org_id/apps/:app_id/logo` - App logo upload page
+- `PUT /admin/orgs/:org_id/apps/:app_id/logo` - Save app light/dark logos
 - `POST /admin/orgs/:org_id/apps/:app_id/publish` - Publish app to customer catalog
 - `DELETE /admin/orgs/:org_id/apps/:app_id/publish` - Remove app from customer catalog
 - `GET /admin/orgs/:org_id/links` - Organization install links
@@ -395,7 +396,6 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /installs/:install_id/panel/audit` - Audit logs panel (HTMX)
 - `GET /installs/:install_id/inputs` - Get current install inputs
 - `PUT /installs/:install_id/inputs` - Update install inputs
-- `POST /installs/:install_id/health-checks/run` - Trigger health checks manually
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
 - `POST /installs/:install_id/workflows/:workflow_id/cancel` - Cancel running workflow
 

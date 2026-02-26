@@ -85,28 +85,22 @@ type InstallsPageData struct {
 
 // InstallData contains data for a single install.
 type InstallData struct {
-	ID                  string `json:"id"`
-	Name                string `json:"name"`
-	Status              string `json:"status"`
-	Region              string `json:"region"`
-	Platform            string `json:"platform"`
-	AppName             string `json:"app_name"`
-	CreatedAt           string `json:"created_at"`
-	HasHealthChecks     bool   `json:"has_health_checks"`
-	HealthChecksPassed  int    `json:"health_checks_passed"`
-	HealthChecksPending int    `json:"health_checks_pending"`
-	HealthChecksFailed  int    `json:"health_checks_failed"`
-	HasPendingApproval  bool   `json:"has_pending_approval"`
+	ID                 string `json:"id"`
+	Name               string `json:"name"`
+	Status             string `json:"status"`
+	Region             string `json:"region"`
+	Platform           string `json:"platform"`
+	AppName            string `json:"app_name"`
+	CreatedAt          string `json:"created_at"`
+	HasPendingApproval bool   `json:"has_pending_approval"`
 }
 
 // InstallDetailPageData contains data for the install detail page.
 type InstallDetailPageData struct {
-	Install         InstallData       `json:"install"`
-	Workflows       []WorkflowData    `json:"workflows"`
-	RecentWorkflows []WorkflowData    `json:"recent_workflows"`
-	HealthChecks    []HealthCheckData `json:"health_checks"`
-	HasHealthChecks bool              `json:"has_health_checks"`
-	PendingApproval *WorkflowData     `json:"pending_approval,omitempty"`
+	Install         InstallData    `json:"install"`
+	Workflows       []WorkflowData `json:"workflows"`
+	RecentWorkflows []WorkflowData `json:"recent_workflows"`
+	PendingApproval *WorkflowData  `json:"pending_approval,omitempty"`
 }
 
 // WorkflowData contains data for a workflow.
@@ -119,15 +113,6 @@ type WorkflowData struct {
 	CompletedAt string `json:"completed_at,omitempty"`
 	FinishedAt  string `json:"finished_at,omitempty"`
 	Error       string `json:"error,omitempty"`
-}
-
-// HealthCheckData contains data for a health check.
-type HealthCheckData struct {
-	ID        string `json:"id"`
-	Name      string `json:"name"`
-	Status    string `json:"status"`
-	Message   string `json:"message,omitempty"`
-	CheckedAt string `json:"checked_at,omitempty"`
 }
 
 // InstallLinkPageData contains data for the install link acceptance page.

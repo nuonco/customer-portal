@@ -7,13 +7,13 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 )
 
-// AppWithHealthCheckStatus represents an app with health check info
+// AppWithHealthCheckStatus represents an app in the apps list
 type AppWithHealthCheckStatus struct {
-	ID               string
-	Name             string
-	Platform         string
-	HasHealthChecks  bool
-	HealthCheckCount int
+	ID              string
+	Name            string
+	Platform        string
+	LogoLightBase64 string // base64 data URI for light mode logo
+	LogoDarkBase64  string // base64 data URI for dark mode logo
 }
 
 // AppsPageProps for the apps list page
@@ -31,7 +31,7 @@ templ AppsPage(props AppsPageProps) {
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
 					<h1 class="stratus-page-title">Apps</h1>
-					<p class="stratus-page-subtitle">Configure health checks and publish apps for your customer portal.</p>
+					<p class="stratus-page-subtitle">Configure and publish apps for your customer portal.</p>
 				</div>
 			</div>
 			<div class="stratus-page-section">
@@ -40,6 +40,10 @@ templ AppsPage(props AppsPageProps) {
 						<table class="min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
 							<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
 								<tr>
+									<th scope="col" class="w-8 px-2 py-3"></th>
+									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+										Logo
+									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Name
 									</th>
@@ -47,20 +51,32 @@ templ AppsPage(props AppsPageProps) {
 										Platform
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-										Health Checks
-									</th>
-									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Published
 									</th>
 								</tr>
 							</thead>
-							<tbody class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
+							<tbody id="publishedAppsContainer" class="bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700">
 								for _, app := range props.Apps {
 									@appTableRow(app, props.Org.ID, props.BasePath, props.PublishedAppIDs[app.ID])
 								}
 							</tbody>
 						</table>
 					</div>
+					<div class="mt-4 flex justify-end">
+						<button
+							id="saveOrderBtn"
+							onclick={ saveAppOrder(props.BasePath, props.Org.ID) }
+							disabled
+							class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							<span id="saveOrderText">Save Configuration</span>
+							<svg id="saveOrderSpinner" class="hidden ml-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+							</svg>
+						</button>
+					</div>
+					@appsScript(props.BasePath, props.Org.ID)
 				} else {
 					@emptyAppsState()
 				}
@@ -70,7 +86,29 @@ templ AppsPage(props AppsPageProps) {
 }
 
 templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, isPublished bool) {
-	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 sortable-app" data-app-id={ app.ID }>
+		<td class="px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing">
+			<svg class="h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+				<circle cx="9" cy="6" r="1.5"></circle>
+				<circle cx="15" cy="6" r="1.5"></circle>
+				<circle cx="9" cy="12" r="1.5"></circle>
+				<circle cx="15" cy="12" r="1.5"></circle>
+				<circle cx="9" cy="18" r="1.5"></circle>
+				<circle cx="15" cy="18" r="1.5"></circle>
+			</svg>
+		</td>
+		<td class="px-6 py-4 whitespace-nowrap">
+			if app.LogoLightBase64 != "" {
+				<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
+				if app.LogoDarkBase64 != "" {
+					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+				}
+			} else if app.LogoDarkBase64 != "" {
+				<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
+			} else {
+				<span class="text-cool-grey-400 dark:text-cool-grey-600">—</span>
+			}
+		</td>
 		<td class="px-6 py-4 whitespace-nowrap">
 			<a
 				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
@@ -84,12 +122,142 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, isPublis
 			@platformBadge(app.Platform)
 		</td>
 		<td class="px-6 py-4 whitespace-nowrap">
-			@healthCheckBadge(app.HasHealthChecks, app.HealthCheckCount)
-		</td>
-		<td class="px-6 py-4 whitespace-nowrap">
 			@publishToggle(isPublished, basePath, orgID, app.ID)
 		</td>
 	</tr>
+}
+
+templ appsScript(basePath, orgID string) {
+	<style>
+		.sortable-ghost {
+			opacity: 0.5;
+		}
+		.sortable-chosen {
+			background-color: rgb(243 232 255);
+			box-shadow: 0 0 0 2px rgb(168 85 247);
+		}
+		.dark .sortable-chosen {
+			background-color: rgb(88 28 135 / 0.3);
+		}
+	</style>
+	<script src="/static/js/sortable.min.js"></script>
+	<script>
+		(function() {
+			var initialSnapshot = '';
+
+			function getAppOrder() {
+				var ids = [];
+				document.querySelectorAll('.sortable-app').forEach(function(row) {
+					ids.push(row.dataset.appId);
+				});
+				return ids;
+			}
+
+			function getSnapshot() {
+				var published = {};
+				document.querySelectorAll('.sortable-app').forEach(function(row) {
+					var btn = row.querySelector('[role="switch"]');
+					published[row.dataset.appId] = btn ? btn.getAttribute('aria-checked') === 'true' : false;
+				});
+				return JSON.stringify({ order: getAppOrder(), published: published });
+			}
+
+			function updateSaveBtn() {
+				document.getElementById('saveOrderBtn').disabled = (getSnapshot() === initialSnapshot);
+			}
+
+			window.togglePublishLocal = function(btn) {
+				var current = btn.getAttribute('aria-checked') === 'true';
+				var next = !current;
+				btn.setAttribute('aria-checked', String(next));
+				if (next) {
+					btn.classList.remove('bg-cool-grey-200', 'dark:bg-dark-grey-600');
+					btn.classList.add('bg-primary-600');
+				} else {
+					btn.classList.remove('bg-primary-600');
+					btn.classList.add('bg-cool-grey-200', 'dark:bg-dark-grey-600');
+				}
+				var indicator = btn.querySelector('[aria-hidden="true"]');
+				if (indicator) {
+					if (next) {
+						indicator.classList.remove('translate-x-0');
+						indicator.classList.add('translate-x-5');
+					} else {
+						indicator.classList.remove('translate-x-5');
+						indicator.classList.add('translate-x-0');
+					}
+				}
+				updateSaveBtn();
+			};
+
+
+			function initSortable() {
+				var container = document.getElementById('publishedAppsContainer');
+				if (container && typeof Sortable !== 'undefined') {
+					initialSnapshot = getSnapshot();
+					new Sortable(container, {
+						animation: 150,
+						handle: '.app-drag-handle',
+						draggable: '.sortable-app',
+						ghostClass: 'sortable-ghost',
+						chosenClass: 'sortable-chosen',
+						onEnd: function() {
+							updateSaveBtn();
+						}
+					});
+				}
+			}
+
+			window.saveAppOrder = function(basePath, orgID) {
+				var btn = document.getElementById('saveOrderBtn');
+				var text = document.getElementById('saveOrderText');
+				var spinner = document.getElementById('saveOrderSpinner');
+				btn.disabled = true;
+				text.textContent = 'Saving...';
+				spinner.classList.remove('hidden');
+
+				var appIDs = getAppOrder();
+				var publishedAppIDs = [];
+				document.querySelectorAll('.sortable-app').forEach(function(row) {
+					var toggle = row.querySelector('[role="switch"]');
+					if (toggle && toggle.getAttribute('aria-checked') === 'true') {
+						publishedAppIDs.push(row.dataset.appId);
+					}
+				});
+
+				fetch(basePath + '/orgs/' + orgID + '/apps/order', {
+					method: 'PUT',
+					headers: {'Content-Type': 'application/json'},
+					body: JSON.stringify({app_ids: appIDs, published_app_ids: publishedAppIDs})
+				}).then(function(r) {
+					text.textContent = 'Save Configuration';
+					spinner.classList.add('hidden');
+					if (!r.ok) {
+						btn.disabled = false;
+						alert('Failed to save configuration');
+					} else {
+						initialSnapshot = getSnapshot();
+						btn.disabled = true;
+					}
+				}).catch(function() {
+					btn.disabled = false;
+					text.textContent = 'Save Configuration';
+					spinner.classList.add('hidden');
+					alert('Failed to save configuration');
+				});
+			};
+
+			if (document.readyState === 'loading') {
+				document.addEventListener('DOMContentLoaded', function() { initSortable(); });
+			} else {
+				initSortable();
+			}
+		})();
+	</script>
+}
+
+script saveAppOrder(basePath, orgID string) {
+	window.saveAppOrder(basePath, orgID);
 }
 
 // publishToggle renders an on/off toggle for publishing an app to the customer catalog
@@ -98,7 +266,7 @@ templ publishToggle(isPublished bool, basePath, orgID, appID string) {
 		type="button"
 		role="switch"
 		aria-checked={ fmt.Sprintf("%t", isPublished) }
-		onclick={ togglePublish(basePath, orgID, appID, isPublished) }
+		onclick="togglePublishLocal(this)"
 		class={ "relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
 			templ.KV("bg-primary-600", isPublished),
 			templ.KV("bg-cool-grey-200 dark:bg-dark-grey-600", !isPublished) }
@@ -119,14 +287,6 @@ templ publishToggle(isPublished bool, basePath, orgID, appID string) {
 	</button>
 }
 
-script togglePublish(basePath, orgID, appID string, isPublished bool) {
-	var method = isPublished ? 'DELETE' : 'POST';
-	var action = isPublished ? 'unpublish' : 'publish';
-	fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/publish', {method: method})
-		.then(function(r) { if (r.ok) { window.location.reload(); } else { alert('Failed to ' + action + ' app'); } })
-		.catch(function() { alert('Failed to ' + action + ' app'); });
-}
-
 templ platformBadge(platform string) {
 	switch platform {
 		case "aws":
@@ -143,21 +303,6 @@ templ platformBadge(platform string) {
 			<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 dark:bg-cool-grey-700 text-cool-grey-800 dark:text-cool-grey-300">
 				{ platform }
 			</span>
-	}
-}
-
-templ healthCheckBadge(hasHealthChecks bool, count int) {
-	if hasHealthChecks {
-		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-			<svg class="mr-1.5 h-3 w-3" fill="currentColor" viewBox="0 0 8 8">
-				<circle cx="4" cy="4" r="3"></circle>
-			</svg>
-			{ fmt.Sprintf("%d configured", count) }
-		</span>
-	} else {
-		<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 dark:bg-cool-grey-700 text-cool-grey-500 dark:text-cool-grey-400">
-			Not configured
-		</span>
 	}
 }
 

@@ -14,6 +14,12 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
+// AppInfo holds basic app identification info for vendor app pages
+type AppInfo struct {
+	ID   string
+	Name string
+}
+
 // AppInputInfo represents an input field for display
 type AppInputInfo struct {
 	Name           string
@@ -168,7 +174,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 84, Col: 94}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 90, Col: 94}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -181,7 +187,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(group.DisplayName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 111, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 117, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -194,7 +200,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(group.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 121, Col: 40}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 127, Col: 40}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -222,7 +228,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var7 string
 					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 158, Col: 131}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 164, Col: 131}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 					if templ_7745c5c3_Err != nil {
@@ -235,7 +241,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var8 string
 					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(input.DisplayName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 171, Col: 30}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 177, Col: 30}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 					if templ_7745c5c3_Err != nil {
@@ -248,7 +254,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var9 string
 					templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 176, Col: 23}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 182, Col: 23}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 					if templ_7745c5c3_Err != nil {
@@ -261,7 +267,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var10 string
 					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(input.Description)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 180, Col: 115}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 186, Col: 115}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
@@ -274,7 +280,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var11 string
 					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(input.Description)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 181, Col: 30}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 187, Col: 30}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
@@ -292,7 +298,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 						var templ_7745c5c3_Var12 string
 						templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(input.Default)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 186, Col: 112}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 192, Col: 112}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 						if templ_7745c5c3_Err != nil {
@@ -305,7 +311,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 						var templ_7745c5c3_Var13 string
 						templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(truncateDefault(input.Default))
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 187, Col: 44}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 193, Col: 44}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 						if templ_7745c5c3_Err != nil {
@@ -343,7 +349,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(input.Type)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 205, Col: 24}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 211, Col: 24}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
@@ -366,7 +372,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 					var templ_7745c5c3_Var15 string
 					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(input.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 217, Col: 40}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 223, Col: 40}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -393,14 +399,14 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<!-- Save Button --><div class=\"flex justify-end\"><button id=\"saveConfigBtn\" onclick=\"saveCustomerInputConfig()\" class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveConfigText\">Save Configuration</span> <svg id=\"saveConfigSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></div><!-- Hidden element with data attributes for JavaScript --><div id=\"inputConfigData\" class=\"hidden\" data-org-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<!-- Save Button --><div class=\"flex justify-end\"><button id=\"saveConfigBtn\" onclick=\"saveCustomerInputConfig()\" disabled class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveConfigText\">Save Configuration</span> <svg id=\"saveConfigSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></div><!-- Hidden element with data attributes for JavaScript --><div id=\"inputConfigData\" class=\"hidden\" data-org-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 61}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 255, Col: 61}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -413,7 +419,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 		var templ_7745c5c3_Var17 string
 		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(appID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 83}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 255, Col: 83}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 		if templ_7745c5c3_Err != nil {
@@ -426,7 +432,7 @@ func inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID strin
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 248, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_inputs.templ`, Line: 255, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -534,7 +540,7 @@ func appInputsScript(orgID string, appID string, basePath string) templ.Componen
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255); /* primary-100 equivalent */\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247); /* primary-500 ring */\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3); /* primary-900/30 */\n\t\t}\n\t</style><script>\n\t\tfunction getConfigData() {\n\t\t\tvar configEl = document.getElementById('inputConfigData');\n\t\t\treturn {\n\t\t\t\torgID: configEl ? configEl.dataset.orgId : '',\n\t\t\t\tappID: configEl ? configEl.dataset.appId : '',\n\t\t\t\tbasePath: configEl ? configEl.dataset.basePath : ''\n\t\t\t};\n\t\t}\n\n\t\t// Initialize SortableJS for groups and inputs\n\t\tfunction initSortable() {\n\t\t\t// Make groups sortable\n\t\t\tvar groupsContainer = document.getElementById('inputGroupsContainer');\n\t\t\tif (groupsContainer && typeof Sortable !== 'undefined') {\n\t\t\t\tnew Sortable(groupsContainer, {\n\t\t\t\t\tanimation: 150,\n\t\t\t\t\thandle: '.group-drag-handle',\n\t\t\t\t\tdraggable: '.sortable-group',\n\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t});\n\n\t\t\t\t// Make inputs within each group sortable\n\t\t\t\tdocument.querySelectorAll('.sortable-inputs').forEach(function(tbody) {\n\t\t\t\t\tnew Sortable(tbody, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.input-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-input',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen'\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t}\n\t\t}\n\n\t\t// Collect current group order from DOM\n\t\tfunction getGroupOrder() {\n\t\t\tvar order = [];\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\torder.push(group.dataset.groupName);\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect current input order per group from DOM\n\t\tfunction getInputOrder() {\n\t\t\tvar order = {};\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\tvar groupName = group.dataset.groupName;\n\t\t\t\tvar inputs = [];\n\t\t\t\tgroup.querySelectorAll('.sortable-input').forEach(function(input) {\n\t\t\t\t\tinputs.push(input.dataset.inputName);\n\t\t\t\t});\n\t\t\t\torder[groupName] = inputs;\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect groups that are collapsed by default\n\t\tfunction getCollapsedGroups() {\n\t\t\tvar collapsed = [];\n\t\t\tdocument.querySelectorAll('.collapsed-by-default-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcollapsed.push(checkbox.dataset.groupName);\n\t\t\t});\n\t\t\treturn collapsed;\n\t\t}\n\n\t\tfunction saveCustomerInputConfig() {\n\t\t\tvar config = getConfigData();\n\t\t\tvar btn = document.getElementById('saveConfigBtn');\n\t\t\tvar text = document.getElementById('saveConfigText');\n\t\t\tvar spinner = document.getElementById('saveConfigSpinner');\n\n\t\t\t// Disable button and show spinner\n\t\t\tbtn.disabled = true;\n\t\t\ttext.textContent = 'Saving...';\n\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t// Collect all checked input names\n\t\t\tvar customerInputNames = [];\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcustomerInputNames.push(checkbox.dataset.inputName);\n\t\t\t});\n\n\t\t\t// Collect ordering\n\t\t\tvar groupOrder = getGroupOrder();\n\t\t\tvar inputOrder = getInputOrder();\n\n\t\t\t// Collect collapsed groups\n\t\t\tvar collapsedGroups = getCollapsedGroups();\n\n\t\t\t// Make API call\n\t\t\tvar url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';\n\t\t\tfetch(url, {\n\t\t\t\tmethod: 'PUT',\n\t\t\t\theaders: {\n\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t},\n\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\tcustomer_input_names: customerInputNames,\n\t\t\t\t\tgroup_order: groupOrder,\n\t\t\t\t\tinput_order: inputOrder,\n\t\t\t\t\tcollapsed_groups: collapsedGroups\n\t\t\t\t})\n\t\t\t})\n\t\t\t.then(function(response) {\n\t\t\t\tif (!response.ok) {\n\t\t\t\t\tthrow new Error('Failed to save configuration');\n\t\t\t\t}\n\t\t\t\treturn response.json();\n\t\t\t})\n\t\t\t.then(function(data) {\n\t\t\t\tshowToast('Configuration saved successfully', 'success');\n\t\t\t})\n\t\t\t.catch(function(error) {\n\t\t\t\tshowToast('Failed to save configuration: ' + error.message, 'error');\n\t\t\t})\n\t\t\t.finally(function() {\n\t\t\t\t// Re-enable button\n\t\t\t\tbtn.disabled = false;\n\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\tspinner.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Initialize on page load\n\t\tdocument.addEventListener('DOMContentLoaded', initSortable);\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255); /* primary-100 equivalent */\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247); /* primary-500 ring */\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3); /* primary-900/30 */\n\t\t}\n\t</style><script>\n\t\tfunction getConfigData() {\n\t\t\tvar configEl = document.getElementById('inputConfigData');\n\t\t\treturn {\n\t\t\t\torgID: configEl ? configEl.dataset.orgId : '',\n\t\t\t\tappID: configEl ? configEl.dataset.appId : '',\n\t\t\t\tbasePath: configEl ? configEl.dataset.basePath : ''\n\t\t\t};\n\t\t}\n\n\t\tvar initialConfigSnapshot = '';\n\n\t\tfunction getConfigSnapshot() {\n\t\t\tvar customerInputNames = [];\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox').forEach(function(cb) {\n\t\t\t\tif (cb.checked) customerInputNames.push(cb.dataset.inputName);\n\t\t\t});\n\t\t\tvar collapsedGroups = [];\n\t\t\tdocument.querySelectorAll('.collapsed-by-default-checkbox').forEach(function(cb) {\n\t\t\t\tif (cb.checked) collapsedGroups.push(cb.dataset.groupName);\n\t\t\t});\n\t\t\treturn JSON.stringify({\n\t\t\t\tcustomerInputNames: customerInputNames,\n\t\t\t\tgroupOrder: getGroupOrder(),\n\t\t\t\tinputOrder: getInputOrder(),\n\t\t\t\tcollapsedGroups: collapsedGroups\n\t\t\t});\n\t\t}\n\n\t\tfunction updateSaveBtn() {\n\t\t\tdocument.getElementById('saveConfigBtn').disabled = (getConfigSnapshot() === initialConfigSnapshot);\n\t\t}\n\n\t\t// Initialize SortableJS for groups and inputs\n\t\tfunction initSortable() {\n\t\t\tvar groupsContainer = document.getElementById('inputGroupsContainer');\n\t\t\tif (groupsContainer && typeof Sortable !== 'undefined') {\n\t\t\t\tnew Sortable(groupsContainer, {\n\t\t\t\t\tanimation: 150,\n\t\t\t\t\thandle: '.group-drag-handle',\n\t\t\t\t\tdraggable: '.sortable-group',\n\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\tonEnd: updateSaveBtn\n\t\t\t\t});\n\n\t\t\t\t// Make inputs within each group sortable\n\t\t\t\tdocument.querySelectorAll('.sortable-inputs').forEach(function(tbody) {\n\t\t\t\t\tnew Sortable(tbody, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.input-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-input',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\t\tonEnd: updateSaveBtn\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t}\n\n\t\t\t// Capture baseline after sortable is set up\n\t\t\tinitialConfigSnapshot = getConfigSnapshot();\n\n\t\t\t// Listen for checkbox changes\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox, .collapsed-by-default-checkbox').forEach(function(cb) {\n\t\t\t\tcb.addEventListener('change', updateSaveBtn);\n\t\t\t});\n\t\t}\n\n\t\t// Collect current group order from DOM\n\t\tfunction getGroupOrder() {\n\t\t\tvar order = [];\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\torder.push(group.dataset.groupName);\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect current input order per group from DOM\n\t\tfunction getInputOrder() {\n\t\t\tvar order = {};\n\t\t\tdocument.querySelectorAll('.sortable-group').forEach(function(group) {\n\t\t\t\tvar groupName = group.dataset.groupName;\n\t\t\t\tvar inputs = [];\n\t\t\t\tgroup.querySelectorAll('.sortable-input').forEach(function(input) {\n\t\t\t\t\tinputs.push(input.dataset.inputName);\n\t\t\t\t});\n\t\t\t\torder[groupName] = inputs;\n\t\t\t});\n\t\t\treturn order;\n\t\t}\n\n\t\t// Collect groups that are collapsed by default\n\t\tfunction getCollapsedGroups() {\n\t\t\tvar collapsed = [];\n\t\t\tdocument.querySelectorAll('.collapsed-by-default-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcollapsed.push(checkbox.dataset.groupName);\n\t\t\t});\n\t\t\treturn collapsed;\n\t\t}\n\n\t\tfunction saveCustomerInputConfig() {\n\t\t\tvar config = getConfigData();\n\t\t\tvar btn = document.getElementById('saveConfigBtn');\n\t\t\tvar text = document.getElementById('saveConfigText');\n\t\t\tvar spinner = document.getElementById('saveConfigSpinner');\n\n\t\t\t// Disable button and show spinner\n\t\t\tbtn.disabled = true;\n\t\t\ttext.textContent = 'Saving...';\n\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t// Collect all checked input names\n\t\t\tvar customerInputNames = [];\n\t\t\tdocument.querySelectorAll('.customer-facing-checkbox:checked').forEach(function(checkbox) {\n\t\t\t\tcustomerInputNames.push(checkbox.dataset.inputName);\n\t\t\t});\n\n\t\t\t// Collect ordering\n\t\t\tvar groupOrder = getGroupOrder();\n\t\t\tvar inputOrder = getInputOrder();\n\n\t\t\t// Collect collapsed groups\n\t\t\tvar collapsedGroups = getCollapsedGroups();\n\n\t\t\t// Make API call\n\t\t\tvar url = config.basePath + '/orgs/' + config.orgID + '/apps-api/' + config.appID + '/customer-input-config';\n\t\t\tfetch(url, {\n\t\t\t\tmethod: 'PUT',\n\t\t\t\theaders: {\n\t\t\t\t\t'Content-Type': 'application/json',\n\t\t\t\t},\n\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\tcustomer_input_names: customerInputNames,\n\t\t\t\t\tgroup_order: groupOrder,\n\t\t\t\t\tinput_order: inputOrder,\n\t\t\t\t\tcollapsed_groups: collapsedGroups\n\t\t\t\t})\n\t\t\t})\n\t\t\t.then(function(response) {\n\t\t\t\tif (!response.ok) {\n\t\t\t\t\tthrow new Error('Failed to save configuration');\n\t\t\t\t}\n\t\t\t\treturn response.json();\n\t\t\t})\n\t\t\t.then(function(data) {\n\t\t\t\tshowToast('Configuration saved successfully', 'success');\n\t\t\t\tinitialConfigSnapshot = getConfigSnapshot();\n\t\t\t\tbtn.disabled = true;\n\t\t\t})\n\t\t\t.catch(function(error) {\n\t\t\t\tshowToast('Failed to save configuration: ' + error.message, 'error');\n\t\t\t\tbtn.disabled = false;\n\t\t\t})\n\t\t\t.finally(function() {\n\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\tspinner.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Initialize on page load\n\t\tdocument.addEventListener('DOMContentLoaded', initSortable);\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
