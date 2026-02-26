@@ -42,7 +42,8 @@ type LayoutProps struct {
 	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
 
 	// Inline error for Nuon API failures (token expired, unreachable, etc.)
-	NuonAPIError string
+	NuonAPIError         string
+	NuonAPIShowUpdateCTA bool
 
 	// Asset paths (cache-busted)
 	CSSPath string
@@ -121,7 +122,7 @@ templ Layout(props LayoutProps) {
 									<p class="text-sm font-medium text-red-800 dark:text-red-200">Unable to connect to Nuon API</p>
 									<p class="text-sm text-red-700 dark:text-red-300 mt-0.5">{ props.NuonAPIError }</p>
 								</div>
-								if props.CurrentOrg != nil {
+								if props.NuonAPIShowUpdateCTA && props.CurrentOrg != nil {
 									<a href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection") }
 										class="text-sm font-medium text-red-700 dark:text-red-300 underline hover:text-red-900 dark:hover:text-red-100 whitespace-nowrap">
 										Update connection →

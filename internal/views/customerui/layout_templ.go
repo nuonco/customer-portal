@@ -173,7 +173,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 = []any{"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor)}
+		var templ_7745c5c3_Var9 = []any{"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var9...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -433,9 +433,6 @@ func buildThemeCSS(props LayoutProps) string {
 	} else if props.BodyFont != "" {
 		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	}
-	if fontFaceCSS == "" && css == "" {
-		return ""
-	}
 	darkCSS := ""
 	if props.PrimaryColorDarkMode != "" {
 		darkCSS += "--theme-primary: " + props.PrimaryColorDarkMode + ";"
@@ -448,18 +445,14 @@ func buildThemeCSS(props LayoutProps) string {
 	}
 	if props.BlackColor != "" {
 		darkCSS += "--theme-black: " + props.BlackColor + ";"
+	} else {
+		darkCSS += "--theme-black: #121212;"
 	}
 	result := "<style>" + fontFaceCSS
 	if css != "" {
 		result += ":root{" + css + "}"
 	}
-	if darkCSS != "" {
-		result += ".dark{" + darkCSS + "}"
-	}
-	result += "</style>"
-	if result == "<style></style>" {
-		return ""
-	}
+	result += ".dark{" + darkCSS + "}</style>"
 	return result
 }
 

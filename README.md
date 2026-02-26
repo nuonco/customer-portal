@@ -399,6 +399,50 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
 - `POST /installs/:install_id/workflows/:workflow_id/cancel` - Cancel running workflow
 
+## Semantic Button Classes
+
+Every button element in the customer UI templates carries two semantic CSS classes: `button` (applied to all buttons) and a variant class `button-<variant>`. These classes carry **no styles of their own** — they exist purely as stable CSS hooks that vendors can target with custom CSS injected via the Custom CSS branding setting.
+
+### Variants
+
+| Class | Applied to |
+|---|---|
+| `button button-primary` | Primary call-to-action buttons (`.btn-theme-primary`) |
+| `button button-secondary` | Secondary action buttons (`.btn-theme-secondary`) |
+| `button button-outline` | Outline/cancel buttons (`.btn-theme-outline`) |
+| `button button-neutral` | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
+| `button button-danger` | Destructive actions — Forget, logout, `.dropdown-item-danger` |
+| `button button-icon` | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`) |
+| `button button-nav` | Navigation and tab buttons (`.nav-item`) |
+| `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`) |
+| `button button-dropdown-item` | Dropdown menu item buttons (`.dropdown-item`) |
+| `button button-pagination` | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`) |
+
+### Example
+
+Vendors can target these hooks inside the Custom CSS field on the Branding settings page:
+
+```css
+/* Make all primary buttons use a custom brand color */
+.button.button-primary {
+  background-color: #e63946;
+  border-radius: 2px;
+}
+
+/* Make danger buttons more prominent */
+.button.button-danger {
+  font-weight: 700;
+  text-decoration: underline;
+}
+
+/* Round all icon buttons */
+.button.button-icon {
+  border-radius: 50%;
+}
+```
+
+These class names are considered stable and will not be removed or renamed in patch or minor releases.
+
 ## Security Features
 
 - JWT-based authentication with role separation

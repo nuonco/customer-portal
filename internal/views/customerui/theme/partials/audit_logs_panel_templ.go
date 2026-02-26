@@ -138,7 +138,7 @@ func auditLogsPanelContent(props AuditLogsPanelProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"field-input\"></div><button type=\"button\" onclick=\"applyCustomAuditRange()\" class=\"btn-theme-primary\">Apply</button></form><!-- Current Range Display --><div class=\"card-section-divider flex items-center justify-between mt-4\"><div class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\"><span class=\"font-medium\">Showing:</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"field-input\"></div><button type=\"button\" onclick=\"applyCustomAuditRange()\" class=\"button button-primary btn-theme-primary\">Apply</button></form><!-- Current Range Display --><div class=\"card-section-divider flex items-center justify-between mt-4\"><div class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\"><span class=\"font-medium\">Showing:</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -260,8 +260,8 @@ func auditRangePresetButtonPanel(props AuditLogsPanelProps, rangeType, label str
 		ctx = templ.ClearChildren(ctx)
 		isActive := props.RangeType == rangeType
 		baseClasses := "px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer rounded-theme"
-		activeClasses := "bg-theme-primary text-white"
-		inactiveClasses := "btn-neutral"
+		activeClasses := "button button-primary bg-theme-primary text-white"
+		inactiveClasses := "button button-neutral btn-neutral"
 		var templ_7745c5c3_Var11 = []any{baseClasses, templ.KV(activeClasses, isActive), templ.KV(inactiveClasses, !isActive)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 		if templ_7745c5c3_Err != nil {

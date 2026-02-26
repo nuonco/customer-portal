@@ -38,7 +38,7 @@ templ Layout(props LayoutProps) {
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 		</head>
-		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor) }>
+		<body class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
 			@scripts.Auth(props.BasePath)
 
@@ -152,9 +152,6 @@ func buildThemeCSS(props LayoutProps) string {
 	} else if props.BodyFont != "" {
 		css += "--font-body: '" + props.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	}
-	if fontFaceCSS == "" && css == "" {
-		return ""
-	}
 	darkCSS := ""
 	if props.PrimaryColorDarkMode != "" {
 		darkCSS += "--theme-primary: " + props.PrimaryColorDarkMode + ";"
@@ -167,18 +164,14 @@ func buildThemeCSS(props LayoutProps) string {
 	}
 	if props.BlackColor != "" {
 		darkCSS += "--theme-black: " + props.BlackColor + ";"
+	} else {
+		darkCSS += "--theme-black: #121212;"
 	}
 	result := "<style>" + fontFaceCSS
 	if css != "" {
 		result += ":root{" + css + "}"
 	}
-	if darkCSS != "" {
-		result += ".dark{" + darkCSS + "}"
-	}
-	result += "</style>"
-	if result == "<style></style>" {
-		return ""
-	}
+	result += ".dark{" + darkCSS + "}</style>"
 	return result
 }
 

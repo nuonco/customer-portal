@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/csv"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,14 +15,25 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/nuonco/nuon-go"
+	nuonpkg "github.com/nuonco/nuon-go"
 	"github.com/nuonco/nuon-go/models"
 	"go.uber.org/zap"
 )
 
+// IsUnauthorized reports whether err (or any error in its chain) is a 401 Unauthorized response.
+func IsUnauthorized(err error) bool {
+	for err != nil {
+		if nuonpkg.IsUnauthorized(err) {
+			return true
+		}
+		err = errors.Unwrap(err)
+	}
+	return false
+}
+
 // Client wraps the Nuon API client for the installer app
 type Client struct {
-	client   nuon.Client
+	client   nuonpkg.Client
 	apiURL   string
 	apiToken string
 	orgID    string
@@ -47,11 +59,11 @@ func NewClientWithURL(apiToken, orgID, apiURL string) (*Client, error) {
 	)
 
 	// Create Nuon client with options - using exact CLI pattern
-	client, err := nuon.New(
-		nuon.WithValidator(v),
-		nuon.WithAuthToken(apiToken),
-		nuon.WithOrgID(orgID),
-		nuon.WithURL(apiURL),
+	client, err := nuonpkg.New(
+		nuonpkg.WithValidator(v),
+		nuonpkg.WithAuthToken(apiToken),
+		nuonpkg.WithOrgID(orgID),
+		nuonpkg.WithURL(apiURL),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Nuon client: %w", err)

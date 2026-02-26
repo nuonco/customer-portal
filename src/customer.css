@@ -580,6 +580,11 @@
   color: var(--theme-secondary, var(--theme-primary, #3b82f6));
 }
 
+.back-link {
+  @apply inline-flex items-center text-sm hover:underline;
+  color: var(--theme-secondary, var(--theme-primary, #3b82f6));
+}
+
 /* Hide columns on mobile */
 @media (max-width: 768px) {
   .hide-mobile {
@@ -698,6 +703,16 @@
   .detail-panel {
     width: 100%;
   }
+}
+
+/* When vendor admin bar is present, offset panel below it */
+body.has-vendor-bar .detail-panel {
+  top: 40px;
+  height: calc(100% - 40px);
+}
+
+body.has-vendor-bar .panel-overlay {
+  top: 40px;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────

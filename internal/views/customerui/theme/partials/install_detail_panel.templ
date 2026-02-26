@@ -99,7 +99,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				<button
 					type="button"
 					onclick="toggleActionsDropdown()"
-					class="dropdown-trigger"
+					class="button button-dropdown-trigger dropdown-trigger"
 				>
 					Actions
 					<svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -245,7 +245,7 @@ templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink stri
 			<div class="space-y-4">
 				@workflowCardPanel(*workflow, installID, basePath, primaryColor)
 				if cloudFormationLink != "" {
-					<div class="p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
+					<div class="callout p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
 						<div class="flex items-center justify-between">
 							<div>
 								<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
@@ -255,11 +255,10 @@ templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink stri
 								href={ templ.SafeURL(cloudFormationLink) }
 								target="_blank"
 								rel="noopener noreferrer"
-								class="inline-flex items-center px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover"
-								style="border-radius: var(--theme-radius)"
+								class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
 							>
 								Open in AWS
-								<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
 								</svg>
 							</a>
@@ -436,7 +435,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 					if workflow.CanApproveAll {
 						<button
 							type="button"
-							class="workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
+							class="button button-primary workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 						>
 							Approve Installation
@@ -445,7 +444,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 						<button
 							type="button"
 							disabled
-							class="px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed"
+							class="button button-primary px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed"
 							title={ workflow.ApproveAllDisabledReason }
 						>
 							Approve Installation
@@ -455,7 +454,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 				if workflow.CanCancel {
 					<button
 						type="button"
-						class="workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded"
+						class="button button-neutral workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded"
 						data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
 					>
 						Cancel
@@ -928,19 +927,19 @@ templ editInputsModalPanel() {
 				</div>
 				<form id="editInputsForm" class="hidden space-y-4">
 					<div id="editInputsFields" class="space-y-4"></div>
-					<div class="card-section-divider flex space-x-3">
-						<button
-							type="submit"
-							class="flex-1 bg-theme-primary text-white py-2 px-4 rounded-md hover:bg-theme-primary-hover focus:ring-2 focus:ring-primary-400 font-medium"
-						>
-							Update Inputs
-						</button>
+					<div class="card-section-divider flex justify-end space-x-3">
 						<button
 							type="button"
 							onclick="closeEditInputsModal()"
-							class="flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-2 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium"
+							class="button button-outline btn-theme-outline"
 						>
 							Cancel
+						</button>
+						<button
+							type="submit"
+							class="button button-primary btn-theme-primary"
+						>
+							Update Inputs
 						</button>
 					</div>
 				</form>
@@ -952,7 +951,7 @@ templ editInputsModalPanel() {
 					<button
 						type="button"
 						onclick="closeEditInputsModal()"
-						class="bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-2 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 font-medium"
+						class="button button-outline btn-theme-outline"
 					>
 						Cancel
 					</button>

@@ -156,13 +156,13 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 		// ── Tabbed body ─────────────────────────────────────────────────────
 		<div class="app-catalog-tabs">
 			<div class="tabs-divider flex mb-4">
-				<button class="nav-item active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-overview')"} }>Overview</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-config')"} }>Inputs</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-secrets')"} }>Secrets</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-sandbox')"} }>Sandbox</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
-				<button class="nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
+				<button class="button button-nav nav-item active" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-overview')"} }>Overview</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-config')"} }>Inputs</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-secrets')"} }>Secrets</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-sandbox')"} }>Sandbox</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
 			</div>
 			// Overview pane
 			<div id={ "act-" + app.AppID + "-overview" } class="panel-tab-pane active">
@@ -395,10 +395,9 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 		</script>
 		// ── Footer ──────────────────────────────────────────────────────────
 		<div class="mt-8 flex justify-end">
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) }
-				class="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover focus:outline-none focus:ring-2 focus:ring-primary-400 rounded-lg"
-			>Install</a>
+			<form action={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) } method="get">
+				<button type="submit" class="button button-primary btn-theme-primary">Install</button>
+			</form>
 		</div>
 	</div>
 }
@@ -473,7 +472,7 @@ templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
 	@customerui.Layout(props.LayoutProps) {
 		<div>
 			<div class="mb-6">
-				<a href={ templ.SafeURL(props.BasePath + "/apps") } class="inline-flex items-center text-sm text-cool-grey-500 dark:text-cool-grey-400 hover:text-cool-grey-700 dark:hover:text-cool-grey-200">
+				<a href={ templ.SafeURL(props.BasePath + "/apps") } class="back-link">
 					<svg class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 						<path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path>
 					</svg>

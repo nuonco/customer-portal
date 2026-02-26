@@ -1772,21 +1772,23 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
+		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:            org.Name + " - Apps",
-				ActivePage:       "apps",
-				User:             user,
-				CurrentOrg:       org,
-				Orgs:             allOrgs,
-				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-				BasePath:         h.basePath,
-				PortalScheme:     h.schemeFromBaseURL(),
-				DashboardURL:     h.dashboardURL,
-				PortalBaseDomain: h.subdomainBaseDomain,
-				CSSPath:          assets.VendorCSSPath(),
-				NuonAPIError:     "Your API token may be expired or invalid.",
+				Title:                org.Name + " - Apps",
+				ActivePage:           "apps",
+				User:                 user,
+				CurrentOrg:           org,
+				Orgs:                 allOrgs,
+				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:             h.basePath,
+				PortalScheme:         h.schemeFromBaseURL(),
+				DashboardURL:         h.dashboardURL,
+				PortalBaseDomain:     h.subdomainBaseDomain,
+				CSSPath:              assets.VendorCSSPath(),
+				NuonAPIError:         err.Error(),
+				NuonAPIShowUpdateCTA: showCTA,
 			},
 			Org: *org,
 		}
@@ -1798,21 +1800,23 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Fetch apps from Nuon API
 	apps, err := nuonClient.ListApps(c.Request.Context())
 	if err != nil {
+		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:            org.Name + " - Apps",
-				ActivePage:       "apps",
-				User:             user,
-				CurrentOrg:       org,
-				Orgs:             allOrgs,
-				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-				BasePath:         h.basePath,
-				PortalScheme:     h.schemeFromBaseURL(),
-				DashboardURL:     h.dashboardURL,
-				PortalBaseDomain: h.subdomainBaseDomain,
-				CSSPath:          assets.VendorCSSPath(),
-				NuonAPIError:     "Your API token may be expired or invalid.",
+				Title:                org.Name + " - Apps",
+				ActivePage:           "apps",
+				User:                 user,
+				CurrentOrg:           org,
+				Orgs:                 allOrgs,
+				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:             h.basePath,
+				PortalScheme:         h.schemeFromBaseURL(),
+				DashboardURL:         h.dashboardURL,
+				PortalBaseDomain:     h.subdomainBaseDomain,
+				CSSPath:              assets.VendorCSSPath(),
+				NuonAPIError:         err.Error(),
+				NuonAPIShowUpdateCTA: showCTA,
 			},
 			Org: *org,
 		}
@@ -2033,21 +2037,23 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
+		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppInputsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:            "App - Inputs",
-				ActivePage:       "apps",
-				User:             user,
-				CurrentOrg:       org,
-				Orgs:             allOrgs,
-				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
-				BasePath:         h.basePath,
-				PortalScheme:     h.schemeFromBaseURL(),
-				DashboardURL:     h.dashboardURL,
-				PortalBaseDomain: h.subdomainBaseDomain,
-				CSSPath:          assets.VendorCSSPath(),
-				NuonAPIError:     "Your API token may be expired or invalid.",
+				Title:                "App - Inputs",
+				ActivePage:           "apps",
+				User:                 user,
+				CurrentOrg:           org,
+				Orgs:                 allOrgs,
+				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:             h.basePath,
+				PortalScheme:         h.schemeFromBaseURL(),
+				DashboardURL:         h.dashboardURL,
+				PortalBaseDomain:     h.subdomainBaseDomain,
+				CSSPath:              assets.VendorCSSPath(),
+				NuonAPIError:         err.Error(),
+				NuonAPIShowUpdateCTA: showCTA,
 			},
 			Org:   *org,
 			AppID: appID,
@@ -2061,21 +2067,23 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Fetch app details from Nuon API
 	app, err := nuonClient.GetApp(c.Request.Context(), appID)
 	if err != nil {
+		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppInputsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:            "App - Inputs",
-				ActivePage:       "apps",
-				User:             user,
-				CurrentOrg:       org,
-				Orgs:             allOrgs,
-				Breadcrumbs:      []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
-				BasePath:         h.basePath,
-				PortalScheme:     h.schemeFromBaseURL(),
-				DashboardURL:     h.dashboardURL,
-				PortalBaseDomain: h.subdomainBaseDomain,
-				CSSPath:          assets.VendorCSSPath(),
-				NuonAPIError:     "Your API token may be expired or invalid.",
+				Title:                "App - Inputs",
+				ActivePage:           "apps",
+				User:                 user,
+				CurrentOrg:           org,
+				Orgs:                 allOrgs,
+				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:             h.basePath,
+				PortalScheme:         h.schemeFromBaseURL(),
+				DashboardURL:         h.dashboardURL,
+				PortalBaseDomain:     h.subdomainBaseDomain,
+				CSSPath:              assets.VendorCSSPath(),
+				NuonAPIError:         err.Error(),
+				NuonAPIShowUpdateCTA: showCTA,
 			},
 			Org:   *org,
 			AppID: appID,

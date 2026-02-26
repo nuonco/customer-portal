@@ -34,14 +34,14 @@ templ Header(props HeaderProps) {
 					if props.HasPublishedApps {
 						<nav class="flex items-center">
 							if props.ActiveNav == "apps" {
-								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item active">App Catalog</a>
+								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="button button-nav nav-item active">App Catalog</a>
 							} else {
-								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="nav-item">App Catalog</a>
+								<a href={ templ.SafeURL(props.BasePath + "/apps") } class="button button-nav nav-item">App Catalog</a>
 							}
 							if props.ActiveNav == "installs" {
-								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item active">My Installs</a>
+								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item active">My Installs</a>
 							} else {
-								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="nav-item">My Installs</a>
+								<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item">My Installs</a>
 							}
 						</nav>
 					}

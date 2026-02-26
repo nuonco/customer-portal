@@ -2333,6 +2333,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 
 	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme, h.getOrgForLayout(c))
 	layoutProps.HasPublishedApps = true
+	layoutProps.ActiveNav = "apps"
 
 	props := customerpages.AppInstallPageProps{
 		LayoutProps:  layoutProps,

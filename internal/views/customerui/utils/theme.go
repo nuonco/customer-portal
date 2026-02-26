@@ -83,10 +83,6 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 
 	css += "}"
 
-	if css == ":root{}" {
-		return ""
-	}
-
 	// Append .dark{} block for dark-mode overrides
 	darkCSS := ""
 	if theme != nil && theme.WhiteColorDark != "" {
@@ -94,12 +90,15 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 	}
 	if theme != nil && theme.BlackColor != "" {
 		darkCSS += "--theme-black:" + theme.BlackColor + ";"
-	}
-	if darkCSS != "" {
-		return "<style>" + css + ".dark{" + darkCSS + "}</style>"
+	} else {
+		darkCSS += "--theme-black:#121212;"
 	}
 
-	return "<style>" + css + "</style>"
+	rootBlock := ""
+	if css != ":root{}" {
+		rootBlock = css
+	}
+	return "<style>" + rootBlock + ".dark{" + darkCSS + "}</style>"
 }
 
 // BuildLayoutThemeCSS generates theme CSS for the main layout (without defaults).

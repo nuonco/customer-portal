@@ -128,8 +128,7 @@ templ InstallsPage(props InstallsPageProps) {
 				<div class="text-center mt-4">
 					<a
 						href={ templ.SafeURL(props.BasePath + "/apps") }
-						class="inline-flex items-center justify-center text-sm h-9 px-4 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors"
-						style="border-radius: var(--theme-radius)"
+						class="button button-primary btn-theme-primary inline-flex items-center justify-center text-sm h-9 px-4 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors"
 					>
 						Go to App Catalog
 					</a>
@@ -149,7 +148,7 @@ templ InstallsPage(props InstallsPageProps) {
 				</div>
 				<div class="flex items-center gap-2 flex-shrink-0">
 					<div id="panel-actions-container"></div>
-					<button id="panel-expand-btn" type="button" onclick="togglePanelSize()" class="panel-header-btn" title="Expand to full screen">
+					<button id="panel-expand-btn" type="button" onclick="togglePanelSize()" class="button button-icon panel-header-btn" title="Expand to full screen">
 						<svg id="panel-expand-icon" class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 							<path d="M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z"></path>
 						</svg>
@@ -157,7 +156,7 @@ templ InstallsPage(props InstallsPageProps) {
 							<path d="M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z"></path>
 						</svg>
 					</button>
-					<button class="panel-close-btn" onclick="closeInstallPanel()" aria-label="Close panel">
+					<button class="button button-icon panel-close-btn" onclick="closeInstallPanel()" aria-label="Close panel">
 					<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 						<path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path>
 					</svg>
@@ -166,9 +165,9 @@ templ InstallsPage(props InstallsPageProps) {
 			</div>
 			<!-- Tab Headers -->
 			<div class="panel-tab-headers">
-				<button id="tab-overview-btn" class="nav-item active" onclick="switchPanelTab('overview')">Overview</button>
-				<button id="tab-history-btn" class="nav-item" onclick="switchPanelTab('history')">History</button>
-				<button id="tab-audit-btn" class="nav-item" onclick="switchPanelTab('audit')">Audit Log</button>
+				<button id="tab-overview-btn" class="button button-nav nav-item active" onclick="switchPanelTab('overview')">Overview</button>
+				<button id="tab-history-btn" class="button button-nav nav-item" onclick="switchPanelTab('history')">History</button>
+				<button id="tab-audit-btn" class="button button-nav nav-item" onclick="switchPanelTab('audit')">Audit Log</button>
 			</div>
 			<div class="panel-content">
 				<!-- Overview Tab -->
@@ -233,14 +232,14 @@ templ installTab(tabID, label, currentTab string, count int64, primaryColor stri
 		}
 	}}
 	if isActive {
-		<a href={ templ.SafeURL("?tab=" + tabID) } class="nav-item active">
+		<a href={ templ.SafeURL("?tab=" + tabID) } class="button button-nav nav-item active">
 			{ label }
 			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
 				{ fmt.Sprintf("%d", count) }
 			</span>
 		</a>
 	} else {
-		<a href={ templ.SafeURL("?tab=" + tabID) } class="nav-item">
+		<a href={ templ.SafeURL("?tab=" + tabID) } class="button button-nav nav-item">
 			{ label }
 			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
 				{ fmt.Sprintf("%d", count) }

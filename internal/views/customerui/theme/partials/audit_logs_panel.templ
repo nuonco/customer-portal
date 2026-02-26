@@ -68,7 +68,7 @@ templ auditLogsPanelContent(props AuditLogsPanelProps) {
 			<button
 				type="button"
 				onclick="applyCustomAuditRange()"
-				class="btn-theme-primary"
+				class="button button-primary btn-theme-primary"
 			>
 				Apply
 			</button>
@@ -117,8 +117,8 @@ templ auditRangePresetButtonPanel(props AuditLogsPanelProps, rangeType, label st
 	{{
 		isActive := props.RangeType == rangeType
 		baseClasses := "px-3 py-1.5 text-sm font-medium transition-colors cursor-pointer rounded-theme"
-		activeClasses := "bg-theme-primary text-white"
-		inactiveClasses := "btn-neutral"
+		activeClasses := "button button-primary bg-theme-primary text-white"
+		inactiveClasses := "button button-neutral btn-neutral"
 	}}
 	<button
 		type="button"

@@ -10,7 +10,7 @@
    * ═══════════════════════════════════════════════════════════════════════════ */
 
   /* Base colors */
-  --color-white: #FFFFFF;
+  --color-white: #ffffff;
   --color-black: #000000;
 
   /* Border colors */
@@ -20,105 +20,105 @@
   /* ─────────────────────────────────────────────────────────────────────────────
    * PRIMARY - Purple (Stratus brand color)
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-primary-50: #FCFAFF;
-  --color-primary-100: #F6F0FF;
-  --color-primary-200: #F2E5FF;
-  --color-primary-300: #E5D0FB;
-  --color-primary-400: #C494F4;
-  --color-primary-500: #AD71EA;
-  --color-primary-600: #8040BF;
-  --color-primary-700: #7339AC;
-  --color-primary-800: #662F9D;
-  --color-primary-900: #4C2277;
-  --color-primary-950: #2E0E4E;
+  --color-primary-50: #fcfaff;
+  --color-primary-100: #f6f0ff;
+  --color-primary-200: #f2e5ff;
+  --color-primary-300: #e5d0fb;
+  --color-primary-400: #c494f4;
+  --color-primary-500: #ad71ea;
+  --color-primary-600: #8040bf;
+  --color-primary-700: #7339ac;
+  --color-primary-800: #662f9d;
+  --color-primary-900: #4c2277;
+  --color-primary-950: #2e0e4e;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * BLUE - Info, Links
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-blue-50: #FAFBFF;
-  --color-blue-100: #EDF2FF;
-  --color-blue-200: #E5EEFF;
-  --color-blue-300: #CDDDFF;
-  --color-blue-400: #8DB0FB;
-  --color-blue-500: #6792F4;
-  --color-blue-600: #3062D4;
-  --color-blue-700: #2759CD;
-  --color-blue-800: #1E50C0;
+  --color-blue-50: #fafbff;
+  --color-blue-100: #edf2ff;
+  --color-blue-200: #e5eeff;
+  --color-blue-300: #cdddff;
+  --color-blue-400: #8db0fb;
+  --color-blue-500: #6792f4;
+  --color-blue-600: #3062d4;
+  --color-blue-700: #2759cd;
+  --color-blue-800: #1e50c0;
   --color-blue-900: #113997;
-  --color-blue-950: #05205E;
+  --color-blue-950: #05205e;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * GREEN - Success
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-green-50: #F4FBF7;
-  --color-green-100: #E6F9EF;
-  --color-green-200: #D8F8E7;
-  --color-green-300: #C6F1DA;
-  --color-green-400: #75CC9E;
-  --color-green-500: #4AA578;
-  --color-green-600: #1D7C4D;
-  --color-green-700: #1E714A;
+  --color-green-50: #f4fbf7;
+  --color-green-100: #e6f9ef;
+  --color-green-200: #d8f8e7;
+  --color-green-300: #c6f1da;
+  --color-green-400: #75cc9e;
+  --color-green-500: #4aa578;
+  --color-green-600: #1d7c4d;
+  --color-green-700: #1e714a;
   --color-green-800: #196742;
-  --color-green-900: #0E4E30;
-  --color-green-950: #062D1B;
+  --color-green-900: #0e4e30;
+  --color-green-950: #062d1b;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * ORANGE - Warning
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-orange-50: #FFF5EB;
-  --color-orange-100: #FFF0E0;
-  --color-orange-200: #FFE8D1;
-  --color-orange-300: #FFD4A8;
-  --color-orange-400: #FEB872;
-  --color-orange-500: #F6A351;
-  --color-orange-600: #F59638;
-  --color-orange-700: #B4610E;
-  --color-orange-800: #A05C1C;
-  --color-orange-900: #7A4510;
+  --color-orange-50: #fff5eb;
+  --color-orange-100: #fff0e0;
+  --color-orange-200: #ffe8d1;
+  --color-orange-300: #ffd4a8;
+  --color-orange-400: #feb872;
+  --color-orange-500: #f6a351;
+  --color-orange-600: #f59638;
+  --color-orange-700: #b4610e;
+  --color-orange-800: #a05c1c;
+  --color-orange-900: #7a4510;
   --color-orange-950: #482909;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * RED - Error, Danger
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-red-50: #FEF2F2;
-  --color-red-100: #FEE2E2;
-  --color-red-200: #FECACA;
-  --color-red-300: #FCA5A5;
-  --color-red-400: #F87171;
-  --color-red-500: #EF4444;
-  --color-red-600: #DC2626;
-  --color-red-700: #B91C1C;
-  --color-red-800: #991B1B;
-  --color-red-900: #7F1D1D;
-  --color-red-950: #450A0A;
+  --color-red-50: #fef2f2;
+  --color-red-100: #fee2e2;
+  --color-red-200: #fecaca;
+  --color-red-300: #fca5a5;
+  --color-red-400: #f87171;
+  --color-red-500: #ef4444;
+  --color-red-600: #dc2626;
+  --color-red-700: #b91c1c;
+  --color-red-800: #991b1b;
+  --color-red-900: #7f1d1d;
+  --color-red-950: #450a0a;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * COOL GREY - Light mode neutrals
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-cool-grey-50: #FAFAFA;
-  --color-cool-grey-100: #F0F3F5;
-  --color-cool-grey-200: #EAEDF0;
-  --color-cool-grey-300: #DEE3E7;
-  --color-cool-grey-400: #CFD6DD;
-  --color-cool-grey-500: #9EA8B3;
-  --color-cool-grey-600: #555F6D;
-  --color-cool-grey-700: #4A545E;
-  --color-cool-grey-800: #3A424A;
-  --color-cool-grey-900: #272E35;
-  --color-cool-grey-950: #1B242C;
+  --color-cool-grey-50: #fafafa;
+  --color-cool-grey-100: #f0f3f5;
+  --color-cool-grey-200: #eaedf0;
+  --color-cool-grey-300: #dee3e7;
+  --color-cool-grey-400: #cfd6dd;
+  --color-cool-grey-500: #9ea8b3;
+  --color-cool-grey-600: #555f6d;
+  --color-cool-grey-700: #4a545e;
+  --color-cool-grey-800: #3a424a;
+  --color-cool-grey-900: #272e35;
+  --color-cool-grey-950: #1b242c;
 
   /* ─────────────────────────────────────────────────────────────────────────────
    * DARK GREY - Dark mode neutrals
    * ───────────────────────────────────────────────────────────────────────────── */
-  --color-dark-grey-50: #3F3F3F;
-  --color-dark-grey-100: #3A3A3A;
+  --color-dark-grey-50: #3f3f3f;
+  --color-dark-grey-100: #3a3a3a;
   --color-dark-grey-200: #363636;
   --color-dark-grey-300: #303030;
-  --color-dark-grey-400: #2C2C2C;
+  --color-dark-grey-400: #2c2c2c;
   --color-dark-grey-500: #282828;
   --color-dark-grey-600: #232323;
-  --color-dark-grey-700: #1E1E1E;
-  --color-dark-grey-800: #1A1A1A;
+  --color-dark-grey-700: #1e1e1e;
+  --color-dark-grey-800: #1a1a1a;
   --color-dark-grey-900: #151515;
   --color-dark-grey-950: #121212;
 
@@ -160,8 +160,8 @@
   --theme-secondary-hover: var(--color-blue-700);
 
   /* Font families - can be overridden by vendor theme */
-  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-heading: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-heading: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -192,22 +192,46 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 /* Primary color utilities */
-.bg-theme-primary { background-color: var(--theme-primary) !important; }
-.bg-theme-primary-hover:hover { background-color: var(--theme-primary-hover) !important; }
-.text-theme-primary { color: var(--theme-primary) !important; }
-.border-theme-primary { border-color: var(--theme-primary) !important; }
-.ring-theme-primary { --tw-ring-color: var(--theme-primary) !important; }
-.focus\:ring-theme-primary:focus { --tw-ring-color: var(--theme-primary) !important; }
-.focus\:border-theme-primary:focus { border-color: var(--theme-primary) !important; }
+.bg-theme-primary {
+  background-color: var(--theme-primary);
+}
+.bg-theme-primary-hover:hover {
+  background-color: var(--theme-primary-hover);
+}
+.text-theme-primary {
+  color: var(--theme-primary);
+}
+.border-theme-primary {
+  border-color: var(--theme-primary);
+}
+.ring-theme-primary {
+  --tw-ring-color: var(--theme-primary);
+}
+.focus\:ring-theme-primary:focus {
+  --tw-ring-color: var(--theme-primary);
+}
+.focus\:border-theme-primary:focus {
+  border-color: var(--theme-primary);
+}
 
 /* Secondary color utilities */
-.bg-theme-secondary { background-color: var(--theme-secondary) !important; }
-.text-theme-secondary { color: var(--theme-secondary) !important; }
-.text-theme-secondary-hover:hover { color: var(--theme-secondary-hover) !important; }
-.border-theme-secondary { border-color: var(--theme-secondary) !important; }
+.bg-theme-secondary {
+  background-color: var(--theme-secondary);
+}
+.text-theme-secondary {
+  color: var(--theme-secondary);
+}
+.text-theme-secondary-hover:hover {
+  color: var(--theme-secondary-hover);
+}
+.border-theme-secondary {
+  border-color: var(--theme-secondary);
+}
 
 /* Light primary for backgrounds */
-.bg-theme-primary-light { background-color: var(--theme-primary-light) !important; }
+.bg-theme-primary-light {
+  background-color: var(--theme-primary-light);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * BASE STYLES
@@ -219,7 +243,12 @@ body {
   font-family: var(--font-body);
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   font-family: var(--font-heading);
 }
 
@@ -264,13 +293,23 @@ button.htmx-request {
 }
 
 /* Font weight utilities using design tokens */
-.font-normal { font-weight: var(--font-weight-normal); }
-.font-strong { font-weight: var(--font-weight-strong); }
-.font-stronger { font-weight: var(--font-weight-stronger); }
+.font-normal {
+  font-weight: var(--font-weight-normal);
+}
+.font-strong {
+  font-weight: var(--font-weight-strong);
+}
+.font-stronger {
+  font-weight: var(--font-weight-stronger);
+}
 
 /* Font family utilities */
-.font-body { font-family: var(--font-body); }
-.font-heading { font-family: var(--font-heading); }
+.font-body {
+  font-family: var(--font-body);
+}
+.font-heading {
+  font-family: var(--font-heading);
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * ANIMATIONS
@@ -285,13 +324,21 @@ button.htmx-request {
 }
 
 @keyframes enter-fade {
-  0% { opacity: 0; }
-  100% { opacity: 1; }
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 @keyframes exit-fade {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 .slide-in {
