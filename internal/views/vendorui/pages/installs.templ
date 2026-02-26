@@ -132,7 +132,7 @@ templ CustomerInstallsPage(props CustomerInstallsPageProps) {
 											Created
 										</th>
 										<th scope="col" class="px-3 py-3 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-											Link
+											Forget
 										</th>
 										<th scope="col" class="px-3 py-3 text-center text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 											Portal
@@ -173,7 +173,7 @@ templ InstallsTableBody(installs []AdminInstall, orgID, basePath, nuonOrgID stri
 }
 
 templ adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID string) {
-	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800" data-install-id={ install.ID }>
 		<td class="px-4 py-3 whitespace-nowrap">
 			<div class="text-sm font-medium text-cool-grey-900 dark:text-white">{ install.Name }</div>
 			<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">{ install.ID }</div>
@@ -211,19 +211,17 @@ templ adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID stri
 			<div class="text-sm text-cool-grey-900 dark:text-white">{ install.CreatedAt }</div>
 		</td>
 		<td class="px-3 py-3 whitespace-nowrap text-center">
-			if install.InstallLinkID != "" {
-				<a
-					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/links/%s", basePath, orgID, install.InstallLinkID)) }
-					class="inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-					title="View Install Link"
-				>
-					@linkIcon()
-				</a>
-			} else {
-				<span class="inline-flex items-center text-cool-grey-300 dark:text-dark-grey-600 cursor-not-allowed" title="No install link">
-					@linkIcon()
-				</span>
-			}
+			<button
+				type="button"
+				class="button button-danger inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors"
+				data-install-id={ install.ID }
+				data-install-name={ install.Name }
+				data-forget-url={ fmt.Sprintf("%s/orgs/%s/installs/%s/forget", basePath, orgID, install.ID) }
+				onclick="adminForgetInstall(this.dataset.installId, this.dataset.installName, this.dataset.forgetUrl)"
+				title="Forget install (removes from portal only)"
+			>
+				Forget
+			</button>
 		</td>
 		<td class="px-3 py-3 whitespace-nowrap text-center">
 			<a
@@ -359,6 +357,56 @@ templ importInstallModal(basePath, orgID string) {
 		</div>
 	</div>
 	<script>
+		async function adminForgetInstall(installID, installName, forgetURL) {
+			var confirmed = await showConfirmModal({
+				title: 'Important Warning',
+				message: 'Only use "Forget" after the install has been deprovisioned and the CloudFormation stack removed.\n\n"Forget" only removes this install from the portal — it does NOT deprovision any infrastructure.\n\nAre you sure you want to forget this install?',
+				variant: 'warning',
+				confirmText: 'Forget',
+				cancelText: 'Cancel'
+			});
+
+			if (!confirmed) {
+				return;
+			}
+
+			var confirmName = await showPromptModal({
+				title: 'Confirm Action',
+				message: 'To confirm, please type the install name: ' + installName,
+				placeholder: 'Enter install name',
+				expectedValue: installName,
+				validationMessage: 'Install name does not match. Please try again.',
+				confirmText: 'Forget Install',
+				variant: 'danger'
+			});
+
+			if (confirmName === null) {
+				return;
+			}
+
+			try {
+				var response = await fetch(forgetURL, {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' }
+				});
+
+				if (response.ok) {
+					showToast('Install forgotten successfully.', 'success');
+					var row = document.querySelector('tr[data-install-id="' + installID + '"]');
+					if (row) {
+						row.remove();
+					} else {
+						setTimeout(function() { window.location.reload(); }, 1000);
+					}
+				} else {
+					var data = await response.json();
+					showToast(data.error || 'Failed to forget install', 'error');
+				}
+			} catch (error) {
+				showToast('Network error. Please try again.', 'error');
+			}
+		}
+
 		function closeImportModal() {
 			document.getElementById('import-install-modal').classList.add('hidden');
 			// Reset to step 1

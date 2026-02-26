@@ -346,6 +346,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/orgs/:org_id/installs` - List all customer installs tracked in the portal
 - `GET /admin/orgs/:org_id/installs/search-nuon` - Search Nuon API for installs to import (HTMX)
 - `POST /admin/orgs/:org_id/installs/import` - Import an existing Nuon install and assign to a customer
+- `POST /admin/orgs/:org_id/installs/:install_id/forget` - Remove an install from the portal (vendor-only; does not deprovision infrastructure)
 - `GET /admin/orgs/:org_id/customers` - List organization customers
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
 - `GET /admin/orgs/:org_id/team/members` - List team members

@@ -286,6 +286,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/installs", h.CustomerInstallsPage)
 			orgRoutes.GET("/installs/search-nuon", h.SearchNuonInstalls)
 			orgRoutes.POST("/installs/import", h.ImportInstall)
+			orgRoutes.POST("/installs/:install_id/forget", h.AdminForgetInstall)
 
 			// Customers - view all customers and their installs
 			orgRoutes.GET("/customers", h.CustomersPage)

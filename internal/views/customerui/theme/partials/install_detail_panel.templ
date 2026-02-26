@@ -124,13 +124,6 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 					>
 						Deprovision
 					</button>
-					<button
-						type="button"
-						onclick="forgetInstall(); toggleActionsDropdown();"
-						class="dropdown-item-danger"
-					>
-						Forget
-					</button>
 				</div>
 			</div>
 		</div>
@@ -152,18 +145,8 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 							You are viewing cached data only. Live features (health checks, workflows, updates) are unavailable.
 						</p>
 						<p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
-							<strong>Action required:</strong> Use the "Forget" button to remove this install from your portal.
+							<strong>Action required:</strong> Contact your vendor to remove this install from the portal.
 						</p>
-						<button
-							type="button"
-							onclick="forgetInstall()"
-							class="btn-warning-sm"
-						>
-							<svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-								<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
-							</svg>
-							Forget Install
-						</button>
 					</div>
 				</div>
 			</div>
@@ -529,56 +512,6 @@ templ installDetailPanelScripts() {
 						setTimeout(function() { window.location.reload(); }, 1500);
 					} else {
 						showToast('Failed to deprovision installation', 'error');
-					}
-				} catch (error) {
-					showToast('Network error. Please try again.', 'error');
-				}
-			};
-
-			// Forget install uses custom modals for better UX
-			window.forgetInstall = async function() {
-				var confirmed = await showConfirmModal({
-					title: 'Important Warning',
-					message: 'Only use "Forget" after you have successfully deprovisioned the install and removed the CloudFormation stack.\n\n"Forget" only removes this install from your list - it does NOT deprovision any infrastructure.\n\nAre you sure you want to forget this installation?',
-					variant: 'warning',
-					confirmText: 'Forget',
-					cancelText: 'Cancel'
-				});
-
-				if (!confirmed) {
-					return;
-				}
-
-				var confirmName = await showPromptModal({
-					title: 'Confirm Action',
-					message: 'To confirm, please type the install name: ' + installName,
-					placeholder: 'Enter install name',
-					expectedValue: installName,
-					validationMessage: 'Install name does not match. Please try again.',
-					confirmText: 'Forget Install',
-					variant: 'danger'
-				});
-
-				if (confirmName === null) {
-					return;
-				}
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/forget', {
-						method: 'POST',
-						headers: {
-							'Content-Type': 'application/json',
-						}
-					});
-
-					if (response.ok) {
-						showToast('Install forgotten successfully. Redirecting...', 'success');
-						setTimeout(function() {
-							window.location.href = basePath + '/installs';
-						}, 1500);
-					} else {
-						var data = await response.json();
-						showToast(data.error || 'Failed to forget installation', 'error');
 					}
 				} catch (error) {
 					showToast('Network error. Please try again.', 'error');
