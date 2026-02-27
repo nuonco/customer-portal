@@ -121,17 +121,11 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 					}
 				</div>
 			} else {
-				<div class="card-base text-center">
-					<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
-						<svg class="h-8 w-8 text-cool-grey-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9"></path>
-						</svg>
-					</div>
-					<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Apps Available</h3>
-					<p class="text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto">
-						No applications are currently available for installation.
-					</p>
-				</div>
+				@components.EmptyState(components.EmptyStateProps{
+				Title:   "No Apps Available",
+				Message: "No apps are currently available to install",
+				Icon:    "inbox",
+			})
 			}
 		</div>
 	}

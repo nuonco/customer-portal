@@ -12,6 +12,7 @@ type CustomerLoginPageProps struct {
 	Error      string
 	Theme      *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
 	CSSPath    string
+	OrgName    string
 }
 
 // CustomerLoginPage renders the customer login page with vendor theming
@@ -21,7 +22,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 		<head>
 			<meta charset="UTF-8"/>
 			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-			<title>{ getLoginTitle(props.Theme) }</title>
+			<title>{ getLoginTitle(props.Theme, props.OrgName) }</title>
 			if props.Theme != nil && props.Theme.FaviconBase64 != "" {
 				<link rel="icon" href={ templ.SafeURL(props.Theme.FaviconBase64) }/>
 			}
@@ -50,10 +51,10 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						<!-- Heading and Subtitle -->
 						<div class="flex flex-col gap-6">
 							<h1 class="text-[34px] leading-10 tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white">
-								{ getLoginTitle(props.Theme) }
+								{ getLoginTitle(props.Theme, props.OrgName) }
 							</h1>
 							<p class="text-lg leading-[27px] tracking-[-0.2px] font-body text-cool-grey-600 dark:text-white/70">
-								{ getLoginSubtitle(props.Theme) }
+								{ getLoginSubtitle(props.Theme, props.OrgName) }
 							</p>
 						</div>
 						<!-- Error message -->
@@ -70,18 +71,18 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 							Sign up
 						</a>
 						<!-- Divider -->
-						<hr class="hr-divider"/>
-						<!-- Already have account section -->
-						<h2 class="text-2xl leading-[30px] tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white">
-							Already have an account?
-						</h2>
-						<!-- Sign In Button (Secondary) -->
+						<div class="flex items-center gap-3">
+							<hr class="hr-divider flex-1"/>
+							<span class="text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500">or</span>
+							<hr class="hr-divider flex-1"/>
+						</div>
+						<!-- Log In Button (Secondary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
 							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme"
 							style={ "border-color: var(--theme-primary); color: var(--theme-primary)" }
 						>
-							Sign in
+							Log in
 						</a>
 					</div>
 				</div>
@@ -275,18 +276,24 @@ func buildCustomerLoginThemeCSS(theme *models.AppTheme) string {
 	return css
 }
 
-// getLoginTitle returns the login title from theme or the default
-func getLoginTitle(theme *models.AppTheme) string {
-	if theme != nil {
-		return theme.GetLoginTitle()
+// getLoginTitle returns the login title from theme or an org-aware default
+func getLoginTitle(theme *models.AppTheme, orgName string) string {
+	if theme != nil && theme.LoginTitle != "" {
+		return theme.LoginTitle
+	}
+	if orgName != "" {
+		return orgName + " BYOC"
 	}
 	return models.DefaultLoginTitle
 }
 
-// getLoginSubtitle returns the login subtitle from theme or the default
-func getLoginSubtitle(theme *models.AppTheme) string {
-	if theme != nil {
-		return theme.GetLoginSubtitle()
+// getLoginSubtitle returns the login subtitle from theme or an org-aware default
+func getLoginSubtitle(theme *models.AppTheme, orgName string) string {
+	if theme != nil && theme.LoginSubtitle != "" {
+		return theme.LoginSubtitle
+	}
+	if orgName != "" {
+		return "Manage your " + orgName + " BYOC installs"
 	}
 	return models.DefaultLoginSubtitle
 }

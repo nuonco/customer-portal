@@ -38,7 +38,9 @@ type AppTheme struct {
 	LoginRightSideGradient        string    `json:"login_right_side_gradient"`
 	LoginRightSideImageBase64Dark string    `json:"login_right_side_image_base64_dark"`
 	LoginRightSideGradientDark    string    `json:"login_right_side_gradient_dark"`
-	CustomCSS                     string    `json:"custom_css"` // Vendor-injected CSS for the customer portal
+	CustomCSS                     string    `json:"custom_css"`          // Vendor-injected CSS for the customer portal
+	HeaderTitle                   string    `json:"header_title"`        // Custom header title text (empty = use default)
+	HeaderTitleHidden             bool      `json:"header_title_hidden"` // Hide the header title entirely
 	CreatedAt                     time.Time `json:"created_at"`
 	UpdatedAt                     time.Time `json:"updated_at"`
 
@@ -66,6 +68,9 @@ const (
 	DefaultLoginTitle    = "Customer Portal"
 	DefaultLoginSubtitle = "Manage your installs."
 )
+
+// DefaultHeaderTitleSuffix is appended to the org name for the default header title
+const DefaultHeaderTitleSuffix = "BYOC"
 
 // ValidBorderRadiusValues are the allowed values for BorderRadius
 var ValidBorderRadiusValues = []string{"sharp", "subtle", "rounded", "very-rounded"}
@@ -107,6 +112,19 @@ func (t *AppTheme) GetRadiusClass() string {
 		return "radius-" + DefaultBorderRadius
 	}
 	return "radius-" + t.BorderRadius
+}
+
+// GetHeaderTitle returns the header title for the customer portal.
+// If a custom title is set, returns that. Otherwise returns "<orgName> BYOC".
+// If orgName is empty, returns just "BYOC".
+func (t *AppTheme) GetHeaderTitle(orgName string) string {
+	if t.HeaderTitle != "" {
+		return t.HeaderTitle
+	}
+	if orgName != "" {
+		return orgName + " " + DefaultHeaderTitleSuffix
+	}
+	return DefaultHeaderTitleSuffix
 }
 
 // GetLoginTitle returns the customer login page title, or the default if not set

@@ -547,6 +547,15 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
+	// Look up org name for default login title/subtitle
+	var orgName string
+	if orgID != "" {
+		var org models.NuonOrg
+		if err := h.db.Where("id = ?", orgID).First(&org).Error; err == nil {
+			orgName = org.Name
+		}
+	}
+
 	// Check if we're on a subdomain
 	subdomain, _ := c.Get("subdomain")
 	var authURL string
@@ -593,6 +602,7 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 		AuthURL:  authURL,
 		Theme:    theme,
 		CSSPath:  assets.CustomerCSSPath(),
+		OrgName:  orgName,
 	}
 
 	// Try template override first
@@ -1466,6 +1476,8 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
 		LoginRightSideGradient    string `json:"login_right_side_gradient"`
 		CustomCSS                 string `json:"custom_css"`
+		HeaderTitle               string `json:"header_title"`
+		HeaderTitleHidden         *bool  `json:"header_title_hidden"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1650,6 +1662,12 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 
 	// CustomCSS: any string value sets it (including empty to clear)
 	theme.CustomCSS = req.CustomCSS
+
+	// Header title: allow setting to empty to use default
+	theme.HeaderTitle = req.HeaderTitle
+	if req.HeaderTitleHidden != nil {
+		theme.HeaderTitleHidden = *req.HeaderTitleHidden
+	}
 
 	if err := h.db.Save(theme).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to save theme settings"})

@@ -116,6 +116,9 @@ type LayoutProps struct {
 	CSSPath       string // main customer stylesheet (cache-busted)
 	CustomCSSPath string // org-specific custom CSS (empty when not configured)
 
+	// Header
+	HeaderTitle string // Resolved header title text (empty = hidden)
+
 	// Navigation
 	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
 	ActiveNav        string // "apps" or "installs" — highlights the current nav item
@@ -123,5 +126,5 @@ type LayoutProps struct {
 	// Vendor admin bar context
 	OrgName      string // Human-readable org name shown in the vendor admin bar
 	PortalDomain string // Portal domain shown in the vendor admin bar (e.g. "acme.customers.nuon.co")
-	AdminURL     string // Absolute URL for the "Back to Admin" link (e.g. "https://customers.nuon.co/admin/orgs")
+	AdminURL     string // Absolute URL for the "Go to admin" link (e.g. "https://customers.nuon.co/admin/orgs")
 }

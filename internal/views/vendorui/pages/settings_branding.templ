@@ -34,6 +34,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 						<div class="space-y-6">
 							@installerSettingsModeToggle()
 							<div id="globalSettings" class="space-y-6">
+								@installerPageHeaderTitleSection(props.Theme, props.CurrentOrg.Name)
 								@installerPageFaviconSection(props.Theme)
 								@installerPageColorSchemeSection(props.Theme)
 								@installerPageTypographySection(props.Theme)
@@ -120,6 +121,8 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					data-black-color={ props.Theme.BlackColor }
 					data-white-color-dark={ props.Theme.WhiteColorDark }
 					data-black-color-light={ props.Theme.BlackColorLight }
+					data-header-title={ props.Theme.HeaderTitle }
+					data-header-title-hidden={ boolToDataAttr(props.Theme.HeaderTitleHidden) }
 				></div>
 				@installerPageScript()
 			</div>
@@ -142,6 +145,7 @@ templ brandingPreviewInstallDetail(theme *models.AppTheme) {
 				} else {
 					<img src="" alt="Logo" class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark"/>
 				}
+				<span class="text-sm font-semibold preview-text-heading preview-heading-font preview-header-title"></span>
 			</div>
 			<span class="text-sm preview-text-muted preview-body-font">user@example.com</span>
 		</header>
@@ -709,6 +713,43 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 	</div>
 }
 
+templ installerPageHeaderTitleSection(theme *models.AppTheme, orgName string) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Header Title</h3>
+		<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
+			Set a title that appears next to your logo in the customer portal header.
+		</p>
+		<div class="space-y-4">
+			<div>
+				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1" for="installerHeaderTitle">Custom Title</label>
+				<input
+					type="text"
+					id="installerHeaderTitle"
+					value={ theme.HeaderTitle }
+					placeholder={ theme.GetHeaderTitle(orgName) }
+					oninput="updatePreview()"
+					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md text-sm bg-white dark:bg-dark-grey-700 text-cool-grey-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+				/>
+				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
+					Leave empty to use the default: "{ theme.GetHeaderTitle(orgName) }"
+				</p>
+			</div>
+			<div class="flex items-center gap-2">
+				<input
+					type="checkbox"
+					id="installerHeaderTitleHidden"
+					if theme.HeaderTitleHidden {
+						checked
+					}
+					onchange="updatePreview()"
+					class="h-4 w-4 rounded border-cool-grey-300 text-primary-600 focus:ring-primary-500"
+				/>
+				<label class="text-sm text-cool-grey-700 dark:text-cool-grey-300" for="installerHeaderTitleHidden">Hide header title</label>
+			</div>
+		</div>
+	</div>
+}
+
 templ installerPageFaviconSection(theme *models.AppTheme) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
 		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white">Favicon</h3>
@@ -768,6 +809,7 @@ templ brandingPreviewInstallsList(theme *models.AppTheme) {
 				<div class="flex items-center gap-3">
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+					<span class="text-sm font-semibold preview-text-heading preview-heading-font preview-header-title"></span>
 				</div>
 				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
 			</div>
@@ -820,6 +862,7 @@ templ brandingPreviewInstallCreation(theme *models.AppTheme) {
 				<div class="flex items-center gap-3">
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+					<span class="text-sm font-semibold preview-text-heading preview-heading-font preview-header-title"></span>
 				</div>
 				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
 			</div>
@@ -863,6 +906,7 @@ templ brandingPreviewApps(theme *models.AppTheme) {
 				<div class="flex items-center gap-3">
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-light" src="" alt="Logo"/>
 					<img class="h-6 w-auto max-w-24 object-contain hidden preview-logo-dark" src="" alt="Logo"/>
+					<span class="text-sm font-semibold preview-text-heading preview-heading-font preview-header-title"></span>
 				</div>
 				<span class="text-sm preview-text-muted preview-body-font">Logout</span>
 			</div>
@@ -984,6 +1028,13 @@ func getBrandingFontStyle(font string) string {
 		return ""
 	}
 	return "font-family: '" + font + "', ui-sans-serif, system-ui, sans-serif;"
+}
+
+func boolToDataAttr(b bool) string {
+	if b {
+		return "true"
+	}
+	return "false"
 }
 
 templ installerPageScript() {
@@ -1137,6 +1188,22 @@ templ installerPageScript() {
 					}
 				});
 
+				// Update header title in all preview pages
+				var headerTitleInput = document.getElementById("installerHeaderTitle");
+				var headerTitleHidden = document.getElementById("installerHeaderTitleHidden");
+				var headerTitleText = '';
+				if (headerTitleHidden && !headerTitleHidden.checked) {
+					headerTitleText = (headerTitleInput && headerTitleInput.value) || headerTitleInput.placeholder || '';
+				}
+				document.querySelectorAll('#previewContainer .preview-header-title').forEach(function(el) {
+					el.textContent = headerTitleText;
+					if (headerTitleText) {
+						el.classList.remove('hidden');
+					} else {
+						el.classList.add('hidden');
+					}
+				});
+
 				// Update secondary color links (install detail page)
 				var backLink = document.getElementById("installerPreviewBackLink");
 				if (backLink) backLink.style.color = secondaryColor;
@@ -1251,7 +1318,9 @@ templ installerPageScript() {
 					heading_font: document.getElementById("installerHeadingFont").value,
 					body_font: document.getElementById("installerBodyFont").value,
 					theme_mode: document.querySelector('input[name="themeMode"]:checked')?.value || 'auto',
-					custom_css: document.getElementById("installerCustomCSS").value
+					custom_css: document.getElementById("installerCustomCSS").value,
+					header_title: document.getElementById("installerHeaderTitle").value,
+					header_title_hidden: document.getElementById("installerHeaderTitleHidden").checked
 				};
 
 				// Handle light mode logo

@@ -156,7 +156,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					if props.Pagination.CurrentTab == "healthy" {
 						templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{
 							Title:   "No healthy installs",
-							Message: "All your installs currently need attention or are being updated.",
+							Message: "All your installs need attention or are being updated",
 							Icon:    "check-circle",
 						}).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
@@ -165,7 +165,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					} else if props.Pagination.CurrentTab == "updating" {
 						templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{
 							Title:   "No updates in progress",
-							Message: "There are no installs currently being updated.",
+							Message: "None of your installs are being updated",
 							Icon:    "refresh",
 						}).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
@@ -174,7 +174,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					} else {
 						templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{
 							Title:   "No installs need attention",
-							Message: "All your installs are running smoothly with passing health checks!",
+							Message: "All your installs are healthy",
 							Icon:    "check-circle",
 						}).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
@@ -190,7 +190,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					}
 					templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{
 						Title:   "You are not logged in",
-						Message: "Log in to view and manage your installations.",
+						Message: "Log in to view and manage your installs",
 						Icon:    "inbox",
 					}).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
@@ -220,7 +220,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					}
 					templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{
 						Title:   "No installs yet",
-						Message: "Select an app from the App Catalog to get started.",
+						Message: "Select an app from the Catalog to get started",
 						Icon:    "inbox",
 					}).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {

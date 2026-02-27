@@ -83,19 +83,19 @@ templ InstallsPage(props InstallsPageProps) {
 				if props.Pagination.CurrentTab == "healthy" {
 					@components.EmptyState(components.EmptyStateProps{
 						Title:   "No healthy installs",
-						Message: "All your installs currently need attention or are being updated.",
+						Message: "All your installs need attention or are being updated",
 						Icon:    "check-circle",
 					})
 				} else if props.Pagination.CurrentTab == "updating" {
 					@components.EmptyState(components.EmptyStateProps{
 						Title:   "No updates in progress",
-						Message: "There are no installs currently being updated.",
+						Message: "None of your installs are being updated",
 						Icon:    "refresh",
 					})
 				} else {
 					@components.EmptyState(components.EmptyStateProps{
 						Title:   "No installs need attention",
-						Message: "All your installs are running smoothly with passing health checks!",
+						Message: "All your installs are healthy",
 						Icon:    "check-circle",
 					})
 				}
@@ -105,7 +105,7 @@ templ InstallsPage(props InstallsPageProps) {
 				<!-- Not logged in — show login CTA -->
 				@components.EmptyState(components.EmptyStateProps{
 					Title:   "You are not logged in",
-					Message: "Log in to view and manage your installations.",
+					Message: "Log in to view and manage your installs",
 					Icon:    "inbox",
 				})
 				<div class="text-center mt-4">
@@ -121,7 +121,7 @@ templ InstallsPage(props InstallsPageProps) {
 				<!-- No Installs At All (logged in) -->
 				@components.EmptyState(components.EmptyStateProps{
 					Title:   "No installs yet",
-					Message: "Select an app from the App Catalog to get started.",
+					Message: "Select an app from the Catalog to get started",
 					Icon:    "inbox",
 				})
 				<div class="text-center mt-4">

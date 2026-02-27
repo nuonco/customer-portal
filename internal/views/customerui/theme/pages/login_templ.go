@@ -20,6 +20,7 @@ type CustomerLoginPageProps struct {
 	Error    string
 	Theme    *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
 	CSSPath  string
+	OrgName  string
 }
 
 // CustomerLoginPage renders the customer login page with vendor theming
@@ -71,9 +72,9 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginTitle(props.Theme))
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginTitle(props.Theme, props.OrgName))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 24, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 25, Col: 53}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -91,7 +92,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			var templ_7745c5c3_Var5 templ.SafeURL
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.Theme.FaviconBase64))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 26, Col: 68}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 27, Col: 68}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -109,7 +110,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 		var templ_7745c5c3_Var6 templ.SafeURL
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 28, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 29, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
@@ -144,7 +145,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoLightBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 43, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 44, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -157,7 +158,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoDarkBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 44, Col: 45}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 45, Col: 45}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
@@ -175,7 +176,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Theme.LogoLightBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 47, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 48, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
@@ -192,9 +193,9 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
-		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginTitle(props.Theme))
+		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginTitle(props.Theme, props.OrgName))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 53, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 54, Col: 51}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -205,9 +206,9 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginSubtitle(props.Theme))
+		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(getLoginSubtitle(props.Theme, props.OrgName))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 56, Col: 39}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 57, Col: 54}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
@@ -225,7 +226,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 62, Col: 21}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 63, Col: 21}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -243,20 +244,20 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 		var templ_7745c5c3_Var13 templ.SafeURL
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.AuthURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 67, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 68, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors rounded-theme\">Sign up</a><!-- Divider --><hr class=\"hr-divider\"><!-- Already have account section --><h2 class=\"text-2xl leading-[30px] tracking-[-0.8px] font-strong font-heading text-cool-grey-900 dark:text-white\">Already have an account?</h2><!-- Sign In Button (Secondary) --><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors rounded-theme\">Sign up</a><!-- Divider --><div class=\"flex items-center gap-3\"><hr class=\"hr-divider flex-1\"><span class=\"text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500\">or</span><hr class=\"hr-divider flex-1\"></div><!-- Log In Button (Secondary) --><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 templ.SafeURL
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.AuthURL))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 80, Col: 42}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 81, Col: 42}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -269,13 +270,13 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("border-color: var(--theme-primary); color: var(--theme-primary)")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 82, Col: 80}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 83, Col: 80}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\">Sign in</a></div></div><!-- Right Side - Themed Background, Gradient, or Image -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\">Log in</a></div></div><!-- Right Side - Themed Background, Gradient, or Image -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -426,7 +427,7 @@ func customerLoginFontLinks(theme *models.AppTheme) templ.Component {
 			var templ_7745c5c3_Var18 templ.SafeURL
 			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + theme.HeadingFont + ":wght@400;500;600;700&display=swap")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 183, Col: 117}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 184, Col: 117}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
@@ -445,7 +446,7 @@ func customerLoginFontLinks(theme *models.AppTheme) templ.Component {
 			var templ_7745c5c3_Var19 templ.SafeURL
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + theme.BodyFont + ":wght@400;500;600&display=swap")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 186, Col: 110}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/login.templ`, Line: 187, Col: 110}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
@@ -573,18 +574,24 @@ func buildCustomerLoginThemeCSS(theme *models.AppTheme) string {
 	return css
 }
 
-// getLoginTitle returns the login title from theme or the default
-func getLoginTitle(theme *models.AppTheme) string {
-	if theme != nil {
-		return theme.GetLoginTitle()
+// getLoginTitle returns the login title from theme or an org-aware default
+func getLoginTitle(theme *models.AppTheme, orgName string) string {
+	if theme != nil && theme.LoginTitle != "" {
+		return theme.LoginTitle
+	}
+	if orgName != "" {
+		return orgName + " BYOC"
 	}
 	return models.DefaultLoginTitle
 }
 
-// getLoginSubtitle returns the login subtitle from theme or the default
-func getLoginSubtitle(theme *models.AppTheme) string {
-	if theme != nil {
-		return theme.GetLoginSubtitle()
+// getLoginSubtitle returns the login subtitle from theme or an org-aware default
+func getLoginSubtitle(theme *models.AppTheme, orgName string) string {
+	if theme != nil && theme.LoginSubtitle != "" {
+		return theme.LoginSubtitle
+	}
+	if orgName != "" {
+		return "Manage your " + orgName + " BYOC installs"
 	}
 	return models.DefaultLoginSubtitle
 }

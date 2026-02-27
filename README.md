@@ -34,6 +34,9 @@ General vendor journeys.
 - As a customer,
   - if I have a single install, I am shown that install's detail page on the home page of the portal.
   - if I have multiple installs, I am shown the installs list on the homepage.
+- As a customer,
+  - I always see "App Catalog" and "My Installs" navigation links in the header.
+  - when I visit the App Catalog and no apps are published, I see a friendly empty state message.
 
 ## Implementation Status
 
@@ -65,7 +68,7 @@ General vendor journeys.
 - Install creation flow
 - Install management dashboard
 - Install status tracking
-- **App Catalog** (`/apps`): When an org has published apps, customers can browse and install them without a link. Redirects to `/installs` if no published apps exist.
+- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 
 ✅ **User Interface**
@@ -179,7 +182,7 @@ We should avoid writing custom Javascript for client-side interactions and state
 **Configuration Models:**
 
 - **AppInputConfig** - App-specific input field configurations
-- **AppTheme** - Custom theming and branding per org (colors, logos, favicon, fonts, login page, color scheme lock, custom CSS). Vendors can upload a custom favicon via Branding settings; it is stored as a base64 data URI in `FaviconBase64` and rendered in the customer portal `<head>`. The `ThemeMode` field (`"auto"`, `"light"`, `"dark"`) controls whether the customer portal follows the system preference or is locked to a specific color scheme. The `CustomCSS` field allows vendors to inject arbitrary CSS into the customer portal; it is appended to the portal stylesheet after all theme variables are applied and served via the `/custom/css/:org_id.css` endpoint. The vendor logo (`LogoLightBase64`, `LogoDarkBase64`) is **not** shown in the header nav — it appears as a centered hero block (`h-16 max-w-xs`) at the top of each main customer page (`/installs`, `/apps`, install link, app install).
+- **AppTheme** - Custom theming and branding per org (colors, logos, favicon, fonts, login page, color scheme lock, custom CSS, header title). Vendors can upload a custom favicon via Branding settings; it is stored as a base64 data URI in `FaviconBase64` and rendered in the customer portal `<head>`. The `ThemeMode` field (`"auto"`, `"light"`, `"dark"`) controls whether the customer portal follows the system preference or is locked to a specific color scheme. The `CustomCSS` field allows vendors to inject arbitrary CSS into the customer portal; it is appended to the portal stylesheet after all theme variables are applied and served via the `/custom/css/:org_id.css` endpoint. The vendor logo (`LogoLightBase64`, `LogoDarkBase64`) is **not** shown in the header nav — it appears as a centered hero block (`h-16 max-w-xs`) at the top of each main customer page (`/installs`, `/apps`, install link, app install). When `LoginTitle` and `LoginSubtitle` are not customized by the vendor, the login page uses org-aware defaults: the title shows `"<OrgName> BYOC"` and the subtitle shows `"Manage your <OrgName> BYOC installs"` (falling back to `"Customer Portal"` / `"Manage your installs."` if the org name is unavailable). The `HeaderTitle` field sets a custom title displayed next to the logo in the customer portal header; when empty, it defaults to `"<OrgName> BYOC"`. The `HeaderTitleHidden` field (boolean) hides the header title entirely when set to true.
 - **CustomerAuthConfig** - Customer-specific OIDC/SAML settings
 - **GitHubRepoConfig** - GitHub integration settings
 - **AssetOverride** - Custom asset uploads (logos, icons)
@@ -385,7 +388,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /installs/:install_id/workflows` - Workflow history
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link
-- `GET /apps` - Customer app catalog (redirects to `/installs` if no published apps)
+- `GET /apps` - Customer app catalog (shows empty state if no published apps)
 - `GET /apps/:app_id` - App detail page (full info, components, permissions, policies)
 - `GET /apps/:app_id/install` - Install form for a published app
 - `POST /apps/:app_id/install` - Create install from a published app
@@ -418,6 +421,12 @@ Every button element in the customer UI templates carries two semantic CSS class
 | `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`) |
 | `button button-dropdown-item` | Dropdown menu item buttons (`.dropdown-item`) |
 | `button button-pagination` | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`) |
+
+### Other Semantic CSS Hooks
+
+| Class | Applied to |
+|---|---|
+| `.header-title` | Header title text displayed next to the logo in the customer portal header |
 
 ### Example
 

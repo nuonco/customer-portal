@@ -319,6 +319,11 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		adminURL = h.customerBaseURL + "/admin/orgs/" + org.ID
 	}
 
+	headerTitle := ""
+	if !theme.HeaderTitleHidden {
+		headerTitle = theme.GetHeaderTitle(orgName)
+	}
+
 	return customerui.LayoutProps{
 		Title:                  title,
 		User:                   user,
@@ -342,6 +347,7 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		FaviconBase64:          theme.FaviconBase64,
 		RadiusClass:            theme.GetRadiusClass(),
 		ThemeMode:              theme.GetThemeMode(),
+		HeaderTitle:            headerTitle,
 		CSSPath:                assets.CustomerCSSPath(),
 		CustomCSSPath:          h.getCustomCSSPath(theme.OrgID),
 		OrgName:                orgName,
@@ -2040,24 +2046,25 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	}
 
 	var publishedApps []models.PublishedApp
-	if err := h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil || len(publishedApps) == 0 {
-		c.Redirect(http.StatusFound, h.basePath+"/installs")
-		return
+	if err := h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil {
+		zap.L().Warn("failed to fetch published apps", zap.Error(err))
 	}
 
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
 	appDisplays := make([]customerpages.PublishedAppDisplay, 0, len(publishedApps))
-	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	for _, pa := range publishedApps {
-		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
-		display.LogoLightBase64 = pa.LogoLightBase64
-		display.LogoDarkBase64 = pa.LogoDarkBase64
-		appDisplays = append(appDisplays, display)
+	if len(publishedApps) > 0 {
+		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+		for _, pa := range publishedApps {
+			display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
+			display.LogoLightBase64 = pa.LogoLightBase64
+			display.LogoDarkBase64 = pa.LogoDarkBase64
+			appDisplays = append(appDisplays, display)
+		}
 	}
 
 	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c))
-	layoutProps.HasPublishedApps = true
+	layoutProps.HasPublishedApps = len(publishedApps) > 0
 	layoutProps.ActiveNav = "apps"
 
 	props := customerpages.CustomerAppsPageProps{
