@@ -2419,6 +2419,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		CreatedByVendorID: nil, // no vendor for published-app installs
 		InstallLinkID:     nil,
 		NuonAppID:         appID,
+		AppName:           appName,
 		NuonInstallID:     nuonInstall.ID,
 		Name:              req.Name,
 		Status:            models.StatusPending,

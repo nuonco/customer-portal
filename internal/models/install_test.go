@@ -110,6 +110,61 @@ func TestInstall_GetNuonOrg(t *testing.T) {
 	}
 }
 
+func TestInstall_GetAppID(t *testing.T) {
+	linkID := "ilktest123456789012345"
+
+	tests := []struct {
+		name    string
+		install Install
+		want    string
+	}{
+		{
+			name: "install-link install returns InstallLink.AppID",
+			install: Install{
+				InstallLinkID: &linkID,
+				InstallLink:   InstallLink{AppID: "app-from-link"},
+				NuonAppID:     "app-from-nuon",
+				AppID:         "app-from-import",
+			},
+			want: "app-from-link",
+		},
+		{
+			name: "published-app install returns NuonAppID",
+			install: Install{
+				InstallLinkID: nil,
+				NuonAppID:     "app-from-nuon",
+				AppID:         "",
+			},
+			want: "app-from-nuon",
+		},
+		{
+			name: "legacy imported install falls back to AppID",
+			install: Install{
+				InstallLinkID: nil,
+				NuonAppID:     "",
+				AppID:         "app-from-import",
+			},
+			want: "app-from-import",
+		},
+		{
+			name: "empty install returns empty string",
+			install: Install{
+				InstallLinkID: nil,
+				NuonAppID:     "",
+				AppID:         "",
+			},
+			want: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.install.GetAppID()
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestInstallStatus_Transitions(t *testing.T) {
 	// Document the valid status transitions
 	// This helps ensure status flow is understood

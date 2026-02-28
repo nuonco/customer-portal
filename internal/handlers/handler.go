@@ -2985,6 +2985,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 		CustomerName       string
 		AppID              string
 		AppName            string
+		NuonAppID          string
 		Status             string
 		Region             string
 		CreatedAt          time.Time
@@ -2996,6 +2997,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 	query := h.db.Table("installs").
 		Select(`installs.id, installs.nuon_install_id, installs.user_id,
 			installs.name, installs.app_id, installs.app_name,
+			installs.nuon_app_id,
 			installs.status, installs.region, installs.created_at,
 			COALESCE(installs.install_link_id::text, '') as install_link_id,
 			users.email as customer_email, users.name as customer_name,
@@ -3009,10 +3011,8 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 	if filterEmail != "" {
 		query = query.Where("users.email ILIKE ?", "%"+filterEmail+"%")
 	}
-	if filterApp != "" {
-		pattern := "%" + filterApp + "%"
-		query = query.Where("(installs.app_name ILIKE ? OR install_links.app_name ILIKE ?)", pattern, pattern)
-	}
+	// Note: app filter is applied in Go after name resolution (see below)
+	// because published-app installs get names from the Nuon API, not DB.
 
 	var rows []InstallRow
 	if err := query.Find(&rows).Error; err != nil {
@@ -3020,11 +3020,16 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 		return
 	}
 
-	// Fetch apps from Nuon API to build platform map
+	// Fetch apps from Nuon API to build platform and name maps
 	platformMap := make(map[string]string)
+	appNameMap := make(map[string]string)
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err == nil {
 		apps, appsErr := nuonClient.ListApps(c.Request.Context())
+		if appsErr != nil {
+			zap.L().Warn("failed to fetch apps from Nuon API for platform/name resolution",
+				zap.String("org_id", org.ID), zap.Error(appsErr))
+		}
 		if appsErr == nil {
 			for _, app := range apps {
 				platform := "aws"
@@ -3032,6 +3037,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 					platform = "azure"
 				}
 				platformMap[app.ID] = platform
+				appNameMap[app.ID] = app.Name
 			}
 		}
 	}
@@ -3039,17 +3045,50 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 	// Convert rows to AdminInstall, applying platform filter in Go
 	adminInstalls := make([]vendorpages.AdminInstall, 0, len(rows))
 	for _, row := range rows {
-		// Resolve app ID and name
+		// Resolve app ID and name from all sources
 		effectiveAppID := row.AppID
 		if effectiveAppID == "" {
 			effectiveAppID = row.InstallLinkAppID
+		}
+		if effectiveAppID == "" {
+			effectiveAppID = row.NuonAppID
 		}
 		effectiveAppName := row.AppName
 		if effectiveAppName == "" {
 			effectiveAppName = row.InstallLinkAppName
 		}
 		if effectiveAppName == "" {
+			if name, ok := appNameMap[effectiveAppID]; ok {
+				effectiveAppName = name
+				// Backfill app_name for installs missing it
+				if row.AppName == "" {
+					h.db.Model(&models.Install{}).Where("id = ?", row.ID).Update("app_name", name)
+				}
+			}
+		}
+		if effectiveAppName == "" && nuonClient != nil && effectiveAppID != "" {
+			if app, err := nuonClient.GetApp(c.Request.Context(), effectiveAppID); err == nil && app != nil && app.Name != "" {
+				effectiveAppName = app.Name
+				// Backfill for future loads
+				if row.AppName == "" {
+					h.db.Model(&models.Install{}).Where("id = ?", row.ID).Update("app_name", app.Name)
+				}
+				// Also populate maps for other installs with the same app
+				appNameMap[effectiveAppID] = app.Name
+				if app.RunnerConfig != nil && string(app.RunnerConfig.AppRunnerType) == "azure" {
+					platformMap[effectiveAppID] = "azure"
+				} else {
+					platformMap[effectiveAppID] = "aws"
+				}
+			}
+		}
+		if effectiveAppName == "" {
 			effectiveAppName = "Unknown App"
+		}
+
+		// Apply app name filter (done in Go to cover API-resolved names)
+		if filterApp != "" && !strings.Contains(strings.ToLower(effectiveAppName), strings.ToLower(filterApp)) {
+			continue
 		}
 
 		// Resolve platform
@@ -3314,7 +3353,7 @@ func (h *Handler) ImportInstall(c *gin.Context) {
 		CreatedByVendorID: &vendorID,
 		InstallLinkID:     nil,
 		NuonInstallID:     nuonInstallID,
-		AppID:             appID,
+		NuonAppID:         appID,
 		AppName:           appName,
 		Name:              installName,
 		Status:            installStatus,

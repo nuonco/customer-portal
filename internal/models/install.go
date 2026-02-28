@@ -52,11 +52,15 @@ func (i *Install) BeforeCreate(tx *gorm.DB) error {
 // GetAppID returns the Nuon app ID for this install.
 // For install-link installs, returns InstallLink.AppID.
 // For published-app installs (InstallLinkID == nil), returns NuonAppID.
+// Falls back to AppID for legacy imported installs.
 func (i *Install) GetAppID() string {
 	if i.InstallLinkID != nil {
 		return i.InstallLink.AppID
 	}
-	return i.NuonAppID
+	if i.NuonAppID != "" {
+		return i.NuonAppID
+	}
+	return i.AppID
 }
 
 // GetNuonOrg returns the NuonOrg for this install.
