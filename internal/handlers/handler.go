@@ -598,12 +598,13 @@ func (h *Handler) CustomerLoginPageTempl(c *gin.Context) {
 	}
 
 	props := customerpages.CustomerLoginPageProps{
-		BasePath: h.basePath,
-		Error:    errorMsg,
-		AuthURL:  authURL,
-		Theme:    theme,
-		CSSPath:  assets.CustomerCSSPath(),
-		OrgName:  orgName,
+		BasePath:      h.basePath,
+		Error:         errorMsg,
+		AuthURL:       authURL,
+		Theme:         theme,
+		CSSPath:       assets.CustomerCSSPath(),
+		CustomCSSPath: h.getCustomCSSPath(orgID),
+		OrgName:       orgName,
 	}
 
 	// Try template override first

@@ -7,12 +7,13 @@ import (
 
 // CustomerLoginPageProps for the themed customer login page
 type CustomerLoginPageProps struct {
-	BasePath   string
-	AuthURL    string
-	Error      string
-	Theme      *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
-	CSSPath    string
-	OrgName    string
+	BasePath      string
+	AuthURL       string
+	Error         string
+	Theme         *models.AppTheme // Theme contains LoginTitle and LoginSubtitle
+	CSSPath       string
+	CustomCSSPath string
+	OrgName       string
 }
 
 // CustomerLoginPage renders the customer login page with vendor theming
@@ -27,6 +28,9 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 				<link rel="icon" href={ templ.SafeURL(props.Theme.FaviconBase64) }/>
 			}
 			<link href={ props.CSSPath } rel="stylesheet"/>
+			if props.CustomCSSPath != "" {
+				<link href={ props.CustomCSSPath } rel="stylesheet"/>
+			}
 			@scripts.DarkMode(getThemeMode(props.Theme))
 			@customerLoginFontLinks(props.Theme)
 			@customerLoginThemeStyles(props.Theme)
@@ -66,7 +70,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						<!-- Sign Up Button (Primary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
-							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors rounded-theme"
+							class="button button-primary w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border border-transparent bg-theme-primary hover:bg-theme-primary-hover text-white transition-colors rounded-theme"
 						>
 							Sign up
 						</a>
@@ -79,7 +83,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						<!-- Log In Button (Secondary) -->
 						<a
 							href={ templ.SafeURL(props.AuthURL) }
-							class="w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme"
+							class="button button-secondary w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme"
 							style={ "border-color: var(--theme-primary); color: var(--theme-primary)" }
 						>
 							Log in
