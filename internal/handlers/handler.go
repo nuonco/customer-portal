@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"html"
 	"math"
 	"net/http"
 	"net/url"
@@ -3192,13 +3193,13 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 		return
 	}
 
-	html := ""
+	htmlOut := ""
 	for _, r := range results {
 		displayText := r.InstallName + "  •  " + r.AppName
 		if r.Status != "" {
 			displayText += "  •  " + r.Status
 		}
-		html += fmt.Sprintf(`<div class="px-4 py-3 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+		htmlOut += fmt.Sprintf(`<div class="px-4 py-3 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
 			<div class="flex items-center justify-between gap-3">
 				<div>
 					<div class="text-sm font-medium text-cool-grey-900 dark:text-white">%s</div>
@@ -3206,7 +3207,10 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 				</div>
 				<button
 					type="button"
-					onclick="selectImportInstall(%q, %q, %q)"
+					data-install-id="%s"
+					data-app-id="%s"
+					data-display="%s"
+					onclick="selectImportInstall(this.dataset.installId, this.dataset.appId, this.dataset.display)"
 					class="shrink-0 text-xs font-medium text-primary-600 dark:text-primary-400 hover:underline"
 				>
 					Select &rarr;
@@ -3214,11 +3218,11 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 			</div>
 		</div>`,
 			r.InstallName, r.AppName, r.Region,
-			r.InstallID, r.AppID, displayText,
+			html.EscapeString(r.InstallID), html.EscapeString(r.AppID), html.EscapeString(displayText),
 		)
 	}
 
-	c.Data(http.StatusOK, "text/html", []byte(html))
+	c.Data(http.StatusOK, "text/html", []byte(htmlOut))
 }
 
 // ImportInstall imports an existing Nuon install into the portal and assigns it to a customer.
