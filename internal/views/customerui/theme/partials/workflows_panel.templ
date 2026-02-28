@@ -33,9 +33,7 @@ templ WorkflowsPanel(props WorkflowsPanelProps) {
 		<!-- Workflow Groups -->
 		if len(props.WorkflowGroups) == 0 {
 			<div class="text-center py-12">
-				<svg class="mx-auto h-12 w-12 text-cool-grey-400 dark:text-cool-grey-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
-				</svg>
+				<i class="ph-bold ph-clipboard-text text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
 				<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No workflows yet</h3>
 				<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Workflow history will appear here once updates are triggered.</p>
 			</div>
@@ -62,9 +60,7 @@ templ WorkflowsPanel(props WorkflowsPanelProps) {
 								onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadWorkflowsPage(%d)", props.PrevOffset)} }
 								class="pagination-nav-btn"
 							>
-								<svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-								</svg>
+								<i class="ph-bold ph-caret-left text-base mr-2"></i>
 								Previous
 							</button>
 						}
@@ -77,9 +73,7 @@ templ WorkflowsPanel(props WorkflowsPanelProps) {
 								class="pagination-nav-btn"
 							>
 								Next
-								<svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
-								</svg>
+								<i class="ph-bold ph-caret-right text-base ml-2"></i>
 							</button>
 						}
 					</div>

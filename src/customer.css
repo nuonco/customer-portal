@@ -581,8 +581,11 @@
 }
 
 .back-link {
-  @apply inline-flex items-center text-sm hover:underline;
+  @apply inline-flex items-center text-sm border-b border-transparent;
   color: var(--theme-secondary, var(--theme-primary, #3b82f6));
+}
+.back-link:hover {
+  border-color: currentColor;
 }
 
 /* Hide columns on mobile */
@@ -593,10 +596,19 @@
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * PLATFORM CHIPS
- * Cloud platform badges with icons
+ * PLATFORM LOGOS
+ * Cloud platform brand logos
  * ───────────────────────────────────────────────────────────────────────────── */
 
+.platform-logo {
+  @apply w-8 h-8 object-contain flex-shrink-0;
+}
+
+.card-lg .platform-logo {
+  @apply w-10 h-10;
+}
+
+/* Legacy platform chip classes — kept for vendor Custom CSS backward compat */
 .platform-chip {
   @apply inline-flex items-center gap-1.5 px-2 py-0.5 text-xs font-medium rounded;
 }

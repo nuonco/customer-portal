@@ -189,10 +189,7 @@ templ appInstallScript() {
 					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1">' + group.description + '<\/p>';
 				}
 				html += '<\/div>';
-				html += '<svg class="input-group-chevron h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4' + (isCollapsed ? '' : ' rotate-180') + '" ';
-				html += 'viewBox="0 0 20 20" fill="currentColor">';
-				html += '<path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd"><\/path>';
-				html += '<\/svg>';
+				html += '<i class="input-group-chevron ph-bold ph-caret-down text-xl text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4' + (isCollapsed ? '' : ' rotate-180') + '"><\/i>';
 				html += '<\/div>';
 				var maxHeight = isCollapsed ? '0' : '2000px';
 				var opacity = isCollapsed ? '0' : '1';

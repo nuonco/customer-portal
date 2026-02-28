@@ -213,6 +213,9 @@
 .focus\:border-theme-primary:focus {
   border-color: var(--theme-primary);
 }
+.hover\:border-theme-primary:hover {
+  border-color: var(--theme-primary);
+}
 
 /* Secondary color utilities */
 .bg-theme-secondary {

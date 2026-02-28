@@ -149,6 +149,10 @@ Templ is used to define the UI. We maintain separate sets of UI elements for the
 
 Tailwind allows us to define styles directly in the Templ templates using utility classes. We should avoid writing custom CSS, either one-off styles or custom classes, as much as possible.
 
+#### Icons
+
+Customer UI uses the [Phosphor Icons](https://phosphoricons.com/) font (Bold weight), self-hosted at `static/fonts/`. Use `<i class="ph-bold ph-{icon-name}">` with Tailwind text-size classes for sizing (e.g., `text-base` for 16px, `text-xl` for 20px). Browse available icons at phosphoricons.com.
+
 #### HTMX
 
 We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like udpating page content, updating the browser history, and polling for updates.

@@ -102,9 +102,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 					class="button button-dropdown-trigger dropdown-trigger"
 				>
 					Actions
-					<svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-					</svg>
+					<i class="ph-bold ph-caret-down text-base ml-2"></i>
 				</button>
 				<div
 					id="actionsDropdownMenu"
@@ -134,9 +132,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			<div class="alert-warning">
 				<div class="flex items-start">
 					<div class="flex-shrink-0 mr-3 text-amber-500">
-						<svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-							<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-						</svg>
+						<i class="ph-bold ph-warning text-xl"></i>
 					</div>
 					<div class="flex-1">
 						<h3 class="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Install Deleted from API</h3>
@@ -180,17 +176,18 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 	@installDetailPanelScripts()
 }
 
-// overviewPlatformChip renders a platform chip inline (avoids import cycle with components)
+// overviewPlatformChip renders a platform logo inline (avoids import cycle with components)
 templ overviewPlatformChip(platform string) {
 	switch platform {
 	case "aws":
-		<span class="platform-chip platform-chip-aws">AWS</span>
+		<img src="/static/images/logos/aws.svg" class="platform-logo dark:hidden" alt="AWS"/>
+		<img src="/static/images/logos/aws.svg" class="platform-logo hidden dark:block dark:invert" alt="AWS"/>
 	case "azure":
-		<span class="platform-chip platform-chip-azure">Azure</span>
+		<img src="/static/images/logos/azure.svg" class="platform-logo" alt="Azure"/>
 	case "gcp":
-		<span class="platform-chip platform-chip-gcp">GCP</span>
+		<img src="/static/images/logos/google.svg" class="platform-logo" alt="GCP"/>
 	default:
-		<span class="platform-chip platform-chip-unknown">Cloud</span>
+		<i class="ph-bold ph-cloud platform-logo text-cool-grey-400 dark:text-cool-grey-500"></i>
 	}
 }
 
@@ -241,9 +238,7 @@ templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink stri
 								class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
 							>
 								Open in AWS
-								<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
-								</svg>
+								<i class="ph-bold ph-arrow-square-out text-base"></i>
 							</a>
 						</div>
 					</div>
@@ -274,9 +269,7 @@ templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) 
 					<div class="mt-4 space-y-2">
 						for _, warning := range readme.Warnings {
 							<div class="flex items-start gap-2 alert-warning">
-								<svg class="w-5 h-5 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
-								</svg>
+								<i class="ph-bold ph-warning text-xl text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
 								<p class="text-sm text-amber-800 dark:text-amber-300">{ warning }</p>
 							</div>
 						}
@@ -368,10 +361,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 					if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
 						<div class="flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400">
 							<!-- Animated loading spinner -->
-							<svg class="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
-								<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-								<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-							</svg>
+							<i class="ph-bold ph-circle-notch animate-spin text-base"></i>
 							<span>
 								if workflow.TotalSteps > 0 {
 									<span class="font-medium">Step { fmt.Sprintf("%d", workflow.CurrentStepNumber) } of { fmt.Sprintf("%d", workflow.TotalSteps) }:</span>
