@@ -82,3 +82,15 @@ func NewAssetOverrideID() string {
 func NewPublishedAppID() string {
 	return New("pap")
 }
+
+func NewCustomerAccountID() string {
+	return New("cat")
+}
+
+func NewCustomerAccountMemberID() string {
+	return New("cam")
+}
+
+func NewCustomerAccountInviteID() string {
+	return New("cai")
+}

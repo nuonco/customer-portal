@@ -95,6 +95,11 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("created_by_vendor_id nullable migration failed: %w", err)
 	}
 
+	// Migrate customer_account_invites from token-based to email-based schema
+	if err := runInviteEmailMigration(db); err != nil {
+		return nil, fmt.Errorf("invite email migration failed: %w", err)
+	}
+
 	// Auto-migrate all models
 	err = db.AutoMigrate(
 		&User{},
@@ -111,6 +116,10 @@ func InitDB() (*gorm.DB, error) {
 		&GitHubRepoConfig{},
 		&TemplateOverride{},
 		&AssetOverride{},
+		// Customer account models
+		&CustomerAccount{},
+		&CustomerAccountMember{},
+		&CustomerAccountInvite{},
 	)
 	if err != nil {
 		return nil, err
@@ -149,7 +158,55 @@ func InitDB() (*gorm.DB, error) {
 		return nil, fmt.Errorf("drop health_check_action_ids migration failed: %w", err)
 	}
 
+	// Default existing installs to visibility='account'
+	if err := runInstallVisibilityMigration(db); err != nil {
+		return nil, fmt.Errorf("install visibility migration failed: %w", err)
+	}
+
+	// Add unique index on customer_account_members(user_id, org_id) to enforce one account per customer per org
+	if err := runCustomerAccountMemberUniqueIndexMigration(db); err != nil {
+		return nil, fmt.Errorf("customer account member unique index migration failed: %w", err)
+	}
+
 	return db, nil
+}
+
+// runInstallVisibilityMigration defaults existing installs to visibility='account'.
+// This is idempotent - safe to run multiple times.
+func runInstallVisibilityMigration(db *gorm.DB) error {
+	var columnExists bool
+	if err := db.Raw(`
+		SELECT EXISTS (
+			SELECT 1 FROM information_schema.columns
+			WHERE table_name = 'installs' AND column_name = 'visibility'
+		)
+	`).Scan(&columnExists).Error; err != nil {
+		return fmt.Errorf("failed to check for visibility column: %w", err)
+	}
+	if !columnExists {
+		return nil
+	}
+
+	// Update any installs with empty or null visibility to 'account'
+	if err := db.Exec(`
+		UPDATE installs SET visibility = 'account'
+		WHERE (visibility IS NULL OR visibility = '') AND deleted_at IS NULL
+	`).Error; err != nil {
+		return fmt.Errorf("failed to set default visibility: %w", err)
+	}
+
+	// Add composite index on (customer_account_id, visibility) for install queries
+	db.Exec(`CREATE INDEX IF NOT EXISTS idx_installs_account_visibility ON installs (customer_account_id, visibility)`)
+
+	return nil
+}
+
+// runCustomerAccountMemberUniqueIndexMigration drops the old unique index that enforced
+// one account per customer per org. Customers can now belong to multiple accounts.
+// This is idempotent - safe to run multiple times.
+func runCustomerAccountMemberUniqueIndexMigration(db *gorm.DB) error {
+	db.Exec(`DROP INDEX IF EXISTS idx_customer_account_members_user_org`)
+	return nil
 }
 
 // runDropAppHealthCheckConfigsMigration drops the app_health_check_configs table if it exists.
@@ -764,5 +821,22 @@ func ensureInstallLinkNamesPopulated(db *gorm.DB) error {
 		return fmt.Errorf("failed to populate install link names: %w", err)
 	}
 
+	return nil
+}
+
+// runInviteEmailMigration migrates customer_account_invites from the old token-based
+// schema to the new email-based schema. Deletes all existing rows (old token-based
+// invites are no longer usable) and drops obsolete columns so AutoMigrate can safely
+// add the email NOT NULL column.
+// This is idempotent - safe to run multiple times.
+func runInviteEmailMigration(db *gorm.DB) error {
+	if !db.Migrator().HasTable("customer_account_invites") {
+		return nil
+	}
+	if db.Migrator().HasColumn(&CustomerAccountInvite{}, "token") {
+		db.Exec("DELETE FROM customer_account_invites")
+		db.Migrator().DropColumn(&CustomerAccountInvite{}, "token")
+		db.Migrator().DropColumn(&CustomerAccountInvite{}, "expires_at")
+	}
 	return nil
 }

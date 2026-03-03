@@ -186,11 +186,18 @@ func RequireInstallOwnership(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// Check access - on customer portal, always check user_id ownership
-		// (regardless of the user's database role, as users may have accepted
-		// installs through install-links which link via user_id)
+		// Check access based on active account from middleware context
 		var install models.Install
-		err := db.Where("id = ? AND user_id = ?", installID, user.ID).First(&install).Error
+		activeMember := GetCustomerAccountMember(c)
+
+		var err error
+		if activeMember != nil {
+			err = db.Where("id = ? AND ((user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?))",
+				installID, user.ID, activeMember.AccountID, activeMember.AccountID, models.VisibilityAccount).First(&install).Error
+		} else {
+			err = db.Where("id = ? AND user_id = ? AND customer_account_id IS NULL",
+				installID, user.ID).First(&install).Error
+		}
 
 		if err != nil {
 			if err == gorm.ErrRecordNotFound {

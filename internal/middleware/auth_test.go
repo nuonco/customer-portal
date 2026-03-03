@@ -54,7 +54,22 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		app_id TEXT DEFAULT '',
 		app_name TEXT DEFAULT '',
 		status TEXT DEFAULT 'pending_customer',
+		visibility TEXT DEFAULT 'account',
+		customer_account_id TEXT,
 		region TEXT,
+		created_at DATETIME,
+		updated_at DATETIME,
+		deleted_at DATETIME
+	)`).Error
+	require.NoError(t, err)
+
+	err = db.Exec(`CREATE TABLE IF NOT EXISTS customer_account_members (
+		id TEXT PRIMARY KEY,
+		account_id TEXT NOT NULL,
+		user_id TEXT NOT NULL,
+		org_id TEXT NOT NULL,
+		role TEXT DEFAULT 'member',
+		joined_at DATETIME,
 		created_at DATETIME,
 		updated_at DATETIME,
 		deleted_at DATETIME

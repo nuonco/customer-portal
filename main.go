@@ -292,6 +292,10 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/customers", h.CustomersPage)
 			orgRoutes.GET("/customers/:customer_id", h.CustomerDetailPage)
 
+			// Customer Accounts - view customer company accounts
+			orgRoutes.GET("/accounts", h.AccountsPage)
+			orgRoutes.GET("/accounts/:account_id", h.AccountDetailPage)
+
 			// Team pages (org-scoped)
 			orgRoutes.GET("/team", func(c *gin.Context) {
 				c.Redirect(http.StatusFound, c.Request.URL.Path+"/members")
@@ -388,10 +392,29 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	rg.GET("/installs", h.InstallsPage)
 	rg.GET("/installs/:install_id", h.InstallsPage) // Detail view with panel open
 
+	// Customer account routes (require auth but exempt from account middleware)
+	account := rg.Group("/account")
+	account.Use(jwtAuth.MiddlewareFunc())
+	account.Use(middleware.RequireRole(models.RoleCustomer))
+	{
+		account.GET("/", h.AccountPage)
+		account.PUT("/", h.UpdateAccount)
+		account.GET("/setup", h.AccountSetupPage)
+		account.GET("/new", h.NewAccountPage)
+		account.POST("/create", h.CreateAccount)
+		account.POST("/switch", h.SwitchAccount)
+		account.GET("/members", h.AccountMembersRedirect)
+		account.POST("/invite", h.CreateAccountInvite)
+		account.DELETE("/invite/:invite_id", h.DeleteAccountInvite)
+		account.DELETE("/members/:member_id", h.DeleteAccountMember)
+		account.POST("/members/:member_id/transfer-ownership", h.TransferAccountOwnership)
+	}
+
 	// Protected customer routes
 	installs := rg.Group("/installs")
 	installs.Use(jwtAuth.MiddlewareFunc())
 	installs.Use(middleware.RequireRole(models.RoleCustomer))
+	installs.Use(middleware.RequireCustomerAccount(db))
 	{
 		// Routes that require install ownership verification
 		installOwnership := installs.Group("/:install_id")

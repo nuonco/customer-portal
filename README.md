@@ -35,8 +35,24 @@ General vendor journeys.
   - if I have a single install, I am shown that install's detail page on the home page of the portal.
   - if I have multiple installs, I am shown the installs list on the homepage.
 - As a customer,
-  - I always see "App Catalog" and "My Installs" navigation links in the header.
+  - I always see "App Catalog", "Installs", and "My Account" navigation links in the header.
   - when I visit the App Catalog and no apps are published, I see a friendly empty state message.
+- As a customer,
+  - after logging in via OIDC, if I don't have a customer account, one is automatically created with the name "<first-name>'s Account" (or "My Account" if no name is available).
+  - I can create additional company accounts from the "Create New Account" option in the user menu dropdown.
+  - as an account owner, I can rename my account from the Account Settings page.
+  - as an account owner, I can transfer ownership to another member from the Account Settings page.
+  - as an account owner, I can invite teammates by email from the Account Settings page.
+  - if the invited email matches an existing user, they are added as a member immediately.
+  - if the invited email doesn't match an existing user, a pending invite is created and they auto-join when they next log in.
+  - I can toggle any install I own between "account" visibility (shared) and "private" (only me).
+  - I can belong to multiple accounts in the same org (e.g. via invites to different company accounts).
+  - the user menu dropdown shows the active account name instead of my email.
+  - if I have multiple accounts, the dropdown lists other accounts I can switch to.
+  - switching accounts sets a cookie and reloads the page, scoping installs to the selected account.
+- As a vendor,
+  - I can view all customer accounts in the Accounts tab under Customer Management.
+  - I can click into an account to see its members and associated installs.
 
 ## Implementation Status
 
@@ -70,6 +86,8 @@ General vendor journeys.
 - Install status tracking
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
+- **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
+- **Install Visibility**: Install owners can toggle visibility between "account" (shared with all account members) and "private" (only visible to the owner).
 
 ✅ **User Interface**
 
@@ -157,6 +175,29 @@ Customer UI uses the [Phosphor Icons](https://phosphoricons.com/) font (Bold wei
 
 We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like udpating page content, updating the browser history, and polling for updates.
 
+## User Experience Design
+
+There are some conventions and guidelines that we follow for UI/UX design.
+
+### Common Conventions
+
+There are some conventions that we use both the admin and the customer UIs.
+
+- For both the admin and the customer UIs, we should use modular components. Avoid one-offs as much as possible.
+- Do not use built-in browser alerts. Always use HTML modals. There is a component for this in both the admin and the customer UIs.
+
+### Admin
+
+There are some conventions that are specific to the admin UI.
+
+- The admin UI uses Stratus, our official design system, which is also used by the dashboard-ui in the /nuonco/nuon repo.
+- We use tailwind for the admin UI components, and should stick to using the tailwind utility classes. Avoid custom CSS.
+
+### Customer
+
+- The customer UI does not use Stratus. We keep it's design simple and unbranded so it's easy for vendors to brand and customize.
+- While tailwind is still installed in the customer UI, we should avoid using the tailwind utility classes. Instead, use semantic classes, so that styles are easy for vendors to override with custom CSS.
+
 ## Architecture
 
 ### Backend
@@ -180,8 +221,11 @@ We should avoid writing custom Javascript for client-side interactions and state
 - **User** - Email, role (vendor/customer), timestamps
 - **NuonOrg** - Connected organizations with API credentials
 - **InstallLink** - Shareable links with SHA-based security
-- **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs)
+- **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs). Has `Visibility` (account/private) and optional `CustomerAccountID` for account-based sharing.
 - **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable). Has `LogoLightBase64` and `LogoDarkBase64` for per-app logos.
+- **CustomerAccount** - Company account that groups customers together within a vendor org. Scoped to org via `OrgID`.
+- **CustomerAccountMember** - Links a user to a customer account with role (owner/member). A user can belong to multiple accounts in the same org and switch between them via a cookie.
+- **CustomerAccountInvite** - Email-based invite for joining a customer account. When a user with a matching email logs in, they are automatically added as a member.
 
 **Configuration Models:**
 
@@ -356,6 +400,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /admin/orgs/:org_id/installs/:install_id/forget` - Remove an install from the portal (vendor-only; does not deprovision infrastructure)
 - `GET /admin/orgs/:org_id/customers` - List organization customers
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
+- `GET /admin/orgs/:org_id/accounts` - List customer company accounts
+- `GET /admin/orgs/:org_id/accounts/:account_id` - Account detail with members and installs
 - `GET /admin/orgs/:org_id/team/members` - List team members
 - `GET /admin/orgs/:org_id/team/invites` - List pending invitations
 - `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
@@ -406,6 +452,16 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `PUT /installs/:install_id/inputs` - Update install inputs
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
 - `POST /installs/:install_id/workflows/:workflow_id/cancel` - Cancel running workflow
+- `GET /account` - Account settings page (name editing, members, invites)
+- `PUT /account` - Update account name (owner only)
+- `GET /account/setup` - Redirects to /installs (accounts are auto-created during auth)
+- `GET /account/new` - Account creation form for creating additional accounts
+- `POST /account/create` - Create customer account and owner membership
+- `GET /account/members` - Redirects to /account
+- `POST /account/invite` - Invite a user by email (adds immediately if user exists, creates pending invite otherwise)
+- `POST /account/switch` - Switch active account (sets cookie, redirects to /installs)
+- `POST /account/members/:member_id/transfer-ownership` - Transfer account ownership to another member
+- `DELETE /account/invite/:invite_id` - Revoke a pending invite
 
 ## Semantic Button Classes
 
@@ -413,23 +469,23 @@ Every button element in the customer UI templates carries two semantic CSS class
 
 ### Variants
 
-| Class | Applied to |
-|---|---|
-| `button button-primary` | Primary call-to-action buttons (`.btn-theme-primary`) |
-| `button button-secondary` | Secondary action buttons (`.btn-theme-secondary`) |
-| `button button-outline` | Outline/cancel buttons (`.btn-theme-outline`) |
-| `button button-neutral` | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
-| `button button-danger` | Destructive actions — Forget, logout, `.dropdown-item-danger` |
-| `button button-icon` | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`) |
-| `button button-nav` | Navigation and tab buttons (`.nav-item`) |
-| `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`) |
-| `button button-dropdown-item` | Dropdown menu item buttons (`.dropdown-item`) |
-| `button button-pagination` | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`) |
+| Class                            | Applied to                                                                    |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| `button button-primary`          | Primary call-to-action buttons (`.btn-theme-primary`)                         |
+| `button button-secondary`        | Secondary action buttons (`.btn-theme-secondary`)                             |
+| `button button-outline`          | Outline/cancel buttons (`.btn-theme-outline`)                                 |
+| `button button-neutral`          | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
+| `button button-danger`           | Destructive actions — Forget, logout, `.dropdown-item-danger`                 |
+| `button button-icon`             | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`)     |
+| `button button-nav`              | Navigation and tab buttons (`.nav-item`)                                      |
+| `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`)                                |
+| `button button-dropdown-item`    | Dropdown menu item buttons (`.dropdown-item`)                                 |
+| `button button-pagination`       | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`)      |
 
 ### Other Semantic CSS Hooks
 
-| Class | Applied to |
-|---|---|
+| Class           | Applied to                                                                 |
+| --------------- | -------------------------------------------------------------------------- |
 | `.header-title` | Header title text displayed next to the logo in the customer portal header |
 
 ### Example

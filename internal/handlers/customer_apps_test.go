@@ -16,7 +16,7 @@ import (
 )
 
 func TestCustomerAppsPage_EmptyApps(t *testing.T) {
-	db := testutil.RequireTestDB(t)
+	testutil.RequireTestDB(t)
 
 	testutil.TestTransaction(t, func(tx *gorm.DB) {
 		_, org, err := testutil.SeedMinimalData(tx)
@@ -40,7 +40,7 @@ func TestCustomerAppsPage_EmptyApps(t *testing.T) {
 }
 
 func TestCustomerAppsPage_WithPublishedApps(t *testing.T) {
-	db := testutil.RequireTestDB(t)
+	testutil.RequireTestDB(t)
 
 	testutil.TestTransaction(t, func(tx *gorm.DB) {
 		_, org, err := testutil.SeedMinimalData(tx)

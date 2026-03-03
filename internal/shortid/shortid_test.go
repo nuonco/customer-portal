@@ -221,6 +221,30 @@ func TestNewAssetOverrideID(t *testing.T) {
 	assert.True(t, IsValid(id))
 }
 
+func TestNewCustomerAccountID(t *testing.T) {
+	id := NewCustomerAccountID()
+
+	assert.Len(t, id, 26)
+	assert.Equal(t, "cat", id[:3], "Customer account ID should have 'cat' prefix")
+	assert.True(t, IsValid(id))
+}
+
+func TestNewCustomerAccountMemberID(t *testing.T) {
+	id := NewCustomerAccountMemberID()
+
+	assert.Len(t, id, 26)
+	assert.Equal(t, "cam", id[:3], "Customer account member ID should have 'cam' prefix")
+	assert.True(t, IsValid(id))
+}
+
+func TestNewCustomerAccountInviteID(t *testing.T) {
+	id := NewCustomerAccountInviteID()
+
+	assert.Len(t, id, 26)
+	assert.Equal(t, "cai", id[:3], "Customer account invite ID should have 'cai' prefix")
+	assert.True(t, IsValid(id))
+}
+
 func TestAllIDPrefixes_Unique(t *testing.T) {
 	// Verify all prefixes are unique to prevent ID collisions
 	prefixes := map[string]string{
@@ -237,10 +261,14 @@ func TestAllIDPrefixes_Unique(t *testing.T) {
 		"ghc": "github_repo_config",
 		"tov": "template_override",
 		"aov": "asset_override",
+		"pap": "published_app",
+		"cat": "customer_account",
+		"cam": "customer_account_member",
+		"cai": "customer_account_invite",
 	}
 
 	// Verify we have the expected number of unique prefixes
-	assert.Len(t, prefixes, 13, "Should have 13 unique entity prefixes")
+	assert.Len(t, prefixes, 17, "Should have 17 unique entity prefixes")
 
 	// Verify each prefix is exactly 3 characters
 	for prefix := range prefixes {

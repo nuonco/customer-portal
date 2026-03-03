@@ -14,7 +14,7 @@
 
 :root {
   /* Default radius - can be overridden by theme */
-  --theme-radius: 8px;
+  --theme-radius: 3px;
   --theme-radius-sm: calc(var(--theme-radius) * 0.5);
   --theme-radius-lg: calc(var(--theme-radius) * 1.5);
   --theme-radius-xl: calc(var(--theme-radius) * 2);
@@ -24,8 +24,8 @@
   --spacing-card-padding: 24px;
   --spacing-section-gap: 24px;
   --spacing-element-gap: 16px;
-  --spacing-input-padding-y: 12px;
-  --spacing-input-padding-x: 16px;
+  --spacing-input-padding-y: 8px;
+  --spacing-input-padding-x: 12px;
 
   /* Light-mode surface tones derived from --theme-white */
   --theme-surface-subtle:  color-mix(in srgb, var(--theme-white, #ffffff) 97%, black);  /* ~cool-grey-50  hover/table-header tint */
@@ -56,7 +56,7 @@
 }
 
 .radius-rounded {
-  --theme-radius: 8px;
+  --theme-radius: 3px;
 }
 
 .radius-very-rounded {
@@ -429,6 +429,12 @@
 .section-header {
   @apply flex items-center justify-between;
   margin-bottom: var(--spacing-element-gap);
+}
+
+.page-title {
+  @apply text-xl font-bold text-cool-grey-900;
+  font-family: var(--font-heading);
+  @apply dark:text-white;
 }
 
 .section-title {

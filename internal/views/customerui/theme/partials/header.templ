@@ -12,6 +12,8 @@ type HeaderProps struct {
 	HasPublishedApps bool
 	ActiveNav        string // "apps" or "installs"
 	HeaderTitle      string // Resolved header title (empty = hidden)
+	ActiveAccount    *models.CustomerAccount
+	OtherAccounts    []models.CustomerAccount
 }
 
 // Header renders the customer header with navigation links and user menu dropdown.
@@ -44,15 +46,18 @@ templ Header(props HeaderProps) {
 							<a href={ templ.SafeURL(props.BasePath + "/apps") } class="button button-nav nav-item">App Catalog</a>
 						}
 						if props.ActiveNav == "installs" {
-							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item active">My Installs</a>
+							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item active">Installs</a>
 						} else {
-							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item">My Installs</a>
+							<a href={ templ.SafeURL(props.BasePath + "/installs") } class="button button-nav nav-item">Installs</a>
 						}
 					</nav>
 				</div>
 				@UserMenu(UserMenuProps{
-					User:     props.User,
-					BasePath: props.BasePath,
+					User:          props.User,
+					BasePath:      props.BasePath,
+					ActiveNav:     props.ActiveNav,
+					ActiveAccount: props.ActiveAccount,
+					OtherAccounts: props.OtherAccounts,
 				})
 			</div>
 		</div>

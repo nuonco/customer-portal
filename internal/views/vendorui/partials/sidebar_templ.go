@@ -349,7 +349,7 @@ func Sidebar(props SidebarProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.CurrentOrg != nil {
-			var templ_7745c5c3_Var13 = []any{"stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers")}
+			var templ_7745c5c3_Var13 = []any{"stratus-sidebar-link", templ.KV("active", isCustomersPage(props.ActivePage))}
 			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -765,6 +765,11 @@ func safeSlice(s string, start, end int) string {
 // isPortalPage checks if the active page is a Customer Portal page
 func isPortalPage(activePage string) bool {
 	return strings.HasPrefix(activePage, "portal-")
+}
+
+// isCustomersPage checks if the active page is a Customers section page
+func isCustomersPage(activePage string) bool {
+	return activePage == "customers" || strings.HasPrefix(activePage, "customers-")
 }
 
 func sidebarScript() templ.Component {

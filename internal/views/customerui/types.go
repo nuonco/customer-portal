@@ -123,6 +123,10 @@ type LayoutProps struct {
 	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
 	ActiveNav        string // "apps" or "installs" — highlights the current nav item
 
+	// Account switching
+	ActiveAccount *models.CustomerAccount  // Currently active account (nil if no account)
+	OtherAccounts []models.CustomerAccount // Other accounts the user can switch to
+
 	// Vendor admin bar context
 	OrgName      string // Human-readable org name shown in the vendor admin bar
 	PortalDomain string // Portal domain shown in the vendor admin bar (e.g. "acme.customers.nuon.co")

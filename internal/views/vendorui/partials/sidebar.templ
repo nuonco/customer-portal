@@ -133,7 +133,7 @@ templ Sidebar(props SidebarProps) {
 					if props.CurrentOrg != nil {
 						<a
 							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
-							class={ "stratus-sidebar-link", templ.KV("active", props.ActivePage == "customers") }
+							class={ "stratus-sidebar-link", templ.KV("active", isCustomersPage(props.ActivePage)) }
 						>
 							@usersIcon()
 							<span class="sidebar-text">Customers</span>
@@ -253,6 +253,11 @@ func safeSlice(s string, start, end int) string {
 // isPortalPage checks if the active page is a Customer Portal page
 func isPortalPage(activePage string) bool {
 	return strings.HasPrefix(activePage, "portal-")
+}
+
+// isCustomersPage checks if the active page is a Customers section page
+func isCustomersPage(activePage string) bool {
+	return activePage == "customers" || strings.HasPrefix(activePage, "customers-")
 }
 
 templ sidebarScript() {

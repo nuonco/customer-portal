@@ -385,7 +385,7 @@ func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, err
 
 	// Fall back to default Templ template
 	props := customerpages.ErrorPageProps{
-		LayoutProps: h.buildCustomerLayoutProps(title, user, theme, nil),
+		LayoutProps: h.buildCustomerLayoutProps(title, user, theme, nil, nil, nil),
 		Error:       errorMsg,
 	}
 	h.RenderTempl(c, status, customerpages.ErrorPage(props))

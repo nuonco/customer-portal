@@ -90,6 +90,9 @@ func runMigrations(db *gorm.DB) error {
 		&models.GitHubRepoConfig{},
 		&models.TemplateOverride{},
 		&models.AssetOverride{},
+		&models.CustomerAccount{},
+		&models.CustomerAccountMember{},
+		&models.CustomerAccountInvite{},
 	)
 }
 
@@ -131,6 +134,9 @@ func CleanupTable(db *gorm.DB, tableName string) error {
 // This is useful for setting up a clean slate before integration tests.
 func CleanupAllTables(db *gorm.DB) error {
 	tables := []string{
+		"customer_account_invites",
+		"customer_account_members",
+		"customer_accounts",
 		"asset_overrides",
 		"template_overrides",
 		"github_repo_configs",

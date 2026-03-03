@@ -17,6 +17,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
@@ -301,7 +302,7 @@ func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder
 }
 
 // buildCustomerLayoutProps builds the layout props for customer pages
-func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme, org *models.NuonOrg) customerui.LayoutProps {
+func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme, org *models.NuonOrg, activeAccount *models.CustomerAccount, otherAccounts []models.CustomerAccount) customerui.LayoutProps {
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
 	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
@@ -353,6 +354,8 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		OrgName:                orgName,
 		PortalDomain:           portalDomain,
 		AdminURL:               adminURL,
+		ActiveAccount:          activeAccount,
+		OtherAccounts:          otherAccounts,
 	}
 }
 
@@ -495,7 +498,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if sha == "" {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c), nil, nil),
 			Error:       "Missing or invalid install link",
 		}
 		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
@@ -506,7 +509,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if err := h.db.Preload("NuonOrg").Where("sha = ?", sha).First(&link).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c), nil, nil),
 			Error:       "Install link not found or invalid",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -516,7 +519,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	if link.Used {
 		theme, _ := models.GetOrCreateAppTheme(h.db, link.OrgID)
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c), nil, nil),
 			Error:       "This install link has already been used",
 		}
 		h.RenderTempl(c, http.StatusBadRequest, customerpages.ErrorPage(props))
@@ -529,7 +532,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	theme, err := models.GetOrCreateAppTheme(h.db, orgID)
 	if err != nil {
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", nil, theme, h.getOrgForLayout(c), nil, nil),
 			Error:       "Failed to load theme settings",
 		}
 		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
@@ -566,7 +569,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 
 	// Fall back to default Templ template
 	props := customerpages.InstallLinkPageProps{
-		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme, h.getOrgForLayout(c)),
+		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme, h.getOrgForLayout(c), nil, nil),
 		Link:         &link,
 		LoggedInUser: loggedInUser,
 	}
@@ -659,6 +662,14 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		Name:              installName,
 		Status:            models.StatusPending,
 		Region:            region,
+		Visibility:        models.VisibilityAccount,
+	}
+
+	// Associate with customer's active account if they have one
+	var members []models.CustomerAccountMember
+	if err := h.db.Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", customer.ID, link.OrgID).Find(&members).Error; err == nil && len(members) > 0 {
+		selected := middleware.SelectActiveMember(c, members)
+		install.CustomerAccountID = &selected.AccountID
 	}
 
 	if err := h.db.Create(install).Error; err != nil {
@@ -695,7 +706,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	if user == nil {
 		orgID := h.getOrgIDForTheme(c)
 		theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-		layoutProps := h.buildCustomerLayoutProps("Your Installs", nil, theme, h.getOrgForLayout(c))
+		layoutProps := h.buildCustomerLayoutProps("Your Installs", nil, theme, h.getOrgForLayout(c), nil, nil)
 		layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 		layoutProps.ActiveNav = "installs"
 		props := customerpages.InstallsPageProps{
@@ -710,9 +721,28 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	var initialInstallID string
 
 	if installIDParam != "" {
-		// Validate install exists and belongs to user
+		// Validate install exists and user has access
 		var install models.Install
-		if err := h.db.Where("id = ? AND user_id = ?", installIDParam, user.ID).First(&install).Error; err != nil {
+		detailQuery := h.db.Where("id = ?", installIDParam)
+		detailMember := middleware.GetCustomerAccountMember(c)
+		if detailMember == nil {
+			orgID := h.getOrgIDForTheme(c)
+			if orgID != "" {
+				var members []models.CustomerAccountMember
+				if h.db.Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", user.ID, orgID).Find(&members).Error == nil && len(members) > 0 {
+					detailMember = middleware.SelectActiveMember(c, members)
+				}
+			}
+		}
+		if detailMember != nil {
+			detailQuery = detailQuery.Where(
+				"(user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?)",
+				user.ID, detailMember.AccountID, detailMember.AccountID, models.VisibilityAccount,
+			)
+		} else {
+			detailQuery = detailQuery.Where("user_id = ? AND customer_account_id IS NULL", user.ID)
+		}
+		if err := detailQuery.First(&install).Error; err != nil {
 			// Install not found or doesn't belong to user - redirect to list
 			c.Redirect(http.StatusFound, h.basePath+"/installs")
 			return
@@ -726,14 +756,35 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	page := getPageFromQuery(c)
 	offset := (page - 1) * installsPerPage
 
-	// Get all installs owned by this user
+	// Get all installs visible to this user (own installs + account-shared installs)
 	var allInstalls []models.Install
 	query := h.db.Preload("InstallLink").Preload("InstallLink.NuonOrg").Preload("Org").Order("created_at DESC")
-	query = query.Where("user_id = ?", user.ID)
+
+	// Use active account from middleware context for account-based visibility
+	activeMember := middleware.GetCustomerAccountMember(c)
+	if activeMember == nil && user != nil {
+		// Fallback: look up membership from DB (route may not use RequireCustomerAccount middleware)
+		orgID := h.getOrgIDForTheme(c)
+		if orgID != "" {
+			var members []models.CustomerAccountMember
+			if h.db.Preload("Account").Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", user.ID, orgID).Find(&members).Error == nil && len(members) > 0 {
+				activeMember = middleware.SelectActiveMember(c, members)
+			}
+		}
+	}
+	if activeMember != nil {
+		query = query.Where(
+			"(user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?)",
+			user.ID, activeMember.AccountID, activeMember.AccountID, models.VisibilityAccount,
+		)
+	} else {
+		query = query.Where("user_id = ? AND customer_account_id IS NULL", user.ID)
+	}
 	if err := query.Find(&allInstalls).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
+		acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", user, theme, h.getOrgForLayout(c), acctActive, acctOthers),
 			Error:       "Failed to load installs",
 		}
 		h.RenderTempl(c, http.StatusInternalServerError, customerpages.ErrorPage(props))
@@ -970,7 +1021,8 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Fall back to default Templ template
-	installsLayoutProps := h.buildCustomerLayoutProps("Your Installs", user, theme, h.getOrgForLayout(c))
+	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
+	installsLayoutProps := h.buildCustomerLayoutProps("Your Installs", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	installsLayoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 	installsLayoutProps.ActiveNav = "installs"
 	props := customerpages.InstallsPageProps{
@@ -1020,7 +1072,8 @@ func (h *Handler) UpdateInstall(c *gin.Context) {
 	install := installInterface.(*models.Install)
 
 	var req struct {
-		Region string `json:"region,omitempty"`
+		Region     string `json:"region,omitempty"`
+		Visibility string `json:"visibility,omitempty"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -1028,9 +1081,18 @@ func (h *Handler) UpdateInstall(c *gin.Context) {
 		return
 	}
 
+	user := middleware.GetCurrentUser(c)
+
 	// Update allowed fields
 	if req.Region != "" {
 		install.Region = req.Region
+	}
+
+	// Only the install owner can change visibility
+	if req.Visibility != "" && install.UserID == user.ID {
+		if req.Visibility == string(models.VisibilityAccount) || req.Visibility == string(models.VisibilityPrivate) {
+			install.Visibility = models.InstallVisibility(req.Visibility)
+		}
 	}
 
 	if err := h.db.Save(install).Error; err != nil {
@@ -2063,7 +2125,8 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		}
 	}
 
-	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c))
+	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
+	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = len(publishedApps) > 0
 	layoutProps.ActiveNav = "apps"
 
@@ -2276,7 +2339,8 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	display.LogoLightBase64 = publishedApp.LogoLightBase64
 	display.LogoDarkBase64 = publishedApp.LogoDarkBase64
 
-	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c))
+	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
+	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
 
@@ -2299,11 +2363,13 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 		return
 	}
 
+	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
+
 	org, err := h.getOrgForCustomerPage(c)
 	if err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c), acctActive, acctOthers),
 			Error:       "Organization not found",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -2315,7 +2381,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 		props := customerpages.ErrorPageProps{
-			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c)),
+			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c), acctActive, acctOthers),
 			Error:       "App not found or not published",
 		}
 		h.RenderTempl(c, http.StatusNotFound, customerpages.ErrorPage(props))
@@ -2338,7 +2404,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 		}
 	}
 
-	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme, h.getOrgForLayout(c))
+	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
 
@@ -2424,6 +2490,18 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		Name:              req.Name,
 		Status:            models.StatusPending,
 		Region:            region,
+		Visibility:        models.VisibilityAccount,
+	}
+
+	// Associate with customer's active account
+	if activeMember := middleware.GetCustomerAccountMember(c); activeMember != nil {
+		install.CustomerAccountID = &activeMember.AccountID
+	} else {
+		var members []models.CustomerAccountMember
+		if err := h.db.Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", customer.ID, org.ID).Find(&members).Error; err == nil && len(members) > 0 {
+			selected := middleware.SelectActiveMember(c, members)
+			install.CustomerAccountID = &selected.AccountID
+		}
 	}
 
 	if err := h.db.Create(install).Error; err != nil {

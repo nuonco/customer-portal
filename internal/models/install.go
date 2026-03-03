@@ -7,6 +7,13 @@ import (
 	"gorm.io/gorm"
 )
 
+type InstallVisibility string
+
+const (
+	VisibilityAccount InstallVisibility = "account"
+	VisibilityPrivate InstallVisibility = "private"
+)
+
 type InstallStatus string
 
 const (
@@ -19,21 +26,23 @@ const (
 )
 
 type Install struct {
-	ID                string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
-	OrgID             string         `gorm:"index" json:"org_id"`                     // Vendor org that owns this install
-	UserID            string         `gorm:"not null" json:"user_id"`                 // Current owner (vendor initially, then customer)
-	CreatedByVendorID *string        `json:"created_by_vendor_id"`                    // Original vendor who created the install (nil for published-app installs)
-	InstallLinkID     *string        `json:"install_link_id"`                         // Nullable: nil for published-app installs
-	NuonAppID         string         `gorm:"default:''" json:"nuon_app_id,omitempty"` // Set for published-app installs; empty for install-link installs
-	NuonInstallID     string         `gorm:"not null" json:"nuon_install_id"`
-	Name              string         `gorm:"default:''" json:"name"`     // Human-readable install name
-	AppID             string         `gorm:"default:''" json:"app_id"`   // Nuon app ID (set for imported installs)
-	AppName           string         `gorm:"default:''" json:"app_name"` // App display name (set for imported installs)
-	Status            InstallStatus  `gorm:"type:varchar(30);default:'pending_customer'" json:"status"`
-	Region            string         `json:"region,omitempty"`
-	CreatedAt         time.Time      `json:"created_at"`
-	UpdatedAt         time.Time      `json:"updated_at"`
-	DeletedAt         gorm.DeletedAt `gorm:"index" json:"-"`
+	ID                string            `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
+	OrgID             string            `gorm:"index" json:"org_id"`                     // Vendor org that owns this install
+	UserID            string            `gorm:"not null" json:"user_id"`                 // Current owner (vendor initially, then customer)
+	CreatedByVendorID *string           `json:"created_by_vendor_id"`                    // Original vendor who created the install (nil for published-app installs)
+	InstallLinkID     *string           `json:"install_link_id"`                         // Nullable: nil for published-app installs
+	NuonAppID         string            `gorm:"default:''" json:"nuon_app_id,omitempty"` // Set for published-app installs; empty for install-link installs
+	NuonInstallID     string            `gorm:"not null" json:"nuon_install_id"`
+	Name              string            `gorm:"default:''" json:"name"`     // Human-readable install name
+	AppID             string            `gorm:"default:''" json:"app_id"`   // Nuon app ID (set for imported installs)
+	AppName           string            `gorm:"default:''" json:"app_name"` // App display name (set for imported installs)
+	Visibility        InstallVisibility `gorm:"type:varchar(20);default:'account'" json:"visibility"`
+	CustomerAccountID *string           `gorm:"index" json:"customer_account_id,omitempty"`
+	Status            InstallStatus     `gorm:"type:varchar(30);default:'pending_customer'" json:"status"`
+	Region            string            `json:"region,omitempty"`
+	CreatedAt         time.Time         `json:"created_at"`
+	UpdatedAt         time.Time         `json:"updated_at"`
+	DeletedAt         gorm.DeletedAt    `gorm:"index" json:"-"`
 
 	// Relationships
 	Org             NuonOrg     `gorm:"foreignKey:OrgID" json:"org,omitempty"`

@@ -3,6 +3,7 @@
 package testutil
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -380,6 +381,131 @@ func NewTestCustomerAuthConfig(opts ...CustomerAuthConfigOptions) *models.Custom
 	}
 
 	return config
+}
+
+// CustomerAccountOptions allows customization of test customer account creation.
+type CustomerAccountOptions struct {
+	ID              string
+	OrgID           string
+	Name            string
+	CreatedByUserID string
+}
+
+// NewTestCustomerAccount creates a test customer account with sensible defaults.
+func NewTestCustomerAccount(opts ...CustomerAccountOptions) *models.CustomerAccount {
+	account := &models.CustomerAccount{
+		ID:              RandomID("cat"),
+		OrgID:           RandomOrgID(),
+		Name:            "Test Company",
+		CreatedByUserID: RandomUserID(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	if len(opts) > 0 {
+		opt := opts[0]
+		if opt.ID != "" {
+			account.ID = opt.ID
+		}
+		if opt.OrgID != "" {
+			account.OrgID = opt.OrgID
+		}
+		if opt.Name != "" {
+			account.Name = opt.Name
+		}
+		if opt.CreatedByUserID != "" {
+			account.CreatedByUserID = opt.CreatedByUserID
+		}
+	}
+
+	return account
+}
+
+// CustomerAccountMemberOptions allows customization of test customer account member creation.
+type CustomerAccountMemberOptions struct {
+	ID        string
+	AccountID string
+	UserID    string
+	OrgID     string
+	Role      models.CustomerAccountRole
+}
+
+// NewTestCustomerAccountMember creates a test customer account member with sensible defaults.
+func NewTestCustomerAccountMember(opts ...CustomerAccountMemberOptions) *models.CustomerAccountMember {
+	member := &models.CustomerAccountMember{
+		ID:        RandomID("cam"),
+		AccountID: RandomID("cat"),
+		UserID:    RandomUserID(),
+		OrgID:     RandomOrgID(),
+		Role:      models.CustomerAccountRoleMember,
+		JoinedAt:  time.Now(),
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+	}
+
+	if len(opts) > 0 {
+		opt := opts[0]
+		if opt.ID != "" {
+			member.ID = opt.ID
+		}
+		if opt.AccountID != "" {
+			member.AccountID = opt.AccountID
+		}
+		if opt.UserID != "" {
+			member.UserID = opt.UserID
+		}
+		if opt.OrgID != "" {
+			member.OrgID = opt.OrgID
+		}
+		if opt.Role != "" {
+			member.Role = opt.Role
+		}
+	}
+
+	return member
+}
+
+// CustomerAccountInviteOptions allows customization of test customer account invite creation.
+type CustomerAccountInviteOptions struct {
+	ID              string
+	AccountID       string
+	OrgID           string
+	Email           string
+	CreatedByUserID string
+}
+
+// NewTestCustomerAccountInvite creates a test customer account invite with sensible defaults.
+func NewTestCustomerAccountInvite(opts ...CustomerAccountInviteOptions) *models.CustomerAccountInvite {
+	invite := &models.CustomerAccountInvite{
+		ID:              RandomID("cai"),
+		AccountID:       RandomID("cat"),
+		OrgID:           RandomOrgID(),
+		Email:           fmt.Sprintf("invite-%s@test.com", RandomString(8)),
+		CreatedByUserID: RandomUserID(),
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
+	}
+
+	if len(opts) > 0 {
+		opt := opts[0]
+		if opt.ID != "" {
+			invite.ID = opt.ID
+		}
+		if opt.AccountID != "" {
+			invite.AccountID = opt.AccountID
+		}
+		if opt.OrgID != "" {
+			invite.OrgID = opt.OrgID
+		}
+		if opt.Email != "" {
+			invite.Email = opt.Email
+		}
+		if opt.CreatedByUserID != "" {
+			invite.CreatedByUserID = opt.CreatedByUserID
+		}
+	}
+
+	return invite
 }
 
 // CreateUserWithOrg creates a user and an org where the user is a member.

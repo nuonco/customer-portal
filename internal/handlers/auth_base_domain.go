@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	gojwt "github.com/golang-jwt/jwt/v4"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
@@ -231,6 +232,37 @@ func (h *Handler) CompleteSubdomainAuth(c *gin.Context) {
 		true,  // httpOnly
 	)
 
+	// Auto-create account for new customers (no existing account membership)
+	claims, ok := parsedToken.Claims.(gojwt.MapClaims)
+	if ok {
+		if role, _ := claims["role"].(string); role == string(models.RoleCustomer) {
+			if userID, _ := claims["user_id"].(string); userID != "" {
+				subdomainStr := subdomain.(string)
+				var org models.NuonOrg
+				if h.db.Where("subdomain = ?", subdomainStr).First(&org).Error == nil {
+					var count int64
+					h.db.Model(&models.CustomerAccountMember{}).
+						Where("user_id = ? AND org_id = ?", userID, org.ID).
+						Count(&count)
+					if count == 0 {
+						// Look up user for their name
+						var user models.User
+						if h.db.Where("id = ?", userID).First(&user).Error == nil {
+							accountName := "My Account"
+							if user.Name != "" {
+								firstName := strings.Split(user.Name, " ")[0]
+								accountName = firstName + "'s Account"
+							}
+							if account, err := h.createAccountForUser(userID, org.ID, accountName); err == nil {
+								c.SetCookie("active_account_id", account.ID, 60*60*24*365, "/", "", false, true)
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
 	// Get redirect URL from query params, default to /installs
 	redirectURL := c.Query("redirect")
 	if redirectURL == "" {
@@ -259,7 +291,7 @@ func (h *Handler) AuthErrorPage(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
 	props := pages.AuthErrorPageProps{
-		LayoutProps: h.buildCustomerLayoutProps("Authentication Error", nil, theme, nil),
+		LayoutProps: h.buildCustomerLayoutProps("Authentication Error", nil, theme, nil, nil, nil),
 		Message:     message,
 	}
 
