@@ -33,10 +33,11 @@ func IsUnauthorized(err error) bool {
 
 // Client wraps the Nuon API client for the installer app
 type Client struct {
-	client   nuonpkg.Client
-	apiURL   string
-	apiToken string
-	orgID    string
+	client     nuonpkg.Client
+	httpClient *http.Client
+	apiURL     string
+	apiToken   string
+	orgID      string
 }
 
 // NewClient creates a new Nuon API client using default localhost URL
@@ -70,7 +71,14 @@ func NewClientWithURL(apiToken, orgID, apiURL string) (*Client, error) {
 	}
 
 	return &Client{
-		client:   client,
+		client: client,
+		httpClient: &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		},
 		apiURL:   apiURL,
 		apiToken: apiToken,
 		orgID:    orgID,
@@ -143,7 +151,7 @@ func (c *Client) GetAppSecretsConfig(ctx context.Context, appID string) (*models
 	}
 	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -265,8 +273,7 @@ func (c *Client) GetInstallWorkflowsByType(ctx context.Context, installID string
 	zap.L().Debug("making Nuon API request", zap.String("url", url))
 
 	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -450,8 +457,7 @@ func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, star
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
 
 	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -540,8 +546,7 @@ func (c *Client) GetInstallReadme(ctx context.Context, installID string) (*Servi
 	req.Header.Set("Content-Type", "application/json")
 
 	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -604,7 +609,7 @@ func (c *Client) GetLatestAppPermissionsConfig(ctx context.Context, appID string
 	}
 	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -632,7 +637,7 @@ func (c *Client) GetLatestAppPoliciesConfigFull(ctx context.Context, appID strin
 	}
 	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
-	resp, err := (&http.Client{}).Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("request failed: %w", err)
 	}
@@ -674,8 +679,7 @@ func (c *Client) ListAppInstalls(ctx context.Context, appID, query string) ([]*m
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
 	req.Header.Set("Content-Type", "application/json")
 
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
@@ -718,8 +722,7 @@ func (c *Client) IsInstallNameAvailable(ctx context.Context, appID, name string)
 	req.Header.Set("Content-Type", "application/json")
 
 	// Make the request
-	client := &http.Client{}
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return false, fmt.Errorf("failed to execute request: %w", err)
 	}
