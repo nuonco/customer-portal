@@ -5,6 +5,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AccountPageProps for the account page
@@ -120,21 +121,9 @@ templ AccountPage(props AccountPageProps) {
 			</div>
 			<!-- Members Tab -->
 			<div id="tab-members">
-				<div class="table-wrapper">
-					<table class="installs-table">
-						<thead>
-							<tr>
-								<th>Name</th>
-								<th>Email</th>
-								<th>Role</th>
-								<th class="hide-mobile">Joined</th>
-								if props.IsOwner {
-									<th class="w-20"></th>
-									<th class="w-20"></th>
-								}
-							</tr>
-						</thead>
-						<tbody>
+				@components.Table(components.TableProps{
+					Header: membersTableHeader(props.IsOwner),
+				}) {
 							for _, member := range props.Members {
 								<tr id={ fmt.Sprintf("member-%s", member.ID) }>
 									<td class="font-medium">{ member.User.Name }</td>
@@ -165,9 +154,7 @@ templ AccountPage(props AccountPageProps) {
 									}
 								</tr>
 							}
-						</tbody>
-					</table>
-				</div>
+				}
 			</div>
 			<!-- Invited Tab -->
 			<div id="tab-invited" class="hidden">
@@ -177,20 +164,10 @@ templ AccountPage(props AccountPageProps) {
 						<p class="text-sm">No pending invites.</p>
 					</div>
 				} else {
-					<div class="table-wrapper">
-						<table class="installs-table">
-							<thead>
-								<tr>
-									<th>Email</th>
-									<th>Invited By</th>
-									<th class="hide-mobile">Date</th>
-									if props.IsOwner {
-										<th class="w-20"></th>
-									}
-								</tr>
-							</thead>
-							<tbody>
-								for _, invite := range props.Invites {
+					@components.Table(components.TableProps{
+						Header: invitesTableHeader(props.IsOwner),
+					}) {
+						for _, invite := range props.Invites {
 									<tr id={ fmt.Sprintf("invite-%s", invite.ID) }>
 										<td class="font-medium">{ invite.Email }</td>
 										<td>{ invite.CreatedBy.Name }</td>
@@ -206,10 +183,8 @@ templ AccountPage(props AccountPageProps) {
 											</td>
 										}
 									</tr>
-								}
-							</tbody>
-						</table>
-					</div>
+						}
+					}
 				}
 			</div>
 			<!-- Invite Modal -->
@@ -308,4 +283,28 @@ templ AccountPage(props AccountPageProps) {
 			}
 		</div>
 	}
+}
+
+templ membersTableHeader(isOwner bool) {
+	<tr>
+		<th>Name</th>
+		<th>Email</th>
+		<th>Role</th>
+		<th class="hide-mobile">Joined</th>
+		if isOwner {
+			<th class="w-20"></th>
+			<th class="w-20"></th>
+		}
+	</tr>
+}
+
+templ invitesTableHeader(isOwner bool) {
+	<tr>
+		<th>Email</th>
+		<th>Invited By</th>
+		<th class="hide-mobile">Date</th>
+		if isOwner {
+			<th class="w-20"></th>
+		}
+	</tr>
 }

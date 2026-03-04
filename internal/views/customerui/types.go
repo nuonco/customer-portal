@@ -9,29 +9,23 @@ import (
 // InstallWithApprovalStatus extends Install with approval status info
 type InstallWithApprovalStatus struct {
 	models.Install
-	AppName             string `json:"app_name"` // Fetched from Nuon API at runtime
-	HasPendingApprovals bool   `json:"has_pending_approvals"`
-	IsUpdating          bool   `json:"is_updating"` // has in-progress workflow without approval steps
+	AppName string `json:"app_name"` // Fetched from Nuon API at runtime
 }
 
 // InstallPaginationData holds pagination metadata for customer installs
 type InstallPaginationData struct {
-	Installs            []InstallWithApprovalStatus `json:"installs"`
-	CurrentPage         int                         `json:"current_page"`
-	TotalPages          int                         `json:"total_pages"`
-	HasPrevious         bool                        `json:"has_previous"`
-	HasNext             bool                        `json:"has_next"`
-	PreviousPage        int                         `json:"previous_page"`
-	NextPage            int                         `json:"next_page"`
-	TotalCount          int64                       `json:"total_count"`
-	PerPage             int                         `json:"per_page"`
-	ShowingFrom         int                         `json:"showing_from"`
-	ShowingTo           int                         `json:"showing_to"`
-	PageNumbers         []int                       `json:"page_numbers"`
-	CurrentTab          string                      `json:"current_tab"`
-	NeedsAttentionCount int64                       `json:"needs_attention_count"`
-	HealthyCount        int64                       `json:"healthy_count"`
-	UpdatingCount       int64                       `json:"updating_count"`
+	Installs     []InstallWithApprovalStatus `json:"installs"`
+	CurrentPage  int                         `json:"current_page"`
+	TotalPages   int                         `json:"total_pages"`
+	HasPrevious  bool                        `json:"has_previous"`
+	HasNext      bool                        `json:"has_next"`
+	PreviousPage int                         `json:"previous_page"`
+	NextPage     int                         `json:"next_page"`
+	TotalCount   int64                       `json:"total_count"`
+	PerPage      int                         `json:"per_page"`
+	ShowingFrom  int                         `json:"showing_from"`
+	ShowingTo    int                         `json:"showing_to"`
+	PageNumbers  []int                       `json:"page_numbers"`
 }
 
 // WorkflowData holds processed workflow information for display

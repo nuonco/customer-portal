@@ -13,6 +13,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AccountPageProps for the account page
@@ -70,7 +71,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Account.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 28, Col: 73}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 29, Col: 73}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -83,7 +84,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Account.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 48, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 49, Col: 34}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -101,7 +102,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Account.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 85, Col: 48}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 86, Col: 48}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -129,7 +130,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues(fmt.Sprintf("border-color: var(--theme-primary); color: var(--theme-primary);"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 106, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 107, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -142,7 +143,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(props.Members)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 109, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 110, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -155,284 +156,374 @@ func AccountPage(props AccountPageProps) templ.Component {
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", len(props.Invites)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 116, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 117, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ")</span></button></div></div></div><!-- Members Tab --><div id=\"tab-members\"><div class=\"table-wrapper\"><table class=\"installs-table\"><thead><tr><th>Name</th><th>Email</th><th>Role</th><th class=\"hide-mobile\">Joined</th>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ")</span></button></div></div></div><!-- Members Tab --><div id=\"tab-members\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if props.IsOwner {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<th class=\"w-20\"></th><th class=\"w-20\"></th>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</tr></thead> <tbody>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			for _, member := range props.Members {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<tr id=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var9 string
-				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("member-%s", member.ID))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 139, Col: 52}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><td class=\"font-medium\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var10 string
-				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Name)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 140, Col: 51}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var11 string
-				templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Email)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 141, Col: 32}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"capitalize\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var12 string
-				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(string(member.Role))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 142, Col: 53}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td class=\"hide-mobile\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var13 string
-				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(member.JoinedAt.Format("Jan 2, 2006"))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 143, Col: 72}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if props.IsOwner {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<td>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if member.Role != models.CustomerAccountRoleOwner {
-						templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)})
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
+			templ_7745c5c3_Var9 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<button onclick=\"")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						var templ_7745c5c3_Var14 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var14.Call)
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" class=\"button button-secondary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm\">Transfer Ownership</button>")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					if member.Role != models.CustomerAccountRoleOwner {
-						templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)})
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<button onclick=\"")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						var templ_7745c5c3_Var15 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15.Call)
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm\">Remove</button>")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</td>")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
+					}()
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</tr>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</tbody></table></div></div><!-- Invited Tab --><div id=\"tab-invited\" class=\"hidden\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if len(props.Invites) == 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"text-center py-12 text-cool-grey-500 dark:text-cool-grey-400\"><i class=\"ph-bold ph-envelope-simple text-[32px] mb-2 block\"></i><p class=\"text-sm\">No pending invites.</p></div>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<div class=\"table-wrapper\"><table class=\"installs-table\"><thead><tr><th>Email</th><th>Invited By</th><th class=\"hide-mobile\">Date</th>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				if props.IsOwner {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<th class=\"w-20\"></th>")
+				ctx = templ.InitializeContext(ctx)
+				for _, member := range props.Members {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr id=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</tr></thead> <tbody>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				for _, invite := range props.Invites {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<tr id=\"")
+					var templ_7745c5c3_Var10 string
+					templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("member-%s", member.ID))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 128, Col: 52}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var16 string
-					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("invite-%s", invite.ID))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 194, Col: 53}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"><td class=\"font-medium\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\"><td class=\"font-medium\">")
+					var templ_7745c5c3_Var11 string
+					templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 129, Col: 51}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var17 string
-					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Email)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 195, Col: 48}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</td><td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</td><td>")
+					var templ_7745c5c3_Var12 string
+					templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Email)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 130, Col: 32}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var18 string
-					templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedBy.Name)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 196, Col: 37}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</td><td class=\"capitalize\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</td><td class=\"hide-mobile\">")
+					var templ_7745c5c3_Var13 string
+					templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(string(member.Role))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 131, Col: 53}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var19 string
-					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedAt.Format("Jan 2, 2006"))
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 197, Col: 74}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td class=\"hide-mobile\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</td>")
+					var templ_7745c5c3_Var14 string
+					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(member.JoinedAt.Format("Jan 2, 2006"))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 132, Col: 72}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					if props.IsOwner {
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<td>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<td>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)})
+						if member.Role != models.CustomerAccountRoleOwner {
+							templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)})
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<button onclick=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var15 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15.Call)
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"button button-secondary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm\">Transfer Ownership</button>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td><td>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<button onclick=\"")
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
+						if member.Role != models.CustomerAccountRoleOwner {
+							templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)})
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<button onclick=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var16 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var16.Call)
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" class=\"button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm\">Remove</button>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
 						}
-						var templ_7745c5c3_Var20 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)}
-						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var20.Call)
-						if templ_7745c5c3_Err != nil {
-							return templ_7745c5c3_Err
-						}
-						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" class=\"button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm\">Revoke</button></td>")
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</td>")
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</tbody></table></div>")
+				return nil
+			})
+			templ_7745c5c3_Err = components.Table(components.TableProps{
+				Header: membersTableHeader(props.IsOwner),
+			}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var9), templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div><!-- Invited Tab --><div id=\"tab-invited\" class=\"hidden\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if len(props.Invites) == 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"text-center py-12 text-cool-grey-500 dark:text-cool-grey-400\"><i class=\"ph-bold ph-envelope-simple text-[32px] mb-2 block\"></i><p class=\"text-sm\">No pending invites.</p></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Var17 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+					if !templ_7745c5c3_IsBuffer {
+						defer func() {
+							templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+							if templ_7745c5c3_Err == nil {
+								templ_7745c5c3_Err = templ_7745c5c3_BufErr
+							}
+						}()
+					}
+					ctx = templ.InitializeContext(ctx)
+					for _, invite := range props.Invites {
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<tr id=\"")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var18 string
+						templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("invite-%s", invite.ID))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 171, Col: 53}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"><td class=\"font-medium\">")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var19 string
+						templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Email)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 172, Col: 48}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</td><td>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var20 string
+						templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedBy.Name)
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 173, Col: 37}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</td><td class=\"hide-mobile\">")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						var templ_7745c5c3_Var21 string
+						templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedAt.Format("Jan 2, 2006"))
+						if templ_7745c5c3_Err != nil {
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/account_members.templ`, Line: 174, Col: 74}
+						}
+						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+						if props.IsOwner {
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<td>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)})
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<button onclick=\"")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							var templ_7745c5c3_Var22 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)}
+							_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var22.Call)
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+							templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" class=\"button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm\">Revoke</button></td>")
+							if templ_7745c5c3_Err != nil {
+								return templ_7745c5c3_Err
+							}
+						}
+						templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</tr>")
+						if templ_7745c5c3_Err != nil {
+							return templ_7745c5c3_Err
+						}
+					}
+					return nil
+				})
+				templ_7745c5c3_Err = components.Table(components.TableProps{
+					Header: invitesTableHeader(props.IsOwner),
+				}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var17), templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div><!-- Invite Modal -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><!-- Invite Modal -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if props.IsOwner {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div id=\"invite-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center\"><div class=\"absolute inset-0 bg-black/50\" onclick=\"document.getElementById('invite-modal').classList.add('hidden')\"></div><div class=\"relative theme-card-bg rounded-lg shadow-xl w-full max-w-md mx-4 p-6\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Add members</h3><label class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-2 block\">Enter email addresses, separated by commas</label> <textarea id=\"invite-emails\" rows=\"3\" placeholder=\"e.g. alice@company.com, bob@company.com\" class=\"w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-cool-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-400\" style=\"border-color: var(--theme-border);\"></textarea><div id=\"invite-modal-result\" class=\"mt-2 text-sm\"></div><div class=\"flex justify-end gap-3 mt-4\"><button onclick=\"document.getElementById('invite-modal').classList.add('hidden');document.getElementById('invite-emails').value='';document.getElementById('invite-modal-result').innerHTML='';document.getElementById('invite-submit-btn').disabled=true;\" class=\"button button-outline btn-theme-outline px-4 py-2 text-sm\">Cancel</button> <button id=\"invite-submit-btn\" onclick=\"submitInviteEmails()\" class=\"button button-primary btn-theme-primary px-4 py-2 text-sm\" disabled>Add members</button></div><script>\n\t\t\t\t\t\t\t(function() {\n\t\t\t\t\t\t\t\tvar ta = document.getElementById('invite-emails');\n\t\t\t\t\t\t\t\tvar btn = document.getElementById('invite-submit-btn');\n\t\t\t\t\t\t\t\tta.addEventListener('input', function() {\n\t\t\t\t\t\t\t\t\tbtn.disabled = ta.value.trim() === '';\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t})();\n\n\t\t\t\t\t\t\tfunction submitInviteEmails() {\n\t\t\t\t\t\t\t\tvar ta = document.getElementById('invite-emails');\n\t\t\t\t\t\t\t\tvar resultDiv = document.getElementById('invite-modal-result');\n\t\t\t\t\t\t\t\tvar btn = document.getElementById('invite-submit-btn');\n\t\t\t\t\t\t\t\tvar emails = ta.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });\n\t\t\t\t\t\t\t\tvar emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\t\t\t\t\t\t\t\tvar invalid = emails.filter(function(e) { return !emailRegex.test(e); });\n\t\t\t\t\t\t\t\tif (invalid.length > 0) {\n\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = '<span class=\"text-red-500\">Invalid email(s): ' + invalid.join(', ') + '</span>';\n\t\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tif (emails.length === 0) {\n\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = '<span class=\"text-red-500\">Please enter at least one email address.</span>';\n\t\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t\t\t\tbtn.textContent = 'Adding...';\n\t\t\t\t\t\t\t\tresultDiv.innerHTML = '';\n\t\t\t\t\t\t\t\tvar results = [];\n\t\t\t\t\t\t\t\tvar done = 0;\n\t\t\t\t\t\t\t\temails.forEach(function(email) {\n\t\t\t\t\t\t\t\t\tfetch('/account/invite', {\n\t\t\t\t\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\t\t\t\t\tbody: JSON.stringify({ email: email })\n\t\t\t\t\t\t\t\t\t}).then(function(r) {\n\t\t\t\t\t\t\t\t\t\treturn r.text().then(function(text) {\n\t\t\t\t\t\t\t\t\t\t\tresults.push({ email: email, ok: r.ok, message: text });\n\t\t\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\t\t}).catch(function() {\n\t\t\t\t\t\t\t\t\t\tresults.push({ email: email, ok: false, message: 'Network error' });\n\t\t\t\t\t\t\t\t\t}).finally(function() {\n\t\t\t\t\t\t\t\t\t\tdone++;\n\t\t\t\t\t\t\t\t\t\tif (done === emails.length) {\n\t\t\t\t\t\t\t\t\t\t\tvar errors = results.filter(function(r) { return !r.ok; });\n\t\t\t\t\t\t\t\t\t\t\tif (errors.length === 0) {\n\t\t\t\t\t\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\t\t\t\t\t\t\tbtn.textContent = 'Add members';\n\t\t\t\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = errors.map(function(e) {\n\t\t\t\t\t\t\t\t\t\t\t\t\treturn '<div class=\"text-red-500\">' + e.email + ': failed to invite</div>';\n\t\t\t\t\t\t\t\t\t\t\t\t}).join('');\n\t\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t</script></div></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<div id=\"invite-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center\"><div class=\"absolute inset-0 bg-black/50\" onclick=\"document.getElementById('invite-modal').classList.add('hidden')\"></div><div class=\"relative theme-card-bg rounded-lg shadow-xl w-full max-w-md mx-4 p-6\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Add members</h3><label class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-2 block\">Enter email addresses, separated by commas</label> <textarea id=\"invite-emails\" rows=\"3\" placeholder=\"e.g. alice@company.com, bob@company.com\" class=\"w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-cool-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-400\" style=\"border-color: var(--theme-border);\"></textarea><div id=\"invite-modal-result\" class=\"mt-2 text-sm\"></div><div class=\"flex justify-end gap-3 mt-4\"><button onclick=\"document.getElementById('invite-modal').classList.add('hidden');document.getElementById('invite-emails').value='';document.getElementById('invite-modal-result').innerHTML='';document.getElementById('invite-submit-btn').disabled=true;\" class=\"button button-outline btn-theme-outline px-4 py-2 text-sm\">Cancel</button> <button id=\"invite-submit-btn\" onclick=\"submitInviteEmails()\" class=\"button button-primary btn-theme-primary px-4 py-2 text-sm\" disabled>Add members</button></div><script>\n\t\t\t\t\t\t\t(function() {\n\t\t\t\t\t\t\t\tvar ta = document.getElementById('invite-emails');\n\t\t\t\t\t\t\t\tvar btn = document.getElementById('invite-submit-btn');\n\t\t\t\t\t\t\t\tta.addEventListener('input', function() {\n\t\t\t\t\t\t\t\t\tbtn.disabled = ta.value.trim() === '';\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t})();\n\n\t\t\t\t\t\t\tfunction submitInviteEmails() {\n\t\t\t\t\t\t\t\tvar ta = document.getElementById('invite-emails');\n\t\t\t\t\t\t\t\tvar resultDiv = document.getElementById('invite-modal-result');\n\t\t\t\t\t\t\t\tvar btn = document.getElementById('invite-submit-btn');\n\t\t\t\t\t\t\t\tvar emails = ta.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });\n\t\t\t\t\t\t\t\tvar emailRegex = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\t\t\t\t\t\t\t\tvar invalid = emails.filter(function(e) { return !emailRegex.test(e); });\n\t\t\t\t\t\t\t\tif (invalid.length > 0) {\n\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = '<span class=\"text-red-500\">Invalid email(s): ' + invalid.join(', ') + '</span>';\n\t\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tif (emails.length === 0) {\n\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = '<span class=\"text-red-500\">Please enter at least one email address.</span>';\n\t\t\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t\t\t\tbtn.textContent = 'Adding...';\n\t\t\t\t\t\t\t\tresultDiv.innerHTML = '';\n\t\t\t\t\t\t\t\tvar results = [];\n\t\t\t\t\t\t\t\tvar done = 0;\n\t\t\t\t\t\t\t\temails.forEach(function(email) {\n\t\t\t\t\t\t\t\t\tfetch('/account/invite', {\n\t\t\t\t\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\t\t\t\t\tbody: JSON.stringify({ email: email })\n\t\t\t\t\t\t\t\t\t}).then(function(r) {\n\t\t\t\t\t\t\t\t\t\treturn r.text().then(function(text) {\n\t\t\t\t\t\t\t\t\t\t\tresults.push({ email: email, ok: r.ok, message: text });\n\t\t\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\t\t}).catch(function() {\n\t\t\t\t\t\t\t\t\t\tresults.push({ email: email, ok: false, message: 'Network error' });\n\t\t\t\t\t\t\t\t\t}).finally(function() {\n\t\t\t\t\t\t\t\t\t\tdone++;\n\t\t\t\t\t\t\t\t\t\tif (done === emails.length) {\n\t\t\t\t\t\t\t\t\t\t\tvar errors = results.filter(function(r) { return !r.ok; });\n\t\t\t\t\t\t\t\t\t\t\tif (errors.length === 0) {\n\t\t\t\t\t\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\t\t\t\t\t\t\tbtn.textContent = 'Add members';\n\t\t\t\t\t\t\t\t\t\t\t\tresultDiv.innerHTML = errors.map(function(e) {\n\t\t\t\t\t\t\t\t\t\t\t\t\treturn '<div class=\"text-red-500\">' + e.email + ': failed to invite</div>';\n\t\t\t\t\t\t\t\t\t\t\t\t}).join('');\n\t\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t\t}\n\t\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t\t});\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t</script></div></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
 		templ_7745c5c3_Err = customerui.Layout(props.LayoutProps).Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func membersTableHeader(isOwner bool) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<tr><th>Name</th><th>Email</th><th>Role</th><th class=\"hide-mobile\">Joined</th>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if isOwner {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<th class=\"w-20\"></th><th class=\"w-20\"></th>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</tr>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func invitesTableHeader(isOwner bool) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var24 == nil {
+			templ_7745c5c3_Var24 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<tr><th>Email</th><th>Invited By</th><th class=\"hide-mobile\">Date</th>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if isOwner {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<th class=\"w-20\"></th>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

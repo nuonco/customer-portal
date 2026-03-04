@@ -1,10 +1,16 @@
 package customerui
 
 import (
+	"os"
+
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
 )
+
+func isLiveReload() bool {
+	return os.Getenv("LIVE_RELOAD") == "true"
+}
 
 // NOTE: LayoutProps is defined in customerui/types.go
 
@@ -86,6 +92,9 @@ templ Layout(props LayoutProps) {
 			<!-- Modals -->
 			@partials.ConfirmModal()
 			@partials.PromptModal()
+			if isLiveReload() {
+				<script src="/_templ/reload/script.js"></script>
+			}
 		</body>
 	</html>
 }

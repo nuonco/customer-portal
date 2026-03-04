@@ -135,6 +135,9 @@ func extractPaginationProps(data interface{}) components.PaginationProps {
 			PreviousPage: ipd.PreviousPage,
 			NextPage:     ipd.NextPage,
 			BaseURL:      "?page=",
+			ShowingFrom:  ipd.ShowingFrom,
+			ShowingTo:    ipd.ShowingTo,
+			TotalCount:   int(ipd.TotalCount),
 		}
 	}
 
@@ -148,6 +151,9 @@ func extractPaginationProps(data interface{}) components.PaginationProps {
 			PreviousPage: ipd.PreviousPage,
 			NextPage:     ipd.NextPage,
 			BaseURL:      "?page=",
+			ShowingFrom:  ipd.ShowingFrom,
+			ShowingTo:    ipd.ShowingTo,
+			TotalCount:   int(ipd.TotalCount),
 		}
 	}
 
@@ -208,6 +214,24 @@ func extractPaginationFromMap(m map[string]interface{}) components.PaginationPro
 		props.BaseURL = "?page="
 	}
 
+	if v, ok := m["ShowingFrom"].(int); ok {
+		props.ShowingFrom = v
+	} else if v, ok := m["showing_from"].(int); ok {
+		props.ShowingFrom = v
+	}
+
+	if v, ok := m["ShowingTo"].(int); ok {
+		props.ShowingTo = v
+	} else if v, ok := m["showing_to"].(int); ok {
+		props.ShowingTo = v
+	}
+
+	if v, ok := m["TotalCount"].(int); ok {
+		props.TotalCount = v
+	} else if v, ok := m["total_count"].(int); ok {
+		props.TotalCount = v
+	}
+
 	return props
 }
 
@@ -247,6 +271,15 @@ func extractPaginationFromReflect(data interface{}) components.PaginationProps {
 	}
 	if f := v.FieldByName("BaseURL"); f.IsValid() && f.Kind() == reflect.String {
 		props.BaseURL = f.String()
+	}
+	if f := v.FieldByName("ShowingFrom"); f.IsValid() && f.Kind() == reflect.Int {
+		props.ShowingFrom = int(f.Int())
+	}
+	if f := v.FieldByName("ShowingTo"); f.IsValid() && f.Kind() == reflect.Int {
+		props.ShowingTo = int(f.Int())
+	}
+	if f := v.FieldByName("TotalCount"); f.IsValid() {
+		props.TotalCount = int(f.Int())
 	}
 
 	return props

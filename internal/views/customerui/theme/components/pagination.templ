@@ -11,11 +11,14 @@ type PaginationProps struct {
 	PreviousPage int
 	NextPage     int
 	BaseURL      string // e.g., "?tab=healthy&page="
+	ShowingFrom  int    // first item index on current page (e.g. 1)
+	ShowingTo    int    // last item index on current page (e.g. 10)
+	TotalCount   int    // total items across all pages
 }
 
 // Pagination renders pagination controls
 templ Pagination(props PaginationProps) {
-	<nav class="customer-card flex items-center justify-between mt-6 px-4 py-3">
+	<nav class="flex items-center justify-between px-3 py-3">
 		<div class="flex-1 flex justify-between sm:hidden">
 			if props.HasPrevious {
 				<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.PreviousPage)) } class="button button-pagination pagination-nav-btn">
@@ -31,29 +34,33 @@ templ Pagination(props PaginationProps) {
 		<div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
 			<div>
 				<p class="text-sm text-cool-grey-700 dark:text-cool-grey-300">
-					Page <span class="font-medium">{ fmt.Sprintf("%d", props.CurrentPage) }</span> of <span class="font-medium">{ fmt.Sprintf("%d", props.TotalPages) }</span>
+					if props.TotalCount > 0 {
+						{ fmt.Sprintf("%d-%d of %d", props.ShowingFrom, props.ShowingTo, props.TotalCount) }
+					} else {
+						Page <span class="font-medium">{ fmt.Sprintf("%d", props.CurrentPage) }</span> of <span class="font-medium">{ fmt.Sprintf("%d", props.TotalPages) }</span>
+					}
 				</p>
 			</div>
 			<div>
-				<nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+				<nav class="relative z-0 inline-flex -space-x-px">
 					if props.HasPrevious {
-						<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.PreviousPage)) } class="button button-pagination pagination-btn rounded-l-md">
+						<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.PreviousPage)) } class="button button-pagination pagination-btn">
 							<span class="sr-only">Previous</span>
 							<i class="ph-bold ph-caret-left text-xl"></i>
 						</a>
 					} else {
-						<span class="pagination-btn-disabled rounded-l-md">
+						<span class="pagination-btn-disabled">
 							<span class="sr-only">Previous</span>
 							<i class="ph-bold ph-caret-left text-xl"></i>
 						</span>
 					}
 					if props.HasNext {
-						<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.NextPage)) } class="button button-pagination pagination-btn rounded-r-md">
+						<a href={ templ.SafeURL(props.BaseURL + fmt.Sprintf("%d", props.NextPage)) } class="button button-pagination pagination-btn">
 							<span class="sr-only">Next</span>
 							<i class="ph-bold ph-caret-right text-xl"></i>
 						</a>
 					} else {
-						<span class="pagination-btn-disabled rounded-r-md">
+						<span class="pagination-btn-disabled">
 							<span class="sr-only">Next</span>
 							<i class="ph-bold ph-caret-right text-xl"></i>
 						</span>

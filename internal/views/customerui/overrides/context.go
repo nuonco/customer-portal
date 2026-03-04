@@ -67,32 +67,26 @@ type RegisterPageData struct {
 
 // InstallsPageData contains data for the installs list page.
 type InstallsPageData struct {
-	Installs            []InstallData `json:"installs"`
-	CurrentTab          string        `json:"current_tab"`
-	TotalCount          int64         `json:"total_count"`
-	NeedsAttentionCount int64         `json:"needs_attention_count"`
-	UpdatingCount       int64         `json:"updating_count"`
-	HealthyCount        int64         `json:"healthy_count"`
-	CurrentPage         int           `json:"current_page"`
-	TotalPages          int           `json:"total_pages"`
-	HasPrevious         bool          `json:"has_previous"`
-	HasNext             bool          `json:"has_next"`
-	PreviousPage        int           `json:"previous_page"`
-	NextPage            int           `json:"next_page"`
-	ShowingFrom         int           `json:"showing_from"`
-	ShowingTo           int           `json:"showing_to"`
+	Installs     []InstallData `json:"installs"`
+	TotalCount   int64         `json:"total_count"`
+	CurrentPage  int           `json:"current_page"`
+	TotalPages   int           `json:"total_pages"`
+	HasPrevious  bool          `json:"has_previous"`
+	HasNext      bool          `json:"has_next"`
+	PreviousPage int           `json:"previous_page"`
+	NextPage     int           `json:"next_page"`
+	ShowingFrom  int           `json:"showing_from"`
+	ShowingTo    int           `json:"showing_to"`
 }
 
 // InstallData contains data for a single install.
 type InstallData struct {
-	ID                 string `json:"id"`
-	Name               string `json:"name"`
-	Status             string `json:"status"`
-	Region             string `json:"region"`
-	Platform           string `json:"platform"`
-	AppName            string `json:"app_name"`
-	CreatedAt          string `json:"created_at"`
-	HasPendingApproval bool   `json:"has_pending_approval"`
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Region    string `json:"region"`
+	Platform  string `json:"platform"`
+	AppName   string `json:"app_name"`
+	CreatedAt string `json:"created_at"`
 }
 
 // InstallDetailPageData contains data for the install detail page.

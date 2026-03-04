@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"math"
 	"net/http"
 	"sync"
@@ -66,9 +65,8 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		initialInstallID = installIDParam
 	}
 
-	// Tab and pagination parameters
+	// Pagination parameters
 	const installsPerPage = 10
-	currentTab := c.DefaultQuery("tab", "needs-attention")
 	page := getPageFromQuery(c)
 	offset := (page - 1) * installsPerPage
 
@@ -107,105 +105,25 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		return
 	}
 
-	// Check status of all installs in parallel with bounded concurrency
-	statuses := make([]installStatus, len(allInstalls))
-	{
-		var wg sync.WaitGroup
-		sem := make(chan struct{}, 10)
-		ctx := c.Request.Context()
-		for i, install := range allInstalls {
-			wg.Add(1)
-			go func(i int, install models.Install) {
-				defer wg.Done()
-				sem <- struct{}{}
-				defer func() { <-sem }()
-				statuses[i] = h.checkInstallStatus(ctx, &install)
-			}(i, install)
-		}
-		wg.Wait()
-	}
-
-	// Separate installs by status into tabs
-	var needsAttentionInstalls []customerui.InstallWithApprovalStatus
-	var healthyInstalls []customerui.InstallWithApprovalStatus
-	var updatingInstalls []customerui.InstallWithApprovalStatus
-
-	for i, install := range allInstalls {
-		st := statuses[i]
-		installWithStatus := customerui.InstallWithApprovalStatus{
-			Install:             install,
-			HasPendingApprovals: st.HasPendingApprovals,
-			IsUpdating:          st.IsUpdating,
-		}
-
-		// Categorization logic (priority order):
-		// 1. Needs Attention: pending approvals OR active provision
-		// 2. Updating: in-progress workflow without approvals
-		// 3. Healthy: everything else
-		needsAttention := st.HasPendingApprovals || st.HasActiveProvision
-
-		if needsAttention {
-			needsAttentionInstalls = append(needsAttentionInstalls, installWithStatus)
-		} else if st.IsUpdating {
-			updatingInstalls = append(updatingInstalls, installWithStatus)
-		} else {
-			healthyInstalls = append(healthyInstalls, installWithStatus)
-		}
-	}
-
-	// Get counts for each tab
-	needsAttentionCount := int64(len(needsAttentionInstalls))
-	healthyCount := int64(len(healthyInstalls))
-	updatingCount := int64(len(updatingInstalls))
-
-	// If navigating directly to a specific install, switch to the tab that contains it
-	if initialInstallID != "" && c.Query("tab") == "" {
-		for _, inst := range updatingInstalls {
-			if inst.Install.ID == initialInstallID {
-				currentTab = "updating"
-				break
-			}
-		}
-		if currentTab == "needs-attention" {
-			for _, inst := range healthyInstalls {
-				if inst.Install.ID == initialInstallID {
-					currentTab = "healthy"
-					break
-				}
-			}
-		}
-	}
-
-	// Select the appropriate list based on current tab
-	var filteredInstalls []customerui.InstallWithApprovalStatus
-	var totalCount int64
-
-	switch currentTab {
-	case "healthy":
-		filteredInstalls = healthyInstalls
-		totalCount = healthyCount
-	case "updating":
-		filteredInstalls = updatingInstalls
-		totalCount = updatingCount
-	default: // "needs-attention"
-		filteredInstalls = needsAttentionInstalls
-		totalCount = needsAttentionCount
-	}
-
-	// Apply pagination to filtered installs
+	// Paginate directly from allInstalls (already sorted by created_at DESC from DB)
+	totalCount := int64(len(allInstalls))
 	var paginatedInstalls []customerui.InstallWithApprovalStatus
-	if len(filteredInstalls) > 0 {
+	if len(allInstalls) > 0 {
 		startIndex := offset
 		endIndex := offset + installsPerPage
-		if startIndex >= len(filteredInstalls) {
+		if startIndex >= len(allInstalls) {
 			startIndex = 0
 			page = 1
 			offset = 0
 		}
-		if endIndex > len(filteredInstalls) {
-			endIndex = len(filteredInstalls)
+		if endIndex > len(allInstalls) {
+			endIndex = len(allInstalls)
 		}
-		paginatedInstalls = filteredInstalls[startIndex:endIndex]
+		for _, install := range allInstalls[startIndex:endIndex] {
+			paginatedInstalls = append(paginatedInstalls, customerui.InstallWithApprovalStatus{
+				Install: install,
+			})
+		}
 	}
 
 	// Calculate pagination metadata
@@ -235,30 +153,25 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	pagination := customerui.InstallPaginationData{
-		Installs:            paginatedInstalls,
-		CurrentPage:         page,
-		TotalPages:          totalPages,
-		HasPrevious:         page > 1,
-		HasNext:             page < totalPages,
-		PreviousPage:        page - 1,
-		NextPage:            page + 1,
-		TotalCount:          totalCount,
-		PerPage:             installsPerPage,
-		ShowingFrom:         showingFrom,
-		ShowingTo:           showingTo,
-		PageNumbers:         pageNumbers,
-		CurrentTab:          currentTab,
-		NeedsAttentionCount: needsAttentionCount,
-		HealthyCount:        healthyCount,
-		UpdatingCount:       updatingCount,
+		Installs:     paginatedInstalls,
+		CurrentPage:  page,
+		TotalPages:   totalPages,
+		HasPrevious:  page > 1,
+		HasNext:      page < totalPages,
+		PreviousPage: page - 1,
+		NextPage:     page + 1,
+		TotalCount:   totalCount,
+		PerPage:      installsPerPage,
+		ShowingFrom:  showingFrom,
+		ShowingTo:    showingTo,
+		PageNumbers:  pageNumbers,
 	}
 
 	// Always use the subdomain's org for theme — it is the authoritative org context
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 
-	// Fetch platform and app name information for all paginated installs in parallel
-	platformMap := make(map[string]string)
+	// Fetch app name information for all paginated installs in parallel
 	appNameMap := make(map[string]string)
 
 	// Collect unique app IDs and their org credentials, plus fallback names
@@ -281,7 +194,6 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 			fallback = inst.Install.InstallLink.AppName
 		}
 		if org == nil || org.APIToken == "" {
-			platformMap[appID] = ""
 			if fallback != "" {
 				appNameMap[appID] = fallback
 			}
@@ -293,9 +205,8 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	// Fetch app details in parallel with bounded concurrency
 	if len(toFetch) > 0 {
 		type appResult struct {
-			appID    string
-			platform string
-			appName  string
+			appID   string
+			appName string
 		}
 		results := make([]appResult, len(toFetch))
 		var wg sync.WaitGroup
@@ -312,9 +223,6 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 					app, err := nuonClient.GetApp(c.Request.Context(), info.appID)
 					if err == nil && app != nil {
 						res.appName = app.Name
-						if app.RunnerConfig != nil {
-							res.platform = string(app.RunnerConfig.AppRunnerType)
-						}
 					}
 				}
 				results[i] = res
@@ -322,51 +230,49 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		}
 		wg.Wait()
 		for _, res := range results {
-			platformMap[res.appID] = res.platform
 			if res.appName != "" {
 				appNameMap[res.appID] = res.appName
 			}
 		}
 	}
 
-	// Set AppName on each paginated install from the fetched map
+	// Set AppName on each paginated install from the fetched map (preserve existing name if API lookup failed)
 	for i, inst := range paginatedInstalls {
-		paginatedInstalls[i].AppName = appNameMap[inst.Install.GetAppID()]
+		if name := appNameMap[inst.Install.GetAppID()]; name != "" {
+			paginatedInstalls[i].AppName = name
+		}
 	}
 
 	// Try template override first
 	installsData := make([]overrides.InstallData, 0, len(paginatedInstalls))
 	for _, inst := range paginatedInstalls {
 		appID := inst.Install.GetAppID()
-		platform := platformMap[appID]
+		appName := appNameMap[appID]
+		if appName == "" {
+			appName = inst.AppName
+		}
 
 		installsData = append(installsData, overrides.InstallData{
-			ID:                 inst.Install.ID,
-			Name:               inst.Install.Name,
-			Status:             string(inst.Install.Status),
-			Region:             inst.Install.Region,
-			Platform:           platform,
-			AppName:            appNameMap[appID],
-			CreatedAt:          inst.Install.CreatedAt.Format("Jan 2, 2006"),
-			HasPendingApproval: inst.HasPendingApprovals,
+			ID:        inst.Install.ID,
+			Name:      inst.Install.Name,
+			Region:    inst.Install.Region,
+			Platform:  "",
+			AppName:   appName,
+			CreatedAt: inst.Install.CreatedAt.Format("Jan 2, 2006"),
 		})
 	}
 
 	pageData := overrides.InstallsPageData{
-		Installs:            installsData,
-		CurrentTab:          currentTab,
-		TotalCount:          totalCount,
-		NeedsAttentionCount: needsAttentionCount,
-		UpdatingCount:       updatingCount,
-		HealthyCount:        healthyCount,
-		CurrentPage:         page,
-		TotalPages:          totalPages,
-		HasPrevious:         page > 1,
-		HasNext:             page < totalPages,
-		PreviousPage:        page - 1,
-		NextPage:            page + 1,
-		ShowingFrom:         showingFrom,
-		ShowingTo:           showingTo,
+		Installs:     installsData,
+		TotalCount:   totalCount,
+		CurrentPage:  page,
+		TotalPages:   totalPages,
+		HasPrevious:  page > 1,
+		HasNext:      page < totalPages,
+		PreviousPage: page - 1,
+		NextPage:     page + 1,
+		ShowingFrom:  showingFrom,
+		ShowingTo:    showingTo,
 	}
 
 	ctx := h.buildTemplateContext(orgID, "Your Installs", user, theme, pageData)
@@ -388,80 +294,5 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 }
 
 // getString safely gets a string value from a gin.H map
-
-type installStatus struct {
-	HasPendingApprovals bool
-	IsUpdating          bool
-	HasActiveProvision  bool
-}
-
-// checkInstallStatus determines all status flags for an install using minimal API calls.
-// It uses the already-preloaded NuonOrg (no extra DB query) and makes one GetInstallWorkflows
-// call plus up to 4 GetInstallWorkflowsByType calls (short-circuiting on first active match).
-
-func (h *Handler) checkInstallStatus(ctx context.Context, install *models.Install) installStatus {
-	org := install.GetNuonOrg()
-	if org == nil || org.APIToken == "" {
-		return installStatus{}
-	}
-
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
-	if err != nil {
-		return installStatus{}
-	}
-
-	var st installStatus
-
-	// Single call to get recent workflows — determines both HasPendingApprovals and IsUpdating
-	const checkLimit = 5
-	workflows, _, err := nuonClient.GetInstallWorkflows(ctx, install.NuonInstallID, 0, checkLimit)
-	if err == nil {
-		for _, workflow := range workflows {
-			if workflow.Status == nil {
-				continue
-			}
-			status := string(workflow.Status.Status)
-			switch status {
-			case "approval-awaiting":
-				st.HasPendingApprovals = true
-			case "in-progress":
-				hasApprovalStep := false
-				if workflow.Steps != nil {
-					for _, step := range workflow.Steps {
-						if step.ExecutionType == "approval" {
-							hasApprovalStep = true
-							break
-						}
-					}
-				}
-				if hasApprovalStep {
-					st.HasPendingApprovals = true
-				} else {
-					st.IsUpdating = true
-				}
-			}
-		}
-	}
-
-	// Check for active provision workflows (short-circuit on first match)
-	provisionTypes := []string{"provision", "provision_sandbox", "reprovision", "reprovision_sandbox"}
-	for _, wfType := range provisionTypes {
-		provWorkflows, _, err := nuonClient.GetInstallWorkflowsByType(ctx, install.NuonInstallID, 0, 1, wfType)
-		if err != nil || len(provWorkflows) == 0 {
-			continue
-		}
-		wf := provWorkflows[0]
-		if wf.Status == nil {
-			continue
-		}
-		s := string(wf.Status.Status)
-		if s == "pending" || s == "in-progress" || s == "approval-awaiting" {
-			st.HasActiveProvision = true
-			break
-		}
-	}
-
-	return st
-}
 
 // InstallDetailPanel renders the install detail content for the sliding panel (no layout wrapper)

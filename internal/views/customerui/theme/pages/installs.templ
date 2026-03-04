@@ -18,89 +18,17 @@ type InstallsPageProps struct {
 // InstallsPage renders the customer installs page with table layout and sliding panel
 templ InstallsPage(props InstallsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		if props.Pagination.NeedsAttentionCount+props.Pagination.UpdatingCount+props.Pagination.HealthyCount > 0 {
-			<!-- Tab Interface -->
-			<div class="mb-6">
-				<div class="tabs-divider">
-					<nav class="flex">
-						@installTab("needs-attention", "Needs Attention", props.Pagination.CurrentTab, props.Pagination.NeedsAttentionCount, props.PrimaryColor)
-						@installTab("updating", "Updating", props.Pagination.CurrentTab, props.Pagination.UpdatingCount, props.PrimaryColor)
-						@installTab("healthy", "Healthy", props.Pagination.CurrentTab, props.Pagination.HealthyCount, props.PrimaryColor)
-					</nav>
-				</div>
-			</div>
-			if len(props.Pagination.Installs) > 0 {
-				<!-- Tab Content Description -->
-				<div class="mb-4">
-					if props.Pagination.CurrentTab == "healthy" {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs are running smoothly with all health checks passing.</p>
-					} else if props.Pagination.CurrentTab == "updating" {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs have updates in progress that don't require your approval.</p>
-					} else {
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">These installs have pending approvals or health check issues requiring your attention.</p>
-					}
-				</div>
-				<div class="flex justify-between items-center mb-4">
-					<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400">
-						{ fmt.Sprintf("%d-%d of %d", props.Pagination.ShowingFrom, props.Pagination.ShowingTo, props.Pagination.TotalCount) }
-					</span>
-				</div>
-				<!-- Installs Table -->
-				<div class="table-wrapper">
-					<table class="installs-table">
-						<thead>
-							<tr>
-								<th>Install</th>
-								<th>App</th>
-								<th>Platform</th>
-								<th class="hide-mobile">Region</th>
-								<th class="hide-mobile">Created</th>
-							</tr>
-						</thead>
-						<tbody>
-							for _, install := range props.Pagination.Installs {
-								@installTableRow(install, props.BasePath)
-							}
-						</tbody>
-					</table>
-				</div>
-				<!-- Pagination Controls -->
-				if props.Pagination.TotalPages > 1 {
-					<div class="mt-6">
-						@components.Pagination(components.PaginationProps{
-							CurrentPage:  props.Pagination.CurrentPage,
-							TotalPages:   props.Pagination.TotalPages,
-							HasPrevious:  props.Pagination.HasPrevious,
-							HasNext:      props.Pagination.HasNext,
-							PreviousPage: props.Pagination.PreviousPage,
-							NextPage:     props.Pagination.NextPage,
-							BaseURL:      fmt.Sprintf("?tab=%s&page=", props.Pagination.CurrentTab),
-						})
-					</div>
-				}
-			} else {
-				<!-- Empty State for Current Tab -->
-				if props.Pagination.CurrentTab == "healthy" {
-					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No healthy installs",
-						Message: "All your installs need attention or are being updated",
-						Icon:    "check-circle",
-					})
-				} else if props.Pagination.CurrentTab == "updating" {
-					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No updates in progress",
-						Message: "None of your installs are being updated",
-						Icon:    "refresh",
-					})
-				} else {
-					@components.EmptyState(components.EmptyStateProps{
-						Title:   "No installs need attention",
-						Message: "All your installs are healthy",
-						Icon:    "check-circle",
-					})
+		if len(props.Pagination.Installs) > 0 {
+			<!-- Installs Table -->
+			@components.Table(components.TableProps{
+				Header: installsTableHeader(),
+				Footer: paginationFooter(props),
+			}) {
+				for _, install := range props.Pagination.Installs {
+					@installTableRow(install, props.BasePath)
 				}
 			}
-		} else {
+		} else if props.User == nil || props.Pagination.TotalCount == 0 {
 			if props.User == nil {
 				<!-- Not logged in — show login CTA -->
 				@components.EmptyState(components.EmptyStateProps{
@@ -202,43 +130,14 @@ templ InstallsPage(props InstallsPageProps) {
 	}
 }
 
-templ installTab(tabID, label, currentTab string, count int64, primaryColor string) {
-	{{
-		isActive := currentTab == tabID || (tabID == "needs-attention" && currentTab == "")
-
-		// Badge colors
-		badgeBgClass := "bg-cool-grey-100 dark:bg-dark-grey-700"
-		badgeTextClass := "text-cool-grey-900 dark:text-cool-grey-300"
-
-		if count > 0 {
-			switch tabID {
-			case "needs-attention":
-				badgeBgClass = "bg-orange-100 dark:bg-orange-900/30"
-				badgeTextClass = "text-orange-800 dark:text-orange-300"
-			case "updating":
-				badgeBgClass = "bg-blue-100 dark:bg-blue-900/30"
-				badgeTextClass = "text-blue-800 dark:text-blue-300"
-			case "healthy":
-				badgeBgClass = "bg-green-100 dark:bg-green-900/30"
-				badgeTextClass = "text-green-800 dark:text-green-300"
-			}
-		}
-	}}
-	if isActive {
-		<a href={ templ.SafeURL("?tab=" + tabID) } class="button button-nav nav-item active">
-			{ label }
-			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
-				{ fmt.Sprintf("%d", count) }
-			</span>
-		</a>
-	} else {
-		<a href={ templ.SafeURL("?tab=" + tabID) } class="button button-nav nav-item">
-			{ label }
-			<span class={ "ml-2 rounded-full px-2.5 py-0.5 text-xs font-medium", badgeBgClass, badgeTextClass }>
-				{ fmt.Sprintf("%d", count) }
-			</span>
-		</a>
-	}
+templ installsTableHeader() {
+	<tr>
+		<th>Name</th>
+		<th>App</th>
+		<th>Platform</th>
+		<th class="hide-mobile">Region</th>
+		<th class="hide-mobile">Created</th>
+	</tr>
 }
 
 templ installTableRow(install customerui.InstallWithApprovalStatus, basePath string) {
@@ -268,14 +167,14 @@ templ installTableRow(install customerui.InstallWithApprovalStatus, basePath str
 		<td>
 			@components.PlatformChip(platform)
 		</td>
-		<td class="hide-mobile">
+		<td>
 			if install.Region != "" {
 				{ install.Region }
 			} else {
 				<span class="text-cool-grey-400 dark:text-cool-grey-500">—</span>
 			}
 		</td>
-		<td class="hide-mobile">
+		<td>
 			{ install.CreatedAt.Format("Jan 2, 2006") }
 		</td>
 	</tr>
@@ -480,4 +379,19 @@ templ installsPanelScripts() {
 			});
 		})();
 	</script>
+}
+
+templ paginationFooter(props InstallsPageProps) {
+	@components.Pagination(components.PaginationProps{
+		CurrentPage:  props.Pagination.CurrentPage,
+		TotalPages:   props.Pagination.TotalPages,
+		HasPrevious:  props.Pagination.HasPrevious,
+		HasNext:      props.Pagination.HasNext,
+		PreviousPage: props.Pagination.PreviousPage,
+		NextPage:     props.Pagination.NextPage,
+		BaseURL:      "?page=",
+		ShowingFrom:  props.Pagination.ShowingFrom,
+		ShowingTo:    props.Pagination.ShowingTo,
+		TotalCount:   int(props.Pagination.TotalCount),
+	})
 }

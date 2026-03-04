@@ -29,7 +29,7 @@ health_checks:
   - http://localhost:8080/livez
 
 env:
-  PORT: 8080
+  PORT: 7331
   GIN_MODE: debug
 
   # Database config for local PostgreSQL
@@ -53,20 +53,14 @@ env:
   SERVICE_DEPLOYMENT: customer-dashboard
   DISABLE_METRICS: true
 
-watch_ignore:
-  - '\/static/'
-  - '\/node_modules/'
-  - '\/tmp/'
-  - '_templ\.go$'
+disable_watch: true   # templ generate --watch handles all file watching
 
 local_startup_cmds:
 
 local_build_cmds:
-  - go generate ./...
-  - go build -o ./tmp/main .
 
 local_cmds:
-  - ./tmp/main
+  - ./scripts/dev.sh
 
 docker_cmds:
   - cmd: ""

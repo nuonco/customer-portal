@@ -134,6 +134,8 @@ General vendor journeys.
 
 ## Development Guide
 
+Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. When run in dev mode, the service will listen on port :7331, and a dev proxy will listen to :8080. This is to support live reloading in the browser while making changes. When run in container mode, and in stage and prod, the service itself will listen to port :8080.
+
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
 
 A high-level design principal is that this app has two sections. The first is the customer portal that customer users log into and interact with. The second is an admin section, that vendors log into so they can configure the customer portal. While we use the same libraries and design patterns across both, the two sections are kept separate. Each has it's own set of Gin routes, gin handlers, Templ templates, and Tailwind styles.

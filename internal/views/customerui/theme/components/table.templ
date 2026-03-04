@@ -1,0 +1,29 @@
+package components
+
+// TableProps configures the reusable table component.
+type TableProps struct {
+	Header templ.Component // rendered inside <thead>
+	Footer templ.Component // optional, rendered after table inside wrapper
+	ID     string          // optional id on <tbody>
+}
+
+// Table renders a standard table with wrapper, thead, and tbody.
+templ Table(props TableProps) {
+	<div class="table-wrapper">
+		<table class="installs-table">
+			<thead>
+				@props.Header
+			</thead>
+			<tbody
+				if props.ID != "" {
+					id={ props.ID }
+				}
+			>
+				{ children... }
+			</tbody>
+		</table>
+		if props.Footer != nil {
+			@props.Footer
+		}
+	</div>
+}

@@ -555,6 +555,23 @@
   border-bottom: 1px solid var(--theme-surface-raised);
 }
 
+.installs-table tbody tr {
+  @apply cursor-pointer transition-colors duration-150;
+  background-color: var(--theme-white, #ffffff);
+}
+
+.dark .installs-table tbody tr {
+  background-color: var(--theme-black, #1e2433);
+}
+
+.installs-table tbody tr:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.dark .installs-table tbody tr:hover {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+}
+
 .install-row {
   @apply cursor-pointer transition-colors duration-150;
   background-color: var(--theme-white, #ffffff);
@@ -1130,49 +1147,50 @@ body {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .pagination-btn {
-  background-color: var(--theme-white, #ffffff);
+  background-color: transparent;
   @apply relative inline-flex items-center px-2 py-2;
   @apply text-sm font-medium text-cool-grey-500 dark:text-cool-grey-400;
-  @apply dark:hover:bg-dark-grey-700;
-  border: 1px solid var(--theme-border);
+  border: none;
 }
 
 .pagination-btn:hover {
-  background-color: var(--theme-surface-subtle);
+  background-color: transparent;
+  opacity: 0.7;
 }
 
 .dark .pagination-btn {
-  background-color: var(--theme-surface-raised);
+  background-color: transparent;
   border-color: transparent;
 }
 
 .pagination-btn-disabled {
   @apply relative inline-flex items-center px-2 py-2;
   @apply text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 cursor-not-allowed;
-  background-color: var(--theme-surface-raised);
-  border: 1px solid var(--theme-border);
+  background-color: transparent;
+  border: none;
+  opacity: 0.4;
 }
 
 .dark .pagination-btn-disabled {
-  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+  background-color: transparent;
   border-color: transparent;
 }
 
 .pagination-nav-btn {
-  background-color: var(--theme-white, #ffffff);
+  background-color: transparent;
   @apply inline-flex items-center px-4 py-2 text-sm font-medium;
   @apply text-cool-grey-700 dark:text-cool-grey-300;
-  @apply dark:hover:bg-dark-grey-700;
-  border: 1px solid var(--theme-border);
+  border: none;
   border-radius: var(--theme-radius);
 }
 
 .pagination-nav-btn:hover {
-  background-color: var(--theme-surface-subtle);
+  background-color: transparent;
+  opacity: 0.7;
 }
 
 .dark .pagination-nav-btn {
-  background-color: var(--theme-surface-raised);
+  background-color: transparent;
   border-color: transparent;
 }
 

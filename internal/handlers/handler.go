@@ -223,6 +223,7 @@ func (h *Handler) GetUserOrgs(userID string) []models.NuonOrg {
 
 func (h *Handler) RenderTempl(c *gin.Context, status int, component templ.Component) {
 	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.Header("templ-skip-modify", "true")
 	c.Status(status)
 	if err := component.Render(c.Request.Context(), c.Writer); err != nil {
 		c.String(http.StatusInternalServerError, "Render error: %v", err)
