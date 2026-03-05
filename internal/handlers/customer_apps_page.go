@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"sync"
@@ -30,7 +32,15 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
 	appDisplays := make([]customerpages.PublishedAppDisplay, len(publishedApps))
-	if len(publishedApps) > 0 {
+	if len(publishedApps) == 1 {
+		// Single app: full detail fetch so the full-width card has all tab data
+		pa := publishedApps[0]
+		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
+		display.LogoLightBase64 = pa.LogoLightBase64
+		display.LogoDarkBase64 = pa.LogoDarkBase64
+		appDisplays[0] = display
+	} else if len(publishedApps) > 1 {
 		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 
 		// Fetch only app name/platform/description in parallel (no heavy detail calls)
@@ -88,7 +98,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 
 	ctx := c.Request.Context()
 
-	// Fan out all 7 API calls concurrently
+	// Fan out all 6 API calls concurrently
 	var (
 		wg          sync.WaitGroup
 		app         *nuonmodels.AppApp
@@ -97,8 +107,6 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		compErr     error
 		sbCfg       *nuonmodels.AppAppSandboxConfig
 		sbErr       error
-		permCfg     *nuonmodels.AppAppPermissionsConfig
-		permErr     error
 		policies    []nuon.AppPoliciesConfigPolicy
 		polErr      error
 		secretsCfg  *nuonmodels.AppAppSecretsConfig
@@ -107,11 +115,10 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		inputErr    error
 	)
 
-	wg.Add(7)
+	wg.Add(6)
 	go func() { defer wg.Done(); app, appErr = nuonClient.GetApp(ctx, appID) }()
 	go func() { defer wg.Done(); comps, compErr = nuonClient.GetAppComponents(ctx, appID) }()
 	go func() { defer wg.Done(); sbCfg, sbErr = nuonClient.GetAppSandboxLatestConfig(ctx, appID) }()
-	go func() { defer wg.Done(); permCfg, permErr = nuonClient.GetLatestAppPermissionsConfig(ctx, appID) }()
 	go func() { defer wg.Done(); policies, polErr = nuonClient.GetLatestAppPoliciesConfigFull(ctx, appID) }()
 	go func() { defer wg.Done(); secretsCfg, secErr = nuonClient.GetAppSecretsConfig(ctx, appID) }()
 	go func() { defer wg.Done(); inputConfig, inputErr = nuonClient.GetAppInputConfig(ctx, appID) }()
@@ -158,10 +165,8 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		}
 	}
 
-	// Process permissions config
-	if permErr != nil {
-		zap.L().Warn("failed to fetch app permissions config", zap.String("app_id", appID), zap.Error(permErr))
-	} else if permCfg != nil {
+	// Process roles from full app config (with recurse=true to get nested permissions)
+	if appErr == nil && app != nil && len(app.AppConfigs) > 0 {
 		addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
 			if role == nil || role.Name == "" {
 				return
@@ -170,25 +175,77 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 			if name == "" {
 				name = role.Name
 			}
-			display.Permissions = append(display.Permissions, customerpages.IAMRoleDisplay{
-				Label:       label,
-				Name:        name,
-				Description: role.Description,
-			})
-		}
-		if permCfg.ProvisionAwsIamRole.Name != "" {
-			prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
-			addRole(&prov, "Provision")
-		}
-		addRole(permCfg.DeprovisionAwsIamRole, "Deprovision")
-		addRole(permCfg.MaintenanceAwsIamRole, "Maintenance")
-		addRole(permCfg.BreakGlassAwsIamRole, "Break Glass")
-		for _, r := range permCfg.AwsIamRoles {
-			label := r.DisplayName
-			if label == "" {
-				label = r.Name
+			permBoundary := role.PermissionsBoundary
+			if permBoundary != "" {
+				if decoded, err := base64.StdEncoding.DecodeString(permBoundary); err == nil {
+					var prettyJSON bytes.Buffer
+					if json.Indent(&prettyJSON, decoded, "", "  ") == nil {
+						permBoundary = prettyJSON.String()
+					}
+				}
 			}
-			addRole(r, label)
+			rd := customerpages.IAMRoleDisplay{
+				Label:               label,
+				Name:                name,
+				Description:         role.Description,
+				Type:                string(role.Type),
+				PermissionsBoundary: permBoundary,
+			}
+			for _, p := range role.Policies {
+				if p == nil {
+					continue
+				}
+				policyType := "Vendor defined"
+				if p.ManagedPolicyName != "" {
+					policyType = "AWS managed"
+				}
+				pName := p.Name
+				if pName == "" {
+					pName = p.ManagedPolicyName
+				}
+				rd.Policies = append(rd.Policies, customerpages.IAMPolicyDisplay{
+					Name:             pName,
+					Type:             policyType,
+					ManagedPolicyARN: p.ManagedPolicyName,
+				})
+			}
+			display.Permissions = append(display.Permissions, rd)
+		}
+
+		configID := app.AppConfigs[0].ID
+		fullCfg, fullCfgErr := nuonClient.GetAppConfigFull(ctx, appID, configID)
+		if fullCfgErr != nil {
+			zap.L().Warn("failed to fetch full app config for roles", zap.String("app_id", appID), zap.Error(fullCfgErr))
+		} else if fullCfg != nil && fullCfg.Permissions != nil {
+			permCfg := fullCfg.Permissions
+
+			// Track named role IDs to avoid duplicates from AwsIamRoles
+			seen := map[string]bool{}
+			trackAndAdd := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
+				if role == nil || role.Name == "" {
+					return
+				}
+				seen[role.Name] = true
+				addRole(role, label)
+			}
+
+			if permCfg.ProvisionAwsIamRole.Name != "" {
+				prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
+				trackAndAdd(&prov, "Provision")
+			}
+			trackAndAdd(permCfg.DeprovisionAwsIamRole, "Deprovision")
+			trackAndAdd(permCfg.MaintenanceAwsIamRole, "Maintenance")
+			trackAndAdd(permCfg.BreakGlassAwsIamRole, "Break Glass")
+			for _, r := range permCfg.AwsIamRoles {
+				if seen[r.Name] {
+					continue
+				}
+				label := r.DisplayName
+				if label == "" {
+					label = r.Name
+				}
+				addRole(r, label)
+			}
 		}
 	}
 

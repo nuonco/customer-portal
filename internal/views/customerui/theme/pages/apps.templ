@@ -2,10 +2,19 @@ package pages
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
+
+func humanize(s string) string {
+	s = strings.ReplaceAll(s, "_", " ")
+	if len(s) > 0 {
+		s = strings.ToUpper(s[:1]) + s[1:]
+	}
+	return s
+}
 
 // ComponentDisplay holds display info for a single app component
 type ComponentDisplay struct {
@@ -13,11 +22,21 @@ type ComponentDisplay struct {
 	Type string // "helm_chart", "docker_build", "terraform_module", "external_image", "job", "kubernetes_manifest"
 }
 
-// IAMRoleDisplay holds display info for a single IAM role permission.
+// IAMPolicyDisplay holds display info for a single IAM policy within a role.
+type IAMPolicyDisplay struct {
+	Name             string
+	Type             string // "AWS managed" or "Vendor defined"
+	ManagedPolicyARN string // for AWS managed policies
+}
+
+// IAMRoleDisplay holds display info for a single IAM role.
 type IAMRoleDisplay struct {
-	Label       string // "Provision", "Deprovision", "Maintenance", "Break Glass", or role display name
-	Name        string // display_name, fallback to name
-	Description string
+	Label               string // "Provision", "Deprovision", "Maintenance", "Break Glass", or role display name
+	Name                string // display_name, fallback to name
+	Description         string
+	Type                string // e.g. "provision", "deprovision", etc.
+	Policies            []IAMPolicyDisplay
+	PermissionsBoundary string
 }
 
 // PolicyDisplay holds display info for a single deployment policy.
@@ -114,7 +133,9 @@ type CustomerAppDetailPageProps struct {
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
 		<div>
-			if len(props.Apps) > 0 {
+			if len(props.Apps) == 1 {
+				@appFullWidthCard(props.Apps[0], props.BasePath)
+			} else if len(props.Apps) > 1 {
 				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					for _, app := range props.Apps {
 						@appCatalogCard(app, props.BasePath)
@@ -158,7 +179,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-secrets')"} }>Secrets</button>
 				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-sandbox')"} }>Sandbox</button>
 				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-comp')"} }>Components</button>
-				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Permissions</button>
+				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-perms')"} }>Roles</button>
 				<button class="button button-nav nav-item" onclick={ templ.ComponentScript{Call: "switchAppCatalogTab(this, 'act-" + app.AppID + "-pols')"} }>Policies</button>
 			</div>
 			// Overview pane
@@ -322,31 +343,66 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 							for _, comp := range app.Components {
 								<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
 									<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">{ comp.Name }</td>
-									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">{ comp.Type }</td>
+									<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+									<span class="flex items-center gap-1.5">
+										@componentTypeIcon(comp.Type)
+										{ humanize(comp.Type) }
+									</span>
+								</td>
 								</tr>
 							}
 						</tbody>
 					</table>
 				}
 			</div>
-			// Permissions pane
+			// Roles pane
 			<div id={ "act-" + app.AppID + "-perms" } class="panel-tab-pane">
 				if len(app.Permissions) == 0 {
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No permissions configured.</p>
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No roles configured.</p>
 				} else {
-					<ul class="space-y-3">
+					<div class="space-y-6">
 						for _, role := range app.Permissions {
-							<li class="text-sm">
-								<div class="flex items-center gap-2 mb-0.5">
-									<span class="chip-sm-neutral">{ role.Label }</span>
-									<span class="font-medium text-cool-grey-900 dark:text-white">{ role.Name }</span>
+							<div>
+								<div class="mb-2">
+									<h4 class="text-base font-semibold text-cool-grey-900 dark:text-white">{ role.Name }</h4>
+									if role.Description != "" {
+										<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mt-1">{ role.Description }</p>
+									}
 								</div>
-								if role.Description != "" {
-									<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 pl-1">{ role.Description }</p>
+								if len(role.Policies) > 0 {
+									<div class="mt-3">
+										<h5 class="text-xs font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide mb-2">Policies</h5>
+										<table class="w-full table-fixed text-sm text-left">
+											<thead>
+												<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+													<th class="w-1/2 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+													<th class="w-1/2 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+												</tr>
+											</thead>
+											<tbody>
+												for _, pol := range role.Policies {
+													<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700">
+														<td class="py-2 pr-4 text-cool-grey-900 dark:text-white">{ pol.Name }</td>
+														<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+															<span class="chip-sm-neutral">{ pol.Type }</span>
+														</td>
+													</tr>
+												}
+											</tbody>
+										</table>
+									</div>
 								}
-							</li>
+								<div class="mt-3">
+									<h5 class="text-xs font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide mb-1">Permission Boundary</h5>
+									if role.PermissionsBoundary != "" {
+										<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto"><code>{ role.PermissionsBoundary }</code></pre>
+									} else {
+										<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto text-cool-grey-400 dark:text-cool-grey-500 italic">No permissions boundary defined</pre>
+									}
+								</div>
+							</div>
 						}
-					</ul>
+					</div>
 				}
 			</div>
 			// Policies pane

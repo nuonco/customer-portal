@@ -131,6 +131,17 @@ func (c *Client) GetApp(ctx context.Context, appID string) (*models.AppApp, erro
 	return app, nil
 }
 
+// GetAppConfigFull retrieves an app config with all nested relations (permissions, roles, policies)
+// by calling the SDK's GetAppConfig with recurse=true.
+func (c *Client) GetAppConfigFull(ctx context.Context, appID, appConfigID string) (*models.AppAppConfig, error) {
+	recurse := true
+	cfg, err := c.client.GetAppConfig(ctx, appID, appConfigID, &recurse)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get full app config: %w", err)
+	}
+	return cfg, nil
+}
+
 // GetAppInputConfig retrieves the input configuration for an app
 func (c *Client) GetAppInputConfig(ctx context.Context, appID string) (interface{}, error) {
 	inputCfg, err := c.client.GetAppInputLatestConfig(ctx, appID)
@@ -597,34 +608,6 @@ type AppPoliciesConfigPolicy struct {
 	Type        string `json:"type"`
 	Engine      string `json:"engine"`
 	Description string `json:"description"`
-}
-
-// GetLatestAppPermissionsConfig fetches the latest permissions config for an app.
-// Uses a direct HTTP call to avoid the SDK TextConsumer deserialization error.
-func (c *Client) GetLatestAppPermissionsConfig(ctx context.Context, appID string) (*models.AppAppPermissionsConfig, error) {
-	url := fmt.Sprintf("%s/v1/apps/%s/latest-app-permissions-config", c.apiURL, appID)
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-	req.Header.Set("Authorization", "Bearer "+c.apiToken)
-	req.Header.Set("X-Nuon-Org-ID", c.orgID)
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("request failed: %w", err)
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
-	}
-	var result models.AppAppPermissionsConfig
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, fmt.Errorf("failed to decode response: %w", err)
-	}
-	return &result, nil
 }
 
 // GetLatestAppPoliciesConfigFull fetches the latest policies config, including the

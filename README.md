@@ -84,7 +84,7 @@ General vendor journeys.
 - Install creation flow
 - Install management dashboard
 - Install status tracking
-- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet.
+- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 - **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
 - **Install Visibility**: Install owners can toggle visibility between "account" (shared with all account members) and "private" (only visible to the owner).
@@ -442,7 +442,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link
 - `GET /apps` - Customer app catalog (shows empty state if no published apps)
-- `GET /apps/:app_id` - App detail page (full info, components, permissions, policies)
+- `GET /apps/:app_id` - App detail page (full info, components, roles, policies)
 - `GET /apps/:app_id/install` - Install form for a published app
 - `POST /apps/:app_id/install` - Create install from a published app
 - `GET /apps/:app_id/config` - Get app config for a published app (unauthenticated)
