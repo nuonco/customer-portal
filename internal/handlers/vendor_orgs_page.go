@@ -37,6 +37,7 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			IsSuperuser:      h.isSuperuser(user),
 		},
 		Orgs: orgs,
 	}

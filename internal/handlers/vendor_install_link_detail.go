@@ -65,6 +65,7 @@ func (h *Handler) InstallLinkDetail(c *gin.Context) {
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			IsSuperuser:      h.isSuperuser(user),
 		},
 		Link:                        &link,
 		InstallURL:                  installURL,

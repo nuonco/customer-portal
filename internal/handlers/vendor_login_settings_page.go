@@ -50,6 +50,7 @@ func (h *Handler) LoginSettingsPage(c *gin.Context) {
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			IsSuperuser:      h.isSuperuser(user),
 		},
 		Config: config,
 		Theme:  theme,

@@ -53,6 +53,9 @@ type LayoutProps struct {
 
 	// Asset paths (cache-busted)
 	CSSPath string
+
+	// Superuser access
+	IsSuperuser bool
 }
 
 // Layout renders the vendor layout with sidebar, topbar, and content area
@@ -108,11 +111,12 @@ templ Layout(props LayoutProps) {
 				<div class="flex-1 flex flex-col h-full">
 					<!-- Topbar with Breadcrumbs -->
 					@partials.Topbar(partials.TopbarProps{
-						Breadcrumbs:      props.Breadcrumbs,
-						User:             props.User,
-						BasePath:         props.BasePath,
-						CurrentOrg: props.CurrentOrg,
-						Orgs:       props.Orgs,
+						Breadcrumbs: props.Breadcrumbs,
+						User:        props.User,
+						BasePath:    props.BasePath,
+						CurrentOrg:  props.CurrentOrg,
+						Orgs:        props.Orgs,
+						IsSuperuser: props.IsSuperuser,
 					})
 					<!-- Entity Title Bar (shown on detail pages) -->
 					@partials.TitleBar(partials.TitleBarProps{

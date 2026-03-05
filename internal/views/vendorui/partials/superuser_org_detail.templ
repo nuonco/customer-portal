@@ -1,0 +1,62 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+type SuperuserOrgDetailProps struct {
+	Org      *models.NuonOrg
+	IsMember bool
+	BasePath string
+}
+
+templ SuperuserOrgDetail(props SuperuserOrgDetailProps) {
+	<div class="mt-4 p-4 border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg">
+		<h3 class="text-sm font-semibold text-cool-grey-900 dark:text-white mb-2">
+			if props.Org.Name != "" {
+				{ props.Org.Name }
+			} else {
+				Unnamed Org
+			}
+		</h3>
+		<dl class="text-xs text-cool-grey-600 dark:text-cool-grey-400 space-y-1 mb-4">
+			<div class="flex gap-2">
+				<dt class="font-medium w-20">ID:</dt>
+				<dd class="font-mono">{ props.Org.ID }</dd>
+			</div>
+			if props.Org.Subdomain != "" {
+				<div class="flex gap-2">
+					<dt class="font-medium w-20">Subdomain:</dt>
+					<dd>{ props.Org.Subdomain }</dd>
+				</div>
+			}
+			if props.Org.NuonOrgID != "" {
+				<div class="flex gap-2">
+					<dt class="font-medium w-20">Nuon Org:</dt>
+					<dd class="font-mono">{ props.Org.NuonOrgID }</dd>
+				</div>
+			}
+		</dl>
+		if props.IsMember {
+			<button
+				type="button"
+				hx-delete={ props.BasePath + "/superuser/orgs/" + props.Org.ID + "/leave" }
+				hx-target="#superuser-org-detail"
+				hx-swap="innerHTML"
+				class="px-4 py-2 text-sm font-medium text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md hover:bg-red-100 dark:hover:bg-red-900/50 transition-colors"
+			>
+				Leave Org
+			</button>
+		} else {
+			<button
+				type="button"
+				hx-post={ props.BasePath + "/superuser/orgs/" + props.Org.ID + "/join" }
+				hx-target="#superuser-org-detail"
+				hx-swap="innerHTML"
+				class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors"
+			>
+				Join Org
+			</button>
+		}
+	</div>
+}

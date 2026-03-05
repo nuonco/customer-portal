@@ -13,6 +13,7 @@ type TopbarProps struct {
 	BasePath    string
 	CurrentOrg  *models.NuonOrg
 	Orgs        []models.NuonOrg
+	IsSuperuser bool
 }
 
 // Breadcrumb for navigation trail
@@ -92,6 +93,20 @@ templ Topbar(props TopbarProps) {
 						<span>Keyboard shortcuts</span>
 						@keyboardIcon()
 					</button>
+					if props.IsSuperuser {
+						<!-- Superuser Button -->
+						<button
+							type="button"
+							hx-get={ props.BasePath + "/superuser/panel" }
+							hx-target="#settings-panel-container"
+							hx-trigger="click"
+							hx-swap="innerHTML"
+							class="stratus-menu-item-dashboard"
+						>
+							<span>Superuser</span>
+							@superuserMenuIcon()
+						</button>
+					}
 					<hr class="stratus-menu-divider"/>
 					<!-- Logout Button -->
 					<button type="button" onclick="logout()" class="stratus-menu-item-dashboard logout">
@@ -157,6 +172,12 @@ templ userIcon() {
 templ keyboardIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
 		<path d="M224,48H32A16,16,0,0,0,16,64V192a16,16,0,0,0,16,16H224a16,16,0,0,0,16-16V64A16,16,0,0,0,224,48ZM32,64H224V192H32ZM64,168a8,8,0,0,1,8-8H184a8,8,0,0,1,0,16H72A8,8,0,0,1,64,168Zm0-32a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16H72A8,8,0,0,1,64,136Zm48,0a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16h-8A8,8,0,0,1,112,136Zm48,0a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16h-8A8,8,0,0,1,160,136Zm40,0a8,8,0,0,1-8-8h0a8,8,0,0,1,0-16h8a8,8,0,0,1,0,16h0A8,8,0,0,1,200,136ZM64,104a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16H72A8,8,0,0,1,64,104Zm48,0a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16h-8A8,8,0,0,1,112,104Zm48,0a8,8,0,0,1,8-8h8a8,8,0,0,1,0,16h-8A8,8,0,0,1,160,104Zm40,0a8,8,0,0,1-8-8h0a8,8,0,0,1,0-16h8a8,8,0,0,1,0,16h0A8,8,0,0,1,200,104Z"></path>
+	</svg>
+}
+
+templ superuserMenuIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor" class="stratus-menu-icon">
+		<path d="M208,40H48A16,16,0,0,0,32,56v58.77c0,89.61,75.82,119.34,91,124.39a15.53,15.53,0,0,0,10,0c15.2-5.05,91-34.78,91-124.39V56A16,16,0,0,0,208,40Zm0,74.79c0,78.42-66.35,104.62-80,109.18-13.53-4.51-80-30.69-80-109.18V56H208ZM82.34,141.66a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35a8,8,0,0,1,11.32,11.32l-56,56a8,8,0,0,1-11.32,0Z"></path>
 	</svg>
 }
 

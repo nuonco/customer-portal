@@ -1,0 +1,41 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+templ SuperuserSearchResults(orgs []models.NuonOrg) {
+	if orgs == nil {
+		<!-- Empty state before search -->
+	} else if len(orgs) == 0 {
+		<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 py-4 text-center">No orgs found.</p>
+	} else {
+		<div class="space-y-1">
+			for _, org := range orgs {
+				<button
+					type="button"
+					hx-get={ "/admin/superuser/orgs/" + org.ID }
+					hx-target="#superuser-org-detail"
+					hx-swap="innerHTML"
+					class="w-full text-left px-3 py-2 rounded-md hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700 transition-colors"
+				>
+					<div class="text-sm font-medium text-cool-grey-900 dark:text-white">
+						if org.Name != "" {
+							{ org.Name }
+						} else {
+							<span class="text-cool-grey-400">Unnamed</span>
+						}
+					</div>
+					<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400 flex gap-3 mt-0.5">
+						if org.Subdomain != "" {
+							<span>{ org.Subdomain }</span>
+						}
+						if org.NuonOrgID != "" {
+							<span class="font-mono">{ org.NuonOrgID }</span>
+						}
+					</div>
+				</button>
+			}
+		</div>
+	}
+}

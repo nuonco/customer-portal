@@ -23,7 +23,7 @@ func TestCustomerAppsPage_EmptyApps(t *testing.T) {
 		require.NoError(t, err)
 
 		logger := zap.NewNop()
-		h := NewHandler(tx, nil, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, nil, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)
@@ -54,7 +54,7 @@ func TestCustomerAppsPage_WithPublishedApps(t *testing.T) {
 		require.NoError(t, tx.Create(pa).Error)
 
 		logger := zap.NewNop()
-		h := NewHandler(tx, nil, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, nil, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

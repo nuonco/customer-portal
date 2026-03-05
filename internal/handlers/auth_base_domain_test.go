@@ -60,7 +60,7 @@ func TestCompleteSubdomainAuth_AutoCreatesAccountForNewCustomer(t *testing.T) {
 
 		jwtMW := newTestJWTMiddleware()
 		logger := zap.NewNop()
-		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		token := generateTestToken(jwtMW, customer)
 
@@ -102,7 +102,7 @@ func TestCompleteSubdomainAuth_AutoCreatesAccountFallbackName(t *testing.T) {
 
 		jwtMW := newTestJWTMiddleware()
 		logger := zap.NewNop()
-		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		token := generateTestToken(jwtMW, customer)
 
@@ -151,7 +151,7 @@ func TestCompleteSubdomainAuth_RedirectsExistingCustomerToInstalls(t *testing.T)
 
 		jwtMW := newTestJWTMiddleware()
 		logger := zap.NewNop()
-		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		token := generateTestToken(jwtMW, customer)
 
@@ -176,7 +176,7 @@ func TestCompleteSubdomainAuth_VendorSkipsAccountCheck(t *testing.T) {
 
 		jwtMW := newTestJWTMiddleware()
 		logger := zap.NewNop()
-		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", logger)
+		h := NewHandler(tx, jwtMW, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
 
 		token := generateTestToken(jwtMW, vendor)
 

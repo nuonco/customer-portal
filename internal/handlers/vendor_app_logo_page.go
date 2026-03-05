@@ -51,6 +51,7 @@ func (h *Handler) AppLogoPage(c *gin.Context) {
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			IsSuperuser:      h.isSuperuser(user),
 		},
 		Org:             *org,
 		App:             appInfo,

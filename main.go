@@ -99,6 +99,12 @@ func main() {
 		subdomainBaseDomain = "localhost:" + port
 	}
 
+	// Get superuser email domain from environment
+	superuserEmailDomain := os.Getenv("SUPERUSER_EMAIL_DOMAIN")
+	if superuserEmailDomain == "" {
+		superuserEmailDomain = "nuon.co"
+	}
+
 	// Load auth provider configuration from environment
 	authConfig := auth.LoadConfigFromEnv()
 
@@ -145,7 +151,7 @@ func main() {
 	})
 
 	// Set up vendor routes under /admin prefix
-	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain, logger)
+	setupVendorRoutes(router.Group("/admin"), db, vendorAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain, superuserEmailDomain, logger)
 
 	// Create customer auth factory with env var OIDC as fallback
 	// Pass the auth config loaded from env vars to use as fallback when no DB config is active
@@ -170,9 +176,9 @@ func main() {
 }
 
 // setupVendorRoutes configures vendor-facing routes on the given router group
-func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain string, logger *zap.Logger) {
+func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain, superuserEmailDomain string, logger *zap.Logger) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
-	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, "/admin", subdomainBaseDomain, logger)
+	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, "/admin", subdomainBaseDomain, superuserEmailDomain, logger)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -311,6 +317,21 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 				orgPortal.GET("/login", h.LoginSettingsPage)
 				orgPortal.GET("/dns", h.DNSSettingsPage)
 			}
+		}
+	}
+
+	// Superuser routes (restricted to superuser email domain)
+	if superuserEmailDomain != "" {
+		superuser := rg.Group("/superuser")
+		superuser.Use(jwtAuth.MiddlewareFunc())
+		superuser.Use(middleware.RequireRole(models.RoleVendor))
+		superuser.Use(middleware.RequireSuperuser(superuserEmailDomain))
+		{
+			superuser.GET("/panel", h.SuperuserPanelContent)
+			superuser.GET("/orgs/search", h.SuperuserSearchOrgs)
+			superuser.GET("/orgs/:org_id", h.SuperuserOrgDetail)
+			superuser.POST("/orgs/:org_id/join", h.SuperuserJoinOrg)
+			superuser.DELETE("/orgs/:org_id/leave", h.SuperuserLeaveOrg)
 		}
 	}
 

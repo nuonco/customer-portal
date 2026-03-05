@@ -90,17 +90,18 @@ func GetPrimaryColors(primaryColor string) (string, string) {
 }
 
 type Handler struct {
-	db                  *gorm.DB
-	auth                *jwt.GinJWTMiddleware
-	authProvider        auth.AuthProvider                 // Authentication provider (OIDC, SAML) for vendors
-	customerAuthFactory *auth.CustomerAuthProviderFactory // Dynamic auth factory for customers
-	customerBaseURL     string                            // Base URL for customer-facing install links
-	nuonAPIURL          string                            // Global Nuon API URL for all orgs
-	dashboardURL        string                            // URL of the Nuon dashboard-ui (e.g., "https://app.nuon.co")
-	basePath            string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
-	templateRenderer    *overrides.TemplateRenderer       // Template renderer for customer page overrides
-	subdomainBaseDomain string                            // Base domain for workspace subdomains (e.g., "portal.nuon.co")
-	logger              *zap.Logger
+	db                   *gorm.DB
+	auth                 *jwt.GinJWTMiddleware
+	authProvider         auth.AuthProvider                 // Authentication provider (OIDC, SAML) for vendors
+	customerAuthFactory  *auth.CustomerAuthProviderFactory // Dynamic auth factory for customers
+	customerBaseURL      string                            // Base URL for customer-facing install links
+	nuonAPIURL           string                            // Global Nuon API URL for all orgs
+	dashboardURL         string                            // URL of the Nuon dashboard-ui (e.g., "https://app.nuon.co")
+	basePath             string                            // Base path prefix for routes (e.g., "/admin" or "" for root)
+	templateRenderer     *overrides.TemplateRenderer       // Template renderer for customer page overrides
+	subdomainBaseDomain  string                            // Base domain for workspace subdomains (e.g., "portal.nuon.co")
+	superuserEmailDomain string                            // Email domain for superuser access (e.g., "nuon.co")
+	logger               *zap.Logger
 }
 
 // PaginationData holds pagination metadata for templates
@@ -130,18 +131,19 @@ type Breadcrumb struct {
 	Active bool   `json:"active"`
 }
 
-func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, basePath, subdomainBaseDomain string, logger *zap.Logger) *Handler {
+func NewHandler(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, basePath, subdomainBaseDomain, superuserEmailDomain string, logger *zap.Logger) *Handler {
 	return &Handler{
-		db:                  db,
-		auth:                jwtAuth,
-		authProvider:        authProvider,
-		customerBaseURL:     customerBaseURL,
-		nuonAPIURL:          nuonAPIURL,
-		dashboardURL:        dashboardURL,
-		basePath:            basePath,
-		templateRenderer:    overrides.NewTemplateRenderer(db, logger),
-		subdomainBaseDomain: subdomainBaseDomain,
-		logger:              logger,
+		db:                   db,
+		auth:                 jwtAuth,
+		authProvider:         authProvider,
+		customerBaseURL:      customerBaseURL,
+		nuonAPIURL:           nuonAPIURL,
+		dashboardURL:         dashboardURL,
+		basePath:             basePath,
+		templateRenderer:     overrides.NewTemplateRenderer(db, logger),
+		subdomainBaseDomain:  subdomainBaseDomain,
+		superuserEmailDomain: superuserEmailDomain,
+		logger:               logger,
 	}
 }
 
@@ -159,6 +161,14 @@ func NewHandlerWithCustomerAuth(db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, cust
 		subdomainBaseDomain: subdomainBaseDomain,
 		logger:              logger,
 	}
+}
+
+// isSuperuser checks if a user has superuser access based on email domain.
+func (h *Handler) isSuperuser(user *models.User) bool {
+	if user == nil || h.superuserEmailDomain == "" {
+		return false
+	}
+	return middleware.IsSuperuserEmail(user.Email, h.superuserEmailDomain)
 }
 
 // schemeFromBaseURL returns the URL scheme ("http://" or "https://") based on the customerBaseURL.

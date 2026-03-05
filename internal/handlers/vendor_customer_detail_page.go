@@ -134,6 +134,7 @@ func (h *Handler) CustomerDetailPage(c *gin.Context) {
 			DashboardURL:     h.dashboardURL,
 			PortalBaseDomain: h.subdomainBaseDomain,
 			CSSPath:          assets.VendorCSSPath(),
+			IsSuperuser:      h.isSuperuser(user),
 			NuonAPIError:     customerDetailNuonAPIError,
 		},
 		Org:      *org,

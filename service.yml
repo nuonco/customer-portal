@@ -52,6 +52,7 @@ env:
   SERVICE_TYPE: app
   SERVICE_DEPLOYMENT: customer-dashboard
   DISABLE_METRICS: true
+  SUPERUSER_EMAIL_DOMAIN: nuon.co
 
 disable_watch: true   # templ generate --watch handles all file watching
 
@@ -71,6 +72,7 @@ namespace: customer-dashboard
 
 docker_env:
   AUTH_CLIENT_SECRET: "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"
+  SUPERUSER_EMAIL_DOMAIN: nuon.co
   DATABASE_URL: postgres://customer_dashboard:password@host.nuon.dev:5432/customer_dashboard?sslmode=disable
   NUON_API_URL: http://host.nuon.dev:8081
   CUSTOMER_BASE_URL: http://localhost:8080
