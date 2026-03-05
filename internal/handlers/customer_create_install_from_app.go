@@ -63,7 +63,10 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		appName = app.Name
 	}
 
-	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, req.Inputs)
+	// Merge in defaults for non-customer-facing inputs
+	mergedInputs := h.mergeDefaultInputs(c.Request.Context(), nuonClient, appID, org.ID, req.Inputs)
+
+	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, mergedInputs)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
 		return

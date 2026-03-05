@@ -72,6 +72,9 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
+	// Merge in defaults for non-customer-facing inputs
+	mergedInputs = h.mergeDefaultInputs(c.Request.Context(), nuonClient, link.AppID, link.OrgID, mergedInputs)
+
 	// Use the vendor-provided install name from the link
 	installName := link.Name
 

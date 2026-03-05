@@ -101,6 +101,7 @@ General vendor journeys.
 - Basic client wrapper implemented
 - Mock data for development/testing
 - Real API calls need to be uncommented and tested
+- Non-customer-facing inputs with default values are automatically merged into install creation requests
 
 ## Quick Start
 

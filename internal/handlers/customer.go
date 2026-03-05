@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"context"
+	"encoding/json"
 	"sort"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
@@ -8,6 +10,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 type FilterType string
@@ -171,6 +174,62 @@ func filterInputConfigByLocalConfig(inputConfig interface{}, customerInputNames 
 		result[k] = v
 	}
 	result["input_groups"] = filteredGroups
+	return result
+}
+
+// mergeDefaultInputs fetches the full app input config from the Nuon API and
+// fills in default values for any non-customer-facing inputs that are missing
+// from the provided inputs map. This ensures required inputs with defaults
+// (e.g. cluster_version) are sent to the API even though the customer never
+// sees them in the form.
+func (h *Handler) mergeDefaultInputs(ctx context.Context, nuonClient *nuon.Client, appID string, orgID string, inputs map[string]string) map[string]string {
+	result := make(map[string]string)
+	for k, v := range inputs {
+		result[k] = v
+	}
+
+	inputConfig, err := nuonClient.GetAppInputConfig(ctx, appID)
+	if err != nil || inputConfig == nil {
+		return result
+	}
+
+	// Determine which inputs are customer-facing via local config
+	customerInputSet := make(map[string]bool)
+	var localConfig models.AppInputConfig
+	if err := h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig).Error; err == nil {
+		for _, name := range localConfig.GetCustomerInputNames() {
+			customerInputSet[name] = true
+		}
+	}
+
+	// Walk the config structure to extract defaults for non-customer-facing inputs
+	jsonBytes, err := json.Marshal(inputConfig)
+	if err != nil {
+		return result
+	}
+	var configMap map[string]interface{}
+	if err := json.Unmarshal(jsonBytes, &configMap); err != nil {
+		return result
+	}
+
+	inputGroups, _ := configMap["input_groups"].([]interface{})
+	for _, group := range inputGroups {
+		groupMap, _ := group.(map[string]interface{})
+		appInputs, _ := groupMap["app_inputs"].([]interface{})
+		for _, input := range appInputs {
+			inputMap, _ := input.(map[string]interface{})
+			name, _ := inputMap["name"].(string)
+			defaultVal, _ := inputMap["default"].(string)
+			if name == "" || defaultVal == "" {
+				continue
+			}
+			// Only fill in defaults for non-customer-facing inputs not already provided
+			if !customerInputSet[name] && result[name] == "" {
+				result[name] = defaultVal
+			}
+		}
+	}
+
 	return result
 }
 

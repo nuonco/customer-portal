@@ -187,12 +187,11 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 								<table class="w-full table-fixed text-sm text-left">
 									<thead>
 										<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-											<th class="w-1/5 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
-											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
-											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Required</th>
-											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Default</th>
-											<th class="w-1/6 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Provided by</th>
-											<th class="py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Description</th>
+											<th class="w-3/12 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+											<th class="w-2/12 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Provided by</th>
+											<th class="w-2/12 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Required</th>
+											<th class="w-2/12 py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Default</th>
+											<th class="w-4/12 py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Description</th>
 										</tr>
 									</thead>
 									<tbody>
@@ -208,7 +207,9 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 														<span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">sensitive</span>
 													}
 												</td>
-												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">{ input.Type }</td>
+												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
+													<span class="chip-sm-neutral">{ input.ConfiguredBy }</span>
+												</td>
 												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
 													if input.Required {
 														Yes
@@ -222,9 +223,6 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 													} else {
 														<span class="text-cool-grey-400 dark:text-cool-grey-500">—</span>
 													}
-												</td>
-												<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-300">
-													<span class="chip-sm-neutral">{ input.ConfiguredBy }</span>
 												</td>
 												<td class="py-2 text-cool-grey-600 dark:text-cool-grey-300">{ input.Description }</td>
 											</tr>
