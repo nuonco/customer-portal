@@ -14,17 +14,17 @@ COPY internal ./internal/
 COPY pkg ./pkg/
 COPY main.go ./
 RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
-    --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+    --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     go generate ./...
 
 FROM code AS build
 
 RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
-    --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+    --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     CGO_ENABLED=0 GOOS=linux go build -o /bin/service
 
 FROM code AS test
-RUN --mount=type=cache,target=/root/.cache/go-build,id=gobuild-customer-dashboard \
+RUN --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     go test -v ./...
 
 FROM code AS lint
@@ -32,6 +32,7 @@ FROM code AS lint
 COPY .golangci.yml .
 
 RUN --mount=type=cache,target=/root/.cache/golangci-lint,id=golint-customer-dashboard \
+    --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     golangci-lint run -c .golangci.yml -v
 
 # Use the provided runtime image
