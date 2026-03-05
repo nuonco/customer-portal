@@ -608,6 +608,7 @@ type AppPoliciesConfigPolicy struct {
 	Type        string `json:"type"`
 	Engine      string `json:"engine"`
 	Description string `json:"description"`
+	Contents    string `json:"contents"`
 }
 
 // GetLatestAppPoliciesConfigFull fetches the latest policies config, including the

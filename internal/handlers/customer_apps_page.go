@@ -98,42 +98,47 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 
 	ctx := c.Request.Context()
 
-	// Fan out all 6 API calls concurrently
+	// Step 1: Fetch app (need AppConfigs[0].ID for GetAppConfigFull)
+	app, appErr := nuonClient.GetApp(ctx, appID)
+	if appErr != nil {
+		zap.L().Warn("failed to fetch app", zap.String("app_id", appID), zap.Error(appErr))
+		return display
+	}
+	if app == nil {
+		return display
+	}
+
+	if app.Name != "" {
+		display.AppName = app.Name
+	}
+	if app.RunnerConfig != nil {
+		display.Platform = string(app.RunnerConfig.AppRunnerType)
+	}
+	display.Description = app.Description
+
+	// Step 2: Fan out remaining API calls concurrently
+	// GetAppConfigFull (recurse=true) returns sandbox, secrets, input, permissions, and policies nested data.
+	// We still need a separate call for policies because the SDK model drops the Policies array field.
 	var (
-		wg          sync.WaitGroup
-		app         *nuonmodels.AppApp
-		appErr      error
-		comps       []*nuonmodels.AppComponent
-		compErr     error
-		sbCfg       *nuonmodels.AppAppSandboxConfig
-		sbErr       error
-		policies    []nuon.AppPoliciesConfigPolicy
-		polErr      error
-		secretsCfg  *nuonmodels.AppAppSecretsConfig
-		secErr      error
-		inputConfig interface{}
-		inputErr    error
+		wg       sync.WaitGroup
+		comps    []*nuonmodels.AppComponent
+		compErr  error
+		fullCfg  *nuonmodels.AppAppConfig
+		cfgErr   error
+		policies []nuon.AppPoliciesConfigPolicy
+		polErr   error
 	)
 
-	wg.Add(6)
-	go func() { defer wg.Done(); app, appErr = nuonClient.GetApp(ctx, appID) }()
+	wg.Add(3)
 	go func() { defer wg.Done(); comps, compErr = nuonClient.GetAppComponents(ctx, appID) }()
-	go func() { defer wg.Done(); sbCfg, sbErr = nuonClient.GetAppSandboxLatestConfig(ctx, appID) }()
+	go func() {
+		defer wg.Done()
+		if len(app.AppConfigs) > 0 {
+			fullCfg, cfgErr = nuonClient.GetAppConfigFull(ctx, appID, app.AppConfigs[0].ID)
+		}
+	}()
 	go func() { defer wg.Done(); policies, polErr = nuonClient.GetLatestAppPoliciesConfigFull(ctx, appID) }()
-	go func() { defer wg.Done(); secretsCfg, secErr = nuonClient.GetAppSecretsConfig(ctx, appID) }()
-	go func() { defer wg.Done(); inputConfig, inputErr = nuonClient.GetAppInputConfig(ctx, appID) }()
 	wg.Wait()
-
-	// Process app info
-	if appErr == nil && app != nil {
-		if app.Name != "" {
-			display.AppName = app.Name
-		}
-		if app.RunnerConfig != nil {
-			display.Platform = string(app.RunnerConfig.AppRunnerType)
-		}
-		display.Description = app.Description
-	}
 
 	// Process components
 	if compErr != nil {
@@ -147,79 +152,143 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		}
 	}
 
-	// Process sandbox config
-	if sbErr != nil {
-		zap.L().Warn("failed to fetch app sandbox config", zap.String("app_id", appID), zap.Error(sbErr))
-	} else if sbCfg != nil {
-		display.SandboxPlatform = sbCfg.CloudPlatform
-		if display.SandboxPlatform == "" {
-			display.SandboxPlatform = display.Platform
+	// Process full config (sandbox, secrets, input, roles)
+	if cfgErr != nil {
+		zap.L().Warn("failed to fetch full app config", zap.String("app_id", appID), zap.Error(cfgErr))
+	} else if fullCfg != nil {
+		// Sandbox
+		if sbCfg := fullCfg.Sandbox; sbCfg != nil {
+			display.SandboxPlatform = sbCfg.CloudPlatform
+			if display.SandboxPlatform == "" {
+				display.SandboxPlatform = display.Platform
+			}
+			display.SandboxTFVersion = sbCfg.TerraformVersion
+			display.SandboxDrift = sbCfg.DriftSchedule
+			if sbCfg.PublicGitVcsConfig != nil {
+				display.SandboxRepoIsPublic = true
+				display.SandboxRepoURL = sbCfg.PublicGitVcsConfig.Repo
+				display.SandboxRepoBranch = sbCfg.PublicGitVcsConfig.Branch
+				display.SandboxRepoDir = sbCfg.PublicGitVcsConfig.Directory
+			}
 		}
-		display.SandboxTFVersion = sbCfg.TerraformVersion
-		display.SandboxDrift = sbCfg.DriftSchedule
-		if sbCfg.PublicGitVcsConfig != nil {
-			display.SandboxRepoIsPublic = true
-			display.SandboxRepoURL = sbCfg.PublicGitVcsConfig.Repo
-			display.SandboxRepoBranch = sbCfg.PublicGitVcsConfig.Branch
-			display.SandboxRepoDir = sbCfg.PublicGitVcsConfig.Directory
-		}
-	}
 
-	// Process roles from full app config (with recurse=true to get nested permissions)
-	if appErr == nil && app != nil && len(app.AppConfigs) > 0 {
-		addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
-			if role == nil || role.Name == "" {
-				return
-			}
-			name := role.DisplayName
-			if name == "" {
-				name = role.Name
-			}
-			permBoundary := role.PermissionsBoundary
-			if permBoundary != "" {
-				if decoded, err := base64.StdEncoding.DecodeString(permBoundary); err == nil {
-					var prettyJSON bytes.Buffer
-					if json.Indent(&prettyJSON, decoded, "", "  ") == nil {
-						permBoundary = prettyJSON.String()
-					}
-				}
-			}
-			rd := customerpages.IAMRoleDisplay{
-				Label:               label,
-				Name:                name,
-				Description:         role.Description,
-				Type:                string(role.Type),
-				PermissionsBoundary: permBoundary,
-			}
-			for _, p := range role.Policies {
-				if p == nil {
-					continue
-				}
-				policyType := "Vendor defined"
-				if p.ManagedPolicyName != "" {
-					policyType = "AWS managed"
-				}
-				pName := p.Name
-				if pName == "" {
-					pName = p.ManagedPolicyName
-				}
-				rd.Policies = append(rd.Policies, customerpages.IAMPolicyDisplay{
-					Name:             pName,
-					Type:             policyType,
-					ManagedPolicyARN: p.ManagedPolicyName,
+		// Secrets
+		if secretsCfg := fullCfg.Secrets; secretsCfg != nil {
+			for _, s := range secretsCfg.Secrets {
+				display.Secrets = append(display.Secrets, customerpages.SecretDisplay{
+					Name:         s.Name,
+					DisplayName:  s.DisplayName,
+					Description:  s.Description,
+					AutoGenerate: s.AutoGenerate,
 				})
 			}
-			display.Permissions = append(display.Permissions, rd)
 		}
 
-		configID := app.AppConfigs[0].ID
-		fullCfg, fullCfgErr := nuonClient.GetAppConfigFull(ctx, appID, configID)
-		if fullCfgErr != nil {
-			zap.L().Warn("failed to fetch full app config for roles", zap.String("app_id", appID), zap.Error(fullCfgErr))
-		} else if fullCfg != nil && fullCfg.Permissions != nil {
-			permCfg := fullCfg.Permissions
+		// Input config
+		if inputCfg := fullCfg.Input; inputCfg != nil {
+			var localConfig models.AppInputConfig
+			h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+			customerInputNames := localConfig.GetCustomerInputNames()
+			customerInputSet := make(map[string]bool)
+			for _, name := range customerInputNames {
+				customerInputSet[name] = true
+			}
 
-			// Track named role IDs to avoid duplicates from AwsIamRoles
+			// Build a map of group ID → inputs, since the recursive config
+			// returns inputs flat rather than nested within groups.
+			inputsByGroup := make(map[string][]*nuonmodels.AppAppInput)
+			for _, input := range inputCfg.Inputs {
+				if input != nil && input.GroupID != "" {
+					inputsByGroup[input.GroupID] = append(inputsByGroup[input.GroupID], input)
+				}
+			}
+
+			for _, group := range inputCfg.InputGroups {
+				if group == nil {
+					continue
+				}
+				// Use nested AppInputs if present, otherwise fall back to flat Inputs joined by GroupID
+				inputs := group.AppInputs
+				if len(inputs) == 0 {
+					inputs = inputsByGroup[group.ID]
+				}
+				gd := customerpages.InputGroupDisplay{
+					Name:        group.Name,
+					DisplayName: group.DisplayName,
+				}
+				for _, input := range inputs {
+					if input == nil {
+						continue
+					}
+					configuredBy := "vendor"
+					if customerInputSet[input.Name] {
+						configuredBy = "customer"
+					}
+					gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
+						Name:         input.Name,
+						DisplayName:  input.DisplayName,
+						Description:  input.Description,
+						Type:         input.Type,
+						Required:     input.Required,
+						Sensitive:    input.Sensitive,
+						Default:      input.Default,
+						ConfiguredBy: configuredBy,
+					})
+				}
+				if len(gd.Inputs) > 0 {
+					display.InputGroups = append(display.InputGroups, gd)
+				}
+			}
+		}
+
+		// Roles (from permissions)
+		if fullCfg.Permissions != nil {
+			addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
+				if role == nil || role.Name == "" {
+					return
+				}
+				name := role.DisplayName
+				if name == "" {
+					name = role.Name
+				}
+				permBoundary := role.PermissionsBoundary
+				if permBoundary != "" {
+					if decoded, err := base64.StdEncoding.DecodeString(permBoundary); err == nil {
+						var prettyJSON bytes.Buffer
+						if json.Indent(&prettyJSON, decoded, "", "  ") == nil {
+							permBoundary = prettyJSON.String()
+						}
+					}
+				}
+				rd := customerpages.IAMRoleDisplay{
+					Label:               label,
+					Name:                name,
+					Description:         role.Description,
+					Type:                string(role.Type),
+					PermissionsBoundary: permBoundary,
+				}
+				for _, p := range role.Policies {
+					if p == nil {
+						continue
+					}
+					policyType := "Vendor defined"
+					if p.ManagedPolicyName != "" {
+						policyType = "AWS managed"
+					}
+					pName := p.Name
+					if pName == "" {
+						pName = p.ManagedPolicyName
+					}
+					rd.Policies = append(rd.Policies, customerpages.IAMPolicyDisplay{
+						Name:             pName,
+						Type:             policyType,
+						ManagedPolicyARN: p.ManagedPolicyName,
+					})
+				}
+				display.Permissions = append(display.Permissions, rd)
+			}
+
+			permCfg := fullCfg.Permissions
 			seen := map[string]bool{}
 			trackAndAdd := func(role *nuonmodels.AppAppAWSIAMRoleConfig, label string) {
 				if role == nil || role.Name == "" {
@@ -249,7 +318,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		}
 	}
 
-	// Process policies config
+	// Process policies config (separate call — SDK model drops nested Policies array)
 	if polErr != nil {
 		zap.L().Warn("failed to fetch app policies config", zap.String("app_id", appID), zap.Error(polErr))
 	} else {
@@ -259,81 +328,8 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 				Type:        p.Type,
 				Engine:      p.Engine,
 				Description: p.Description,
+				Contents:    p.Contents,
 			})
-		}
-	}
-
-	// Process secrets config
-	if secErr != nil {
-		zap.L().Warn("failed to fetch app secrets config", zap.String("app_id", appID), zap.Error(secErr))
-	} else if secretsCfg != nil && len(secretsCfg.Secrets) > 0 {
-		for _, s := range secretsCfg.Secrets {
-			display.Secrets = append(display.Secrets, customerpages.SecretDisplay{
-				Name:         s.Name,
-				DisplayName:  s.DisplayName,
-				Description:  s.Description,
-				AutoGenerate: s.AutoGenerate,
-			})
-		}
-	}
-
-	// Process input config using pre-fetched DB data
-	if inputErr != nil {
-		zap.L().Warn("failed to fetch app input config", zap.String("app_id", appID), zap.Error(inputErr))
-	} else if inputConfig != nil {
-		var localConfig models.AppInputConfig
-		h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
-		customerInputNames := localConfig.GetCustomerInputNames()
-
-		customerInputSet := make(map[string]bool)
-		for _, name := range customerInputNames {
-			customerInputSet[name] = true
-		}
-
-		// Marshal/unmarshal to work with the untyped config
-		jsonBytes, _ := json.Marshal(inputConfig)
-		var configMap map[string]interface{}
-		if json.Unmarshal(jsonBytes, &configMap) == nil {
-			if inputGroups, ok := configMap["input_groups"].([]interface{}); ok {
-				for _, group := range inputGroups {
-					groupMap, ok := group.(map[string]interface{})
-					if !ok {
-						continue
-					}
-					appInputs, ok := groupMap["app_inputs"].([]interface{})
-					if !ok {
-						continue
-					}
-					gd := customerpages.InputGroupDisplay{
-						Name:        strVal(groupMap, "name"),
-						DisplayName: strVal(groupMap, "display_name"),
-					}
-					for _, input := range appInputs {
-						inputMap, ok := input.(map[string]interface{})
-						if !ok {
-							continue
-						}
-						inputName := strVal(inputMap, "name")
-						configuredBy := "vendor"
-						if customerInputSet[inputName] {
-							configuredBy = "customer"
-						}
-						gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
-							Name:         inputName,
-							DisplayName:  strVal(inputMap, "display_name"),
-							Description:  strVal(inputMap, "description"),
-							Type:         strVal(inputMap, "input_type"),
-							Required:     boolVal(inputMap, "required"),
-							Sensitive:    boolVal(inputMap, "sensitive"),
-							Default:      strVal(inputMap, "default"),
-							ConfiguredBy: configuredBy,
-						})
-					}
-					if len(gd.Inputs) > 0 {
-						display.InputGroups = append(display.InputGroups, gd)
-					}
-				}
-			}
 		}
 	}
 
