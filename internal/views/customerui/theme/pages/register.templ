@@ -3,6 +3,7 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
 )
 
 // RegisterPageProps for the customer registration page
@@ -176,45 +177,7 @@ templ registerFontLinks(theme *models.AppTheme) {
 }
 
 templ registerThemeStyles(theme *models.AppTheme) {
-	if theme != nil {
-		@templ.Raw(buildRegisterThemeCSS(theme))
-	}
-}
-
-func buildRegisterThemeCSS(theme *models.AppTheme) string {
-	if theme == nil {
-		return ""
-	}
-	css := "<style>:root {"
-	if theme.PrimaryColor != "" {
-		css += "--theme-primary: " + theme.PrimaryColor + ";"
-		css += "--theme-primary-hover: " + theme.PrimaryColor + ";"
-	}
-	if theme.SecondaryColor != "" {
-		css += "--theme-secondary: " + theme.SecondaryColor + ";"
-	}
-	if theme.HeadingFontBase64 != "" {
-		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	} else if theme.HeadingFont != "" {
-		css += "--font-heading: '" + theme.HeadingFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	}
-	if theme.BodyFontBase64 != "" {
-		css += "--font-body: 'CustomBody', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	} else if theme.BodyFont != "" {
-		css += "--font-body: '" + theme.BodyFont + "', 'Inter', ui-sans-serif, system-ui, sans-serif;"
-	}
-	switch theme.BorderRadius {
-	case "sharp":
-		css += "--theme-radius: 0;"
-	case "subtle":
-		css += "--theme-radius: 4px;"
-	case "very-rounded":
-		css += "--theme-radius: 12px;"
-	default:
-		css += "--theme-radius: 8px;"
-	}
-	css += "}</style>"
-	return css
+	@templ.Raw(utils.BuildLoginThemeCSS(theme))
 }
 
 templ customerRegisterScript() {

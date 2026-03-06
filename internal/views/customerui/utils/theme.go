@@ -35,6 +35,8 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 	// White/Black background colors
 	if theme != nil && theme.WhiteColor != "" {
 		css += "--theme-white:" + theme.WhiteColor + ";"
+	} else if includeDefaults {
+		css += "--theme-white:#ffffff;"
 	}
 	blackForRoot := ""
 	if theme != nil {
@@ -45,6 +47,8 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 	}
 	if blackForRoot != "" {
 		css += "--theme-black:" + blackForRoot + ";"
+	} else if includeDefaults {
+		css += "--theme-black:#121212;"
 	}
 
 	// Heading font
