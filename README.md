@@ -14,6 +14,7 @@ General vendor journeys.
 - As a vendor, after creating an account, I should be able to connect to any instance of a Nuon control plane, by providing an org ID and api token.
 - As a vendor, after connecting to a Nuon control plane, I should be able create an "install link" for any app in the connected org.
 - As a vendor, I need to be able to create, list, view, and delete install links.
+- As a vendor, I can invite team members by email. If the email matches an existing user, they are added immediately. If not, a pending invitation is created and they auto-join when they next log in.
 
 - As a vendor,
   - when I view an org in the vendor dashboard at https://app.nuon.co, there will be an item in the main nav titled "Connect Customer Portal".
@@ -274,7 +275,6 @@ internal/
 | `POST /admin/login/`        | `LocalLogin`           | Local password auth (when no IdP configured) |
 | `GET /admin/register`       | `RegisterPageTempl`    | Vendor registration page                     |
 | `POST /admin/register`      | `Register`             | Create vendor account                        |
-| `GET /admin/invite`         | `InvitePageTempl`      | Accept team invitation page                  |
 | `GET /admin/logout`         | `VendorLogout`         | Logout handler                               |
 | `GET /admin/callback`       | `AuthCallback`         | OIDC callback (code exchange)                |
 | `POST /admin/callback`      | `AuthCallback`         | SAML callback (SAMLResponse)                 |
@@ -392,7 +392,6 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `DELETE /admin/orgs/:org_id/links/:link_id` - Delete link
 - `GET /admin/register` - Vendor registration page
 - `POST /admin/register` - Create vendor account
-- `GET /admin/invite` - Accept team invitation
 - `POST /admin/org/create` - Create new organization
 - `POST /admin/org/switch` - Switch active organization context
 - `GET /admin/profile/panel` - User profile panel
@@ -405,10 +404,10 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
 - `GET /admin/orgs/:org_id/accounts` - List customer company accounts
 - `GET /admin/orgs/:org_id/accounts/:account_id` - Account detail with members and installs
-- `GET /admin/orgs/:org_id/team/members` - List team members
-- `GET /admin/orgs/:org_id/team/invites` - List pending invitations
+- `GET /admin/orgs/:org_id/team/members` - Team page (members + invites tabs)
+- `GET /admin/orgs/:org_id/team/invites` - Redirects to team/members
 - `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
-- `POST /admin/orgs/:org_id/invitations` - Generate organization invitations
+- `POST /admin/orgs/:org_id/invitations` - Invite a team member by email (adds immediately if user exists, creates pending invite otherwise)
 - `DELETE /admin/orgs/:org_id/invitations/:id` - Revoke organization invitation
 - `DELETE /admin/orgs/:org_id/members/:user_id` - Remove organization member
 - `PUT /admin/orgs/:org_id/settings` - Update general settings

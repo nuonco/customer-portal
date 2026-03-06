@@ -8,6 +8,7 @@ import (
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -322,4 +323,100 @@ func GetCurrentOrg(c *gin.Context) *models.NuonOrg {
 		}
 	}
 	return nil
+}
+
+// ProcessPendingOrgInvites checks for pending org invitations matching the
+// current user's email and auto-joins them to those orgs. Non-blocking:
+// errors are logged but don't affect the request.
+func ProcessPendingOrgInvites(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		user := GetCurrentUser(c)
+
+		var invites []models.OrgInvitation
+		if err := db.Where("email = ? AND accepted_at IS NULL AND deleted_at IS NULL", user.Email).
+			Find(&invites).Error; err != nil {
+			zap.L().Error("failed to query pending org invites", zap.Error(err))
+			c.Next()
+			return
+		}
+
+		for _, invite := range invites {
+			// Check if already a member
+			var count int64
+			db.Model(&models.OrgMember{}).Where("org_id = ? AND user_id = ? AND deleted_at IS NULL",
+				invite.OrgID, user.ID).Count(&count)
+			if count > 0 {
+				// Already a member, just mark invite as accepted
+				now := time.Now()
+				db.Model(&invite).Updates(map[string]interface{}{
+					"accepted_at": &now,
+					"used_count":  1,
+				})
+				continue
+			}
+
+			now := time.Now()
+			txErr := db.Transaction(func(tx *gorm.DB) error {
+				// Check for soft-deleted member and restore instead of creating duplicate
+				var existingMember models.OrgMember
+				if err := tx.Unscoped().Where("org_id = ? AND user_id = ? AND deleted_at IS NOT NULL", invite.OrgID, user.ID).First(&existingMember).Error; err == nil {
+					if err := tx.Unscoped().Model(&existingMember).Updates(map[string]interface{}{
+						"deleted_at": nil,
+						"status":     models.MemberStatusActive,
+						"invited_by": &invite.InvitedBy,
+						"joined_at":  &now,
+					}).Error; err != nil {
+						return err
+					}
+				} else {
+					member := models.OrgMember{
+						OrgID:     invite.OrgID,
+						UserID:    user.ID,
+						InvitedBy: &invite.InvitedBy,
+						Status:    models.MemberStatusActive,
+						JoinedAt:  &now,
+					}
+					if err := tx.Create(&member).Error; err != nil {
+						return err
+					}
+				}
+
+				// Upgrade customer to vendor role when auto-joining a vendor org
+				var dbUser models.User
+				if err := tx.First(&dbUser, "id = ?", user.ID).Error; err == nil {
+					if dbUser.Role == models.RoleCustomer {
+						tx.Model(&dbUser).Update("role", models.RoleVendor)
+					}
+				}
+
+				return tx.Model(&invite).Updates(map[string]interface{}{
+					"accepted_at": &now,
+					"used_count":  1,
+				}).Error
+			})
+			if txErr != nil {
+				zap.L().Error("failed to auto-join org via invite",
+					zap.String("org_id", invite.OrgID),
+					zap.String("email", user.Email),
+					zap.Error(txErr))
+			}
+		}
+
+		// If user was a customer and got upgraded to vendor, update JWT claims
+		// so downstream middleware (RequireRole) sees the new role.
+		if user.Role == models.RoleCustomer {
+			var dbUser models.User
+			if err := db.First(&dbUser, "id = ?", user.ID).Error; err == nil {
+				if dbUser.Role == models.RoleVendor {
+					if claims, ok := c.Get("JWT_PAYLOAD"); ok {
+						if mc, ok := claims.(jwt.MapClaims); ok {
+							mc["role"] = string(models.RoleVendor)
+						}
+					}
+				}
+			}
+		}
+
+		c.Next()
+	}
 }

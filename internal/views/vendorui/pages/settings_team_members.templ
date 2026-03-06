@@ -5,55 +5,92 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
-// TeamMembersPageProps for the team members page
-type TeamMembersPageProps struct {
+// TeamPageProps for the combined team page
+type TeamPageProps struct {
 	vendorui.LayoutProps
-	Org     *models.NuonOrg
-	Members []models.OrgMember
+	Org         *models.NuonOrg
+	Members     []models.OrgMember
+	Invitations []models.OrgInvitation
 }
 
-// TeamMembersPage renders the team members page with sub-nav
-templ TeamMembersPage(props TeamMembersPageProps) {
+// TeamPage renders the combined team members and invites page with tabs
+templ TeamPage(props TeamPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex flex-1 overflow-hidden">
-			@components.TeamSubnav(components.TeamSubnavProps{
-				OrgID:         props.CurrentOrg.ID,
-				ActiveSubPage: "members",
-				BasePath:      props.BasePath,
-			})
-			<div class="stratus-page-content overflow-auto">
-				<div class="stratus-page-header">
-					<div class="stratus-heading-group">
-						<h1 class="stratus-page-title">Team Members</h1>
-						<p class="stratus-page-subtitle">Manage who has access to your organization.</p>
+		<div class="stratus-page-content overflow-auto">
+			<div class="stratus-page-header">
+				<div class="stratus-heading-group">
+					<h1 class="stratus-page-title">Team</h1>
+					<p class="stratus-page-subtitle">Manage who has access to your organization.</p>
+				</div>
+				<div class="flex items-center gap-2">
+					<button
+						type="button"
+						onclick="document.getElementById('inviteModal').classList.remove('hidden')"
+						class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors"
+					>
+						Add members
+					</button>
+				</div>
+			</div>
+			<!-- Members -->
+			<div class="stratus-page-section">
+				<h3 class="text-base font-semibold text-cool-grey-900 dark:text-white mb-4">Members ({ fmt.Sprintf("%d", len(props.Members)) })</h3>
+				@teamMembersList(props.Members, props.LayoutProps.User)
+			</div>
+			<!-- Invited -->
+			<div class="stratus-page-section mt-8">
+				<h3 class="text-base font-semibold text-cool-grey-900 dark:text-white mb-4">Invited ({ fmt.Sprintf("%d", countPendingInvites(props.Invitations)) })</h3>
+				@invitationsList(props.Invitations)
+			</div>
+		</div>
+		<!-- Invite Modal -->
+		<div id="inviteModal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
+			<div class="fixed inset-0 bg-black/50" onclick="document.getElementById('inviteModal').classList.add('hidden')"></div>
+			<div class="relative bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl border border-cool-grey-200 dark:border-dark-grey-600 w-full max-w-md mx-4 p-6">
+				<h2 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-1">Add members</h2>
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-4">Enter email addresses, separated by commas.</p>
+				<form id="inviteForm">
+					<textarea
+						id="inviteEmails"
+						name="emails"
+						rows="3"
+						placeholder="e.g. alice@co.com, bob@co.com"
+						class="w-full px-3 py-2 text-sm border border-cool-grey-300 dark:border-dark-grey-500 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 placeholder-cool-grey-400 dark:placeholder-cool-grey-500 resize-none"
+					></textarea>
+					<div class="flex justify-end gap-2 mt-4">
+						<button
+							type="button"
+							onclick="document.getElementById('inviteModal').classList.add('hidden')"
+							class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded-md transition-colors"
+						>
+							Cancel
+						</button>
+						<button
+							type="submit"
+							id="inviteSubmitBtn"
+							class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+						>
+							Add members
+						</button>
 					</div>
-				</div>
-				<div class="stratus-page-section">
-					@teamMembersList(props.Members, props.LayoutProps.User)
-				</div>
+				</form>
 			</div>
 		</div>
 		<!-- Config data for JavaScript -->
 		<div
-			id="team-members-config"
+			id="team-config"
 			class="hidden"
 			data-base-path={ props.BasePath }
 			data-org-id={ props.Org.ID }
 		></div>
-		@teamMembersScript()
+		@teamPageScript()
 	}
 }
 
 templ teamMembersList(members []models.OrgMember, currentUser *models.User) {
 	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
-		<h3 class="text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white flex items-center gap-2">
-			@teamMembersUsersIcon()
-			Team Members
-			<span class="text-cool-grey-500 dark:text-cool-grey-400 font-normal text-sm">({ fmt.Sprintf("%d", len(members)) })</span>
-		</h3>
 		<div class="space-y-2">
 			for _, member := range members {
 				<div class="flex items-center justify-between p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg">
@@ -80,7 +117,7 @@ templ teamMembersList(members []models.OrgMember, currentUser *models.User) {
 							class="p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
 							title="Remove member"
 						>
-							@teamMembersTrashIcon()
+							@teamTrashIcon()
 						</button>
 					}
 				</div>
@@ -92,6 +129,53 @@ templ teamMembersList(members []models.OrgMember, currentUser *models.User) {
 			}
 		</div>
 	</div>
+}
+
+templ invitationsList(invitations []models.OrgInvitation) {
+	<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500">
+		<div class="space-y-2">
+			for _, invite := range invitations {
+				<div class="p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg">
+					<div class="flex items-center justify-between">
+						<div class="flex items-center gap-2">
+							<span class="text-sm font-medium text-cool-grey-900 dark:text-white">{ invite.Email }</span>
+							if invite.AcceptedAt != nil {
+								<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Joined</span>
+							} else {
+								<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400">Pending</span>
+							}
+						</div>
+						if invite.AcceptedAt == nil {
+							<button
+								type="button"
+								onclick="deleteInvitation(this)"
+								data-invite-id={ invite.ID }
+								class="p-1.5 text-cool-grey-400 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+								title="Revoke invitation"
+							>
+								@teamTrashIcon()
+							</button>
+						}
+					</div>
+				</div>
+			}
+			if len(invitations) == 0 {
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 text-center py-4">
+					No pending invitations.
+				</p>
+			}
+		</div>
+	</div>
+}
+
+func countPendingInvites(invitations []models.OrgInvitation) int {
+	count := 0
+	for _, inv := range invitations {
+		if inv.AcceptedAt == nil {
+			count++
+		}
+	}
+	return count
 }
 
 func getMemberInitials(name, email string) string {
@@ -135,14 +219,15 @@ func splitMemberWords(s string) []string {
 	return words
 }
 
-templ teamMembersScript() {
+templ teamPageScript() {
 	<script>
 		(function() {
-			var config = document.getElementById('team-members-config');
+			var config = document.getElementById('team-config');
 			var basePath = config.dataset.basePath;
 			var orgId = config.dataset.orgId;
 
-			async function removeMember(btn) {
+			// Remove member
+			window.removeMember = async function(btn) {
 				var userId = btn.dataset.userId;
 				var userName = btn.dataset.userName;
 				if (!confirm('Remove ' + userName + ' from this organization?')) {
@@ -152,9 +237,7 @@ templ teamMembersScript() {
 				try {
 					var response = await fetch(basePath + '/orgs/' + orgId + '/members/' + userId, {
 						method: 'DELETE',
-						headers: {
-							'Content-Type': 'application/json'
-						}
+						headers: { 'Content-Type': 'application/json' }
 					});
 
 					if (response.ok) {
@@ -167,21 +250,93 @@ templ teamMembersScript() {
 				} catch (error) {
 					showToast('Network error. Please try again.', 'error');
 				}
-			}
+			};
 
-			window.removeMember = removeMember;
+			// Delete invitation
+			window.deleteInvitation = async function(btn) {
+				var inviteId = btn.dataset.inviteId;
+				if (!confirm('Revoke this invitation?')) {
+					return;
+				}
+
+				try {
+					var response = await fetch(basePath + '/orgs/' + orgId + '/invitations/' + inviteId, {
+						method: 'DELETE',
+						headers: { 'Content-Type': 'application/json' }
+					});
+
+					if (response.ok) {
+						showToast('Invitation revoked', 'success');
+						location.reload();
+					} else {
+						var data = await response.json();
+						showToast(data.error || 'Failed to revoke invitation', 'error');
+					}
+				} catch (error) {
+					showToast('Network error. Please try again.', 'error');
+				}
+			};
+
+			// Invite form submission
+			document.getElementById('inviteForm').addEventListener('submit', async function(e) {
+				e.preventDefault();
+
+				var btn = document.getElementById('inviteSubmitBtn');
+				btn.disabled = true;
+				btn.textContent = 'Adding...';
+
+				var raw = document.getElementById('inviteEmails').value;
+				var emails = raw.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+
+				if (emails.length === 0) {
+					showToast('Please enter at least one email address.', 'error');
+					btn.disabled = false;
+					btn.textContent = 'Add members';
+					return;
+				}
+
+				var succeeded = 0;
+				var failed = 0;
+
+				for (var i = 0; i < emails.length; i++) {
+					try {
+						var response = await fetch(basePath + '/orgs/' + orgId + '/invitations', {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify({ email: emails[i] })
+						});
+
+						if (response.ok) {
+							succeeded++;
+						} else {
+							failed++;
+						}
+					} catch (error) {
+						failed++;
+					}
+				}
+
+				if (succeeded > 0) {
+					showToast(succeeded + ' member(s) invited successfully', 'success');
+				}
+				if (failed > 0) {
+					showToast(failed + ' invitation(s) failed', 'error');
+				}
+
+				document.getElementById('inviteModal').classList.add('hidden');
+				document.getElementById('inviteEmails').value = '';
+				btn.disabled = false;
+				btn.textContent = 'Add members';
+
+				if (succeeded > 0) {
+					location.reload();
+				}
+			});
 		})();
 	</script>
 }
 
-// Icons for team members page
-templ teamMembersUsersIcon() {
-	<svg class="w-5 h-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
-		<path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
-	</svg>
-}
-
-templ teamMembersTrashIcon() {
+templ teamTrashIcon() {
 	<svg class="w-4 h-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216,48H176V40a24,24,0,0,0-24-24H104A24,24,0,0,0,80,40v8H40a8,8,0,0,0,0,16h8V208a16,16,0,0,0,16,16H192a16,16,0,0,0,16-16V64h8a8,8,0,0,0,0-16ZM96,40a8,8,0,0,1,8-8h48a8,8,0,0,1,8,8v8H96Zm96,168H64V64H192ZM112,104v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Zm48,0v64a8,8,0,0,1-16,0V104a8,8,0,0,1,16,0Z"></path>
 	</svg>

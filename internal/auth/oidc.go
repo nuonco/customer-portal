@@ -187,6 +187,11 @@ func (p *OIDCProvider) findOrCreateUserWithRole(email, name string, defaultRole 
 			user.Name = name
 			p.db.Save(&user)
 		}
+		// Upgrade customer to vendor when logging in through vendor login
+		if defaultRole == models.RoleVendor && user.Role == models.RoleCustomer {
+			user.Role = models.RoleVendor
+			p.db.Model(&user).Update("role", models.RoleVendor)
+		}
 	}
 
 	return &user, nil

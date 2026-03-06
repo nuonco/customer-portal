@@ -14,8 +14,8 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
-// TeamMembersPage renders the team members page with sub-nav
-func (h *Handler) TeamMembersPage(c *gin.Context) {
+// TeamPage renders the combined team members and invites page
+func (h *Handler) TeamPage(c *gin.Context) {
 	user := h.GetFreshUser(c)
 	org := middleware.GetCurrentOrg(c)
 	if org == nil {
@@ -32,47 +32,6 @@ func (h *Handler) TeamMembersPage(c *gin.Context) {
 		return
 	}
 
-	// Get user's orgs for sidebar dropdown
-	allOrgs := h.GetUserOrgs(user.ID)
-
-	// Build breadcrumb path with org ID
-	teamBasePath := h.basePath + "/orgs/" + org.ID + "/team"
-
-	props := vendorpages.TeamMembersPageProps{
-		LayoutProps: vendorui.LayoutProps{
-			Title:      "Team Members",
-			ActivePage: "settings-team",
-			User:       user,
-			CurrentOrg: org,
-			Orgs:       allOrgs,
-			Breadcrumbs: []partials.Breadcrumb{
-				{Text: "Team", Path: teamBasePath},
-				{Text: "Members", Path: teamBasePath + "/members", Active: true},
-			},
-			BasePath:         h.basePath,
-			PortalScheme:     h.schemeFromBaseURL(),
-			DashboardURL:     h.dashboardURL,
-			PortalBaseDomain: h.subdomainBaseDomain,
-			CSSPath:          assets.VendorCSSPath(),
-			IsSuperuser:      h.isSuperuser(user),
-		},
-		Org:     org,
-		Members: members,
-	}
-
-	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.TeamMembersPage(props))
-}
-
-// TeamInvitesPage renders the team invites page with sub-nav
-func (h *Handler) TeamInvitesPage(c *gin.Context) {
-	user := h.GetFreshUser(c)
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		h.RenderErrorPage(c, http.StatusBadRequest, "Organization context not found")
-		return
-	}
-
 	// Load active invitations
 	var invitations []models.OrgInvitation
 	if err := h.db.Where("org_id = ? AND (expires_at IS NULL OR expires_at > ?) AND (max_uses = 0 OR used_count < max_uses)",
@@ -85,19 +44,15 @@ func (h *Handler) TeamInvitesPage(c *gin.Context) {
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
-	// Build breadcrumb path with org ID
-	teamBasePath := h.basePath + "/orgs/" + org.ID + "/team"
-
-	props := vendorpages.TeamInvitesPageProps{
+	props := vendorpages.TeamPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:      "Invitation Links",
+			Title:      "Team",
 			ActivePage: "settings-team",
 			User:       user,
 			CurrentOrg: org,
 			Orgs:       allOrgs,
 			Breadcrumbs: []partials.Breadcrumb{
-				{Text: "Team", Path: teamBasePath},
-				{Text: "Invites", Path: teamBasePath + "/invites", Active: true},
+				{Text: "Team", Active: true},
 			},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
@@ -107,11 +62,12 @@ func (h *Handler) TeamInvitesPage(c *gin.Context) {
 			IsSuperuser:      h.isSuperuser(user),
 		},
 		Org:         org,
+		Members:     members,
 		Invitations: invitations,
 	}
 
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.TeamInvitesPage(props))
+	h.RenderTempl(c, http.StatusOK, vendorpages.TeamPage(props))
 }
 
 // BrandingSettingsPage renders the branding settings page

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -97,6 +98,22 @@ func setupTestDB(t *testing.T) *gorm.DB {
 		status TEXT DEFAULT 'active',
 		invited_at DATETIME,
 		joined_at DATETIME,
+		created_at DATETIME,
+		updated_at DATETIME,
+		deleted_at DATETIME
+	)`).Error
+	require.NoError(t, err)
+
+	err = db.Exec(`CREATE TABLE IF NOT EXISTS org_invitations (
+		id TEXT PRIMARY KEY,
+		org_id TEXT NOT NULL,
+		email TEXT,
+		invited_by TEXT NOT NULL,
+		token TEXT NOT NULL UNIQUE,
+		expires_at DATETIME,
+		accepted_at DATETIME,
+		used_count INTEGER DEFAULT 0,
+		max_uses INTEGER DEFAULT 0,
 		created_at DATETIME,
 		updated_at DATETIME,
 		deleted_at DATETIME
@@ -535,4 +552,225 @@ func TestGetStringClaim(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
+}
+
+func TestProcessPendingOrgInvites(t *testing.T) {
+	db := setupTestDB(t)
+
+	// Create test vendor and org
+	vendor := testutil.NewTestVendor()
+	require.NoError(t, db.Create(vendor).Error)
+
+	org := testutil.NewTestOrg(testutil.OrgOptions{UserID: vendor.ID})
+	require.NoError(t, db.Create(org).Error)
+
+	// Create a new vendor user who will be invited
+	invitee := testutil.NewTestVendor(testutil.UserOptions{Email: "invitee@example.com"})
+	require.NoError(t, db.Create(invitee).Error)
+
+	t.Run("auto-joins org with pending invite", func(t *testing.T) {
+		// Create pending invite
+		invite := models.OrgInvitation{
+			OrgID:     org.ID,
+			Email:     invitee.Email,
+			InvitedBy: vendor.ID,
+			Token:     "test-token-1",
+			MaxUses:   1,
+		}
+		require.NoError(t, db.Create(&invite).Error)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		setJWTClaims(c, map[string]interface{}{
+			"user_id": invitee.ID,
+			"email":   invitee.Email,
+			"role":    string(models.RoleVendor),
+			"name":    invitee.Name,
+		})
+
+		mw := ProcessPendingOrgInvites(db)
+		mw(c)
+
+		assert.False(t, c.IsAborted())
+
+		// Verify member was created
+		var member models.OrgMember
+		err := db.Where("org_id = ? AND user_id = ?", org.ID, invitee.ID).First(&member).Error
+		require.NoError(t, err)
+		assert.Equal(t, models.MemberStatusActive, member.Status)
+
+		// Verify invite was marked accepted
+		var updatedInvite models.OrgInvitation
+		require.NoError(t, db.First(&updatedInvite, "id = ?", invite.ID).Error)
+		assert.NotNil(t, updatedInvite.AcceptedAt)
+		assert.Equal(t, 1, updatedInvite.UsedCount)
+
+		// Cleanup
+		db.Where("org_id = ? AND user_id = ?", org.ID, invitee.ID).Delete(&models.OrgMember{})
+		db.Where("id = ?", invite.ID).Unscoped().Delete(&models.OrgInvitation{})
+	})
+
+	t.Run("skips already-accepted invites", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		setJWTClaims(c, map[string]interface{}{
+			"user_id": invitee.ID,
+			"email":   invitee.Email,
+			"role":    string(models.RoleVendor),
+			"name":    invitee.Name,
+		})
+
+		// No pending invites — should be a no-op
+		mw := ProcessPendingOrgInvites(db)
+		mw(c)
+
+		assert.False(t, c.IsAborted())
+
+		// No member should have been created
+		var count int64
+		db.Model(&models.OrgMember{}).Where("org_id = ? AND user_id = ?", org.ID, invitee.ID).Count(&count)
+		assert.Equal(t, int64(0), count)
+	})
+
+	t.Run("upgrades customer role to vendor on auto-join", func(t *testing.T) {
+		// Create a customer user
+		customer := testutil.NewTestCustomer()
+		require.NoError(t, db.Create(customer).Error)
+
+		// Create pending invite for the customer
+		invite := models.OrgInvitation{
+			OrgID:     org.ID,
+			Email:     customer.Email,
+			InvitedBy: vendor.ID,
+			Token:     "test-token-upgrade",
+			MaxUses:   1,
+		}
+		require.NoError(t, db.Create(&invite).Error)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		setJWTClaims(c, map[string]interface{}{
+			"user_id": customer.ID,
+			"email":   customer.Email,
+			"role":    string(models.RoleCustomer),
+			"name":    customer.Name,
+		})
+
+		mw := ProcessPendingOrgInvites(db)
+		mw(c)
+
+		assert.False(t, c.IsAborted())
+
+		// Verify member was created
+		var member models.OrgMember
+		err := db.Where("org_id = ? AND user_id = ?", org.ID, customer.ID).First(&member).Error
+		require.NoError(t, err)
+		assert.Equal(t, models.MemberStatusActive, member.Status)
+
+		// Verify user role was upgraded in DB
+		var updatedUser models.User
+		require.NoError(t, db.First(&updatedUser, "id = ?", customer.ID).Error)
+		assert.Equal(t, models.RoleVendor, updatedUser.Role)
+
+		// Verify JWT claims were updated
+		claims, exists := c.Get("JWT_PAYLOAD")
+		require.True(t, exists)
+		mc, ok := claims.(jwt.MapClaims)
+		require.True(t, ok)
+		assert.Equal(t, string(models.RoleVendor), mc["role"])
+
+		// Cleanup
+		db.Where("org_id = ? AND user_id = ?", org.ID, customer.ID).Delete(&models.OrgMember{})
+		db.Where("id = ?", invite.ID).Unscoped().Delete(&models.OrgInvitation{})
+		db.Where("id = ?", customer.ID).Unscoped().Delete(&models.User{})
+	})
+
+	t.Run("restores soft-deleted member on re-invite", func(t *testing.T) {
+		// Create a user who was previously a member
+		reinvitee := testutil.NewTestVendor(testutil.UserOptions{Email: "reinvitee@example.com"})
+		require.NoError(t, db.Create(reinvitee).Error)
+
+		// Create and then soft-delete a member
+		now := time.Now()
+		member := models.OrgMember{
+			OrgID:    org.ID,
+			UserID:   reinvitee.ID,
+			Status:   models.MemberStatusActive,
+			JoinedAt: &now,
+		}
+		require.NoError(t, db.Create(&member).Error)
+		require.NoError(t, db.Delete(&member).Error)
+
+		// Verify it's soft-deleted
+		var count int64
+		db.Model(&models.OrgMember{}).Where("org_id = ? AND user_id = ?", org.ID, reinvitee.ID).Count(&count)
+		assert.Equal(t, int64(0), count)
+
+		// Create pending invite for the removed user
+		invite := models.OrgInvitation{
+			OrgID:     org.ID,
+			Email:     reinvitee.Email,
+			InvitedBy: vendor.ID,
+			Token:     "test-token-reinvite",
+			MaxUses:   1,
+		}
+		require.NoError(t, db.Create(&invite).Error)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		setJWTClaims(c, map[string]interface{}{
+			"user_id": reinvitee.ID,
+			"email":   reinvitee.Email,
+			"role":    string(models.RoleVendor),
+			"name":    reinvitee.Name,
+		})
+
+		mw := ProcessPendingOrgInvites(db)
+		mw(c)
+
+		assert.False(t, c.IsAborted())
+
+		// Verify member was restored (not duplicated)
+		var restored models.OrgMember
+		err := db.Where("org_id = ? AND user_id = ?", org.ID, reinvitee.ID).First(&restored).Error
+		require.NoError(t, err)
+		assert.Equal(t, models.MemberStatusActive, restored.Status)
+
+		// Verify only one record exists (no duplicates)
+		var totalCount int64
+		db.Unscoped().Model(&models.OrgMember{}).Where("org_id = ? AND user_id = ?", org.ID, reinvitee.ID).Count(&totalCount)
+		assert.Equal(t, int64(1), totalCount)
+
+		// Cleanup
+		db.Where("org_id = ? AND user_id = ?", org.ID, reinvitee.ID).Unscoped().Delete(&models.OrgMember{})
+		db.Where("id = ?", invite.ID).Unscoped().Delete(&models.OrgInvitation{})
+		db.Where("id = ?", reinvitee.ID).Unscoped().Delete(&models.User{})
+	})
+
+	t.Run("does not block request on error", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+
+		setJWTClaims(c, map[string]interface{}{
+			"user_id": invitee.ID,
+			"email":   invitee.Email,
+			"role":    string(models.RoleVendor),
+			"name":    invitee.Name,
+		})
+
+		mw := ProcessPendingOrgInvites(db)
+		mw(c)
+
+		// Should always proceed
+		assert.False(t, c.IsAborted())
+	})
 }

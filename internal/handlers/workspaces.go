@@ -3,12 +3,9 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"net/url"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	gojwt "github.com/golang-jwt/jwt/v4"
-	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -208,7 +205,9 @@ func (h *Handler) UpdateOrg(c *gin.Context) {
 	})
 }
 
-// GenerateOrgInvitation creates a new invitation link for the organization
+// GenerateOrgInvitation invites a user to the organization by email.
+// If the user already exists, they are added as a member immediately.
+// If not, a pending invitation is created and they auto-join on next login.
 func (h *Handler) GenerateOrgInvitation(c *gin.Context) {
 	org := middleware.GetCurrentOrg(c)
 	if org == nil {
@@ -221,8 +220,7 @@ func (h *Handler) GenerateOrgInvitation(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 
 	var req struct {
-		Email     string     `json:"email"`
-		ExpiresAt *time.Time `json:"expires_at"`
+		Email string `json:"email"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -240,23 +238,99 @@ func (h *Handler) GenerateOrgInvitation(c *gin.Context) {
 		return
 	}
 
-	// Set default expiration of 7 days if not provided
-	expiresAt := req.ExpiresAt
-	if expiresAt == nil {
-		defaultExpiry := time.Now().Add(7 * 24 * time.Hour)
-		expiresAt = &defaultExpiry
+	// Check if already a member
+	var existingMember models.OrgMember
+	if err := h.db.Where("org_id = ? AND user_id IN (SELECT id FROM users WHERE email = ?) AND deleted_at IS NULL",
+		org.ID, req.Email).First(&existingMember).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "User is already a member of this organization",
+		})
+		return
 	}
 
-	// Create invitation - always single-use (max_uses = 1)
+	// Check if there's already a pending invite for this email
+	var existingInvite models.OrgInvitation
+	if err := h.db.Where("org_id = ? AND email = ? AND accepted_at IS NULL AND deleted_at IS NULL",
+		org.ID, req.Email).First(&existingInvite).Error; err == nil {
+		c.JSON(http.StatusConflict, gin.H{
+			"error": "An invitation for this email is already pending",
+		})
+		return
+	}
+
+	// Check if the user already exists
+	var existingUser models.User
+	userExists := h.db.Where("email = ?", req.Email).First(&existingUser).Error == nil
+
+	now := time.Now()
+
+	// Create the invitation record
 	invitation := models.OrgInvitation{
 		OrgID:     org.ID,
 		Email:     req.Email,
 		InvitedBy: user.ID,
-		ExpiresAt: expiresAt,
 		MaxUses:   1,
 	}
 
-	// BeforeCreate hook will generate the token
+	if userExists {
+		// User exists — add as member immediately and mark invite as accepted
+		err := h.db.Transaction(func(tx *gorm.DB) error {
+			invitation.AcceptedAt = &now
+			invitation.UsedCount = 1
+			if err := tx.Create(&invitation).Error; err != nil {
+				return err
+			}
+
+			// Check for soft-deleted member and restore instead of creating duplicate
+			var existingMember models.OrgMember
+			if err := tx.Unscoped().Where("org_id = ? AND user_id = ? AND deleted_at IS NOT NULL", org.ID, existingUser.ID).First(&existingMember).Error; err == nil {
+				// Restore soft-deleted member
+				if err := tx.Unscoped().Model(&existingMember).Updates(map[string]interface{}{
+					"deleted_at": nil,
+					"status":     models.MemberStatusActive,
+					"invited_by": &user.ID,
+					"joined_at":  &now,
+				}).Error; err != nil {
+					return err
+				}
+			} else {
+				member := models.OrgMember{
+					OrgID:     org.ID,
+					UserID:    existingUser.ID,
+					InvitedBy: &user.ID,
+					Status:    models.MemberStatusActive,
+					JoinedAt:  &now,
+				}
+				if err := tx.Create(&member).Error; err != nil {
+					return err
+				}
+			}
+
+			// Upgrade customer to vendor role when invited to a vendor org
+			if existingUser.Role == models.RoleCustomer {
+				if err := tx.Model(&existingUser).Update("role", models.RoleVendor).Error; err != nil {
+					return err
+				}
+			}
+
+			return nil
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to add member",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"id":      invitation.ID,
+			"status":  "joined",
+			"message": "Member added to organization",
+		})
+		return
+	}
+
+	// User doesn't exist — create pending invitation
 	if err := h.db.Create(&invitation).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to create invitation",
@@ -264,15 +338,10 @@ func (h *Handler) GenerateOrgInvitation(c *gin.Context) {
 		return
 	}
 
-	// Generate invitation URL
-	invitationURL := invitation.GetInvitationURL(c.Request.Host)
-
 	c.JSON(http.StatusOK, gin.H{
-		"id":         invitation.ID,
-		"token":      invitation.Token,
-		"url":        invitationURL,
-		"expires_at": invitation.ExpiresAt,
-		"max_uses":   invitation.MaxUses,
+		"id":      invitation.ID,
+		"status":  "pending",
+		"message": "Invitation sent",
 	})
 }
 
@@ -367,208 +436,6 @@ func (h *Handler) RemoveOrgMember(c *gin.Context) {
 	})
 }
 
-// AcceptOrgInvitation is a public endpoint for accepting organization invitations
-func (h *Handler) AcceptOrgInvitation(c *gin.Context) {
-	token := c.Query("token")
-	if token == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invitation token is required",
-		})
-		return
-	}
-
-	// Find invitation
-	var invitation models.OrgInvitation
-	if err := h.db.Where("token = ?", token).Preload("Org").First(&invitation).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{
-				"error": "Invitation not found or expired",
-			})
-			return
-		}
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to load invitation",
-		})
-		return
-	}
-
-	// Validate invitation
-	if !invitation.IsValid() {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Invitation is invalid or expired",
-		})
-		return
-	}
-
-	// Get current user (must be authenticated)
-	user := middleware.GetCurrentUser(c)
-	if user == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Authentication required",
-		})
-		return
-	}
-
-	// Check if user is already a member
-	var existingMember models.OrgMember
-	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
-		First(&existingMember).Error
-	if err == nil {
-		// Already a member - redirect to org
-		c.JSON(http.StatusOK, gin.H{
-			"message":     "Already a member of this organization",
-			"redirect_to": fmt.Sprintf("/admin/orgs/%s/apps", invitation.OrgID),
-		})
-		return
-	}
-
-	// Add user as member
-	now := time.Now()
-	member := models.OrgMember{
-		OrgID:     invitation.OrgID,
-		UserID:    user.ID,
-		InvitedBy: &invitation.InvitedBy,
-		Status:    models.MemberStatusActive,
-		JoinedAt:  &now,
-	}
-
-	if err := h.db.Create(&member).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": "Failed to add member to organization",
-		})
-		return
-	}
-
-	// Increment invitation used count
-	h.db.Model(&invitation).UpdateColumn("used_count", gorm.Expr("used_count + ?", 1))
-
-	// Mark invitation as accepted
-	acceptedAt := time.Now()
-	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
-
-	c.JSON(http.StatusOK, gin.H{
-		"message":     "Successfully joined organization",
-		"redirect_to": fmt.Sprintf("/admin/orgs/%s/apps", invitation.OrgID),
-	})
-}
-
-// AcceptOrgInvitationPage handles invitation acceptance via browser navigation
-// This is a public endpoint that redirects to login if not authenticated
-func (h *Handler) AcceptOrgInvitationPage(c *gin.Context) {
-	token := c.Query("token")
-	if token == "" {
-		h.RenderErrorPage(c, http.StatusBadRequest, "Invitation token is required")
-		return
-	}
-
-	// Find invitation
-	var invitation models.OrgInvitation
-	if err := h.db.Where("token = ?", token).Preload("Org").First(&invitation).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			h.RenderErrorPage(c, http.StatusNotFound, "Invitation not found or expired")
-			return
-		}
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to load invitation")
-		return
-	}
-
-	// Validate invitation
-	if !invitation.IsValid() {
-		h.RenderErrorPage(c, http.StatusBadRequest, "This invitation has expired or reached its maximum uses")
-		return
-	}
-
-	// Try to get current user from JWT cookie
-	user := h.tryGetCurrentUser(c)
-	if user == nil {
-		// Not authenticated - store return URL in cookie and redirect to login
-		// URL-encode the token in case it contains special characters
-		returnURL := h.basePath + "/invite?token=" + url.QueryEscape(token)
-		h.logger.Debug("AcceptOrgInvitationPage: user not authenticated, redirecting to login", zap.String("return_url", returnURL))
-		c.SetCookie("return_url", returnURL, 3600, "/", "", false, true)
-		c.Redirect(http.StatusFound, h.basePath+"/login/")
-		return
-	}
-
-	// Check if user is already a member
-	var existingMember models.OrgMember
-	err := h.db.Where("org_id = ? AND user_id = ?", invitation.OrgID, user.ID).
-		First(&existingMember).Error
-	if err == nil {
-		// Already a member - redirect to org
-		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, invitation.OrgID))
-		return
-	}
-
-	// Add user as member
-	now := time.Now()
-	member := models.OrgMember{
-		OrgID:     invitation.OrgID,
-		UserID:    user.ID,
-		InvitedBy: &invitation.InvitedBy,
-		Status:    models.MemberStatusActive,
-		JoinedAt:  &now,
-	}
-
-	if err := h.db.Create(&member).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Failed to join organization")
-		return
-	}
-
-	// Increment invitation used count
-	h.db.Model(&invitation).UpdateColumn("used_count", gorm.Expr("used_count + ?", 1))
-
-	// Mark invitation as accepted
-	acceptedAt := time.Now()
-	h.db.Model(&invitation).Update("accepted_at", &acceptedAt)
-
-	// Redirect to the org
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/apps", h.basePath, invitation.OrgID))
-}
-
-// tryGetCurrentUser attempts to get the current user from the JWT cookie without requiring auth middleware
-func (h *Handler) tryGetCurrentUser(c *gin.Context) *models.User {
-	// Get the JWT token from cookie
-	tokenCookie, err := c.Cookie("jwt")
-	if err != nil || tokenCookie == "" {
-		h.logger.Debug("tryGetCurrentUser: no JWT cookie found")
-		return nil
-	}
-
-	// Use the JWT middleware to parse and validate the token
-	token, err := h.auth.ParseTokenString(tokenCookie)
-	if err != nil {
-		h.logger.Warn("tryGetCurrentUser: failed to parse JWT", zap.Error(err))
-		return nil
-	}
-
-	// Extract claims from the token
-	claims, ok := token.Claims.(gojwt.MapClaims)
-	if !ok || !token.Valid {
-		h.logger.Warn("tryGetCurrentUser: invalid token claims")
-		return nil
-	}
-
-	// Extract user ID from claims
-	userID, ok := claims["user_id"].(string)
-	if !ok || userID == "" {
-		h.logger.Warn("tryGetCurrentUser: no user_id in claims")
-		return nil
-	}
-
-	h.logger.Debug("tryGetCurrentUser: loading user from DB", zap.String("user_id", userID))
-
-	// Load user from database
-	var user models.User
-	if err := h.db.First(&user, "id = ?", userID).Error; err != nil {
-		h.logger.Warn("tryGetCurrentUser: failed to load user from DB", zap.Error(err))
-		return nil
-	}
-
-	h.logger.Debug("tryGetCurrentUser: loaded user", zap.String("user_id", user.ID), zap.String("email", user.Email))
-	return &user
-}
-
 // Deprecated aliases for backwards compatibility during migration
 // These will be removed after all routes are updated
 
@@ -595,14 +462,4 @@ func (h *Handler) DeleteInvitation(c *gin.Context) {
 // RemoveMember is deprecated - use RemoveOrgMember instead
 func (h *Handler) RemoveMember(c *gin.Context) {
 	h.RemoveOrgMember(c)
-}
-
-// AcceptInvitation is deprecated - use AcceptOrgInvitation instead
-func (h *Handler) AcceptInvitation(c *gin.Context) {
-	h.AcceptOrgInvitation(c)
-}
-
-// AcceptInvitationPage is deprecated - use AcceptOrgInvitationPage instead
-func (h *Handler) AcceptInvitationPage(c *gin.Context) {
-	h.AcceptOrgInvitationPage(c)
 }

@@ -189,9 +189,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	rg.GET("/login/", h.VendorLoginPageTempl)
 	rg.GET("/logout", h.VendorLogout) // Logout handler
 
-	// Invitation acceptance route (public - redirects to login if not authenticated)
-	rg.GET("/invite", h.AcceptInvitationPage)
-
 	// Auth routes depend on provider type
 	if authProvider != nil && authProvider.Name() == "local" {
 		// Local password auth routes
@@ -227,6 +224,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	// Protected vendor routes
 	orgs := rg.Group("/orgs")
 	orgs.Use(jwtAuth.MiddlewareFunc())
+	orgs.Use(middleware.ProcessPendingOrgInvites(db))
 	orgs.Use(middleware.RequireRole(models.RoleVendor))
 	{
 		// Org-level routes (no specific org selected, no RequireOrgContext)
@@ -306,8 +304,11 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/team", func(c *gin.Context) {
 				c.Redirect(http.StatusFound, c.Request.URL.Path+"/members")
 			})
-			orgRoutes.GET("/team/members", h.TeamMembersPage)
-			orgRoutes.GET("/team/invites", h.TeamInvitesPage)
+			orgRoutes.GET("/team/members", h.TeamPage)
+			orgRoutes.GET("/team/invites", func(c *gin.Context) {
+				orgID := c.Param("org_id")
+				c.Redirect(http.StatusFound, "/admin/orgs/"+orgID+"/team/members")
+			})
 
 			// Customer Portal pages (org-scoped)
 			orgPortal := orgRoutes.Group("/portal")
