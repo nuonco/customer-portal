@@ -10,33 +10,29 @@ import (
 
 func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 	var req struct {
-		PrimaryColor              string `json:"primary_color"`
-		SecondaryColor            string `json:"secondary_color"`
-		PrimaryColorDark          string `json:"primary_color_dark"`   // Dark mode primary color
-		SecondaryColorDark        string `json:"secondary_color_dark"` // Dark mode secondary color
-		LogoBase64                string `json:"logo_base64"`          // Kept for backward compatibility (maps to LogoLightBase64)
-		LogoLightBase64           string `json:"logo_light_base64"`    // Light mode logo
-		LogoDarkBase64            string `json:"logo_dark_base64"`     // Dark mode logo
-		FaviconBase64             string `json:"favicon_base64"`
-		HeadingFont               string `json:"heading_font"`
-		BodyFont                  string `json:"body_font"`
-		HeadingFontBase64         string `json:"heading_font_base64"`
-		BodyFontBase64            string `json:"body_font_base64"`
-		HeadingFontName           string `json:"heading_font_name"`
-		BodyFontName              string `json:"body_font_name"`
-		WhiteColor                string `json:"white_color"`
-		BlackColor                string `json:"black_color"`
-		WhiteColorDark            string `json:"white_color_dark"`
-		BlackColorLight           string `json:"black_color_light"`
-		BorderRadius              string `json:"border_radius"`
-		ThemeMode                 string `json:"theme_mode"`
-		LoginTitle                string `json:"login_title"`
-		LoginSubtitle             string `json:"login_subtitle"`
-		LoginRightSideImageBase64 string `json:"login_right_side_image_base64"`
-		LoginRightSideGradient    string `json:"login_right_side_gradient"`
-		CustomCSS                 string `json:"custom_css"`
-		HeaderTitle               string `json:"header_title"`
-		HeaderTitleHidden         *bool  `json:"header_title_hidden"`
+		PrimaryColor       string `json:"primary_color"`
+		SecondaryColor     string `json:"secondary_color"`
+		PrimaryColorDark   string `json:"primary_color_dark"`   // Dark mode primary color
+		SecondaryColorDark string `json:"secondary_color_dark"` // Dark mode secondary color
+		LogoBase64         string `json:"logo_base64"`          // Kept for backward compatibility (maps to LogoLightBase64)
+		LogoLightBase64    string `json:"logo_light_base64"`    // Light mode logo
+		LogoDarkBase64     string `json:"logo_dark_base64"`     // Dark mode logo
+		FaviconBase64      string `json:"favicon_base64"`
+		HeadingFont        string `json:"heading_font"`
+		BodyFont           string `json:"body_font"`
+		HeadingFontBase64  string `json:"heading_font_base64"`
+		BodyFontBase64     string `json:"body_font_base64"`
+		HeadingFontName    string `json:"heading_font_name"`
+		BodyFontName       string `json:"body_font_name"`
+		WhiteColor         string `json:"white_color"`
+		BlackColor         string `json:"black_color"`
+		WhiteColorDark     string `json:"white_color_dark"`
+		BlackColorLight    string `json:"black_color_light"`
+		BorderRadius       string `json:"border_radius"`
+		ThemeMode          string `json:"theme_mode"`
+		CustomCSS          string `json:"custom_css"`
+		HeaderTitle        string `json:"header_title"`
+		HeaderTitleHidden  *bool  `json:"header_title_hidden"`
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -195,28 +191,6 @@ func (h *Handler) UpdateThemeSettings(c *gin.Context) {
 		theme.ThemeMode = req.ThemeMode
 	} else {
 		theme.ThemeMode = ""
-	}
-
-	// Update login page text - allow setting to empty to use defaults
-	theme.LoginTitle = req.LoginTitle
-	theme.LoginSubtitle = req.LoginSubtitle
-
-	// Handle login right side image - "REMOVE" clears, valid data URI sets
-	if req.LoginRightSideImageBase64 != "" {
-		if req.LoginRightSideImageBase64 == "REMOVE" {
-			theme.LoginRightSideImageBase64 = ""
-		} else if strings.HasPrefix(req.LoginRightSideImageBase64, "data:image/") {
-			theme.LoginRightSideImageBase64 = req.LoginRightSideImageBase64
-		}
-	}
-
-	// Handle login right side gradient - "REMOVE" clears, otherwise sets CSS gradient
-	if req.LoginRightSideGradient != "" {
-		if req.LoginRightSideGradient == "REMOVE" {
-			theme.LoginRightSideGradient = ""
-		} else {
-			theme.LoginRightSideGradient = req.LoginRightSideGradient
-		}
 	}
 
 	// CustomCSS: any string value sets it (including empty to clear)

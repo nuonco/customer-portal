@@ -1022,18 +1022,9 @@ body {
   border-color: transparent;
 }
 
-/* Large card: 32px padding (install/form pages) */
+/* Large card: 32px padding (install/form pages) — always paired with .card-base */
 .card-lg {
-  background-color: var(--theme-white, #ffffff);
-  @apply shadow-md;
-  border: 1px solid var(--theme-border);
-  border-radius: var(--theme-radius);
   padding: 32px;
-}
-
-.dark .card-lg {
-  background-color: var(--theme-surface-raised);
-  border-color: transparent;
 }
 
 /* Divider section within a card */

@@ -10,6 +10,7 @@ import templruntime "github.com/a-h/templ/runtime"
 
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AccountSetupPageProps for the account setup page
@@ -52,17 +53,43 @@ func AccountSetupPage(props AccountSetupPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-[60vh] flex items-center justify-center px-4\"><div class=\"w-full max-w-md\"><div class=\"card-base p-8\"><div class=\"text-center mb-6\"><h2 class=\"page-title mb-2\">Create your account</h2><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">Enter your company name to get started. Team members can be invited later.</p></div><form hx-post=\"/account/create\" class=\"space-y-4\"><div><label for=\"name\" class=\"field-label\">Company Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 field-input\" placeholder=\"e.g. Acme Inc.\" autofocus></div><div class=\"flex justify-end gap-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"min-h-[60vh] flex items-center justify-center px-4\"><div class=\"w-full max-w-md\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if props.HasOtherAccounts {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<a href=\"/account\" class=\"button button-outline btn-theme-outline px-4 py-2 text-sm\">Cancel</a> ")
+			templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"text-center mb-6\"><h2 class=\"page-title mb-2\">Create your account</h2><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">Enter your company name to get started. Team members can be invited later.</p></div><form hx-post=\"/account/create\" class=\"space-y-4\"><div><label for=\"name\" class=\"field-label\">Company Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 field-input\" placeholder=\"e.g. Acme Inc.\" autofocus></div><div class=\"flex justify-end gap-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
+				if props.HasOtherAccounts {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<a href=\"/account\" class=\"button button-outline btn-theme-outline px-4 py-2 text-sm\">Cancel</a> ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<button type=\"submit\" class=\"button button-primary btn-theme-primary px-4 py-2 text-sm\">Create</button></div></form><div id=\"error\" class=\"mt-4 alert-error hidden\"></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = components.Card(components.CardProps{Class: "p-8"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<button type=\"submit\" class=\"button button-primary btn-theme-primary px-4 py-2 text-sm\">Create</button></div></form><div id=\"error\" class=\"mt-4 alert-error hidden\"></div></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

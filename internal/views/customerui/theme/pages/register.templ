@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // RegisterPageProps for the customer registration page
@@ -50,7 +51,7 @@ templ RegisterPage(props RegisterPageProps) {
 				</div>
 			</nav>
 			<main class="container mx-auto p-4">
-				<div class="max-w-md mx-auto card-base mt-10">
+				@components.Card(components.CardProps{Class: "max-w-md mx-auto mt-10"}) {
 					<h2 class="text-2xl font-bold mb-6 text-center text-cool-grey-900 dark:text-white">{ props.Title }</h2>
 					if props.Error != "" {
 						<div class="mb-4 alert-error">
@@ -128,7 +129,7 @@ templ RegisterPage(props RegisterPageProps) {
 						}
 					</p>
 					<div id="error" class="mt-4 alert-error hidden"></div>
-				</div>
+				}
 			</main>
 			<!-- Config data for JavaScript -->
 			<div id="register-config" class="hidden" data-register-url={ props.BasePath + "/register" } data-login-url={ props.BasePath + "/login" } data-redirect-url={ props.RedirectURL }></div>

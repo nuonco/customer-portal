@@ -2,6 +2,7 @@ package pages
 
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
 )
 
@@ -40,7 +41,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 				<!-- Left Side - Content -->
 				<div class="flex flex-col gap-10 justify-center w-full lg:w-[840px] px-8 md:px-20 py-16">
 					<!-- Card -->
-					<div class="card-base px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8">
+					@components.Card(components.CardProps{Class: "px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8"}) {
 						<!-- Logo -->
 						if props.Theme != nil {
 							if props.Theme.LogoDarkBase64 != "" {
@@ -88,7 +89,7 @@ templ CustomerLoginPage(props CustomerLoginPageProps) {
 						>
 							Log in
 						</a>
-					</div>
+					}
 				</div>
 				<!-- Right Side - Themed Background, Gradient, or Image -->
 				@customerLoginRightPanel(props.Theme)

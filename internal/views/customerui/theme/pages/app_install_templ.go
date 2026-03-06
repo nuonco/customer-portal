@@ -11,6 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AppInstallPageProps for the published-app install page
@@ -63,114 +64,192 @@ func AppInstallPage(props AppInstallPageProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 21, Col: 54}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 22, Col: 54}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><!-- Card 1: Header + Account + Name + Region --><div class=\"card-lg\"><div class=\"mb-6 text-center\"><h3 class=\"text-xl text-cool-grey-800 dark:text-cool-grey-200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\"><!-- Card 1: Header + Account + Name + Region -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 25, Col: 83}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</h3><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">provided by ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var5 string
-			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.OrgName)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 26, Col: 86}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></div><!-- Account Info --><div class=\"card-section-divider\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Your Account</h4><div class=\"account-info-box\"><div class=\"flex items-center justify-between\"><div><p class=\"text-sm text-green-700 dark:text-green-300\">Installing as <strong class=\"font-semibold\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var6 string
-			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Email)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 35, Col: 79}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</strong></p>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.LoggedInUser.Name != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p class=\"text-xs text-green-600 dark:text-green-400 mt-1\">")
+			templ_7745c5c3_Var4 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"mb-6 text-center\"><h3 class=\"text-xl text-cool-grey-800 dark:text-cool-grey-200\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 26, Col: 83}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</h3><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">provided by ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.OrgName)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 27, Col: 86}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p></div><!-- Account Info --> <div class=\"card-section-divider\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Your Account</h4><div class=\"account-info-box\"><div class=\"flex items-center justify-between\"><div><p class=\"text-sm text-green-700 dark:text-green-300\">Installing as <strong class=\"font-semibold\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var7 string
-				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Name)
+				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Email)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 38, Col: 93}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 36, Col: 79}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</strong></p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div><a href=\"")
+				if props.LoggedInUser.Name != "" {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p class=\"text-xs text-green-600 dark:text-green-400 mt-1\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var8 string
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 39, Col: 93}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</p>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div><a href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var9 templ.SafeURL
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 42, Col: 57}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" class=\"text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 underline\">Switch account</a></div></div></div><!-- Install Name --> <div class=\"card-section-divider\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Install Name</h4><input type=\"text\" id=\"installName\" name=\"name\" required placeholder=\"my-install\" class=\"field-input\"><p class=\"field-hint\">A name to identify this installation.</p></div><!-- Region Selection --> <div id=\"regionSection\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Deployment Region</h4><div id=\"regionContainer\"><p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Loading regions...</p></div></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = components.Card(components.CardProps{Size: components.CardLarge}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 templ.SafeURL
-			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 41, Col: 57}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<!-- Input Group Cards --><div id=\"appInputsContainer\" class=\"space-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" class=\"text-xs text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 underline\">Switch account</a></div></div></div><!-- Install Name --><div class=\"card-section-divider\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Install Name</h4><input type=\"text\" id=\"installName\" name=\"name\" required placeholder=\"my-install\" class=\"field-input\"><p class=\"field-hint\">A name to identify this installation.</p></div><!-- Region Selection --><div id=\"regionSection\"><h4 class=\"text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200\">Deployment Region</h4><div id=\"regionContainer\"><p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Loading regions...</p></div></div></div><!-- Input Group Cards --><div id=\"appInputsContainer\" class=\"space-y-6\"><div class=\"card-lg\"><p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Loading configuration options...</p></div></div><!-- Submit Section --><div class=\"card-lg\"><button type=\"submit\" class=\"button button-primary w-full btn-theme-primary\">Create install</button><div id=\"error\" class=\"mt-4 alert-error hidden\"></div><div id=\"success\" class=\"mt-4 alert-success hidden\"></div></div></form><!-- Config data for JavaScript --> <div id=\"app-install-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Var10 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<p class=\"text-cool-grey-500 dark:text-cool-grey-400 text-sm\">Loading configuration options...</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = components.Card(components.CardProps{Size: components.CardLarge}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 87, Col: 77}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div><!-- Submit Section -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" data-app-id=\"")
+			templ_7745c5c3_Var11 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+				if !templ_7745c5c3_IsBuffer {
+					defer func() {
+						templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+						if templ_7745c5c3_Err == nil {
+							templ_7745c5c3_Err = templ_7745c5c3_BufErr
+						}
+					}()
+				}
+				ctx = templ.InitializeContext(ctx)
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<button type=\"submit\" class=\"button button-primary w-full btn-theme-primary\">Create install</button><div id=\"error\" class=\"mt-4 alert-error hidden\"></div><div id=\"success\" class=\"mt-4 alert-success hidden\"></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				return nil
+			})
+			templ_7745c5c3_Err = components.Card(components.CardProps{Size: components.CardLarge}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var11), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppID)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 87, Col: 105}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</form><!-- Config data for JavaScript --> <div id=\"app-install-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"></div>")
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 88, Col: 77}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" data-app-id=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/app_install.templ`, Line: 88, Col: 105}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -204,12 +283,12 @@ func appInstallScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('app-install-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar appId = config.dataset.appId;\n\t\t\tvar currentAppConfig = null;\n\n\t\t\t// Fetch app config on page load\n\t\t\tasync function loadAppConfig() {\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/apps/' + appId + '/config?filter=customer');\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tcurrentAppConfig = await response.json();\n\t\t\t\t\t\trenderRegionSelector(currentAppConfig.platform);\n\t\t\t\t\t\trenderInputFields(currentAppConfig.input_config, currentAppConfig.collapsed_groups || []);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tdocument.getElementById('appInputsContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Failed to load configuration<\\/p>';\n\t\t\t\t\t\tdocument.getElementById('regionContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Failed to load regions<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tdocument.getElementById('appInputsContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Error loading configuration<\\/p>';\n\t\t\t\t\tdocument.getElementById('regionContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Error loading regions<\\/p>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderRegionSelector(platform) {\n\t\t\t\tvar container = document.getElementById('regionContainer');\n\t\t\t\tvar html = '';\n\n\t\t\t\tif (platform === 'azure_aks') {\n\t\t\t\t\thtml = '<label for=\"azureLocation\" class=\"field-label\">Azure Location *<\\/label>' +\n\t\t\t\t\t\t'<select id=\"azureLocation\" required class=\"field-input\">' +\n\t\t\t\t\t\t\t'<option value=\"eastus\">East US<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eastus2\">East US 2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westus\">West US<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westus2\">West US 2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westeurope\">West Europe<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"northeurope\">North Europe<\\/option>' +\n\t\t\t\t\t\t'<\\/select>';\n\t\t\t\t} else {\n\t\t\t\t\thtml = '<label for=\"awsRegion\" class=\"field-label\">AWS Region *<\\/label>' +\n\t\t\t\t\t\t'<select id=\"awsRegion\" required class=\"field-input\">' +\n\t\t\t\t\t\t\t'<option value=\"us-east-1\">US East (N. Virginia) - us-east-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-east-2\">US East (Ohio) - us-east-2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-west-1\">US West (N. California) - us-west-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-west-2\">US West (Oregon) - us-west-2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eu-west-1\">Europe (Ireland) - eu-west-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eu-central-1\">Europe (Frankfurt) - eu-central-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"ap-southeast-1\">Asia Pacific (Singapore) - ap-southeast-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"ap-northeast-1\">Asia Pacific (Tokyo) - ap-northeast-1<\\/option>' +\n\t\t\t\t\t\t'<\\/select>';\n\t\t\t\t}\n\n\t\t\t\tcontainer.innerHTML = html;\n\t\t\t}\n\n\t\t\tfunction renderInputFields(inputConfig, collapsedGroups) {\n\t\t\t\tvar container = document.getElementById('appInputsContainer');\n\t\t\t\tcollapsedGroups = collapsedGroups || [];\n\n\t\t\t\tvar collapsedSet = {};\n\t\t\t\tcollapsedGroups.forEach(function(name) { collapsedSet[name] = true; });\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.style.display = 'none';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tif (group.app_inputs && group.app_inputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\tvar isCollapsed = collapsedSet[group.name] || false;\n\t\t\t\t\t\thtml += renderInputGroup(group, group.app_inputs, isCollapsed);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.style.display = 'none';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderInputGroup(group, inputs, isCollapsed) {\n\t\t\t\tvar groupId = 'group-' + (group.name || 'default').replace(/[^a-z0-9]/gi, '-').toLowerCase();\n\t\t\t\tvar html = '<div class=\"input-group-card\">';\n\t\t\t\thtml += '<div class=\"input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors\" ';\n\t\t\t\thtml += 'onclick=\"toggleInputGroup(\\'' + groupId + '\\')\" ';\n\t\t\t\thtml += 'role=\"button\" tabindex=\"0\" aria-expanded=\"' + (!isCollapsed) + '\" aria-controls=\"' + groupId + '-content\" ';\n\t\t\t\thtml += 'onkeydown=\"if(event.key===\\'Enter\\'||event.key===\\' \\'){event.preventDefault();toggleInputGroup(\\'' + groupId + '\\');}\">';\n\t\t\t\thtml += '<div>';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\thtml += '<i class=\"input-group-chevron ph-bold ph-caret-down text-xl text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4' + (isCollapsed ? '' : ' rotate-180') + '\"><\\/i>';\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\tvar maxHeight = isCollapsed ? '0' : '2000px';\n\t\t\t\tvar opacity = isCollapsed ? '0' : '1';\n\t\t\t\thtml += '<div id=\"' + groupId + '-content\" class=\"input-group-content\" ';\n\t\t\t\thtml += 'style=\"max-height: ' + maxHeight + '; opacity: ' + opacity + '; overflow: hidden;\">';\n\t\t\t\thtml += '<div class=\"px-4 pb-4 space-y-4\">';\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\thtml += renderSingleInput(input);\n\t\t\t\t});\n\t\t\t\thtml += '<\\/div><\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\twindow.toggleInputGroup = window.toggleInputGroup || function(groupId) {\n\t\t\t\tvar content = document.getElementById(groupId + '-content');\n\t\t\t\tvar header = content.previousElementSibling;\n\t\t\t\tvar chevron = header.querySelector('.input-group-chevron');\n\t\t\t\tvar isCurrentlyCollapsed = content.style.maxHeight === '0px';\n\t\t\t\tif (isCurrentlyCollapsed) {\n\t\t\t\t\tcontent.style.maxHeight = content.scrollHeight + 'px';\n\t\t\t\t\tcontent.style.opacity = '1';\n\t\t\t\t\tchevron.classList.add('rotate-180');\n\t\t\t\t\theader.setAttribute('aria-expanded', 'true');\n\t\t\t\t} else {\n\t\t\t\t\tcontent.style.maxHeight = '0px';\n\t\t\t\t\tcontent.style.opacity = '0';\n\t\t\t\t\tchevron.classList.remove('rotate-180');\n\t\t\t\t\theader.setAttribute('aria-expanded', 'false');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\tfunction renderSingleInput(input) {\n\t\t\t\tvar inputName = 'inputs:' + input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (input.default === 'true') html += ' checked';\n\t\t\t\t\thtml += ' class=\"field-checkbox\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"field-input\">';\n\t\t\t\t\thtml += (input.default || '') + '<\\/textarea>';\n\t\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') inputType = 'number';\n\t\t\t\telse if (input.sensitive) inputType = 'password';\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"field-input\" \\/>';\n\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('installForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar errorDiv = document.getElementById('error');\n\t\t\t\tvar successDiv = document.getElementById('success');\n\t\t\t\tvar submitButton = e.target.querySelector('button[type=\"submit\"]');\n\n\t\t\t\terrorDiv.classList.add('hidden');\n\t\t\t\tsuccessDiv.classList.add('hidden');\n\t\t\t\tsubmitButton.textContent = 'Creating install...';\n\t\t\t\tsubmitButton.disabled = true;\n\n\t\t\t\tvar region = '';\n\t\t\t\tvar location = '';\n\t\t\t\tvar awsRegionEl = document.getElementById('awsRegion');\n\t\t\t\tvar azureLocationEl = document.getElementById('azureLocation');\n\n\t\t\t\tif (awsRegionEl) region = awsRegionEl.value;\n\t\t\t\tif (azureLocationEl) location = azureLocationEl.value;\n\n\t\t\t\tvar formData = {\n\t\t\t\t\tname: document.getElementById('installName').value,\n\t\t\t\t\tregion: region,\n\t\t\t\t\tlocation: location,\n\t\t\t\t\tinputs: {}\n\t\t\t\t};\n\n\t\t\t\tvar inputFields = document.querySelectorAll('#appInputsContainer input[name^=\"inputs:\"], #appInputsContainer select[name^=\"inputs:\"], #appInputsContainer textarea[name^=\"inputs:\"]');\n\t\t\t\tinputFields.forEach(function(input) {\n\t\t\t\t\tvar fieldName = input.name.substring(7);\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\tformData.inputs[fieldName] = input.value === 'true' ? 'true' : input.value;\n\t\t\t\t\t\t} else if (!formData.inputs.hasOwnProperty(fieldName)) {\n\t\t\t\t\t\t\tformData.inputs[fieldName] = 'false';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else if (input.type !== 'hidden' && input.value) {\n\t\t\t\t\t\tformData.inputs[fieldName] = input.value;\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/apps/' + appId + '/install', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tdocument.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24);\n\t\t\t\t\t\tsuccessDiv.innerHTML = '<p class=\"font-semibold\">Installation created successfully!<\\/p><p class=\"text-sm mt-2\">Redirecting to your install...<\\/p>';\n\t\t\t\t\t\tsuccessDiv.classList.remove('hidden');\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.href = basePath + '/installs/' + data.install.id;\n\t\t\t\t\t\t}, 2000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to create installation';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t} finally {\n\t\t\t\t\tsubmitButton.textContent = 'Create install';\n\t\t\t\t\tsubmitButton.disabled = false;\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tloadAppConfig();\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('app-install-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar appId = config.dataset.appId;\n\t\t\tvar currentAppConfig = null;\n\n\t\t\t// Fetch app config on page load\n\t\t\tasync function loadAppConfig() {\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/apps/' + appId + '/config?filter=customer');\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tcurrentAppConfig = await response.json();\n\t\t\t\t\t\trenderRegionSelector(currentAppConfig.platform);\n\t\t\t\t\t\trenderInputFields(currentAppConfig.input_config, currentAppConfig.collapsed_groups || []);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tdocument.getElementById('appInputsContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Failed to load configuration<\\/p>';\n\t\t\t\t\t\tdocument.getElementById('regionContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Failed to load regions<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tdocument.getElementById('appInputsContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Error loading configuration<\\/p>';\n\t\t\t\t\tdocument.getElementById('regionContainer').innerHTML = '<p class=\"text-red-600 dark:text-red-400\">Error loading regions<\\/p>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderRegionSelector(platform) {\n\t\t\t\tvar container = document.getElementById('regionContainer');\n\t\t\t\tvar html = '';\n\n\t\t\t\tif (platform === 'azure_aks') {\n\t\t\t\t\thtml = '<label for=\"azureLocation\" class=\"field-label\">Azure Location *<\\/label>' +\n\t\t\t\t\t\t'<select id=\"azureLocation\" required class=\"field-input\">' +\n\t\t\t\t\t\t\t'<option value=\"eastus\">East US<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eastus2\">East US 2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westus\">West US<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westus2\">West US 2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"westeurope\">West Europe<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"northeurope\">North Europe<\\/option>' +\n\t\t\t\t\t\t'<\\/select>';\n\t\t\t\t} else {\n\t\t\t\t\thtml = '<label for=\"awsRegion\" class=\"field-label\">AWS Region *<\\/label>' +\n\t\t\t\t\t\t'<select id=\"awsRegion\" required class=\"field-input\">' +\n\t\t\t\t\t\t\t'<option value=\"us-east-1\">US East (N. Virginia) - us-east-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-east-2\">US East (Ohio) - us-east-2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-west-1\">US West (N. California) - us-west-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"us-west-2\">US West (Oregon) - us-west-2<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eu-west-1\">Europe (Ireland) - eu-west-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"eu-central-1\">Europe (Frankfurt) - eu-central-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"ap-southeast-1\">Asia Pacific (Singapore) - ap-southeast-1<\\/option>' +\n\t\t\t\t\t\t\t'<option value=\"ap-northeast-1\">Asia Pacific (Tokyo) - ap-northeast-1<\\/option>' +\n\t\t\t\t\t\t'<\\/select>';\n\t\t\t\t}\n\n\t\t\t\tcontainer.innerHTML = html;\n\t\t\t}\n\n\t\t\tfunction renderInputFields(inputConfig, collapsedGroups) {\n\t\t\t\tvar container = document.getElementById('appInputsContainer');\n\t\t\t\tcollapsedGroups = collapsedGroups || [];\n\n\t\t\t\tvar collapsedSet = {};\n\t\t\t\tcollapsedGroups.forEach(function(name) { collapsedSet[name] = true; });\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.style.display = 'none';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tif (group.app_inputs && group.app_inputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\tvar isCollapsed = collapsedSet[group.name] || false;\n\t\t\t\t\t\thtml += renderInputGroup(group, group.app_inputs, isCollapsed);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.style.display = 'none';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderInputGroup(group, inputs, isCollapsed) {\n\t\t\t\tvar groupId = 'group-' + (group.name || 'default').replace(/[^a-z0-9]/gi, '-').toLowerCase();\n\t\t\t\tvar html = '<div class=\"input-group-card\">';\n\t\t\t\thtml += '<div class=\"input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors\" ';\n\t\t\t\thtml += 'onclick=\"toggleInputGroup(\\'' + groupId + '\\')\" ';\n\t\t\t\thtml += 'role=\"button\" tabindex=\"0\" aria-expanded=\"' + (!isCollapsed) + '\" aria-controls=\"' + groupId + '-content\" ';\n\t\t\t\thtml += 'onkeydown=\"if(event.key===\\'Enter\\'||event.key===\\' \\'){event.preventDefault();toggleInputGroup(\\'' + groupId + '\\');}\">';\n\t\t\t\thtml += '<div>';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\thtml += '<i class=\"input-group-chevron ph-bold ph-caret-down text-xl text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4' + (isCollapsed ? '' : ' rotate-180') + '\"><\\/i>';\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\tvar maxHeight = isCollapsed ? '0' : '2000px';\n\t\t\t\tvar opacity = isCollapsed ? '0' : '1';\n\t\t\t\thtml += '<div id=\"' + groupId + '-content\" class=\"input-group-content\" ';\n\t\t\t\thtml += 'style=\"max-height: ' + maxHeight + '; opacity: ' + opacity + '; overflow: hidden;\">';\n\t\t\t\thtml += '<div class=\"px-4 pb-4 space-y-4\">';\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\thtml += renderSingleInput(input);\n\t\t\t\t});\n\t\t\t\thtml += '<\\/div><\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\twindow.toggleInputGroup = window.toggleInputGroup || function(groupId) {\n\t\t\t\tvar content = document.getElementById(groupId + '-content');\n\t\t\t\tvar header = content.previousElementSibling;\n\t\t\t\tvar chevron = header.querySelector('.input-group-chevron');\n\t\t\t\tvar isCurrentlyCollapsed = content.style.maxHeight === '0px';\n\t\t\t\tif (isCurrentlyCollapsed) {\n\t\t\t\t\tcontent.style.maxHeight = content.scrollHeight + 'px';\n\t\t\t\t\tcontent.style.opacity = '1';\n\t\t\t\t\tchevron.classList.add('rotate-180');\n\t\t\t\t\theader.setAttribute('aria-expanded', 'true');\n\t\t\t\t} else {\n\t\t\t\t\tcontent.style.maxHeight = '0px';\n\t\t\t\t\tcontent.style.opacity = '0';\n\t\t\t\t\tchevron.classList.remove('rotate-180');\n\t\t\t\t\theader.setAttribute('aria-expanded', 'false');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\tfunction renderSingleInput(input) {\n\t\t\t\tvar inputName = 'inputs:' + input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (input.default === 'true') html += ' checked';\n\t\t\t\t\thtml += ' class=\"field-checkbox\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"field-input\">';\n\t\t\t\t\thtml += (input.default || '') + '<\\/textarea>';\n\t\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') inputType = 'number';\n\t\t\t\telse if (input.sensitive) inputType = 'password';\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"field-input\" \\/>';\n\t\t\t\tif (input.description) html += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('installForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar errorDiv = document.getElementById('error');\n\t\t\t\tvar successDiv = document.getElementById('success');\n\t\t\t\tvar submitButton = e.target.querySelector('button[type=\"submit\"]');\n\n\t\t\t\terrorDiv.classList.add('hidden');\n\t\t\t\tsuccessDiv.classList.add('hidden');\n\t\t\t\tsubmitButton.textContent = 'Creating install...';\n\t\t\t\tsubmitButton.disabled = true;\n\n\t\t\t\tvar region = '';\n\t\t\t\tvar location = '';\n\t\t\t\tvar awsRegionEl = document.getElementById('awsRegion');\n\t\t\t\tvar azureLocationEl = document.getElementById('azureLocation');\n\n\t\t\t\tif (awsRegionEl) region = awsRegionEl.value;\n\t\t\t\tif (azureLocationEl) location = azureLocationEl.value;\n\n\t\t\t\tvar formData = {\n\t\t\t\t\tname: document.getElementById('installName').value,\n\t\t\t\t\tregion: region,\n\t\t\t\t\tlocation: location,\n\t\t\t\t\tinputs: {}\n\t\t\t\t};\n\n\t\t\t\tvar inputFields = document.querySelectorAll('#appInputsContainer input[name^=\"inputs:\"], #appInputsContainer select[name^=\"inputs:\"], #appInputsContainer textarea[name^=\"inputs:\"]');\n\t\t\t\tinputFields.forEach(function(input) {\n\t\t\t\t\tvar fieldName = input.name.substring(7);\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\tformData.inputs[fieldName] = input.value === 'true' ? 'true' : input.value;\n\t\t\t\t\t\t} else if (!formData.inputs.hasOwnProperty(fieldName)) {\n\t\t\t\t\t\t\tformData.inputs[fieldName] = 'false';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else if (input.type !== 'hidden' && input.value) {\n\t\t\t\t\t\tformData.inputs[fieldName] = input.value;\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/apps/' + appId + '/install', {\n\t\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify(formData)\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tdocument.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24);\n\t\t\t\t\t\tsuccessDiv.innerHTML = '<p class=\"font-semibold\">Installation created successfully!<\\/p><p class=\"text-sm mt-2\">Redirecting to your install...<\\/p>';\n\t\t\t\t\t\tsuccessDiv.classList.remove('hidden');\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.href = basePath + '/installs/' + data.install.id;\n\t\t\t\t\t\t}, 2000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to create installation';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t} finally {\n\t\t\t\t\tsubmitButton.textContent = 'Create install';\n\t\t\t\t\tsubmitButton.disabled = false;\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tloadAppConfig();\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -154,7 +154,7 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 }
 
 templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
-	<div class="card-lg">
+	@components.Card(components.CardProps{Size: components.CardLarge}) {
 		// ── Header ──────────────────────────────────────────────────────────
 		<div class="mb-8">
 			<div class="flex items-start justify-between">
@@ -466,7 +466,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 				<button type="submit" class="button button-primary btn-theme-primary">Install</button>
 			</form>
 		</div>
-	</div>
+	}
 }
 
 templ componentTypeIcon(componentType string) {
@@ -501,7 +501,7 @@ templ componentTypeIcon(componentType string) {
 }
 
 templ appCatalogCard(app PublishedAppDisplay, basePath string) {
-	<div class="card-base flex flex-col">
+	@components.Card(components.CardProps{Class: "flex flex-col"}) {
 		<div class="mb-4">
 			<div class="flex items-start justify-between">
 				<div class="flex items-center gap-2 min-w-0">
@@ -530,7 +530,7 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 				<i class="ph-bold ph-arrow-right text-base"></i>
 			</a>
 		</div>
-	</div>
+	}
 }
 
 // CustomerAppDetailPage renders the full detail view for a single published app.

@@ -3,6 +3,7 @@ package pages
 import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AppInstallPageProps for the published-app install page
@@ -20,7 +21,7 @@ templ AppInstallPage(props AppInstallPageProps) {
 		<form id="installForm" class="max-w-2xl mx-auto mt-10 space-y-6">
 			<input type="hidden" id="appId" value={ props.AppID }/>
 			<!-- Card 1: Header + Account + Name + Region -->
-			<div class="card-lg">
+			@components.Card(components.CardProps{Size: components.CardLarge}) {
 				<div class="mb-6 text-center">
 					<h3 class="text-xl text-cool-grey-800 dark:text-cool-grey-200">{ props.AppName }</h3>
 					<p class="text-cool-grey-600 dark:text-cool-grey-400">provided by { props.OrgName }</p>
@@ -64,15 +65,15 @@ templ AppInstallPage(props AppInstallPageProps) {
 						<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading regions...</p>
 					</div>
 				</div>
-			</div>
+			}
 			<!-- Input Group Cards -->
 			<div id="appInputsContainer" class="space-y-6">
-				<div class="card-lg">
+				@components.Card(components.CardProps{Size: components.CardLarge}) {
 					<p class="text-cool-grey-500 dark:text-cool-grey-400 text-sm">Loading configuration options...</p>
-				</div>
+				}
 			</div>
 			<!-- Submit Section -->
-			<div class="card-lg">
+			@components.Card(components.CardProps{Size: components.CardLarge}) {
 				<button
 					type="submit"
 					class="button button-primary w-full btn-theme-primary"
@@ -81,7 +82,7 @@ templ AppInstallPage(props AppInstallPageProps) {
 				</button>
 				<div id="error" class="mt-4 alert-error hidden"></div>
 				<div id="success" class="mt-4 alert-success hidden"></div>
-			</div>
+			}
 		</form>
 		<!-- Config data for JavaScript -->
 		<div id="app-install-config" class="hidden" data-base-path={ props.BasePath } data-app-id={ props.AppID }></div>

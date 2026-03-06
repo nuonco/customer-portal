@@ -14,7 +14,7 @@ type WorkflowCardProps struct {
 
 // WorkflowCard renders a single workflow with status and action buttons
 templ WorkflowCard(props WorkflowCardProps) {
-	<div id={ "workflow-" + props.Workflow.ID } class="card-base">
+	@Card(CardProps{ID: "workflow-" + props.Workflow.ID}) {
 		<div class="flex justify-between items-start">
 			<div class="flex-grow">
 				<div class="flex items-center space-x-3 mb-2">
@@ -38,7 +38,7 @@ templ WorkflowCard(props WorkflowCardProps) {
 			</div>
 		</div>
 		@workflowStatusMessage(props.Workflow.Status)
-	</div>
+	}
 }
 
 templ approveAllButton(props WorkflowCardProps) {

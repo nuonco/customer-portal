@@ -1,0 +1,38 @@
+package components
+
+import "strings"
+
+type CardSize string
+
+const (
+	CardDefault CardSize = ""
+	CardLarge   CardSize = "lg"
+)
+
+type CardProps struct {
+	Size  CardSize
+	Class string
+	ID    string
+}
+
+templ Card(props CardProps) {
+	<div
+		if props.ID != "" {
+			id={ props.ID }
+		}
+		class={ cardClasses(props) }
+	>
+		{ children... }
+	</div>
+}
+
+func cardClasses(props CardProps) string {
+	classes := "card-base"
+	if props.Size == CardLarge {
+		classes += " card-lg"
+	}
+	if props.Class != "" {
+		classes += " " + strings.TrimSpace(props.Class)
+	}
+	return classes
+}
