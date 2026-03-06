@@ -27,9 +27,9 @@ type AppWithHealthCheckStatus struct {
 // AppsPageProps for the apps list page
 type AppsPageProps struct {
 	vendorui.LayoutProps
-	Org             models.NuonOrg
-	Apps            []AppWithHealthCheckStatus
-	PublishedAppIDs map[string]bool // Set of app IDs that are currently published
+	Org         models.NuonOrg
+	Apps        []AppWithHealthCheckStatus
+	AppStatuses map[string]string // app ID → "published", "coming_soon", or "" (unpublished)
 }
 
 // AppsPage renders the apps list page
@@ -71,12 +71,12 @@ func AppsPage(props AppsPageProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if len(props.Apps) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"w-8 px-2 py-3\"></th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Logo</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Platform</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Published</th></tr></thead> <tbody id=\"publishedAppsContainer\" class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"w-8 px-2 py-3\"></th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Logo</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Platform</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Status</th></tr></thead> <tbody id=\"publishedAppsContainer\" class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, app := range props.Apps {
-					templ_7745c5c3_Err = appTableRow(app, props.Org.ID, props.BasePath, props.PublishedAppIDs[app.ID]).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = appTableRow(app, props.Org.ID, props.BasePath, props.AppStatuses[app.ID]).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -98,7 +98,7 @@ func AppsPage(props AppsPageProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" disabled class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveOrderText\">Save Configuration</span> <svg id=\"saveOrderSpinner\" class=\"hidden ml-2 h-4 w-4 animate-spin\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" disabled class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"saveOrderText\">Save Configuration</span> <svg id=\"saveOrderSpinner\" class=\"hidden ml-2 h-5 w-5 animate-spin\" xmlns=\"http://www.w3.org/2000/svg\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -126,7 +126,7 @@ func AppsPage(props AppsPageProps) templ.Component {
 	})
 }
 
-func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, isPublished bool) templ.Component {
+func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -276,7 +276,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, isPublish
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = publishToggle(isPublished, basePath, orgID, app.ID).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = statusSelect(status).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -309,7 +309,7 @@ func appsScript(basePath, orgID string) templ.Component {
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255);\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247);\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3);\n\t\t}\n\t</style><script src=\"/static/js/sortable.min.js\"></script><script>\n\t\t(function() {\n\t\t\tvar initialSnapshot = '';\n\n\t\t\tfunction getAppOrder() {\n\t\t\t\tvar ids = [];\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tids.push(row.dataset.appId);\n\t\t\t\t});\n\t\t\t\treturn ids;\n\t\t\t}\n\n\t\t\tfunction getSnapshot() {\n\t\t\t\tvar published = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar btn = row.querySelector('[role=\"switch\"]');\n\t\t\t\t\tpublished[row.dataset.appId] = btn ? btn.getAttribute('aria-checked') === 'true' : false;\n\t\t\t\t});\n\t\t\t\treturn JSON.stringify({ order: getAppOrder(), published: published });\n\t\t\t}\n\n\t\t\tfunction updateSaveBtn() {\n\t\t\t\tdocument.getElementById('saveOrderBtn').disabled = (getSnapshot() === initialSnapshot);\n\t\t\t}\n\n\t\t\twindow.togglePublishLocal = function(btn) {\n\t\t\t\tvar current = btn.getAttribute('aria-checked') === 'true';\n\t\t\t\tvar next = !current;\n\t\t\t\tbtn.setAttribute('aria-checked', String(next));\n\t\t\t\tif (next) {\n\t\t\t\t\tbtn.classList.remove('bg-cool-grey-200', 'dark:bg-dark-grey-600');\n\t\t\t\t\tbtn.classList.add('bg-primary-600');\n\t\t\t\t} else {\n\t\t\t\t\tbtn.classList.remove('bg-primary-600');\n\t\t\t\t\tbtn.classList.add('bg-cool-grey-200', 'dark:bg-dark-grey-600');\n\t\t\t\t}\n\t\t\t\tvar indicator = btn.querySelector('[aria-hidden=\"true\"]');\n\t\t\t\tif (indicator) {\n\t\t\t\t\tif (next) {\n\t\t\t\t\t\tindicator.classList.remove('translate-x-0');\n\t\t\t\t\t\tindicator.classList.add('translate-x-5');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tindicator.classList.remove('translate-x-5');\n\t\t\t\t\t\tindicator.classList.add('translate-x-0');\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t\tupdateSaveBtn();\n\t\t\t};\n\n\n\t\t\tfunction initSortable() {\n\t\t\t\tvar container = document.getElementById('publishedAppsContainer');\n\t\t\t\tif (container && typeof Sortable !== 'undefined') {\n\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\tnew Sortable(container, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.app-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-app',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\t\tonEnd: function() {\n\t\t\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.saveAppOrder = function(basePath, orgID) {\n\t\t\t\tvar btn = document.getElementById('saveOrderBtn');\n\t\t\t\tvar text = document.getElementById('saveOrderText');\n\t\t\t\tvar spinner = document.getElementById('saveOrderSpinner');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\ttext.textContent = 'Saving...';\n\t\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t\tvar appIDs = getAppOrder();\n\t\t\t\tvar publishedAppIDs = [];\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar toggle = row.querySelector('[role=\"switch\"]');\n\t\t\t\t\tif (toggle && toggle.getAttribute('aria-checked') === 'true') {\n\t\t\t\t\t\tpublishedAppIDs.push(row.dataset.appId);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tfetch(basePath + '/orgs/' + orgID + '/apps/order', {\n\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\theaders: {'Content-Type': 'application/json'},\n\t\t\t\t\tbody: JSON.stringify({app_ids: appIDs, published_app_ids: publishedAppIDs})\n\t\t\t\t}).then(function(r) {\n\t\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tif (!r.ok) {\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\talert('Failed to save configuration');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t}\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\talert('Failed to save configuration');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\tif (document.readyState === 'loading') {\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() { initSortable(); });\n\t\t\t} else {\n\t\t\t\tinitSortable();\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255);\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247);\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3);\n\t\t}\n\t</style><script src=\"/static/js/sortable.min.js\"></script><script>\n\t\t(function() {\n\t\t\tvar initialSnapshot = '';\n\n\t\t\tfunction getAppOrder() {\n\t\t\t\tvar ids = [];\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tids.push(row.dataset.appId);\n\t\t\t\t});\n\t\t\t\treturn ids;\n\t\t\t}\n\n\t\t\tfunction getSnapshot() {\n\t\t\t\tvar statuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tstatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\t\t\t\treturn JSON.stringify({ order: getAppOrder(), statuses: statuses });\n\t\t\t}\n\n\t\t\tfunction updateSaveBtn() {\n\t\t\t\tdocument.getElementById('saveOrderBtn').disabled = (getSnapshot() === initialSnapshot);\n\t\t\t}\n\n\t\t\twindow.updateSaveBtnGlobal = updateSaveBtn;\n\n\t\t\tfunction initSortable() {\n\t\t\t\tvar container = document.getElementById('publishedAppsContainer');\n\t\t\t\tif (container && typeof Sortable !== 'undefined') {\n\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\tnew Sortable(container, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.app-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-app',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\t\tonEnd: function() {\n\t\t\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.saveAppOrder = function(basePath, orgID) {\n\t\t\t\tvar btn = document.getElementById('saveOrderBtn');\n\t\t\t\tvar text = document.getElementById('saveOrderText');\n\t\t\t\tvar spinner = document.getElementById('saveOrderSpinner');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\ttext.textContent = 'Saving...';\n\t\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t\tvar appIDs = getAppOrder();\n\t\t\t\tvar appStatuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tappStatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\n\t\t\t\tfetch(basePath + '/orgs/' + orgID + '/apps/order', {\n\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\theaders: {'Content-Type': 'application/json'},\n\t\t\t\t\tbody: JSON.stringify({app_ids: appIDs, app_statuses: appStatuses})\n\t\t\t\t}).then(function(r) {\n\t\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tif (!r.ok) {\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\talert('Failed to save configuration');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t}\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\ttext.textContent = 'Save Configuration';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\talert('Failed to save configuration');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\tif (document.readyState === 'loading') {\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() { initSortable(); });\n\t\t\t} else {\n\t\t\t\tinitSortable();\n\t\t\t}\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -327,8 +327,8 @@ func saveAppOrder(basePath, orgID string) templ.ComponentScript {
 	}
 }
 
-// publishToggle renders an on/off toggle for publishing an app to the customer catalog
-func publishToggle(isPublished bool, basePath, orgID, appID string) templ.Component {
+// statusSelect renders a dropdown to set the publish status of an app
+func statusSelect(status string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -349,79 +349,37 @@ func publishToggle(isPublished bool, basePath, orgID, appID string) templ.Compon
 			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		var templ_7745c5c3_Var14 = []any{"relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
-			templ.KV("bg-primary-600", isPublished),
-			templ.KV("bg-cool-grey-200 dark:bg-dark-grey-600", !isPublished)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var14...)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<select class=\"app-status-select text-sm rounded-md border border-cool-grey-300 dark:border-dark-grey-500 bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500\" onchange=\"updateSaveBtnGlobal()\"><option value=\"unpublished\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<button type=\"button\" role=\"switch\" aria-checked=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%t", isPublished))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 268, Col: 47}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" onclick=\"togglePublishLocal(this)\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var16 string
-		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var14).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\"><span class=\"sr-only\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if isPublished {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "Remove from catalog")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "Add to catalog")
+		if status == "" || status == "unpublished" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, ">Unpublished</option> <option value=\"coming_soon\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 = []any{"pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out",
-			templ.KV("translate-x-5", isPublished),
-			templ.KV("translate-x-0", !isPublished)}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var17...)
+		if status == "coming_soon" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, ">Coming Soon</option> <option value=\"published\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<span aria-hidden=\"true\" class=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
+		if status == "published" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var17).String())
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 1, Col: 0}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"></span></button>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, ">Published</option></select>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -445,53 +403,42 @@ func platformBadge(platform string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		switch platform {
 		case "aws":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-300\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = awsIcon().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "AWS</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<img src=\"/static/images/logos/aws.svg\" class=\"h-8 w-8\" alt=\"AWS\" title=\"AWS\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "azure":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<img src=\"/static/images/logos/azure.svg\" class=\"h-8 w-8\" alt=\"Azure\" title=\"Azure\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = azureIcon().Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "Azure</span>")
+		case "gcp":
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<img src=\"/static/images/logos/google.svg\" class=\"h-8 w-8\" alt=\"GCP\" title=\"GCP\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<span class=\"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-cool-grey-100 dark:bg-cool-grey-700 text-cool-grey-800 dark:text-cool-grey-300\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var20 string
-			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(platform)
+			var templ_7745c5c3_Var15 string
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(platform)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 304, Col: 14}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 259, Col: 78}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -516,12 +463,12 @@ func emptyAppsState() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var16 == nil {
+			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -529,7 +476,7 @@ func emptyAppsState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Apps Found</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto\">No apps are configured in this Nuon organization. Use the Nuon CLI to sync your apps configuration.</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Apps Found</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto\">No apps are configured in this Nuon organization. Use the Nuon CLI to sync your apps configuration.</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -553,70 +500,12 @@ func cubeIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var22 == nil {
-			templ_7745c5c3_Var22 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<svg class=\"h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9\"></path></svg>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func awsIcon() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var23 == nil {
-			templ_7745c5c3_Var23 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<svg class=\"mr-1.5 h-3 w-3\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M6.763 10.036c0 .296.032.535.088.71.064.176.144.368.256.576.04.063.056.127.056.183 0 .08-.048.16-.152.24l-.503.335a.383.383 0 0 1-.208.072c-.08 0-.16-.04-.239-.112a2.47 2.47 0 0 1-.287-.375 6.18 6.18 0 0 1-.248-.471c-.622.734-1.405 1.101-2.347 1.101-.67 0-1.205-.191-1.596-.574-.391-.384-.59-.894-.59-1.533 0-.678.239-1.23.726-1.644.487-.415 1.133-.623 1.955-.623.272 0 .551.024.846.064.296.04.6.104.918.176v-.583c0-.607-.127-1.03-.375-1.277-.255-.248-.686-.367-1.3-.367-.28 0-.568.031-.863.103-.296.064-.583.16-.863.28a2.19 2.19 0 0 1-.263.12.49.49 0 0 1-.135.024c-.12 0-.176-.086-.176-.255V5.2c0-.134.016-.232.056-.296a.58.58 0 0 1 .216-.16c.28-.144.615-.264 1.006-.36.391-.104.806-.152 1.245-.152.95 0 1.644.216 2.091.647.439.43.662 1.085.662 1.963v2.585zm-3.24 1.214c.263 0 .534-.048.822-.144.287-.096.543-.271.758-.51.128-.152.224-.32.272-.512.047-.191.08-.423.08-.694v-.335a6.66 6.66 0 0 0-.735-.136 6.02 6.02 0 0 0-.75-.048c-.535 0-.926.104-1.19.32-.263.215-.39.518-.39.917 0 .375.095.655.295.846.191.2.47.296.838.296zm6.41.862c-.144 0-.24-.024-.304-.08-.064-.048-.12-.16-.168-.311L7.586 5.55a1.398 1.398 0 0 1-.072-.32c0-.128.064-.2.191-.2h.783c.151 0 .255.025.31.08.065.048.113.16.16.312l1.342 5.284 1.245-5.284c.04-.16.088-.264.151-.312a.549.549 0 0 1 .32-.08h.638c.152 0 .256.025.32.08.063.048.12.16.151.312l1.261 5.348 1.381-5.348c.048-.16.104-.264.16-.312.064-.048.168-.08.311-.08h.743c.127 0 .2.065.2.2 0 .04-.009.08-.017.128a1.137 1.137 0 0 1-.056.2l-1.923 6.17c-.048.16-.104.263-.168.311a.543.543 0 0 1-.304.08h-.687c-.151 0-.255-.024-.32-.08-.063-.056-.119-.16-.15-.32l-1.238-5.148-1.23 5.14c-.04.16-.087.264-.15.32-.065.056-.177.08-.32.08zm10.256.215c-.415 0-.83-.048-1.229-.143-.399-.096-.71-.2-.918-.32-.128-.071-.216-.151-.248-.223a.563.563 0 0 1-.048-.224v-.407c0-.167.064-.247.183-.247.048 0 .096.008.144.024.048.016.12.048.2.08.271.12.566.215.878.279.319.064.63.096.95.096.502 0 .894-.088 1.165-.264a.86.86 0 0 0 .415-.758.777.777 0 0 0-.215-.559c-.144-.151-.415-.287-.806-.415l-1.157-.36c-.583-.183-1.014-.454-1.277-.813a1.902 1.902 0 0 1-.4-1.158c0-.335.073-.63.216-.886.144-.255.335-.479.575-.654.24-.184.51-.32.83-.415.32-.096.655-.136 1.006-.136.175 0 .359.008.535.032.183.024.35.056.518.088.16.04.312.08.455.127.144.048.256.096.336.144a.69.69 0 0 1 .24.2.43.43 0 0 1 .071.263v.375c0 .168-.064.256-.184.256a.83.83 0 0 1-.303-.096 3.652 3.652 0 0 0-1.532-.311c-.455 0-.815.071-1.062.223a.75.75 0 0 0-.375.679c0 .224.08.416.24.567.159.152.454.304.877.44l1.134.358c.574.184.99.44 1.237.767.247.327.367.702.367 1.117 0 .343-.072.655-.207.926-.144.272-.336.511-.583.703-.248.2-.543.343-.886.447-.36.111-.734.167-1.142.167z\"></path></svg>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func azureIcon() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<svg class=\"mr-1.5 h-3 w-3\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M5.483 21.3H24L14.025 4.013l-3.038 8.347 5.836 6.938L5.483 21.3zM13.23 2.7L6.105 8.677 0 19.253h5.505l7.725-16.553z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<svg class=\"h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

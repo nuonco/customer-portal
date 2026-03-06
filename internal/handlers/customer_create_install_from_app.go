@@ -44,6 +44,11 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		return
 	}
 
+	if publishedApp.Status == "coming_soon" {
+		c.JSON(http.StatusForbidden, gin.H{"error": "This app is not yet available for installation"})
+		return
+	}
+
 	region := req.Region
 	location := req.Location
 	if region == "" && location == "" {

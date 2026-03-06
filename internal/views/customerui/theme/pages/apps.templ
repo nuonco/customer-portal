@@ -81,6 +81,7 @@ type PublishedAppDisplay struct {
 	AppName          string
 	Platform         string
 	Description      string
+	Status           string // "published" or "coming_soon"
 	LogoLightBase64  string // base64 data URI for light mode logo
 	LogoDarkBase64   string // base64 data URI for dark mode logo
 	Components       []ComponentDisplay
@@ -462,9 +463,13 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 		</script>
 		// ── Footer ──────────────────────────────────────────────────────────
 		<div class="mt-8 flex justify-end">
-			<form action={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) } method="get">
-				<button type="submit" class="button button-primary btn-theme-primary">Install</button>
-			</form>
+			if app.Status == "coming_soon" {
+				<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
+			} else {
+				<form action={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) } method="get">
+					<button type="submit" class="button button-primary btn-theme-primary">Install</button>
+				</form>
+			}
 		</div>
 	}
 }
@@ -522,13 +527,13 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 			}
 		</div>
 		<div class="mt-auto pt-4 flex justify-end">
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s", basePath, app.AppID)) }
-				class="inline-flex items-center gap-1 text-sm font-medium text-theme-primary border-b border-transparent hover:border-theme-primary"
-			>
-				View
-				<i class="ph-bold ph-arrow-right text-base"></i>
-			</a>
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s", basePath, app.AppID)) }
+					class="inline-flex items-center gap-1 text-sm font-medium text-theme-primary border-b border-transparent hover:border-theme-primary"
+				>
+					View
+					<i class="ph-bold ph-arrow-right text-base"></i>
+				</a>
 		</div>
 	}
 }

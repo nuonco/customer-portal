@@ -73,8 +73,8 @@ General vendor journeys.
 - Install link creation with SHA-based security
 - Install link management (create, view, delete)
 - Organization dashboard with link listing
-- **Publish App**: Vendors can publish apps to a customer-facing catalog (`POST /admin/orgs/:org_id/apps/:app_id/publish`). Published apps appear on the customer `/apps` page without requiring an install link.
-- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of published apps in the customer catalog. Clicking "Save Order" persists the order via `PUT /admin/orgs/:org_id/apps/order`.
+- **Publish App**: Vendors can set each app's catalog status to "Published", "Coming Soon", or "Unpublished" via a dropdown on the Apps page. Published apps appear on the customer `/apps` page without requiring an install link. Coming-soon apps appear in the catalog with a badge but cannot be installed.
+- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of published apps in the customer catalog. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
 - **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
 
 ✅ **Customer Features**
@@ -225,7 +225,7 @@ There are some conventions that are specific to the admin UI.
 - **NuonOrg** - Connected organizations with API credentials
 - **InstallLink** - Shareable links with SHA-based security
 - **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs). Has `Visibility` (account/private) and optional `CustomerAccountID` for account-based sharing.
-- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable). Has `LogoLightBase64` and `LogoDarkBase64` for per-app logos.
+- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable). Has `Status` (`"published"` or `"coming_soon"`; default `"published"`), `LogoLightBase64` and `LogoDarkBase64` for per-app logos. Coming-soon apps appear in the catalog with a badge but cannot be installed.
 - **CustomerAccount** - Company account that groups customers together within a vendor org. Scoped to org via `OrgID`.
 - **CustomerAccountMember** - Links a user to a customer account with role (owner/member). A user can belong to multiple accounts in the same org and switch between them via a cookie.
 - **CustomerAccountInvite** - Email-based invite for joining a customer account. When a user with a matching email logs in, they are automatically added as a member.

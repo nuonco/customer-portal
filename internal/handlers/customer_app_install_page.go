@@ -46,6 +46,11 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 		return
 	}
 
+	if publishedApp.Status == "coming_soon" {
+		c.Redirect(http.StatusFound, h.basePath+"/apps/"+appID)
+		return
+	}
+
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
 	appName := appID

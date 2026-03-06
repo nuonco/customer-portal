@@ -70,6 +70,37 @@ func TestCustomerAppsPage_SingleApp_FullWidthCard(t *testing.T) {
 	})
 }
 
+func TestCustomerAppsPage_ComingSoonApp_ShowsBadge(t *testing.T) {
+	testutil.RequireTestDB(t)
+
+	testutil.TestTransaction(t, func(tx *gorm.DB) {
+		_, org, err := testutil.SeedMinimalData(tx)
+		require.NoError(t, err)
+
+		pa := &models.PublishedApp{
+			OrgID:  org.ID,
+			AppID:  "app-coming-soon-1",
+			Status: "coming_soon",
+		}
+		require.NoError(t, tx.Create(pa).Error)
+
+		logger := zap.NewNop()
+		h := NewHandler(tx, nil, nil, "http://localhost:8080", "https://api.nuon.co", "", "", "localhost:8080", "nuon.co", logger)
+
+		w := httptest.NewRecorder()
+		c, _ := gin.CreateTestContext(w)
+		c.Request, _ = http.NewRequest(http.MethodGet, "/apps", nil)
+		c.Set("subdomain", org.Subdomain)
+
+		h.CustomerAppsPage(c)
+
+		assert.Equal(t, http.StatusOK, w.Code)
+		body := w.Body.String()
+		assert.Contains(t, body, "Coming Soon", "should show Coming Soon badge")
+		assert.NotContains(t, body, ">Install<", "should not show Install button for coming soon app")
+	})
+}
+
 func TestCustomerAppsPage_MultipleApps_Grid(t *testing.T) {
 	testutil.RequireTestDB(t)
 

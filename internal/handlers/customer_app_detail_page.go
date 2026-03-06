@@ -32,6 +32,10 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
 	display.LogoLightBase64 = publishedApp.LogoLightBase64
 	display.LogoDarkBase64 = publishedApp.LogoDarkBase64
+	display.Status = publishedApp.Status
+	if display.Status == "" {
+		display.Status = "published"
+	}
 
 	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
 	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c), acctActive, acctOthers)

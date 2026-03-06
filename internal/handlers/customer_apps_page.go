@@ -39,6 +39,10 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
 		display.LogoLightBase64 = pa.LogoLightBase64
 		display.LogoDarkBase64 = pa.LogoDarkBase64
+		display.Status = pa.Status
+		if display.Status == "" {
+			display.Status = "published"
+		}
 		appDisplays[0] = display
 	} else if len(publishedApps) > 1 {
 		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
@@ -49,10 +53,15 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 			wg.Add(1)
 			go func(i int, pa models.PublishedApp) {
 				defer wg.Done()
+				status := pa.Status
+				if status == "" {
+					status = "published"
+				}
 				display := customerpages.PublishedAppDisplay{
 					AppID:           pa.AppID,
 					AppName:         pa.AppID,
 					Platform:        "unknown",
+					Status:          status,
 					LogoLightBase64: pa.LogoLightBase64,
 					LogoDarkBase64:  pa.LogoDarkBase64,
 				}

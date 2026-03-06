@@ -87,12 +87,16 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Get all published apps for this org
 	var publishedApps []models.PublishedApp
 	h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps)
-	publishedAppIDs := make(map[string]bool)
+	appStatuses := make(map[string]string)
 	sortOrderMap := make(map[string]int)
 	logoLightMap := make(map[string]string)
 	logoDarkMap := make(map[string]string)
 	for _, pa := range publishedApps {
-		publishedAppIDs[pa.AppID] = true
+		status := pa.Status
+		if status == "" {
+			status = "published"
+		}
+		appStatuses[pa.AppID] = status
 		sortOrderMap[pa.AppID] = pa.SortOrder
 		if pa.LogoLightBase64 != "" {
 			logoLightMap[pa.AppID] = pa.LogoLightBase64
@@ -111,6 +115,8 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			runnerType := string(app.RunnerConfig.AppRunnerType)
 			if runnerType == "azure" {
 				platform = "azure"
+			} else if runnerType == "gcp" {
+				platform = "gcp"
 			}
 		}
 
@@ -166,9 +172,9 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			CSSPath:          assets.VendorCSSPath(),
 			IsSuperuser:      h.isSuperuser(user),
 		},
-		Org:             *org,
-		Apps:            templApps,
-		PublishedAppIDs: publishedAppIDs,
+		Org:         *org,
+		Apps:        templApps,
+		AppStatuses: appStatuses,
 	}
 
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
