@@ -29,7 +29,7 @@ templ Auth(basePath string) {
 		function logout() {
 			var config = document.getElementById('customer-layout-config');
 			var basePath = config.dataset.basePath;
-			window.location.href = basePath + "/logout";
+			window.location.href = basePath + "/logout?redirect=" + encodeURIComponent(window.location.pathname + window.location.search);
 		}
 	</script>
 }

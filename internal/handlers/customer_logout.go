@@ -13,8 +13,12 @@ func (h *Handler) CustomerLogout(c *gin.Context) {
 	// Clear the session cookie if present
 	c.SetCookie("auth_session", "", -1, "/", "", false, true)
 
-	// Redirect to customer login
-	c.Redirect(http.StatusFound, "/login")
+	// Redirect back to the current page if provided, otherwise to login
+	redirect := c.Query("redirect")
+	if redirect == "" || redirect[0] != '/' {
+		redirect = "/login"
+	}
+	c.Redirect(http.StatusFound, redirect)
 }
 
 // LocalLogin handles POST /admin/login/ for email/password authentication

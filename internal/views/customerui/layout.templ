@@ -92,7 +92,7 @@ templ Layout(props LayoutProps) {
 			<!-- Modals -->
 			@partials.ConfirmModal()
 			@partials.PromptModal()
-			if isLiveReload() {
+		if isLiveReload() {
 				<script src="/_templ/reload/script.js"></script>
 			}
 		</body>

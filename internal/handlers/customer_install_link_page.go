@@ -85,12 +85,14 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	// Fall back to default Templ template
-	props := customerpages.InstallLinkPageProps{
+	props := customerpages.CreateInstallPageProps{
 		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme, h.getOrgForLayout(c), nil, nil),
-		Link:         &link,
+		AppID:        link.AppID,
+		AppName:      link.AppName,
+		SHA:          sha,
 		LoggedInUser: loggedInUser,
 	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallLinkPage(props))
+	h.RenderTempl(c, http.StatusOK, customerpages.CreateInstallPage(props))
 }
 
 // AcceptInstallLink handles the install link acceptance

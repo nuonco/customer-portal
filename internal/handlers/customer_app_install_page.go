@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"net/url"
 
@@ -13,13 +14,7 @@ import (
 func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	appID := c.Param("app_id")
 
-	// Require authentication
 	loggedInUser := h.tryGetLoggedInUser(c)
-	if loggedInUser == nil {
-		redirectURL := url.QueryEscape(h.basePath + "/apps/" + appID + "/install")
-		c.Redirect(http.StatusFound, h.basePath+"/login?redirect="+redirectURL)
-		return
-	}
 
 	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
 
@@ -71,14 +66,25 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
 
-	props := customerpages.AppInstallPageProps{
-		LayoutProps:  layoutProps,
-		AppID:        appID,
-		AppName:      appName,
-		OrgName:      orgName,
-		LoggedInUser: loggedInUser,
+	var authURL string
+	if loggedInUser == nil {
+		if subdomain, ok := c.Get("subdomain"); ok && subdomain != nil && subdomain.(string) != "" {
+			redirect := url.QueryEscape(h.basePath + "/apps/" + appID + "/install")
+			authURL = fmt.Sprintf("%s/auth/login?return_to=%s&redirect=%s", h.customerBaseURL, subdomain.(string), redirect)
+		}
 	}
-	h.RenderTempl(c, http.StatusOK, customerpages.AppInstallPage(props))
+
+	props := customerpages.CreateInstallPageProps{
+		LayoutProps:     layoutProps,
+		AppID:           appID,
+		AppName:         appName,
+		OrgName:         orgName,
+		LogoLightBase64: publishedApp.LogoLightBase64,
+		LogoDarkBase64:  publishedApp.LogoDarkBase64,
+		LoggedInUser:    loggedInUser,
+		AuthURL:         authURL,
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.CreateInstallPage(props))
 }
 
 // CreateInstallFromApp creates an install from a published app

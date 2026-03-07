@@ -6,30 +6,74 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
-// AppInstallPageProps for the published-app install page
-type AppInstallPageProps struct {
+// CreateInstallPageProps for both install-link and published-app install pages
+type CreateInstallPageProps struct {
 	customerui.LayoutProps
-	AppID        string
-	AppName      string
-	OrgName      string
-	LoggedInUser *models.User
+	AppID           string
+	AppName         string
+	OrgName         string
+	LogoLightBase64 string
+	LogoDarkBase64  string
+	LoggedInUser    *models.User
+	AuthURL         string
+	SHA             string // Non-empty = install-link mode
 }
 
-// AppInstallPage renders the install form for a published app
-templ AppInstallPage(props AppInstallPageProps) {
+// CreateInstallPage renders the unified install form
+templ CreateInstallPage(props CreateInstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<form id="installForm" class="max-w-2xl mx-auto mt-10 space-y-6">
+		<form id="installForm" class="max-w-2xl mx-auto space-y-6">
 			<input type="hidden" id="appId" value={ props.AppID }/>
-			<!-- Card 1: Header + Account + Name + Region -->
+			if props.SHA != "" {
+				<input type="hidden" id="sha" value={ props.SHA }/>
+			}
+			<!-- App Header -->
 			@components.Card(components.CardProps{Size: components.CardLarge}) {
-				<div class="mb-6 text-center">
+				<div class="text-center">
+					if props.LogoLightBase64 != "" {
+						if props.LogoDarkBase64 != "" {
+							<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-10 h-10 rounded object-contain mx-auto mb-2 dark:hidden"/>
+							<img src={ props.LogoDarkBase64 } alt={ props.AppName } class="w-10 h-10 rounded object-contain mx-auto mb-2 hidden dark:block"/>
+						} else {
+							<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-10 h-10 rounded object-contain mx-auto mb-2"/>
+						}
+					}
 					<h3 class="text-xl text-cool-grey-800 dark:text-cool-grey-200">{ props.AppName }</h3>
-					<p class="text-cool-grey-600 dark:text-cool-grey-400">provided by { props.OrgName }</p>
 				</div>
-				<!-- Account Info -->
-				<div class="card-section-divider">
-					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
-					<div class="account-info-box">
+				if props.SHA != "" {
+					<p class="text-cool-grey-700 dark:text-cool-grey-300 mb-6 text-center mt-4">
+						You've been invited to install this application. Please provide your details below.
+					</p>
+				}
+			}
+			if props.SHA == "" && props.LoggedInUser == nil {
+				<!-- Sign up / Log in (app install mode, unauthenticated) -->
+				@components.Card(components.CardProps{Size: components.CardLarge}) {
+					<p class="text-sm text-center text-cool-grey-600 dark:text-cool-grey-400 mb-4">Sign up or log in to continue</p>
+					<a href={ templ.SafeURL(props.AuthURL) } class="button button-primary btn-theme-primary w-full text-center block mb-3">Sign up</a>
+					<div class="flex items-center gap-3 mb-3">
+						<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
+						<span class="text-sm text-cool-grey-400 dark:text-cool-grey-500">or</span>
+						<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
+					</div>
+					<a href={ templ.SafeURL(props.AuthURL) } class="button button-secondary btn-theme-secondary w-full text-center block">Log in</a>
+				}
+			}
+			<!-- Install Details -->
+			<fieldset
+				if props.SHA == "" && props.LoggedInUser == nil {
+					disabled
+				}
+				class="space-y-6"
+				if props.SHA == "" && props.LoggedInUser == nil {
+					style="opacity: 0.5; pointer-events: none;"
+				}
+			>
+			@components.Card(components.CardProps{Size: components.CardLarge}) {
+				if props.SHA != "" && props.LoggedInUser != nil {
+					<!-- Account Info - install link mode -->
+					<div class="card-section-divider">
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
 						<div class="flex items-center justify-between">
 							<div>
 								<p class="text-sm text-green-700 dark:text-green-300">
@@ -44,20 +88,22 @@ templ AppInstallPage(props AppInstallPageProps) {
 							</a>
 						</div>
 					</div>
-				</div>
-				<!-- Install Name -->
-				<div class="card-section-divider">
-					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Install Name</h4>
-					<input
-						type="text"
-						id="installName"
-						name="name"
-						required
-						placeholder="my-install"
-						class="field-input"
-					/>
-					<p class="field-hint">A name to identify this installation.</p>
-				</div>
+				}
+				if props.SHA == "" {
+					<!-- Install Name (app install mode only) -->
+					<div class="card-section-divider">
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Install Name</h4>
+						<input
+							type="text"
+							id="installName"
+							name="name"
+							required
+							placeholder="my-install"
+							class="field-input"
+						/>
+						<p class="field-hint">A name to identify this installation.</p>
+					</div>
+				}
 				<!-- Region Selection -->
 				<div id="regionSection">
 					<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
@@ -83,25 +129,41 @@ templ AppInstallPage(props AppInstallPageProps) {
 				<div id="error" class="mt-4 alert-error hidden"></div>
 				<div id="success" class="mt-4 alert-success hidden"></div>
 			}
+			</fieldset>
 		</form>
 		<!-- Config data for JavaScript -->
-		<div id="app-install-config" class="hidden" data-base-path={ props.BasePath } data-app-id={ props.AppID }></div>
-		@appInstallScript()
+		<div
+			id="create-install-config"
+			class="hidden"
+			data-base-path={ props.BasePath }
+			data-app-id={ props.AppID }
+			if props.SHA != "" {
+				data-sha={ props.SHA }
+			}
+		></div>
+		@createInstallScript()
 	}
 }
 
-templ appInstallScript() {
+templ createInstallScript() {
 	<script>
 		(function() {
-			var config = document.getElementById('app-install-config');
+			var config = document.getElementById('create-install-config');
 			var basePath = config.dataset.basePath;
 			var appId = config.dataset.appId;
+			var sha = config.dataset.sha || '';
 			var currentAppConfig = null;
 
 			// Fetch app config on page load
 			async function loadAppConfig() {
 				try {
-					var response = await fetch(basePath + '/apps/' + appId + '/config?filter=customer');
+					var configURL;
+					if (sha) {
+						configURL = basePath + '/install-link/' + sha + '/app-config?filter=customer';
+					} else {
+						configURL = basePath + '/apps/' + appId + '/config?filter=customer';
+					}
+					var response = await fetch(configURL);
 					if (response.ok) {
 						currentAppConfig = await response.json();
 						renderRegionSelector(currentAppConfig.platform);
@@ -275,7 +337,7 @@ templ appInstallScript() {
 
 				errorDiv.classList.add('hidden');
 				successDiv.classList.add('hidden');
-				submitButton.textContent = 'Creating install...';
+				submitButton.textContent = sha ? 'Accepting install...' : 'Creating install...';
 				submitButton.disabled = true;
 
 				var region = '';
@@ -287,11 +349,16 @@ templ appInstallScript() {
 				if (azureLocationEl) location = azureLocationEl.value;
 
 				var formData = {
-					name: document.getElementById('installName').value,
 					region: region,
 					location: location,
 					inputs: {}
 				};
+
+				if (sha) {
+					formData.sha = document.getElementById('sha').value;
+				} else {
+					formData.name = document.getElementById('installName').value;
+				}
 
 				var inputFields = document.querySelectorAll('#appInputsContainer input[name^="inputs:"], #appInputsContainer select[name^="inputs:"], #appInputsContainer textarea[name^="inputs:"]');
 				inputFields.forEach(function(input) {
@@ -308,7 +375,14 @@ templ appInstallScript() {
 				});
 
 				try {
-					var response = await fetch(basePath + '/apps/' + appId + '/install', {
+					var submitURL;
+					if (sha) {
+						submitURL = basePath + '/install-link';
+					} else {
+						submitURL = basePath + '/apps/' + appId + '/install';
+					}
+
+					var response = await fetch(submitURL, {
 						method: 'POST',
 						headers: { 'Content-Type': 'application/json' },
 						body: JSON.stringify(formData)
@@ -318,7 +392,8 @@ templ appInstallScript() {
 
 					if (response.ok) {
 						document.cookie = 'jwt=' + data.token + '; path=/; max-age=' + (60 * 60 * 24);
-						successDiv.innerHTML = '<p class="font-semibold">Installation created successfully!<\/p><p class="text-sm mt-2">Redirecting to your install...<\/p>';
+						var successMsg = sha ? 'Installation accepted successfully!' : 'Installation created successfully!';
+						successDiv.innerHTML = '<p class="font-semibold">' + successMsg + '<\/p><p class="text-sm mt-2">Redirecting to your install...<\/p>';
 						successDiv.classList.remove('hidden');
 						setTimeout(function() {
 							window.location.href = basePath + '/installs/' + data.install.id;

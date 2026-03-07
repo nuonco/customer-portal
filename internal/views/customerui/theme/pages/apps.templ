@@ -122,13 +122,13 @@ func formatPolicyType(t string) string {
 // CustomerAppsPageProps for the customer apps catalog page
 type CustomerAppsPageProps struct {
 	customerui.LayoutProps
-	Apps []PublishedAppDisplay
+	Apps    []PublishedAppDisplay
 }
 
 // CustomerAppDetailPageProps for the single app detail page
 type CustomerAppDetailPageProps struct {
 	customerui.LayoutProps
-	App PublishedAppDisplay
+	App     PublishedAppDisplay
 }
 
 // CustomerAppsPage renders the customer-facing app catalog
@@ -466,9 +466,7 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 			if app.Status == "coming_soon" {
 				<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
 			} else {
-				<form action={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", basePath, app.AppID)) } method="get">
-					<button type="submit" class="button button-primary btn-theme-primary">Install</button>
-				</form>
+				<a href={ templ.SafeURL(basePath + "/apps/" + app.AppID + "/install") } class="button button-primary btn-theme-primary">Install</a>
 			}
 		</div>
 	}

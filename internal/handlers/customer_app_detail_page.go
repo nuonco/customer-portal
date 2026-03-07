@@ -48,5 +48,3 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	}
 	h.RenderTempl(c, http.StatusOK, customerpages.CustomerAppDetailPage(props))
 }
-
-// CustomerAppInstallPage renders the install form for a published app
