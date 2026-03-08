@@ -1,0 +1,18 @@
+package partials
+
+// ModalWrapper provides consistent modal styling across all customer UI modals.
+// It renders a fixed backdrop with centered card content using theme-aware classes.
+templ ModalWrapper(id string, maxWidth string) {
+	<div
+		id={id}
+		class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
+		style="z-index: 100"
+		onclick="if (event.target === this) { this.classList.add('hidden'); }"
+	>
+		<div class="flex items-center justify-center min-h-full p-4">
+			<div class={"card-base card-lg w-full my-8 " + maxWidth}>
+				{ children... }
+			</div>
+		</div>
+	</div>
+}

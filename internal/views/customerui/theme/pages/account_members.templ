@@ -6,6 +6,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 )
 
 // AccountPageProps for the account page
@@ -189,97 +190,94 @@ templ AccountPage(props AccountPageProps) {
 			</div>
 			<!-- Invite Modal -->
 			if props.IsOwner {
-				<div id="invite-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center">
-					<div class="absolute inset-0 bg-black/50" onclick="document.getElementById('invite-modal').classList.add('hidden')"></div>
-					<div class="relative theme-card-bg rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
-						<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Add members</h3>
-						<label class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-2 block">
-							Enter email addresses, separated by commas
-						</label>
-						<textarea
-							id="invite-emails"
-							rows="3"
-							placeholder="e.g. alice@company.com, bob@company.com"
-							class="w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-cool-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-400"
-							style="border-color: var(--theme-border);"
-						></textarea>
-						<div id="invite-modal-result" class="mt-2 text-sm"></div>
-						<div class="flex justify-end gap-3 mt-4">
-							<button
-								onclick="document.getElementById('invite-modal').classList.add('hidden');document.getElementById('invite-emails').value='';document.getElementById('invite-modal-result').innerHTML='';document.getElementById('invite-submit-btn').disabled=true;"
-								class="button button-outline btn-theme-outline px-4 py-2 text-sm"
-							>
-								Cancel
-							</button>
-							<button
-								id="invite-submit-btn"
-								onclick="submitInviteEmails()"
-								class="button button-primary btn-theme-primary px-4 py-2 text-sm"
-								disabled
-							>
-								Add members
-							</button>
-						</div>
-						<script>
-							(function() {
-								var ta = document.getElementById('invite-emails');
-								var btn = document.getElementById('invite-submit-btn');
-								ta.addEventListener('input', function() {
-									btn.disabled = ta.value.trim() === '';
-								});
-							})();
-
-							function submitInviteEmails() {
-								var ta = document.getElementById('invite-emails');
-								var resultDiv = document.getElementById('invite-modal-result');
-								var btn = document.getElementById('invite-submit-btn');
-								var emails = ta.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });
-								var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-								var invalid = emails.filter(function(e) { return !emailRegex.test(e); });
-								if (invalid.length > 0) {
-									resultDiv.innerHTML = '<span class="text-red-500">Invalid email(s): ' + invalid.join(', ') + '</span>';
-									return;
-								}
-								if (emails.length === 0) {
-									resultDiv.innerHTML = '<span class="text-red-500">Please enter at least one email address.</span>';
-									return;
-								}
-								btn.disabled = true;
-								btn.textContent = 'Adding...';
-								resultDiv.innerHTML = '';
-								var results = [];
-								var done = 0;
-								emails.forEach(function(email) {
-									fetch('/account/invite', {
-										method: 'POST',
-										headers: { 'Content-Type': 'application/json' },
-										body: JSON.stringify({ email: email })
-									}).then(function(r) {
-										return r.text().then(function(text) {
-											results.push({ email: email, ok: r.ok, message: text });
-										});
-									}).catch(function() {
-										results.push({ email: email, ok: false, message: 'Network error' });
-									}).finally(function() {
-										done++;
-										if (done === emails.length) {
-											var errors = results.filter(function(r) { return !r.ok; });
-											if (errors.length === 0) {
-												window.location.reload();
-											} else {
-												btn.disabled = false;
-												btn.textContent = 'Add members';
-												resultDiv.innerHTML = errors.map(function(e) {
-													return '<div class="text-red-500">' + e.email + ': failed to invite</div>';
-												}).join('');
-											}
-										}
-									});
-								});
-							}
-						</script>
+				@partials.ModalWrapper("invite-modal", "max-w-md") {
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Add members</h3>
+					<label class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-2 block">
+						Enter email addresses, separated by commas
+					</label>
+					<textarea
+						id="invite-emails"
+						rows="3"
+						placeholder="e.g. alice@company.com, bob@company.com"
+						class="w-full px-3 py-2 text-sm rounded-lg border bg-white dark:bg-cool-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-400"
+						style="border-color: var(--theme-border);"
+					></textarea>
+					<div id="invite-modal-result" class="mt-2 text-sm"></div>
+					<div class="flex justify-end gap-3 mt-4">
+						<button
+							onclick="document.getElementById('invite-modal').classList.add('hidden');document.getElementById('invite-emails').value='';document.getElementById('invite-modal-result').innerHTML='';document.getElementById('invite-submit-btn').disabled=true;"
+							class="button button-outline btn-theme-outline px-4 py-2 text-sm"
+						>
+							Cancel
+						</button>
+						<button
+							id="invite-submit-btn"
+							onclick="submitInviteEmails()"
+							class="button button-primary btn-theme-primary px-4 py-2 text-sm"
+							disabled
+						>
+							Add members
+						</button>
 					</div>
-				</div>
+					<script>
+						(function() {
+							var ta = document.getElementById('invite-emails');
+							var btn = document.getElementById('invite-submit-btn');
+							ta.addEventListener('input', function() {
+								btn.disabled = ta.value.trim() === '';
+							});
+						})();
+
+						function submitInviteEmails() {
+							var ta = document.getElementById('invite-emails');
+							var resultDiv = document.getElementById('invite-modal-result');
+							var btn = document.getElementById('invite-submit-btn');
+							var emails = ta.value.split(',').map(function(e) { return e.trim(); }).filter(function(e) { return e !== ''; });
+							var emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+							var invalid = emails.filter(function(e) { return !emailRegex.test(e); });
+							if (invalid.length > 0) {
+								resultDiv.innerHTML = '<span class="text-red-500">Invalid email(s): ' + invalid.join(', ') + '</span>';
+								return;
+							}
+							if (emails.length === 0) {
+								resultDiv.innerHTML = '<span class="text-red-500">Please enter at least one email address.</span>';
+								return;
+							}
+							btn.disabled = true;
+							btn.textContent = 'Adding...';
+							resultDiv.innerHTML = '';
+							var results = [];
+							var done = 0;
+							emails.forEach(function(email) {
+								fetch('/account/invite', {
+									method: 'POST',
+									headers: { 'Content-Type': 'application/json' },
+									body: JSON.stringify({ email: email })
+								}).then(function(r) {
+									return r.text().then(function(text) {
+										results.push({ email: email, ok: r.ok, message: text });
+									});
+								}).catch(function() {
+									results.push({ email: email, ok: false, message: 'Network error' });
+								}).finally(function() {
+									done++;
+									if (done === emails.length) {
+										var errors = results.filter(function(r) { return !r.ok; });
+										if (errors.length === 0) {
+											window.location.reload();
+										} else {
+											btn.disabled = false;
+											btn.textContent = 'Add members';
+											resultDiv.innerHTML = errors.map(function(e) {
+												return '<div class="text-red-500">' + e.email + ': failed to invite</div>';
+											}).join('');
+										}
+									}
+								});
+							});
+						}
+					</script>
+				}
 			}
 		</div>
 	}

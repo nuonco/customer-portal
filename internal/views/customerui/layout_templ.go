@@ -175,7 +175,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -184,7 +184,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<body class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<body hx-boost=\"true\" hx-ext=\"head-support\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -324,7 +324,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var12 templ.SafeURL
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@500;600;700&family=" + props.BodyFont + ":wght@400;500;600&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 114, Col: 161}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 115, Col: 161}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -342,7 +342,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var13 templ.SafeURL
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 116, Col: 118}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 117, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
@@ -360,7 +360,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var14 templ.SafeURL
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.BodyFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 118, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 119, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {

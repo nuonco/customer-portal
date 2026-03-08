@@ -50,7 +50,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 							</div>
 							<!-- Save Button -->
 							<div class="flex flex-col space-y-3">
-								<button type="button" id="installerSaveButton" onclick="saveInstallerSettings()" class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700">
+								<button type="button" id="installerSaveButton" onclick="saveInstallerSettings()" disabled class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-600">
 									Save Changes
 								</button>
 								<!-- Status Messages -->
@@ -120,6 +120,8 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					data-black-color-light={ props.Theme.BlackColorLight }
 					data-header-title={ props.Theme.HeaderTitle }
 					data-header-title-hidden={ boolToDataAttr(props.Theme.HeaderTitleHidden) }
+					data-theme-mode={ props.Theme.GetThemeMode() }
+					data-custom-css={ props.Theme.CustomCSS }
 				></div>
 				@installerPageScript()
 			</div>
@@ -822,12 +824,6 @@ templ brandingPreviewInstallCreation(theme *models.AppTheme) {
 					<h3 class="text-base preview-text-heading preview-heading-font">Acme App</h3>
 					<p class="text-xs preview-text-muted preview-body-font">provided by Acme Corp</p>
 				</div>
-				<!-- Account info -->
-				<div class="mb-4 p-3 rounded-lg" style="background-color: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.3);">
-					<p class="text-xs" style="color: #15803d;">
-						Installing as <span class="font-semibold">user@example.com</span>
-					</p>
-				</div>
 				<!-- Region -->
 				<div>
 					<label class="block text-xs font-semibold preview-text-heading preview-body-font mb-1">Deployment Region</label>
@@ -1340,12 +1336,18 @@ templ installerPageScript() {
 					var data = await response.json();
 
 					if (response.ok) {
-						successMessage.classList.remove("hidden");
 						showToast("Installer settings saved!", "success");
-						setTimeout(function() {
-							successMessage.classList.add("hidden");
-							window.location.reload();
-						}, 1500);
+						// Update stored config so next save only sends new changes
+						Object.keys(formData).forEach(function(key) {
+							var attrName = 'data-' + key.replace(/_/g, '-');
+							config.setAttribute(attrName, formData[key]);
+						});
+						// Sync file upload globals into config dataset
+						config.dataset.logoLightBase64 = window._installerLogoLightBase64 || '';
+						config.dataset.logoDarkBase64 = window._installerLogoDarkBase64 || '';
+						config.dataset.faviconBase64 = window._installerFaviconBase64 || '';
+						config.dataset.headingFontBase64 = window._installerHeadingFontBase64 || '';
+						config.dataset.bodyFontBase64 = window._installerBodyFontBase64 || '';
 					} else {
 						errorMessage.textContent = data.error || "Failed to save settings";
 						errorMessage.classList.remove("hidden");
@@ -1356,13 +1358,61 @@ templ installerPageScript() {
 				}
 
 				saveButton.textContent = "Save Changes";
-				saveButton.disabled = false;
+				checkForChanges();
 			};
+
+			function checkForChanges() {
+				var saveButton = document.getElementById("installerSaveButton");
+				var current = {
+					primary_color: document.getElementById("installerPrimaryColorLight").value,
+					primary_color_dark: document.getElementById("installerPrimaryColorDarkText").value || "",
+					white_color: document.getElementById("installerWhiteColorText").value || "",
+					black_color: document.getElementById("installerBlackColorDarkText").value || "",
+					white_color_dark: document.getElementById("installerWhiteColorDarkText").value || "",
+					black_color_light: document.getElementById("installerBlackColorLightText").value || "",
+					heading_font: document.getElementById("installerHeadingFont").value,
+					body_font: document.getElementById("installerBodyFont").value,
+					theme_mode: document.querySelector('input[name="themeMode"]:checked')?.value || 'auto',
+					custom_css: document.getElementById("installerCustomCSS").value,
+					header_title: document.getElementById("installerHeaderTitle").value,
+					header_title_hidden: document.getElementById("installerHeaderTitleHidden").checked ? "true" : "false"
+				};
+				var saved = {
+					primary_color: config.dataset.primaryColor || "",
+					primary_color_dark: config.dataset.primaryColorDark || "",
+					white_color: config.dataset.whiteColor || "",
+					black_color: config.dataset.blackColor || "",
+					white_color_dark: config.dataset.whiteColorDark || "",
+					black_color_light: config.dataset.blackColorLight || "",
+					heading_font: config.dataset.headingFont || "",
+					body_font: config.dataset.bodyFont || "",
+					theme_mode: config.dataset.themeMode || "auto",
+					custom_css: config.dataset.customCss || "",
+					header_title: config.dataset.headerTitle || "",
+					header_title_hidden: config.dataset.headerTitleHidden || "false"
+				};
+				var hasChanges = Object.keys(current).some(function(k) { return current[k] !== saved[k]; });
+				// Check file uploads
+				if (!hasChanges) {
+					var logoLight = window._installerLogoLightBase64 || '';
+					var logoDark = window._installerLogoDarkBase64 || '';
+					var favicon = window._installerFaviconBase64 || '';
+					var headingFontB64 = window._installerHeadingFontBase64 || '';
+					var bodyFontB64 = window._installerBodyFontBase64 || '';
+					if (logoLight !== (config.dataset.logoLightBase64 || '')) hasChanges = true;
+					if (logoDark !== (config.dataset.logoDarkBase64 || '')) hasChanges = true;
+					if (favicon !== (config.dataset.faviconBase64 || '')) hasChanges = true;
+					if (headingFontB64 !== (config.dataset.headingFontBase64 || '')) hasChanges = true;
+					if (bodyFontB64 !== (config.dataset.bodyFontBase64 || '')) hasChanges = true;
+				}
+				saveButton.disabled = !hasChanges;
+			}
 
 			// Event listeners for light mode color inputs
 			document.getElementById("installerPrimaryColorLight")?.addEventListener("input", function(e) {
 				document.getElementById("installerPrimaryColorLightText").value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerPrimaryColorLightText")?.addEventListener("input", function(e) {
@@ -1371,6 +1421,7 @@ templ installerPageScript() {
 					document.getElementById("installerPrimaryColorLight").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			// Event listeners for dark mode color inputs
@@ -1378,6 +1429,7 @@ templ installerPageScript() {
 				var textInput = document.getElementById("installerPrimaryColorDarkText");
 				textInput.value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerPrimaryColorDarkText")?.addEventListener("input", function(e) {
@@ -1391,12 +1443,14 @@ templ installerPageScript() {
 					document.getElementById("installerPrimaryColorDark").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			// Event listeners for white (light background) color
 			document.getElementById("installerWhiteColor")?.addEventListener("input", function(e) {
 				document.getElementById("installerWhiteColorText").value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerWhiteColorText")?.addEventListener("input", function(e) {
@@ -1405,12 +1459,14 @@ templ installerPageScript() {
 					document.getElementById("installerWhiteColor").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			// Event listeners for black (dark background) color
 			document.getElementById("installerBlackColorDark")?.addEventListener("input", function(e) {
 				document.getElementById("installerBlackColorDarkText").value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerBlackColorDarkText")?.addEventListener("input", function(e) {
@@ -1423,12 +1479,14 @@ templ installerPageScript() {
 					document.getElementById("installerBlackColorDark").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			// Event listeners for white color dark mode override
 			document.getElementById("installerWhiteColorDark")?.addEventListener("input", function(e) {
 				document.getElementById("installerWhiteColorDarkText").value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerWhiteColorDarkText")?.addEventListener("input", function(e) {
@@ -1441,12 +1499,14 @@ templ installerPageScript() {
 					document.getElementById("installerWhiteColorDark").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			// Event listeners for black color light mode override
 			document.getElementById("installerBlackColorLight")?.addEventListener("input", function(e) {
 				document.getElementById("installerBlackColorLightText").value = e.target.value.toUpperCase();
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerBlackColorLightText")?.addEventListener("input", function(e) {
@@ -1458,16 +1518,37 @@ templ installerPageScript() {
 					document.getElementById("installerBlackColorLight").value = value;
 					updatePreview();
 				}
+				checkForChanges();
 			});
 
 			document.getElementById("installerHeadingFont")?.addEventListener("change", function(e) {
 				loadGoogleFont(e.target.value);
 				updatePreview();
+				checkForChanges();
 			});
 
 			document.getElementById("installerBodyFont")?.addEventListener("change", function(e) {
 				loadGoogleFont(e.target.value);
 				updatePreview();
+				checkForChanges();
+			});
+
+			// Event listeners for inputs without existing listeners
+			document.getElementById("installerCustomCSS")?.addEventListener("input", function() {
+				checkForChanges();
+			});
+			document.getElementById("installerHeaderTitle")?.addEventListener("input", function() {
+				updatePreview();
+				checkForChanges();
+			});
+			document.getElementById("installerHeaderTitleHidden")?.addEventListener("change", function() {
+				updatePreview();
+				checkForChanges();
+			});
+			document.querySelectorAll('input[name="themeMode"]').forEach(function(radio) {
+				radio.addEventListener("change", function() {
+					checkForChanges();
+				});
 			});
 
 			// Load initial fonts
@@ -1562,6 +1643,7 @@ templ installerPageScript() {
 					placeholder.classList.add("hidden");
 					removeBtn.classList.remove("hidden");
 					updatePreview();
+					checkForChanges();
 				};
 				reader.readAsDataURL(file);
 			});
@@ -1596,6 +1678,7 @@ templ installerPageScript() {
 					placeholder.classList.add("hidden");
 					removeBtn.classList.remove("hidden");
 					updatePreview();
+					checkForChanges();
 				};
 				reader.readAsDataURL(file);
 			});
@@ -1629,6 +1712,7 @@ templ installerPageScript() {
 					preview.classList.remove("hidden");
 					placeholder.classList.add("hidden");
 					removeBtn.classList.remove("hidden");
+					checkForChanges();
 				};
 				reader.readAsDataURL(file);
 			});
@@ -1665,6 +1749,7 @@ templ installerPageScript() {
 					document.getElementById("installerHeadingFontCard").classList.remove("hidden");
 					document.getElementById("installerHeadingFontUpload").classList.add("hidden");
 					updatePreview();
+					checkForChanges();
 				};
 				reader.readAsDataURL(file);
 			});
@@ -1701,6 +1786,7 @@ templ installerPageScript() {
 					document.getElementById("installerBodyFontCard").classList.remove("hidden");
 					document.getElementById("installerBodyFontUpload").classList.add("hidden");
 					updatePreview();
+					checkForChanges();
 				};
 				reader.readAsDataURL(file);
 			});
