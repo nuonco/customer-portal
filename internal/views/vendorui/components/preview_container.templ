@@ -13,7 +13,6 @@ type PreviewContainerProps struct {
 	InitialMode    string // "light" or "dark" (default: "light")
 	InitialSize    string // "desktop", "tablet", or "mobile" (default: "desktop")
 	PrimaryColor   string // CSS hex color for --preview-primary
-	SecondaryColor string // CSS hex color for --preview-secondary
 	WhiteColor     string // CSS hex color for --preview-white (light background)
 	BlackColor     string // CSS hex color for --preview-black (dark background)
 	PageOptions    []PreviewPageOption // optional page selector options
@@ -55,13 +54,6 @@ func (p PreviewContainerProps) getPrimaryColor() string {
 		return "#8040BF"
 	}
 	return p.PrimaryColor
-}
-
-func (p PreviewContainerProps) getSecondaryColor() string {
-	if p.SecondaryColor == "" {
-		return "#8040BF"
-	}
-	return p.SecondaryColor
 }
 
 func (p PreviewContainerProps) getWhiteColor() string {
@@ -194,7 +186,7 @@ templ PreviewContainer(props PreviewContainerProps) {
 			<div
 				id="previewContainer"
 				class={ props.getModeClass(), props.getContainerClass() }
-				style={ "--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";" }
+				style={ "--preview-primary: " + props.getPrimaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";" }
 			>
 				<!-- Scaled preview frame -->
 				<div id="previewScaler" class={ "origin-top-left", props.getSizeClass() }>

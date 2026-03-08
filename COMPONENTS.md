@@ -409,7 +409,7 @@ Theme colors are available as CSS variables:
 }
 
 .my-link {
-  color: var(--theme-secondary);
+  color: var(--theme-primary);
 }
 ```
 

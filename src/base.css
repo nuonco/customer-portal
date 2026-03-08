@@ -156,8 +156,6 @@
   --theme-primary: var(--color-primary-600);
   --theme-primary-hover: var(--color-primary-700);
   --theme-primary-light: var(--color-primary-50);
-  --theme-secondary: var(--color-blue-600);
-  --theme-secondary-hover: var(--color-blue-700);
 
   /* Font families - can be overridden by vendor theme */
   --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -215,20 +213,6 @@
 }
 .hover\:border-theme-primary:hover {
   border-color: var(--theme-primary);
-}
-
-/* Secondary color utilities */
-.bg-theme-secondary {
-  background-color: var(--theme-secondary);
-}
-.text-theme-secondary {
-  color: var(--theme-secondary);
-}
-.text-theme-secondary-hover:hover {
-  color: var(--theme-secondary-hover);
-}
-.border-theme-secondary {
-  border-color: var(--theme-secondary);
 }
 
 /* Light primary for backgrounds */

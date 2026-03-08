@@ -51,7 +51,7 @@ templ AccountPage(props AccountPageProps) {
 								class="flex-1 px-3 py-2 text-sm rounded-lg border bg-white dark:bg-cool-grey-800 text-cool-grey-900 dark:text-white"
 								style="border-color: var(--theme-border);"
 							/>
-							<button type="submit" class="button button-secondary btn-theme-secondary px-3 py-1.5 text-sm shrink-0" id="account-name-save" disabled>
+							<button type="submit" class="button button-primary btn-theme-primary px-3 py-1.5 text-sm shrink-0" id="account-name-save" disabled>
 								Save
 							</button>
 							<button
@@ -135,7 +135,7 @@ templ AccountPage(props AccountPageProps) {
 											if member.Role != models.CustomerAccountRoleOwner {
 												<button
 													onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)} }
-													class="button button-secondary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm"
+													class="button button-primary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm"
 												>
 													Transfer Ownership
 												</button>

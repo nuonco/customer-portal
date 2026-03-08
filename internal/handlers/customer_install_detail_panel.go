@@ -225,7 +225,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, _ := GetPrimaryColors(theme.SecondaryColor)
 
 	props := partials.InstallDetailPanelProps{
 		Install:                 install,
@@ -233,7 +232,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		APIDeletedError:         apiDeletedError,
 		BasePath:                h.basePath,
 		PrimaryColor:            primaryColor,
-		SecondaryColor:          secondaryColor,
 		AppConfigVersion:        appConfigVersion,
 		AppConfigUpdatedAt:      appConfigUpdatedAt,
 		InstallConfigVersion:    installConfigVersion,

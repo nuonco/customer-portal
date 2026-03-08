@@ -30,25 +30,23 @@ type UserData struct {
 
 // ThemeData contains theme settings for templates.
 type ThemeData struct {
-	PrimaryColor       string `json:"primary_color"`
-	PrimaryColorDark   string `json:"primary_color_dark"`
-	SecondaryColor     string `json:"secondary_color"`
-	SecondaryColorDark string `json:"secondary_color_dark"`
-	WhiteColor         string `json:"white_color,omitempty"`       // Background color for light mode
-	BlackColor         string `json:"black_color,omitempty"`       // Background color for dark mode
-	WhiteColorDark     string `json:"white_color_dark,omitempty"`  // Optional: --theme-white override for dark mode
-	BlackColorLight    string `json:"black_color_light,omitempty"` // Optional: --theme-black override for light mode
-	LogoBase64         string `json:"logo_base64,omitempty"`       // Backward compatibility (alias for LogoLightBase64)
-	LogoLightBase64    string `json:"logo_light_base64,omitempty"` // Light mode logo
-	LogoDarkBase64     string `json:"logo_dark_base64,omitempty"`  // Dark mode logo
-	HeadingFont        string `json:"heading_font,omitempty"`
-	BodyFont           string `json:"body_font,omitempty"`
-	HeadingFontBase64  string `json:"heading_font_base64,omitempty"`
-	BodyFontBase64     string `json:"body_font_base64,omitempty"`
-	BorderRadius       string `json:"border_radius"`
-	LoginTitle         string `json:"login_title"`
-	LoginSubtitle      string `json:"login_subtitle"`
-	RadiusClass        string `json:"radius_class"`
+	PrimaryColor      string `json:"primary_color"`
+	PrimaryColorDark  string `json:"primary_color_dark"`
+	WhiteColor        string `json:"white_color,omitempty"`       // Background color for light mode
+	BlackColor        string `json:"black_color,omitempty"`       // Background color for dark mode
+	WhiteColorDark    string `json:"white_color_dark,omitempty"`  // Optional: --theme-white override for dark mode
+	BlackColorLight   string `json:"black_color_light,omitempty"` // Optional: --theme-black override for light mode
+	LogoBase64        string `json:"logo_base64,omitempty"`       // Backward compatibility (alias for LogoLightBase64)
+	LogoLightBase64   string `json:"logo_light_base64,omitempty"` // Light mode logo
+	LogoDarkBase64    string `json:"logo_dark_base64,omitempty"`  // Dark mode logo
+	HeadingFont       string `json:"heading_font,omitempty"`
+	BodyFont          string `json:"body_font,omitempty"`
+	HeadingFontBase64 string `json:"heading_font_base64,omitempty"`
+	BodyFontBase64    string `json:"body_font_base64,omitempty"`
+	BorderRadius      string `json:"border_radius"`
+	LoginTitle        string `json:"login_title"`
+	LoginSubtitle     string `json:"login_subtitle"`
+	RadiusClass       string `json:"radius_class"`
 }
 
 // Page-specific data types
@@ -168,12 +166,11 @@ func NewUserData(user *models.User) *UserData {
 func NewThemeData(theme *models.AppTheme) *ThemeData {
 	if theme == nil {
 		return &ThemeData{
-			PrimaryColor:   models.DefaultPrimaryColor,
-			SecondaryColor: models.DefaultPrimaryColor,
-			BorderRadius:   models.DefaultBorderRadius,
-			LoginTitle:     models.DefaultLoginTitle,
-			LoginSubtitle:  models.DefaultLoginSubtitle,
-			RadiusClass:    "radius-" + models.DefaultBorderRadius,
+			PrimaryColor:  models.DefaultPrimaryColor,
+			BorderRadius:  models.DefaultBorderRadius,
+			LoginTitle:    models.DefaultLoginTitle,
+			LoginSubtitle: models.DefaultLoginSubtitle,
+			RadiusClass:   "radius-" + models.DefaultBorderRadius,
 		}
 	}
 
@@ -182,31 +179,24 @@ func NewThemeData(theme *models.AppTheme) *ThemeData {
 		primaryColor = models.DefaultPrimaryColor
 	}
 
-	secondaryColor := theme.SecondaryColor
-	if secondaryColor == "" {
-		secondaryColor = primaryColor
-	}
-
 	return &ThemeData{
-		PrimaryColor:       primaryColor,
-		PrimaryColorDark:   darkenColor(primaryColor),
-		SecondaryColor:     secondaryColor,
-		SecondaryColorDark: darkenColor(secondaryColor),
-		WhiteColor:         theme.WhiteColor,
-		BlackColor:         theme.BlackColor,
-		WhiteColorDark:     theme.WhiteColorDark,
-		BlackColorLight:    theme.BlackColorLight,
-		LogoBase64:         theme.LogoLightBase64, // Backward compatibility
-		LogoLightBase64:    theme.LogoLightBase64,
-		LogoDarkBase64:     theme.LogoDarkBase64,
-		HeadingFont:        theme.HeadingFont,
-		BodyFont:           theme.BodyFont,
-		HeadingFontBase64:  theme.HeadingFontBase64,
-		BodyFontBase64:     theme.BodyFontBase64,
-		BorderRadius:       theme.BorderRadius,
-		LoginTitle:         theme.GetLoginTitle(),
-		LoginSubtitle:      theme.GetLoginSubtitle(),
-		RadiusClass:        theme.GetRadiusClass(),
+		PrimaryColor:      primaryColor,
+		PrimaryColorDark:  darkenColor(primaryColor),
+		WhiteColor:        theme.WhiteColor,
+		BlackColor:        theme.BlackColor,
+		WhiteColorDark:    theme.WhiteColorDark,
+		BlackColorLight:   theme.BlackColorLight,
+		LogoBase64:        theme.LogoLightBase64, // Backward compatibility
+		LogoLightBase64:   theme.LogoLightBase64,
+		LogoDarkBase64:    theme.LogoDarkBase64,
+		HeadingFont:       theme.HeadingFont,
+		BodyFont:          theme.BodyFont,
+		HeadingFontBase64: theme.HeadingFontBase64,
+		BodyFontBase64:    theme.BodyFontBase64,
+		BorderRadius:      theme.BorderRadius,
+		LoginTitle:        theme.GetLoginTitle(),
+		LoginSubtitle:     theme.GetLoginSubtitle(),
+		RadiusClass:       theme.GetRadiusClass(),
 	}
 }
 

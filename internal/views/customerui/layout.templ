@@ -143,10 +143,6 @@ func buildThemeCSS(props LayoutProps) string {
 		css += "--theme-primary: " + props.PrimaryColor + ";"
 		css += "--theme-primary-hover: " + props.PrimaryColorDark + ";"
 	}
-	if props.SecondaryColor != "" {
-		css += "--theme-secondary: " + props.SecondaryColor + ";"
-		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
-	}
 	if props.WhiteColor != "" {
 		css += "--theme-white: " + props.WhiteColor + ";"
 	}
@@ -170,9 +166,6 @@ func buildThemeCSS(props LayoutProps) string {
 	darkCSS := ""
 	if props.PrimaryColorDarkMode != "" {
 		darkCSS += "--theme-primary: " + props.PrimaryColorDarkMode + ";"
-	}
-	if props.SecondaryColorDarkMode != "" {
-		darkCSS += "--theme-secondary: " + props.SecondaryColorDarkMode + ";"
 	}
 	if props.WhiteColorDark != "" {
 		darkCSS += "--theme-white: " + props.WhiteColorDark + ";"

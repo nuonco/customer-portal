@@ -134,27 +134,6 @@
   @apply opacity-50 cursor-not-allowed;
 }
 
-.btn-theme-secondary {
-  @apply inline-flex items-center justify-center font-medium text-white;
-  @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
-  @apply transition-colors duration-150;
-  background-color: var(--theme-secondary, var(--theme-primary, #3b82f6));
-  padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
-  border-radius: var(--theme-radius);
-}
-
-.btn-theme-secondary:hover {
-  background-color: var(--theme-secondary-hover, var(--theme-primary-hover, #2563eb));
-}
-
-.btn-theme-secondary:focus {
-  --tw-ring-color: var(--theme-secondary, var(--theme-primary, #3b82f6));
-}
-
-.btn-theme-secondary:disabled {
-  @apply opacity-50 cursor-not-allowed;
-}
-
 .btn-theme-outline {
   @apply inline-flex items-center justify-center font-medium;
   @apply bg-transparent text-cool-grey-700;
@@ -451,12 +430,12 @@
 
 .install-name-link {
   @apply hover:underline;
-  color: var(--theme-secondary, var(--theme-primary, #3b82f6));
+  color: var(--theme-primary, #3b82f6);
 }
 
 .back-link {
   @apply inline-flex items-center text-sm border-b border-transparent;
-  color: var(--theme-secondary, var(--theme-primary, #3b82f6));
+  color: var(--theme-primary, #3b82f6);
 }
 .back-link:hover {
   border-color: currentColor;

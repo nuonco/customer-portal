@@ -490,17 +490,6 @@ func TestBuildThemeCSS(t *testing.T) {
 				"--theme-primary-hover: #CC0000",
 			},
 		},
-		{
-			name: "secondary color",
-			theme: &ThemeData{
-				SecondaryColor:     "#00FF00",
-				SecondaryColorDark: "#00CC00",
-			},
-			contains: []string{
-				"--theme-secondary: #00FF00",
-				"--theme-secondary-hover: #00CC00",
-			},
-		},
 	}
 
 	for _, tt := range tests {

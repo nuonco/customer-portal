@@ -16,15 +16,14 @@ type PreviewPageOption struct {
 
 // PreviewContainerProps for the reusable preview component
 type PreviewContainerProps struct {
-	Title          string              // e.g. "Live Preview"
-	Description    string              // e.g. "This is your customers will see."
-	InitialMode    string              // "light" or "dark" (default: "light")
-	InitialSize    string              // "desktop", "tablet", or "mobile" (default: "desktop")
-	PrimaryColor   string              // CSS hex color for --preview-primary
-	SecondaryColor string              // CSS hex color for --preview-secondary
-	WhiteColor     string              // CSS hex color for --preview-white (light background)
-	BlackColor     string              // CSS hex color for --preview-black (dark background)
-	PageOptions    []PreviewPageOption // optional page selector options
+	Title        string              // e.g. "Live Preview"
+	Description  string              // e.g. "This is your customers will see."
+	InitialMode  string              // "light" or "dark" (default: "light")
+	InitialSize  string              // "desktop", "tablet", or "mobile" (default: "desktop")
+	PrimaryColor string              // CSS hex color for --preview-primary
+	WhiteColor   string              // CSS hex color for --preview-white (light background)
+	BlackColor   string              // CSS hex color for --preview-black (dark background)
+	PageOptions  []PreviewPageOption // optional page selector options
 }
 
 func (p PreviewContainerProps) getInitialMode() string {
@@ -63,13 +62,6 @@ func (p PreviewContainerProps) getPrimaryColor() string {
 		return "#8040BF"
 	}
 	return p.PrimaryColor
-}
-
-func (p PreviewContainerProps) getSecondaryColor() string {
-	if p.SecondaryColor == "" {
-		return "#8040BF"
-	}
-	return p.SecondaryColor
 }
 
 func (p PreviewContainerProps) getWhiteColor() string {
@@ -115,7 +107,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 86, Col: 86}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 78, Col: 86}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -128,7 +120,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Description)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 87, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 79, Col: 85}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -151,7 +143,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Value)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 98, Col: 32}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 90, Col: 32}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -164,7 +156,7 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(opt.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 98, Col: 46}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 90, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -327,9 +319,9 @@ func PreviewContainer(props PreviewContainerProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
-		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-secondary: " + props.getSecondaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";")
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("--preview-primary: " + props.getPrimaryColor() + "; --preview-white: " + props.getWhiteColor() + "; --preview-black: " + props.getBlackColor() + ";")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 197, Col: 217}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/preview_container.templ`, Line: 189, Col: 161}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {

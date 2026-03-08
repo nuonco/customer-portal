@@ -22,16 +22,6 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 		css += "--theme-primary-hover:#1D4ED8;"
 	}
 
-	// Secondary color
-	if theme != nil && theme.SecondaryColor != "" {
-		css += "--theme-secondary:" + theme.SecondaryColor + ";"
-		css += "--theme-secondary-hover:" + DarkenColor(theme.SecondaryColor, 20) + ";"
-	} else if theme != nil && theme.PrimaryColor != "" {
-		// If no secondary color, use primary color as fallback
-		css += "--theme-secondary:" + theme.PrimaryColor + ";"
-		css += "--theme-secondary-hover:" + DarkenColor(theme.PrimaryColor, 20) + ";"
-	}
-
 	// White/Black background colors
 	if theme != nil && theme.WhiteColor != "" {
 		css += "--theme-white:" + theme.WhiteColor + ";"

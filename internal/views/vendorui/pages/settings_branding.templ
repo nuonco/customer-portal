@@ -68,7 +68,6 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 								InitialMode:    "light",
 								InitialSize:    "desktop",
 								PrimaryColor:   getBrandingPrimaryColor(props.Theme.PrimaryColor),
-								SecondaryColor: getBrandingSecondaryColor(props.Theme.SecondaryColor),
 								WhiteColor:     getBrandingWhiteColor(props.Theme.WhiteColor),
 								BlackColor:     getBrandingBlackColor(props.Theme.BlackColor),
 								PageOptions: []components.PreviewPageOption{
@@ -114,9 +113,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 					data-heading-font-name={ props.Theme.HeadingFontName }
 					data-body-font-name={ props.Theme.BodyFontName }
 					data-primary-color={ props.Theme.PrimaryColor }
-					data-secondary-color={ props.Theme.SecondaryColor }
 					data-primary-color-dark={ props.Theme.PrimaryColorDark }
-					data-secondary-color-dark={ props.Theme.SecondaryColorDark }
 					data-white-color={ props.Theme.WhiteColor }
 					data-black-color={ props.Theme.BlackColor }
 					data-white-color-dark={ props.Theme.WhiteColorDark }
@@ -202,14 +199,14 @@ templ brandingPreviewInstallDetail(theme *models.AppTheme) {
 							</thead>
 							<tbody>
 								<tr class="border-t preview-status-border" style="background-color: color-mix(in srgb, var(--preview-primary) 8%, transparent);">
-									<td class="px-3 py-2 preview-body-font font-medium" style="color: var(--preview-secondary, var(--preview-primary));">my-production</td>
+									<td class="px-3 py-2 preview-body-font font-medium" style="color: var(--preview-primary);">my-production</td>
 									<td class="px-3 py-2 preview-text-body preview-body-font">Acme App</td>
 									<td class="px-3 py-2"><span class="px-1.5 py-0.5 text-[10px] rounded font-medium bg-orange-100 text-orange-800">AWS</span></td>
 									<td class="px-3 py-2 preview-text-muted preview-body-font">us-east-1</td>
 									<td class="px-3 py-2 preview-text-muted preview-body-font">Jan 15, 2025</td>
 								</tr>
 								<tr class="border-t preview-status-border">
-									<td class="px-3 py-2 preview-body-font font-medium" style="color: var(--preview-secondary, var(--preview-primary));">my-staging</td>
+									<td class="px-3 py-2 preview-body-font font-medium" style="color: var(--preview-primary);">my-staging</td>
 									<td class="px-3 py-2 preview-text-body preview-body-font">Acme App</td>
 									<td class="px-3 py-2"><span class="px-1.5 py-0.5 text-[10px] rounded font-medium bg-orange-100 text-orange-800">AWS</span></td>
 									<td class="px-3 py-2 preview-text-muted preview-body-font">eu-west-1</td>
@@ -439,27 +436,6 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 			</div>
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons.</p>
 		</div>
-		<!-- Secondary Color -->
-		<div class="mb-5">
-			<label for="installerSecondaryColorLight" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
-			<div class="flex items-center space-x-3">
-				<input
-					type="color"
-					id="installerSecondaryColorLight"
-					value={ getBrandingSecondaryColor(theme.SecondaryColor) }
-					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
-				/>
-				<input
-					type="text"
-					id="installerSecondaryColorLightText"
-					value={ getBrandingSecondaryColor(theme.SecondaryColor) }
-					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
-					placeholder="#8040BF"
-					pattern="^#[0-9A-Fa-f]{6}$"
-				/>
-			</div>
-			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements.</p>
-		</div>
 		<!-- White (Background) Color -->
 		<div>
 			<label for="installerWhiteColor" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">White</label>
@@ -531,27 +507,6 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 				/>
 			</div>
 			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for navigation bar and primary buttons in dark mode.</p>
-		</div>
-		<!-- Secondary Color Dark -->
-		<div class="mb-5">
-			<label for="installerSecondaryColorDark" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Secondary Color</label>
-			<div class="flex items-center space-x-3">
-				<input
-					type="color"
-					id="installerSecondaryColorDark"
-					value={ getBrandingDarkColor(theme.SecondaryColorDark, theme.SecondaryColor) }
-					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
-				/>
-				<input
-					type="text"
-					id="installerSecondaryColorDarkText"
-					value={ getBrandingDarkColorText(theme.SecondaryColorDark) }
-					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
-					placeholder="(uses light mode)"
-					pattern="^#[0-9A-Fa-f]{6}$"
-				/>
-			</div>
-			<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Used for links, accents, and secondary elements in dark mode.</p>
 		</div>
 		<!-- White Color (Dark Mode) -->
 		<div class="mb-5">
@@ -829,21 +784,21 @@ templ brandingPreviewInstallsList(theme *models.AppTheme) {
 					</thead>
 					<tbody>
 						<tr class="border-t preview-status-border">
-							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-secondary, var(--preview-primary));">my-production</td>
+							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-primary);">my-production</td>
 							<td class="px-3 py-2.5 preview-text-body preview-body-font">Acme App</td>
 							<td class="px-3 py-2.5"><span class="px-1.5 py-0.5 text-[10px] rounded font-medium bg-orange-100 text-orange-800">AWS</span></td>
 							<td class="px-3 py-2.5 preview-text-muted preview-body-font">us-east-1</td>
 							<td class="px-3 py-2.5 preview-text-muted preview-body-font">Jan 15, 2025</td>
 						</tr>
 						<tr class="border-t preview-status-border">
-							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-secondary, var(--preview-primary));">my-staging</td>
+							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-primary);">my-staging</td>
 							<td class="px-3 py-2.5 preview-text-body preview-body-font">Acme App</td>
 							<td class="px-3 py-2.5"><span class="px-1.5 py-0.5 text-[10px] rounded font-medium bg-orange-100 text-orange-800">AWS</span></td>
 							<td class="px-3 py-2.5 preview-text-muted preview-body-font">eu-west-1</td>
 							<td class="px-3 py-2.5 preview-text-muted preview-body-font">Jan 10, 2025</td>
 						</tr>
 						<tr class="border-t preview-status-border">
-							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-secondary, var(--preview-primary));">my-dev</td>
+							<td class="px-3 py-2.5 preview-body-font font-medium" style="color: var(--preview-primary);">my-dev</td>
 							<td class="px-3 py-2.5 preview-text-body preview-body-font">Acme Analytics</td>
 							<td class="px-3 py-2.5"><span class="px-1.5 py-0.5 text-[10px] rounded font-medium bg-orange-100 text-orange-800">AWS</span></td>
 							<td class="px-3 py-2.5 preview-text-muted preview-body-font">us-west-2</td>
@@ -983,13 +938,6 @@ templ brandingPreviewLogin(theme *models.AppTheme) {
 }
 
 func getBrandingPrimaryColor(color string) string {
-	if color == "" {
-		return "#8040BF"
-	}
-	return color
-}
-
-func getBrandingSecondaryColor(color string) string {
 	if color == "" {
 		return "#8040BF"
 	}
@@ -1146,22 +1094,18 @@ templ installerPageScript() {
 
 			window.updatePreview = function() {
 				var isDarkMode = window._previewMode === 'dark';
-				var primaryColor, secondaryColor;
+				var primaryColor;
 
 				// Get colors based on current preview mode
 				if (isDarkMode) {
-					// Dark mode: use dark colors, fall back to light colors
+					// Dark mode: use dark color, fall back to light color
 					var darkPrimary = document.getElementById("installerPrimaryColorDarkText").value;
-					var darkSecondary = document.getElementById("installerSecondaryColorDarkText").value;
 					var lightPrimary = document.getElementById("installerPrimaryColorLight").value;
-					var lightSecondary = document.getElementById("installerSecondaryColorLight").value;
 
 					primaryColor = darkPrimary || lightPrimary;
-					secondaryColor = darkSecondary || lightSecondary;
 				} else {
-					// Light mode: use light colors
+					// Light mode: use light color
 					primaryColor = document.getElementById("installerPrimaryColorLight").value;
-					secondaryColor = document.getElementById("installerSecondaryColorLight").value;
 				}
 
 				var headingFont = document.getElementById("installerHeadingFont").value;
@@ -1170,7 +1114,6 @@ templ installerPageScript() {
 				// Update CSS variables on preview container
 				var container = document.getElementById("previewContainer");
 				container.style.setProperty('--preview-primary', primaryColor);
-				container.style.setProperty('--preview-secondary', secondaryColor);
 
 				// Update white/black background colors
 				var whiteColor = document.getElementById("installerWhiteColor")?.value || '#f8fafc';
@@ -1235,9 +1178,9 @@ templ installerPageScript() {
 					}
 				});
 
-				// Update secondary color links (install detail page)
+				// Update link colors (install detail page)
 				var backLink = document.getElementById("installerPreviewBackLink");
-				if (backLink) backLink.style.color = secondaryColor;
+				if (backLink) backLink.style.color = primaryColor;
 
 				// Update primary color buttons (install detail page)
 				var approveBtn = document.getElementById("installerPreviewApproveBtn");
@@ -1339,9 +1282,7 @@ templ installerPageScript() {
 
 				var formData = {
 					primary_color: document.getElementById("installerPrimaryColorLight").value,
-					secondary_color: document.getElementById("installerSecondaryColorLight").value,
 					primary_color_dark: document.getElementById("installerPrimaryColorDarkText").value || "",
-					secondary_color_dark: document.getElementById("installerSecondaryColorDarkText").value || "",
 					white_color: document.getElementById("installerWhiteColorText").value || "",
 					black_color: document.getElementById("installerBlackColorDarkText").value || "",
 					white_color_dark: document.getElementById("installerWhiteColorDarkText").value || "",
@@ -1432,19 +1373,6 @@ templ installerPageScript() {
 				}
 			});
 
-			document.getElementById("installerSecondaryColorLight")?.addEventListener("input", function(e) {
-				document.getElementById("installerSecondaryColorLightText").value = e.target.value.toUpperCase();
-				updatePreview();
-			});
-
-			document.getElementById("installerSecondaryColorLightText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerSecondaryColorLight").value = value;
-					updatePreview();
-				}
-			});
-
 			// Event listeners for dark mode color inputs
 			document.getElementById("installerPrimaryColorDark")?.addEventListener("input", function(e) {
 				var textInput = document.getElementById("installerPrimaryColorDarkText");
@@ -1461,25 +1389,6 @@ templ installerPageScript() {
 					updatePreview();
 				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
 					document.getElementById("installerPrimaryColorDark").value = value;
-					updatePreview();
-				}
-			});
-
-			document.getElementById("installerSecondaryColorDark")?.addEventListener("input", function(e) {
-				var textInput = document.getElementById("installerSecondaryColorDarkText");
-				textInput.value = e.target.value.toUpperCase();
-				updatePreview();
-			});
-
-			document.getElementById("installerSecondaryColorDarkText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				var lightColor = document.getElementById("installerSecondaryColorLight").value || '#8040BF';
-				if (value === '') {
-					// Reset color picker to light mode fallback when cleared
-					document.getElementById("installerSecondaryColorDark").value = lightColor;
-					updatePreview();
-				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerSecondaryColorDark").value = value;
 					updatePreview();
 				}
 			});

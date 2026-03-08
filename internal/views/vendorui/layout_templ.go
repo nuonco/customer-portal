@@ -36,15 +36,13 @@ type LayoutProps struct {
 	EntityActions []partials.EntityAction
 
 	// Theme colors (computed from theme settings)
-	PrimaryColor       string
-	PrimaryColorDark   string
-	SecondaryColor     string
-	SecondaryColorDark string
-	HeadingFont        string
-	BodyFont           string
-	HeadingFontBase64  string
-	BodyFontBase64     string
-	LogoBase64         string
+	PrimaryColor      string
+	PrimaryColorDark  string
+	HeadingFont       string
+	BodyFont          string
+	HeadingFontBase64 string
+	BodyFontBase64    string
+	LogoBase64        string
 
 	// Portal URL components (for org dropdown link)
 	PortalScheme     string // e.g., "https://"
@@ -95,7 +93,7 @@ func Layout(props LayoutProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 68, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 66, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -108,7 +106,7 @@ func Layout(props LayoutProps) templ.Component {
 		var templ_7745c5c3_Var3 templ.SafeURL
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 71, Col: 29}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 69, Col: 29}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -142,7 +140,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.PrimaryColor != "" || props.SecondaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" || props.HeadingFontBase64 != "" || props.BodyFontBase64 != "" {
+		if props.PrimaryColor != "" || props.HeadingFont != "" || props.BodyFont != "" || props.HeadingFontBase64 != "" || props.BodyFontBase64 != "" {
 			templ_7745c5c3_Err = themeOverrides(props).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -210,7 +208,7 @@ func Layout(props LayoutProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 133, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 131, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -228,7 +226,7 @@ func Layout(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 136, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 134, Col: 97}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -379,10 +377,6 @@ func buildVendorThemeCSS(props LayoutProps) string {
 		css += "--theme-primary: " + props.PrimaryColor + ";"
 		css += "--theme-primary-hover: " + props.PrimaryColorDark + ";"
 	}
-	if props.SecondaryColor != "" {
-		css += "--theme-secondary: " + props.SecondaryColor + ";"
-		css += "--theme-secondary-hover: " + props.SecondaryColorDark + ";"
-	}
 	if props.HeadingFontBase64 != "" {
 		css += "--font-heading: 'CustomHeading', 'Inter', ui-sans-serif, system-ui, sans-serif;"
 	} else if props.HeadingFont != "" {
@@ -485,7 +479,7 @@ func createOrgModal(basePath string) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 429, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 423, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

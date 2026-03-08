@@ -482,7 +482,6 @@ Every button element in the customer UI templates carries two semantic CSS class
 | Class                            | Applied to                                                                    |
 | -------------------------------- | ----------------------------------------------------------------------------- |
 | `button button-primary`          | Primary call-to-action buttons (`.btn-theme-primary`)                         |
-| `button button-secondary`        | Secondary action buttons (`.btn-theme-secondary`)                             |
 | `button button-outline`          | Outline/cancel buttons (`.btn-theme-outline`)                                 |
 | `button button-neutral`          | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
 | `button button-danger`           | Destructive actions — Forget, logout, `.dropdown-item-danger`                 |

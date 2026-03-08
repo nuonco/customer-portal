@@ -300,7 +300,7 @@ func cancelButton(props WorkflowCardProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" class=\"button button-neutral btn-theme-secondary\"><span class=\"htmx-indicator\"><i class=\"ph-bold ph-circle-notch animate-spin text-base inline mr-1\"></i></span> Cancel</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" class=\"button button-neutral btn-theme-primary\"><span class=\"htmx-indicator\"><i class=\"ph-bold ph-circle-notch animate-spin text-base inline mr-1\"></i></span> Cancel</button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

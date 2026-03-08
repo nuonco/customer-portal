@@ -53,7 +53,7 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .stratus-sidebar {
-  @apply w-[17.5rem] border-r flex flex-col;
+  @apply w-[17.5rem] border-r flex flex-col flex-shrink-0;
   @apply transition-[width] duration-200 ease-in-out;
   /* Light mode - gradient background */
   background: linear-gradient(172deg, #FFF 0%, #FAFAFA 99.36%), #FFF;

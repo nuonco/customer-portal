@@ -290,10 +290,9 @@ func NewTestOrgMember(opts ...OrgMemberOptions) *models.OrgMember {
 
 // ThemeOptions allows customization of test theme creation.
 type ThemeOptions struct {
-	ID             string
-	OrgID          string
-	PrimaryColor   string
-	SecondaryColor string
+	ID           string
+	OrgID        string
+	PrimaryColor string
 }
 
 // NewTestTheme creates a test app theme with sensible defaults.
@@ -316,9 +315,6 @@ func NewTestTheme(opts ...ThemeOptions) *models.AppTheme {
 		}
 		if opt.PrimaryColor != "" {
 			theme.PrimaryColor = opt.PrimaryColor
-		}
-		if opt.SecondaryColor != "" {
-			theme.SecondaryColor = opt.SecondaryColor
 		}
 	}
 

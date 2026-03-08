@@ -116,10 +116,9 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 
 		// Create default theme for this org
 		theme := models.AppTheme{
-			OrgID:          org.ID,
-			PrimaryColor:   models.DefaultPrimaryColor,
-			SecondaryColor: models.DefaultPrimaryColor,
-			BorderRadius:   models.DefaultBorderRadius,
+			OrgID:        org.ID,
+			PrimaryColor: models.DefaultPrimaryColor,
+			BorderRadius: models.DefaultBorderRadius,
 		}
 		if err := tx.Create(&theme).Error; err != nil {
 			return fmt.Errorf("failed to create theme: %w", err)

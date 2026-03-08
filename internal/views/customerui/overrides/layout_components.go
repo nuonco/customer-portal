@@ -63,7 +63,7 @@ const confirmModalHTML = `<div id="confirm-modal" class="fixed inset-0 bg-black/
 <p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
 <div class="flex justify-end space-x-3">
 <button id="confirm-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">Cancel</button>
-<button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">Confirm</button>
+<button id="confirm-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded-lg">Confirm</button>
 </div>
 </div>
 </div>
@@ -98,7 +98,7 @@ const promptModalHTML = `<div id="prompt-modal" class="fixed inset-0 bg-black/50
 <p id="prompt-error" class="text-red-600 dark:text-red-400 text-sm mb-4 hidden"></p>
 <div class="flex justify-end space-x-3">
 <button id="prompt-cancel" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 rounded-lg">Cancel</button>
-<button id="prompt-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-secondary hover:bg-theme-secondary-hover rounded-lg">Confirm</button>
+<button id="prompt-ok" class="px-4 py-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded-lg">Confirm</button>
 </div>
 </div>
 </div>
@@ -312,14 +312,6 @@ func buildThemeCSS(theme *ThemeData) string {
 		css.WriteString(";")
 		css.WriteString("--theme-primary-hover: ")
 		css.WriteString(theme.PrimaryColorDark)
-		css.WriteString(";")
-	}
-	if theme.SecondaryColor != "" {
-		css.WriteString("--theme-secondary: ")
-		css.WriteString(theme.SecondaryColor)
-		css.WriteString(";")
-		css.WriteString("--theme-secondary-hover: ")
-		css.WriteString(theme.SecondaryColorDark)
 		css.WriteString(";")
 	}
 	if theme.WhiteColor != "" {

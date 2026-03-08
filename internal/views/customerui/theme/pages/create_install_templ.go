@@ -280,7 +280,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"button button-secondary w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme\" style=\"border-color: var(--theme-primary); color: var(--theme-primary)\">Log in</a>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" class=\"button button-primary w-full inline-flex items-center justify-center text-sm h-9 px-3 py-1 leading-[21px] font-strong tracking-tight border theme-card-bg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-500 transition-colors rounded-theme\" style=\"border-color: var(--theme-primary); color: var(--theme-primary)\">Log in</a>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

@@ -11,9 +11,8 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// RequireCustomerAccount middleware ensures customer users have a CustomerAccount membership.
-// If no membership is found, the user is redirected to /account/setup.
-// Vendor users pass through without checks.
+// RequireCustomerAccount middleware resolves CustomerAccount membership for any authenticated user on a subdomain.
+// If no membership is found, customers are redirected to /installs; vendors pass through for portal preview.
 // When a user has multiple memberships, the active_account_id cookie selects which one to use.
 func RequireCustomerAccount(db *gorm.DB) gin.HandlerFunc {
 	exemptPrefixes := []string{
@@ -39,7 +38,7 @@ func RequireCustomerAccount(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		user := GetCurrentUser(c)
-		if user == nil || user.Role != models.RoleCustomer {
+		if user == nil {
 			c.Next()
 			return
 		}
@@ -109,14 +108,19 @@ func RequireCustomerAccount(db *gorm.DB) gin.HandlerFunc {
 			return
 		}
 
-		// No membership and no invite found - redirect to installs (accounts are auto-created during auth)
-		if isHTMXRequest(c) {
-			c.Header("HX-Redirect", "/installs")
-			c.AbortWithStatus(200)
+		// No membership and no invite found - only redirect customers (vendors pass through for preview)
+		if user.Role == models.RoleCustomer {
+			if isHTMXRequest(c) {
+				c.Header("HX-Redirect", "/installs")
+				c.AbortWithStatus(200)
+				return
+			}
+			c.Redirect(302, "/installs")
+			c.Abort()
 			return
 		}
-		c.Redirect(302, "/installs")
-		c.Abort()
+
+		c.Next()
 	}
 }
 

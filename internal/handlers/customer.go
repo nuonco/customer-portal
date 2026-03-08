@@ -350,7 +350,6 @@ func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder
 
 func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, theme *models.AppTheme, org *models.NuonOrg, activeAccount *models.CustomerAccount, otherAccounts []models.CustomerAccount) customerui.LayoutProps {
 	primaryColor, primaryColorDark := GetPrimaryColors(theme.PrimaryColor)
-	secondaryColor, secondaryColorDark := GetPrimaryColors(theme.SecondaryColor)
 
 	orgName := ""
 	portalDomain := ""
@@ -372,36 +371,33 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 	}
 
 	return customerui.LayoutProps{
-		Title:                  title,
-		User:                   user,
-		BasePath:               h.basePath,
-		PrimaryColor:           primaryColor,
-		PrimaryColorDark:       primaryColorDark,
-		SecondaryColor:         secondaryColor,
-		SecondaryColorDark:     secondaryColorDark,
-		PrimaryColorDarkMode:   theme.PrimaryColorDark,
-		SecondaryColorDarkMode: theme.SecondaryColorDark,
-		WhiteColor:             theme.WhiteColor,
-		BlackColor:             theme.BlackColor,
-		WhiteColorDark:         theme.WhiteColorDark,
-		BlackColorLight:        theme.BlackColorLight,
-		HeadingFont:            theme.HeadingFont,
-		BodyFont:               theme.BodyFont,
-		HeadingFontBase64:      theme.HeadingFontBase64,
-		BodyFontBase64:         theme.BodyFontBase64,
-		LogoBase64:             theme.LogoLightBase64,
-		LogoDarkBase64:         theme.LogoDarkBase64,
-		FaviconBase64:          theme.FaviconBase64,
-		RadiusClass:            theme.GetRadiusClass(),
-		ThemeMode:              theme.GetThemeMode(),
-		HeaderTitle:            headerTitle,
-		CSSPath:                assets.CustomerCSSPath(),
-		CustomCSSPath:          h.getCustomCSSPath(theme.OrgID),
-		OrgName:                orgName,
-		PortalDomain:           portalDomain,
-		AdminURL:               adminURL,
-		ActiveAccount:          activeAccount,
-		OtherAccounts:          otherAccounts,
+		Title:                title,
+		User:                 user,
+		BasePath:             h.basePath,
+		PrimaryColor:         primaryColor,
+		PrimaryColorDark:     primaryColorDark,
+		PrimaryColorDarkMode: theme.PrimaryColorDark,
+		WhiteColor:           theme.WhiteColor,
+		BlackColor:           theme.BlackColor,
+		WhiteColorDark:       theme.WhiteColorDark,
+		BlackColorLight:      theme.BlackColorLight,
+		HeadingFont:          theme.HeadingFont,
+		BodyFont:             theme.BodyFont,
+		HeadingFontBase64:    theme.HeadingFontBase64,
+		BodyFontBase64:       theme.BodyFontBase64,
+		LogoBase64:           theme.LogoLightBase64,
+		LogoDarkBase64:       theme.LogoDarkBase64,
+		FaviconBase64:        theme.FaviconBase64,
+		RadiusClass:          theme.GetRadiusClass(),
+		ThemeMode:            theme.GetThemeMode(),
+		HeaderTitle:          headerTitle,
+		CSSPath:              assets.CustomerCSSPath(),
+		CustomCSSPath:        h.getCustomCSSPath(theme.OrgID),
+		OrgName:              orgName,
+		PortalDomain:         portalDomain,
+		AdminURL:             adminURL,
+		ActiveAccount:        activeAccount,
+		OtherAccounts:        otherAccounts,
 	}
 }
 
