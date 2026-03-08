@@ -179,6 +179,15 @@ Customer UI uses the [Phosphor Icons](https://phosphoricons.com/) font (Bold wei
 
 We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like udpating page content, updating the browser history, and polling for updates.
 
+### CSS Asset Hashing — Hands Off `static/`
+
+The dev server and build pipeline automatically compile source CSS, generate hashed filenames, and update the manifest. **No manual steps are needed.**
+
+- **Only edit source files**: `src/customer.css` and `src/vendor.css`
+- **Never** read, edit, create, copy, rename, delete, or `git add` anything under `static/css/` or `static/manifest.json`
+- These files are build artifacts — treating them as source files will break styles and cause merge conflicts
+- `internal/assets/assets.go` computes hashes on the fly in dev mode; the build pipeline handles production
+
 ## User Experience Design
 
 There are some conventions and guidelines that we follow for UI/UX design.
@@ -200,7 +209,6 @@ There are some conventions that are specific to the admin UI.
 ### Customer
 
 - The customer UI does not use Stratus. We keep it's design simple and unbranded so it's easy for vendors to brand and customize.
-- While tailwind is still installed in the customer UI, we should avoid using the tailwind utility classes. Instead, use semantic classes, so that styles are easy for vendors to override with custom CSS.
 
 ## Architecture
 
