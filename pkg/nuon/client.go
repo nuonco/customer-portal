@@ -255,6 +255,15 @@ func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error
 	return nil
 }
 
+// ReprovisionInstall reprovisions an install
+func (c *Client) ReprovisionInstall(ctx context.Context, installID string) error {
+	if err := c.client.ReprovisionInstall(ctx, installID); err != nil {
+		return fmt.Errorf("failed to reprovision install: %w", err)
+	}
+
+	return nil
+}
+
 // GetInstallWorkflows retrieves workflow history for an install with pagination
 func (c *Client) GetInstallWorkflows(ctx context.Context, installID string, offset int, limit int) ([]*models.AppWorkflow, bool, error) {
 	return c.GetInstallWorkflowsByType(ctx, installID, offset, limit, "")
@@ -349,6 +358,33 @@ func (c *Client) ApproveAllWorkflowSteps(ctx context.Context, workflowID string)
 	_, err := c.client.UpdateWorkflow(ctx, workflowID, request)
 	if err != nil {
 		return fmt.Errorf("failed to set workflow approve-all: %w", err)
+	}
+
+	return nil
+}
+
+// RetryWorkflowStep retries a failed workflow step using the workflow-level retry endpoint.
+// The step_id is passed in the request body to indicate which step to retry from.
+func (c *Client) RetryWorkflowStep(ctx context.Context, workflowID, stepID string) error {
+	reqURL := fmt.Sprintf("%s/v1/workflows/%s/retry", c.apiURL, workflowID)
+	body := fmt.Sprintf(`{"step_id":%q,"operation":"retry-step"}`, stepID)
+	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, strings.NewReader(body))
+	if err != nil {
+		return fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to execute request: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusNoContent {
+		respBody, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(respBody))
 	}
 
 	return nil
@@ -532,59 +568,6 @@ func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, star
 	})
 
 	return entries, nil
-}
-
-// ServiceReadme represents the install readme returned by the API
-type ServiceReadme struct {
-	Readme   string   `json:"readme"`
-	Original string   `json:"original"`
-	Warnings []string `json:"warnings"`
-}
-
-// GetInstallReadme fetches the install-specific readme rendered with install data
-func (c *Client) GetInstallReadme(ctx context.Context, installID string) (*ServiceReadme, error) {
-	// Build URL for the readme endpoint
-	url := fmt.Sprintf("%s/v1/installs/%s/readme", c.apiURL, installID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create request: %w", err)
-	}
-
-	// Add authentication headers
-	req.Header.Set("Authorization", "Bearer "+c.apiToken)
-	req.Header.Set("X-Nuon-Org-ID", c.orgID)
-	req.Header.Set("Content-Type", "application/json")
-
-	// Make the request
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
-	}
-	defer resp.Body.Close()
-
-	// Read response body
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response: %w", err)
-	}
-
-	// Return nil for 404 - app may not have readme configured
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, nil
-	}
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
-	}
-
-	// Parse the response
-	var readme ServiceReadme
-	if err := json.Unmarshal(body, &readme); err != nil {
-		return nil, fmt.Errorf("failed to parse readme: %w", err)
-	}
-
-	return &readme, nil
 }
 
 // GetAppComponents retrieves all components for an app

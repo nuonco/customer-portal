@@ -445,6 +445,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `PUT /installs/:install_id` - Update install
 - `DELETE /installs/:install_id` - Deprovision install
 - `POST /installs/:install_id/forget` - Remove install from local DB
+- `POST /installs/:install_id/reprovision` - Reprovision install
 - `GET /installs/:install_id/workflows` - Workflow history
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link

@@ -30,7 +30,7 @@ func (h *Handler) AuditLogsPanel(c *gin.Context) {
 
 	// Parse time range parameters
 	now := time.Now()
-	rangeType := c.DefaultQuery("range", "past-hour")
+	rangeType := c.DefaultQuery("range", "past-week")
 	var startTime, endTime time.Time
 
 	startStr := c.Query("start")

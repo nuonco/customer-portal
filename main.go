@@ -447,11 +447,11 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/panel/history", h.WorkflowsPanel)          // Panel history tab
 			installOwnership.GET("/panel/audit", h.AuditLogsPanel)            // Panel audit tab
 			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus) // HTMX polling endpoint for active provision workflow
-			installOwnership.GET("/readme-status", h.InstallReadmeStatus)     // HTMX polling endpoint for readme display
 
-			installOwnership.PUT("/", h.UpdateInstall)        // Customer can update their install
-			installOwnership.DELETE("/", h.DeleteInstall)     // Customer can delete (deprovision) their install
-			installOwnership.POST("/forget", h.ForgetInstall) // Customer can forget (remove from DB) their install
+			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
+			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install
+			installOwnership.POST("/forget", h.ForgetInstall)           // Customer can forget (remove from DB) their install
+			installOwnership.POST("/reprovision", h.ReprovisionInstall) // Customer can reprovision their install
 
 			// Input management
 			installOwnership.GET("/inputs", h.GetInstallInputs)    // Customer can view current inputs
@@ -461,6 +461,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.POST("/workflows/:workflow_id/approve", h.ApproveWorkflowStep)
 			installOwnership.POST("/workflows/:workflow_id/approve-all", h.ApproveAllWorkflowSteps)
 			installOwnership.POST("/workflows/:workflow_id/cancel", h.CancelWorkflow)
+			installOwnership.POST("/workflows/:workflow_id/step/:step_id/retry", h.RetryWorkflowStep)
 		}
 	}
 }

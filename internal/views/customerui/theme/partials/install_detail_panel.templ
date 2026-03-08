@@ -29,6 +29,8 @@ type WorkflowDataPanel struct {
 	CurrentStepType          string // Type of current step: "pending", "in-progress", "approval-awaiting", or "initializing"
 	CurrentStepNumber        int    // 1-indexed position of current step (1, 2, 3...)
 	TotalSteps               int    // Total number of steps in workflow
+	FailedStepID             string // ID of the failed step (for retry)
+	FailedStepName           string // Name of the failed step (for display)
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -74,16 +76,8 @@ type InstallDetailPanelProps struct {
 	AppConfigUpdatedAt       string
 	InstallConfigVersion     int64
 	InstallConfigUpdatedAt   string
-	ActiveProvisionWorkflow  *WorkflowDataPanel
-	InstallReadme            *ReadmeDataPanel
-	CloudFormationLink       string
-}
-
-// ReadmeDataPanel represents install readme data for the panel
-type ReadmeDataPanel struct {
-	Readme   string
-	Original string
-	Warnings []string
+	ProvisionWorkflow        *WorkflowDataPanel
+	CloudFormationLink string
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -113,6 +107,13 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 						class="dropdown-item"
 					>
 						Edit Inputs
+					</button>
+					<button
+						type="button"
+						onclick="confirmReprovision(); toggleActionsDropdown();"
+						class="dropdown-item"
+					>
+						Reprovision
 					</button>
 					<button
 						type="button"
@@ -148,17 +149,13 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		}
 		<!-- Active Provision Banner (polls and shows when workflow is active) -->
 		if !props.APIDeletedError {
-			@ActiveProvisionBanner(props.ActiveProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
+			@ProvisionBanner(props.ProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor, false)
 		}
 		<!-- App Config + Platform (side by side) -->
 		<div class="grid grid-cols-2 gap-4">
 			@appConfigCard(props)
 			@platformCard(platform, props.Install.Region)
 		</div>
-		<!-- App Readme Card (polls and shows when NO active workflow) -->
-		if !props.APIDeletedError {
-			@AppReadmeCard(props.InstallReadme, props.Install.ID, props.BasePath)
-		}
 	</div>
 	<!-- Edit Inputs Modal -->
 	@editInputsModalPanel()
@@ -209,12 +206,16 @@ templ platformCard(platform string, region string) {
 	</div>
 }
 
-// ActiveProvisionBanner renders a banner for an active provision workflow at the top of the overview
-templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
+// ProvisionBanner renders a banner for the most recent provision workflow at the top of the overview
+templ ProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string, apiError bool) {
 	<div
 		id="active-provision-banner"
 		hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
-		hx-trigger="every 5s"
+		if workflow != nil && (workflow.Status == "completed" || workflow.Status == "error" || workflow.Status == "cancelled") {
+			hx-trigger="every 30s"
+		} else {
+			hx-trigger="every 5s"
+		}
 		hx-swap="outerHTML"
 		if workflow != nil {
 			data-workflow-status={ workflow.Status }
@@ -242,38 +243,34 @@ templ ActiveProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink stri
 						</div>
 					</div>
 				}
-			</div>
-		}
-	</div>
-}
-
-// AppReadmeCard renders the app readme when no active provision workflow
-// Includes HTMX polling to automatically show/hide as workflows start/complete
-templ AppReadmeCard(readme *ReadmeDataPanel, installID string, basePath string) {
-	<div
-		id="readme-card-container"
-		hx-get={ basePath + "/installs/" + installID + "/readme-status" }
-		hx-trigger="every 5s"
-		hx-swap="outerHTML"
-	>
-		if readme != nil && readme.Readme != "" {
-			<div class="card-base">
-				<div class="flex items-center justify-between mb-4">
-					<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">Getting Started</h3>
-				</div>
-				<div class="prose prose-sm dark:prose-invert max-w-none text-cool-grey-600 dark:text-cool-grey-400 overflow-x-auto">
-					@templ.Raw(readme.Readme)
-				</div>
-				if len(readme.Warnings) > 0 {
-					<div class="mt-4 space-y-2">
-						for _, warning := range readme.Warnings {
-							<div class="flex items-start gap-2 alert-warning">
-								<i class="ph-bold ph-warning text-xl text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5"></i>
-								<p class="text-sm text-amber-800 dark:text-amber-300">{ warning }</p>
+				if workflow.Status == "error" && workflow.FailedStepID != "" {
+					<div class="callout p-4" style="border-radius: var(--theme-radius); background-color: color-mix(in srgb, #ef4444 10%, transparent); border: 1px solid color-mix(in srgb, #ef4444 30%, transparent)">
+						<div class="flex items-center justify-between">
+							<div>
+								<h3 class="text-sm font-medium text-red-700 dark:text-red-400">Failed Step</h3>
+								<p class="text-sm mt-1 text-red-600 dark:text-red-300">{ workflow.FailedStepName }</p>
 							</div>
-						}
+							<button
+								type="button"
+								class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
+								style="background-color: #ef4444; border: 1px solid #dc2626"
+								data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry" }
+								onclick="retryFailedStep(this)"
+							>
+								Retry Step
+								<i class="ph-bold ph-arrow-clockwise text-base"></i>
+							</button>
+						</div>
 					</div>
 				}
+			</div>
+		} else if apiError {
+			<div class="alert-warning flex items-center gap-3" style="border-radius: var(--theme-radius)">
+				<i class="ph-bold ph-warning text-xl"></i>
+				<div>
+					<p class="text-sm font-medium">Unable to fetch workflow status</p>
+					<p class="text-xs opacity-75 mt-0.5">Retrying automatically...</p>
+				</div>
 			</div>
 		}
 	</div>
@@ -356,10 +353,30 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 			<div class="flex items-center justify-between mb-2">
 				<div class="flex-1">
 					<h4 class="font-medium text-cool-grey-900 dark:text-white">{ workflow.Name }</h4>
-					<!-- Show spinner if workflow is active OR if step name exists -->
-					if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
+					<!-- Status subtitle with appropriate icon -->
+					if workflow.Status == "completed" || workflow.Status == "success" {
+						<div class="flex items-center gap-2 mt-1 text-sm text-green-600 dark:text-green-400">
+							<i class="ph-bold ph-check-circle text-base"></i>
+							<span>Completed</span>
+						</div>
+					} else if workflow.Status == "error" {
+						<div class="flex items-center gap-2 mt-1 text-sm text-red-600 dark:text-red-400">
+							<i class="ph-bold ph-x-circle text-base"></i>
+							<span>
+								if workflow.CurrentStepName != "" {
+									Failed at: { workflow.CurrentStepName }
+								} else {
+									Failed
+								}
+							</span>
+						</div>
+					} else if workflow.Status == "cancelled" {
+						<div class="flex items-center gap-2 mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
+							<i class="ph-bold ph-prohibit text-base"></i>
+							<span>Cancelled</span>
+						</div>
+					} else if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
 						<div class="flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400">
-							<!-- Animated loading spinner -->
 							<i class="ph-bold ph-circle-notch animate-spin text-base"></i>
 							<span>
 								if workflow.TotalSteps > 0 {
@@ -377,7 +394,6 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 										{ workflow.CurrentStepName }
 									}
 								} else {
-									<!-- Fallback message if no step data available -->
 									Workflow starting...
 								}
 							</span>
@@ -388,8 +404,20 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 					{ workflow.Status }
 				</span>
 			</div>
-			<!-- Progress bar (only show when we have step data) -->
-			if workflow.TotalSteps > 0 && workflow.CurrentStepNumber > 0 {
+			<!-- Progress bar -->
+			if workflow.Status == "completed" || workflow.Status == "success" {
+				<div class="mb-2">
+					<div class="w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-green-400 dark:border-green-600">
+						<div class="h-full bg-green-500 dark:bg-green-400 rounded-sm" style="width: 100%;"></div>
+					</div>
+				</div>
+			} else if workflow.Status == "error" && workflow.TotalSteps > 0 && workflow.CurrentStepNumber > 0 {
+				@templ.Raw(fmt.Sprintf(`<div class="mb-2">
+					<div class="w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-red-400 dark:border-red-600">
+						<div class="h-full bg-red-500 dark:bg-red-400 rounded-sm" style="width: %d%%;"></div>
+					</div>
+				</div>`, (workflow.CurrentStepNumber * 100) / workflow.TotalSteps))
+			} else if workflow.TotalSteps > 0 && workflow.CurrentStepNumber > 0 {
 				@templ.Raw(fmt.Sprintf(`<div class="mb-2">
 					<div class="w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-cool-grey-400 dark:border-cool-grey-600">
 						<div class="h-full bg-blue-600 dark:bg-blue-500 rounded-sm transition-all duration-300 ease-in-out" style="width: %d%%;"></div>
@@ -477,6 +505,36 @@ templ installDetailPanelScripts() {
 				}
 			});
 
+			// Reprovision install with custom modal confirmation
+			window.confirmReprovision = async function() {
+				var confirmed = await showConfirmModal({
+					title: 'Reprovision Installation?',
+					message: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',
+					variant: 'warning',
+					confirmText: 'Reprovision',
+					cancelText: 'Cancel'
+				});
+
+				if (!confirmed) {
+					return;
+				}
+
+				try {
+					var response = await fetch(basePath + '/installs/' + installID + '/reprovision', {
+						method: 'POST'
+					});
+
+					if (response.ok) {
+						showToast('Reprovision initiated. Refreshing...', 'success');
+						setTimeout(function() { window.location.reload(); }, 1500);
+					} else {
+						showToast('Failed to reprovision installation', 'error');
+					}
+				} catch (error) {
+					showToast('Network error. Please try again.', 'error');
+				}
+			};
+
 			// Deprovision install with custom modal confirmation
 			window.confirmDeprovision = async function() {
 				var confirmed = await showConfirmModal({
@@ -504,6 +562,27 @@ templ installDetailPanelScripts() {
 					}
 				} catch (error) {
 					showToast('Network error. Please try again.', 'error');
+				}
+			};
+
+			// Retry failed workflow step
+			window.retryFailedStep = async function(btn) {
+				var endpoint = btn.getAttribute('data-endpoint');
+				btn.disabled = true;
+				btn.textContent = 'Retrying...';
+				try {
+					var response = await fetch(endpoint, { method: 'POST' });
+					if (response.ok) {
+						showToast('Retry initiated', 'success');
+					} else {
+						showToast('Failed to retry step', 'error');
+						btn.disabled = false;
+						btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
+					}
+				} catch (error) {
+					showToast('Network error. Please try again.', 'error');
+					btn.disabled = false;
+					btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
 				}
 			};
 

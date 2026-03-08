@@ -368,6 +368,65 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 	})
 }
 
+// RetryWorkflowStep handles retrying a failed workflow step
+func (h *Handler) RetryWorkflowStep(c *gin.Context) {
+	user := middleware.GetCurrentUser(c)
+
+	// Get install from middleware
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Install not found"})
+		return
+	}
+
+	install := installInterface.(*localModels.Install)
+	workflowID := c.Param("workflow_id")
+	stepID := c.Param("step_id")
+
+	// Load install with org info
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
+		return
+	}
+
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization not found"})
+		return
+	}
+
+	// Initialize Nuon client
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		return
+	}
+
+	// Retry the failed step
+	if err := nuonClient.RetryWorkflowStep(c.Request.Context(), workflowID, stepID); err != nil {
+		h.logger.Error("failed to retry workflow step", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to retry workflow step"})
+		return
+	}
+
+	h.logger.Info("workflow step retry initiated",
+		zap.String("email", user.Email),
+		zap.String("user_id", user.ID),
+		zap.String("step_id", stepID),
+		zap.String("workflow_id", workflowID),
+	)
+
+	// For HTMX requests, return the updated workflow card partial
+	if isHTMXRequest(c) {
+		h.renderWorkflowCardPartial(c, install, workflowID, nuonClient)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "Workflow step retry initiated successfully",
+	})
+}
+
 // formatStepName converts "await_install_stack" to "Await install stack"
 func formatStepName(stepName string) string {
 	if stepName == "" {
@@ -440,7 +499,7 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 			} else {
 				approveAllDisabledReason = "No approval steps in this workflow"
 			}
-		case "completed":
+		case "completed", "success":
 			approveDisabledReason = "Workflow has already completed"
 			approveAllDisabledReason = "Workflow has already completed"
 			cancelDisabledReason = "Workflow has already completed"
@@ -544,6 +603,19 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		}
 	}
 
+	// Fourth pass: Find the failed step for retry functionality
+	var failedStepID string
+	var failedStepName string
+	if status == "error" && workflow.Steps != nil {
+		for _, step := range workflow.Steps {
+			if step.Status != nil && string(step.Status.Status) == "error" {
+				failedStepID = step.ID
+				failedStepName = formatStepName(step.Name)
+				break
+			}
+		}
+	}
+
 	// Third pass: Placeholder step name while waiting for workflow steps to be created
 	// This handles the case where workflow is active but Steps array is empty/nil
 	if currentStepName == "" && (status == "pending" || status == "in-progress") {
@@ -573,6 +645,8 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		"current_step_type":           currentStepType,
 		"current_step_number":         currentStepNumber,
 		"total_steps":                 totalSteps,
+		"failed_step_id":              failedStepID,
+		"failed_step_name":            failedStepName,
 	}
 }
 
@@ -716,6 +790,8 @@ func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
 		CurrentStepType:          getString(wf, "current_step_type"),
 		CurrentStepNumber:        getInt(wf, "current_step_number"),
 		TotalSteps:               getInt(wf, "total_steps"),
+		FailedStepID:             getString(wf, "failed_step_id"),
+		FailedStepName:           getString(wf, "failed_step_name"),
 	}
 
 	// Handle time fields
