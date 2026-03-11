@@ -616,36 +616,160 @@ html.sidebar-collapsed .stratus-sidebar .stratus-org-dropdown {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * TOOLTIP COMPONENT - Stratus Design System
- * For keyboard shortcut hints
+ * TOOLTIP COMPONENT - Stratus ContextTooltip
+ * Simple text tooltips and rich tooltip panels with item lists
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .stratus-tooltip-container {
   @apply relative;
 }
 
+/* Base tooltip (simple text) */
 .stratus-tooltip {
-  @apply absolute z-50 flex items-center gap-1 px-2 py-1.5 text-xs whitespace-nowrap;
-  @apply bg-cool-grey-900 text-white rounded-md shadow-lg;
-  @apply opacity-0 pointer-events-none transition-opacity duration-150;
-  @apply dark:bg-dark-grey-200;
+  @apply absolute z-50 px-3 py-2 text-xs leading-relaxed;
+  @apply bg-cool-grey-100 text-cool-grey-900 rounded-lg shadow-lg;
+  @apply opacity-0 pointer-events-none transition-all duration-150;
+  @apply dark:bg-dark-grey-600 dark:text-white;
+  @apply border border-cool-grey-200 dark:border-dark-grey-500;
+  width: max-content;
+  max-width: 20rem;
+  white-space: normal;
 }
 
+/* Rich tooltip panel */
+.stratus-tooltip-rich {
+  @apply p-0 rounded-lg overflow-hidden;
+  @apply border border-cool-grey-200 dark:border-dark-grey-500;
+  width: 13rem;
+  max-width: none;
+  white-space: normal;
+}
+
+/* Rich tooltip header */
+.stratus-tooltip-header {
+  @apply px-3 py-2 text-xs font-medium uppercase tracking-wide;
+  @apply border-b border-cool-grey-200 dark:border-dark-grey-500;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+}
+
+/* Rich tooltip scrollable item list */
+.stratus-tooltip-items {
+  @apply divide-y divide-cool-grey-200 dark:divide-dark-grey-500;
+  max-height: 10rem;
+  overflow-y: auto;
+}
+
+/* Item row */
+.stratus-tooltip-item {
+  @apply grid gap-2 px-3 py-2 w-full text-left text-xs;
+  @apply text-cool-grey-900 dark:text-white;
+  grid-template-columns: auto 1fr;
+}
+
+/* Clickable item (link) */
+.stratus-tooltip-item-link {
+  @apply no-underline hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700;
+  @apply transition-colors duration-100 cursor-pointer;
+  grid-template-columns: auto 1fr auto;
+}
+
+/* Item icon */
+.stratus-tooltip-item-icon {
+  @apply self-center text-sm text-cool-grey-500 dark:text-cool-grey-400;
+}
+
+/* Item text block */
+.stratus-tooltip-item-text {
+  @apply flex flex-col min-w-0;
+}
+
+.stratus-tooltip-item-title {
+  @apply font-medium truncate;
+}
+
+.stratus-tooltip-item-subtitle {
+  @apply text-cool-grey-500 dark:text-cool-grey-400 truncate;
+}
+
+/* Caret for linked items */
+.stratus-tooltip-item-caret {
+  @apply self-center text-xs text-cool-grey-400 dark:text-cool-grey-500 ml-auto;
+}
+
+/* Show on hover */
 .stratus-tooltip-container:hover .stratus-tooltip {
-  @apply opacity-100;
+  @apply opacity-100 pointer-events-auto;
 }
 
-/* Tooltip positions */
+/* Tooltip arrow (simple tooltips only) */
+.stratus-tooltip:not(.stratus-tooltip-rich)::after {
+  content: "";
+  position: absolute;
+  border: 0.35rem solid transparent;
+}
+
+/* Position: top */
+.stratus-tooltip-top {
+  @apply bottom-full left-1/2 -translate-x-1/2 mb-2;
+  --tw-translate-y: 0.25rem;
+}
+.stratus-tooltip-container:hover .stratus-tooltip-top {
+  --tw-translate-y: 0;
+}
+.stratus-tooltip-top:not(.stratus-tooltip-rich)::after {
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-top-color: var(--color-cool-grey-100);
+}
+:is(.dark .stratus-tooltip-top:not(.stratus-tooltip-rich))::after {
+  border-top-color: var(--color-dark-grey-600);
+}
+
+/* Position: bottom */
 .stratus-tooltip-bottom {
   @apply top-full left-1/2 -translate-x-1/2 mt-2;
+  --tw-translate-y: -0.25rem;
+}
+.stratus-tooltip-container:hover .stratus-tooltip-bottom {
+  --tw-translate-y: 0;
+}
+.stratus-tooltip-bottom:not(.stratus-tooltip-rich)::after {
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-bottom-color: var(--color-cool-grey-100);
+}
+:is(.dark .stratus-tooltip-bottom:not(.stratus-tooltip-rich))::after {
+  border-bottom-color: var(--color-dark-grey-600);
 }
 
+/* Position: left */
 .stratus-tooltip-left {
   @apply right-full top-1/2 -translate-y-1/2 mr-2;
 }
+.stratus-tooltip-left:not(.stratus-tooltip-rich)::after {
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left-color: var(--color-cool-grey-100);
+}
+:is(.dark .stratus-tooltip-left:not(.stratus-tooltip-rich))::after {
+  border-left-color: var(--color-dark-grey-600);
+}
 
+/* Position: right */
 .stratus-tooltip-right {
   @apply left-full top-1/2 -translate-y-1/2 ml-2;
+}
+.stratus-tooltip-right:not(.stratus-tooltip-rich)::after {
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border-right-color: var(--color-cool-grey-100);
+}
+:is(.dark .stratus-tooltip-right:not(.stratus-tooltip-rich))::after {
+  border-right-color: var(--color-dark-grey-600);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

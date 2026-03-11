@@ -157,15 +157,31 @@ templ installTableRow(install customerui.InstallWithApprovalStatus, basePath str
 		class="install-row"
 		data-install-id={ install.ID }
 		data-install-name={ install.Name }
-		hx-get={ panelURL }
-		hx-target="#panel-content-overview"
-		hx-swap="innerHTML show:no-scroll"
-		hx-push-url={ detailURL }
-		hx-on::before-request={ templ.ComponentScript{Call: beforeRequestCall} }
-		hx-on::after-settle="finalizePanelLoad()"
+		if !install.APIDeleted {
+			hx-get={ panelURL }
+			hx-target="#panel-content-overview"
+			hx-swap="innerHTML show:no-scroll"
+			hx-push-url={ detailURL }
+			hx-on::before-request={ templ.ComponentScript{Call: beforeRequestCall} }
+			hx-on::after-settle="finalizePanelLoad()"
+		}
 	>
 		<td>
 			<span class="install-name-link">{ install.Name }</span>
+			if install.APIDeleted {
+				<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300">Removed</span>
+				<form
+					class="inline ml-2"
+					hx-post={ basePath + "/installs/" + install.ID + "/forget" }
+					hx-target="closest tr"
+					hx-swap="outerHTML"
+					hx-confirm="Remove this install from your list?"
+				>
+					<button type="submit" class="button button-danger inline-flex items-center px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors">
+						Forget
+					</button>
+				</form>
+			}
 		</td>
 		<td>{ install.AppName }</td>
 		<td>

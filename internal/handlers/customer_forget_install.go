@@ -20,7 +20,17 @@ func (h *Handler) ForgetInstall(c *gin.Context) {
 	// Simply delete the install from the local database
 	// This does NOT call any Nuon APIs - it just removes the record locally
 	if err := h.db.Delete(install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to forget install"})
+		if c.GetHeader("HX-Request") != "" {
+			c.String(http.StatusInternalServerError, "Failed to forget install")
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to forget install"})
+		}
+		return
+	}
+
+	if c.GetHeader("HX-Request") != "" {
+		// Return empty string so HTMX removes the row
+		c.String(http.StatusOK, "")
 		return
 	}
 

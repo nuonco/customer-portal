@@ -31,6 +31,7 @@ type AdminInstall struct {
 	Status        string
 	InstallLinkID string
 	CreatedAt     string
+	APIDeleted    bool
 }
 
 // CustomerInstallsPageProps for the admin customer installs list page.
@@ -96,7 +97,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.FilterEmail)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 64, Col: 32}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 65, Col: 32}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -109,7 +110,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 66, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 67, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -122,7 +123,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.FilterApp)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 78, Col: 30}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 79, Col: 30}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
@@ -135,7 +136,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 80, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 81, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
@@ -148,7 +149,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs", props.BasePath, props.Org.ID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 93, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 94, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
@@ -292,7 +293,7 @@ func adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID strin
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 173, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 174, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -305,116 +306,126 @@ func adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID strin
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 175, Col: 85}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 177, Col: 18}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div><div class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, " ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if install.APIDeleted {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200\">Removed from Nuon</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><div class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 176, Col: 89}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 182, Col: 89}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></td><td class=\"px-4 py-3 whitespace-nowrap\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></td><td class=\"px-4 py-3 whitespace-nowrap\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 templ.SafeURL
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/customers/%s", basePath, orgID, install.CustomerID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 180, Col: 101}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 186, Col: 101}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" class=\"text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline block\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" class=\"text-sm font-medium text-primary-600 dark:text-primary-400 hover:underline block\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(install.CustomerEmail)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 183, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 189, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</a> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</a> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if install.CustomerName != "" && install.CustomerName != install.CustomerEmail {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(install.CustomerName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 186, Col: 90}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 192, Col: 90}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</td><td class=\"px-4 py-3 whitespace-nowrap\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td><td class=\"px-4 py-3 whitespace-nowrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if install.AppID != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 templ.SafeURL
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, install.AppID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 192, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 198, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" class=\"text-sm text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:underline\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" class=\"text-sm text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300 hover:underline\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 195, Col: 22}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 201, Col: 22}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</a>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</a>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<span class=\"text-sm text-cool-grey-400 dark:text-cool-grey-600\">unknown</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span class=\"text-sm text-cool-grey-400 dark:text-cool-grey-600\">unknown</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</td><td class=\"px-4 py-3 whitespace-nowrap\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td><td class=\"px-4 py-3 whitespace-nowrap\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -422,72 +433,72 @@ func adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID strin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</td><td class=\"px-4 py-3 whitespace-nowrap\"><div class=\"text-sm text-cool-grey-900 dark:text-white\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</td><td class=\"px-4 py-3 whitespace-nowrap\"><div class=\"text-sm text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(install.CreatedAt)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 205, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 211, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><button type=\"button\" class=\"button button-danger inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors\" data-install-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><button type=\"button\" class=\"button button-danger inline-flex items-center px-2 py-1 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors\" data-install-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var19 string
 		templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 211, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 217, Col: 32}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" data-install-name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" data-install-name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var20 string
 		templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 212, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 218, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\" data-forget-url=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\" data-forget-url=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var21 string
 		templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/%s/forget", basePath, orgID, install.ID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 213, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 219, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "\" onclick=\"adminForgetInstall(this.dataset.installId, this.dataset.installName, this.dataset.forgetUrl)\" title=\"Forget install (removes from portal only)\">Forget</button></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\" onclick=\"adminForgetInstall(this.dataset.installId, this.dataset.installName, this.dataset.forgetUrl)\" title=\"Forget install (removes from portal only)\">Forget</button></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var22 templ.SafeURL
 		templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("/installs/%s", install.ID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 222, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 228, Col: 65}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300\" title=\"View in Customer Portal\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300\" title=\"View in Customer Portal\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -495,20 +506,20 @@ func adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID strin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</a></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><a href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</a></td><td class=\"px-3 py-3 whitespace-nowrap text-center\"><a href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var23 templ.SafeURL
 		templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("https://app.nuon.co/%s/installs/%s", nuonOrgID, install.NuonInstallID)))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 233, Col: 109}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 239, Col: 109}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300\" title=\"View in Nuon Dashboard\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" target=\"_blank\" rel=\"noopener noreferrer\" class=\"inline-flex items-center text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300\" title=\"View in Nuon Dashboard\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -516,7 +527,7 @@ func adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID strin
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</a></td></tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</a></td></tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -545,7 +556,7 @@ func emptyInstallsState() templ.Component {
 			templ_7745c5c3_Var24 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\"><svg class=\"h-8 w-8 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\"></path></svg></div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Installs Yet</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto mb-6\">No installs are tracked in the portal yet. Customers create installs via install links, or you can import an existing install below.</p>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\"><svg class=\"h-8 w-8 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4\"></path></svg></div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Installs Yet</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto mb-6\">No installs are tracked in the portal yet. Customers create installs via install links, or you can import an existing install below.</p>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -557,7 +568,7 @@ func emptyInstallsState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -587,33 +598,33 @@ func importInstallModal(basePath, orgID string) templ.Component {
 			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div id=\"import-install-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-cool-grey-200 dark:border-dark-grey-600\"><!-- Step 1: Search --><div id=\"import-step-1\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an install in the Nuon API to import it into the customer portal.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"import-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div id=\"import-install-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-cool-grey-200 dark:border-dark-grey-600\"><!-- Step 1: Search --><div id=\"import-step-1\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an install in the Nuon API to import it into the customer portal.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"import-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var26 string
 		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/search-nuon", basePath, orgID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 290, Col: 78}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 296, Col: 78}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#import-search-results\" hx-include=\"this\" name=\"q\"><div id=\"import-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div></div><!-- Step 2: Assign to customer --><div id=\"import-step-2\" class=\"hidden\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"import-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"import-install-form\" hx-post=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#import-search-results\" hx-include=\"this\" name=\"q\"><div id=\"import-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div></div><!-- Step 2: Assign to customer --><div id=\"import-step-2\" class=\"hidden\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"import-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"import-install-form\" hx-post=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var27 string
 		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/import", basePath, orgID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 316, Col: 74}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 322, Col: 74}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" hx-target=\"#import-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"nuon_install_id\" id=\"import-nuon-install-id\"> <input type=\"hidden\" name=\"app_id\" id=\"import-app-id\"><div id=\"import-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Assign to customer</label> <input type=\"email\" name=\"customer_email\" placeholder=\"customer@example.com\" required class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Enter the customer&#39;s email. A new account will be created if this email isn&#39;t already in the portal.</p><div class=\"flex items-center justify-between mt-6\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" hx-target=\"#import-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"nuon_install_id\" id=\"import-nuon-install-id\"> <input type=\"hidden\" name=\"app_id\" id=\"import-app-id\"><div id=\"import-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Assign to customer</label> <input type=\"email\" name=\"customer_email\" placeholder=\"customer@example.com\" required class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Enter the customer&#39;s email. A new account will be created if this email isn&#39;t already in the portal.</p><div class=\"flex items-center justify-between mt-6\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -633,7 +644,7 @@ func importInstallModal(basePath, orgID string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></form></div></div></div></div><script>\n\t\tasync function adminForgetInstall(installID, installName, forgetURL) {\n\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Important Warning',\n\t\t\t\tmessage: 'Only use \"Forget\" after the install has been deprovisioned and the CloudFormation stack removed.\\n\\n\"Forget\" only removes this install from the portal — it does NOT deprovision any infrastructure.\\n\\nAre you sure you want to forget this install?',\n\t\t\t\tvariant: 'warning',\n\t\t\t\tconfirmText: 'Forget',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (!confirmed) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tvar confirmName = await showPromptModal({\n\t\t\t\ttitle: 'Confirm Action',\n\t\t\t\tmessage: 'To confirm, please type the install name: ' + installName,\n\t\t\t\tplaceholder: 'Enter install name',\n\t\t\t\texpectedValue: installName,\n\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\tconfirmText: 'Forget Install',\n\t\t\t\tvariant: 'danger'\n\t\t\t});\n\n\t\t\tif (confirmName === null) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tvar response = await fetch(forgetURL, {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: { 'Content-Type': 'application/json' }\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Install forgotten successfully.', 'success');\n\t\t\t\t\tvar row = document.querySelector('tr[data-install-id=\"' + installID + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1000);\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\tshowToast(data.error || 'Failed to forget install', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeImportModal() {\n\t\t\tdocument.getElementById('import-install-modal').classList.add('hidden');\n\t\t\t// Reset to step 1\n\t\t\tshowImportStep1();\n\t\t\tdocument.getElementById('import-search-input').value = '';\n\t\t\tdocument.getElementById('import-search-results').innerHTML = '';\n\t\t\tdocument.getElementById('import-form-error').innerHTML = '';\n\t\t}\n\n\t\tfunction showImportStep1() {\n\t\t\tdocument.getElementById('import-step-1').classList.remove('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectImportInstall(nuonInstallID, appID, displayText) {\n\t\t\tdocument.getElementById('import-nuon-install-id').value = nuonInstallID;\n\t\t\tdocument.getElementById('import-app-id').value = appID;\n\t\t\tdocument.getElementById('import-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('import-step-1').classList.add('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.remove('hidden');\n\t\t}\n\n\t\t// Close modal on backdrop click\n\t\tdocument.getElementById('import-install-modal').addEventListener('click', function(e) {\n\t\t\tif (e.target === this) closeImportModal();\n\t\t});\n\n\t\t// Handle HTMX redirect after successful import\n\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t// Error handling is done via hx-target=\"#import-form-error\"\n\t\t});\n\n\t\t// Listen for HX-Redirect header\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></form></div></div></div></div><script>\n\t\tasync function adminForgetInstall(installID, installName, forgetURL) {\n\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Important Warning',\n\t\t\t\tmessage: 'Only use \"Forget\" after the install has been deprovisioned and the CloudFormation stack removed.\\n\\n\"Forget\" only removes this install from the portal — it does NOT deprovision any infrastructure.\\n\\nAre you sure you want to forget this install?',\n\t\t\t\tvariant: 'warning',\n\t\t\t\tconfirmText: 'Forget',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (!confirmed) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tvar confirmName = await showPromptModal({\n\t\t\t\ttitle: 'Confirm Action',\n\t\t\t\tmessage: 'To confirm, please type the install name: ' + installName,\n\t\t\t\tplaceholder: 'Enter install name',\n\t\t\t\texpectedValue: installName,\n\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\tconfirmText: 'Forget Install',\n\t\t\t\tvariant: 'danger'\n\t\t\t});\n\n\t\t\tif (confirmName === null) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tvar response = await fetch(forgetURL, {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: { 'Content-Type': 'application/json' }\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Install forgotten successfully.', 'success');\n\t\t\t\t\tvar row = document.querySelector('tr[data-install-id=\"' + installID + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1000);\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\tshowToast(data.error || 'Failed to forget install', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeImportModal() {\n\t\t\tdocument.getElementById('import-install-modal').classList.add('hidden');\n\t\t\t// Reset to step 1\n\t\t\tshowImportStep1();\n\t\t\tdocument.getElementById('import-search-input').value = '';\n\t\t\tdocument.getElementById('import-search-results').innerHTML = '';\n\t\t\tdocument.getElementById('import-form-error').innerHTML = '';\n\t\t}\n\n\t\tfunction showImportStep1() {\n\t\t\tdocument.getElementById('import-step-1').classList.remove('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectImportInstall(nuonInstallID, appID, displayText) {\n\t\t\tdocument.getElementById('import-nuon-install-id').value = nuonInstallID;\n\t\t\tdocument.getElementById('import-app-id').value = appID;\n\t\t\tdocument.getElementById('import-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('import-step-1').classList.add('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.remove('hidden');\n\t\t}\n\n\t\t// Close modal on backdrop click\n\t\tdocument.getElementById('import-install-modal').addEventListener('click', function(e) {\n\t\t\tif (e.target === this) closeImportModal();\n\t\t});\n\n\t\t// Handle HTMX redirect after successful import\n\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t// Error handling is done via hx-target=\"#import-form-error\"\n\t\t});\n\n\t\t// Listen for HX-Redirect header\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

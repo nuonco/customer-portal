@@ -129,6 +129,23 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		}
 	}
 
+	// Find orphaned published apps (deleted from Nuon API but still published)
+	apiAppIDs := make(map[string]bool, len(apps))
+	for _, app := range apps {
+		apiAppIDs[app.ID] = true
+	}
+	for _, pa := range publishedApps {
+		if !apiAppIDs[pa.AppID] {
+			appsWithStatus = append(appsWithStatus, AppInfo{
+				ID:              pa.AppID,
+				Name:            "-",
+				LogoLightBase64: pa.LogoLightBase64,
+				LogoDarkBase64:  pa.LogoDarkBase64,
+				Deleted:         true,
+			})
+		}
+	}
+
 	// Sort appsWithStatus by sort_order (published apps first, then unpublished)
 	sort.SliceStable(appsWithStatus, func(i, j int) bool {
 		oi, iHas := sortOrderMap[appsWithStatus[i].ID]
@@ -154,6 +171,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 			Platform:        app.Platform,
 			LogoLightBase64: app.LogoLightBase64,
 			LogoDarkBase64:  app.LogoDarkBase64,
+			Deleted:         app.Deleted,
 		}
 	}
 

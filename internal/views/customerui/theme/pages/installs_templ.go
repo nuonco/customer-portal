@@ -278,68 +278,101 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var11 string
-		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(panelURL)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 160, Col: 19}
+		if !install.APIDeleted {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(panelURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 161, Col: 20}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" hx-target=\"#panel-content-overview\" hx-swap=\"innerHTML show:no-scroll\" hx-push-url=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var12 string
+			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(detailURL)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 164, Col: 26}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" hx-on::before-request=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var13 templ.ComponentScript = templ.ComponentScript{Call: beforeRequestCall}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13.Call)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-on::after-settle=\"finalizePanelLoad()\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" hx-target=\"#panel-content-overview\" hx-swap=\"innerHTML show:no-scroll\" hx-push-url=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var12 string
-		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(detailURL)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 163, Col: 25}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" hx-on::before-request=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var13 templ.ComponentScript = templ.ComponentScript{Call: beforeRequestCall}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13.Call)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" hx-on::after-settle=\"finalizePanelLoad()\"><td><span class=\"install-name-link\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "><td><span class=\"install-name-link\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 168, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 170, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</span></td><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var15 string
-		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 170, Col: 23}
+		if install.APIDeleted {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300\">Removed</span><form class=\"inline ml-2\" hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var15 string
+			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + install.ID + "/forget")
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 175, Col: 63}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" hx-target=\"closest tr\" hx-swap=\"outerHTML\" hx-confirm=\"Remove this install from your list?\"><button type=\"submit\" class=\"button button-danger inline-flex items-center px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors\">Forget</button></form>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td>")
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 186, Col: 23}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -347,40 +380,40 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if install.Region != "" {
-			var templ_7745c5c3_Var16 string
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(install.Region)
+			var templ_7745c5c3_Var17 string
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(install.Region)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 176, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 192, Col: 20}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">—</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">—</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var17 string
-		templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(install.CreatedAt.Format("Jan 2, 2006"))
+		var templ_7745c5c3_Var18 string
+		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(install.CreatedAt.Format("Jan 2, 2006"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 182, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 198, Col: 44}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td></tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td></tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -404,12 +437,12 @@ func installsPanelScripts() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<script>\n\t\t(function() {\n\t\t\t// Get config\n\t\t\tvar configEl = document.getElementById('installs-page-config');\n\t\t\tvar basePath = configEl ? configEl.dataset.basePath : '';\n\n\t\t\t// State\n\t\t\tvar currentInstallId = null;\n\t\t\tvar historyLoaded = false;\n\t\t\tvar auditLoaded = false;\n\n\t\t\t// Prepare panel state before HTMX loads content\n\t\t\twindow.preparePanel = function(rowElement, installId, installName) {\n\t\t\t\t// Store current install context\n\t\t\t\tcurrentInstallId = installId;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Update panel header with provided values (from HTMX call)\n\t\t\t\tdocument.getElementById('panel-install-name').textContent = installName;\n\t\t\t\tdocument.getElementById('panel-install-id').textContent = installId;\n\n\t\t\t\t// Clear actions container until panel content loads\n\t\t\t\tdocument.getElementById('panel-actions-container').innerHTML = '';\n\n\t\t\t\t// Highlight the active row\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\t\t\t\trowElement.classList.add('active');\n\n\t\t\t\t// Show the panel and overlay\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.add('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.add('open');\n\t\t\t\tdocument.body.style.overflow = 'hidden';\n\n\t\t\t\t// Ensure overview tab is active\n\t\t\t\tswitchPanelTab('overview');\n\n\t\t\t\t// Show loading spinner in the container (HTMX will replace it)\n\t\t\t\tdocument.getElementById('panel-content-overview').innerHTML =\n\t\t\t\t\t'<div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div>';\n\t\t\t};\n\n\t\t\t// Finalize panel after HTMX loads and settles content\n\t\t\twindow.finalizePanelLoad = function() {\n\t\t\t\t// HTMX has already injected the content and processed all HTMX attributes\n\t\t\t\t// The banner polling is now active!\n\n\t\t\t\t// Enable panel expand button\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\t\t\t\tif (expandBtn) {\n\t\t\t\t\texpandBtn.disabled = false;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close panel\n\t\t\twindow.closeInstallPanel = function() {\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.remove('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.remove('open');\n\n\t\t\t\t// Remove row highlight\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\n\t\t\t\t// Push new URL state when closing panel\n\t\t\t\tvar currentPath = window.location.pathname;\n\t\t\t\t// Only push state if we're currently on an install detail URL\n\t\t\t\tif (currentPath.match(/\\/installs\\/[^\\/]+/)) {\n\t\t\t\t\tvar params = new URLSearchParams(window.location.search);\n\t\t\t\t\tvar newUrl = basePath + '/installs' + (params.toString() ? '?' + params.toString() : '');\n\t\t\t\t\thistory.pushState({panelClosed: true}, '', newUrl);\n\t\t\t\t}\n\n\t\t\t\t// Reset state\n\t\t\t\tcurrentInstallId = null;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Reset expand state\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\tdocument.getElementById('panel-expand-icon').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('panel-collapse-icon').classList.add('hidden');\n\t\t\t\tdocument.getElementById('panel-expand-btn').setAttribute('title', 'Expand to full screen');\n\n\t\t\t\t// Restore body scroll\n\t\t\t\tdocument.body.style.overflow = '';\n\t\t\t};\n\n\t\t\t// Toggle panel between default and full width\n\t\t\twindow.togglePanelSize = function() {\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tvar expandIcon = document.getElementById('panel-expand-icon');\n\t\t\t\tvar collapseIcon = document.getElementById('panel-collapse-icon');\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Switch tabs\n\t\t\twindow.switchPanelTab = function(tabName) {\n\t\t\t\t// Update tab buttons\n\t\t\t\tdocument.getElementById('tab-overview-btn').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history-btn').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit-btn').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Update tab panes\n\t\t\t\tdocument.getElementById('tab-overview').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Lazy load history tab using HTMX\n\t\t\t\tif (tabName === 'history' && !historyLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/history', {\n\t\t\t\t\t\t\ttarget: '#panel-content-history',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\thistoryLoaded = true;\n\t\t\t\t}\n\n\t\t\t\t// Lazy load audit tab using HTMX\n\t\t\t\tif (tabName === 'audit' && !auditLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/audit', {\n\t\t\t\t\t\t\ttarget: '#panel-content-audit',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\tauditLoaded = true;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close on ESC key\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Close when clicking outside panel (on overlay)\n\t\t\tdocument.getElementById('detail-panel-overlay').addEventListener('click', function(e) {\n\t\t\t\tif (e.target === this) {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Check if we're on /installs/:install_id route (used after accepting install link)\n\t\t\t// Wrapped in DOMContentLoaded to ensure table rows are rendered\n\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\t// Trigger HTMX request to load panel\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Handle back/forward button navigation\n\t\t\twindow.addEventListener('popstate', function(event) {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\t// URL has install ID - open panel\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row && currentInstallId !== installId) {\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\t// URL is just /installs - close panel\n\t\t\t\t\tif (currentInstallId) {\n\t\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<script>\n\t\t(function() {\n\t\t\t// Get config\n\t\t\tvar configEl = document.getElementById('installs-page-config');\n\t\t\tvar basePath = configEl ? configEl.dataset.basePath : '';\n\n\t\t\t// State\n\t\t\tvar currentInstallId = null;\n\t\t\tvar historyLoaded = false;\n\t\t\tvar auditLoaded = false;\n\n\t\t\t// Prepare panel state before HTMX loads content\n\t\t\twindow.preparePanel = function(rowElement, installId, installName) {\n\t\t\t\t// Store current install context\n\t\t\t\tcurrentInstallId = installId;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Update panel header with provided values (from HTMX call)\n\t\t\t\tdocument.getElementById('panel-install-name').textContent = installName;\n\t\t\t\tdocument.getElementById('panel-install-id').textContent = installId;\n\n\t\t\t\t// Clear actions container until panel content loads\n\t\t\t\tdocument.getElementById('panel-actions-container').innerHTML = '';\n\n\t\t\t\t// Highlight the active row\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\t\t\t\trowElement.classList.add('active');\n\n\t\t\t\t// Show the panel and overlay\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.add('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.add('open');\n\t\t\t\tdocument.body.style.overflow = 'hidden';\n\n\t\t\t\t// Ensure overview tab is active\n\t\t\t\tswitchPanelTab('overview');\n\n\t\t\t\t// Show loading spinner in the container (HTMX will replace it)\n\t\t\t\tdocument.getElementById('panel-content-overview').innerHTML =\n\t\t\t\t\t'<div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div>';\n\t\t\t};\n\n\t\t\t// Finalize panel after HTMX loads and settles content\n\t\t\twindow.finalizePanelLoad = function() {\n\t\t\t\t// HTMX has already injected the content and processed all HTMX attributes\n\t\t\t\t// The banner polling is now active!\n\n\t\t\t\t// Enable panel expand button\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\t\t\t\tif (expandBtn) {\n\t\t\t\t\texpandBtn.disabled = false;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close panel\n\t\t\twindow.closeInstallPanel = function() {\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.remove('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.remove('open');\n\n\t\t\t\t// Remove row highlight\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\n\t\t\t\t// Push new URL state when closing panel\n\t\t\t\tvar currentPath = window.location.pathname;\n\t\t\t\t// Only push state if we're currently on an install detail URL\n\t\t\t\tif (currentPath.match(/\\/installs\\/[^\\/]+/)) {\n\t\t\t\t\tvar params = new URLSearchParams(window.location.search);\n\t\t\t\t\tvar newUrl = basePath + '/installs' + (params.toString() ? '?' + params.toString() : '');\n\t\t\t\t\thistory.pushState({panelClosed: true}, '', newUrl);\n\t\t\t\t}\n\n\t\t\t\t// Reset state\n\t\t\t\tcurrentInstallId = null;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Reset expand state\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\tdocument.getElementById('panel-expand-icon').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('panel-collapse-icon').classList.add('hidden');\n\t\t\t\tdocument.getElementById('panel-expand-btn').setAttribute('title', 'Expand to full screen');\n\n\t\t\t\t// Restore body scroll\n\t\t\t\tdocument.body.style.overflow = '';\n\t\t\t};\n\n\t\t\t// Toggle panel between default and full width\n\t\t\twindow.togglePanelSize = function() {\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tvar expandIcon = document.getElementById('panel-expand-icon');\n\t\t\t\tvar collapseIcon = document.getElementById('panel-collapse-icon');\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Switch tabs\n\t\t\twindow.switchPanelTab = function(tabName) {\n\t\t\t\t// Update tab buttons\n\t\t\t\tdocument.getElementById('tab-overview-btn').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history-btn').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit-btn').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Update tab panes\n\t\t\t\tdocument.getElementById('tab-overview').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Lazy load history tab using HTMX\n\t\t\t\tif (tabName === 'history' && !historyLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/history', {\n\t\t\t\t\t\t\ttarget: '#panel-content-history',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\thistoryLoaded = true;\n\t\t\t\t}\n\n\t\t\t\t// Lazy load audit tab using HTMX\n\t\t\t\tif (tabName === 'audit' && !auditLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/audit', {\n\t\t\t\t\t\t\ttarget: '#panel-content-audit',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\tauditLoaded = true;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close on ESC key\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Close when clicking outside panel (on overlay)\n\t\t\tdocument.getElementById('detail-panel-overlay').addEventListener('click', function(e) {\n\t\t\t\tif (e.target === this) {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Check if we're on /installs/:install_id route (used after accepting install link)\n\t\t\t// Wrapped in DOMContentLoaded to ensure table rows are rendered\n\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\t// Trigger HTMX request to load panel\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Handle back/forward button navigation\n\t\t\twindow.addEventListener('popstate', function(event) {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\t// URL has install ID - open panel\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row && currentInstallId !== installId) {\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\t// URL is just /installs - close panel\n\t\t\t\t\tif (currentInstallId) {\n\t\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -433,9 +466,9 @@ func paginationFooter(props InstallsPageProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var20 == nil {
+			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = components.Pagination(components.PaginationProps{

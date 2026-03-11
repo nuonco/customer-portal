@@ -205,6 +205,7 @@ There are some conventions that are specific to the admin UI.
 
 - The admin UI uses Stratus, our official design system, which is also used by the dashboard-ui in the /nuonco/nuon repo.
 - We use tailwind for the admin UI components, and should stick to using the tailwind utility classes. Avoid custom CSS.
+- When running services locally using `nuonctl dev`, a Ladle server will be available at http://localhost:61000/ with working examples of Stratus components. These are implemented in React for the dashboard-ui, but we should be able to copy their design and behavior into Templ components as needed.
 
 ### Customer
 
@@ -473,6 +474,31 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /account/switch` - Switch active account (sets cookie, redirects to /installs)
 - `POST /account/members/:member_id/transfer-ownership` - Transfer account ownership to another member
 - `DELETE /account/invite/:invite_id` - Revoke a pending invite
+
+## Vendor UI Components
+
+### Tooltip (ContextTooltip)
+
+The `components.Tooltip` component (`internal/views/vendorui/components/tooltip.templ`) supports two modes:
+
+**Simple text tooltip** — pass `nil` for items:
+```go
+@components.Tooltip("Helpful hint", nil, components.TooltipTop) {
+    <span>Hover me</span>
+}
+```
+
+**Rich tooltip panel** — pass a slice of `TooltipItem` for a titled, scrollable item list matching the Stratus ContextTooltip design:
+```go
+@components.Tooltip("Resources", []components.TooltipItem{
+    {ID: "1", Title: "Docs", Subtitle: "View documentation", Href: "/docs", Icon: "ph-bold ph-book"},
+    {ID: "2", Title: "Status", Subtitle: "All systems go"},
+}, components.TooltipBottom) {
+    <button>Info</button>
+}
+```
+
+Items with `Href` render as links with a caret-right icon. Items without render as plain text. Positions: `TooltipTop`, `TooltipBottom`, `TooltipLeft`, `TooltipRight`.
 
 ## Semantic Button Classes
 

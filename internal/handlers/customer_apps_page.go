@@ -43,7 +43,11 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		if display.Status == "" {
 			display.Status = "published"
 		}
-		appDisplays[0] = display
+		if display.Platform == "unknown" {
+			appDisplays = nil
+		} else {
+			appDisplays[0] = display
+		}
 	} else if len(publishedApps) > 1 {
 		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 
@@ -80,11 +84,20 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 			}(i, pa)
 		}
 		wg.Wait()
+
+		// Filter out deleted apps (API returned no data, Platform remains "unknown")
+		filtered := appDisplays[:0]
+		for _, d := range appDisplays {
+			if d.Platform != "unknown" {
+				filtered = append(filtered, d)
+			}
+		}
+		appDisplays = filtered
 	}
 
 	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
 	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
-	layoutProps.HasPublishedApps = len(publishedApps) > 0
+	layoutProps.HasPublishedApps = len(appDisplays) > 0
 	layoutProps.ActiveNav = "apps"
 
 	props := customerpages.CustomerAppsPageProps{

@@ -50,7 +50,12 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 						zap.String("install_id", install.ID),
 						zap.String("nuon_install_id", install.NuonInstallID),
 					)
+					if !install.APIDeleted {
+						h.db.Model(install).Update("api_deleted", true)
+					}
 				}
+			} else if install.APIDeleted {
+				h.db.Model(install).Update("api_deleted", false)
 			}
 		}
 	}

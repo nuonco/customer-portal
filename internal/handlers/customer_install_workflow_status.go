@@ -43,6 +43,10 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
 			var notFoundErr *operations.GetInstallNotFound
 			if errors.As(apiErr, &notFoundErr) {
+				// Persist the flag
+				if !install.APIDeleted {
+					h.db.Model(install).Update("api_deleted", true)
+				}
 				// Install deleted from API - return empty state
 				theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
 				primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)

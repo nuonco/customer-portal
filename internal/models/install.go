@@ -39,6 +39,7 @@ type Install struct {
 	Visibility        InstallVisibility `gorm:"type:varchar(20);default:'account'" json:"visibility"`
 	CustomerAccountID *string           `gorm:"index" json:"customer_account_id,omitempty"`
 	Status            InstallStatus     `gorm:"type:varchar(30);default:'pending_customer'" json:"status"`
+	APIDeleted        bool              `gorm:"default:false" json:"api_deleted"`
 	Region            string            `json:"region,omitempty"`
 	CreatedAt         time.Time         `json:"created_at"`
 	UpdatedAt         time.Time         `json:"updated_at"`

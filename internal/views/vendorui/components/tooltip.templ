@@ -1,0 +1,70 @@
+package components
+
+type TooltipPosition string
+
+const (
+	TooltipTop    TooltipPosition = "top"
+	TooltipBottom TooltipPosition = "bottom"
+	TooltipLeft   TooltipPosition = "left"
+	TooltipRight  TooltipPosition = "right"
+)
+
+type TooltipItem struct {
+	ID       string
+	Title    string
+	Subtitle string
+	Href     string // renders as <a> with caret-right if set
+	Icon     string // phosphor icon class (e.g. "ph-bold ph-cube")
+}
+
+// Tooltip renders a hover tooltip. When items is nil, it shows a simple text
+// tooltip with the title as content. When items is provided, it renders a rich
+// panel with a title header and scrollable item list (Stratus ContextTooltip).
+templ Tooltip(title string, items []TooltipItem, position TooltipPosition) {
+	<div class="stratus-tooltip-container inline-flex">
+		{ children... }
+		if items == nil {
+			<div class={ "stratus-tooltip stratus-tooltip-" + string(position) }>
+				<span>{ title }</span>
+			</div>
+		} else {
+			<div class={ "stratus-tooltip stratus-tooltip-rich stratus-tooltip-" + string(position) }>
+				if title != "" {
+					<div class="stratus-tooltip-header">
+						<span>{ title }</span>
+					</div>
+				}
+				<div class="stratus-tooltip-items">
+					for _, item := range items {
+						if item.Href != "" {
+							<a href={ templ.SafeURL(item.Href) } class="stratus-tooltip-item stratus-tooltip-item-link">
+								if item.Icon != "" {
+									<i class={ item.Icon + " stratus-tooltip-item-icon" }></i>
+								}
+								<span class="stratus-tooltip-item-text">
+									<span class="stratus-tooltip-item-title">{ item.Title }</span>
+									if item.Subtitle != "" {
+										<span class="stratus-tooltip-item-subtitle">{ item.Subtitle }</span>
+									}
+								</span>
+								<i class="ph-bold ph-caret-right stratus-tooltip-item-caret"></i>
+							</a>
+						} else {
+							<span class="stratus-tooltip-item">
+								if item.Icon != "" {
+									<i class={ item.Icon + " stratus-tooltip-item-icon" }></i>
+								}
+								<span class="stratus-tooltip-item-text">
+									<span class="stratus-tooltip-item-title">{ item.Title }</span>
+									if item.Subtitle != "" {
+										<span class="stratus-tooltip-item-subtitle">{ item.Subtitle }</span>
+									}
+								</span>
+							</span>
+						}
+					}
+				</div>
+			</div>
+		}
+	</div>
+}

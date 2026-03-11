@@ -48,12 +48,13 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 		InstallLinkID      string
 		InstallLinkAppID   string
 		InstallLinkAppName string
+		APIDeleted         bool
 	}
 
 	query := h.db.Table("installs").
 		Select(`installs.id, installs.nuon_install_id, installs.user_id,
 			installs.name, installs.app_id, installs.app_name,
-			installs.nuon_app_id,
+			installs.nuon_app_id, installs.api_deleted,
 			installs.status, installs.region, installs.created_at,
 			COALESCE(installs.install_link_id::text, '') as install_link_id,
 			users.email as customer_email, users.name as customer_name,
@@ -172,6 +173,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 			Status:        row.Status,
 			InstallLinkID: row.InstallLinkID,
 			CreatedAt:     row.CreatedAt.Format("Jan 2, 2006"),
+			APIDeleted:    row.APIDeleted,
 		})
 	}
 

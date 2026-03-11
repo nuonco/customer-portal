@@ -478,6 +478,7 @@ type AppInfo struct {
 	Platform        string `json:"platform"` // "aws" or "azure"
 	LogoLightBase64 string `json:"logo_light_base64"`
 	LogoDarkBase64  string `json:"logo_dark_base64"`
+	Deleted         bool   `json:"deleted"`
 }
 
 // orgHasPublishedApps checks if an org has any published apps

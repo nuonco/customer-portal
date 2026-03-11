@@ -23,6 +23,7 @@ type AdminInstall struct {
 	Status        string
 	InstallLinkID string
 	CreatedAt     string
+	APIDeleted    bool
 }
 
 // CustomerInstallsPageProps for the admin customer installs list page.
@@ -172,7 +173,12 @@ templ InstallsTableBody(installs []AdminInstall, orgID, basePath, nuonOrgID stri
 templ adminInstallTableRow(install AdminInstall, orgID, basePath, nuonOrgID string) {
 	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800" data-install-id={ install.ID }>
 		<td class="px-4 py-3 whitespace-nowrap">
-			<div class="text-sm font-medium text-cool-grey-900 dark:text-white">{ install.Name }</div>
+			<div class="text-sm font-medium text-cool-grey-900 dark:text-white">
+				{ install.Name }
+				if install.APIDeleted {
+					<span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">Removed from Nuon</span>
+				}
+			</div>
 			<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">{ install.ID }</div>
 		</td>
 		<td class="px-4 py-3 whitespace-nowrap">

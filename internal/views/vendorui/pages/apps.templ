@@ -5,6 +5,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // AppWithHealthCheckStatus represents an app in the apps list
@@ -14,6 +15,7 @@ type AppWithHealthCheckStatus struct {
 	Platform        string
 	LogoLightBase64 string // base64 data URI for light mode logo
 	LogoDarkBase64  string // base64 data URI for dark mode logo
+	Deleted         bool   // true if app was deleted from Nuon API but still published
 }
 
 // AppsPageProps for the apps list page
@@ -51,6 +53,9 @@ templ AppsPage(props AppsPageProps) {
 										Platform
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
+										Published
+									</th>
+									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Status
 									</th>
 								</tr>
@@ -86,45 +91,90 @@ templ AppsPage(props AppsPageProps) {
 }
 
 templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status string) {
-	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 sortable-app" data-app-id={ app.ID }>
-		<td class="px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing">
-			<svg class="h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
-				<circle cx="9" cy="6" r="1.5"></circle>
-				<circle cx="15" cy="6" r="1.5"></circle>
-				<circle cx="9" cy="12" r="1.5"></circle>
-				<circle cx="15" cy="12" r="1.5"></circle>
-				<circle cx="9" cy="18" r="1.5"></circle>
-				<circle cx="15" cy="18" r="1.5"></circle>
-			</svg>
-		</td>
-		<td class="px-6 py-4 whitespace-nowrap">
-			if app.LogoLightBase64 != "" {
-				<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
-				if app.LogoDarkBase64 != "" {
-					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+	if app.Deleted {
+		<tr class="bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 sortable-app" data-app-id={ app.ID }>
+			<td class="px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing">
+				<svg class="h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+					<circle cx="9" cy="6" r="1.5"></circle>
+					<circle cx="15" cy="6" r="1.5"></circle>
+					<circle cx="9" cy="12" r="1.5"></circle>
+					<circle cx="15" cy="12" r="1.5"></circle>
+					<circle cx="9" cy="18" r="1.5"></circle>
+					<circle cx="15" cy="18" r="1.5"></circle>
+				</svg>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				if app.LogoLightBase64 != "" {
+					<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
+					if app.LogoDarkBase64 != "" {
+						<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+					}
+				} else if app.LogoDarkBase64 != "" {
+					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
+				} else {
+					<span class="text-cool-grey-400 dark:text-cool-grey-600">—</span>
 				}
-			} else if app.LogoDarkBase64 != "" {
-				<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
-			} else {
-				<span class="text-cool-grey-400 dark:text-cool-grey-600">—</span>
-			}
-		</td>
-		<td class="px-6 py-4 whitespace-nowrap">
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
-				class="group"
-			>
-				<div class="text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">{ app.Name }</div>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				<div class="text-sm font-medium text-cool-grey-900 dark:text-white">{ app.Name }</div>
 				<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400">{ app.ID }</div>
-			</a>
-		</td>
-		<td class="px-6 py-4 whitespace-nowrap">
-			@platformBadge(app.Platform)
-		</td>
-		<td class="px-6 py-4 whitespace-nowrap">
-			@statusSelect(status)
-		</td>
-	</tr>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				<span class="text-xs text-cool-grey-400 dark:text-cool-grey-500">—</span>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				@statusSelect(status)
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				@components.Tooltip("This app was deleted from the Nuon API and must be unpublished", nil, components.TooltipLeft) {
+					@deletedStatusBadge()
+				}
+			</td>
+		</tr>
+	} else {
+		<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 sortable-app" data-app-id={ app.ID }>
+			<td class="px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing">
+				<svg class="h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto" viewBox="0 0 24 24" fill="currentColor">
+					<circle cx="9" cy="6" r="1.5"></circle>
+					<circle cx="15" cy="6" r="1.5"></circle>
+					<circle cx="9" cy="12" r="1.5"></circle>
+					<circle cx="15" cy="12" r="1.5"></circle>
+					<circle cx="9" cy="18" r="1.5"></circle>
+					<circle cx="15" cy="18" r="1.5"></circle>
+				</svg>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				if app.LogoLightBase64 != "" {
+					<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
+					if app.LogoDarkBase64 != "" {
+						<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+					}
+				} else if app.LogoDarkBase64 != "" {
+					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
+				} else {
+					<span class="text-cool-grey-400 dark:text-cool-grey-600">—</span>
+				}
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				<a
+					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
+					class="group"
+				>
+					<div class="text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">{ app.Name }</div>
+					<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400">{ app.ID }</div>
+				</a>
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				@platformBadge(app.Platform)
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				@statusSelect(status)
+			</td>
+			<td class="px-6 py-4 whitespace-nowrap">
+				@activeStatusBadge()
+			</td>
+		</tr>
+	}
 }
 
 templ appsScript(basePath, orgID string) {
@@ -258,6 +308,20 @@ templ platformBadge(platform string) {
 		default:
 			<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400">{ platform }</span>
 	}
+}
+
+templ deletedStatusBadge() {
+	<span class="inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit cursor-help">
+		<span class="w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-orange-500 shrink-0"></span>
+		Deleted
+	</span>
+}
+
+templ activeStatusBadge() {
+	<span class="inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit">
+		<span class="w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-500 shrink-0"></span>
+		Active
+	</span>
 }
 
 templ emptyAppsState() {
