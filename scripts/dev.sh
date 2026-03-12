@@ -27,9 +27,16 @@ echo "[dev] Starting CSS watcher..."
 ) &
 
 echo "[dev] Starting templ watch + proxy on :8080..."
-exec go tool templ generate --watch \
-    --cmd "go run ." \
-    --proxy="http://localhost:7331" \
-    --proxyport=8080 \
-    --proxybind="0.0.0.0" \
-    --open-browser=false
+while true; do
+    go tool templ generate --watch \
+        --cmd "go run ." \
+        --proxy="http://localhost:7331" \
+        --proxyport=8080 \
+        --proxybind="0.0.0.0" \
+        --open-browser=false || true
+    echo "[dev] templ proxy exited or stuck, cleaning up..."
+    lsof -ti :7331 | xargs kill -9 2>/dev/null || true
+    lsof -ti :8080 | xargs kill -9 2>/dev/null || true
+    sleep 2
+    echo "[dev] Restarting templ watch..."
+done
