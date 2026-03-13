@@ -1,0 +1,217 @@
+package partials
+
+import (
+	"fmt"
+	"strings"
+)
+
+// InstallFormConfig holds the parsed app config data for rendering form fields
+type InstallFormConfig struct {
+	Platform        string
+	InputGroups     []InstallFormInputGroup
+	CollapsedGroups map[string]bool
+}
+
+// InstallFormInputGroup represents a group of inputs
+type InstallFormInputGroup struct {
+	Name        string
+	DisplayName string
+	Description string
+	AppInputs   []InstallFormInput
+}
+
+// InstallFormInput represents a single input field
+type InstallFormInput struct {
+	Name        string
+	DisplayName string
+	Description string
+	Type        string
+	Default     string
+	Required    bool
+	Sensitive   bool
+	Index       int
+}
+
+// groupID returns a sanitized ID for use in HTML element IDs
+func groupID(name string) string {
+	if name == "" {
+		name = "default"
+	}
+	result := strings.Map(func(r rune) rune {
+		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') {
+			return r
+		}
+		return '-'
+	}, name)
+	return "group-" + strings.ToLower(result)
+}
+
+// RegionSelector renders the region or location select field based on platform
+templ RegionSelector(platform string) {
+	if platform == "azure_aks" {
+		<label for="azureLocation" class="field-label">Azure Location *</label>
+		<select id="azureLocation" name="location" required class="field-input">
+			<option value="eastus">East US</option>
+			<option value="eastus2">East US 2</option>
+			<option value="westus">West US</option>
+			<option value="westus2">West US 2</option>
+			<option value="westeurope">West Europe</option>
+			<option value="northeurope">North Europe</option>
+		</select>
+	} else {
+		<label for="awsRegion" class="field-label">AWS Region *</label>
+		<select id="awsRegion" name="region" required class="field-input">
+			<option value="us-east-1">US East (N. Virginia) - us-east-1</option>
+			<option value="us-east-2">US East (Ohio) - us-east-2</option>
+			<option value="us-west-1">US West (N. California) - us-west-1</option>
+			<option value="us-west-2">US West (Oregon) - us-west-2</option>
+			<option value="eu-west-1">Europe (Ireland) - eu-west-1</option>
+			<option value="eu-central-1">Europe (Frankfurt) - eu-central-1</option>
+			<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</option>
+			<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</option>
+		</select>
+	}
+}
+
+// InstallFormFields renders the region selector and input field groups together.
+// The region section replaces #installFormFields innerHTML (inside the main card).
+// Input groups are appended after via the #installInputGroups OOB swap.
+templ InstallFormFields(config InstallFormConfig) {
+	<!-- Region selector (renders inside the existing card) -->
+	<div>
+		<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
+		@RegionSelector(config.Platform)
+	</div>
+	<!-- Input groups swapped into separate container outside the card -->
+	<div id="installInputGroups" hx-swap-oob="innerHTML">
+		for _, group := range config.InputGroups {
+			if len(group.AppInputs) > 0 {
+				@inputGroup(group, config.CollapsedGroups[group.Name])
+			}
+		}
+	</div>
+}
+
+// inputGroup renders a collapsible group of input fields using <details>/<summary>
+templ inputGroup(group InstallFormInputGroup, collapsed bool) {
+	<details
+		class="input-group-card"
+		if !collapsed {
+			open
+		}
+	>
+		<summary class="input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors list-none [&::-webkit-details-marker]:hidden">
+			<div>
+				<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200">
+					if group.DisplayName != "" {
+						{ group.DisplayName }
+					} else if group.Name != "" {
+						{ group.Name }
+					} else {
+						Configuration
+					}
+				</h5>
+				if group.Description != "" {
+					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1">{ group.Description }</p>
+				}
+			</div>
+			<i class="input-group-chevron ph-bold ph-caret-down text-xl text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4 transition-transform"></i>
+		</summary>
+		<div class="px-4 pb-4 space-y-4">
+			for _, input := range group.AppInputs {
+				@singleInput(input)
+			}
+		</div>
+	</details>
+}
+
+// singleInput renders a single form input field
+templ singleInput(input InstallFormInput) {
+	if input.Type == "bool" || input.Default == "true" || input.Default == "false" {
+		<div class="flex items-start space-x-3">
+			<input type="hidden" name={ fmt.Sprintf("inputs[%s]", input.Name) } value="false"/>
+			<input
+				type="checkbox"
+				id={ input.Name }
+				name={ fmt.Sprintf("inputs[%s]", input.Name) }
+				value="true"
+				if input.Default == "true" {
+					checked
+				}
+				class="field-checkbox"
+			/>
+			<div class="flex-1">
+				<label for={ input.Name } class="field-label">
+					{ inputLabel(input) }
+				</label>
+				if input.Description != "" {
+					<p class="field-hint">{ input.Description }</p>
+				}
+			</div>
+		</div>
+	} else if input.Type == "json" {
+		<div>
+			<label for={ input.Name } class="field-label">{ inputLabel(input) }</label>
+			<textarea
+				id={ input.Name }
+				name={ fmt.Sprintf("inputs[%s]", input.Name) }
+				rows="4"
+				placeholder={ input.Default }
+				if input.Required {
+					required
+				}
+				class="field-input"
+			>{ input.Default }</textarea>
+			if input.Description != "" {
+				<p class="field-hint">{ input.Description }</p>
+			}
+		</div>
+	} else {
+		<div>
+			<label for={ input.Name } class="field-label">{ inputLabel(input) }</label>
+			<input
+				type={ inputType(input) }
+				id={ input.Name }
+				name={ fmt.Sprintf("inputs[%s]", input.Name) }
+				placeholder={ input.Default }
+				value={ input.Default }
+				if input.Required {
+					required
+				}
+				if input.Sensitive {
+					autocomplete="off"
+				}
+				class="field-input"
+			/>
+			if input.Description != "" {
+				<p class="field-hint">{ input.Description }</p>
+			}
+		</div>
+	}
+}
+
+func inputLabel(input InstallFormInput) string {
+	label := input.DisplayName
+	if label == "" {
+		label = input.Name
+	}
+	if input.Required {
+		label += " *"
+	}
+	return label
+}
+
+func inputType(input InstallFormInput) string {
+	if input.Type == "number" {
+		return "number"
+	}
+	if input.Sensitive {
+		return "password"
+	}
+	return "text"
+}
+
+// InstallFormError renders an error message for HTMX form error responses
+templ InstallFormError(message string) {
+	<div class="alert-error">{ message }</div>
+}

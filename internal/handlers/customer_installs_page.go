@@ -4,6 +4,7 @@ import (
 	"math"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -12,6 +13,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"gorm.io/gorm"
 )
 
 func (h *Handler) InstallsPage(c *gin.Context) {
@@ -51,11 +53,11 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 		}
 		if detailMember != nil {
 			detailQuery = detailQuery.Where(
-				"(user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?)",
+				"(user_id = ? AND customer_account_id = ?) OR (customer_account_id = ? AND visibility = ?)",
 				user.ID, detailMember.AccountID, detailMember.AccountID, models.VisibilityAccount,
 			)
 		} else {
-			detailQuery = detailQuery.Where("user_id = ? AND customer_account_id IS NULL", user.ID)
+			detailQuery = detailQuery.Where("1 = 0")
 		}
 		if err := detailQuery.First(&install).Error; err != nil {
 			// Install not found or doesn't belong to user - redirect to list
@@ -84,15 +86,50 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 			if h.db.Preload("Account").Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", user.ID, orgID).Find(&members).Error == nil && len(members) > 0 {
 				activeMember = middleware.SelectActiveMember(c, members)
 			}
+			// If still no membership, process pending invites
+			if len(members) == 0 {
+				var invite models.CustomerAccountInvite
+				if h.db.Where("email = ? AND org_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", user.Email, orgID).First(&invite).Error == nil {
+					h.db.Transaction(func(tx *gorm.DB) error {
+						newMember := &models.CustomerAccountMember{
+							AccountID: invite.AccountID,
+							UserID:    user.ID,
+							OrgID:     invite.OrgID,
+							Role:      models.CustomerAccountRoleMember,
+						}
+						if err := tx.Create(newMember).Error; err != nil {
+							return err
+						}
+						now := time.Now()
+						invite.UsedByUserID = &user.ID
+						invite.UsedAt = &now
+						if err := tx.Save(&invite).Error; err != nil {
+							return err
+						}
+						// Migrate unassigned installs to the invited account
+						tx.Model(&models.Install{}).
+							Where("user_id = ? AND org_id = ? AND customer_account_id IS NULL AND deleted_at IS NULL", user.ID, invite.OrgID).
+							Updates(map[string]interface{}{
+								"customer_account_id": invite.AccountID,
+								"visibility":          models.VisibilityAccount,
+							})
+						return nil
+					})
+					// Re-query memberships after processing invite
+					if h.db.Preload("Account").Where("user_id = ? AND org_id = ? AND deleted_at IS NULL", user.ID, orgID).Find(&members).Error == nil && len(members) > 0 {
+						activeMember = middleware.SelectActiveMember(c, members)
+					}
+				}
+			}
 		}
 	}
 	if activeMember != nil {
 		query = query.Where(
-			"(user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?)",
+			"(user_id = ? AND customer_account_id = ?) OR (customer_account_id = ? AND visibility = ?)",
 			user.ID, activeMember.AccountID, activeMember.AccountID, models.VisibilityAccount,
 		)
 	} else {
-		query = query.Where("user_id = ? AND customer_account_id IS NULL", user.ID)
+		query = query.Where("1 = 0")
 	}
 	if err := query.Find(&allInstalls).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
@@ -222,7 +259,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 				if err == nil {
 					app, err := nuonClient.GetApp(c.Request.Context(), info.appID)
 					if err == nil && app != nil {
-						res.appName = app.Name
+						res.appName = appDisplayName(app)
 					}
 				}
 				results[i] = res

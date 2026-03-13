@@ -47,6 +47,7 @@ templ Layout(props LayoutProps) {
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
 		</head>
 		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
@@ -93,6 +94,34 @@ templ Layout(props LayoutProps) {
 			<!-- Modals -->
 			@partials.ConfirmModal()
 			@partials.PromptModal()
+		<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) -->
+			<script>
+				(function initMermaid() {
+					var codes = document.querySelectorAll('pre > code.language-mermaid');
+					if (codes.length === 0) return;
+					var divs = [];
+					codes.forEach(function(code) {
+						var pre = code.parentElement;
+						var div = document.createElement('div');
+						div.className = 'mermaid';
+						div.textContent = code.textContent;
+						pre.parentElement.replaceChild(div, pre);
+						divs.push(div);
+					});
+					function renderDiagrams() {
+						mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
+						mermaid.run({ nodes: divs });
+					}
+					if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
+						renderDiagrams();
+					} else {
+						var s = document.createElement('script');
+						s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+						s.onload = renderDiagrams;
+						document.head.appendChild(s);
+					}
+				})();
+			</script>
 		if isLiveReload() {
 				<script src="/_templ/reload/script.js"></script>
 			}

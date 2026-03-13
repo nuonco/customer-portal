@@ -262,11 +262,14 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.POST("/settings/github/bulk-toggle", h.BulkToggleOverrides)
 
 			// Apps - configuration pages
-			orgRoutes.GET("/apps", h.AppsPage)                     // Apps list page (HTML)
-			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)    // Redirect to inputs
-			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage) // Inputs config page
-			orgRoutes.GET("/apps/:app_id/logo", h.AppLogoPage)     // Logo upload page
-			orgRoutes.PUT("/apps/:app_id/logo", h.UpdateAppLogo)   // Save app logos
+			orgRoutes.GET("/apps", h.AppsPage)                                     // Apps list page (HTML)
+			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)                    // Redirect to inputs
+			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage)                 // Inputs config page
+			orgRoutes.GET("/apps/:app_id/logo", h.AppLogoPage)                     // Logo upload page
+			orgRoutes.PUT("/apps/:app_id/logo", h.UpdateAppLogo)                   // Save app logos
+			orgRoutes.GET("/apps/:app_id/overview", h.AppOverviewPage)             // Overview editor page
+			orgRoutes.PUT("/apps/:app_id/overview", h.UpdateAppOverview)           // Save app overview
+			orgRoutes.POST("/apps/:app_id/overview/preview", h.PreviewAppOverview) // Preview rendered markdown
 
 			// Apps - publish/unpublish for customer portal catalog
 			orgRoutes.POST("/apps/:app_id/publish", h.PublishApp)     // Publish app to customer catalog
@@ -294,11 +297,16 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 
 			// Customers - view all customers and their installs
 			orgRoutes.GET("/customers", h.CustomersPage)
-			orgRoutes.GET("/customers/:customer_id", h.CustomerDetailPage)
 
 			// Customer Accounts - view customer company accounts
 			orgRoutes.GET("/accounts", h.AccountsPage)
-			orgRoutes.GET("/accounts/:account_id", h.AccountDetailPage)
+			orgRoutes.GET("/accounts/:account_id", h.AccountDetailRedirect)
+			orgRoutes.GET("/accounts/:account_id/members", h.AccountMembersPage)
+			orgRoutes.GET("/accounts/:account_id/installs", h.AccountInstallsPage)
+			orgRoutes.GET("/accounts/:account_id/installs/search", h.SearchOrgInstalls)
+			orgRoutes.POST("/accounts/:account_id/installs/assign", h.AssignInstallToAccount)
+			orgRoutes.POST("/accounts/:account_id/invite", h.VendorInviteAccountMember)
+			orgRoutes.DELETE("/accounts/:account_id/invite/:invite_id", h.VendorDeleteAccountInvite)
 
 			// Team pages (org-scoped)
 			orgRoutes.GET("/team", func(c *gin.Context) {
@@ -400,6 +408,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// Published app config endpoint (unauthenticated - same pattern as install-link app-config)
 	rg.GET("/apps/:app_id/config", h.GetPublishedAppConfig)
+
+	// Install form fields partial (returns HTML for HTMX, unauthenticated)
+	rg.GET("/install-form-fields", h.GetInstallFormFields)
 
 	// Public customer routes for published apps (auth handled in handlers)
 	customerApps := rg.Group("/apps")

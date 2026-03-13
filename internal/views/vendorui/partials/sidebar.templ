@@ -79,7 +79,7 @@ templ Sidebar(props SidebarProps) {
 						<div id="org-list" class="py-1">
 							for _, org := range props.Orgs {
 								<a
-									href={ templ.SafeURL(props.BasePath + "/orgs/" + org.ID + "/install-links") }
+									href={ templ.SafeURL(props.BasePath + "/orgs/" + org.ID) }
 									class={ "stratus-org-item", templ.KV("active", props.CurrentOrg != nil && props.CurrentOrg.ID == org.ID) }
 								>
 									<span class="stratus-org-avatar-sm">{ safeSlice(org.Name, 0, 2) }</span>
@@ -126,17 +126,17 @@ templ Sidebar(props SidebarProps) {
 				</div>
 				<hr class="stratus-sidebar-divider"/>
 			}
-			<!-- Customer Management Section -->
+			<!-- Account Management Section -->
 			<div class="stratus-sidebar-section">
-				<div class="stratus-sidebar-label">Customer Management</div>
+				<div class="stratus-sidebar-label">Account Management</div>
 				<nav class="stratus-sidebar-nav">
 					if props.CurrentOrg != nil {
 						<a
-							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/customers") }
-							class={ "stratus-sidebar-link", templ.KV("active", isCustomersPage(props.ActivePage)) }
+							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/accounts") }
+							class={ "stratus-sidebar-link", templ.KV("active", isAccountsPage(props.ActivePage)) }
 						>
-							@usersIcon()
-							<span class="sidebar-text">Customers</span>
+							@sidebarAccountsIcon()
+							<span class="sidebar-text">Accounts</span>
 						</a>
 						<a
 							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
@@ -154,8 +154,8 @@ templ Sidebar(props SidebarProps) {
 						</a>
 					} else {
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
-							@usersIcon()
-							<span class="sidebar-text">Customers</span>
+							@sidebarAccountsIcon()
+							<span class="sidebar-text">Accounts</span>
 						</span>
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 							@linkIcon()
@@ -255,9 +255,9 @@ func isPortalPage(activePage string) bool {
 	return strings.HasPrefix(activePage, "portal-")
 }
 
-// isCustomersPage checks if the active page is a Customers section page
-func isCustomersPage(activePage string) bool {
-	return activePage == "customers" || strings.HasPrefix(activePage, "customers-")
+// isAccountsPage checks if the active page is an Accounts section page
+func isAccountsPage(activePage string) bool {
+	return activePage == "accounts" || strings.HasPrefix(activePage, "accounts-")
 }
 
 templ sidebarScript() {
@@ -399,6 +399,12 @@ templ codeIcon() {
 templ keyIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
 		<path d="M216.57,39.43A80,80,0,0,0,83.91,120.78L28.69,176a15.86,15.86,0,0,0-4.69,11.31V216a16,16,0,0,0,16,16H72a8,8,0,0,0,8-8V208H96a8,8,0,0,0,8-8V184h16a8,8,0,0,0,5.66-2.34l9.56-9.57A80,80,0,0,0,216.57,39.43ZM224,96a63.65,63.65,0,0,1-21.41,47.66L192,129.24V112a8,8,0,0,0-2.34-5.66l-48-48A8,8,0,0,0,136,56H118.76L108.34,45.57A64,64,0,0,1,224,96ZM71.31,216H40V184.69l55.22-55.22,32,32ZM144,80a16,16,0,1,1,16,16A16,16,0,0,1,144,80Z"></path>
+	</svg>
+}
+
+templ sidebarAccountsIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216V96H40ZM40,200V112H216v88Z"></path>
 	</svg>
 }
 

@@ -103,6 +103,7 @@ type PublishedAppDisplay struct {
 	SandboxRepoBranch   string // git branch
 	SandboxRepoDir      string // subdirectory within repo
 	SandboxRepoIsPublic bool   // true = show repo links; false = hide repo section
+	ReadmeHTML          string // pre-rendered markdown HTML from app readme
 }
 
 func formatPolicyType(t string) string {
@@ -193,8 +194,10 @@ templ appFullWidthCard(app PublishedAppDisplay, basePath string) {
 			</div>
 			// Overview pane
 			<div id={ "act-" + app.AppID + "-overview" } class="panel-tab-pane active">
-				if app.Description != "" {
-					<p class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ app.Description }</p>
+				if app.ReadmeHTML != "" {
+					<div class="prose">
+						@templ.Raw(app.ReadmeHTML)
+					</div>
 				} else {
 					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No description available.</p>
 				}

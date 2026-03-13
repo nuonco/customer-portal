@@ -5,7 +5,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // CustomerWithInstallCount represents a customer with their install count
@@ -27,17 +26,11 @@ type CustomersPageProps struct {
 // CustomersPage renders the customers list page
 templ CustomersPage(props CustomersPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex flex-1 overflow-hidden">
-			@components.CustomerSubnav(components.CustomerSubnavProps{
-				OrgID:         props.Org.ID,
-				ActiveSubPage: "customers",
-				BasePath:      props.BasePath,
-			})
 		<div class="stratus-page-content overflow-auto">
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
-					<h1 class="stratus-page-title">Customers</h1>
-					<p class="stratus-page-subtitle">View all customers who have installed your applications.</p>
+					<h1 class="stratus-page-title">Accounts</h1>
+					<p class="stratus-page-subtitle">View all accounts that have installed your applications.</p>
 				</div>
 			</div>
 			<div class="stratus-page-section">
@@ -59,16 +52,13 @@ templ CustomersPage(props CustomersPageProps) {
 							<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
 								<tr>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-										Customer
+										Account
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Email
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Installs
-									</th>
-									<th scope="col" class="relative px-6 py-3">
-										<span class="sr-only">Actions</span>
 									</th>
 								</tr>
 							</thead>
@@ -79,7 +69,7 @@ templ CustomersPage(props CustomersPageProps) {
 									}
 								} else {
 									<tr>
-										<td colspan="4" class="px-6 py-8 text-center">
+										<td colspan="3" class="px-6 py-8 text-center">
 											<p class="text-cool-grey-500 dark:text-cool-grey-400">
 												No customers found matching "{ props.SearchQuery }"
 											</p>
@@ -94,7 +84,6 @@ templ CustomersPage(props CustomersPageProps) {
 				}
 			</div>
 		</div>
-		</div>
 	}
 }
 
@@ -106,7 +95,7 @@ templ CustomersTableBody(customers []CustomerWithInstallCount, orgID, basePath, 
 		}
 	} else {
 		<tr>
-			<td colspan="4" class="px-6 py-8 text-center">
+			<td colspan="3" class="px-6 py-8 text-center">
 				<p class="text-cool-grey-500 dark:text-cool-grey-400">
 					No customers found matching "{ searchQuery }"
 				</p>
@@ -116,10 +105,7 @@ templ CustomersTableBody(customers []CustomerWithInstallCount, orgID, basePath, 
 }
 
 templ customerTableRow(customer CustomerWithInstallCount, orgID, basePath string) {
-	<tr
-		class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 cursor-pointer"
-		onclick={ templ.ComponentScript{Call: fmt.Sprintf("window.location.href='%s/orgs/%s/customers/%s'", basePath, orgID, customer.ID)} }
-	>
+	<tr class="hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
 		<td class="px-6 py-4 whitespace-nowrap">
 			<div class="flex items-center">
 				<div class="flex-shrink-0 h-10 w-10 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center">
@@ -141,14 +127,6 @@ templ customerTableRow(customer CustomerWithInstallCount, orgID, basePath string
 				{ fmt.Sprintf("%d", customer.InstallCount) }
 			</span>
 		</td>
-		<td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-			<a
-				href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/customers/%s", basePath, orgID, customer.ID)) }
-				class="text-primary-600 dark:text-primary-400 hover:text-primary-900 dark:hover:text-primary-300"
-			>
-				View Details &rarr;
-			</a>
-		</td>
 	</tr>
 }
 
@@ -157,9 +135,9 @@ templ emptyCustomersState() {
 		<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
 			@usersIcon()
 		</div>
-		<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Customers Yet</h3>
+		<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Accounts Yet</h3>
 		<p class="text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto">
-			No customers have installed your applications yet. Share your install links to get started.
+			No accounts have installed your applications yet. Share your install links to get started.
 		</p>
 	</div>
 }

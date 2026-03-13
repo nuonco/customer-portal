@@ -376,9 +376,9 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var16 templ.SafeURL
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)))
+			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/overview", basePath, orgID, app.ID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 160, Col: 92}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 160, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {

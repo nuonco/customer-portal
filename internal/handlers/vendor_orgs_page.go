@@ -19,7 +19,7 @@ func (h *Handler) OrgsPage(c *gin.Context) {
 
 	// If user has orgs, redirect to the first org's customers page
 	if len(orgs) > 0 {
-		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/customers", h.basePath, orgs[0].ID))
+		c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, orgs[0].ID))
 		return
 	}
 

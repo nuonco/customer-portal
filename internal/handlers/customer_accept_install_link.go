@@ -7,14 +7,25 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 func (h *Handler) AcceptInstallLink(c *gin.Context) {
+	htmx := isHTMXRequest(c)
+
+	respondError := func(status int, msg string) {
+		if htmx {
+			h.RenderTempl(c, status, partials.InstallFormError(msg))
+			return
+		}
+		c.JSON(status, gin.H{"error": msg})
+	}
+
 	// REQUIRE authentication - user must be logged in first
 	customer := h.tryGetLoggedInUser(c)
 	if customer == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please log in first"})
+		respondError(http.StatusUnauthorized, "Please log in first")
 		return
 	}
 
@@ -26,19 +37,19 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Find the install link
 	var link models.InstallLink
 	if err := h.db.Preload("NuonOrg").Where("sha = ?", req.SHA).First(&link).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Install link not found"})
+		respondError(http.StatusNotFound, "Install link not found")
 		return
 	}
 
 	if link.Used {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Install link already used"})
+		respondError(http.StatusBadRequest, "Install link already used")
 		return
 	}
 
@@ -52,7 +63,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	// Get vendor inputs from link
 	vendorInputs, err := link.GetVendorInputs()
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to read vendor inputs"})
+		respondError(http.StatusInternalServerError, "Failed to read vendor inputs")
 		return
 	}
 
@@ -68,7 +79,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	// Initialize Nuon client with the org's credentials
 	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to initialize Nuon client: %v", err)})
+		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to initialize Nuon client: %v", err))
 		return
 	}
 
@@ -81,7 +92,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	// Create the install via Nuon API with merged inputs
 	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, mergedInputs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
+		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to create install via Nuon API: %v", err))
 		return
 	}
 
@@ -107,21 +118,29 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	}
 
 	if err := h.db.Create(install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store install locally"})
+		respondError(http.StatusInternalServerError, "Failed to store install locally")
 		return
 	}
 
 	// Mark link as used
 	link.Used = true
 	if err := h.db.Save(&link).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update install link"})
+		respondError(http.StatusInternalServerError, "Failed to update install link")
 		return
 	}
 
 	// Generate JWT token for the customer (customer is already *models.User)
 	token, _, err := h.auth.TokenGenerator(customer)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		respondError(http.StatusInternalServerError, "Failed to generate authentication token")
+		return
+	}
+
+	if htmx {
+		basePath := h.basePath
+		c.SetCookie("jwt", token, 86400, "/", "", false, false)
+		c.Header("HX-Redirect", basePath+"/installs/"+install.ID)
+		c.Status(http.StatusOK)
 		return
 	}
 

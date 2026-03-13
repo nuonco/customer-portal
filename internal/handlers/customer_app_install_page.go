@@ -53,8 +53,10 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	nuonClient, clientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if clientErr == nil {
 		app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
-		if appErr == nil && app != nil && app.Name != "" {
-			appName = app.Name
+		if appErr == nil && app != nil {
+			if dn := appDisplayName(app); dn != "" {
+				appName = dn
+			}
 		}
 		apiOrg, orgErr := nuonClient.GetOrg(c.Request.Context())
 		if orgErr == nil && apiOrg != nil && apiOrg.Name != "" {

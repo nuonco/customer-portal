@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
@@ -32,6 +33,11 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
 	display.LogoLightBase64 = publishedApp.LogoLightBase64
 	display.LogoDarkBase64 = publishedApp.LogoDarkBase64
+	if publishedApp.OverviewMarkdown != "" {
+		if html, err := markdown.Render([]byte(publishedApp.OverviewMarkdown)); err == nil {
+			display.ReadmeHTML = html
+		}
+	}
 	display.Status = publishedApp.Status
 	if display.Status == "" {
 		display.Status = "published"

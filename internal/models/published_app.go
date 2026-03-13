@@ -17,11 +17,12 @@ type PublishedApp struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	Status          string  `gorm:"default:'published'" json:"status"` // "published" or "coming_soon"
-	SortOrder       int     `gorm:"default:0" json:"sort_order"`
-	LogoLightBase64 string  `gorm:"type:text" json:"logo_light_base64"` // base64 data URI for light mode
-	LogoDarkBase64  string  `gorm:"type:text" json:"logo_dark_base64"`  // base64 data URI for dark mode
-	NuonOrg         NuonOrg `gorm:"foreignKey:OrgID" json:"nuon_org,omitempty"`
+	Status           string  `gorm:"default:'published'" json:"status"` // "published" or "coming_soon"
+	SortOrder        int     `gorm:"default:0" json:"sort_order"`
+	LogoLightBase64  string  `gorm:"type:text" json:"logo_light_base64"` // base64 data URI for light mode
+	LogoDarkBase64   string  `gorm:"type:text" json:"logo_dark_base64"`  // base64 data URI for dark mode
+	OverviewMarkdown string  `gorm:"type:text" json:"overview_markdown"` // vendor-authored markdown overview
+	NuonOrg          NuonOrg `gorm:"foreignKey:OrgID" json:"nuon_org,omitempty"`
 }
 
 func (p *PublishedApp) BeforeCreate(tx *gorm.DB) error {

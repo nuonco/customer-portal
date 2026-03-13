@@ -75,12 +75,12 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 
 	props := vendorpages.CustomersPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:            org.Name + " - Customers",
-			ActivePage:       "customers",
+			Title:            org.Name + " - Accounts",
+			ActivePage:       "accounts",
 			User:             user,
 			CurrentOrg:       org,
 			Orgs:             allOrgs,
-			Breadcrumbs:      []partials.Breadcrumb{{Text: "Customers", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "Accounts", Path: fmt.Sprintf("%s/orgs/%s/customers", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
 			DashboardURL:     h.dashboardURL,
@@ -96,5 +96,3 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.CustomersPage(props))
 }
-
-// CustomerDetailPage displays details for a specific customer and their installs

@@ -136,10 +136,10 @@ templ AppSubnav(props AppSubnavProps) {
 		ActiveSubPage: props.ActiveSubPage,
 		Items: []SubnavItem{
 			{
-				URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", props.BasePath, props.OrgID, props.AppID),
-				Label:     "Inputs",
-				Icon:      inputsIcon(),
-				ActiveKey: "inputs",
+				URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/overview", props.BasePath, props.OrgID, props.AppID),
+				Label:     "Overview",
+				Icon:      overviewIcon(),
+				ActiveKey: "overview",
 			},
 			{
 				URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/logo", props.BasePath, props.OrgID, props.AppID),
@@ -147,36 +147,49 @@ templ AppSubnav(props AppSubnavProps) {
 				Icon:      logoIcon(),
 				ActiveKey: "logo",
 			},
+			{
+				URL:       fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", props.BasePath, props.OrgID, props.AppID),
+				Label:     "Inputs",
+				Icon:      inputsIcon(),
+				ActiveKey: "inputs",
+			},
 		},
 	})
 }
 
-// CustomerSubnavProps for the customer management sub-navigation sidebar
-type CustomerSubnavProps struct {
+// AccountSubnavProps for the account detail sub-navigation sidebar
+type AccountSubnavProps struct {
 	OrgID         string
+	AccountID     string
 	ActiveSubPage string
 	BasePath      string
 }
 
-// CustomerSubnav renders the customer management sub-navigation sidebar
-templ CustomerSubnav(props CustomerSubnavProps) {
+// AccountSubnav renders the account detail sub-navigation sidebar
+templ AccountSubnav(props AccountSubnavProps) {
 	@PageSubnav(PageSubnavProps{
 		ActiveSubPage: props.ActiveSubPage,
 		Items: []SubnavItem{
 			{
-				URL:       fmt.Sprintf("%s/orgs/%s/customers", props.BasePath, props.OrgID),
-				Label:     "Customers",
+				URL:       fmt.Sprintf("%s/orgs/%s/accounts/%s/members", props.BasePath, props.OrgID, props.AccountID),
+				Label:     "Members",
 				Icon:      membersIcon(),
-				ActiveKey: "customers",
+				ActiveKey: "members",
 			},
 			{
-				URL:       fmt.Sprintf("%s/orgs/%s/accounts", props.BasePath, props.OrgID),
-				Label:     "Accounts",
+				URL:       fmt.Sprintf("%s/orgs/%s/accounts/%s/installs", props.BasePath, props.OrgID, props.AccountID),
+				Label:     "Installs",
 				Icon:      accountsIcon(),
-				ActiveKey: "accounts",
+				ActiveKey: "installs",
 			},
 		},
 	})
+}
+
+templ membersIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M164.47,195.63a8,8,0,0,1-6.7,12.37H10.23a8,8,0,0,1-6.7-12.37,95.83,95.83,0,0,1,47.22-37.71,60,60,0,1,1,66.5,0A95.83,95.83,0,0,1,164.47,195.63ZM259.8,157.92a95.83,95.83,0,0,0-47.22-37.71A60,60,0,0,0,168.09,36.93a8,8,0,0,0-3.78,15.53,44,44,0,0,1,0,83.08,8,8,0,0,0-3.78,15.53,95.83,95.83,0,0,1,47.22,37.71,8,8,0,0,0,6.7,3.22,7.9,7.9,0,0,0,4.3-1.26A8,8,0,0,0,259.8,157.92Z"></path>
+	</svg>
 }
 
 templ accountsIcon() {
@@ -210,13 +223,6 @@ templ dnsIcon() {
 	</svg>
 }
 
-// Icon components for team sub-nav
-templ membersIcon() {
-	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
-		<path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"></path>
-	</svg>
-}
-
 // Icon components for app sub-nav
 templ inputsIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
@@ -224,6 +230,12 @@ templ inputsIcon() {
 	</svg>
 }
 
+
+templ overviewIcon() {
+	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+		<path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200ZM184,96a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,96Zm0,32a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,128Zm0,32a8,8,0,0,1-8,8H80a8,8,0,0,1,0-16h96A8,8,0,0,1,184,160Z"></path>
+	</svg>
+}
 
 templ logoIcon() {
 	<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">

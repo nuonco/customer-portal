@@ -14,7 +14,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
-func (h *Handler) AppLogoPage(c *gin.Context) {
+func (h *Handler) AppOverviewPage(c *gin.Context) {
 	user := h.GetFreshUser(c)
 	appID := c.Param("app_id")
 
@@ -24,7 +24,6 @@ func (h *Handler) AppLogoPage(c *gin.Context) {
 		return
 	}
 
-	// Load app name from Nuon API (best effort)
 	appInfo := vendorpages.AppInfo{ID: appID}
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err == nil {
@@ -33,14 +32,13 @@ func (h *Handler) AppLogoPage(c *gin.Context) {
 		}
 	}
 
-	// Load existing logos from PublishedApp record (may not exist yet)
 	var publishedApp models.PublishedApp
 	h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp)
 
 	allOrgs := h.GetUserOrgs(user.ID)
-	props := vendorpages.AppLogoPageProps{
+	props := vendorpages.AppOverviewPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:            "App - Logo",
+			Title:            "App - Overview",
 			ActivePage:       "apps",
 			User:             user,
 			CurrentOrg:       org,
@@ -53,13 +51,10 @@ func (h *Handler) AppLogoPage(c *gin.Context) {
 			CSSPath:          assets.VendorCSSPath(),
 			IsSuperuser:      h.isSuperuser(user),
 		},
-		Org:             *org,
-		App:             appInfo,
-		LogoLightBase64: publishedApp.LogoLightBase64,
-		LogoDarkBase64:  publishedApp.LogoDarkBase64,
+		Org:              *org,
+		App:              appInfo,
+		OverviewMarkdown: publishedApp.OverviewMarkdown,
 	}
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.AppLogoPage(props))
+	h.RenderTempl(c, http.StatusOK, vendorpages.AppOverviewPage(props))
 }
-
-// UpdateAppLogo saves light and dark logos for a published app

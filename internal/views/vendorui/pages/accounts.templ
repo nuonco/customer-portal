@@ -5,7 +5,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 )
 
 // AccountWithCounts represents a customer account with member and install counts
@@ -28,12 +27,6 @@ type AccountsPageProps struct {
 // AccountsPage renders the customer accounts list page
 templ AccountsPage(props AccountsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
-		<div class="flex flex-1 overflow-hidden">
-			@components.CustomerSubnav(components.CustomerSubnavProps{
-				OrgID:         props.Org.ID,
-				ActiveSubPage: "accounts",
-				BasePath:      props.BasePath,
-			})
 		<div class="stratus-page-content overflow-auto">
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
@@ -94,7 +87,6 @@ templ AccountsPage(props AccountsPageProps) {
 					@emptyAccountsState()
 				}
 			</div>
-		</div>
 		</div>
 	}
 }

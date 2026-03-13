@@ -136,7 +136,7 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Vendor Theme Overrides -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Mermaid diagram rendering --><script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t});\n\t\t\t</script><!-- Vendor Theme Overrides -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -208,7 +208,7 @@ func Layout(props LayoutProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 131, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 138, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -226,7 +226,7 @@ func Layout(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 134, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 141, Col: 97}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -479,7 +479,7 @@ func createOrgModal(basePath string) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 423, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 430, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

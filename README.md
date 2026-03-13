@@ -77,6 +77,7 @@ General vendor journeys.
 - **Publish App**: Vendors can set each app's catalog status to "Published", "Coming Soon", or "Unpublished" via a dropdown on the Apps page. Published apps appear on the customer `/apps` page without requiring an install link. Coming-soon apps appear in the catalog with a badge but cannot be installed.
 - **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of published apps in the customer catalog. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
 - **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
+- **Import Install to Account**: From the account detail page, vendors can search for existing org installs (unassigned or in other accounts) and assign them to a customer account. This is useful for migrating legacy installs that lack account associations.
 
 ✅ **Customer Features**
 
@@ -85,10 +86,10 @@ General vendor journeys.
 - Install creation flow
 - Install management dashboard
 - Install status tracking
-- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card.
+- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 - **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
-- **Install Visibility**: Install owners can toggle visibility between "account" (shared with all account members) and "private" (only visible to the owner).
+- **Install Visibility**: Install owners can toggle visibility between "account" (shared with all account members) and "private" (only visible to the owner). Installs must belong to a customer account to be visible; legacy installs without an account association are excluded from all listings.
 
 ✅ **User Interface**
 
@@ -224,7 +225,7 @@ There are some conventions that are specific to the admin UI.
 
 - **Rendering**: Server-side Golang templates, defined using Templ
 - **Styling**: Tailwind CSS for responsive design, with separate design systems for the vendor and the customer UIs
-- **JavaScript**: Vanilla JS for API interactions, HTMX for loading templates from the backend
+- **JavaScript**: HTMX for dynamic interactions (form submissions, partial loading, navigation); minimal vanilla JS
 - **State**: JWT tokens stored in browser cookies
 
 ### Models
@@ -412,7 +413,11 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/orgs/:org_id/customers` - List organization customers
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
 - `GET /admin/orgs/:org_id/accounts` - List customer company accounts
-- `GET /admin/orgs/:org_id/accounts/:account_id` - Account detail with members and installs
+- `GET /admin/orgs/:org_id/accounts/:account_id` - Redirects to `/members`
+- `GET /admin/orgs/:org_id/accounts/:account_id/members` - Account members tab
+- `GET /admin/orgs/:org_id/accounts/:account_id/installs` - Account installs tab
+- `GET /admin/orgs/:org_id/accounts/:account_id/installs/search` - Search org installs to assign to account (HTMX)
+- `POST /admin/orgs/:org_id/accounts/:account_id/installs/assign` - Assign an existing install to the account
 - `GET /admin/orgs/:org_id/team/members` - Team page (members + invites tabs)
 - `GET /admin/orgs/:org_id/team/invites` - Redirects to team/members
 - `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
@@ -455,6 +460,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /apps/:app_id/install` - Install form for a published app
 - `POST /apps/:app_id/install` - Create install from a published app
 - `GET /apps/:app_id/config` - Get app config for a published app (unauthenticated)
+- `GET /install-form-fields` - Get install form HTML partials (region selector + input fields) via `?sha=X` or `?app_id=X`
 - `GET /custom/css/:org_id` - Serve organization-specific CSS
 - `GET /custom/assets/:org_id/*path` - Serve organization-specific assets
 - `GET /installs/:install_id/panel` - Install detail panel (HTMX)

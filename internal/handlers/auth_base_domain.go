@@ -7,12 +7,14 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	gojwt "github.com/golang-jwt/jwt/v4"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"gorm.io/gorm"
 )
 
 // BaseDomainLogin initiates OIDC login from the base domain.
@@ -232,22 +234,42 @@ func (h *Handler) CompleteSubdomainAuth(c *gin.Context) {
 		true,  // httpOnly
 	)
 
-	// Auto-create account for new customers (no existing account membership)
+	// Auto-join invited account or auto-create account for new users (any role)
 	claims, ok := parsedToken.Claims.(gojwt.MapClaims)
 	if ok {
-		if role, _ := claims["role"].(string); role == string(models.RoleCustomer) {
-			if userID, _ := claims["user_id"].(string); userID != "" {
-				subdomainStr := subdomain.(string)
-				var org models.NuonOrg
-				if h.db.Where("subdomain = ?", subdomainStr).First(&org).Error == nil {
-					var count int64
-					h.db.Model(&models.CustomerAccountMember{}).
-						Where("user_id = ? AND org_id = ?", userID, org.ID).
-						Count(&count)
-					if count == 0 {
-						// Look up user for their name
-						var user models.User
-						if h.db.Where("id = ?", userID).First(&user).Error == nil {
+		if userID, _ := claims["user_id"].(string); userID != "" {
+			subdomainStr := subdomain.(string)
+			var org models.NuonOrg
+			if h.db.Where("subdomain = ?", subdomainStr).First(&org).Error == nil {
+				var count int64
+				h.db.Model(&models.CustomerAccountMember{}).
+					Where("user_id = ? AND org_id = ?", userID, org.ID).
+					Count(&count)
+				if count == 0 {
+					var user models.User
+					if h.db.Where("id = ?", userID).First(&user).Error == nil {
+						// Check for pending invites first
+						var invite models.CustomerAccountInvite
+						if h.db.Where("email = ? AND org_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", user.Email, org.ID).First(&invite).Error == nil {
+							// Process invite — create membership and mark invite used
+							h.db.Transaction(func(tx *gorm.DB) error {
+								newMember := &models.CustomerAccountMember{
+									AccountID: invite.AccountID,
+									UserID:    user.ID,
+									OrgID:     invite.OrgID,
+									Role:      models.CustomerAccountRoleMember,
+								}
+								if err := tx.Create(newMember).Error; err != nil {
+									return err
+								}
+								now := time.Now()
+								invite.UsedByUserID = &user.ID
+								invite.UsedAt = &now
+								return tx.Save(&invite).Error
+							})
+							c.SetCookie("active_account_id", invite.AccountID, 60*60*24*365, "/", "", false, true)
+						} else {
+							// No invite — auto-create account
 							accountName := "My Account"
 							if user.Name != "" {
 								firstName := strings.Split(user.Name, " ")[0]

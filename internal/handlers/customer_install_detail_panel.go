@@ -75,7 +75,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		if err == nil {
 			app, err := appClient.GetApp(context.Background(), install.GetAppID())
 			if err == nil && app != nil {
-				appName = app.Name
+				appName = appDisplayName(app)
 				if len(app.AppConfigs) > 0 {
 					appConfigVersion = app.AppConfigs[0].Version
 					appConfigUpdatedAt = app.AppConfigs[0].UpdatedAt

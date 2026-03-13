@@ -157,7 +157,7 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status s
 			</td>
 			<td class="px-6 py-4 whitespace-nowrap">
 				<a
-					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/inputs", basePath, orgID, app.ID)) }
+					href={ templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/overview", basePath, orgID, app.ID)) }
 					class="group"
 				>
 					<div class="text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400">{ app.Name }</div>

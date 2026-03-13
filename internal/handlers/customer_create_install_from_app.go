@@ -7,13 +7,24 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 func (h *Handler) CreateInstallFromApp(c *gin.Context) {
+	htmx := isHTMXRequest(c)
+
+	respondError := func(status int, msg string) {
+		if htmx {
+			h.RenderTempl(c, status, partials.InstallFormError(msg))
+			return
+		}
+		c.JSON(status, gin.H{"error": msg})
+	}
+
 	customer := h.tryGetLoggedInUser(c)
 	if customer == nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Please log in first"})
+		respondError(http.StatusUnauthorized, "Please log in first")
 		return
 	}
 
@@ -27,25 +38,25 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		respondError(http.StatusBadRequest, err.Error())
 		return
 	}
 
 	org, err := h.getOrgForCustomerPage(c)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
+		respondError(http.StatusNotFound, "Organization not found")
 		return
 	}
 
 	// Verify app is published for this org
 	var publishedApp models.PublishedApp
 	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "App not found or not published"})
+		respondError(http.StatusNotFound, "App not found or not published")
 		return
 	}
 
 	if publishedApp.Status == "coming_soon" {
-		c.JSON(http.StatusForbidden, gin.H{"error": "This app is not yet available for installation"})
+		respondError(http.StatusForbidden, "This app is not yet available for installation")
 		return
 	}
 
@@ -57,7 +68,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to initialize Nuon client: %v", err)})
+		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to initialize Nuon client: %v", err))
 		return
 	}
 
@@ -73,7 +84,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 
 	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, mergedInputs)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to create install via Nuon API: %v", err)})
+		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to create install via Nuon API: %v", err))
 		return
 	}
 
@@ -104,13 +115,21 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	}
 
 	if err := h.db.Create(install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store install locally"})
+		respondError(http.StatusInternalServerError, "Failed to store install locally")
 		return
 	}
 
 	token, _, err := h.auth.TokenGenerator(customer)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate authentication token"})
+		respondError(http.StatusInternalServerError, "Failed to generate authentication token")
+		return
+	}
+
+	if htmx {
+		basePath := h.basePath
+		c.SetCookie("jwt", token, 86400, "/", "", false, false)
+		c.Header("HX-Redirect", basePath+"/installs/"+install.ID)
+		c.Status(http.StatusOK)
 		return
 	}
 

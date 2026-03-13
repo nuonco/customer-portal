@@ -193,11 +193,10 @@ func RequireInstallOwnership(db *gorm.DB) gin.HandlerFunc {
 
 		var err error
 		if activeMember != nil {
-			err = db.Where("id = ? AND ((user_id = ? AND (customer_account_id IS NULL OR customer_account_id = ?)) OR (customer_account_id = ? AND visibility = ?))",
+			err = db.Where("id = ? AND ((user_id = ? AND customer_account_id = ?) OR (customer_account_id = ? AND visibility = ?))",
 				installID, user.ID, activeMember.AccountID, activeMember.AccountID, models.VisibilityAccount).First(&install).Error
 		} else {
-			err = db.Where("id = ? AND user_id = ? AND customer_account_id IS NULL",
-				installID, user.ID).First(&install).Error
+			err = db.Where("1 = 0").First(&install).Error
 		}
 
 		if err != nil {

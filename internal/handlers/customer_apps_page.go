@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
@@ -39,6 +40,11 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
 		display.LogoLightBase64 = pa.LogoLightBase64
 		display.LogoDarkBase64 = pa.LogoDarkBase64
+		if pa.OverviewMarkdown != "" {
+			if html, err := markdown.Render([]byte(pa.OverviewMarkdown)); err == nil {
+				display.ReadmeHTML = html
+			}
+		}
 		display.Status = pa.Status
 		if display.Status == "" {
 			display.Status = "published"
@@ -71,8 +77,8 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 				}
 				if nuonClientErr == nil {
 					if app, err := nuonClient.GetApp(c.Request.Context(), pa.AppID); err == nil && app != nil {
-						if app.Name != "" {
-							display.AppName = app.Name
+						if dn := appDisplayName(app); dn != "" {
+							display.AppName = dn
 						}
 						if app.RunnerConfig != nil {
 							display.Platform = string(app.RunnerConfig.AppRunnerType)
@@ -130,8 +136,8 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		return display
 	}
 
-	if app.Name != "" {
-		display.AppName = app.Name
+	if appDisplayName(app) != "" {
+		display.AppName = appDisplayName(app)
 	}
 	if app.RunnerConfig != nil {
 		display.Platform = string(app.RunnerConfig.AppRunnerType)
@@ -338,6 +344,12 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 				addRole(r, label)
 			}
 		}
+
+	}
+
+	// Fall back to description if no readme
+	if display.ReadmeHTML == "" && display.Description != "" {
+		display.ReadmeHTML = "<p>" + display.Description + "</p>"
 	}
 
 	// Process policies config (separate call — SDK model drops nested Policies array)
