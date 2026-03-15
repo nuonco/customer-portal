@@ -8,6 +8,23 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
+// ProvisionPhase represents a logical grouping of workflow steps
+type ProvisionPhase struct {
+	Name           string
+	Status         string // "not_started", "in_progress", "completed", "failed"
+	Steps          []PhaseStep
+	ActiveStepName string // name of in-progress step within this phase
+	StepProgress   string // e.g. "Step 2 of 3"
+}
+
+// PhaseStep represents a single step within a provision phase
+type PhaseStep struct {
+	Name      string
+	Status    string
+	ID        string // step ID for retry endpoint
+	Retryable bool
+}
+
 // WorkflowDataPanel represents workflow data for the panel (avoids import cycle)
 type WorkflowDataPanel struct {
 	ID                       string
@@ -31,6 +48,7 @@ type WorkflowDataPanel struct {
 	TotalSteps               int    // Total number of steps in workflow
 	FailedStepID             string // ID of the failed step (for retry)
 	FailedStepName           string // Name of the failed step (for display)
+	FailedStepRetryable      bool   // Whether the failed step can be retried
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -78,6 +96,8 @@ type InstallDetailPanelProps struct {
 	InstallConfigUpdatedAt   string
 	ProvisionWorkflow        *WorkflowDataPanel
 	CloudFormationLink string
+	ProvisionPhases    []ProvisionPhase
+	HasActiveProvision bool
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -147,15 +167,27 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				</div>
 			</div>
 		}
-		<!-- Active Provision Banner (polls and shows when workflow is active) -->
+		<!-- Active Provision / Accordion -->
 		if !props.APIDeletedError {
-			@ProvisionBanner(props.ProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor, false)
+			if props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
+				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
+			} else {
+				<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows -->
+				<div
+					id="active-provision-banner"
+					hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
+					hx-trigger="every 5s"
+					hx-swap="outerHTML"
+				></div>
+			}
 		}
-		<!-- App Config + Platform (side by side) -->
-		<div class="grid grid-cols-2 gap-4">
-			@appConfigCard(props)
-			@platformCard(platform, props.Install.Region)
-		</div>
+		<!-- App Config + Platform (side by side) — hidden during active provision -->
+		if !(props.HasActiveProvision && len(props.ProvisionPhases) > 0) {
+			<div class="grid grid-cols-2 gap-4">
+				@appConfigCard(props)
+				@platformCard(platform, props.Install.Region)
+			</div>
+		}
 	</div>
 	<!-- Config data for JavaScript -->
 	<div
@@ -204,74 +236,333 @@ templ platformCard(platform string, region string) {
 	</div>
 }
 
-// ProvisionBanner renders a banner for the most recent provision workflow at the top of the overview
-templ ProvisionBanner(workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string, apiError bool) {
+// ProvisionAccordion renders the phased provision progress view
+templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
 	<div
 		id="active-provision-banner"
 		hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
-		if workflow != nil && (workflow.Status == "completed" || workflow.Status == "error" || workflow.Status == "cancelled") {
-			hx-trigger="every 30s"
-		} else {
-			hx-trigger="every 5s"
-		}
-		hx-swap="outerHTML"
+		hx-trigger="every 5s"
+		hx-ext="morph"
+		hx-swap="morph:outerHTML"
 		if workflow != nil {
 			data-workflow-status={ workflow.Status }
 		}
 	>
-		if workflow != nil && workflow.ID != "" {
-			<div class="space-y-4">
-				@workflowCardPanel(*workflow, installID, basePath, primaryColor)
-				if cloudFormationLink != "" {
-					<div class="callout p-4" style={ "border-radius: var(--theme-radius); background-color: color-mix(in srgb, var(--theme-primary) 10%, transparent); border: 1px solid color-mix(in srgb, var(--theme-primary) 30%, transparent)" }>
-						<div class="flex items-center justify-between">
-							<div>
-								<h3 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h3>
-								<p class="text-sm mt-1" style="color: color-mix(in srgb, var(--theme-primary) 80%, black)">Complete your infrastructure setup in AWS Console</p>
-							</div>
-							<a
-								href={ templ.SafeURL(cloudFormationLink) }
-								target="_blank"
-								rel="noopener noreferrer"
-								class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
-							>
-								Open in AWS
-								<i class="ph-bold ph-arrow-square-out text-base"></i>
-							</a>
-						</div>
-					</div>
-				}
-				if workflow.Status == "error" && workflow.FailedStepID != "" {
-					<div class="callout p-4" style="border-radius: var(--theme-radius); background-color: color-mix(in srgb, #ef4444 10%, transparent); border: 1px solid color-mix(in srgb, #ef4444 30%, transparent)">
-						<div class="flex items-center justify-between">
-							<div>
-								<h3 class="text-sm font-medium text-red-700 dark:text-red-400">Failed Step</h3>
-								<p class="text-sm mt-1 text-red-600 dark:text-red-300">{ workflow.FailedStepName }</p>
-							</div>
-							<button
-								type="button"
-								class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
-								style="background-color: #ef4444; border: 1px solid #dc2626"
-								data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry" }
-								onclick="retryFailedStep(this)"
-							>
-								Retry Step
-								<i class="ph-bold ph-arrow-clockwise text-base"></i>
-							</button>
-						</div>
-					</div>
-				}
-			</div>
-		} else if apiError {
-			<div class="alert-warning flex items-center gap-3" style="border-radius: var(--theme-radius)">
-				<i class="ph-bold ph-warning text-xl"></i>
-				<div>
-					<p class="text-sm font-medium">Unable to fetch workflow status</p>
-					<p class="text-xs opacity-75 mt-0.5">Retrying automatically...</p>
+		<!-- Failed step callout -->
+		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
+			<div class="card-base !p-0 mb-3" style="border-top: 2px solid #ef4444">
+				<!-- Header -->
+				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+					<h4 class="text-sm font-medium text-red-700 dark:text-red-400">Failed Step</h4>
+				</div>
+				<!-- Body -->
+				<div class="px-4 py-3">
+					<p class="text-xs text-[var(--theme-text-muted)]">Step name</p>
+					<p class="text-sm font-medium mt-1">{ workflow.FailedStepName }</p>
+				</div>
+				<!-- Footer -->
+				<div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
+					if workflow.FailedStepRetryable {
+						<p class="text-xs text-[var(--theme-text-muted)]">You can retry this step.</p>
+						<button
+							type="button"
+							class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
+							style="background-color: #ef4444; border: 1px solid #dc2626"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry" }
+							onclick="retryFailedStep(this)"
+						>
+							Retry Step
+							<i class="ph-bold ph-arrow-clockwise text-base"></i>
+						</button>
+					} else {
+						<p class="text-xs text-red-600 dark:text-red-300">This step cannot be retried. Please reprovision the install.</p>
+						<button
+							type="button"
+							class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
+							style="background-color: #ef4444; border: 1px solid #dc2626"
+							onclick="confirmReprovision()"
+						>
+							Reprovision
+							<i class="ph-bold ph-arrow-clockwise text-base"></i>
+						</button>
+					}
 				</div>
 			</div>
 		}
+		<!-- CloudFormation link -->
+		if cloudFormationLink != "" {
+			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
+				<!-- Header -->
+				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+					<h4 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h4>
+				</div>
+				<!-- Body -->
+				<div class="px-4 py-3">
+					<p class="text-xs text-[var(--theme-text-muted)]">Status</p>
+					<p class="text-sm font-medium mt-1">Complete setup in AWS Console</p>
+				</div>
+				<!-- Footer -->
+				<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
+					if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
+						<button
+							type="button"
+							class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
+						>
+							Approve Installation
+						</button>
+					}
+					if workflow != nil && workflow.CanCancel {
+						<button
+							type="button"
+							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+						>
+							Cancel
+						</button>
+					}
+					<a
+						href={ templ.SafeURL(cloudFormationLink) }
+						target="_blank"
+						rel="noopener noreferrer"
+						class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
+					>
+						Open in AWS
+						<i class="ph-bold ph-arrow-square-out text-base"></i>
+					</a>
+				</div>
+			</div>
+		}
+		if cloudFormationLink == "" && workflow != nil && (workflow.HasApprovalSteps || workflow.CanCancel) {
+			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
+				<!-- Header -->
+				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+					<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ workflow.CurrentStepName }</h4>
+					if workflow.CurrentStepType == "approval-awaiting" {
+						<span class="badge-warning text-xs px-2 py-0.5 rounded-full">Awaiting Approval</span>
+					} else if workflow.CurrentStepType == "in-progress" {
+						<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+							<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
+							In Progress
+						</span>
+					} else if workflow.CurrentStepType == "error" {
+						<span class="badge-error text-xs px-2 py-0.5 rounded-full">Failed</span>
+					} else {
+						<span class="badge-neutral text-xs px-2 py-0.5 rounded-full">Pending</span>
+					}
+				</div>
+				<!-- Body -->
+				<div class="px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+					if workflow.TotalSteps > 0 {
+						<p class="text-xs text-[var(--theme-text-muted)]">Step { fmt.Sprintf("%d", workflow.CurrentStepNumber) } of { fmt.Sprintf("%d", workflow.TotalSteps) }</p>
+					}
+					if workflow.CurrentStepType == "approval-awaiting" {
+						<p class="text-sm mt-1">This step requires your approval to continue.</p>
+					} else if workflow.CurrentStepType == "in-progress" {
+						<p class="text-sm mt-1">This step is currently running.</p>
+					} else {
+						<p class="text-sm mt-1">Waiting to start.</p>
+					}
+				</div>
+				<!-- Footer -->
+				<div class="flex items-center justify-end gap-2 px-4 py-3">
+					if workflow.HasApprovalSteps && workflow.CanApproveAll {
+						<button
+							type="button"
+							class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
+						>
+							Approve Installation
+						</button>
+					}
+					if workflow.CanCancel {
+						<button
+							type="button"
+							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
+							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+						>
+							Cancel
+						</button>
+					}
+				</div>
+			</div>
+		}
+		if workflow != nil && workflow.CurrentStepType == "initializing" {
+			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
+				<div class="flex items-center gap-3 px-4 py-3">
+					<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
+					<div>
+						<h4 class="text-sm font-medium">{ workflow.CurrentStepName }</h4>
+						<p class="text-xs text-[var(--theme-text-muted)] mt-0.5">Your install is being set up. This may take a moment.</p>
+					</div>
+				</div>
+			</div>
+		}
+		<div class="space-y-2 provision-accordion">
+			for i, phase := range phases {
+				@provisionPhaseAccordion(phase, i+1) {
+					<div class="space-y-1">
+						if len(phase.Steps) == 0 {
+							<div class="flex items-center gap-2 py-1 text-sm">
+								<i class="ph-bold ph-circle text-cool-grey-300 dark:text-cool-grey-600 text-sm"></i>
+								<span class="text-cool-grey-500 dark:text-cool-grey-400 italic">Waiting to start</span>
+							</div>
+						}
+						for _, step := range phase.Steps {
+							<div class="flex items-center gap-2 py-1 text-sm">
+								switch step.Status {
+								case "completed", "success", "approved":
+									<i class="ph-bold ph-check-circle text-green-500 dark:text-green-400 text-sm"></i>
+								case "in-progress":
+									<i class="ph-bold ph-circle-notch animate-spin text-blue-500 dark:text-blue-400 text-sm"></i>
+								case "approval-awaiting":
+									<i class="ph-bold ph-clock text-amber-500 dark:text-amber-400 text-sm"></i>
+								case "error":
+									<i class="ph-bold ph-x-circle text-red-500 dark:text-red-400 text-sm"></i>
+								default:
+									<i class="ph-bold ph-circle text-cool-grey-300 dark:text-cool-grey-600 text-sm"></i>
+								}
+								<span class={
+									"text-cool-grey-700 dark:text-cool-grey-300",
+									templ.KV("font-medium", step.Status == "in-progress" || step.Status == "approval-awaiting"),
+								}>{ step.Name }</span>
+							</div>
+						}
+					</div>
+				}
+			}
+		</div>
+		<!-- Open active/failed phase on first load; one-at-a-time toggle -->
+		<script>
+		(function(){
+			// Preserve <details> open state across idiomorph morph swaps
+			if(!window._apsMorphBound){
+				window._apsMorphBound = true;
+				var _apsOpenPhases = [];
+				var _apsPhaseStatuses = {};
+				document.body.addEventListener('htmx:beforeSwap', function(evt){
+					var el = evt.detail.target || evt.detail.elt;
+					if(!el || el.id !== 'active-provision-banner') return;
+					_apsOpenPhases = [];
+					_apsPhaseStatuses = {};
+					el.querySelectorAll('details.provision-phase').forEach(function(d){
+						var idx = d.getAttribute('data-phase-index');
+						if(d.open) _apsOpenPhases.push(idx);
+						_apsPhaseStatuses[idx] = d.getAttribute('data-phase-status');
+					});
+				});
+				document.body.addEventListener('htmx:afterSwap', function(evt){
+					var el = evt.detail.target || evt.detail.elt;
+					if(!el || el.id !== 'active-provision-banner') return;
+					var transitionTarget = null;
+					el.querySelectorAll('details.provision-phase').forEach(function(d){
+						var idx = d.getAttribute('data-phase-index');
+						var newStatus = d.getAttribute('data-phase-status');
+						var oldStatus = _apsPhaseStatuses[idx];
+						if(oldStatus && oldStatus !== newStatus &&
+						   (newStatus === 'in_progress' || newStatus === 'failed')){
+							transitionTarget = idx;
+						}
+					});
+					if(transitionTarget){
+						el.querySelectorAll('details.provision-phase').forEach(function(d){
+							if(d.getAttribute('data-phase-index') === transitionTarget){
+								d.setAttribute('open','');
+							} else {
+								d.removeAttribute('open');
+							}
+						});
+					} else {
+						el.querySelectorAll('details.provision-phase').forEach(function(d){
+							if(_apsOpenPhases.indexOf(d.getAttribute('data-phase-index')) >= 0){
+								d.setAttribute('open','');
+							}
+						});
+					}
+				});
+			}
+
+			// First-load: open the active or failed phase (only once)
+			if(!window._apsInit){
+				window._apsInit = true;
+				var phases = document.querySelectorAll('#active-provision-banner details.provision-phase');
+				phases.forEach(function(d){
+					var s = d.getAttribute('data-phase-status');
+					if(s === 'in_progress' || s === 'failed') d.setAttribute('open','');
+				});
+			}
+
+			// One-at-a-time toggle: close siblings when opening a phase
+			document.querySelectorAll('.provision-accordion').forEach(function(acc){
+				acc.addEventListener('toggle', function(e){
+					if(e.target.tagName==='DETAILS' && e.target.classList.contains('provision-phase') && e.target.open){
+						acc.querySelectorAll('details.provision-phase').forEach(function(d){
+							if(d!==e.target) d.removeAttribute('open');
+						});
+					}
+				}, true);
+			});
+		})();
+		</script>
 	</div>
+}
+
+// provisionPhaseAccordion renders a single phase as a details/summary accordion
+templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
+	<details
+		class="provision-phase"
+		data-phase-index={ fmt.Sprintf("%d", stepNumber) }
+		data-phase-status={ phase.Status }
+	>
+		<summary class="provision-phase-summary list-none [&::-webkit-details-marker]:hidden">
+			<div class="flex items-center gap-3 flex-1 min-w-0">
+				<!-- Step number circle with status icon -->
+				switch phase.Status {
+				case "completed":
+					<div class="provision-phase-circle provision-phase-completed">
+						<i class="ph-bold ph-check text-xs"></i>
+					</div>
+				case "in_progress":
+					<div class="provision-phase-circle provision-phase-in-progress">
+						<span class="text-xs font-semibold">{ fmt.Sprintf("%d", stepNumber) }</span>
+					</div>
+				case "failed":
+					<div class="provision-phase-circle provision-phase-failed">
+						<i class="ph-bold ph-x text-xs"></i>
+					</div>
+				default:
+					<div class="provision-phase-circle provision-phase-not-started">
+						<span class="text-xs font-semibold">{ fmt.Sprintf("%d", stepNumber) }</span>
+					</div>
+				}
+				<!-- Title and status -->
+				<div class="flex-1 min-w-0">
+					<span class="text-sm font-medium text-cool-grey-900 dark:text-white">{ phase.Name }</span>
+					if phase.StepProgress != "" && phase.Status == "in_progress" {
+						<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 ml-2">{ phase.StepProgress }</span>
+					}
+				</div>
+				<!-- Status badge -->
+				switch phase.Status {
+				case "completed":
+					<span class="badge-success text-xs">Completed</span>
+				case "in_progress":
+					<span class="badge-info text-xs">
+						<i class="ph-bold ph-circle-notch animate-spin text-xs mr-1"></i>
+						In Progress
+					</span>
+				case "failed":
+					<span class="badge-error text-xs">Failed</span>
+				default:
+					<span class="badge-neutral text-xs">Pending</span>
+				}
+			</div>
+			<i class="ph-bold ph-caret-down text-sm text-cool-grey-400 dark:text-cool-grey-500 provision-phase-chevron ml-2"></i>
+		</summary>
+		<div class="provision-phase-content">
+			{ children... }
+		</div>
+	</details>
 }
 
 // appConfigCard renders the app configuration card
@@ -340,7 +631,7 @@ func formatConfigDate(dateStr string) string {
 	return dateStr
 }
 
-// workflowCardPanel renders a workflow card for the panel
+// workflowCardPanel renders a workflow card for the panel (used by workflow history)
 templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primaryColor string) {
 	<div
 		id={ "workflow-" + workflow.ID }
@@ -631,6 +922,15 @@ templ installDetailPanelScripts() {
 					var modal = document.getElementById('confirm-modal');
 					modal.classList.add('hidden');
 
+					// If the target was the provision banner (swap:none), trigger immediate re-poll
+					var targetSel = evt.detail.elt.getAttribute('hx-target');
+					if (targetSel === '#active-provision-banner') {
+						var banner = document.querySelector('#active-provision-banner');
+						if (banner) {
+							htmx.trigger(banner, 'every 5s');
+						}
+					}
+
 					// Clean up HTMX attributes
 					evt.detail.elt.removeAttribute('hx-post');
 					evt.detail.elt.removeAttribute('hx-target');
@@ -640,17 +940,36 @@ templ installDetailPanelScripts() {
 
 			// Attach event listeners to workflow action buttons using event delegation
 			document.body.addEventListener('click', function(e) {
-				// Handle Approve Installation button
+				// Determine HTMX target based on button location
+				// Buttons inside the provision banner use swap:none and trigger a re-poll
+				var inBanner = !!e.target.closest('#active-provision-banner');
+				var target = inBanner ? '#active-provision-banner' : '#workflow-status-display';
+				var swap = inBanner ? 'none' : 'innerHTML';
+
+				// Handle Approve Installation button — no confirmation needed
 				if (e.target.classList.contains('workflow-approve-all-btn')) {
-					var endpoint = e.target.getAttribute('data-endpoint');
-					showWorkflowActionModal({
-						endpoint: endpoint,
-						target: '#workflow-status-display',
-						swap: 'innerHTML',
-						title: 'Approve Update?',
-						message: 'Are you sure you want to approve this update? This will automatically approve all steps.',
-						confirmText: 'Approve',
-						cancelText: 'Cancel'
+					var btn = e.target;
+					var endpoint = btn.getAttribute('data-endpoint');
+					btn.disabled = true;
+					btn.textContent = 'Approving...';
+					// Pause banner polling so HTMX doesn't replace the disabled button
+					var banner = document.querySelector('#active-provision-banner');
+					if (banner) { banner.removeAttribute('hx-trigger'); htmx.process(banner); }
+					fetch(endpoint, { method: 'POST' }).then(function(resp) {
+						if (resp.ok) {
+							showToast('Approved', 'success');
+						} else {
+							showToast('Failed to approve. Please try again.', 'error');
+						}
+					}).catch(function() {
+						showToast('Network error. Please try again.', 'error');
+					}).finally(function() {
+						// Resume polling — the next poll will render updated state
+						if (banner) {
+							banner.setAttribute('hx-trigger', 'every 5s');
+							htmx.process(banner);
+							htmx.trigger(banner, 'every 5s');
+						}
 					});
 				}
 				// Handle Cancel button
@@ -658,8 +977,8 @@ templ installDetailPanelScripts() {
 					var endpoint = e.target.getAttribute('data-endpoint');
 					showWorkflowActionModal({
 						endpoint: endpoint,
-						target: '#workflow-status-display',
-						swap: 'innerHTML',
+						target: target,
+						swap: swap,
 						title: 'Cancel Update?',
 						message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
 						confirmText: 'Cancel Update',

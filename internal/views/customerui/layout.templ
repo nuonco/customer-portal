@@ -48,6 +48,7 @@ templ Layout(props LayoutProps) {
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
+			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
 		</head>
 		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->

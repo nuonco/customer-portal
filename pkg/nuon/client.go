@@ -31,6 +31,22 @@ func IsUnauthorized(err error) bool {
 	return false
 }
 
+// statusCoder matches the unexported stderrResponse interface from nuon-go.
+type statusCoder interface {
+	IsCode(int) bool
+}
+
+// IsConflict reports whether err (or any error in its chain) is a 409 Conflict response.
+func IsConflict(err error) bool {
+	for err != nil {
+		if sc, ok := err.(statusCoder); ok && sc.IsCode(409) {
+			return true
+		}
+		err = errors.Unwrap(err)
+	}
+	return false
+}
+
 // Client wraps the Nuon API client for the installer app
 type Client struct {
 	client     nuonpkg.Client

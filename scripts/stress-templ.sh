@@ -6,7 +6,7 @@
 set -e
 cd "$(dirname "$0")/.."
 
-ITERATIONS=${1:-100}
+ITERATIONS=${1:-500}
 DELAY=${2:-0}
 FILES=$(find internal/views/customerui/theme -name '*.templ' -not -name '*_templ.go')
 COUNT=$(echo "$FILES" | wc -l | tr -d ' ')

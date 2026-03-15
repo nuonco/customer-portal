@@ -86,6 +86,7 @@ General vendor journeys.
 - Install creation flow
 - Install management dashboard
 - Install status tracking
+- **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes.
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 - **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
@@ -138,6 +139,8 @@ General vendor journeys.
 ## Development Guide
 
 Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. When run in dev mode, the service will listen on port :7331, and a dev proxy will listen to :8080. This is to support live reloading in the browser while making changes. When run in container mode, and in stage and prod, the service itself will listen to port :8080.
+
+The dev script uses `go build` + `exec` (instead of `go run`) so the compiled binary runs directly in the shell's process group. This ensures clean process cleanup when nuonctl restarts the service — no orphaned processes holding ports.
 
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
 

@@ -1,0 +1,70 @@
+package scripts
+
+// FormPersist saves and restores install form fields to sessionStorage,
+// keyed by app ID or install-link SHA. State is cleared on successful
+// submission or when the user opens a different app's install page.
+templ FormPersist(appKey string) {
+	<script>
+		(function() {
+			var KEY = "installForm:" + {{ appKey }};
+			var LAST_KEY = "installForm:lastKey";
+
+			// Clear stale data from a different app/link
+			var prev = sessionStorage.getItem(LAST_KEY);
+			if (prev && prev !== KEY) {
+				sessionStorage.removeItem(prev);
+			}
+			sessionStorage.setItem(LAST_KEY, KEY);
+
+			function saveForm() {
+				var form = document.getElementById("installForm");
+				if (!form) return;
+				var data = {};
+				form.querySelectorAll("input, select, textarea").forEach(function(el) {
+					if (!el.name || el.type === "hidden") return;
+					if (el.type === "checkbox") { data[el.name] = el.checked; }
+					else { data[el.name] = el.value; }
+				});
+				sessionStorage.setItem(KEY, JSON.stringify(data));
+			}
+
+			function restoreForm() {
+				var raw = sessionStorage.getItem(KEY);
+				if (!raw) return;
+				try { var data = JSON.parse(raw); } catch(e) { return; }
+				var form = document.getElementById("installForm");
+				if (!form) return;
+				Object.keys(data).forEach(function(name) {
+					var el = form.querySelector('[name="' + name + '"]');
+					if (!el || el.type === "hidden") return;
+					if (el.type === "checkbox") { el.checked = data[name]; }
+					else { el.value = data[name]; }
+				});
+			}
+
+			// Save on every input change
+			document.addEventListener("input", saveForm);
+			document.addEventListener("change", saveForm);
+
+			// Restore static fields immediately
+			restoreForm();
+
+			// Restore HTMX-loaded fields after they settle
+			document.addEventListener("htmx:afterSettle", function(evt) {
+				var id = evt.detail.target && evt.detail.target.id;
+				if (id === "installFormFields" || id === "installInputGroups") {
+					restoreForm();
+				}
+			});
+
+			// Clear on successful submit (HX-Redirect response)
+			document.addEventListener("htmx:afterRequest", function(evt) {
+				var xhr = evt.detail.xhr;
+				if (xhr && xhr.getResponseHeader("HX-Redirect")) {
+					sessionStorage.removeItem(KEY);
+					sessionStorage.removeItem(LAST_KEY);
+				}
+			});
+		})();
+	</script>
+}

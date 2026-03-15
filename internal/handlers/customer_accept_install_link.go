@@ -16,7 +16,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 
 	respondError := func(status int, msg string) {
 		if htmx {
-			h.RenderTempl(c, status, partials.InstallFormError(msg))
+			h.RenderTempl(c, http.StatusOK, partials.InstallFormError(msg))
 			return
 		}
 		c.JSON(status, gin.H{"error": msg})
@@ -92,6 +92,10 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	// Create the install via Nuon API with merged inputs
 	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, mergedInputs)
 	if err != nil {
+		if nuon.IsConflict(err) {
+			respondError(http.StatusConflict, "An install with that name already exists. Please choose a different name.")
+			return
+		}
 		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to create install via Nuon API: %v", err))
 		return
 	}

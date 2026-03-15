@@ -606,11 +606,13 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 	// Fourth pass: Find the failed step for retry functionality
 	var failedStepID string
 	var failedStepName string
+	var failedStepRetryable bool
 	if status == "error" && workflow.Steps != nil {
 		for _, step := range workflow.Steps {
 			if step.Status != nil && string(step.Status.Status) == "error" {
 				failedStepID = step.ID
 				failedStepName = formatStepName(step.Name)
+				failedStepRetryable = step.Retryable
 				break
 			}
 		}
@@ -647,6 +649,7 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		"total_steps":                 totalSteps,
 		"failed_step_id":              failedStepID,
 		"failed_step_name":            failedStepName,
+		"failed_step_retryable":       failedStepRetryable,
 	}
 }
 
@@ -792,6 +795,7 @@ func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
 		TotalSteps:               getInt(wf, "total_steps"),
 		FailedStepID:             getString(wf, "failed_step_id"),
 		FailedStepName:           getString(wf, "failed_step_name"),
+		FailedStepRetryable:      getBool(wf, "failed_step_retryable"),
 	}
 
 	// Handle time fields

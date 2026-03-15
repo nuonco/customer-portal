@@ -248,9 +248,9 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 					if input == nil {
 						continue
 					}
-					configuredBy := "vendor"
-					if customerInputSet[input.Name] {
-						configuredBy = "customer"
+					// Only show customer-facing inputs in the catalog
+					if !customerInputSet[input.Name] {
+						continue
 					}
 					gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
 						Name:         input.Name,
@@ -260,7 +260,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 						Required:     input.Required,
 						Sensitive:    input.Sensitive,
 						Default:      input.Default,
-						ConfiguredBy: configuredBy,
+						ConfiguredBy: "customer",
 					})
 				}
 				if len(gd.Inputs) > 0 {

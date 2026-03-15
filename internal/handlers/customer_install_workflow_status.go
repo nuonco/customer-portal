@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"slices"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -47,10 +50,9 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 				if !install.APIDeleted {
 					h.db.Model(install).Update("api_deleted", true)
 				}
-				// Install deleted from API - return empty state
-				theme, _ := models.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
-				primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
-				h.RenderTempl(c, http.StatusOK, partials.ProvisionBanner(nil, "", install.ID, h.basePath, primaryColor, false))
+				// Install deleted from API - return empty div that stops polling
+				c.Header("Content-Type", "text/html; charset=utf-8")
+				c.String(http.StatusOK, `<div id="active-provision-banner"></div>`)
 				return
 			}
 		}
@@ -59,20 +61,19 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	// Fetch most recent provision workflow (any status)
 	var provisionWorkflow *partials.WorkflowDataPanel
 	var cloudFormationLink string
-	var apiError bool
+	var rawWorkflow *nuonmodels.AppWorkflow
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		provClient, provErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
 			h.nuonAPIURL,
 		)
-		if provErr != nil {
-			apiError = true
-		} else {
+		if provErr == nil {
 			ctx := c.Request.Context()
 			bestWf, bestPanel := h.findMostRecentProvisionWorkflow(ctx, provClient, install.NuonInstallID)
 			if bestPanel != nil {
 				provisionWorkflow = bestPanel
+				rawWorkflow = bestWf
 
 				// Only check for CloudFormation link on active workflows
 				if isActiveWorkflowStatus(provisionWorkflow.Status) && bestWf != nil {
@@ -87,15 +88,63 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
-	// Always render banner (pass nil if no workflow, component handles it)
-	h.RenderTempl(c, http.StatusOK, partials.ProvisionBanner(
-		provisionWorkflow,
-		cloudFormationLink,
-		install.ID,
-		h.basePath,
-		primaryColor,
-		apiError,
-	))
+	// If active or failed provision, render accordion; otherwise render banner
+	if provisionWorkflow != nil && (isActiveWorkflowStatus(provisionWorkflow.Status) || provisionWorkflow.Status == "error") && rawWorkflow != nil {
+		phases := groupStepsIntoPhases(rawWorkflow)
+		if len(phases) > 0 {
+			h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
+				phases,
+				provisionWorkflow,
+				cloudFormationLink,
+				install.ID,
+				h.basePath,
+				primaryColor,
+			))
+			return
+		}
+	}
+
+	// If the most recent provision workflow reached a terminal state, transition install status
+	if provisionWorkflow != nil && (install.Status == models.StatusPending || install.Status == models.StatusProvisioning) {
+		switch provisionWorkflow.Status {
+		case "completed", "success":
+			h.db.Model(install).Update("status", models.StatusActive)
+			install.Status = models.StatusActive
+		case "cancelled":
+			h.db.Model(install).Update("status", models.StatusFailed)
+			install.Status = models.StatusFailed
+		}
+	}
+
+	// If install is pending and no active provision was rendered above, show placeholder
+	if install.Status == models.StatusPending {
+		placeholderWf := &partials.WorkflowDataPanel{
+			Name:            "Provision",
+			Status:          "pending",
+			StatusClass:     "badge-neutral",
+			CurrentStepName: "Preparing to provision",
+			CurrentStepType: "initializing",
+		}
+		placeholderPhases := []partials.ProvisionPhase{
+			{Name: "Install stack", Status: "not_started"},
+			{Name: "Provision sandbox", Status: "not_started"},
+			{Name: "Deploy app", Status: "not_started"},
+		}
+		h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
+			placeholderPhases, placeholderWf, "", install.ID, h.basePath, primaryColor,
+		))
+		return
+	}
+
+	// Fallback: return empty polling div
+	// For terminal workflows, poll slowly; for no-workflow-yet, poll every 5s
+	trigger := "every 5s"
+	if provisionWorkflow != nil && isTerminalWorkflowStatus(provisionWorkflow.Status) {
+		trigger = "every 30s"
+	}
+	c.Header("Content-Type", "text/html; charset=utf-8")
+	c.String(http.StatusOK, fmt.Sprintf(`<div id="active-provision-banner" hx-get="%s/installs/%s/workflow-status" hx-trigger="%s" hx-swap="outerHTML"></div>`,
+		h.basePath, install.ID, trigger))
 }
 
 // findMostRecentProvisionWorkflow finds the most recently created workflow across all provision types.
@@ -188,6 +237,100 @@ func isActiveWorkflowStatus(status string) bool {
 // isTerminalWorkflowStatus returns true if the workflow is in a final state.
 func isTerminalWorkflowStatus(status string) bool {
 	return status == "completed" || status == "success" || status == "error" || status == "cancelled"
+}
+
+// groupStepsIntoPhases groups workflow steps into logical provision phases.
+func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow) []partials.ProvisionPhase {
+	if wf == nil || len(wf.Steps) == 0 {
+		return nil
+	}
+
+	// Sort steps by index
+	steps := make([]*nuonmodels.AppWorkflowStep, len(wf.Steps))
+	copy(steps, wf.Steps)
+	slices.SortFunc(steps, func(a, b *nuonmodels.AppWorkflowStep) int {
+		return cmp.Compare(a.Idx, b.Idx)
+	})
+
+	phaseNames := []string{"Install stack", "Provision sandbox", "Deploy app"}
+
+	// Assign each step to a phase by index: 0-4 stack, 5-9 sandbox, 10+ components
+	phaseSteps := make([][]partials.PhaseStep, len(phaseNames))
+
+	for i, step := range steps {
+		stepStatus := ""
+		if step.Status != nil {
+			stepStatus = string(step.Status.Status)
+		}
+
+		ps := partials.PhaseStep{
+			Name:      formatStepName(step.Name),
+			Status:    stepStatus,
+			ID:        step.ID,
+			Retryable: step.Retryable,
+		}
+
+		switch {
+		case i < 5:
+			phaseSteps[0] = append(phaseSteps[0], ps)
+		case i < 10:
+			phaseSteps[1] = append(phaseSteps[1], ps)
+		default:
+			phaseSteps[2] = append(phaseSteps[2], ps)
+		}
+	}
+
+	// Build phases — always include all three for consistent layout
+	var phases []partials.ProvisionPhase
+	for i, name := range phaseNames {
+		phase := partials.ProvisionPhase{
+			Name:  name,
+			Steps: phaseSteps[i],
+		}
+
+		if len(phaseSteps[i]) == 0 {
+			phase.Status = "not_started"
+			phases = append(phases, phase)
+			continue
+		}
+
+		// Derive phase status from steps
+		allCompleted := true
+		activeStepIdx := -1
+		for j, s := range phase.Steps {
+			switch s.Status {
+			case "error":
+				phase.Status = "failed"
+				phase.ActiveStepName = s.Name
+				allCompleted = false
+			case "in-progress", "approval-awaiting":
+				if phase.Status != "failed" {
+					phase.Status = "in_progress"
+					phase.ActiveStepName = s.Name
+					activeStepIdx = j
+				}
+				allCompleted = false
+			case "completed", "success", "approved":
+				// continue
+			default:
+				allCompleted = false
+			}
+		}
+
+		if allCompleted && phase.Status == "" {
+			phase.Status = "completed"
+		} else if phase.Status == "" {
+			phase.Status = "not_started"
+		}
+
+		if activeStepIdx >= 0 {
+			phase.StepProgress = fmt.Sprintf("Step %d of %d", activeStepIdx+1, len(phase.Steps))
+		}
+
+		phases = append(phases, phase)
+	}
+
+	return phases
 }
 
 // InstallReadmeStatus handles HTMX polling for readme display

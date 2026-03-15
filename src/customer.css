@@ -567,6 +567,23 @@ details[open] > summary .input-group-chevron {
   max-width: none;
 }
 
+/* Two-column layout for provision view in full-screen panel */
+.detail-panel.panel-full #active-provision-banner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.detail-panel.panel-full #active-provision-banner > .card-base {
+  grid-column: 1;
+}
+
+.detail-panel.panel-full #active-provision-banner > .provision-accordion {
+  grid-column: 2;
+  grid-row: 1 / -1;
+}
+
 /* Full width on mobile */
 @media (max-width: 768px) {
   .detail-panel {
@@ -1112,6 +1129,77 @@ body {
 .vendor-admin-bar-org-sep  { color: #475569; }
 
 .vendor-admin-bar-org-domain { font-family: ui-monospace, monospace; font-size: 0.75rem; color: #94a3b8; }
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * PROVISION PHASE ACCORDION
+ * Phased progress accordion for active provision workflows
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.provision-phase {
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border-subtle);
+  border-radius: var(--theme-radius);
+  overflow: hidden;
+}
+
+.dark .provision-phase {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.provision-phase + .provision-phase {
+  margin-top: -1px;
+}
+
+.provision-phase-summary {
+  @apply flex items-center px-4 py-3 cursor-pointer select-none;
+  @apply transition-colors duration-150;
+}
+
+.provision-phase-summary:hover {
+  background-color: var(--theme-surface-subtle);
+}
+
+.provision-phase-circle {
+  @apply flex items-center justify-center w-6 h-6 rounded-full flex-shrink-0;
+}
+
+.provision-phase-completed {
+  @apply bg-green-100 text-green-600;
+  @apply dark:bg-green-900/30 dark:text-green-400;
+}
+
+.provision-phase-in-progress {
+  @apply bg-blue-100 text-blue-600;
+  @apply dark:bg-blue-900/30 dark:text-blue-400;
+}
+
+.provision-phase-failed {
+  @apply bg-red-100 text-red-600;
+  @apply dark:bg-red-900/30 dark:text-red-400;
+}
+
+.provision-phase-not-started {
+  @apply text-cool-grey-400;
+  @apply dark:text-cool-grey-500;
+  background-color: var(--theme-surface-raised);
+}
+
+.dark .provision-phase-not-started {
+  background-color: color-mix(in srgb, var(--theme-black, #1e2433) 97%, white);
+}
+
+.provision-phase-chevron {
+  transition: transform 0.2s ease-out;
+}
+
+details[open] > summary .provision-phase-chevron {
+  transform: rotate(180deg);
+}
+
+.provision-phase-content {
+  @apply px-4 pb-4 pl-13;
+}
 
 /* ═══════════════════════════════════════════════════════════════════════════════
  * PROSE — rendered markdown content

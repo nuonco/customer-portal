@@ -3,6 +3,7 @@ package nuon
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
@@ -298,6 +299,41 @@ func TestNewClientWithURL(t *testing.T) {
 		assert.Equal(t, "token", client.apiToken)
 		assert.Equal(t, "org-id", client.orgID)
 	}
+}
+
+// mockAPIError simulates the nuon-go stderrResponse interface for testing.
+type mockAPIError struct {
+	code int
+}
+
+func (e *mockAPIError) Error() string     { return "api error" }
+func (e *mockAPIError) IsCode(c int) bool { return e.code == c }
+
+func TestIsConflict(t *testing.T) {
+	t.Run("returns true for 409 error", func(t *testing.T) {
+		err := &mockAPIError{code: 409}
+		assert.True(t, IsConflict(err))
+	})
+
+	t.Run("returns false for non-409 error", func(t *testing.T) {
+		err := &mockAPIError{code: 500}
+		assert.False(t, IsConflict(err))
+	})
+
+	t.Run("returns true for wrapped 409 error", func(t *testing.T) {
+		inner := &mockAPIError{code: 409}
+		wrapped := fmt.Errorf("create install failed: %w", inner)
+		assert.True(t, IsConflict(wrapped))
+	})
+
+	t.Run("returns false for nil error", func(t *testing.T) {
+		assert.False(t, IsConflict(nil))
+	})
+
+	t.Run("returns false for plain error", func(t *testing.T) {
+		err := fmt.Errorf("something went wrong")
+		assert.False(t, IsConflict(err))
+	})
 }
 
 func TestNewClient_DefaultURL(t *testing.T) {

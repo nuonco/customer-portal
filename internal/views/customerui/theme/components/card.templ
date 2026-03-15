@@ -13,6 +13,7 @@ type CardProps struct {
 	Size  CardSize
 	Class string
 	ID    string
+	Style string
 }
 
 templ Card(props CardProps) {
@@ -21,6 +22,9 @@ templ Card(props CardProps) {
 			id={ props.ID }
 		}
 		class={ cardClasses(props) }
+		if props.Style != "" {
+			style={ props.Style }
+		}
 	>
 		{ children... }
 	</div>
