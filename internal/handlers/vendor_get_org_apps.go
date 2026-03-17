@@ -18,7 +18,7 @@ func (h *Handler) GetOrgApps(c *gin.Context) {
 	}
 
 	// Initialize Nuon client with the org's credentials and global API URL
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return

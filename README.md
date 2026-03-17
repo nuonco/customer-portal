@@ -15,6 +15,8 @@ General vendor journeys.
 - As a vendor, after connecting to a Nuon control plane, I should be able create an "install link" for any app in the connected org.
 - As a vendor, I need to be able to create, list, view, and delete install links.
 - As a vendor, I can invite team members by email. If the email matches an existing user, they are added immediately. If not, a pending invitation is created and they auto-join when they next log in.
+- As a vendor, I can archive an org I no longer need from the Org Connection settings page. Archiving soft-deletes the org and clears the API token. The org disappears from the sidebar and all queries.
+- As a vendor, I can restore an archived org from the Profile panel by providing a new API token. Restoring undeletes the org and reconnects it.
 
 - As a vendor,
   - when I view an org in the vendor dashboard at https://app.nuon.co, there will be an item in the main nav titled "Connect Customer Portal".
@@ -75,18 +77,21 @@ General vendor journeys.
 - Install link management (create, view, delete)
 - Organization dashboard with link listing
 - **Publish App**: Vendors can set each app's catalog status to "Published", "Coming Soon", or "Unpublished" via a dropdown on the Apps page. Published apps appear on the customer `/apps` page without requiring an install link. Coming-soon apps appear in the catalog with a badge but cannot be installed.
-- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of published apps in the customer catalog. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
+- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of apps in the customer catalog. Ordering is preserved for all apps (published, coming soon, and unpublished) so the sort order is stable across page reloads. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
 - **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
 - **Import Install to Account**: From the account detail page, vendors can search for existing org installs (unassigned or in other accounts) and assign them to a customer account. This is useful for migrating legacy installs that lack account associations.
+- **Archive & Restore Org**: Vendors can archive an org from the Org Connection settings page (danger zone). Archiving soft-deletes the record and clears the API token. Archived orgs appear in the Profile panel and can be restored by providing a new API token.
 
 ✅ **Customer Features**
 
 - Install link acceptance page
 - Customer account creation via install links
 - Install creation flow
+- **Platform-Aware Region Selector**: The install form detects the app platform from `RunnerConfig.AppRunnerType` and renders the appropriate region selector. AWS apps show a full AWS region list, Azure apps show Azure locations, and GCP apps show no region selector (GCP installs don't require a region). The submission handlers also skip the default `us-east-1` fallback for non-AWS platforms.
 - Install management dashboard
 - Install status tracking
 - **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes.
+- **GCP Stack Setup Guide**: For GCP apps, the "await install stack" provision step displays a 4-step setup guide (clone install stack module, configure GCS remote state, save tfvars, run Terraform). The platform is detected from the app's `RunnerConfig.AppRunnerType`. Tfvars content is parsed from `stack.Versions[0].Contents`.
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
 - **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
@@ -207,9 +212,9 @@ There are some conventions that we use both the admin and the customer UIs.
 
 There are some conventions that are specific to the admin UI.
 
-- The admin UI uses Stratus, our official design system, which is also used by the dashboard-ui in the /nuonco/nuon repo.
 - We use tailwind for the admin UI components, and should stick to using the tailwind utility classes. Avoid custom CSS.
-- When running services locally using `nuonctl dev`, a Ladle server will be available at http://localhost:61000/ with working examples of Stratus components. These are implemented in React for the dashboard-ui, but we should be able to copy their design and behavior into Templ components as needed.
+- The admin UI uses Stratus, our official design system, which is also used by the dashboard-ui in the /nuonco/nuon repo.
+- The Stratus design system is defined in Figma, and we should pull from the Figma project for all admin UI styles and components: https://www.figma.com/design/K3IcokRSyYRkH2tsr1KMhV/Stratus-Design-System
 
 ### Customer
 
@@ -236,10 +241,10 @@ There are some conventions that are specific to the admin UI.
 **Core Models:**
 
 - **User** - Email, role (vendor/customer), timestamps
-- **NuonOrg** - Connected organizations with API credentials
+- **NuonOrg** - Connected organizations with API credentials. Has optional `APIURL` field to override the global Nuon API URL per-org (e.g., for staging or self-hosted control planes); set at org creation time.
 - **InstallLink** - Shareable links with SHA-based security
 - **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs). Has `Visibility` (account/private) and optional `CustomerAccountID` for account-based sharing.
-- **PublishedApp** - Apps published to the customer catalog (org_id + app_id, soft-deletable). Has `Status` (`"published"` or `"coming_soon"`; default `"published"`), `LogoLightBase64` and `LogoDarkBase64` for per-app logos. Coming-soon apps appear in the catalog with a badge but cannot be installed.
+- **PublishedApp** - Tracks all apps in the catalog with their display order (org_id + app_id, soft-deletable). Has `Status` (`"published"`, `"coming_soon"`, or `"unpublished"`; default `"published"`), `LogoLightBase64` and `LogoDarkBase64` for per-app logos. All apps (including unpublished) have records so drag-and-drop sort order is preserved across page reloads. Coming-soon apps appear in the catalog with a badge but cannot be installed. Customer-facing queries filter to published/coming_soon only.
 - **CustomerAccount** - Company account that groups customers together within a vendor org. Scoped to org via `OrgID`.
 - **CustomerAccountMember** - Links a user to a customer account with role (owner/member). A user can belong to multiple accounts in the same org and switch between them via a cookie.
 - **CustomerAccountInvite** - Email-based invite for joining a customer account. When a user with a matching email logs in, they are automatically added as a member.
@@ -391,6 +396,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /admin/callback` - OAuth/OIDC callback handler
 - `GET /admin/orgs/` - Redirects to first org
 - `POST /admin/orgs/` - Connect new organization
+- `DELETE /admin/orgs/:org_id` - Archive organization (soft-delete, clears API token)
+- `POST /admin/orgs/:org_id/restore` - Restore archived organization (requires new API token)
 - `GET /admin/orgs/:org_id/apps` - Organization apps
 - `GET /admin/orgs/:org_id/apps/:app_id` - Redirects to app input configuration page
 - `GET /admin/orgs/:org_id/apps/:app_id/inputs` - App input configuration
@@ -399,6 +406,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `PUT /admin/orgs/:org_id/apps/:app_id/logo` - Save app light/dark logos
 - `POST /admin/orgs/:org_id/apps/:app_id/publish` - Publish app to customer catalog
 - `DELETE /admin/orgs/:org_id/apps/:app_id/publish` - Remove app from customer catalog
+- `DELETE /admin/orgs/:org_id/apps/:app_id/forget` - Soft-delete orphaned app record (deleted from Nuon API)
 - `GET /admin/orgs/:org_id/links` - Organization install links
 - `POST /admin/orgs/:org_id/links` - Create install link
 - `GET /admin/orgs/:org_id/links/:link_id` - View link details
@@ -491,6 +499,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 The `components.Tooltip` component (`internal/views/vendorui/components/tooltip.templ`) supports two modes:
 
 **Simple text tooltip** — pass `nil` for items:
+
 ```go
 @components.Tooltip("Helpful hint", nil, components.TooltipTop) {
     <span>Hover me</span>
@@ -498,6 +507,7 @@ The `components.Tooltip` component (`internal/views/vendorui/components/tooltip.
 ```
 
 **Rich tooltip panel** — pass a slice of `TooltipItem` for a titled, scrollable item list matching the Stratus ContextTooltip design:
+
 ```go
 @components.Tooltip("Resources", []components.TooltipItem{
     {ID: "1", Title: "Docs", Subtitle: "View documentation", Href: "/docs", Icon: "ph-bold ph-book"},

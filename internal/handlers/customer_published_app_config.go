@@ -27,12 +27,12 @@ func (h *Handler) GetPublishedAppConfig(c *gin.Context) {
 
 	// Verify app is published for this org
 	var publishedApp models.PublishedApp
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND app_id = ? AND status IN ?", org.ID, appID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).First(&publishedApp).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "App not found or not published"})
 		return
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize client"})
 		return

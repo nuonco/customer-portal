@@ -231,6 +231,9 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		// This allows users with no orgs to reach this route without redirect loop
 		orgs.GET("/", h.OrgsPage)
 
+		// Restore archived org (outside orgRoutes because archived orgs fail RequireOrgAccessByParam)
+		orgs.POST("/:org_id/restore", h.RestoreOrg)
+
 		// Org-specific routes (require org access by param)
 		orgRoutes := orgs.Group("/:org_id")
 		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
@@ -274,6 +277,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			// Apps - publish/unpublish for customer portal catalog
 			orgRoutes.POST("/apps/:app_id/publish", h.PublishApp)     // Publish app to customer catalog
 			orgRoutes.DELETE("/apps/:app_id/publish", h.UnpublishApp) // Remove app from customer catalog
+			orgRoutes.DELETE("/apps/:app_id/forget", h.ForgetApp)     // Soft-delete orphaned app record
 			orgRoutes.PUT("/apps/order", h.UpdateAppOrder)            // Update published app catalog order
 
 			// Apps - API endpoints (JSON, used by create link modal)

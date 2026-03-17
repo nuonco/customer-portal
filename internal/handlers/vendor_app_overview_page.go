@@ -25,7 +25,7 @@ func (h *Handler) AppOverviewPage(c *gin.Context) {
 	}
 
 	appInfo := vendorpages.AppInfo{ID: appID}
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err == nil {
 		if app, err := nuonClient.GetApp(c.Request.Context(), appID); err == nil && app != nil {
 			appInfo.Name = appDisplayName(app)

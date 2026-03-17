@@ -123,10 +123,16 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status s
 				<span class="text-xs text-cool-grey-400 dark:text-cool-grey-500">—</span>
 			</td>
 			<td class="px-6 py-4 whitespace-nowrap">
-				@statusSelect(status)
+				@components.Button(components.ButtonProps{
+					Text:          "Remove",
+					Variant:       "danger",
+					Size:          "sm",
+					Icon:          "ph-bold ph-trash",
+					OnClickScript: forgetApp(orgID, app.ID, basePath),
+				})
 			</td>
 			<td class="px-6 py-4 whitespace-nowrap">
-				@components.Tooltip("This app was deleted from the Nuon API and must be unpublished", nil, components.TooltipLeft) {
+				@components.Tooltip("This app was deleted from the Nuon API. Click Remove to clean up.", nil, components.TooltipLeft) {
 					@deletedStatusBadge()
 				}
 			</td>
@@ -283,6 +289,29 @@ templ appsScript(basePath, orgID string) {
 
 script saveAppOrder(basePath, orgID string) {
 	window.saveAppOrder(basePath, orgID);
+}
+
+script forgetApp(orgID, appID, basePath string) {
+	(async function() {
+		var confirmed = await showConfirmModal({
+			title: 'Remove App?',
+			message: 'This will remove the deleted app from the list. This action cannot be undone.',
+			variant: 'danger',
+			confirmText: 'Remove',
+			cancelText: 'Cancel'
+		});
+		if (!confirmed) return;
+		try {
+			var response = await fetch(basePath + "/orgs/" + orgID + "/apps/" + appID + "/forget", {method: "DELETE"});
+			if (response.ok) {
+				window.location.reload();
+			} else {
+				showToast('Failed to remove app.', 'error');
+			}
+		} catch (error) {
+			showToast('Network error. Please try again.', 'error');
+		}
+	})();
 }
 
 // statusSelect renders a dropdown to set the publish status of an app

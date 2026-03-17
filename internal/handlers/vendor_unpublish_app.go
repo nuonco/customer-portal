@@ -16,8 +16,11 @@ func (h *Handler) UnpublishApp(c *gin.Context) {
 		return
 	}
 
-	// Soft-delete the PublishedApp record
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).Delete(&models.PublishedApp{}).Error; err != nil {
+	// Set status to unpublished (keep record for sort order)
+	result := h.db.Model(&models.PublishedApp{}).
+		Where("org_id = ? AND app_id = ?", org.ID, appID).
+		Update("status", models.AppStatusUnpublished)
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unpublish app"})
 		return
 	}

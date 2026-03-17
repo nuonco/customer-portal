@@ -5,16 +5,18 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
 // ProfilePanelProps for the profile edit panel
 type ProfilePanelProps struct {
-	User     *models.User
-	BasePath string
+	User         *models.User
+	BasePath     string
+	ArchivedOrgs []models.NuonOrg
 }
 
 // ProfilePanel renders the profile settings slide-in panel
@@ -46,7 +48,7 @@ func ProfilePanel(props ProfilePanelProps) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 15, Col: 91}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 16, Col: 91}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
@@ -87,7 +89,7 @@ func ProfilePanel(props ProfilePanelProps) templ.Component {
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 53, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 54, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
@@ -100,13 +102,99 @@ func ProfilePanel(props ProfilePanelProps) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.User.Email)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 69, Col: 31}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 70, Col: 31}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" disabled class=\"w-full px-3 py-2 text-sm border border-cool-grey-200 dark:border-dark-grey-600 rounded-md bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-500 dark:text-cool-grey-400 cursor-not-allowed\"><p class=\"mt-1.5 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Email address cannot be changed.</p></div><!-- Actions --><div class=\"flex justify-end gap-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><button type=\"button\" onclick=\"closeProfilePanel()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 transition-colors\">Cancel</button> <button type=\"submit\" id=\"profileSaveBtn\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"profileSaveBtnText\">Save Changes</span> <svg id=\"profileSaveSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></form></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" disabled class=\"w-full px-3 py-2 text-sm border border-cool-grey-200 dark:border-dark-grey-600 rounded-md bg-cool-grey-100 dark:bg-dark-grey-700 text-cool-grey-500 dark:text-cool-grey-400 cursor-not-allowed\"><p class=\"mt-1.5 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Email address cannot be changed.</p></div><!-- Actions --><div class=\"flex justify-end gap-3 pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\"><button type=\"button\" onclick=\"closeProfilePanel()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 transition-colors\">Cancel</button> <button type=\"submit\" id=\"profileSaveBtn\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed\"><span id=\"profileSaveBtnText\">Save Changes</span> <svg id=\"profileSaveSpinner\" class=\"hidden animate-spin ml-2 h-4 w-4 text-white\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle> <path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg></button></div></form>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if len(props.ArchivedOrgs) > 0 {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"mt-8 pt-6 border-t border-cool-grey-200 dark:border-dark-grey-600\"><h3 class=\"text-sm font-semibold text-cool-grey-700 dark:text-cool-grey-300 mb-3\">Archived Organizations</h3><div class=\"space-y-3\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			for _, org := range props.ArchivedOrgs {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"flex items-center justify-between p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-md border border-cool-grey-200 dark:border-dark-grey-600\"><div><p class=\"text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var5 string
+				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(org.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 107, Col: 94}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</p><p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var6 string
+				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(org.NuonOrgID)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 108, Col: 97}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				if org.DeletedAt.Valid {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<p class=\"text-xs text-cool-grey-400 dark:text-cool-grey-500\">Archived ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var7 string
+					templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(org.DeletedAt.Time.Format("Jan 2, 2006"))
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/partials/profile_panel.templ`, Line: 110, Col: 124}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</p>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, restoreOrgClick(props.BasePath, org.ID, org.Name))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<button type=\"button\" onclick=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var8 templ.ComponentScript = restoreOrgClick(props.BasePath, org.ID, org.Name)
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var8.Call)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-grey-700 border border-primary-300 dark:border-primary-700 rounded-md hover:bg-primary-50 dark:hover:bg-dark-grey-600 transition-colors\">Restore</button></div>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -116,6 +204,45 @@ func ProfilePanel(props ProfilePanelProps) templ.Component {
 		}
 		return nil
 	})
+}
+
+func restoreOrgClick(basePath, orgID, orgName string) templ.ComponentScript {
+	return templ.ComponentScript{
+		Name: `__templ_restoreOrgClick_239d`,
+		Function: `function __templ_restoreOrgClick_239d(basePath, orgID, orgName){(async function() {
+		var token = await showPromptModal({
+			title: 'Restore "' + orgName + '"?',
+			message: 'Enter a new API token to reconnect this organization. The previous token was cleared when the org was archived.',
+			confirmText: 'Restore',
+			cancelText: 'Cancel',
+			variant: 'primary',
+			placeholder: 'Nuon API token'
+		});
+		if (token === null) return;
+
+		try {
+			var response = await fetch(basePath + '/orgs/' + orgID + '/restore', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'same-origin',
+				body: JSON.stringify({ api_token: token })
+			});
+
+			if (response.ok) {
+				var data = await response.json();
+				window.location.href = data.redirect || basePath + '/orgs';
+			} else {
+				var data = await response.json();
+				showToast(data.error || 'Failed to restore organization', 'error');
+			}
+		} catch (error) {
+			showToast('Network error. Please try again.', 'error');
+		}
+	})();
+}`,
+		Call:       templ.SafeScript(`__templ_restoreOrgClick_239d`, basePath, orgID, orgName),
+		CallInline: templ.SafeScriptInline(`__templ_restoreOrgClick_239d`, basePath, orgID, orgName),
+	}
 }
 
 func profilePanelScript() templ.Component {
@@ -134,12 +261,12 @@ func profilePanelScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var5 == nil {
-			templ_7745c5c3_Var5 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<script>\n\t\t(function() {\n\t\t\tconst basePath = document.getElementById('profile-panel').dataset.basePath;\n\n\t\t\tfunction openProfilePanel() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tpanel.classList.remove('panel-hidden');\n\t\t\t\tpanel.classList.add('panel-visible');\n\t\t\t\tdocument.body.classList.add('overflow-hidden');\n\t\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\t\tif (userDropdown) userDropdown.classList.add('hidden');\n\t\t\t}\n\n\t\t\tfunction closeProfilePanel() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tpanel.classList.remove('panel-visible', 'panel-full');\n\t\t\t\tpanel.classList.add('panel-hidden');\n\t\t\t\tdocument.body.classList.remove('overflow-hidden');\n\t\t\t\tdocument.getElementById('profileExpandIcon')?.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('profileCollapseIcon')?.classList.add('hidden');\n\t\t\t\tdocument.getElementById('profilePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');\n\t\t\t\tsetTimeout(function() {\n\t\t\t\t\tdocument.getElementById('settings-panel-container').innerHTML = '';\n\t\t\t\t}, 300);\n\t\t\t}\n\n\t\t\tfunction toggleProfilePanelSize() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tconst container = panel.querySelector('.stratus-panel-container');\n\t\t\t\tconst expandIcon = document.getElementById('profileExpandIcon');\n\t\t\t\tconst collapseIcon = document.getElementById('profileCollapseIcon');\n\t\t\t\tconst expandBtn = document.getElementById('profilePanelExpandBtn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\tcontainer.style.maxWidth = '28rem';\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\tcontainer.style.maxWidth = 'none';\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.openProfilePanel = openProfilePanel;\n\t\t\twindow.closeProfilePanel = closeProfilePanel;\n\t\t\twindow.toggleProfilePanelSize = toggleProfilePanelSize;\n\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\t\tif (panel && panel.classList.contains('panel-visible')) {\n\t\t\t\t\t\tcloseProfilePanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('profileForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tconst saveBtn = document.getElementById('profileSaveBtn');\n\t\t\t\tconst saveBtnText = document.getElementById('profileSaveBtnText');\n\t\t\t\tconst saveSpinner = document.getElementById('profileSaveSpinner');\n\t\t\t\tconst nameInput = document.getElementById('profileName');\n\n\t\t\t\tsaveBtn.disabled = true;\n\t\t\t\tsaveBtnText.textContent = 'Saving...';\n\t\t\t\tsaveSpinner.classList.remove('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(basePath + '/profile', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tname: nameInput.value\n\t\t\t\t\t\t})\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Profile updated successfully', 'success');\n\t\t\t\t\t\tcloseProfilePanel();\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t}, 500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast(data.error || 'Failed to update profile', 'error');\n\t\t\t\t\t\tsaveBtn.disabled = false;\n\t\t\t\t\t\tsaveBtnText.textContent = 'Save Changes';\n\t\t\t\t\t\tsaveSpinner.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\tsaveBtn.disabled = false;\n\t\t\t\t\tsaveBtnText.textContent = 'Save Changes';\n\t\t\t\t\tsaveSpinner.classList.add('hidden');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\topenProfilePanel();\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\n\t\t(function() {\n\t\t\tconst basePath = document.getElementById('profile-panel').dataset.basePath;\n\n\t\t\tfunction openProfilePanel() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tpanel.classList.remove('panel-hidden');\n\t\t\t\tpanel.classList.add('panel-visible');\n\t\t\t\tdocument.body.classList.add('overflow-hidden');\n\t\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\t\tif (userDropdown) userDropdown.classList.add('hidden');\n\t\t\t}\n\n\t\t\tfunction closeProfilePanel() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tpanel.classList.remove('panel-visible', 'panel-full');\n\t\t\t\tpanel.classList.add('panel-hidden');\n\t\t\t\tdocument.body.classList.remove('overflow-hidden');\n\t\t\t\tdocument.getElementById('profileExpandIcon')?.classList.remove('hidden');\n\t\t\t\tdocument.getElementById('profileCollapseIcon')?.classList.add('hidden');\n\t\t\t\tdocument.getElementById('profilePanelExpandBtn')?.setAttribute('title', 'Expand to full screen');\n\t\t\t\tsetTimeout(function() {\n\t\t\t\t\tdocument.getElementById('settings-panel-container').innerHTML = '';\n\t\t\t\t}, 300);\n\t\t\t}\n\n\t\t\tfunction toggleProfilePanelSize() {\n\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\tconst container = panel.querySelector('.stratus-panel-container');\n\t\t\t\tconst expandIcon = document.getElementById('profileExpandIcon');\n\t\t\t\tconst collapseIcon = document.getElementById('profileCollapseIcon');\n\t\t\t\tconst expandBtn = document.getElementById('profilePanelExpandBtn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\tcontainer.style.maxWidth = '28rem';\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\tcontainer.style.maxWidth = 'none';\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.openProfilePanel = openProfilePanel;\n\t\t\twindow.closeProfilePanel = closeProfilePanel;\n\t\t\twindow.toggleProfilePanelSize = toggleProfilePanelSize;\n\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tconst panel = document.getElementById('profile-panel');\n\t\t\t\t\tif (panel && panel.classList.contains('panel-visible')) {\n\t\t\t\t\t\tcloseProfilePanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\tdocument.getElementById('profileForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tconst saveBtn = document.getElementById('profileSaveBtn');\n\t\t\t\tconst saveBtnText = document.getElementById('profileSaveBtnText');\n\t\t\t\tconst saveSpinner = document.getElementById('profileSaveSpinner');\n\t\t\t\tconst nameInput = document.getElementById('profileName');\n\n\t\t\t\tsaveBtn.disabled = true;\n\t\t\t\tsaveBtnText.textContent = 'Saving...';\n\t\t\t\tsaveSpinner.classList.remove('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tconst response = await fetch(basePath + '/profile', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: {\n\t\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t\t},\n\t\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\t\tname: nameInput.value\n\t\t\t\t\t\t})\n\t\t\t\t\t});\n\n\t\t\t\t\tconst data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Profile updated successfully', 'success');\n\t\t\t\t\t\tcloseProfilePanel();\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.reload();\n\t\t\t\t\t\t}, 500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast(data.error || 'Failed to update profile', 'error');\n\t\t\t\t\t\tsaveBtn.disabled = false;\n\t\t\t\t\t\tsaveBtnText.textContent = 'Save Changes';\n\t\t\t\t\t\tsaveSpinner.classList.add('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\tsaveBtn.disabled = false;\n\t\t\t\t\tsaveBtnText.textContent = 'Save Changes';\n\t\t\t\t\tsaveSpinner.classList.add('hidden');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\topenProfilePanel();\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -163,12 +290,12 @@ func profileUserIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -192,12 +319,12 @@ func profileExpandIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<svg id=\"profileExpandIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<svg id=\"profileExpandIcon\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M216,48V88a8,8,0,0,1-16,0V56H168a8,8,0,0,1,0-16h40A8,8,0,0,1,216,48ZM88,200H56V168a8,8,0,0,0-16,0v40a8,8,0,0,0,8,8H88a8,8,0,0,0,0-16Zm120-40a8,8,0,0,0-8,8v32H168a8,8,0,0,0,0,16h40a8,8,0,0,0,8-8V168A8,8,0,0,0,208,160ZM88,40H48a8,8,0,0,0-8,8V88a8,8,0,0,0,16,0V56H88a8,8,0,0,0,0-16Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -221,12 +348,12 @@ func profileCollapseIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<svg id=\"profileCollapseIcon\" class=\"hidden\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<svg id=\"profileCollapseIcon\" class=\"hidden\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M152,96V48a8,8,0,0,1,16,0V88h40a8,8,0,0,1,0,16H160A8,8,0,0,1,152,96ZM96,152H48a8,8,0,0,0,0,16H88v40a8,8,0,0,0,16,0V160A8,8,0,0,0,96,152Zm112,0H160a8,8,0,0,0-8,8v48a8,8,0,0,0,16,0V168h40a8,8,0,0,0,0-16ZM96,40a8,8,0,0,0-8,8V88H48a8,8,0,0,0,0,16H96a8,8,0,0,0,8-8V48A8,8,0,0,0,96,40Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -250,12 +377,12 @@ func profileArrowRightIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\"><path d=\"M189.66,122.34a8,8,0,0,1,0,11.32l-72,72a8,8,0,0,1-11.32-11.32L164.69,136H32a8,8,0,0,1,0-16H164.69L106.34,61.66a8,8,0,0,1,11.32-11.32ZM216,32a8,8,0,0,0-8,8V216a8,8,0,0,0,16,0V40A8,8,0,0,0,216,32Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

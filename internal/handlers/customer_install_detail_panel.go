@@ -37,7 +37,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		checkClient, checkErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
+			h.nuonAPIURLForOrg(nuonOrg),
 		)
 		if checkErr == nil {
 			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
@@ -70,7 +70,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		appClient, err := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
+			h.nuonAPIURLForOrg(nuonOrg),
 		)
 		if err == nil {
 			app, err := appClient.GetApp(context.Background(), install.GetAppID())
@@ -98,14 +98,14 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	// Fetch most recent provision workflow (any status)
 	var provisionWorkflow *partials.WorkflowDataPanel
-	var cloudFormationLink string
+	var stackSetup partials.StackSetupData
 	var provisionPhases []partials.ProvisionPhase
 	var hasActiveProvision bool
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		provClient, provErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
+			h.nuonAPIURLForOrg(nuonOrg),
 		)
 		if provErr == nil {
 			ctx := c.Request.Context()
@@ -114,10 +114,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 				provisionWorkflow = bestPanel
 				if bestWf != nil {
 					if isActiveWorkflowStatus(provisionWorkflow.Status) {
-						cloudFormationLink = h.getCloudFormationLink(ctx, provClient, install, bestWf)
+						stackSetup = h.getStackSetupData(ctx, provClient, install, bestWf)
 					}
 					if isActiveWorkflowStatus(provisionWorkflow.Status) || provisionWorkflow.Status == "error" {
-						provisionPhases = groupStepsIntoPhases(bestWf)
+						provisionPhases = groupStepsIntoPhases(bestWf, provisionWorkflow.IsReprovision)
 						hasActiveProvision = len(provisionPhases) > 0
 					}
 				}
@@ -170,7 +170,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		InstallConfigVersion:   installConfigVersion,
 		InstallConfigUpdatedAt: installConfigUpdatedAt,
 		ProvisionWorkflow:      provisionWorkflow,
-		CloudFormationLink:     cloudFormationLink,
+		StackSetup:             stackSetup,
 		ProvisionPhases:        provisionPhases,
 		HasActiveProvision:     hasActiveProvision,
 	}

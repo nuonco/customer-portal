@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"testing"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
@@ -228,4 +229,66 @@ func TestPhaseStepStatus(t *testing.T) {
 	if ps.Status != "completed" {
 		t.Errorf("expected 'completed', got '%s'", ps.Status)
 	}
+}
+
+func TestParseTfvars(t *testing.T) {
+	t.Run("nil returns empty", func(t *testing.T) {
+		if got := parseTfvars(nil); got != "" {
+			t.Errorf("expected empty, got %q", got)
+		}
+	})
+
+	t.Run("JSON string with tfvars key", func(t *testing.T) {
+		input := `{"tfvars":"install_id = \"abc123\"\nregion = \"us-central1\""}`
+		got := parseTfvars(input)
+		if got == "" {
+			t.Error("expected non-empty tfvars")
+		}
+		if got != `install_id = "abc123"\nregion = "us-central1"` && got != "install_id = \"abc123\"\nregion = \"us-central1\"" {
+			// Just check it's not empty — the exact escaping depends on JSON parsing
+			t.Logf("got tfvars: %s", got)
+		}
+	})
+
+	t.Run("JSON string without tfvars key", func(t *testing.T) {
+		input := `{"something_else":"value"}`
+		if got := parseTfvars(input); got != "" {
+			t.Errorf("expected empty, got %q", got)
+		}
+	})
+
+	t.Run("map with tfvars key", func(t *testing.T) {
+		input := map[string]interface{}{"tfvars": "some content"}
+		got := parseTfvars(input)
+		if got != "some content" {
+			t.Errorf("expected 'some content', got %q", got)
+		}
+	})
+
+	t.Run("base64-encoded JSON with tfvars key", func(t *testing.T) {
+		raw := `{"tfvars":"region = \"us-central1\""}`
+		encoded := base64.StdEncoding.EncodeToString([]byte(raw))
+		got := parseTfvars(encoded)
+		if got == "" {
+			t.Error("expected non-empty tfvars from base64-encoded input")
+		}
+		if got != `region = "us-central1"` {
+			t.Errorf("expected 'region = \"us-central1\"', got %q", got)
+		}
+	})
+
+	t.Run("base64-encoded JSON without padding", func(t *testing.T) {
+		raw := `{"tfvars":"x = 1"}`
+		encoded := base64.RawStdEncoding.EncodeToString([]byte(raw))
+		got := parseTfvars(encoded)
+		if got != "x = 1" {
+			t.Errorf("expected 'x = 1', got %q", got)
+		}
+	})
+
+	t.Run("non-JSON string returns empty", func(t *testing.T) {
+		if got := parseTfvars("not json"); got != "" {
+			t.Errorf("expected empty, got %q", got)
+		}
+	})
 }

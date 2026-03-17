@@ -31,7 +31,7 @@ func (h *Handler) ReprovisionInstall(c *gin.Context) {
 	}
 
 	// Initialize Nuon client to reprovision the install using global API URL
-	nuonClient, err := nuon.NewClientWithURL(nuonOrgDep.APIToken, nuonOrgDep.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrgDep.APIToken, nuonOrgDep.NuonOrgID, h.nuonAPIURLForOrg(nuonOrgDep))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return

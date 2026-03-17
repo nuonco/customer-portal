@@ -80,7 +80,7 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 	// Fetch apps from Nuon API to build platform and name maps
 	platformMap := make(map[string]string)
 	appNameMap := make(map[string]string)
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err == nil {
 		apps, appsErr := nuonClient.ListApps(c.Request.Context())
 		if appsErr != nil {

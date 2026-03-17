@@ -171,6 +171,14 @@ func (h *Handler) isSuperuser(user *models.User) bool {
 	return middleware.IsSuperuserEmail(user.Email, h.superuserEmailDomain)
 }
 
+// nuonAPIURLForOrg returns the per-org API URL if set, otherwise the global default.
+func (h *Handler) nuonAPIURLForOrg(org *models.NuonOrg) string {
+	if org != nil && org.APIURL != "" {
+		return org.APIURL
+	}
+	return h.nuonAPIURL
+}
+
 // schemeFromBaseURL returns the URL scheme ("http://" or "https://") based on the customerBaseURL.
 
 func (h *Handler) schemeFromBaseURL() string {
@@ -191,7 +199,7 @@ func (h *Handler) checkOrgStatus(ctx context.Context, org *models.NuonOrg) (stri
 	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 
-	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		return "error", "Unable to reach Nuon API"
 	}

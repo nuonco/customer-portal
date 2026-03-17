@@ -49,6 +49,7 @@ type WorkflowDataPanel struct {
 	FailedStepID             string // ID of the failed step (for retry)
 	FailedStepName           string // Name of the failed step (for display)
 	FailedStepRetryable      bool   // Whether the failed step can be retried
+	IsReprovision            bool   // Whether this is a reprovision workflow
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -83,21 +84,29 @@ func platformLabel(platform string) string {
 	}
 }
 
+// StackSetupData carries platform-specific data for the "await install stack" step.
+type StackSetupData struct {
+	Platform           string // "aws", "gcp", etc.
+	CloudFormationLink string // AWS only
+	TfvarsContent      string // GCP only
+	NuonInstallID      string // GCP only (for backend snippet)
+}
+
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
-	Install                  *models.Install
-	AppName                  string // Fetched from Nuon API at runtime
-	APIDeletedError          bool
-	BasePath                 string
-	PrimaryColor             string
-	AppConfigVersion         int64
-	AppConfigUpdatedAt       string
-	InstallConfigVersion     int64
-	InstallConfigUpdatedAt   string
-	ProvisionWorkflow        *WorkflowDataPanel
-	CloudFormationLink string
-	ProvisionPhases    []ProvisionPhase
-	HasActiveProvision bool
+	Install                *models.Install
+	AppName                string // Fetched from Nuon API at runtime
+	APIDeletedError        bool
+	BasePath               string
+	PrimaryColor           string
+	AppConfigVersion       int64
+	AppConfigUpdatedAt     string
+	InstallConfigVersion   int64
+	InstallConfigUpdatedAt string
+	ProvisionWorkflow      *WorkflowDataPanel
+	StackSetup             StackSetupData
+	ProvisionPhases        []ProvisionPhase
+	HasActiveProvision     bool
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -170,7 +179,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		<!-- Active Provision / Accordion -->
 		if !props.APIDeletedError {
 			if props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.CloudFormationLink, props.Install.ID, props.BasePath, props.PrimaryColor)
+				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
 			} else {
 				<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows -->
 				<div
@@ -237,7 +246,7 @@ templ platformCard(platform string, region string) {
 }
 
 // ProvisionAccordion renders the phased provision progress view
-templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, cloudFormationLink string, installID string, basePath string, primaryColor string) {
+templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, stackSetup StackSetupData, installID string, basePath string, primaryColor string) {
 	<div
 		id="active-provision-banner"
 		hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
@@ -248,7 +257,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 			data-workflow-status={ workflow.Status }
 		}
 	>
-		<!-- Failed step callout -->
+		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
 			<div class="card-base !p-0 mb-3" style="border-top: 2px solid #ef4444">
 				<!-- Header -->
@@ -288,9 +297,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 					}
 				</div>
 			</div>
-		}
-		<!-- CloudFormation link -->
-		if cloudFormationLink != "" {
+		} else if stackSetup.CloudFormationLink != "" {
 			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
 				<!-- Header -->
 				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
@@ -322,7 +329,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 						</button>
 					}
 					<a
-						href={ templ.SafeURL(cloudFormationLink) }
+						href={ templ.SafeURL(stackSetup.CloudFormationLink) }
 						target="_blank"
 						rel="noopener noreferrer"
 						class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
@@ -332,8 +339,19 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 					</a>
 				</div>
 			</div>
-		}
-		if cloudFormationLink == "" && workflow != nil && (workflow.HasApprovalSteps || workflow.CanCancel) {
+		} else if stackSetup.Platform == "gcp" {
+			@gcpStackSetup(stackSetup, workflow, installID, basePath)
+		} else if workflow != nil && workflow.CurrentStepType == "initializing" {
+			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
+				<div class="flex items-center gap-3 px-4 py-3">
+					<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
+					<div>
+						<h4 class="text-sm font-medium">{ workflow.CurrentStepName }</h4>
+						<p class="text-xs text-[var(--theme-text-muted)] mt-0.5">Your install is being set up. This may take a moment.</p>
+					</div>
+				</div>
+			</div>
+		} else if workflow != nil && (workflow.HasApprovalSteps || workflow.CanCancel) {
 			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
 				<!-- Header -->
 				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
@@ -384,17 +402,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 							Cancel
 						</button>
 					}
-				</div>
-			</div>
-		}
-		if workflow != nil && workflow.CurrentStepType == "initializing" {
-			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
-				<div class="flex items-center gap-3 px-4 py-3">
-					<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
-					<div>
-						<h4 class="text-sm font-medium">{ workflow.CurrentStepName }</h4>
-						<p class="text-xs text-[var(--theme-text-muted)] mt-0.5">Your install is being set up. This may take a moment.</p>
-					</div>
 				</div>
 			</div>
 		}
@@ -492,19 +499,122 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, c
 				});
 			}
 
-			// One-at-a-time toggle: close siblings when opening a phase
+			// Take full control of accordion open/close to prevent double-open flicker.
 			document.querySelectorAll('.provision-accordion').forEach(function(acc){
-				acc.addEventListener('toggle', function(e){
-					if(e.target.tagName==='DETAILS' && e.target.classList.contains('provision-phase') && e.target.open){
-						acc.querySelectorAll('details.provision-phase').forEach(function(d){
-							if(d!==e.target) d.removeAttribute('open');
+				acc.querySelectorAll('details.provision-phase > summary').forEach(function(sum){
+					sum.addEventListener('click', function(e){
+						e.preventDefault();
+						var details = sum.parentElement;
+						if(details.open) return;
+						acc.querySelectorAll('details.provision-phase[open]').forEach(function(d){
+							d.removeAttribute('open');
 						});
-					}
-				}, true);
+						details.setAttribute('open','');
+					});
+				});
 			});
 		})();
 		</script>
 	</div>
+}
+
+// gcpStackSetup renders the 4-step GCP install stack setup guide.
+templ gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, installID string, basePath string) {
+	<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
+		<!-- Header -->
+		<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+			<h4 class="text-sm font-medium" style="color: var(--theme-primary)">GCP Stack Setup</h4>
+			if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
+				<button
+					type="button"
+					class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
+					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
+				>
+					Approve Installation
+				</button>
+			}
+		</div>
+		<!-- Body: 4-step guide -->
+		<div class="px-4 py-3 space-y-4">
+			<!-- Step 1: Clone -->
+			<div>
+				<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
+				<div class="gcp-setup-code-block">
+					<pre class="text-xs overflow-x-auto"><code>git clone https://github.com/nuonco/install-stacks.git
+cd install-stacks/gcp</code></pre>
+					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp") }>
+						<i class="ph-bold ph-copy text-sm"></i>
+					</button>
+				</div>
+			</div>
+			<!-- Step 2: Configure remote state -->
+			<div>
+				<p class="text-sm font-medium mb-1">2. Configure remote state (recommended)</p>
+				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Create a <code class="text-xs">backend.tf</code> file to store Terraform state in GCS</p>
+				<div class="gcp-setup-code-block">
+					<pre class="text-xs overflow-x-auto"><code>{ gcpBackendSnippet(stackSetup.NuonInstallID) }</code></pre>
+					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(gcpBackendSnippet(stackSetup.NuonInstallID)) }>
+						<i class="ph-bold ph-copy text-sm"></i>
+					</button>
+				</div>
+			</div>
+			<!-- Step 3: Save install configuration -->
+			if stackSetup.TfvarsContent != "" {
+				<div>
+					<p class="text-sm font-medium mb-1">3. Save the install configuration</p>
+					<p class="text-xs text-[var(--theme-text-muted)] mb-2">Save this as <code class="text-xs">install.tfvars</code></p>
+					<div class="gcp-setup-code-block">
+						<pre class="text-xs overflow-x-auto"><code>{ stackSetup.TfvarsContent }</code></pre>
+						<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(stackSetup.TfvarsContent) }>
+							<i class="ph-bold ph-copy text-sm"></i>
+						</button>
+					</div>
+				</div>
+			}
+			<!-- Step 4: Apply with Terraform -->
+			<div>
+				<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
+				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Initialize and apply the Terraform configuration.</p>
+				<div class="gcp-setup-code-block">
+					<pre class="text-xs overflow-x-auto"><code>{ gcpApplyCmd() }</code></pre>
+					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(gcpApplyCmd()) }>
+						<i class="ph-bold ph-copy text-sm"></i>
+					</button>
+				</div>
+			</div>
+		</div>
+		<!-- Footer -->
+		if workflow != nil && workflow.CanCancel {
+			<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
+				<button
+					type="button"
+					class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
+					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+				>
+					Cancel
+				</button>
+			</div>
+		}
+	</div>
+}
+
+func gcpBackendSnippet(installID string) string {
+	return fmt.Sprintf(`terraform {
+  backend "gcs" {
+    bucket = "<your-state-bucket>"
+    prefix = "nuon/%s"
+  }
+}`, installID)
+}
+
+func gcpApplyCmd() string {
+	return `terraform init && terraform apply -var-file=install.tfvars`
+}
+
+script copyToClipboard(text string) {
+	navigator.clipboard.writeText(text).then(function() {
+		if (typeof showToast === 'function') showToast('Copied to clipboard', 'success');
+	});
 }
 
 // provisionPhaseAccordion renders a single phase as a details/summary accordion

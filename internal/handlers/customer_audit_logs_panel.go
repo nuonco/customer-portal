@@ -66,7 +66,7 @@ func (h *Handler) AuditLogsPanel(c *gin.Context) {
 	// Fetch audit logs via Nuon client
 	var auditEntries []partials.AuditLogEntryPanel
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
-		client, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+		client, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 		if err == nil {
 			entries, err := client.GetInstallAuditLogs(c.Request.Context(), install.NuonInstallID, startTime, endTime)
 			if err == nil {

@@ -1,0 +1,45 @@
+package steps
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+
+// FailedStep renders the failed step card with retry/reprovision buttons
+templ FailedStep(workflow *workflows.WorkflowDataPanel, installID string, basePath string) {
+	<div class="card-base !p-0 mb-3" style="border-top: 2px solid #ef4444">
+		<!-- Header -->
+		<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+			<h4 class="text-sm font-medium text-red-700 dark:text-red-400">Failed Step</h4>
+		</div>
+		<!-- Body -->
+		<div class="px-4 py-3">
+			<p class="text-xs text-[var(--theme-text-muted)]">Step name</p>
+			<p class="text-sm font-medium mt-1">{ workflow.FailedStepName }</p>
+		</div>
+		<!-- Footer -->
+		<div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
+			if workflow.FailedStepRetryable {
+				<p class="text-xs text-[var(--theme-text-muted)]">You can retry this step.</p>
+				<button
+					type="button"
+					class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
+					style="background-color: #ef4444; border: 1px solid #dc2626"
+					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry" }
+					onclick="retryFailedStep(this)"
+				>
+					Retry Step
+					<i class="ph-bold ph-arrow-clockwise text-base"></i>
+				</button>
+			} else {
+				<p class="text-xs text-red-600 dark:text-red-300">This step cannot be retried. Please reprovision the install.</p>
+				<button
+					type="button"
+					class="button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5"
+					style="background-color: #ef4444; border: 1px solid #dc2626"
+					onclick="confirmReprovision()"
+				>
+					Reprovision
+					<i class="ph-bold ph-arrow-clockwise text-base"></i>
+				</button>
+			}
+		</div>
+	</div>
+}

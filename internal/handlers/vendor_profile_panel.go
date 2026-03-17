@@ -19,9 +19,31 @@ func (h *Handler) ProfilePanelContent(c *gin.Context) {
 		return
 	}
 
+	// Query archived orgs for this user (soft-deleted, via creator or membership)
+	var archivedOrgs []models.NuonOrg
+	h.db.Unscoped().
+		Where("user_id = ? AND deleted_at IS NOT NULL", user.ID).
+		Order("deleted_at DESC").
+		Find(&archivedOrgs)
+
+	// Also include orgs where user is a member but not the creator
+	var memberOrgIDs []string
+	h.db.Model(&models.OrgMember{}).
+		Where("user_id = ?", user.ID).
+		Pluck("org_id", &memberOrgIDs)
+	if len(memberOrgIDs) > 0 {
+		var memberArchivedOrgs []models.NuonOrg
+		h.db.Unscoped().
+			Where("id IN ? AND user_id != ? AND deleted_at IS NOT NULL", memberOrgIDs, user.ID).
+			Order("deleted_at DESC").
+			Find(&memberArchivedOrgs)
+		archivedOrgs = append(archivedOrgs, memberArchivedOrgs...)
+	}
+
 	props := partials.ProfilePanelProps{
-		User:     &dbUser,
-		BasePath: h.basePath,
+		User:         &dbUser,
+		BasePath:     h.basePath,
+		ArchivedOrgs: archivedOrgs,
 	}
 
 	h.RenderTempl(c, http.StatusOK, partials.ProfilePanel(props))

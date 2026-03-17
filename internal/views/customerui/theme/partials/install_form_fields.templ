@@ -5,6 +5,16 @@ import (
 	"strings"
 )
 
+// isAzurePlatform returns true for any Azure runner type.
+func isAzurePlatform(platform string) bool {
+	return platform == "azure-aks" || platform == "azure-acs" || platform == "azure"
+}
+
+// isGCPPlatform returns true for GCP runner types.
+func isGCPPlatform(platform string) bool {
+	return platform == "gcp"
+}
+
 // InstallFormConfig holds the parsed app config data for rendering form fields
 type InstallFormConfig struct {
 	Platform        string
@@ -46,29 +56,75 @@ func groupID(name string) string {
 	return "group-" + strings.ToLower(result)
 }
 
-// RegionSelector renders the region or location select field based on platform
+// RegionSelector renders the region or location select field based on platform.
+// GCP apps do not use a region selector.
 templ RegionSelector(platform string) {
-	if platform == "azure_aks" {
-		<label for="azureLocation" class="field-label">Azure Location *</label>
+	if isAzurePlatform(platform) {
 		<select id="azureLocation" name="location" required class="field-input">
-			<option value="eastus">East US</option>
-			<option value="eastus2">East US 2</option>
-			<option value="westus">West US</option>
-			<option value="westus2">West US 2</option>
-			<option value="westeurope">West Europe</option>
-			<option value="northeurope">North Europe</option>
+			<option value="eastus">East US - eastus</option>
+			<option value="eastus2">East US 2 - eastus2</option>
+			<option value="southcentralus">South Central US - southcentralus</option>
+			<option value="westus2">West US 2 - westus2</option>
+			<option value="westus3">West US 3 - westus3</option>
+			<option value="centralus">Central US - centralus</option>
+			<option value="australiaeast">Australia East - australiaeast</option>
+			<option value="southeastasia">Southeast Asia - southeastasia</option>
+			<option value="eastasia">East Asia - eastasia</option>
+			<option value="northeurope">North Europe - northeurope</option>
+			<option value="westeurope">West Europe - westeurope</option>
+			<option value="swedencentral">Sweden Central - swedencentral</option>
+			<option value="uksouth">UK South - uksouth</option>
+			<option value="francecentral">France Central - francecentral</option>
+			<option value="germanywestcentral">Germany West Central - germanywestcentral</option>
+			<option value="italynorth">Italy North - italynorth</option>
+			<option value="norwayeast">Norway East - norwayeast</option>
+			<option value="polandcentral">Poland Central - polandcentral</option>
+			<option value="spaincentral">Spain Central - spaincentral</option>
+			<option value="switzerlandnorth">Switzerland North - switzerlandnorth</option>
+			<option value="southafricanorth">South Africa North - southafricanorth</option>
+			<option value="centralindia">Central India - centralindia</option>
+			<option value="japaneast">Japan East - japaneast</option>
+			<option value="koreacentral">Korea Central - koreacentral</option>
+			<option value="canadacentral">Canada Central - canadacentral</option>
+			<option value="mexicocentral">Mexico Central - mexicocentral</option>
+			<option value="uaenorth">UAE North - uaenorth</option>
+			<option value="brazilsouth">Brazil South - brazilsouth</option>
+			<option value="israelcentral">Israel Central - israelcentral</option>
+			<option value="qatarcentral">Qatar Central - qatarcentral</option>
 		</select>
-	} else {
-		<label for="awsRegion" class="field-label">AWS Region *</label>
+	} else if !isGCPPlatform(platform) {
 		<select id="awsRegion" name="region" required class="field-input">
 			<option value="us-east-1">US East (N. Virginia) - us-east-1</option>
 			<option value="us-east-2">US East (Ohio) - us-east-2</option>
 			<option value="us-west-1">US West (N. California) - us-west-1</option>
 			<option value="us-west-2">US West (Oregon) - us-west-2</option>
-			<option value="eu-west-1">Europe (Ireland) - eu-west-1</option>
-			<option value="eu-central-1">Europe (Frankfurt) - eu-central-1</option>
+			<option value="af-south-1">Africa (Cape Town) - af-south-1</option>
+			<option value="ap-east-1">Asia Pacific (Hong Kong) - ap-east-1</option>
+			<option value="ap-south-1">Asia Pacific (Mumbai) - ap-south-1</option>
+			<option value="ap-south-2">Asia Pacific (Hyderabad) - ap-south-2</option>
 			<option value="ap-southeast-1">Asia Pacific (Singapore) - ap-southeast-1</option>
+			<option value="ap-southeast-2">Asia Pacific (Sydney) - ap-southeast-2</option>
+			<option value="ap-southeast-3">Asia Pacific (Jakarta) - ap-southeast-3</option>
+			<option value="ap-southeast-4">Asia Pacific (Melbourne) - ap-southeast-4</option>
 			<option value="ap-northeast-1">Asia Pacific (Tokyo) - ap-northeast-1</option>
+			<option value="ap-northeast-2">Asia Pacific (Seoul) - ap-northeast-2</option>
+			<option value="ap-northeast-3">Asia Pacific (Osaka) - ap-northeast-3</option>
+			<option value="ca-central-1">Canada (Central) - ca-central-1</option>
+			<option value="ca-west-1">Canada (Calgary) - ca-west-1</option>
+			<option value="eu-central-1">Europe (Frankfurt) - eu-central-1</option>
+			<option value="eu-central-2">Europe (Zurich) - eu-central-2</option>
+			<option value="eu-west-1">Europe (Ireland) - eu-west-1</option>
+			<option value="eu-west-2">Europe (London) - eu-west-2</option>
+			<option value="eu-west-3">Europe (Paris) - eu-west-3</option>
+			<option value="eu-south-1">Europe (Milan) - eu-south-1</option>
+			<option value="eu-south-2">Europe (Spain) - eu-south-2</option>
+			<option value="eu-north-1">Europe (Stockholm) - eu-north-1</option>
+			<option value="il-central-1">Israel (Tel Aviv) - il-central-1</option>
+			<option value="me-south-1">Middle East (Bahrain) - me-south-1</option>
+			<option value="me-central-1">Middle East (UAE) - me-central-1</option>
+			<option value="sa-east-1">South America (São Paulo) - sa-east-1</option>
+			<option value="us-gov-east-1">AWS GovCloud (US-East) - us-gov-east-1</option>
+			<option value="us-gov-west-1">AWS GovCloud (US-West) - us-gov-west-1</option>
 		</select>
 	}
 }
@@ -77,11 +133,13 @@ templ RegionSelector(platform string) {
 // The region section replaces #installFormFields innerHTML (inside the main card).
 // Input groups are appended after via the #installInputGroups OOB swap.
 templ InstallFormFields(config InstallFormConfig) {
-	<!-- Region selector (renders inside the existing card) -->
-	<div>
-		<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
-		@RegionSelector(config.Platform)
-	</div>
+	<!-- Region selector (renders inside the existing card) — hidden for GCP -->
+	if !isGCPPlatform(config.Platform) {
+		<div>
+			<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
+			@RegionSelector(config.Platform)
+		</div>
+	}
 	<!-- Input groups swapped into separate container outside the card -->
 	<div id="installInputGroups" hx-swap-oob="innerHTML">
 		for _, group := range config.InputGroups {

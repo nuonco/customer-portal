@@ -23,6 +23,7 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 		Name     string `json:"name"`                         // Optional - defaults to org name
 		OrgID    string `json:"org_id" binding:"required"`    // Nuon platform org ID
 		APIToken string `json:"api_token" binding:"required"` // Nuon API token
+		APIURL   string `json:"api_url"`                      // Optional per-org API URL override
 	}
 
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -33,7 +34,11 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 	}
 
 	// Validate API token with Nuon API
-	nuonClient, err := nuon.NewClientWithURL(req.APIToken, req.OrgID, h.nuonAPIURL)
+	apiURL := h.nuonAPIURL
+	if req.APIURL != "" {
+		apiURL = req.APIURL
+	}
+	nuonClient, err := nuon.NewClientWithURL(req.APIToken, req.OrgID, apiURL)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Failed to initialize Nuon client",
@@ -95,6 +100,7 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 			UserID:    user.ID,
 			NuonOrgID: req.OrgID,
 			APIToken:  req.APIToken,
+			APIURL:    req.APIURL,
 			Name:      displayName,
 			Subdomain: subdomain,
 		}

@@ -31,7 +31,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 
 	// Verify app is published for this org
 	var publishedApp models.PublishedApp
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND app_id = ? AND status IN ?", org.ID, appID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).First(&publishedApp).Error; err != nil {
 		theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 		props := customerpages.ErrorPageProps{
 			LayoutProps: h.buildCustomerLayoutProps("Error", loggedInUser, theme, h.getOrgForLayout(c), acctActive, acctOthers),
@@ -50,7 +50,7 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 
 	appName := appID
 	orgName := org.NuonOrgID // fallback
-	nuonClient, clientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, clientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if clientErr == nil {
 		app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
 		if appErr == nil && app != nil {

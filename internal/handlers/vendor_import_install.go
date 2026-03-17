@@ -37,7 +37,7 @@ func (h *Handler) ImportInstall(c *gin.Context) {
 	}
 
 	// Fetch install from Nuon API
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to initialize Nuon client.")
 		return

@@ -26,7 +26,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	}
 
 	var publishedApps []models.PublishedApp
-	if err := h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND status IN ?", org.ID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil {
 		zap.L().Warn("failed to fetch published apps", zap.Error(err))
 	}
 
@@ -36,7 +36,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	if len(publishedApps) == 1 {
 		// Single app: full detail fetch so the full-width card has all tab data
 		pa := publishedApps[0]
-		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
 		display.LogoLightBase64 = pa.LogoLightBase64
 		display.LogoDarkBase64 = pa.LogoDarkBase64
@@ -55,7 +55,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 			appDisplays[0] = display
 		}
 	} else if len(publishedApps) > 1 {
-		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 
 		// Fetch only app name/platform/description in parallel (no heavy detail calls)
 		var wg sync.WaitGroup

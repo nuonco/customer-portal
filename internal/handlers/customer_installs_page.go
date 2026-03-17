@@ -255,7 +255,7 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 				sem <- struct{}{}
 				defer func() { <-sem }()
 				res := appResult{appID: info.appID, appName: info.fallbackName}
-				nuonClient, err := nuon.NewClientWithURL(info.org.APIToken, info.org.NuonOrgID, h.nuonAPIURL)
+				nuonClient, err := nuon.NewClientWithURL(info.org.APIToken, info.org.NuonOrgID, h.nuonAPIURLForOrg(info.org))
 				if err == nil {
 					app, err := nuonClient.GetApp(c.Request.Context(), info.appID)
 					if err == nil && app != nil {

@@ -14,6 +14,7 @@ import (
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"go.uber.org/zap"
 )
 
 func (h *Handler) AppsPage(c *gin.Context) {
@@ -27,7 +28,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	}
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
@@ -87,6 +88,16 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Get all published apps for this org
 	var publishedApps []models.PublishedApp
 	h.db.Where("org_id = ?", org.ID).Order("sort_order ASC, created_at ASC").Find(&publishedApps)
+	h.logger.Info("AppsPage: loaded published apps from DB",
+		zap.Int("count", len(publishedApps)),
+	)
+	for _, pa := range publishedApps {
+		h.logger.Info("AppsPage: published app from DB",
+			zap.String("app_id", pa.AppID),
+			zap.Int("sort_order", pa.SortOrder),
+			zap.String("status", pa.Status),
+		)
+	}
 	appStatuses := make(map[string]string)
 	sortOrderMap := make(map[string]int)
 	logoLightMap := make(map[string]string)
@@ -159,6 +170,15 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		return oi < oj
 	})
 
+	// Log final render order
+	for idx, app := range appsWithStatus {
+		h.logger.Info("AppsPage: final render order",
+			zap.Int("index", idx),
+			zap.String("app_id", app.ID),
+			zap.String("name", app.Name),
+		)
+	}
+
 	// Get user's orgs for sidebar dropdown
 	allOrgs := h.GetUserOrgs(user.ID)
 
@@ -203,7 +223,7 @@ func (h *Handler) AppsPage(c *gin.Context) {
 
 func (h *Handler) orgHasPublishedApps(orgID string) bool {
 	var count int64
-	h.db.Model(&models.PublishedApp{}).Where("org_id = ?", orgID).Count(&count)
+	h.db.Model(&models.PublishedApp{}).Where("org_id = ? AND status IN ?", orgID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).Count(&count)
 	return count > 0
 }
 

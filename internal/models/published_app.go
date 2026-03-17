@@ -7,8 +7,14 @@ import (
 	"gorm.io/gorm"
 )
 
-// PublishedApp represents a Nuon app that has been published for customers to discover and install
-// without needing a specific install link.
+const (
+	AppStatusPublished   = "published"
+	AppStatusComingSoon  = "coming_soon"
+	AppStatusUnpublished = "unpublished"
+)
+
+// PublishedApp tracks a Nuon app's catalog status and display order.
+// All apps (published, coming_soon, and unpublished) have records so sort order is preserved.
 type PublishedApp struct {
 	ID        string         `gorm:"primarykey;check:id_checker,char_length(id)=26" json:"id"`
 	OrgID     string         `gorm:"not null;index" json:"org_id"` // FK to NuonOrg.ID (local)

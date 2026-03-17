@@ -53,13 +53,6 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// Validate region or location is provided
-	region := req.Region
-	location := req.Location
-	if region == "" && location == "" {
-		region = "us-east-1" // Default to AWS us-east-1
-	}
-
 	// Get vendor inputs from link
 	vendorInputs, err := link.GetVendorInputs()
 	if err != nil {
@@ -77,10 +70,24 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	}
 
 	// Initialize Nuon client with the org's credentials
-	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURLForOrg(&link.NuonOrg))
 	if err != nil {
 		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to initialize Nuon client: %v", err))
 		return
+	}
+
+	// Determine platform to decide region defaulting
+	region := req.Region
+	location := req.Location
+	if region == "" && location == "" {
+		// Only default to us-east-1 for AWS; GCP installs don't need a region
+		platform := ""
+		if app, err := nuonClient.GetApp(c.Request.Context(), link.AppID); err == nil && app != nil && app.RunnerConfig != nil {
+			platform = string(app.RunnerConfig.AppRunnerType)
+		}
+		if platform != "gcp" && platform != "azure-aks" && platform != "azure-acs" && platform != "azure" {
+			region = "us-east-1"
+		}
 	}
 
 	// Merge in defaults for non-customer-facing inputs

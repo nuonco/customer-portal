@@ -25,7 +25,7 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 		return
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to initialize Nuon client")
 		return

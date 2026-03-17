@@ -50,7 +50,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 
 	// Verify app is published for this org
 	var publishedApp models.PublishedApp
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND app_id = ? AND status IN ?", org.ID, appID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).First(&publishedApp).Error; err != nil {
 		respondError(http.StatusNotFound, "App not found or not published")
 		return
 	}
@@ -60,23 +60,30 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		return
 	}
 
-	region := req.Region
-	location := req.Location
-	if region == "" && location == "" {
-		region = "us-east-1"
-	}
-
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to initialize Nuon client: %v", err))
 		return
 	}
 
-	// Get app name for the API call
+	// Get app name and platform for the API call
 	appName := appID
+	platform := ""
 	app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
-	if appErr == nil && app != nil && app.Name != "" {
-		appName = app.Name
+	if appErr == nil && app != nil {
+		if app.Name != "" {
+			appName = app.Name
+		}
+		if app.RunnerConfig != nil {
+			platform = string(app.RunnerConfig.AppRunnerType)
+		}
+	}
+
+	// Only default to us-east-1 for AWS; GCP installs don't need a region
+	region := req.Region
+	location := req.Location
+	if region == "" && location == "" && platform != "gcp" && platform != "azure-aks" && platform != "azure-acs" && platform != "azure" {
+		region = "us-east-1"
 	}
 
 	// Merge in defaults for non-customer-facing inputs

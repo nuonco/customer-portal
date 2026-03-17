@@ -10,7 +10,7 @@ import (
 // NuonOrg represents a connected Nuon organization.
 // This is the primary entity for multi-tenant vendor access control.
 // Theme settings are stored in AppTheme (one per org).
-// API URL is a global env var (NUON_API_URL), not stored per-org.
+// API URL defaults to the global env var (NUON_API_URL) but can be overridden per-org.
 //
 // Each NuonOrgID (the Nuon platform org ID) can only be connected once (unique constraint).
 type NuonOrg struct {
@@ -18,6 +18,7 @@ type NuonOrg struct {
 	UserID    string         `gorm:"not null" json:"user_id"`              // Audit trail: who created it
 	NuonOrgID string         `gorm:"column:org_id;not null" json:"org_id"` // Nuon API org ID (unique constraint via migration)
 	APIToken  string         `gorm:"not null" json:"-"`                    // Hidden from JSON
+	APIURL    string         `gorm:"column:api_url" json:"api_url"`        // Optional per-org API URL override
 	Name      string         `gorm:"not null" json:"name"`
 	Subdomain string         `gorm:"type:varchar(63);uniqueIndex:idx_unique_subdomain,where:deleted_at IS NULL" json:"subdomain"` // Customer portal subdomain
 	CreatedAt time.Time      `json:"created_at"`

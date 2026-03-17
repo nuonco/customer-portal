@@ -32,7 +32,7 @@ func (h *Handler) GetInstallLinkAppConfig(c *gin.Context) {
 	}
 
 	// Create Nuon client using org credentials
-	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, h.nuonAPIURLForOrg(&link.NuonOrg))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize client"})
 		return

@@ -6,8 +6,9 @@ import (
 
 // ProfilePanelProps for the profile edit panel
 type ProfilePanelProps struct {
-	User     *models.User
-	BasePath string
+	User         *models.User
+	BasePath     string
+	ArchivedOrgs []models.NuonOrg
 }
 
 // ProfilePanel renders the profile settings slide-in panel
@@ -96,10 +97,68 @@ templ ProfilePanel(props ProfilePanelProps) {
 						</button>
 					</div>
 				</form>
+				if len(props.ArchivedOrgs) > 0 {
+					<div class="mt-8 pt-6 border-t border-cool-grey-200 dark:border-dark-grey-600">
+						<h3 class="text-sm font-semibold text-cool-grey-700 dark:text-cool-grey-300 mb-3">Archived Organizations</h3>
+						<div class="space-y-3">
+							for _, org := range props.ArchivedOrgs {
+								<div class="flex items-center justify-between p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-md border border-cool-grey-200 dark:border-dark-grey-600">
+									<div>
+										<p class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ org.Name }</p>
+										<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">{ org.NuonOrgID }</p>
+										if org.DeletedAt.Valid {
+											<p class="text-xs text-cool-grey-400 dark:text-cool-grey-500">Archived { org.DeletedAt.Time.Format("Jan 2, 2006") }</p>
+										}
+									</div>
+									<button
+										type="button"
+										onclick={ restoreOrgClick(props.BasePath, org.ID, org.Name) }
+										class="px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-grey-700 border border-primary-300 dark:border-primary-700 rounded-md hover:bg-primary-50 dark:hover:bg-dark-grey-600 transition-colors"
+									>
+										Restore
+									</button>
+								</div>
+							}
+						</div>
+					</div>
+				}
 			</div>
 		</div>
 	</div>
 	@profilePanelScript()
+}
+
+script restoreOrgClick(basePath, orgID, orgName string) {
+	(async function() {
+		var token = await showPromptModal({
+			title: 'Restore "' + orgName + '"?',
+			message: 'Enter a new API token to reconnect this organization. The previous token was cleared when the org was archived.',
+			confirmText: 'Restore',
+			cancelText: 'Cancel',
+			variant: 'primary',
+			placeholder: 'Nuon API token'
+		});
+		if (token === null) return;
+
+		try {
+			var response = await fetch(basePath + '/orgs/' + orgID + '/restore', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				credentials: 'same-origin',
+				body: JSON.stringify({ api_token: token })
+			});
+
+			if (response.ok) {
+				var data = await response.json();
+				window.location.href = data.redirect || basePath + '/orgs';
+			} else {
+				var data = await response.json();
+				showToast(data.error || 'Failed to restore organization', 'error');
+			}
+		} catch (error) {
+			showToast('Network error. Please try again.', 'error');
+		}
+	})();
 }
 
 templ profilePanelScript() {

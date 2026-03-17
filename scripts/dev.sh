@@ -3,20 +3,24 @@ set -e
 cd "$(dirname "$0")/.."
 
 kill_port_processes() {
-    sleep 0.5
+    sleep 0.3
     lsof -ti :7331 | xargs kill 2>/dev/null || true
     lsof -ti :8080 | xargs kill 2>/dev/null || true
     sleep 0.5
+    # Force-kill anything still holding the ports
     lsof -ti :7331 | xargs kill -9 2>/dev/null || true
     lsof -ti :8080 | xargs kill -9 2>/dev/null || true
 }
 
 cleanup() {
     echo "[dev] Shutting down..."
+    # Kill all direct children (templ, CSS watcher, etc.)
     pkill -P $$ 2>/dev/null || true
+    # Kill the Go server and proxy by port (catches templ's orphaned child
+    # which runs in a separate process group due to templ's Setpgid: true)
     kill_port_processes
 }
-trap cleanup EXIT
+trap cleanup EXIT TERM INT
 mkdir -p ./tmp
 export LIVE_RELOAD=true
 

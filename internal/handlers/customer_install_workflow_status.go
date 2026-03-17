@@ -3,11 +3,13 @@ package handlers
 import (
 	"cmp"
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"slices"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -15,6 +17,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	"github.com/nuonco/nuon-go/client/operations"
 	nuonmodels "github.com/nuonco/nuon-go/models"
+	"go.uber.org/zap"
 )
 
 func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
@@ -40,7 +43,7 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 		checkClient, checkErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
+			h.nuonAPIURLForOrg(nuonOrg),
 		)
 		if checkErr == nil {
 			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
@@ -60,13 +63,13 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 
 	// Fetch most recent provision workflow (any status)
 	var provisionWorkflow *partials.WorkflowDataPanel
-	var cloudFormationLink string
+	var stackSetup partials.StackSetupData
 	var rawWorkflow *nuonmodels.AppWorkflow
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		provClient, provErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
-			h.nuonAPIURL,
+			h.nuonAPIURLForOrg(nuonOrg),
 		)
 		if provErr == nil {
 			ctx := c.Request.Context()
@@ -75,9 +78,9 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 				provisionWorkflow = bestPanel
 				rawWorkflow = bestWf
 
-				// Only check for CloudFormation link on active workflows
+				// Only check for stack setup data on active workflows
 				if isActiveWorkflowStatus(provisionWorkflow.Status) && bestWf != nil {
-					cloudFormationLink = h.getCloudFormationLink(ctx, provClient, install, bestWf)
+					stackSetup = h.getStackSetupData(ctx, provClient, install, bestWf)
 				}
 			}
 		}
@@ -90,12 +93,12 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 
 	// If active or failed provision, render accordion; otherwise render banner
 	if provisionWorkflow != nil && (isActiveWorkflowStatus(provisionWorkflow.Status) || provisionWorkflow.Status == "error") && rawWorkflow != nil {
-		phases := groupStepsIntoPhases(rawWorkflow)
+		phases := groupStepsIntoPhases(rawWorkflow, provisionWorkflow.IsReprovision)
 		if len(phases) > 0 {
 			h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
 				phases,
 				provisionWorkflow,
-				cloudFormationLink,
+				stackSetup,
 				install.ID,
 				h.basePath,
 				primaryColor,
@@ -131,20 +134,22 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 			{Name: "Deploy app", Status: "not_started"},
 		}
 		h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
-			placeholderPhases, placeholderWf, "", install.ID, h.basePath, primaryColor,
+			placeholderPhases, placeholderWf, partials.StackSetupData{}, install.ID, h.basePath, primaryColor,
 		))
 		return
 	}
 
-	// Fallback: return empty polling div
-	// For terminal workflows, poll slowly; for no-workflow-yet, poll every 5s
-	trigger := "every 5s"
-	if provisionWorkflow != nil && isTerminalWorkflowStatus(provisionWorkflow.Status) {
-		trigger = "every 30s"
-	}
+	// Fallback: terminal workflow → re-fetch full panel so overview cards appear;
+	// no workflow yet → keep polling for workflow-status.
 	c.Header("Content-Type", "text/html; charset=utf-8")
-	c.String(http.StatusOK, fmt.Sprintf(`<div id="active-provision-banner" hx-get="%s/installs/%s/workflow-status" hx-trigger="%s" hx-swap="outerHTML"></div>`,
-		h.basePath, install.ID, trigger))
+	if provisionWorkflow != nil && isTerminalWorkflowStatus(provisionWorkflow.Status) {
+		// Trigger an immediate full panel re-render so the overview cards replace the accordion.
+		c.String(http.StatusOK, fmt.Sprintf(`<div id="active-provision-banner" hx-get="%s/installs/%s/panel" hx-trigger="load" hx-target="#panel-content-overview" hx-swap="innerHTML"></div>`,
+			h.basePath, install.ID))
+	} else {
+		c.String(http.StatusOK, fmt.Sprintf(`<div id="active-provision-banner" hx-get="%s/installs/%s/workflow-status" hx-trigger="every 5s" hx-swap="outerHTML"></div>`,
+			h.basePath, install.ID))
+	}
 }
 
 // findMostRecentProvisionWorkflow finds the most recently created workflow across all provision types.
@@ -169,16 +174,20 @@ func (h *Handler) findMostRecentProvisionWorkflow(ctx context.Context, client *n
 			bestWf = wf
 			processed := processWorkflowForCustomer(wf)
 			panel := ginHToWorkflowDataPanel(processed)
+			panel.IsReprovision = strings.Contains(string(wf.Type), "reprovision")
+			if panel.IsReprovision {
+				panel.Name = "Reprovision"
+			}
 			bestPanel = &panel
 		}
 	}
 	return bestWf, bestPanel
 }
 
-// getCloudFormationLink checks for an active "await install stack" step and returns the CF link.
-func (h *Handler) getCloudFormationLink(ctx context.Context, client *nuon.Client, install *models.Install, wf *nuonmodels.AppWorkflow) string {
+// getStackSetupData checks for an active "await install stack" step and returns platform-specific setup data.
+func (h *Handler) getStackSetupData(ctx context.Context, client *nuon.Client, install *models.Install, wf *nuonmodels.AppWorkflow) partials.StackSetupData {
 	if wf.Steps == nil {
-		return ""
+		return partials.StackSetupData{}
 	}
 
 	for _, step := range wf.Steps {
@@ -190,41 +199,146 @@ func (h *Handler) getCloudFormationLink(ctx context.Context, client *nuon.Client
 			stepStatus = string(step.Status.Status)
 		}
 		if stepStatus != "" && stepStatus != "pending" && stepStatus != "in-progress" && stepStatus != "approval-awaiting" {
-			return ""
+			return partials.StackSetupData{}
 		}
 
-		// Fetch CloudFormation link
-		var cloudFormationLink string
+		// Determine platform from app runner type
+		platform := h.detectPlatform(ctx, client, install)
+		zap.L().Debug("getStackSetupData: detected platform", zap.String("platform", platform), zap.String("installID", install.NuonInstallID))
+
 		stack, stackErr := client.GetInstallStack(ctx, install.NuonInstallID)
-		if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
-			if stack.Versions[0].QuickLinkURL != "" {
-				cloudFormationLink = stack.Versions[0].QuickLinkURL
-			}
+		if stackErr != nil {
+			zap.L().Debug("getStackSetupData: failed to fetch install stack", zap.Error(stackErr))
 		}
-		// Append customer inputs to CF URL
-		if cloudFormationLink != "" {
-			inputConfig, inputErr := client.GetAppInputConfig(ctx, install.GetAppID())
-			if inputErr == nil && inputConfig != nil {
-				var configMap map[string]interface{}
-				jsonBytes, jerr := json.Marshal(inputConfig)
-				if jerr == nil {
-					if json.Unmarshal(jsonBytes, &configMap) == nil {
-						inputMappings := extractCustomerInputMappings(configMap)
-						if len(inputMappings) > 0 {
-							currentInputs, ciErr := client.GetInstallCurrentInputs(ctx, install.NuonInstallID)
-							if ciErr == nil && currentInputs != nil && currentInputs.Values != nil {
-								cloudFormationLink = appendInputsToCloudFormationURL(
-									cloudFormationLink,
-									currentInputs.Values,
-									inputMappings,
-								)
+
+		switch platform {
+		case "gcp":
+			setup := partials.StackSetupData{
+				Platform:      "gcp",
+				NuonInstallID: install.NuonInstallID,
+			}
+			if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+				setup.TfvarsContent = parseTfvars(stack.Versions[0].Contents)
+				zap.L().Debug("getStackSetupData: parsed tfvars", zap.Bool("hasTfvars", setup.TfvarsContent != ""))
+			} else {
+				zap.L().Debug("getStackSetupData: no stack versions available for tfvars")
+			}
+			return setup
+
+		default: // AWS and others use CloudFormation
+			setup := partials.StackSetupData{Platform: platform}
+			if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+				if stack.Versions[0].QuickLinkURL != "" {
+					setup.CloudFormationLink = stack.Versions[0].QuickLinkURL
+				}
+			}
+			// Append customer inputs to CF URL
+			if setup.CloudFormationLink != "" {
+				inputConfig, inputErr := client.GetAppInputConfig(ctx, install.GetAppID())
+				if inputErr == nil && inputConfig != nil {
+					var configMap map[string]interface{}
+					jsonBytes, jerr := json.Marshal(inputConfig)
+					if jerr == nil {
+						if json.Unmarshal(jsonBytes, &configMap) == nil {
+							inputMappings := extractCustomerInputMappings(configMap)
+							if len(inputMappings) > 0 {
+								currentInputs, ciErr := client.GetInstallCurrentInputs(ctx, install.NuonInstallID)
+								if ciErr == nil && currentInputs != nil && currentInputs.Values != nil {
+									setup.CloudFormationLink = appendInputsToCloudFormationURL(
+										setup.CloudFormationLink,
+										currentInputs.Values,
+										inputMappings,
+									)
+								}
 							}
 						}
 					}
 				}
 			}
+			return setup
 		}
-		return cloudFormationLink
+	}
+	return partials.StackSetupData{}
+}
+
+// detectPlatform determines the cloud platform from the app's runner type.
+func (h *Handler) detectPlatform(ctx context.Context, client *nuon.Client, install *models.Install) string {
+	appID := install.GetAppID()
+	app, err := client.GetApp(ctx, appID)
+	if err != nil {
+		zap.L().Debug("detectPlatform: failed to fetch app", zap.String("appID", appID), zap.Error(err))
+		return "aws" // default
+	}
+	if app == nil || app.RunnerConfig == nil {
+		zap.L().Debug("detectPlatform: app or runner config is nil", zap.String("appID", appID))
+		return "aws" // default
+	}
+	runnerType := string(app.RunnerConfig.AppRunnerType)
+	zap.L().Debug("detectPlatform: runner type", zap.String("appID", appID), zap.String("runnerType", runnerType))
+	switch runnerType {
+	case "gcp":
+		return "gcp"
+	case "azure":
+		return "azure"
+	default:
+		return "aws"
+	}
+}
+
+// parseTfvars extracts the tfvars string from stack version contents.
+// Contents may be a JSON string containing a "tfvars" key.
+func parseTfvars(contents interface{}) string {
+	if contents == nil {
+		zap.L().Debug("parseTfvars: contents is nil")
+		return ""
+	}
+
+	zap.L().Debug("parseTfvars: contents type", zap.String("type", fmt.Sprintf("%T", contents)))
+
+	var raw interface{}
+	switch v := contents.(type) {
+	case string:
+		if err := json.Unmarshal([]byte(v), &raw); err != nil {
+			// Fallback: try base64 decode, then JSON unmarshal
+			decoded, b64Err := base64.StdEncoding.DecodeString(v)
+			if b64Err != nil {
+				decoded, b64Err = base64.RawStdEncoding.DecodeString(v)
+			}
+			if b64Err != nil {
+				zap.L().Debug("parseTfvars: failed to unmarshal or base64-decode string contents", zap.Error(err))
+				return ""
+			}
+			if err := json.Unmarshal(decoded, &raw); err != nil {
+				zap.L().Debug("parseTfvars: base64-decoded but failed to unmarshal JSON", zap.Error(err))
+				return ""
+			}
+		}
+	case map[string]interface{}:
+		raw = v
+	case json.RawMessage:
+		if err := json.Unmarshal(v, &raw); err != nil {
+			zap.L().Debug("parseTfvars: failed to unmarshal RawMessage contents", zap.Error(err))
+			return ""
+		}
+	default:
+		// Try JSON round-trip for unknown types
+		b, err := json.Marshal(v)
+		if err != nil {
+			zap.L().Debug("parseTfvars: unsupported contents type, marshal failed", zap.String("type", fmt.Sprintf("%T", v)))
+			return ""
+		}
+		if err := json.Unmarshal(b, &raw); err != nil {
+			zap.L().Debug("parseTfvars: unsupported contents type, unmarshal failed", zap.String("type", fmt.Sprintf("%T", v)))
+			return ""
+		}
+	}
+
+	if m, ok := raw.(map[string]interface{}); ok {
+		if tfvars, ok := m["tfvars"]; ok {
+			zap.L().Debug("parseTfvars: found tfvars key")
+			return fmt.Sprintf("%v", tfvars)
+		}
+		zap.L().Debug("parseTfvars: no tfvars key in contents map", zap.Int("numKeys", len(m)))
 	}
 	return ""
 }
@@ -240,7 +354,7 @@ func isTerminalWorkflowStatus(status string) bool {
 }
 
 // groupStepsIntoPhases groups workflow steps into logical provision phases.
-func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow) []partials.ProvisionPhase {
+func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow, isReprovision ...bool) []partials.ProvisionPhase {
 	if wf == nil || len(wf.Steps) == 0 {
 		return nil
 	}
@@ -252,7 +366,13 @@ func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow) []partials.ProvisionPhase 
 		return cmp.Compare(a.Idx, b.Idx)
 	})
 
-	phaseNames := []string{"Install stack", "Provision sandbox", "Deploy app"}
+	reprov := len(isReprovision) > 0 && isReprovision[0]
+	var phaseNames []string
+	if reprov {
+		phaseNames = []string{"Update stack", "Update sandbox", "Update app"}
+	} else {
+		phaseNames = []string{"Install stack", "Provision sandbox", "Deploy app"}
+	}
 
 	// Assign each step to a phase by index: 0-4 stack, 5-9 sandbox, 10+ components
 	phaseSteps := make([][]partials.PhaseStep, len(phaseNames))

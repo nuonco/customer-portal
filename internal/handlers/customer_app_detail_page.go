@@ -21,14 +21,14 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	}
 
 	var publishedApp models.PublishedApp
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND app_id = ? AND status IN ?", org.ID, appID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).First(&publishedApp).Error; err != nil {
 		c.Redirect(http.StatusFound, h.basePath+"/apps")
 		return
 	}
 
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
-	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 
 	display := h.buildAppDisplay(c, appID, org.ID, nuonClient, nuonClientErr)
 	display.LogoLightBase64 = publishedApp.LogoLightBase64

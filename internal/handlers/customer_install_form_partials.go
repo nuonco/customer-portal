@@ -68,7 +68,7 @@ func (h *Handler) getInstallLinkFormData(c *gin.Context, sha string) (*installFo
 		return nil, errBadRequest("Install link already used")
 	}
 
-	return h.fetchAppFormData(c, link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, link.AppID, link.OrgID)
+	return h.fetchAppFormData(c, link.NuonOrg.APIToken, link.NuonOrg.NuonOrgID, link.AppID, link.OrgID, h.nuonAPIURLForOrg(&link.NuonOrg))
 }
 
 // getPublishedAppFormData fetches config data for a published app
@@ -79,16 +79,16 @@ func (h *Handler) getPublishedAppFormData(c *gin.Context, appID string) (*instal
 	}
 
 	var publishedApp models.PublishedApp
-	if err := h.db.Where("org_id = ? AND app_id = ?", org.ID, appID).First(&publishedApp).Error; err != nil {
+	if err := h.db.Where("org_id = ? AND app_id = ? AND status IN ?", org.ID, appID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).First(&publishedApp).Error; err != nil {
 		return nil, errNotFound("App not found or not published")
 	}
 
-	return h.fetchAppFormData(c, org.APIToken, org.NuonOrgID, appID, org.ID)
+	return h.fetchAppFormData(c, org.APIToken, org.NuonOrgID, appID, org.ID, h.nuonAPIURLForOrg(org))
 }
 
 // fetchAppFormData is the shared logic for fetching and filtering app config
-func (h *Handler) fetchAppFormData(c *gin.Context, apiToken, nuonOrgID, appID, orgID string) (*installFormData, error) {
-	nuonClient, err := nuon.NewClientWithURL(apiToken, nuonOrgID, h.nuonAPIURL)
+func (h *Handler) fetchAppFormData(c *gin.Context, apiToken, nuonOrgID, appID, orgID, apiURL string) (*installFormData, error) {
+	nuonClient, err := nuon.NewClientWithURL(apiToken, nuonOrgID, apiURL)
 	if err != nil {
 		return nil, errInternal("Failed to initialize client")
 	}

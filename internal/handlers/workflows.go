@@ -17,8 +17,8 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -168,7 +168,7 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 	}
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -226,7 +226,7 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 	}
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -317,7 +317,7 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 	)
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		h.logger.Error("failed to initialize Nuon client", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
@@ -396,7 +396,7 @@ func (h *Handler) RetryWorkflowStep(c *gin.Context) {
 	}
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
 		return
@@ -931,7 +931,7 @@ func (h *Handler) fetchWorkflowData(c *gin.Context, install *localModels.Install
 		return nil, false, fmt.Errorf("organization information not found")
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		return nil, false, fmt.Errorf("failed to initialize Nuon client: %w", err)
 	}
@@ -1036,7 +1036,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 			zap.Error(err),
 		)
 		// Render error state workflow card
-		errorProps := components.WorkflowCardProps{
+		errorProps := workflows.WorkflowCardProps{
 			Workflow: customerui.WorkflowData{
 				ID:                       workflowID,
 				Name:                     "Error",
@@ -1049,7 +1049,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 			InstallID: install.ID,
 			BasePath:  h.basePath,
 		}
-		h.RenderTempl(c, http.StatusInternalServerError, components.WorkflowCard(errorProps))
+		h.RenderTempl(c, http.StatusInternalServerError, workflows.WorkflowCard(errorProps))
 		return
 	}
 
@@ -1063,13 +1063,13 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 	// Convert gin.H to WorkflowData
 	wfData := ginHToWorkflowData(processed)
 
-	props := components.WorkflowCardProps{
+	props := workflows.WorkflowCardProps{
 		Workflow:     wfData,
 		InstallID:    install.ID,
 		BasePath:     h.basePath,
 		PrimaryColor: primaryColor,
 	}
-	h.RenderTempl(c, http.StatusOK, components.WorkflowCard(props))
+	h.RenderTempl(c, http.StatusOK, workflows.WorkflowCard(props))
 }
 
 // fetchRecentWorkflows fetches the most recent customer-visible workflow for embedded display.
@@ -1085,7 +1085,7 @@ func (h *Handler) fetchRecentWorkflows(c *gin.Context, install *localModels.Inst
 		return nil, fmt.Errorf("organization information not found")
 	}
 
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize Nuon client: %w", err)
 	}

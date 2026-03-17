@@ -67,6 +67,8 @@ templ Layout(props LayoutProps) {
 			<link rel="icon" type="image/svg+xml" href="/static/images/favicon.svg"/>
 			<!-- Stratus Design System - Vendor CSS -->
 			<link href={ props.CSSPath } rel="stylesheet"/>
+			<!-- Phosphor icon font (Bold weight) -->
+			<link href="/static/css/phosphor-bold.css" rel="stylesheet"/>
 			<!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->
 			@darkModeAndSidebarScript()
 			<!-- Inter font (Stratus default) -->
@@ -410,6 +412,21 @@ templ createOrgModal(basePath string) {
 							To get a new token, run: <code>nuon orgs api-token -j</code>
 						</p>
 					</div>
+					<div>
+						<label for="org-api-url" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+							API URL
+						</label>
+						<input
+							type="text"
+							id="org-api-url"
+							name="api_url"
+							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							placeholder="https://api.nuon.co"
+						/>
+						<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
+							Leave blank to use the default API URL.
+						</p>
+					</div>
 					<div id="create-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
 				</form>
 				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
@@ -452,7 +469,8 @@ templ createOrgScript() {
 					credentials: 'same-origin',
 					body: JSON.stringify({
 						org_id: formData.get('org_id'),
-						api_token: formData.get('api_token')
+						api_token: formData.get('api_token'),
+						api_url: formData.get('api_url') || undefined
 					})
 				});
 

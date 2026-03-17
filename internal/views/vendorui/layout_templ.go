@@ -5,11 +5,12 @@ package vendorui
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"os"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -111,7 +112,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" rel=\"stylesheet\"><!-- Phosphor icon font (Bold weight) --><link href=\"/static/css/phosphor-bold.css\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -207,7 +208,7 @@ func Layout(props LayoutProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 138, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 140, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -225,7 +226,7 @@ func Layout(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 141, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 143, Col: 97}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -471,14 +472,14 @@ func createOrgModal(basePath string) templ.Component {
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div id=\"create-org-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Org</h3><button type=\"button\" onclick=\"closeCreateOrgModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"create-org-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"org-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"org-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"org-api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token <span class=\"text-red-500\">*</span></label> <input type=\"password\" id=\"org-api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">To get a new token, run: <code>nuon orgs api-token -j</code></p></div><div id=\"create-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeCreateOrgModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitCreateOrg()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-org-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div id=\"create-org-modal\" class=\"fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto\" style=\"z-index: 100;\"><div class=\"flex items-center justify-center min-h-full p-4\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8\"><div class=\"px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Connect Org</h3><button type=\"button\" onclick=\"closeCreateOrgModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"w-5 h-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form id=\"create-org-form\" class=\"px-6 py-4 space-y-4\"><div><label for=\"org-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"org-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"org-api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token <span class=\"text-red-500\">*</span></label> <input type=\"password\" id=\"org-api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">To get a new token, run: <code>nuon orgs api-token -j</code></p></div><div><label for=\"org-api-url\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API URL</label> <input type=\"text\" id=\"org-api-url\" name=\"api_url\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"https://api.nuon.co\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">Leave blank to use the default API URL.</p></div><div id=\"create-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form><div class=\"px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeCreateOrgModal()\" class=\"px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600\">Cancel</button> <button type=\"button\" onclick=\"submitCreateOrg()\" class=\"px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500\">Connect</button></div></div></div></div><!-- Config data for JavaScript --><div id=\"create-org-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 430, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 447, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
@@ -517,7 +518,7 @@ func createOrgScript() templ.Component {
 			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<script>\n\t\tasync function submitCreateOrg() {\n\t\t\tconst configEl = document.getElementById('create-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/org/create', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token')\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t// Org connected successfully, redirect to the org's links page\n\t\t\t\t\twindow.location.href = data.redirect_to || (basePath + '/orgs/');\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect org';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<script>\n\t\tasync function submitCreateOrg() {\n\t\t\tconst configEl = document.getElementById('create-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/org/create', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token'),\n\t\t\t\t\t\tapi_url: formData.get('api_url') || undefined\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t// Org connected successfully, redirect to the org's links page\n\t\t\t\t\twindow.location.href = data.redirect_to || (basePath + '/orgs/');\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect org';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

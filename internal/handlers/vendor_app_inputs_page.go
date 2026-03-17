@@ -29,7 +29,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	orgID := org.ID
 
 	// Initialize Nuon client
-	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURL)
+	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
 		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)

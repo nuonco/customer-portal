@@ -15,7 +15,8 @@ type ButtonProps struct {
 	DisabledReason string
 
 	// Events
-	OnClick string
+	OnClick       string
+	OnClickScript templ.ComponentScript
 
 	// HTMX
 	HxPost      string
@@ -28,6 +29,9 @@ type ButtonProps struct {
 	HxVals      string
 	HxIndicator string
 	ShowSpinner bool
+
+	// Icon (Phosphor icon class, e.g. "ph-bold ph-trash")
+	Icon string
 
 	// Styling
 	Class        string
@@ -52,11 +56,16 @@ templ buttonLink(props ButtonProps) {
 		if props.ID != "" {
 			id={ props.ID }
 		}
-		if props.OnClick != "" {
+		if props.OnClickScript.Call != "" {
+			onclick={ props.OnClickScript }
+		} else if props.OnClick != "" {
 			onclick={ templ.ComponentScript{Call: props.OnClick} }
 		}
-		class={ "inline-flex items-center justify-center rounded-md font-medium transition", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, false), props.Class }
+		class={ "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, false), props.Class }
 	>
+		if props.Icon != "" {
+			<i class={ props.Icon }></i>
+		}
 		{ props.Text }
 	</a>
 }
@@ -85,7 +94,9 @@ templ buttonElement(props ButtonProps) {
 		if props.Disabled {
 			disabled
 		}
-		if props.OnClick != "" {
+		if props.OnClickScript.Call != "" {
+			onclick={ props.OnClickScript }
+		} else if props.OnClick != "" {
 			onclick={ templ.ComponentScript{Call: props.OnClick} }
 		}
 		if props.HxPost != "" {
@@ -113,7 +124,7 @@ templ buttonElement(props ButtonProps) {
 		if props.HxVals != "" {
 			hx-vals={ props.HxVals }
 		}
-		class={ "inline-flex items-center justify-center rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, props.Disabled), props.Class }
+		class={ "inline-flex items-center justify-center gap-1.5 rounded-md font-medium transition disabled:opacity-50 disabled:cursor-not-allowed", sizeClasses(props.Size), variantClasses(props.Variant, props.PrimaryColor, props.Disabled), props.Class }
 	>
 		if hasHtmx(props) && props.ShowSpinner {
 			<span class="htmx-indicator mr-2">
@@ -122,6 +133,9 @@ templ buttonElement(props ButtonProps) {
 					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
 				</svg>
 			</span>
+		}
+		if props.Icon != "" {
+			<i class={ props.Icon }></i>
 		}
 		{ props.Text }
 	</button>
@@ -154,7 +168,7 @@ func variantClasses(variant, primaryColor string, disabled bool) string {
 	case "secondary":
 		return "bg-white dark:bg-dark-grey-800 text-cool-grey-700 dark:text-cool-grey-300 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 focus:ring-2 focus:ring-primary-400"
 	case "danger":
-		return "bg-red-600 text-white hover:bg-red-700 focus:ring-2 focus:ring-red-400"
+		return "border border-cool-grey-300/25 dark:border-dark-grey-500/25 shadow-sm bg-white dark:bg-dark-grey-900 text-red-800 dark:text-red-500 hover:bg-red-50 dark:hover:bg-[#1D0D10] focus:outline-red-400 dark:focus:outline-red-500/50 active:bg-red-100 dark:active:bg-[#2E1013]"
 	case "success":
 		return "bg-green-600 text-white hover:bg-green-700 focus:ring-2 focus:ring-green-400"
 	default: // primary
