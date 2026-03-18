@@ -16,6 +16,9 @@ func (h *Handler) VendorLogout(c *gin.Context) {
 	// Clear the session cookie
 	c.SetCookie("auth_session", "", -1, "/", "", false, true)
 
+	// Clear vendor OIDC state cookie
+	c.SetCookie("auth_state", "", -1, "/", "", false, true)
+
 	// If provider supports logout, redirect to IdP logout endpoint
 	if h.authProvider != nil && h.authProvider.SupportsLogout() {
 		logoutURL, err := h.authProvider.GetLogoutURL(sessionID)

@@ -13,6 +13,10 @@ func (h *Handler) CustomerLogout(c *gin.Context) {
 	// Clear the session cookie if present
 	c.SetCookie("auth_session", "", -1, "/", "", false, true)
 
+	// Clear customer OIDC state cookie (set on base domain during auth flow)
+	domain := extractBaseDomain(c.Request.Host)
+	c.SetCookie("customer_auth_state", "", -1, "/", domain, true, true)
+
 	// Redirect back to the current page if provided, otherwise to login
 	redirect := c.Query("redirect")
 	if redirect == "" || redirect[0] != '/' {

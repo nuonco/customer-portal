@@ -79,13 +79,13 @@ func (h *Handler) BaseDomainLogin(c *gin.Context) {
 	// returns to the base domain (portal.nuon.co/auth/callback)
 	domain := extractBaseDomain(c.Request.Host)
 	c.SetCookie(
-		"auth_state", // name
-		state,        // value
-		600,          // maxAge (10 minutes)
-		"/",          // path
-		domain,       // domain (base domain for cookie access)
-		true,         // secure (HTTPS only in production)
-		true,         // httpOnly
+		"customer_auth_state", // name
+		state,                 // value
+		600,                   // maxAge (10 minutes)
+		"/",                   // path
+		domain,                // domain (base domain for cookie access)
+		true,                  // secure (HTTPS only in production)
+		true,                  // httpOnly
 	)
 
 	// Get OIDC authorization URL using org-specific config
@@ -117,7 +117,7 @@ func (h *Handler) BaseDomainCallback(c *gin.Context) {
 
 	// Get state from query parameter and cookie
 	state := c.Query("state")
-	storedState, err := c.Cookie("auth_state")
+	storedState, err := c.Cookie("customer_auth_state")
 	if err != nil || state != storedState {
 		c.Redirect(http.StatusFound, "/auth/error?message=Invalid+state+parameter")
 		return
@@ -125,7 +125,7 @@ func (h *Handler) BaseDomainCallback(c *gin.Context) {
 
 	// Clear state cookie immediately after validation
 	domain := extractBaseDomain(c.Request.Host)
-	c.SetCookie("auth_state", "", -1, "/", domain, true, true)
+	c.SetCookie("customer_auth_state", "", -1, "/", domain, true, true)
 
 	// Extract subdomain from state parameter
 	returnSubdomain, err := auth.ExtractSubdomainFromState(state)
