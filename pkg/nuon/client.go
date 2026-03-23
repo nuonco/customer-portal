@@ -588,7 +588,10 @@ func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, star
 
 // GetAppComponents retrieves all components for an app
 func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.AppComponent, error) {
-	components, _, err := c.client.GetAppComponents(ctx, appID, nil)
+	components, _, err := c.client.GetAppComponents(ctx, appID, &models.GetPaginatedQuery{
+		Offset: 0,
+		Limit:  100,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get app components: %w", err)
 	}
