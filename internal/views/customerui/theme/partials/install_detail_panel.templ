@@ -505,7 +505,10 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 					sum.addEventListener('click', function(e){
 						e.preventDefault();
 						var details = sum.parentElement;
-						if(details.open) return;
+						if(details.open){
+							details.removeAttribute('open');
+							return;
+						}
 						acc.querySelectorAll('details.provision-phase[open]').forEach(function(d){
 							d.removeAttribute('open');
 						});

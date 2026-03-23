@@ -37,6 +37,11 @@ func (p CreateInstallPageProps) formAction() string {
 // CreateInstallPage renders the unified install form
 templ CreateInstallPage(props CreateInstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
+		<div class="max-w-2xl mx-auto mb-4 flex justify-end">
+			<button type="button" onclick="history.back()" class="button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 transition-colors" aria-label="Close">
+				<i class="ph-bold ph-x text-xl"></i>
+			</button>
+		</div>
 		<form
 			id="installForm"
 			class="max-w-2xl mx-auto space-y-6"
