@@ -87,6 +87,10 @@ func BuildThemeCSS(theme *models.AppTheme, includeDefaults bool) string {
 	} else {
 		darkCSS += "--theme-black:#121212;"
 	}
+	if theme != nil && theme.PrimaryColorDark != "" {
+		darkCSS += "--theme-primary:" + theme.PrimaryColorDark + ";"
+		darkCSS += "--theme-primary-hover:" + DarkenColor(theme.PrimaryColorDark, 20) + ";"
+	}
 
 	rootBlock := ""
 	if css != ":root{}" {
