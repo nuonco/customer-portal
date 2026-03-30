@@ -63,7 +63,7 @@ func (h *Handler) AccountsPage(c *gin.Context) {
 		}
 	}
 
-	if c.GetHeader("HX-Request") == "true" {
+	if isHTMXPartialRequest(c) {
 		h.RenderTempl(c, http.StatusOK, vendorpages.AccountsTableBody(accounts, org.ID, h.basePath, searchQuery))
 		return
 	}

@@ -5,14 +5,13 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"fmt"
 	"strings"
 	"time"
 
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -139,28 +138,44 @@ func InstallDetailPanel(props InstallDetailPanelProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		platform := platformFromRegion(props.Install.Region)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div id=\"panel-actions-source\" class=\"hidden\"><div class=\"relative\" id=\"actionsDropdown\"><button type=\"button\" onclick=\"toggleActionsDropdown()\" class=\"button button-dropdown-trigger dropdown-trigger\">Actions <i class=\"ph-bold ph-caret-down text-base ml-2\"></i></button><div id=\"actionsDropdownMenu\" class=\"hidden dropdown-menu\"><button type=\"button\" onclick=\"openEditInputsModal(); toggleActionsDropdown();\" class=\"dropdown-item\">Edit Inputs</button> <button type=\"button\" onclick=\"confirmReprovision(); toggleActionsDropdown();\" class=\"dropdown-item\">Reprovision</button> <button type=\"button\" onclick=\"confirmDeprovision(); toggleActionsDropdown();\" class=\"dropdown-item\">Deprovision</button></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div id=\"panel-actions-source\" class=\"hidden\"><div class=\"relative\" id=\"actionsDropdown\"><button type=\"button\" onclick=\"toggleActionsDropdown()\" class=\"button button-dropdown-trigger dropdown-trigger\">Actions <i class=\"ph-bold ph-caret-down text-base ml-2\"></i></button><div id=\"actionsDropdownMenu\" class=\"hidden dropdown-menu\"><button type=\"button\" onclick=\"openEditInputsModal(); toggleActionsDropdown();\" class=\"dropdown-item\">Edit Inputs</button> <button type=\"button\" onclick=\"confirmReprovision(); toggleActionsDropdown();\" class=\"dropdown-item\">Reprovision</button> <button type=\"button\" onclick=\"confirmDeprovision(); toggleActionsDropdown();\" class=\"dropdown-item\">Deprovision</button></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"space-y-4 mt-4\"><!-- API Deletion Warning Banner -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"space-y-4 mt-4\"><!-- API Deletion Warning Banner -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.APIDeletedError {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<div class=\"alert-warning\"><div class=\"flex items-start\"><div class=\"flex-shrink-0 mr-3 text-amber-500\"><i class=\"ph-bold ph-warning text-xl\"></i></div><div class=\"flex-1\"><h3 class=\"text-sm font-medium text-amber-800 dark:text-amber-300 mb-1\">Install Deleted from API</h3><p class=\"text-sm text-amber-700 dark:text-amber-400 mb-3\">This install was deleted from the Nuon control plane but still exists in your local portal. You are viewing cached data only. Live features (health checks, workflows, updates) are unavailable.</p><p class=\"text-sm text-amber-700 dark:text-amber-400 mb-3\"><strong>Action required:</strong> Contact your vendor to remove this install from the portal.</p></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div class=\"alert-warning\"><div class=\"flex items-start\"><div class=\"flex-shrink-0 mr-3 text-amber-500\"><i class=\"ph-bold ph-warning text-xl\"></i></div><div class=\"flex-1\"><h3 class=\"text-sm font-medium text-amber-800 dark:text-amber-300 mb-1\">Install Deleted from API</h3><p class=\"text-sm text-amber-700 dark:text-amber-400 mb-3\">This install was deleted from the Nuon control plane but still exists in your local portal. You are viewing cached data only. Live features (health checks, workflows, updates) are unavailable.</p><p class=\"text-sm text-amber-700 dark:text-amber-400 mb-3\"><strong>Action required:</strong> Contact your vendor to remove this install from the portal.</p></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- Active Provision / Accordion -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<div class=\"overview-layout space-y-4\"><div class=\"overview-cards\"><!-- App Config + Platform (side by side) --><div class=\"grid grid-cols-2 gap-4\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = appConfigCard(props).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = platformCard(platform, props.Install.Region).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div><div class=\"overview-workflow\"><!-- Active Provision / Accordion -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -171,100 +186,78 @@ func InstallDetailPanel(props InstallDetailPanelProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows --> <div id=\"active-provision-banner\" hx-get=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows --> <div id=\"active-provision-banner\" hx-get=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var2 string
 				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath + "/installs/" + props.Install.ID + "/workflow-status")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 187, Col: 83}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 197, Col: 85}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" hx-trigger=\"every 5s\" hx-swap=\"outerHTML\"></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" hx-trigger=\"every 5s\" hx-swap=\"outerHTML\"></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- App Config + Platform (side by side) — hidden during active provision -->")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if !(props.HasActiveProvision && len(props.ProvisionPhases) > 0) {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"grid grid-cols-2 gap-4\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = appConfigCard(props).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = platformCard(platform, props.Install.Region).Render(ctx, templ_7745c5c3_Buffer)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div><!-- Config data for JavaScript --><div id=\"install-detail-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div></div><!-- Config data for JavaScript --><div id=\"install-detail-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var3 string
 		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 205, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 210, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" data-install-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" data-install-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 206, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 211, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" data-install-name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" data-install-name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 207, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 212, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" data-nuon-install-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" data-nuon-install-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var6 string
 		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.NuonInstallID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 208, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 213, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"></div><!-- JavaScript for actions -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"></div><!-- JavaScript for actions -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -300,22 +293,22 @@ func overviewPlatformChip(platform string) templ.Component {
 		ctx = templ.ClearChildren(ctx)
 		switch platform {
 		case "aws":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<img src=\"/static/images/logos/aws.svg\" class=\"platform-logo dark:hidden\" alt=\"AWS\"> <img src=\"/static/images/logos/aws.svg\" class=\"platform-logo hidden dark:block dark:invert\" alt=\"AWS\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<img src=\"/static/images/logos/aws.svg\" class=\"platform-logo dark:hidden\" alt=\"AWS\"> <img src=\"/static/images/logos/aws.svg\" class=\"platform-logo hidden dark:block dark:invert\" alt=\"AWS\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "azure":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<img src=\"/static/images/logos/azure.svg\" class=\"platform-logo\" alt=\"Azure\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<img src=\"/static/images/logos/azure.svg\" class=\"platform-logo\" alt=\"Azure\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "gcp":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<img src=\"/static/images/logos/google.svg\" class=\"platform-logo\" alt=\"GCP\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<img src=\"/static/images/logos/google.svg\" class=\"platform-logo\" alt=\"GCP\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<i class=\"ph-bold ph-cloud platform-logo text-cool-grey-400 dark:text-cool-grey-500\"></i>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<i class=\"ph-bold ph-cloud platform-logo text-cool-grey-400 dark:text-cool-grey-500\"></i>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -346,43 +339,43 @@ func platformCard(platform string, region string) templ.Component {
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"card-base\"><h3 class=\"text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3\">Platform</h3><div class=\"space-y-3 text-sm\"><div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Name</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"card-base\"><h3 class=\"text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3\">Platform</h3><div class=\"space-y-3 text-sm\"><div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Name</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(platformLabel(platform))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 236, Col: 95}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 241, Col: 95}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if region != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Region</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Region</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
 			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(region)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 241, Col: 79}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 246, Col: 79}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -412,127 +405,140 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div id=\"active-provision-banner\" hx-get=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div id=\"active-provision-banner\" hx-get=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflow-status")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 252, Col: 67}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 257, Col: 67}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" hx-trigger=\"every 5s\" hx-ext=\"morph\" hx-swap=\"morph:outerHTML\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" hx-trigger=\"every 5s\" hx-ext=\"morph\" hx-swap=\"morph:outerHTML\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " data-workflow-status=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " data-workflow-status=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Status)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 257, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 262, Col: 41}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "><!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "><!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid #ef4444\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium text-red-700 dark:text-red-400\">Failed Step</h4></div><!-- Body --><div class=\"px-4 py-3\"><p class=\"text-xs text-[var(--theme-text-muted)]\">Step name</p><p class=\"text-sm font-medium mt-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid #ef4444\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium text-red-700 dark:text-red-400\">Failed Step</h4></div><!-- Body --><div class=\"px-4 py-3\"><p class=\"text-xs text-[var(--theme-text-muted)]\">Step name</p><p class=\"text-sm font-medium mt-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.FailedStepName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 270, Col: 66}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 275, Col: 66}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</p></div><!-- Footer --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-top: 1px solid var(--theme-border-subtle)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</p></div><!-- Footer --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-top: 1px solid var(--theme-border-subtle)\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.FailedStepRetryable {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<p class=\"text-xs text-[var(--theme-text-muted)]\">You can retry this step.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<p class=\"text-xs text-[var(--theme-text-muted)]\">You can retry this step.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var15 string
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 280, Col: 134}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 285, Col: 134}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" onclick=\"retryFailedStep(this)\">Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" onclick=\"retryFailedStep(this)\">Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<p class=\"text-xs text-red-600 dark:text-red-300\">This step cannot be retried. Please reprovision the install.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" onclick=\"confirmReprovision()\">Reprovision <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<p class=\"text-xs text-red-600 dark:text-red-300\">This step cannot be retried. Please reprovision the install.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" onclick=\"confirmReprovision()\">Reprovision <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if stackSetup.CloudFormationLink != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid var(--theme-primary)\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium\" style=\"color: var(--theme-primary)\">AWS CloudFormation</h4></div><!-- Body --><div class=\"px-4 py-3\"><p class=\"text-xs text-[var(--theme-text-muted)]\">Status</p><p class=\"text-sm font-medium mt-1\">Complete setup in AWS Console</p></div><!-- Footer --><div class=\"flex items-center justify-end gap-2 px-4 py-3\" style=\"border-top: 1px solid var(--theme-border-subtle)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid var(--theme-primary)\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium\" style=\"color: var(--theme-primary)\">AWS CloudFormation</h4></div><!-- Body --><div class=\"px-4 py-3\"><p class=\"text-xs text-[var(--theme-text-muted)]\">Status</p><p class=\"text-sm font-medium mt-1\">Complete setup in AWS Console</p></div><!-- Footer --><div class=\"flex items-center justify-end gap-2 px-4 py-3\" style=\"border-top: 1px solid var(--theme-border-subtle)\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var16 string
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 317, Col: 105}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 322, Col: 105}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "\">Approve Installation</button> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "\">Approve Installation</button> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if workflow != nil && workflow.CanCancel {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn btn-theme-outline text-sm\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn btn-theme-outline text-sm\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var17 string
 				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 326, Col: 100}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 331, Col: 100}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "\" data-workflow-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var18 string
+				templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 332, Col: 41}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -545,12 +551,12 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var18 templ.SafeURL
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(stackSetup.CloudFormationLink))
+			var templ_7745c5c3_Var19 templ.SafeURL
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(stackSetup.CloudFormationLink))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 332, Col: 57}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 338, Col: 57}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -564,174 +570,174 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 				return templ_7745c5c3_Err
 			}
 		} else if workflow != nil && workflow.CurrentStepType == "initializing" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"card-base !p-0 mb-3\" style=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var19 string
-			templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("border-top: 2px solid " + templ.SafeCSS(primaryColor))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 345, Col: 98}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\"><div class=\"flex items-center gap-3 px-4 py-3\"><i class=\"ph-bold ph-circle-notch animate-spin text-base\" style=\"color: var(--theme-primary)\"></i><div><h4 class=\"text-sm font-medium\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid var(--theme-primary)\"><div class=\"flex items-center gap-3 px-4 py-3\"><i class=\"ph-bold ph-circle-notch animate-spin text-base\" style=\"color: var(--theme-primary)\"></i><div><h4 class=\"text-sm font-medium\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 349, Col: 64}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 355, Col: 64}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</h4><p class=\"text-xs text-[var(--theme-text-muted)] mt-0.5\">Your install is being set up. This may take a moment.</p></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "</h4><p class=\"text-xs text-[var(--theme-text-muted)] mt-0.5\">Your install is being set up. This may take a moment.</p></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if workflow != nil && (workflow.HasApprovalSteps || workflow.CanCancel) {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<div class=\"card-base !p-0 mb-3\" style=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div class=\"card-base !p-0 mb-3\" style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("border-top: 2px solid " + templ.SafeCSS(primaryColor))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 355, Col: 98}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 361, Col: 98}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium\" style=\"color: var(--theme-primary)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium\" style=\"color: var(--theme-primary)\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var22 string
 			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 358, Col: 99}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 364, Col: 99}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</h4>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</h4>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.CurrentStepType == "approval-awaiting" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span class=\"badge-warning text-xs px-2 py-0.5 rounded-full\">Awaiting Approval</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<span class=\"badge-warning text-xs px-2 py-0.5 rounded-full\">Awaiting Approval</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else if workflow.CurrentStepType == "in-progress" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full\"><i class=\"ph-bold ph-circle-notch animate-spin text-xs\"></i> In Progress</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span class=\"badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full\"><i class=\"ph-bold ph-circle-notch animate-spin text-xs\"></i> In Progress</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else if workflow.CurrentStepType == "error" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<span class=\"badge-error text-xs px-2 py-0.5 rounded-full\">Failed</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"badge-error text-xs px-2 py-0.5 rounded-full\">Failed</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<span class=\"badge-neutral text-xs px-2 py-0.5 rounded-full\">Pending</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<span class=\"badge-neutral text-xs px-2 py-0.5 rounded-full\">Pending</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "</div><!-- Body --><div class=\"px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</div><!-- Body --><div class=\"px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.TotalSteps > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<p class=\"text-xs text-[var(--theme-text-muted)]\">Step ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<p class=\"text-xs text-[var(--theme-text-muted)]\">Step ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var23 string
 				templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.CurrentStepNumber))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 375, Col: 108}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 381, Col: 108}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, " of ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, " of ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var24 string
 				templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.TotalSteps))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 375, Col: 154}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 381, Col: 154}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if workflow.CurrentStepType == "approval-awaiting" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<p class=\"text-sm mt-1\">This step requires your approval to continue.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "<p class=\"text-sm mt-1\">This step requires your approval to continue.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else if workflow.CurrentStepType == "in-progress" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<p class=\"text-sm mt-1\">This step is currently running.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<p class=\"text-sm mt-1\">This step is currently running.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<p class=\"text-sm mt-1\">Waiting to start.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 58, "<p class=\"text-sm mt-1\">Waiting to start.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "</div><!-- Footer --><div class=\"flex items-center justify-end gap-2 px-4 py-3\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "</div><!-- Footer --><div class=\"flex items-center justify-end gap-2 px-4 py-3\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.HasApprovalSteps && workflow.CanApproveAll {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 60, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var25 string
 				templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 391, Col: 105}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 397, Col: 105}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "\">Approve Installation</button> ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 61, "\">Approve Installation</button> ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if workflow.CanCancel {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn btn-theme-outline text-sm\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 62, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn btn-theme-outline text-sm\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var26 string
 				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 400, Col: 100}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 406, Col: 100}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 63, "\" data-workflow-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var27 string
+				templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 407, Col: 41}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -750,7 +756,7 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 			return templ_7745c5c3_Err
 		}
 		for i, phase := range phases {
-			templ_7745c5c3_Var27 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var28 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -804,10 +810,10 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 							return templ_7745c5c3_Err
 						}
 					}
-					var templ_7745c5c3_Var28 = []any{"text-cool-grey-700 dark:text-cool-grey-300",
+					var templ_7745c5c3_Var29 = []any{"text-cool-grey-700 dark:text-cool-grey-300",
 						templ.KV("font-medium", step.Status == "in-progress" || step.Status == "approval-awaiting"),
 					}
-					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var28...)
+					templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var29...)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -815,12 +821,12 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var29 string
-					templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var28).String())
+					var templ_7745c5c3_Var30 string
+					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var29).String())
 					if templ_7745c5c3_Err != nil {
 						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 1, Col: 0}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -828,12 +834,12 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var30 string
-					templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(step.Name)
+					var templ_7745c5c3_Var31 string
+					templ_7745c5c3_Var31, templ_7745c5c3_Err = templ.JoinStringErrs(step.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 435, Col: 21}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 442, Col: 21}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var31))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -848,12 +854,12 @@ func ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, st
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = provisionPhaseAccordion(phase, i+1).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = provisionPhaseAccordion(phase, i+1).Render(templ.WithChildren(ctx, templ_7745c5c3_Var28), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><!-- Open active/failed phase on first load; one-at-a-time toggle --><script>\n\t\t(function(){\n\t\t\t// Preserve <details> open state across idiomorph morph swaps\n\t\t\tif(!window._apsMorphBound){\n\t\t\t\twindow._apsMorphBound = true;\n\t\t\t\tvar _apsOpenPhases = [];\n\t\t\t\tvar _apsPhaseStatuses = {};\n\t\t\t\tdocument.body.addEventListener('htmx:beforeSwap', function(evt){\n\t\t\t\t\tvar el = evt.detail.target || evt.detail.elt;\n\t\t\t\t\tif(!el || el.id !== 'active-provision-banner') return;\n\t\t\t\t\t_apsOpenPhases = [];\n\t\t\t\t\t_apsPhaseStatuses = {};\n\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\tvar idx = d.getAttribute('data-phase-index');\n\t\t\t\t\t\tif(d.open) _apsOpenPhases.push(idx);\n\t\t\t\t\t\t_apsPhaseStatuses[idx] = d.getAttribute('data-phase-status');\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t\tdocument.body.addEventListener('htmx:afterSwap', function(evt){\n\t\t\t\t\tvar el = evt.detail.target || evt.detail.elt;\n\t\t\t\t\tif(!el || el.id !== 'active-provision-banner') return;\n\t\t\t\t\tvar transitionTarget = null;\n\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\tvar idx = d.getAttribute('data-phase-index');\n\t\t\t\t\t\tvar newStatus = d.getAttribute('data-phase-status');\n\t\t\t\t\t\tvar oldStatus = _apsPhaseStatuses[idx];\n\t\t\t\t\t\tif(oldStatus && oldStatus !== newStatus &&\n\t\t\t\t\t\t   (newStatus === 'in_progress' || newStatus === 'failed')){\n\t\t\t\t\t\t\ttransitionTarget = idx;\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t\tif(transitionTarget){\n\t\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\t\tif(d.getAttribute('data-phase-index') === transitionTarget){\n\t\t\t\t\t\t\t\td.setAttribute('open','');\n\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\td.removeAttribute('open');\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t} else {\n\t\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\t\tif(_apsOpenPhases.indexOf(d.getAttribute('data-phase-index')) >= 0){\n\t\t\t\t\t\t\t\td.setAttribute('open','');\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t}\n\n\t\t\t// First-load: open the active or failed phase (only once)\n\t\t\tif(!window._apsInit){\n\t\t\t\twindow._apsInit = true;\n\t\t\t\tvar phases = document.querySelectorAll('#active-provision-banner details.provision-phase');\n\t\t\t\tphases.forEach(function(d){\n\t\t\t\t\tvar s = d.getAttribute('data-phase-status');\n\t\t\t\t\tif(s === 'in_progress' || s === 'failed') d.setAttribute('open','');\n\t\t\t\t});\n\t\t\t}\n\n\t\t\t// Take full control of accordion open/close to prevent double-open flicker.\n\t\t\tdocument.querySelectorAll('.provision-accordion').forEach(function(acc){\n\t\t\t\tacc.querySelectorAll('details.provision-phase > summary').forEach(function(sum){\n\t\t\t\t\tsum.addEventListener('click', function(e){\n\t\t\t\t\t\te.preventDefault();\n\t\t\t\t\t\tvar details = sum.parentElement;\n\t\t\t\t\t\tif(details.open) return;\n\t\t\t\t\t\tacc.querySelectorAll('details.provision-phase[open]').forEach(function(d){\n\t\t\t\t\t\t\td.removeAttribute('open');\n\t\t\t\t\t\t});\n\t\t\t\t\t\tdetails.setAttribute('open','');\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t});\n\t\t})();\n\t\t</script></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 79, "</div><!-- Open active/failed phase on first load; one-at-a-time toggle --><script>\n\t\t(function(){\n\t\t\t// Preserve <details> open state across idiomorph morph swaps\n\t\t\tif(!window._apsMorphBound){\n\t\t\t\twindow._apsMorphBound = true;\n\t\t\t\tvar _apsOpenPhases = [];\n\t\t\t\tvar _apsPhaseStatuses = {};\n\t\t\t\tdocument.body.addEventListener('htmx:beforeSwap', function(evt){\n\t\t\t\t\tvar el = evt.detail.target || evt.detail.elt;\n\t\t\t\t\tif(!el || el.id !== 'active-provision-banner') return;\n\t\t\t\t\t_apsOpenPhases = [];\n\t\t\t\t\t_apsPhaseStatuses = {};\n\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\tvar idx = d.getAttribute('data-phase-index');\n\t\t\t\t\t\tif(d.open) _apsOpenPhases.push(idx);\n\t\t\t\t\t\t_apsPhaseStatuses[idx] = d.getAttribute('data-phase-status');\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t\tdocument.body.addEventListener('htmx:afterSwap', function(evt){\n\t\t\t\t\tvar el = evt.detail.target || evt.detail.elt;\n\t\t\t\t\tif(!el || el.id !== 'active-provision-banner') return;\n\t\t\t\t\tvar transitionTarget = null;\n\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\tvar idx = d.getAttribute('data-phase-index');\n\t\t\t\t\t\tvar newStatus = d.getAttribute('data-phase-status');\n\t\t\t\t\t\tvar oldStatus = _apsPhaseStatuses[idx];\n\t\t\t\t\t\tif(oldStatus && oldStatus !== newStatus &&\n\t\t\t\t\t\t   (newStatus === 'in_progress' || newStatus === 'failed')){\n\t\t\t\t\t\t\ttransitionTarget = idx;\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t\tif(transitionTarget){\n\t\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\t\tif(d.getAttribute('data-phase-index') === transitionTarget){\n\t\t\t\t\t\t\t\td.setAttribute('open','');\n\t\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\t\td.removeAttribute('open');\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t} else {\n\t\t\t\t\t\tel.querySelectorAll('details.provision-phase').forEach(function(d){\n\t\t\t\t\t\t\tif(_apsOpenPhases.indexOf(d.getAttribute('data-phase-index')) >= 0){\n\t\t\t\t\t\t\t\td.setAttribute('open','');\n\t\t\t\t\t\t\t}\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t}\n\n\t\t\t// First-load: open the active or failed phase (only once)\n\t\t\tif(!window._apsInit){\n\t\t\t\twindow._apsInit = true;\n\t\t\t\tvar phases = document.querySelectorAll('#active-provision-banner details.provision-phase');\n\t\t\t\tphases.forEach(function(d){\n\t\t\t\t\tvar s = d.getAttribute('data-phase-status');\n\t\t\t\t\tif(s === 'in_progress' || s === 'failed') d.setAttribute('open','');\n\t\t\t\t});\n\t\t\t}\n\n\t\t\t// Take full control of accordion open/close to prevent double-open flicker.\n\t\t\tdocument.querySelectorAll('.provision-accordion').forEach(function(acc){\n\t\t\t\tacc.querySelectorAll('details.provision-phase > summary').forEach(function(sum){\n\t\t\t\t\tsum.addEventListener('click', function(e){\n\t\t\t\t\t\te.preventDefault();\n\t\t\t\t\t\tvar details = sum.parentElement;\n\t\t\t\t\t\tif(details.open){\n\t\t\t\t\t\t\treturn;\n\t\t\t\t\t\t}\n\t\t\t\t\t\tacc.querySelectorAll('details.provision-phase[open]').forEach(function(d){\n\t\t\t\t\t\t\td.removeAttribute('open');\n\t\t\t\t\t\t});\n\t\t\t\t\t\tdetails.setAttribute('open','');\n\t\t\t\t\t});\n\t\t\t\t});\n\t\t\t});\n\t\t})();\n\t\t</script></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -878,9 +884,9 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var31 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var31 == nil {
-			templ_7745c5c3_Var31 = templ.NopComponent
+		templ_7745c5c3_Var32 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var32 == nil {
+			templ_7745c5c3_Var32 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 80, "<div class=\"card-base !p-0 mb-3\" style=\"border-top: 2px solid var(--theme-primary)\"><!-- Header --><div class=\"flex items-center justify-between px-4 py-3\" style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><h4 class=\"text-sm font-medium\" style=\"color: var(--theme-primary)\">GCP Stack Setup</h4>")
@@ -892,12 +898,12 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var32 string
-			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
+			var templ_7745c5c3_Var33 string
+			templ_7745c5c3_Var33, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 531, Col: 103}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 540, Col: 103}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var33))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -918,8 +924,8 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var33 templ.ComponentScript = copyToClipboard("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp")
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var33.Call)
+		var templ_7745c5c3_Var34 templ.ComponentScript = copyToClipboard("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var34.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -927,12 +933,12 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var34 string
-		templ_7745c5c3_Var34, templ_7745c5c3_Err = templ.JoinStringErrs(gcpBackendSnippet(stackSetup.NuonInstallID))
+		var templ_7745c5c3_Var35 string
+		templ_7745c5c3_Var35, templ_7745c5c3_Err = templ.JoinStringErrs(gcpBackendSnippet(stackSetup.NuonInstallID))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 555, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 564, Col: 93}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var34))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var35))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -948,8 +954,8 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var35 templ.ComponentScript = copyToClipboard(gcpBackendSnippet(stackSetup.NuonInstallID))
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var35.Call)
+		var templ_7745c5c3_Var36 templ.ComponentScript = copyToClipboard(gcpBackendSnippet(stackSetup.NuonInstallID))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var36.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -962,12 +968,12 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var36 string
-			templ_7745c5c3_Var36, templ_7745c5c3_Err = templ.JoinStringErrs(stackSetup.TfvarsContent)
+			var templ_7745c5c3_Var37 string
+			templ_7745c5c3_Var37, templ_7745c5c3_Err = templ.JoinStringErrs(stackSetup.TfvarsContent)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 567, Col: 75}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 576, Col: 75}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var36))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var37))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -983,8 +989,8 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var37 templ.ComponentScript = copyToClipboard(stackSetup.TfvarsContent)
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var37.Call)
+			var templ_7745c5c3_Var38 templ.ComponentScript = copyToClipboard(stackSetup.TfvarsContent)
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var38.Call)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -997,12 +1003,12 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var38 string
-		templ_7745c5c3_Var38, templ_7745c5c3_Err = templ.JoinStringErrs(gcpApplyCmd())
+		var templ_7745c5c3_Var39 string
+		templ_7745c5c3_Var39, templ_7745c5c3_Err = templ.JoinStringErrs(gcpApplyCmd())
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 579, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 588, Col: 63}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var38))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var39))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1018,8 +1024,8 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var39 templ.ComponentScript = copyToClipboard(gcpApplyCmd())
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var39.Call)
+		var templ_7745c5c3_Var40 templ.ComponentScript = copyToClipboard(gcpApplyCmd())
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var40.Call)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1032,21 +1038,34 @@ func gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, insta
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var40 string
-			templ_7745c5c3_Var40, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
+			var templ_7745c5c3_Var41 string
+			templ_7745c5c3_Var41, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 592, Col: 98}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 601, Col: 98}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var40))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var41))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\">Cancel</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 98, "\" data-workflow-name=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var42 string
+			templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 602, Col: 39}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "\">Cancel</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 99, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1096,160 +1115,160 @@ func provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) templ.Compone
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var41 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var41 == nil {
-			templ_7745c5c3_Var41 = templ.NopComponent
+		templ_7745c5c3_Var43 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var43 == nil {
+			templ_7745c5c3_Var43 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 100, "<details class=\"provision-phase\" data-phase-index=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "<details class=\"provision-phase\" data-phase-index=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var42 string
-		templ_7745c5c3_Var42, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
+		var templ_7745c5c3_Var44 string
+		templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 624, Col: 50}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 634, Col: 50}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var42))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 101, "\" data-phase-status=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var43 string
-		templ_7745c5c3_Var43, templ_7745c5c3_Err = templ.JoinStringErrs(phase.Status)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 625, Col: 34}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var43))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\" data-phase-status=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 102, "\"><summary class=\"provision-phase-summary list-none [&::-webkit-details-marker]:hidden\"><div class=\"flex items-center gap-3 flex-1 min-w-0\"><!-- Step number circle with status icon -->")
+		var templ_7745c5c3_Var45 string
+		templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(phase.Status)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 635, Col: 34}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "\"><summary class=\"provision-phase-summary list-none [&::-webkit-details-marker]:hidden\"><div class=\"flex items-center gap-3 flex-1 min-w-0\"><!-- Step number circle with status icon -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		switch phase.Status {
 		case "completed":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 103, "<div class=\"provision-phase-circle provision-phase-completed\"><i class=\"ph-bold ph-check text-xs\"></i></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<div class=\"provision-phase-circle provision-phase-completed\"><i class=\"ph-bold ph-check text-xs\"></i></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "in_progress":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 104, "<div class=\"provision-phase-circle provision-phase-in-progress\"><span class=\"text-xs font-semibold\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "<div class=\"provision-phase-circle provision-phase-in-progress\"><span class=\"text-xs font-semibold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var44 string
-			templ_7745c5c3_Var44, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
+			var templ_7745c5c3_Var46 string
+			templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 637, Col: 73}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 647, Col: 73}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var44))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 105, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "failed":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 106, "<div class=\"provision-phase-circle provision-phase-failed\"><i class=\"ph-bold ph-x text-xs\"></i></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<div class=\"provision-phase-circle provision-phase-failed\"><i class=\"ph-bold ph-x text-xs\"></i></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 107, "<div class=\"provision-phase-circle provision-phase-not-started\"><span class=\"text-xs font-semibold\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var45 string
-			templ_7745c5c3_Var45, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 645, Col: 73}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var45))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "</span></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "<!-- Title and status --><div class=\"flex-1 min-w-0\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var46 string
-		templ_7745c5c3_Var46, templ_7745c5c3_Err = templ.JoinStringErrs(phase.Name)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 650, Col: 86}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var46))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "</span> ")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if phase.StepProgress != "" && phase.Status == "in_progress" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "<span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 ml-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 108, "<div class=\"provision-phase-circle provision-phase-not-started\"><span class=\"text-xs font-semibold\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var47 string
-			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(phase.StepProgress)
+			templ_7745c5c3_Var47, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", stepNumber))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 652, Col: 96}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 655, Col: 73}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var47))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 109, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</div><!-- Status badge -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 110, "<!-- Title and status --><div class=\"flex-1 min-w-0\"><span class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var48 string
+		templ_7745c5c3_Var48, templ_7745c5c3_Err = templ.JoinStringErrs(phase.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 660, Col: 86}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var48))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 111, "</span> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if phase.StepProgress != "" && phase.Status == "in_progress" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 112, "<span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 ml-2\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var49 string
+			templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(phase.StepProgress)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 662, Col: 96}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 113, "</span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "</div><!-- Status badge -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		switch phase.Status {
 		case "completed":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 114, "<span class=\"badge-success text-xs\">Completed</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<span class=\"badge-success text-xs\">Completed</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "in_progress":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 115, "<span class=\"badge-info text-xs\"><i class=\"ph-bold ph-circle-notch animate-spin text-xs mr-1\"></i> In Progress</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "<span class=\"badge-info text-xs\"><i class=\"ph-bold ph-circle-notch animate-spin text-xs mr-1\"></i> In Progress</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "failed":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 116, "<span class=\"badge-error text-xs\">Failed</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "<span class=\"badge-error text-xs\">Failed</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 117, "<span class=\"badge-neutral text-xs\">Pending</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "<span class=\"badge-neutral text-xs\">Pending</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 118, "</div><i class=\"ph-bold ph-caret-down text-sm text-cool-grey-400 dark:text-cool-grey-500 provision-phase-chevron ml-2\"></i></summary><div class=\"provision-phase-content\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div><i class=\"ph-bold ph-caret-down text-sm text-cool-grey-400 dark:text-cool-grey-500 provision-phase-chevron ml-2\"></i></summary><div class=\"provision-phase-content\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templ_7745c5c3_Var41.Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templ_7745c5c3_Var43.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 119, "</div></details>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "</div></details>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1274,159 +1293,159 @@ func appConfigCard(props InstallDetailPanelProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var48 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var48 == nil {
-			templ_7745c5c3_Var48 = templ.NopComponent
+		templ_7745c5c3_Var50 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var50 == nil {
+			templ_7745c5c3_Var50 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 120, "<div class=\"card-base\"><div class=\"flex items-center gap-2 mb-3\"><h3 class=\"text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "<div class=\"card-base\"><div class=\"flex items-center gap-2 mb-3\"><h3 class=\"text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var49 string
-		templ_7745c5c3_Var49, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
+		var templ_7745c5c3_Var51 string
+		templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 682, Col: 93}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 692, Col: 93}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var49))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 121, "</h3>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "</h3>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.AppConfigVersion > 0 {
 			if props.InstallConfigVersion < props.AppConfigVersion {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 122, "<span class=\"chip-sm-warning\">update available</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "<span class=\"chip-sm-warning\">update available</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 123, "<span class=\"chip-sm-success\">up to date</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "<span class=\"chip-sm-success\">up to date</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 124, "</div><div class=\"grid grid-cols-2 gap-6 text-sm\"><!-- First column: Installed Version --><div class=\"space-y-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "</div><div class=\"grid grid-cols-2 gap-6 text-sm\"><!-- First column: Installed Version --><div class=\"space-y-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.InstallConfigVersion > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 125, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Installed Version</span> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Installed Version</span> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if props.AppConfigVersion > 0 && props.InstallConfigVersion < props.AppConfigVersion {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 126, "<p class=\"font-medium text-amber-600 dark:text-amber-400\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var50 string
-				templ_7745c5c3_Var50, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.InstallConfigVersion))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 698, Col: 113}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var50))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "</p>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "<p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var51 string
-				templ_7745c5c3_Var51, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.InstallConfigVersion))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 700, Col: 121}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var51))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "</p>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.InstallConfigUpdatedAt != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Last Updated</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "<p class=\"font-medium text-amber-600 dark:text-amber-400\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var52 string
-				templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(formatConfigDate(props.InstallConfigUpdatedAt))
+				templ_7745c5c3_Var52, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.InstallConfigVersion))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 706, Col: 121}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 708, Col: 113}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var52))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "</p></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 128, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 129, "<p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var53 string
+				templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.InstallConfigVersion))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 710, Col: 121}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 130, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 131, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.InstallConfigUpdatedAt != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 132, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Last Updated</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var54 string
+				templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(formatConfigDate(props.InstallConfigUpdatedAt))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 716, Col: 121}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "</p></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 133, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Installed Version</span><p class=\"font-medium text-cool-grey-400 dark:text-cool-grey-500\">—</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Installed Version</span><p class=\"font-medium text-cool-grey-400 dark:text-cool-grey-500\">—</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 134, "</div><!-- Second column: Latest Version + Published --><div class=\"space-y-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "</div><!-- Second column: Latest Version + Published --><div class=\"space-y-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if props.AppConfigVersion > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 135, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Latest Version</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Latest Version</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var53 string
-			templ_7745c5c3_Var53, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.AppConfigVersion))
+			var templ_7745c5c3_Var55 string
+			templ_7745c5c3_Var55, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("v%d", props.AppConfigVersion))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 721, Col: 116}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 731, Col: 116}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var53))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var55))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 136, "</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
 		if props.AppConfigUpdatedAt != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 137, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Published</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "<div><span class=\"text-cool-grey-500 dark:text-cool-grey-400\">Published</span><p class=\"font-medium text-cool-grey-800 dark:text-cool-grey-200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var54 string
-			templ_7745c5c3_Var54, templ_7745c5c3_Err = templ.JoinStringErrs(formatConfigDate(props.AppConfigUpdatedAt))
+			var templ_7745c5c3_Var56 string
+			templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs(formatConfigDate(props.AppConfigUpdatedAt))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 727, Col: 116}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 737, Col: 116}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var54))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 138, "</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 139, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "</div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1460,232 +1479,232 @@ func workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primaryC
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var55 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var55 == nil {
-			templ_7745c5c3_Var55 = templ.NopComponent
+		templ_7745c5c3_Var57 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var57 == nil {
+			templ_7745c5c3_Var57 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 140, "<div id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var56 string
-		templ_7745c5c3_Var56, templ_7745c5c3_Err = templ.JoinStringErrs("workflow-" + workflow.ID)
+		var templ_7745c5c3_Var58 string
+		templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs("workflow-" + workflow.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 747, Col: 32}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 757, Col: 32}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var56))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 141, "\" class=\"card-base mb-4\"><!-- Wrapper for status display - this is the HTMX target --><div id=\"workflow-status-display\"><div class=\"flex items-center justify-between mb-2\"><div class=\"flex-1\"><h4 class=\"font-medium text-cool-grey-900 dark:text-white\">")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var57 string
-		templ_7745c5c3_Var57, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 754, Col: 79}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var57))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "\" class=\"card-base mb-4\"><!-- Wrapper for status display - this is the HTMX target --><div id=\"workflow-status-display\"><div class=\"flex items-center justify-between mb-2\"><div class=\"flex-1\"><h4 class=\"font-medium text-cool-grey-900 dark:text-white\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 142, "</h4><!-- Status subtitle with appropriate icon -->")
+		var templ_7745c5c3_Var59 string
+		templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 764, Col: 79}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "</h4><!-- Status subtitle with appropriate icon -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow.Status == "completed" || workflow.Status == "success" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 143, "<div class=\"flex items-center gap-2 mt-1 text-sm text-green-600 dark:text-green-400\"><i class=\"ph-bold ph-check-circle text-base\"></i> <span>Completed</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "<div class=\"flex items-center gap-2 mt-1 text-sm text-green-600 dark:text-green-400\"><i class=\"ph-bold ph-check-circle text-base\"></i> <span>Completed</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if workflow.Status == "error" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 144, "<div class=\"flex items-center gap-2 mt-1 text-sm text-red-600 dark:text-red-400\"><i class=\"ph-bold ph-x-circle text-base\"></i> <span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "<div class=\"flex items-center gap-2 mt-1 text-sm text-red-600 dark:text-red-400\"><i class=\"ph-bold ph-x-circle text-base\"></i> <span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.CurrentStepName != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 145, "Failed at: ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var58 string
-				templ_7745c5c3_Var58, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 766, Col: 46}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var58))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "Failed")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "</span></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else if workflow.Status == "cancelled" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "<div class=\"flex items-center gap-2 mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\"><i class=\"ph-bold ph-prohibit text-base\"></i> <span>Cancelled</span></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<div class=\"flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400\"><i class=\"ph-bold ph-circle-notch animate-spin text-base\"></i> <span>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if workflow.TotalSteps > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "<span class=\"font-medium\">Step ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var59 string
-				templ_7745c5c3_Var59, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.CurrentStepNumber))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 782, Col: 87}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var59))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, " of ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 146, "Failed at: ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var60 string
-				templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.TotalSteps))
+				templ_7745c5c3_Var60, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 782, Col: 133}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 776, Col: 46}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var60))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, ":</span> ")
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 147, "Failed")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 148, "</span></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if workflow.Status == "cancelled" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 149, "<div class=\"flex items-center gap-2 mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\"><i class=\"ph-bold ph-prohibit text-base\"></i> <span>Cancelled</span></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else if workflow.CurrentStepName != "" || workflow.Status == "in-progress" || workflow.Status == "pending" || workflow.Status == "approval-awaiting" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 150, "<div class=\"flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400\"><i class=\"ph-bold ph-circle-notch animate-spin text-base\"></i> <span>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if workflow.TotalSteps > 0 {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "<span class=\"font-medium\">Step ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var61 string
-				templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
+				templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.CurrentStepNumber))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 783, Col: 14}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 792, Col: 87}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, " ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 152, " of ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var62 string
+				templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", workflow.TotalSteps))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 792, Col: 133}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 153, ":</span> ")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var63 string
+				templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 793, Col: 14}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, " ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if workflow.CurrentStepName != "" {
 				if workflow.CurrentStepType == "pending" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 154, "Waiting to start: ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "Waiting to start: ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var62 string
-					templ_7745c5c3_Var62, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 787, Col: 54}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var62))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else if workflow.CurrentStepType == "approval-awaiting" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 155, "Awaiting approval: ")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var63 string
-					templ_7745c5c3_Var63, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 789, Col: 55}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var63))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-				} else if workflow.CurrentStepType == "initializing" {
 					var templ_7745c5c3_Var64 string
 					templ_7745c5c3_Var64, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 791, Col: 36}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 797, Col: 54}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var64))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-				} else {
+				} else if workflow.CurrentStepType == "approval-awaiting" {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "Awaiting approval: ")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 					var templ_7745c5c3_Var65 string
 					templ_7745c5c3_Var65, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 793, Col: 36}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 799, Col: 55}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var65))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+				} else if workflow.CurrentStepType == "initializing" {
+					var templ_7745c5c3_Var66 string
+					templ_7745c5c3_Var66, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 801, Col: 36}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var66))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					var templ_7745c5c3_Var67 string
+					templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CurrentStepName)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 803, Col: 36}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 156, "Workflow starting...")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "Workflow starting...")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 157, "</span></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</span></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 158, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var66 = []any{"text-xs px-2 py-1 rounded", workflow.StatusClass}
-		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var66...)
+		var templ_7745c5c3_Var68 = []any{"text-xs px-2 py-1 rounded", workflow.StatusClass}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var68...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 159, "<span class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "<span class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var67 string
-		templ_7745c5c3_Var67, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var66).String())
+		var templ_7745c5c3_Var69 string
+		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var68).String())
 		if templ_7745c5c3_Err != nil {
 			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 1, Col: 0}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var67))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 160, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var68 string
-		templ_7745c5c3_Var68, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Status)
+		var templ_7745c5c3_Var70 string
+		templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Status)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 803, Col: 22}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 813, Col: 22}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var68))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 161, "</span></div><!-- Progress bar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "</span></div><!-- Progress bar -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow.Status == "completed" || workflow.Status == "success" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 162, "<div class=\"mb-2\"><div class=\"w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-green-400 dark:border-green-600\"><div class=\"h-full bg-green-500 dark:bg-green-400 rounded-sm\" style=\"width: 100%;\"></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "<div class=\"mb-2\"><div class=\"w-full h-1 bg-cool-grey-300 dark:bg-cool-grey-700 rounded-sm overflow-hidden border border-green-400 dark:border-green-600\"><div class=\"h-full bg-green-500 dark:bg-green-400 rounded-sm\" style=\"width: 100%;\"></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1708,92 +1727,105 @@ func workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primaryC
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 163, "<div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "<div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var69 string
-		templ_7745c5c3_Var69, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
+		var templ_7745c5c3_Var71 string
+		templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 827, Col: 54}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 837, Col: 54}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var69))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 164, "</div></div><!-- Action buttons -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "</div></div><!-- Action buttons -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow.HasApprovalSteps || workflow.CanCancel {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 165, "<div class=\"flex gap-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<div class=\"flex gap-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if workflow.HasApprovalSteps {
 				if workflow.CanApproveAll {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 166, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded\" data-endpoint=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "<button type=\"button\" class=\"button button-primary workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded\" data-endpoint=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var70 string
-					templ_7745c5c3_Var70, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
+					var templ_7745c5c3_Var72 string
+					templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all")
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 838, Col: 105}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 848, Col: 105}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var70))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 167, "\">Approve Installation</button> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "\">Approve Installation</button> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 168, "<button type=\"button\" disabled class=\"button button-primary px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed\" title=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "<button type=\"button\" disabled class=\"button button-primary px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed\" title=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					var templ_7745c5c3_Var71 string
-					templ_7745c5c3_Var71, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.ApproveAllDisabledReason)
+					var templ_7745c5c3_Var73 string
+					templ_7745c5c3_Var73, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.ApproveAllDisabledReason)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 847, Col: 48}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 857, Col: 48}
 					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var71))
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var73))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 169, "\">Approve Installation</button> ")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "\">Approve Installation</button> ")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			}
 			if workflow.CanCancel {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 170, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded\" data-endpoint=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "<button type=\"button\" class=\"button button-neutral workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded\" data-endpoint=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var72 string
-				templ_7745c5c3_Var72, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
+				var templ_7745c5c3_Var74 string
+				templ_7745c5c3_Var74, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 857, Col: 99}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 867, Col: 99}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var72))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var74))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 171, "\">Cancel</button>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "\" data-workflow-name=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var75 string
+				templ_7745c5c3_Var75, templ_7745c5c3_Err = templ.JoinStringErrs(workflow.Name)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_detail_panel.templ`, Line: 868, Col: 40}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var75))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "\">Cancel</button>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 172, "</div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "</div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 173, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1817,12 +1849,12 @@ func installDetailPanelScripts() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var73 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var73 == nil {
-			templ_7745c5c3_Var73 = templ.NopComponent
+		templ_7745c5c3_Var76 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var76 == nil {
+			templ_7745c5c3_Var76 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 174, "<script>\n\t\t(function() {\n\t\t\t// Get config from data attributes\n\t\t\tvar configEl = document.getElementById('install-detail-config');\n\t\t\tvar basePath = configEl.dataset.basePath;\n\t\t\tvar installID = configEl.dataset.installId;\n\t\t\tvar installName = configEl.dataset.installName;\n\t\t\tvar nuonInstallID = configEl.dataset.nuonInstallId;\n\n\t\t\t// Set the install ID in the panel header\n\t\t\tvar installIdEl = document.getElementById('panel-install-id');\n\t\t\tif (installIdEl && nuonInstallID) {\n\t\t\t\tinstallIdEl.textContent = nuonInstallID;\n\t\t\t}\n\n\t\t\t// Move actions dropdown into panel header\n\t\t\tvar actionsSource = document.getElementById('panel-actions-source');\n\t\t\tvar actionsContainer = document.getElementById('panel-actions-container');\n\t\t\tif (actionsSource && actionsContainer) {\n\t\t\t\tactionsContainer.innerHTML = actionsSource.innerHTML;\n\t\t\t}\n\n\t\t\t// Actions dropdown toggle\n\t\t\twindow.toggleActionsDropdown = function() {\n\t\t\t\tvar menu = document.getElementById('actionsDropdownMenu');\n\t\t\t\tif (menu) {\n\t\t\t\t\tmenu.classList.toggle('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close dropdown when clicking outside\n\t\t\tdocument.addEventListener('click', function(event) {\n\t\t\t\tvar dropdown = document.getElementById('actionsDropdown');\n\t\t\t\tvar menu = document.getElementById('actionsDropdownMenu');\n\t\t\t\tif (dropdown && menu && !dropdown.contains(event.target)) {\n\t\t\t\t\tmenu.classList.add('hidden');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Reprovision install with custom modal confirmation\n\t\t\twindow.confirmReprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Reprovision Installation?',\n\t\t\t\t\tmessage: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',\n\t\t\t\t\tvariant: 'warning',\n\t\t\t\t\tconfirmText: 'Reprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/reprovision', {\n\t\t\t\t\t\tmethod: 'POST'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Reprovision initiated. Refreshing...', 'success');\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to reprovision installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Deprovision install with custom modal confirmation\n\t\t\twindow.confirmDeprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Deprovision Installation?',\n\t\t\t\t\tmessage: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Deprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/', {\n\t\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Deprovision initiated. Refreshing...', 'success');\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to deprovision installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Retry failed workflow step\n\t\t\twindow.retryFailedStep = async function(btn) {\n\t\t\t\tvar endpoint = btn.getAttribute('data-endpoint');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtn.textContent = 'Retrying...';\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(endpoint, { method: 'POST' });\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Retry initiated', 'success');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to retry step', 'error');\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\tbtn.innerHTML = 'Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtn.innerHTML = 'Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i>';\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Workflow action modal - dynamically sets HTMX attributes on modal's Confirm button\n\t\t\twindow.showWorkflowActionModal = function(options) {\n\t\t\t\tvar confirmBtn = document.getElementById('confirm-ok');\n\t\t\t\tvar cancelBtn = document.getElementById('confirm-cancel');\n\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\n\t\t\t\t// Set modal content\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm Action';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tconfirmBtn.textContent = options.confirmText || 'Confirm';\n\t\t\t\tcancelBtn.textContent = options.cancelText || 'Cancel';\n\n\t\t\t\t// Set HTMX attributes on the Confirm button\n\t\t\t\tconfirmBtn.setAttribute('hx-post', options.endpoint);\n\t\t\t\tconfirmBtn.setAttribute('hx-target', options.target || '#workflow-status-display');\n\t\t\t\tconfirmBtn.setAttribute('hx-swap', options.swap || 'innerHTML');\n\n\t\t\t\t// Initialize HTMX on the button (processes the new attributes)\n\t\t\t\thtmx.process(confirmBtn);\n\n\t\t\t\t// Show modal\n\t\t\t\tmodal.classList.remove('hidden');\n\n\t\t\t\t// Cancel button just closes modal\n\t\t\t\tcancelBtn.onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\t// Clean up HTMX attributes to prevent accidental reuse\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-post');\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-target');\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-swap');\n\t\t\t\t};\n\n\t\t\t\t// Also handle modal close via backdrop or ESC key\n\t\t\t\tmodal.onclick = function(e) {\n\t\t\t\t\tif (e.target === modal) {\n\t\t\t\t\t\tcancelBtn.click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t};\n\n\t\t\t// Handle HTMX response - close modal after successful request\n\t\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\t\t// Close modal if the request came from the confirm button\n\t\t\t\tif (evt.detail.elt.id === 'confirm-ok') {\n\t\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\t\t\t\t\tmodal.classList.add('hidden');\n\n\t\t\t\t\t// If the target was the provision banner (swap:none), trigger immediate re-poll\n\t\t\t\t\tvar targetSel = evt.detail.elt.getAttribute('hx-target');\n\t\t\t\t\tif (targetSel === '#active-provision-banner') {\n\t\t\t\t\t\tvar banner = document.querySelector('#active-provision-banner');\n\t\t\t\t\t\tif (banner) {\n\t\t\t\t\t\t\thtmx.trigger(banner, 'every 5s');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\t// Clean up HTMX attributes\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-post');\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-target');\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-swap');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Attach event listeners to workflow action buttons using event delegation\n\t\t\tdocument.body.addEventListener('click', function(e) {\n\t\t\t\t// Determine HTMX target based on button location\n\t\t\t\t// Buttons inside the provision banner use swap:none and trigger a re-poll\n\t\t\t\tvar inBanner = !!e.target.closest('#active-provision-banner');\n\t\t\t\tvar target = inBanner ? '#active-provision-banner' : '#workflow-status-display';\n\t\t\t\tvar swap = inBanner ? 'none' : 'innerHTML';\n\n\t\t\t\t// Handle Approve Installation button — no confirmation needed\n\t\t\t\tif (e.target.classList.contains('workflow-approve-all-btn')) {\n\t\t\t\t\tvar btn = e.target;\n\t\t\t\t\tvar endpoint = btn.getAttribute('data-endpoint');\n\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\tbtn.textContent = 'Approving...';\n\t\t\t\t\t// Pause banner polling so HTMX doesn't replace the disabled button\n\t\t\t\t\tvar banner = document.querySelector('#active-provision-banner');\n\t\t\t\t\tif (banner) { banner.removeAttribute('hx-trigger'); htmx.process(banner); }\n\t\t\t\t\tfetch(endpoint, { method: 'POST' }).then(function(resp) {\n\t\t\t\t\t\tif (resp.ok) {\n\t\t\t\t\t\t\tshowToast('Approved', 'success');\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tshowToast('Failed to approve. Please try again.', 'error');\n\t\t\t\t\t\t}\n\t\t\t\t\t}).catch(function() {\n\t\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\t}).finally(function() {\n\t\t\t\t\t\t// Resume polling — the next poll will render updated state\n\t\t\t\t\t\tif (banner) {\n\t\t\t\t\t\t\tbanner.setAttribute('hx-trigger', 'every 5s');\n\t\t\t\t\t\t\thtmx.process(banner);\n\t\t\t\t\t\t\thtmx.trigger(banner, 'every 5s');\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t\t// Handle Cancel button\n\t\t\t\telse if (e.target.classList.contains('workflow-cancel-btn')) {\n\t\t\t\t\tvar endpoint = e.target.getAttribute('data-endpoint');\n\t\t\t\t\tshowWorkflowActionModal({\n\t\t\t\t\t\tendpoint: endpoint,\n\t\t\t\t\t\ttarget: target,\n\t\t\t\t\t\tswap: swap,\n\t\t\t\t\t\ttitle: 'Cancel Update?',\n\t\t\t\t\t\tmessage: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',\n\t\t\t\t\t\tconfirmText: 'Cancel Update',\n\t\t\t\t\t\tcancelText: 'Keep Running'\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Handle HTMX response errors\n\t\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t\tshowToast('An error occurred. Please try again.', 'error');\n\t\t\t});\n\n\t\t\t// Edit Inputs Modal functionality\n\t\t\twindow.openEditInputsModal = async function() {\n\t\t\t\tvar modal = document.getElementById('editInputsModal');\n\t\t\t\tvar loading = document.getElementById('editInputsLoading');\n\t\t\t\tvar form = document.getElementById('editInputsForm');\n\t\t\t\tvar fieldsContainer = document.getElementById('editInputsFields');\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tloading.classList.remove('hidden');\n\t\t\t\tform.classList.add('hidden');\n\t\t\t\terrorDiv.classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs');\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\t\tthrow new Error(data.error || 'Failed to fetch inputs');\n\t\t\t\t\t}\n\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\trenderEditInputFields(data.input_config, data.inputs);\n\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\tform.classList.remove('hidden');\n\t\t\t\t} catch (error) {\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\t// Check if it's a 404 - likely means no inputs configured\n\t\t\t\t\tif (error.message && error.message.includes('404')) {\n\t\t\t\t\t\terrorDiv.textContent = 'No inputs are configured for this install.';\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = error.message || 'Failed to load inputs';\n\t\t\t\t\t}\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeEditInputsModal = function() {\n\t\t\t\tdocument.getElementById('editInputsModal').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsForm').reset();\n\t\t\t\tdocument.getElementById('editInputsError').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\t\t\t};\n\n\t\t\tfunction renderEditInputFields(inputConfig, currentInputs) {\n\t\t\t\tvar container = document.getElementById('editInputsFields');\n\t\t\t\tcurrentInputs = currentInputs || {};\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tvar groupInputs = group.app_inputs || group.inputs || [];\n\t\t\t\t\tif (groupInputs && groupInputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\thtml += renderEditInputGroup(group, groupInputs, currentInputs);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderEditInputGroup(group, inputs, currentInputs) {\n\t\t\t\tvar html = '<div class=\"mb-6\">';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-4\">';\n\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\tvar currentValue = currentInputs[input.name];\n\t\t\t\t\thtml += renderEditSingleInput(input, currentValue);\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderEditSingleInput(input, currentValue) {\n\t\t\t\tvar inputName = input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\t\t\t\tvar value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar isChecked = value === 'true';\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (isChecked) html += ' checked';\n\t\t\t\t\thtml += ' class=\"field-checkbox\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"field-input\">';\n\t\t\t\t\thtml += value + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + value + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"field-input\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('editInputsForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\t\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\t\tvar inputs = {};\n\t\t\t\tvar formInputs = document.querySelectorAll('#editInputsFields input');\n\t\t\t\tformInputs.forEach(function(input) {\n\t\t\t\t\tif (!input.name) return;\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\tinputs[input.name] = 'true';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else if (input.type === 'hidden') {\n\t\t\t\t\t\tif (inputs[input.name] === undefined) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif (input.value) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tvar textareas = document.querySelectorAll('#editInputsFields textarea');\n\t\t\t\ttextareas.forEach(function(textarea) {\n\t\t\t\t\tif (textarea.name && textarea.value) {\n\t\t\t\t\t\tinputs[textarea.name] = textarea.value;\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify({ inputs: inputs })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Inputs updated. A workflow has been triggered to apply changes.', 'success');\n\t\t\t\t\t\tcloseEditInputsModal();\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to update inputs';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\n\t\t// Handle HTMX authentication errors\n\t\tdocument.body.addEventListener('auth-error', function(event) {\n\t\t\tconsole.warn('Authentication expired during HTMX polling, redirecting to login...');\n\n\t\t\t// Show a toast notification (if toast functionality exists)\n\t\t\tif (typeof showToast === 'function') {\n\t\t\t\tshowToast('Your session has expired. Redirecting to login...', 'warning');\n\t\t\t}\n\n\t\t\t// Redirect to login after a short delay\n\t\t\tsetTimeout(function() {\n\t\t\t\tconst currentPath = window.location.pathname;\n\t\t\t\twindow.location.href = '/login?redirect=' + encodeURIComponent(currentPath);\n\t\t\t}, 2000);\n\t\t});\n\n\t\t// Optional: Log HTMX errors for debugging\n\t\tdocument.body.addEventListener('htmx:responseError', function(event) {\n\t\t\tconsole.error('HTMX request failed:', {\n\t\t\t\turl: event.detail.pathInfo.requestPath,\n\t\t\t\tstatus: event.detail.xhr.status,\n\t\t\t\tstatusText: event.detail.xhr.statusText\n\t\t\t});\n\t\t});\n\n\t\t// Optional: Log successful HTMX swaps for debugging\n\t\tdocument.body.addEventListener('htmx:afterSwap', function(event) {\n\t\t\tif (event.detail.target.id === 'active-provision-banner') {\n\t\t\t\tconsole.log('Workflow status banner updated via HTMX');\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 176, "<script>\n\t\t(function() {\n\t\t\t// Get config from data attributes\n\t\t\tvar configEl = document.getElementById('install-detail-config');\n\t\t\tvar basePath = configEl.dataset.basePath;\n\t\t\tvar installID = configEl.dataset.installId;\n\t\t\tvar installName = configEl.dataset.installName;\n\t\t\tvar nuonInstallID = configEl.dataset.nuonInstallId;\n\n\t\t\t// Set the install ID in the panel header\n\t\t\tvar installIdEl = document.getElementById('panel-install-id');\n\t\t\tif (installIdEl && nuonInstallID) {\n\t\t\t\tinstallIdEl.textContent = nuonInstallID;\n\t\t\t}\n\n\t\t\t// Move actions dropdown into panel header\n\t\t\tvar actionsSource = document.getElementById('panel-actions-source');\n\t\t\tvar actionsContainer = document.getElementById('panel-actions-container');\n\t\t\tif (actionsSource && actionsContainer) {\n\t\t\t\tactionsContainer.innerHTML = actionsSource.innerHTML;\n\t\t\t}\n\n\t\t\t// Actions dropdown toggle\n\t\t\twindow.toggleActionsDropdown = function() {\n\t\t\t\tvar menu = document.getElementById('actionsDropdownMenu');\n\t\t\t\tif (menu) {\n\t\t\t\t\tmenu.classList.toggle('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close dropdown when clicking outside\n\t\t\tdocument.addEventListener('click', function(event) {\n\t\t\t\tvar dropdown = document.getElementById('actionsDropdown');\n\t\t\t\tvar menu = document.getElementById('actionsDropdownMenu');\n\t\t\t\tif (dropdown && menu && !dropdown.contains(event.target)) {\n\t\t\t\t\tmenu.classList.add('hidden');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Reprovision install with custom modal confirmation\n\t\t\twindow.confirmReprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Reprovision Installation?',\n\t\t\t\t\tmessage: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',\n\t\t\t\t\tvariant: 'warning',\n\t\t\t\t\tconfirmText: 'Reprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/reprovision', {\n\t\t\t\t\t\tmethod: 'POST'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Reprovision initiated', 'success');\n\t\t\t\t\t\tvar overview = document.getElementById('panel-content-overview');\n\t\t\t\t\t\tif (overview) {\n\t\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to reprovision installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Deprovision install with custom modal confirmation\n\t\t\twindow.confirmDeprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Deprovision Installation?',\n\t\t\t\t\tmessage: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Deprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/', {\n\t\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Deprovision initiated. Refreshing...', 'success');\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to deprovision installation', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Retry failed workflow step\n\t\t\twindow.retryFailedStep = async function(btn) {\n\t\t\t\tvar endpoint = btn.getAttribute('data-endpoint');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtn.textContent = 'Retrying...';\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(endpoint, { method: 'POST' });\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Retry initiated', 'success');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to retry step', 'error');\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\tbtn.innerHTML = 'Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtn.innerHTML = 'Retry Step <i class=\"ph-bold ph-arrow-clockwise text-base\"></i>';\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Workflow action modal - dynamically sets HTMX attributes on modal's Confirm button\n\t\t\twindow.showWorkflowActionModal = function(options) {\n\t\t\t\tvar confirmBtn = document.getElementById('confirm-ok');\n\t\t\t\tvar cancelBtn = document.getElementById('confirm-cancel');\n\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\n\t\t\t\t// Set modal content\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm Action';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tconfirmBtn.textContent = options.confirmText || 'Confirm';\n\t\t\t\tcancelBtn.textContent = options.cancelText || 'Cancel';\n\n\t\t\t\t// Set HTMX attributes on the Confirm button\n\t\t\t\tconfirmBtn.setAttribute('hx-post', options.endpoint);\n\t\t\t\tconfirmBtn.setAttribute('hx-target', options.target || '#workflow-status-display');\n\t\t\t\tconfirmBtn.setAttribute('hx-swap', options.swap || 'innerHTML');\n\n\t\t\t\t// Initialize HTMX on the button (processes the new attributes)\n\t\t\t\thtmx.process(confirmBtn);\n\n\t\t\t\t// Show modal\n\t\t\t\tmodal.classList.remove('hidden');\n\n\t\t\t\t// Cancel button just closes modal\n\t\t\t\tcancelBtn.onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\t// Clean up HTMX attributes to prevent accidental reuse\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-post');\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-target');\n\t\t\t\t\tconfirmBtn.removeAttribute('hx-swap');\n\t\t\t\t};\n\n\t\t\t\t// Also handle modal close via backdrop or ESC key\n\t\t\t\tmodal.onclick = function(e) {\n\t\t\t\t\tif (e.target === modal) {\n\t\t\t\t\t\tcancelBtn.click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t};\n\n\t\t\t// Handle HTMX response - close modal after successful request\n\t\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\t\t// Close modal if the request came from the confirm button\n\t\t\t\tif (evt.detail.elt.id === 'confirm-ok') {\n\t\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\t\t\t\t\tmodal.classList.add('hidden');\n\n\t\t\t\t\t// If the target was the provision banner (swap:none), trigger immediate re-poll\n\t\t\t\t\tvar targetSel = evt.detail.elt.getAttribute('hx-target');\n\t\t\t\t\tif (targetSel === '#active-provision-banner') {\n\t\t\t\t\t\tvar banner = document.querySelector('#active-provision-banner');\n\t\t\t\t\t\tif (banner) {\n\t\t\t\t\t\t\thtmx.trigger(banner, 'every 5s');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\t// Clean up HTMX attributes\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-post');\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-target');\n\t\t\t\t\tevt.detail.elt.removeAttribute('hx-swap');\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Attach event listeners to workflow action buttons using event delegation\n\t\t\tdocument.body.addEventListener('click', function(e) {\n\t\t\t\t// Determine HTMX target based on button location\n\t\t\t\t// Buttons inside the provision banner use swap:none and trigger a re-poll\n\t\t\t\tvar inBanner = !!e.target.closest('#active-provision-banner');\n\t\t\t\tvar target = inBanner ? '#active-provision-banner' : '#workflow-status-display';\n\t\t\t\tvar swap = inBanner ? 'none' : 'innerHTML';\n\n\t\t\t\t// Handle Approve Installation button — no confirmation needed\n\t\t\t\tif (e.target.classList.contains('workflow-approve-all-btn')) {\n\t\t\t\t\tvar btn = e.target;\n\t\t\t\t\tvar endpoint = btn.getAttribute('data-endpoint');\n\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\tbtn.textContent = 'Approving...';\n\t\t\t\t\t// Pause banner polling so HTMX doesn't replace the disabled button\n\t\t\t\t\tvar banner = document.querySelector('#active-provision-banner');\n\t\t\t\t\tif (banner) { banner.removeAttribute('hx-trigger'); htmx.process(banner); }\n\t\t\t\t\tfetch(endpoint, { method: 'POST' }).then(function(resp) {\n\t\t\t\t\t\tif (resp.ok) {\n\t\t\t\t\t\t\tshowToast('Approved', 'success');\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tshowToast('Failed to approve. Please try again.', 'error');\n\t\t\t\t\t\t}\n\t\t\t\t\t}).catch(function() {\n\t\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t\t}).finally(function() {\n\t\t\t\t\t\t// Resume polling — the next poll will render updated state\n\t\t\t\t\t\tif (banner) {\n\t\t\t\t\t\t\tbanner.setAttribute('hx-trigger', 'every 5s');\n\t\t\t\t\t\t\thtmx.process(banner);\n\t\t\t\t\t\t\thtmx.trigger(banner, 'every 5s');\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t\t// Handle Cancel button\n\t\t\t\telse if (e.target.classList.contains('workflow-cancel-btn')) {\n\t\t\t\t\tvar endpoint = e.target.getAttribute('data-endpoint');\n\t\t\t\t\tvar wfName = e.target.getAttribute('data-workflow-name') || 'Workflow';\n\t\t\t\t\tshowWorkflowActionModal({\n\t\t\t\t\t\tendpoint: endpoint,\n\t\t\t\t\t\ttarget: target,\n\t\t\t\t\t\tswap: swap,\n\t\t\t\t\t\ttitle: 'Cancel ' + wfName + '?',\n\t\t\t\t\t\tmessage: 'Are you sure you want to cancel this ' + wfName.toLowerCase() + '? This may leave your application in an incomplete state.',\n\t\t\t\t\t\tconfirmText: 'Cancel ' + wfName,\n\t\t\t\t\t\tcancelText: 'Keep Running'\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Handle HTMX response errors\n\t\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t\tshowToast('An error occurred. Please try again.', 'error');\n\t\t\t});\n\n\t\t\t// Edit Inputs Modal functionality\n\t\t\twindow.openEditInputsModal = async function() {\n\t\t\t\tvar modal = document.getElementById('editInputsModal');\n\t\t\t\tvar loading = document.getElementById('editInputsLoading');\n\t\t\t\tvar form = document.getElementById('editInputsForm');\n\t\t\t\tvar fieldsContainer = document.getElementById('editInputsFields');\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tloading.classList.remove('hidden');\n\t\t\t\tform.classList.add('hidden');\n\t\t\t\terrorDiv.classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs');\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\t\tthrow new Error(data.error || 'Failed to fetch inputs');\n\t\t\t\t\t}\n\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\trenderEditInputFields(data.input_config, data.inputs);\n\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\tform.classList.remove('hidden');\n\t\t\t\t} catch (error) {\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\t// Check if it's a 404 - likely means no inputs configured\n\t\t\t\t\tif (error.message && error.message.includes('404')) {\n\t\t\t\t\t\terrorDiv.textContent = 'No inputs are configured for this install.';\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = error.message || 'Failed to load inputs';\n\t\t\t\t\t}\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeEditInputsModal = function() {\n\t\t\t\tdocument.getElementById('editInputsModal').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsForm').reset();\n\t\t\t\tdocument.getElementById('editInputsError').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\t\t\t};\n\n\t\t\tfunction renderEditInputFields(inputConfig, currentInputs) {\n\t\t\t\tvar container = document.getElementById('editInputsFields');\n\t\t\t\tcurrentInputs = currentInputs || {};\n\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tvar groupInputs = group.app_inputs || group.inputs || [];\n\t\t\t\t\tif (groupInputs && groupInputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\thtml += renderEditInputGroup(group, groupInputs, currentInputs);\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderEditInputGroup(group, inputs, currentInputs) {\n\t\t\t\tvar html = '<div class=\"mb-6\">';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-4\">';\n\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\tvar currentValue = currentInputs[input.name];\n\t\t\t\t\thtml += renderEditSingleInput(input, currentValue);\n\t\t\t\t});\n\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderEditSingleInput(input, currentValue) {\n\t\t\t\tvar inputName = input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\t\t\t\tvar value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar isChecked = value === 'true';\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (isChecked) html += ' checked';\n\t\t\t\t\thtml += ' class=\"field-checkbox\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"field-input\">';\n\t\t\t\t\thtml += value + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + value + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"field-input\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('editInputsForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\t\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\t\tvar inputs = {};\n\t\t\t\tvar formInputs = document.querySelectorAll('#editInputsFields input');\n\t\t\t\tformInputs.forEach(function(input) {\n\t\t\t\t\tif (!input.name) return;\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\tif (input.checked) {\n\t\t\t\t\t\t\tinputs[input.name] = 'true';\n\t\t\t\t\t\t}\n\t\t\t\t\t} else if (input.type === 'hidden') {\n\t\t\t\t\t\tif (inputs[input.name] === undefined) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif (input.value) {\n\t\t\t\t\t\t\tinputs[input.name] = input.value;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tvar textareas = document.querySelectorAll('#editInputsFields textarea');\n\t\t\t\ttextareas.forEach(function(textarea) {\n\t\t\t\t\tif (textarea.name && textarea.value) {\n\t\t\t\t\t\tinputs[textarea.name] = textarea.value;\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify({ inputs: inputs })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Inputs updated. A workflow has been triggered to apply changes.', 'success');\n\t\t\t\t\t\tcloseEditInputsModal();\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to update inputs';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\n\t\t// Handle HTMX authentication errors\n\t\tdocument.body.addEventListener('auth-error', function(event) {\n\t\t\tconsole.warn('Authentication expired during HTMX polling, redirecting to login...');\n\n\t\t\t// Show a toast notification (if toast functionality exists)\n\t\t\tif (typeof showToast === 'function') {\n\t\t\t\tshowToast('Your session has expired. Redirecting to login...', 'warning');\n\t\t\t}\n\n\t\t\t// Redirect to login after a short delay\n\t\t\tsetTimeout(function() {\n\t\t\t\tconst currentPath = window.location.pathname;\n\t\t\t\twindow.location.href = '/login?redirect=' + encodeURIComponent(currentPath);\n\t\t\t}, 2000);\n\t\t});\n\n\t\t// Optional: Log HTMX errors for debugging\n\t\tdocument.body.addEventListener('htmx:responseError', function(event) {\n\t\t\tconsole.error('HTMX request failed:', {\n\t\t\t\turl: event.detail.pathInfo.requestPath,\n\t\t\t\tstatus: event.detail.xhr.status,\n\t\t\t\tstatusText: event.detail.xhr.statusText\n\t\t\t});\n\t\t});\n\n\t\t// Optional: Log successful HTMX swaps for debugging\n\t\tdocument.body.addEventListener('htmx:afterSwap', function(event) {\n\t\t\tif (event.detail.target.id === 'active-provision-banner') {\n\t\t\t\tconsole.log('Workflow status banner updated via HTMX');\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1846,12 +1878,12 @@ func EditInputsModalPanel() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var74 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var74 == nil {
-			templ_7745c5c3_Var74 = templ.NopComponent
+		templ_7745c5c3_Var77 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var77 == nil {
+			templ_7745c5c3_Var77 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var75 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var78 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -1863,13 +1895,13 @@ func EditInputsModalPanel() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "<div class=\"mb-4\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Edit Inputs</h3></div><div id=\"editInputsLoading\" class=\"py-8 text-center\"><div class=\"inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600\"></div><p class=\"mt-2 text-cool-grey-500 dark:text-cool-grey-400\">Loading inputs...</p></div><form id=\"editInputsForm\" class=\"hidden space-y-4\"><div id=\"editInputsFields\" class=\"space-y-4\"></div><div class=\"card-section-divider flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeEditInputsModal()\" class=\"button button-outline btn-theme-outline\">Cancel</button> <button type=\"submit\" class=\"button button-primary btn-theme-primary\">Update Inputs</button></div></form><div id=\"editInputsError\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden\"></div><div id=\"editInputsErrorActions\" class=\"hidden mt-4 flex justify-end\"><button type=\"button\" onclick=\"closeEditInputsModal()\" class=\"button button-outline btn-theme-outline\">Cancel</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 177, "<div class=\"mb-4\"><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Edit Inputs</h3></div><div id=\"editInputsLoading\" class=\"py-8 text-center\"><div class=\"inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600\"></div><p class=\"mt-2 text-cool-grey-500 dark:text-cool-grey-400\">Loading inputs...</p></div><form id=\"editInputsForm\" class=\"hidden space-y-4\"><div id=\"editInputsFields\" class=\"space-y-4\"></div><div class=\"card-section-divider flex justify-end space-x-3\"><button type=\"button\" onclick=\"closeEditInputsModal()\" class=\"button button-outline btn-theme-outline\">Cancel</button> <button type=\"submit\" class=\"button button-primary btn-theme-primary\">Update Inputs</button></div></form><div id=\"editInputsError\" class=\"mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden\"></div><div id=\"editInputsErrorActions\" class=\"hidden mt-4 flex justify-end\"><button type=\"button\" onclick=\"closeEditInputsModal()\" class=\"button button-outline btn-theme-outline\">Cancel</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ModalWrapper("editInputsModal", "max-w-2xl").Render(templ.WithChildren(ctx, templ_7745c5c3_Var75), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ModalWrapper("editInputsModal", "max-w-2xl").Render(templ.WithChildren(ctx, templ_7745c5c3_Var78), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

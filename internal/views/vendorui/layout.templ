@@ -84,6 +84,8 @@ templ Layout(props LayoutProps) {
 			}
 			<!-- HTMX for dynamic interactions -->
 			<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js"></script>
+			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
 			<!-- SortableJS for drag-and-drop -->
 			<script src="/static/js/sortable.min.js"></script>
 			<!-- Mermaid diagram rendering -->
@@ -99,7 +101,7 @@ templ Layout(props LayoutProps) {
 			}
 			@layoutScripts(props.BasePath)
 		</head>
-		<body class="bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden">
+		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class="bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden">
 			<div class="flex h-screen overflow-hidden">
 				<!-- Sidebar -->
 				@partials.Sidebar(partials.SidebarProps{
@@ -159,7 +161,7 @@ templ Layout(props LayoutProps) {
 			<!-- Theme Settings Panel - lazy loaded via HTMX -->
 			<div id="settings-panel-container"></div>
 			if isLiveReload() {
-				<script src="/_templ/reload/script.js"></script>
+				<script src="/static/js/dev-reload.js"></script>
 			}
 		</body>
 	</html>
@@ -177,14 +179,17 @@ templ darkModeAndSidebarScript() {
 				document.documentElement.classList.toggle('dark', e.matches);
 			});
 
-			// Check sidebar cookie and apply collapsed class to <html>
-			// This prevents the flash where sidebar expands then collapses on page load
+			// Check sidebar cookies and apply collapsed classes to <html>
+			// This prevents the flash where sidebars expand then collapse on page load
+			// Classes on <html> survive Idiomorph morphs (which only touch <body>)
 			var cookies = document.cookie.split(';');
 			for (var i = 0; i < cookies.length; i++) {
 				var cookie = cookies[i].trim();
 				if (cookie.startsWith('sidebar_open=0')) {
 					document.documentElement.classList.add('sidebar-collapsed');
-					break;
+				}
+				if (cookie.startsWith('page_sidebar_open=0')) {
+					document.documentElement.classList.add('page-sidebar-collapsed');
 				}
 			}
 		})();
@@ -269,6 +274,7 @@ templ layoutScripts(basePath string) {
 			const subnav = document.getElementById('page-sidebar');
 			if (subnav) {
 				const isCollapsed = subnav.classList.toggle('collapsed');
+				document.documentElement.classList.toggle('page-sidebar-collapsed', isCollapsed);
 				setCookie('page_sidebar_open', isCollapsed ? '0' : '1');
 			}
 		}
@@ -365,6 +371,7 @@ templ layoutScripts(basePath string) {
 				if (subnav) {
 					subnav.classList.add('collapsed');
 				}
+				document.documentElement.classList.add('page-sidebar-collapsed');
 			}
 		});
 	</script>

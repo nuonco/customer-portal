@@ -5,10 +5,9 @@ package workflows
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
@@ -301,25 +300,38 @@ func cancelButton(props WorkflowCardProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" class=\"button button-neutral btn-theme-primary\"><span class=\"htmx-indicator\"><i class=\"ph-bold ph-circle-notch animate-spin text-base inline mr-1\"></i></span> Cancel</button>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed rounded-theme\">Cancel</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-swap=\"outerHTML\" hx-trigger=\"confirmed\" hx-indicator=\"this\" onclick=\"confirmCancelWorkflow(this)\" data-workflow-name=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workflow.CancelDisabledReason)
+			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workflow.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/workflows/workflow_card.templ`, Line: 101, Col: 41}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/workflows/workflow_card.templ`, Line: 85, Col: 43}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" class=\"button button-neutral btn-theme-primary\"><span class=\"htmx-indicator\"><i class=\"ph-bold ph-circle-notch animate-spin text-base inline mr-1\"></i></span> Cancel</button>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		} else {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"relative group\"><button disabled class=\"bg-cool-grey-300 dark:bg-dark-grey-600 text-cool-grey-500 dark:text-cool-grey-400 px-4 py-2 text-sm cursor-not-allowed rounded-theme\">Cancel</button><div class=\"absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-dark-grey-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var18 string
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.Workflow.CancelDisabledReason)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/workflows/workflow_card.templ`, Line: 102, Col: 41}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -344,33 +356,33 @@ func workflowStatusMessage(status string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var18 == nil {
-			templ_7745c5c3_Var18 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		if status == "approval-awaiting" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Approval Required:</strong> This update is waiting for your approval to proceed.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Approval Required:</strong> This update is waiting for your approval to proceed.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "in-progress" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<div class=\"status-card mt-4 p-4\"><div class=\"flex items-center space-x-2\"><div class=\"animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600\"></div><p class=\"text-sm text-cool-grey-800 dark:text-cool-grey-300\"><strong>In Progress:</strong> This update is currently running.</p></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"status-card mt-4 p-4\"><div class=\"flex items-center space-x-2\"><div class=\"animate-spin rounded-full h-4 w-4 border-b-2 border-primary-600\"></div><p class=\"text-sm text-cool-grey-800 dark:text-cool-grey-300\"><strong>In Progress:</strong> This update is currently running.</p></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "error" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<div class=\"mt-4 alert-error\"><p class=\"text-sm text-red-800 dark:text-red-300\"><strong>Failed:</strong> This update encountered an error.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"mt-4 alert-error\"><p class=\"text-sm text-red-800 dark:text-red-300\"><strong>Failed:</strong> This update encountered an error.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "cancelled" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Cancelled:</strong> This update was cancelled.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"mt-4 alert-warning\"><p class=\"text-sm text-orange-800 dark:text-orange-300\"><strong>Cancelled:</strong> This update was cancelled.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else if status == "success" || status == "approved" || status == "active" || status == "completed" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<div class=\"mt-4 alert-success\"><p class=\"text-sm text-green-800 dark:text-green-300\"><strong>Completed:</strong> This update completed successfully.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<div class=\"mt-4 alert-success\"><p class=\"text-sm text-green-800 dark:text-green-300\"><strong>Completed:</strong> This update completed successfully.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

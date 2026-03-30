@@ -177,8 +177,8 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 		})
 	}
 
-	// Return partial for HTMX filter requests
-	if isHTMXRequest(c) {
+	// Return partial for HTMX filter requests (but not hx-boost navigations)
+	if isHTMXPartialRequest(c) {
 		h.RenderTempl(c, http.StatusOK, vendorpages.InstallsTableBody(adminInstalls, org.ID, h.basePath, org.NuonOrgID))
 		return
 	}

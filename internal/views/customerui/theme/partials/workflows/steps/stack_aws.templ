@@ -30,6 +30,7 @@ templ StackAWS(stackSetup workflows.StackSetupData, workflow *workflows.Workflow
 					type="button"
 					class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
 					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+					data-workflow-name={ workflow.Name }
 				>
 					Cancel
 				</button>

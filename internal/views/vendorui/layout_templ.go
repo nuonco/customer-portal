@@ -5,12 +5,11 @@ package vendorui
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"os"
 
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
@@ -99,7 +98,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/images/favicon.svg\"><!-- Stratus Design System - Vendor CSS --><link href=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/images/favicon-admin.svg\"><!-- Stratus Design System - Vendor CSS --><link href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -136,7 +135,7 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Mermaid diagram rendering --><script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t});\n\t\t\t</script><!-- Vendor Theme Overrides -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script><script src=\"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Mermaid diagram rendering --><script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t});\n\t\t\t</script><!-- Vendor Theme Overrides -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -150,7 +149,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body hx-boost=\"true\" hx-ext=\"head-support\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -208,7 +207,7 @@ func Layout(props LayoutProps) templ.Component {
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 140, Col: 86}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 142, Col: 86}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
@@ -226,7 +225,7 @@ func Layout(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var5 templ.SafeURL
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 143, Col: 97}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 145, Col: 97}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -271,7 +270,7 @@ func Layout(props LayoutProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if isLiveReload() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script src=\"/_templ/reload/script.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script src=\"/static/js/dev-reload.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -305,7 +304,7 @@ func darkModeAndSidebarScript() templ.Component {
 			templ_7745c5c3_Var6 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookie and apply collapsed class to <html>\n\t\t\t// This prevents the flash where sidebar expands then collapses on page load\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookies and apply collapsed classes to <html>\n\t\t\t// This prevents the flash where sidebars expand then collapse on page load\n\t\t\t// Classes on <html> survive Idiomorph morphs (which only touch <body>)\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t}\n\t\t\t\tif (cookie.startsWith('page_sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -443,7 +442,7 @@ func layoutScripts(basePath string) templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\t// Focus on org ID input\n\t\t\t\tconst orgIdInput = document.getElementById('org-org-id');\n\t\t\t\tif (orgIdInput) {\n\t\t\t\t\torgIdInput.focus();\n\t\t\t\t}\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t// Clear form and errors\n\t\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseCreateOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('page-sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('modal-visible');\n\t\t\t}\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tconst modal = document.getElementById('keyboard-shortcuts-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('modal-visible');\n\t\t\t}\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\t// Focus on org ID input\n\t\t\t\tconst orgIdInput = document.getElementById('org-org-id');\n\t\t\t\tif (orgIdInput) {\n\t\t\t\t\torgIdInput.focus();\n\t\t\t\t}\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\tif (modal) {\n\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t// Clear form and errors\n\t\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseCreateOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -479,7 +478,7 @@ func createOrgModal(basePath string) templ.Component {
 		var templ_7745c5c3_Var12 string
 		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 447, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 454, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 		if templ_7745c5c3_Err != nil {

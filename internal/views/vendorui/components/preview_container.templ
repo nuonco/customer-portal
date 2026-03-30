@@ -182,7 +182,7 @@ templ PreviewContainer(props PreviewContainerProps) {
 			</div>
 		</div>
 		<!-- Preview Container with scaling -->
-		<div class="w-fit border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden">
+		<div class="w-fit mx-auto border border-cool-grey-300 dark:border-dark-grey-500 rounded-lg overflow-hidden">
 			<div
 				id="previewContainer"
 				class={ props.getModeClass(), props.getContainerClass() }
@@ -269,6 +269,12 @@ templ previewContainerStyles() {
 			align-items: flex-start;
 			gap: 0.5rem;
 		}
+	/* Login preview: hide right panel and make form full-width on tablet/mobile */
+	.preview-size-tablet .login-preview-left { width: 100%; }
+	.preview-size-tablet .login-preview-right { display: none; }
+	.preview-size-mobile .login-preview-left { width: 100%; }
+	.preview-size-mobile .login-preview-right { display: none; }
+
 	/* Ensure page section wrappers fill the full scaler height */
 	.preview-page-section { height: 100%; }
 	</style>

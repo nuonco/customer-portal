@@ -5,10 +5,12 @@ package components
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
+import (
+	"fmt"
 
-import "fmt"
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+)
 
 // SubnavItem represents a single navigation item in the sub-nav
 type SubnavItem struct {
@@ -61,7 +63,7 @@ func PageSubnav(props PageSubnavProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<style>\n\t\t#page-sidebar.collapsed { width: 4.5rem; }\n\t\t#page-sidebar.collapsed .subnav-text { display: none; }\n\t\t#page-sidebar.collapsed .subnav-link { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }\n\n\t\t/* Nav link hover */\n\t\t#page-sidebar .subnav-link:hover { background-color: rgb(0 0 0 / 0.05); }\n\t\t:root.dark #page-sidebar .subnav-link:hover { background-color: rgb(255 255 255 / 0.1); }\n\n\t\t/* Handle hover — blue border line */\n\t\t#page-sidebar .subnav-handle:hover { border-color: var(--color-primary-600); }\n\n\t\t/* Handle button — hidden by default, shown on handle hover */\n\t\t#page-sidebar .subnav-handle .subnav-handle-button { opacity: 0; transition: opacity 150ms ease-in-out; }\n\t\t#page-sidebar .subnav-handle:hover .subnav-handle-button { opacity: 1; }\n\t</style><div class=\"w-56 flex-shrink-0 border-r relative transition-[width] duration-150 ease-in-out\" style=\"border-color: var(--border-color);\" id=\"page-sidebar\"><div class=\"p-4\"><nav class=\"space-y-1\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<style>\n\t\t#page-sidebar.collapsed,\n\t\t:root.page-sidebar-collapsed #page-sidebar { width: 4.5rem; }\n\t\t#page-sidebar.collapsed .subnav-text,\n\t\t:root.page-sidebar-collapsed #page-sidebar .subnav-text { display: none; }\n\t\t#page-sidebar.collapsed .subnav-link,\n\t\t:root.page-sidebar-collapsed #page-sidebar .subnav-link { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }\n\n\t\t/* Nav link hover */\n\t\t#page-sidebar .subnav-link:hover { background-color: rgb(0 0 0 / 0.05); }\n\t\t:root.dark #page-sidebar .subnav-link:hover { background-color: rgb(255 255 255 / 0.1); }\n\n\t\t/* Handle hover — blue border line */\n\t\t#page-sidebar .subnav-handle:hover { border-color: var(--color-primary-600); }\n\n\t\t/* Handle button — hidden by default, shown on handle hover */\n\t\t#page-sidebar .subnav-handle .subnav-handle-button { opacity: 0; transition: opacity 150ms ease-in-out; }\n\t\t#page-sidebar .subnav-handle:hover .subnav-handle-button { opacity: 1; }\n\t</style><div class=\"w-56 flex-shrink-0 border-r relative transition-[width] duration-150 ease-in-out\" style=\"border-color: var(--border-color);\" id=\"page-sidebar\"><div class=\"p-4\"><nav class=\"space-y-1\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -81,7 +83,7 @@ func PageSubnav(props PageSubnavProps) templ.Component {
 			var templ_7745c5c3_Var3 templ.SafeURL
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(item.URL))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/page_subnav.templ`, Line: 61, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/page_subnav.templ`, Line: 64, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -115,7 +117,7 @@ func PageSubnav(props PageSubnavProps) templ.Component {
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(item.Label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/page_subnav.templ`, Line: 69, Col: 44}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/components/page_subnav.templ`, Line: 72, Col: 44}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {

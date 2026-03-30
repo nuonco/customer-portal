@@ -9,7 +9,8 @@ import (
 // InstallWithApprovalStatus extends Install with approval status info
 type InstallWithApprovalStatus struct {
 	models.Install
-	AppName string `json:"app_name"` // Fetched from Nuon API at runtime
+	AppName  string `json:"app_name"` // Fetched from Nuon API at runtime
+	Platform string `json:"platform"` // Cloud platform (e.g. "aws", "azure", "gcp") from Nuon API
 }
 
 // InstallPaginationData holds pagination metadata for customer installs
@@ -84,20 +85,21 @@ type LayoutProps struct {
 	BasePath string
 
 	// Theme settings (computed from vendor settings)
-	PrimaryColor         string
-	PrimaryColorDark     string
-	PrimaryColorDarkMode string // vendor-set dark mode primary (overrides --theme-primary in .dark{})
-	WhiteColor           string
-	BlackColor           string
-	WhiteColorDark       string
-	BlackColorLight      string
-	HeadingFont          string
-	BodyFont             string
-	HeadingFontBase64    string
-	BodyFontBase64       string
-	LogoBase64           string
-	LogoDarkBase64       string
-	FaviconBase64        string
+	PrimaryColor              string
+	PrimaryColorDark          string
+	PrimaryColorDarkMode      string // vendor-set dark mode primary (overrides --theme-primary in .dark{})
+	PrimaryColorDarkModeHover string // darkened variant of PrimaryColorDarkMode for hover states
+	WhiteColor                string
+	BlackColor                string
+	WhiteColorDark            string
+	BlackColorLight           string
+	HeadingFont               string
+	BodyFont                  string
+	HeadingFontBase64         string
+	BodyFontBase64            string
+	LogoBase64                string
+	LogoDarkBase64            string
+	FaviconBase64             string
 
 	// Style variants
 	RadiusClass string // "radius-sharp", "radius-subtle", "radius-rounded", "radius-very-rounded"

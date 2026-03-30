@@ -17,9 +17,21 @@ func PlatformFromRegion(region string) string {
 	return "unknown"
 }
 
+// NormalizePlatform maps runner types (e.g. "aws-eks", "azure-aks") to base platform names.
+func NormalizePlatform(platform string) string {
+	if strings.HasPrefix(platform, "aws") {
+		return "aws"
+	} else if strings.HasPrefix(platform, "azure") {
+		return "azure"
+	} else if platform == "gcp" {
+		return "gcp"
+	}
+	return platform
+}
+
 // PlatformChip renders a cloud platform logo
 templ PlatformChip(platform string) {
-	switch platform {
+	switch NormalizePlatform(platform) {
 	case "aws":
 		<img src="/static/images/logos/aws.svg" class="platform-logo dark:hidden" alt="AWS"/>
 		<img src="/static/images/logos/aws.svg" class="platform-logo hidden dark:block dark:invert" alt="AWS"/>

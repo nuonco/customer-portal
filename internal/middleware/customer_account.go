@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
@@ -65,8 +66,9 @@ func RequireCustomerAccount(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		// Check for pending invites (even if user already has memberships)
+		// Use Warn log level to suppress "record not found" noise on every request
 		var invite models.CustomerAccountInvite
-		if err := db.Where("email = ? AND org_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", user.Email, org.ID).First(&invite).Error; err == nil {
+		if err := db.Session(&gorm.Session{Logger: db.Logger.LogMode(logger.Warn)}).Where("email = ? AND org_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", user.Email, org.ID).First(&invite).Error; err == nil {
 			txErr := db.Transaction(func(tx *gorm.DB) error {
 				newMember := &models.CustomerAccountMember{
 					AccountID: invite.AccountID,

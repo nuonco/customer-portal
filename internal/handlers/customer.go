@@ -247,6 +247,143 @@ func boolVal(m map[string]interface{}, key string) bool {
 	return v
 }
 
+// filterInputsByName removes inputs whose names are in the exclude set from
+// input_groups[].app_inputs[]. Returns the filtered config.
+func filterInputsByName(configMap map[string]interface{}, exclude map[string]bool) interface{} {
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return configMap
+	}
+
+	var filteredGroups []interface{}
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		var filteredInputs []interface{}
+		for _, input := range appInputs {
+			inputMap, ok := input.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			name, _ := inputMap["name"].(string)
+			if !exclude[name] {
+				filteredInputs = append(filteredInputs, input)
+			}
+		}
+
+		if len(filteredInputs) > 0 {
+			filteredGroup := make(map[string]interface{})
+			for k, v := range groupMap {
+				filteredGroup[k] = v
+			}
+			filteredGroup["app_inputs"] = filteredInputs
+			filteredGroups = append(filteredGroups, filteredGroup)
+		}
+	}
+
+	result := make(map[string]interface{})
+	for k, v := range configMap {
+		result[k] = v
+	}
+	result["input_groups"] = filteredGroups
+	return result
+}
+
+// filterUserConfigurableInputs removes inputs with user_configurable=true from
+// the input config. These inputs are managed by the install stack and cannot be
+// updated via the API after install creation. Returns the filtered config and
+// a list of removed input names (so callers can also strip them from values maps).
+func filterUserConfigurableInputs(inputConfig interface{}) (interface{}, []string) {
+	if inputConfig == nil {
+		return nil, nil
+	}
+
+	configMap, ok := inputConfig.(map[string]interface{})
+	if !ok {
+		return inputConfig, nil
+	}
+
+	inputGroups, ok := configMap["input_groups"].([]interface{})
+	if !ok {
+		return inputConfig, nil
+	}
+
+	var removed []string
+	var filteredGroups []interface{}
+	for _, group := range inputGroups {
+		groupMap, ok := group.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		appInputs, ok := groupMap["app_inputs"].([]interface{})
+		if !ok {
+			continue
+		}
+
+		var filteredInputs []interface{}
+		for _, input := range appInputs {
+			inputMap, ok := input.(map[string]interface{})
+			if !ok {
+				continue
+			}
+
+			userConfigurable, _ := inputMap["user_configurable"].(bool)
+			if userConfigurable {
+				if name, _ := inputMap["name"].(string); name != "" {
+					removed = append(removed, name)
+				}
+				continue
+			}
+			filteredInputs = append(filteredInputs, input)
+		}
+
+		if len(filteredInputs) > 0 {
+			filteredGroup := make(map[string]interface{})
+			for k, v := range groupMap {
+				filteredGroup[k] = v
+			}
+			filteredGroup["app_inputs"] = filteredInputs
+			filteredGroups = append(filteredGroups, filteredGroup)
+		}
+	}
+
+	result := make(map[string]interface{})
+	for k, v := range configMap {
+		result[k] = v
+	}
+	result["input_groups"] = filteredGroups
+	return result, removed
+}
+
+// extractBracketInputs parses flat "inputs[name]" keys from a raw JSON map into
+// a nested map. HTMX's json-enc extension serialises form fields with bracket
+// notation (e.g. "inputs[foo]": "bar") as flat keys instead of nested objects.
+// This helper merges those into the given inputs map so handlers receive the
+// expected map[string]string.
+func extractBracketInputs(raw map[string]interface{}, existing map[string]string) map[string]string {
+	if existing == nil {
+		existing = make(map[string]string)
+	}
+	for key, val := range raw {
+		if len(key) > 7 && key[:7] == "inputs[" && key[len(key)-1] == ']' {
+			name := key[7 : len(key)-1]
+			if s, ok := val.(string); ok {
+				existing[name] = s
+			}
+		}
+	}
+	return existing
+}
+
 // applyInputOrdering sorts input groups and inputs within them based on saved ordering
 
 func applyInputOrdering(inputConfig interface{}, groupOrder []string, inputOrder map[string][]string) interface{} {
@@ -371,33 +508,34 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 	}
 
 	return customerui.LayoutProps{
-		Title:                title,
-		User:                 user,
-		BasePath:             h.basePath,
-		PrimaryColor:         primaryColor,
-		PrimaryColorDark:     primaryColorDark,
-		PrimaryColorDarkMode: theme.PrimaryColorDark,
-		WhiteColor:           theme.WhiteColor,
-		BlackColor:           theme.BlackColor,
-		WhiteColorDark:       theme.WhiteColorDark,
-		BlackColorLight:      theme.BlackColorLight,
-		HeadingFont:          theme.HeadingFont,
-		BodyFont:             theme.BodyFont,
-		HeadingFontBase64:    theme.HeadingFontBase64,
-		BodyFontBase64:       theme.BodyFontBase64,
-		LogoBase64:           theme.LogoLightBase64,
-		LogoDarkBase64:       theme.LogoDarkBase64,
-		FaviconBase64:        theme.FaviconBase64,
-		RadiusClass:          theme.GetRadiusClass(),
-		ThemeMode:            theme.GetThemeMode(),
-		HeaderTitle:          headerTitle,
-		CSSPath:              assets.CustomerCSSPath(),
-		CustomCSSPath:        h.getCustomCSSPath(theme.OrgID),
-		OrgName:              orgName,
-		PortalDomain:         portalDomain,
-		AdminURL:             adminURL,
-		ActiveAccount:        activeAccount,
-		OtherAccounts:        otherAccounts,
+		Title:                     title,
+		User:                      user,
+		BasePath:                  h.basePath,
+		PrimaryColor:              primaryColor,
+		PrimaryColorDark:          primaryColorDark,
+		PrimaryColorDarkMode:      theme.PrimaryColorDark,
+		PrimaryColorDarkModeHover: DarkenColor(theme.PrimaryColorDark, 0.85),
+		WhiteColor:                theme.WhiteColor,
+		BlackColor:                theme.BlackColor,
+		WhiteColorDark:            theme.WhiteColorDark,
+		BlackColorLight:           theme.BlackColorLight,
+		HeadingFont:               theme.HeadingFont,
+		BodyFont:                  theme.BodyFont,
+		HeadingFontBase64:         theme.HeadingFontBase64,
+		BodyFontBase64:            theme.BodyFontBase64,
+		LogoBase64:                theme.LogoLightBase64,
+		LogoDarkBase64:            theme.LogoDarkBase64,
+		FaviconBase64:             theme.FaviconBase64,
+		RadiusClass:               theme.GetRadiusClass(),
+		ThemeMode:                 theme.GetThemeMode(),
+		HeaderTitle:               headerTitle,
+		CSSPath:                   assets.CustomerCSSPath(),
+		CustomCSSPath:             h.getCustomCSSPath(theme.OrgID),
+		OrgName:                   orgName,
+		PortalDomain:              portalDomain,
+		AdminURL:                  adminURL,
+		ActiveAccount:             activeAccount,
+		OtherAccounts:             otherAccounts,
 	}
 }
 

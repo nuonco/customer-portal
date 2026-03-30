@@ -32,8 +32,8 @@ package components
 //   if (value !== null) { ... }
 templ ConfirmModal() {
 	<!-- Confirmation Modal Container -->
-	<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
-		<div class="flex items-center justify-center min-h-full p-4">
+	<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;" onclick="if(event.target===this) closeConfirmModal(confirmModalOptions.isPrompt ? null : false)">
+		<div class="flex items-center justify-center min-h-full p-4" onclick="if(event.target===this) closeConfirmModal(confirmModalOptions.isPrompt ? null : false)">
 			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md transform transition-all border border-cool-grey-300 dark:border-dark-grey-500 my-8">
 				<!-- Modal Header -->
 				<div id="confirm-modal-header" class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
@@ -48,6 +48,7 @@ templ ConfirmModal() {
 							type="text"
 							id="confirm-modal-input"
 							class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+							onkeydown="if(event.key==='Enter'){event.preventDefault();closeConfirmModal('confirm')}"
 						/>
 						<p id="confirm-modal-validation" class="hidden mt-2 text-sm text-red-600 dark:text-red-400"></p>
 					</div>
@@ -58,6 +59,7 @@ templ ConfirmModal() {
 						type="button"
 						id="confirm-modal-cancel"
 						class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-cool-grey-500"
+						onclick="closeConfirmModal(confirmModalOptions.isPrompt ? null : false)"
 					>
 						Cancel
 					</button>
@@ -65,6 +67,7 @@ templ ConfirmModal() {
 						type="button"
 						id="confirm-modal-confirm"
 						class="px-4 py-2 text-sm font-medium text-white rounded-md focus:ring-2"
+						onclick="closeConfirmModal(confirmModalOptions.isPrompt ? 'confirm' : true)"
 					>
 						Confirm
 					</button>
@@ -194,33 +197,9 @@ templ confirmModalScript() {
 			}
 		}
 
-		// Event listeners for modal buttons
-		document.getElementById('confirm-modal-cancel').addEventListener('click', () => {
-			closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
-		});
-
-		document.getElementById('confirm-modal-confirm').addEventListener('click', () => {
-			closeConfirmModal(confirmModalOptions.isPrompt ? 'confirm' : true);
-		});
-
-		// Handle Enter key in input field
-		document.getElementById('confirm-modal-input').addEventListener('keydown', (e) => {
-			if (e.key === 'Enter') {
-				e.preventDefault();
-				closeConfirmModal('confirm');
-			}
-		});
-
-		// Close on Escape key
+		// Close on Escape key (document listener survives morphing)
 		document.addEventListener('keydown', (e) => {
 			if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
-				closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
-			}
-		});
-
-		// Close on backdrop click
-		document.getElementById('confirm-modal').addEventListener('click', (e) => {
-			if (e.target.id === 'confirm-modal') {
 				closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
 			}
 		});

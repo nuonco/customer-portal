@@ -63,8 +63,8 @@ func (h *Handler) CustomersPage(c *gin.Context) {
 		}
 	}
 
-	// Check if this is an HTMX request (search)
-	if c.GetHeader("HX-Request") == "true" {
+	// Check if this is an HTMX request (search, not hx-boost navigation)
+	if isHTMXPartialRequest(c) {
 		// Render only the table body for HTMX updates
 		h.RenderTempl(c, http.StatusOK, vendorpages.CustomersTableBody(customers, org.ID, h.basePath, searchQuery))
 		return

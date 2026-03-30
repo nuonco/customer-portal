@@ -9,7 +9,7 @@ templ ModalWrapper(id string, maxWidth string) {
 		style="z-index: 100"
 		onclick="if (event.target === this) { this.classList.add('hidden'); }"
 	>
-		<div class="flex items-center justify-center min-h-full p-4">
+		<div class="flex items-center justify-center min-h-full p-4" onclick="if (event.target === this) this.parentElement.classList.add('hidden');">
 			<div class={"card-base card-lg w-full my-8 " + maxWidth}>
 				{ children... }
 			</div>

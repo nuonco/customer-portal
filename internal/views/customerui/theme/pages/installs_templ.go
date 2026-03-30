@@ -5,13 +5,12 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"fmt"
 	"strings"
 
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
@@ -153,7 +152,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <!-- Panel Overlay --> <div id=\"detail-panel-overlay\" class=\"panel-overlay\" onclick=\"closeInstallPanel()\"></div><!-- Sliding Detail Panel --> <div id=\"detail-panel\" class=\"detail-panel\"><div class=\"panel-header\"><div class=\"min-w-0 flex-1\"><h2 id=\"panel-install-name\">Loading...</h2><span id=\"panel-install-id\" class=\"text-xs font-mono text-cool-grey-500 dark:text-cool-grey-400 truncate block\"></span></div><div class=\"flex items-center gap-2 flex-shrink-0\"><div id=\"panel-actions-container\"></div><button id=\"panel-expand-btn\" type=\"button\" onclick=\"togglePanelSize()\" class=\"button button-icon panel-header-btn\" title=\"Expand to full screen\"><i id=\"panel-expand-icon\" class=\"ph-bold ph-arrows-out text-xl\"></i> <i id=\"panel-collapse-icon\" class=\"ph-bold ph-arrows-in text-xl hidden\"></i></button> <button class=\"button button-icon panel-close-btn\" onclick=\"closeInstallPanel()\" aria-label=\"Close panel\"><i class=\"ph-bold ph-x text-xl\"></i></button></div></div><!-- Tab Headers --><div class=\"panel-tab-headers\"><button id=\"tab-overview-btn\" class=\"button button-nav nav-item active\" onclick=\"switchPanelTab('overview')\">Overview</button> <button id=\"tab-history-btn\" class=\"button button-nav nav-item\" onclick=\"switchPanelTab('history')\">History</button> <button id=\"tab-audit-btn\" class=\"button button-nav nav-item\" onclick=\"switchPanelTab('audit')\">Audit Log</button></div><div class=\"panel-content\"><!-- Overview Tab --><div id=\"tab-overview\" class=\"panel-tab-pane active\"><div id=\"panel-content-overview\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- History Tab --><div id=\"tab-history\" class=\"panel-tab-pane\"><div id=\"panel-content-history\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Audit Log Tab --><div id=\"tab-audit\" class=\"panel-tab-pane\"><div id=\"panel-content-audit\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div></div></div><!-- Edit Inputs Modal (page-level so it overlays everything) --> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <!-- Panel Overlay --> <div id=\"detail-panel-overlay\" class=\"panel-overlay\"></div><!-- Sliding Detail Panel --> <div id=\"detail-panel\" class=\"detail-panel\"><div class=\"panel-header\"><div class=\"min-w-0 flex-1\"><h2 id=\"panel-install-name\">Loading...</h2><span id=\"panel-install-id\" class=\"text-xs font-mono text-cool-grey-500 dark:text-cool-grey-400 truncate block\"></span></div><div class=\"flex items-center gap-2 flex-shrink-0\"><div id=\"panel-actions-container\"></div><button id=\"panel-expand-btn\" type=\"button\" data-panel-action=\"toggle-size\" class=\"button button-icon panel-header-btn\" title=\"Expand to full screen\"><i id=\"panel-expand-icon\" class=\"ph-bold ph-arrows-out text-xl\"></i> <i id=\"panel-collapse-icon\" class=\"ph-bold ph-arrows-in text-xl hidden\"></i></button> <button class=\"button button-icon panel-close-btn\" data-panel-action=\"close\" aria-label=\"Close panel\"><i class=\"ph-bold ph-x text-xl\"></i></button></div></div><!-- Tab Headers --><div class=\"panel-tab-headers\"><button id=\"tab-overview-btn\" class=\"button button-nav nav-item active\" data-panel-action=\"switch-tab\" data-tab=\"overview\">Overview</button> <button id=\"tab-history-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"history\">History</button> <button id=\"tab-audit-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"audit\">Audit Log</button></div><div class=\"panel-content\"><!-- Overview Tab --><div id=\"tab-overview\" class=\"panel-tab-pane active\"><div id=\"panel-content-overview\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- History Tab --><div id=\"tab-history\" class=\"panel-tab-pane\"><div id=\"panel-content-history\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Audit Log Tab --><div id=\"tab-audit\" class=\"panel-tab-pane\"><div id=\"panel-content-audit\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div></div></div><!-- Edit Inputs Modal (page-level so it overlays everything) --> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -174,11 +173,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div><!-- Panel JavaScript --> ")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = installsPanelScripts().Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div><!-- Panel JavaScript (static/js/install-panel.js loaded in layout head) -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -242,7 +237,10 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		platform := components.PlatformFromRegion(install.Region)
+		platform := install.Platform
+		if platform == "" {
+			platform = components.PlatformFromRegion(install.Region)
+		}
 		panelURL := basePath + "/installs/" + install.ID + "/panel"
 		detailURL := basePath + "/installs/" + install.ID
 		// Escape single quotes in names for JavaScript
@@ -259,7 +257,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 158, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 160, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -272,7 +270,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 159, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 161, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -290,7 +288,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(panelURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 161, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 163, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -303,7 +301,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(detailURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 164, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 166, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -330,7 +328,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 170, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 172, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
@@ -348,7 +346,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + install.ID + "/forget")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 175, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 177, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
@@ -366,7 +364,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 186, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 188, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -388,7 +386,7 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(install.Region)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 192, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 194, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
@@ -407,42 +405,13 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(install.CreatedAt.Format("Jan 2, 2006"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 198, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 200, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td></tr>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		return nil
-	})
-}
-
-func installsPanelScripts() templ.Component {
-	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
-		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
-		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
-			return templ_7745c5c3_CtxErr
-		}
-		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
-		if !templ_7745c5c3_IsBuffer {
-			defer func() {
-				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
-				if templ_7745c5c3_Err == nil {
-					templ_7745c5c3_Err = templ_7745c5c3_BufErr
-				}
-			}()
-		}
-		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
-		}
-		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<script>\n\t\t(function() {\n\t\t\t// Get config\n\t\t\tvar configEl = document.getElementById('installs-page-config');\n\t\t\tvar basePath = configEl ? configEl.dataset.basePath : '';\n\n\t\t\t// State\n\t\t\tvar currentInstallId = null;\n\t\t\tvar historyLoaded = false;\n\t\t\tvar auditLoaded = false;\n\n\t\t\t// Prepare panel state before HTMX loads content\n\t\t\twindow.preparePanel = function(rowElement, installId, installName) {\n\t\t\t\t// Store current install context\n\t\t\t\tcurrentInstallId = installId;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Update panel header with provided values (from HTMX call)\n\t\t\t\tdocument.getElementById('panel-install-name').textContent = installName;\n\t\t\t\tdocument.getElementById('panel-install-id').textContent = installId;\n\n\t\t\t\t// Clear actions container until panel content loads\n\t\t\t\tdocument.getElementById('panel-actions-container').innerHTML = '';\n\n\t\t\t\t// Highlight the active row\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\t\t\t\trowElement.classList.add('active');\n\n\t\t\t\t// Show the panel and overlay\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.add('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.add('open');\n\t\t\t\tdocument.body.style.overflow = 'hidden';\n\n\t\t\t\t// Ensure overview tab is active\n\t\t\t\tswitchPanelTab('overview');\n\n\t\t\t\t// Show loading spinner in the container (HTMX will replace it)\n\t\t\t\tdocument.getElementById('panel-content-overview').innerHTML =\n\t\t\t\t\t'<div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div>';\n\t\t\t};\n\n\t\t\t// Finalize panel after HTMX loads and settles content\n\t\t\twindow.finalizePanelLoad = function() {\n\t\t\t\t// HTMX has already injected the content and processed all HTMX attributes\n\t\t\t\t// The banner polling is now active!\n\n\t\t\t\t// Enable panel expand button\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\t\t\t\tif (expandBtn) {\n\t\t\t\t\texpandBtn.disabled = false;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close panel\n\t\t\twindow.closeInstallPanel = function() {\n\t\t\t\tdocument.getElementById('detail-panel-overlay').classList.remove('open');\n\t\t\t\tdocument.getElementById('detail-panel').classList.remove('open');\n\n\t\t\t\t// Remove row highlight\n\t\t\t\tdocument.querySelectorAll('.install-row').forEach(function(row) {\n\t\t\t\t\trow.classList.remove('active');\n\t\t\t\t});\n\n\t\t\t\t// Push new URL state when closing panel\n\t\t\t\tvar currentPath = window.location.pathname;\n\t\t\t\t// Only push state if we're currently on an install detail URL\n\t\t\t\tif (currentPath.match(/\\/installs\\/[^\\/]+/)) {\n\t\t\t\t\tvar params = new URLSearchParams(window.location.search);\n\t\t\t\t\tvar newUrl = basePath + '/installs' + (params.toString() ? '?' + params.toString() : '');\n\t\t\t\t\thistory.pushState({panelClosed: true}, '', newUrl);\n\t\t\t\t}\n\n\t\t\t\t// Reset state\n\t\t\t\tcurrentInstallId = null;\n\t\t\t\thistoryLoaded = false;\n\t\t\t\tauditLoaded = false;\n\n\t\t\t\t// Reset expand state\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\tdocument.getElementById('panel-expand-icon').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('panel-collapse-icon').classList.add('hidden');\n\t\t\t\tdocument.getElementById('panel-expand-btn').setAttribute('title', 'Expand to full screen');\n\n\t\t\t\t// Restore body scroll\n\t\t\t\tdocument.body.style.overflow = '';\n\t\t\t};\n\n\t\t\t// Toggle panel between default and full width\n\t\t\twindow.togglePanelSize = function() {\n\t\t\t\tvar panel = document.getElementById('detail-panel');\n\t\t\t\tvar expandIcon = document.getElementById('panel-expand-icon');\n\t\t\t\tvar collapseIcon = document.getElementById('panel-collapse-icon');\n\t\t\t\tvar expandBtn = document.getElementById('panel-expand-btn');\n\n\t\t\t\tif (panel.classList.contains('panel-full')) {\n\t\t\t\t\tpanel.classList.remove('panel-full');\n\t\t\t\t\texpandIcon.classList.remove('hidden');\n\t\t\t\t\tcollapseIcon.classList.add('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Expand to full screen');\n\t\t\t\t} else {\n\t\t\t\t\tpanel.classList.add('panel-full');\n\t\t\t\t\texpandIcon.classList.add('hidden');\n\t\t\t\t\tcollapseIcon.classList.remove('hidden');\n\t\t\t\t\texpandBtn.setAttribute('title', 'Resize to default size');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Switch tabs\n\t\t\twindow.switchPanelTab = function(tabName) {\n\t\t\t\t// Update tab buttons\n\t\t\t\tdocument.getElementById('tab-overview-btn').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history-btn').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit-btn').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Update tab panes\n\t\t\t\tdocument.getElementById('tab-overview').classList.toggle('active', tabName === 'overview');\n\t\t\t\tdocument.getElementById('tab-history').classList.toggle('active', tabName === 'history');\n\t\t\t\tdocument.getElementById('tab-audit').classList.toggle('active', tabName === 'audit');\n\n\t\t\t\t// Lazy load history tab using HTMX\n\t\t\t\tif (tabName === 'history' && !historyLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/history', {\n\t\t\t\t\t\t\ttarget: '#panel-content-history',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\thistoryLoaded = true;\n\t\t\t\t}\n\n\t\t\t\t// Lazy load audit tab using HTMX\n\t\t\t\tif (tabName === 'audit' && !auditLoaded && currentInstallId) {\n\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/audit', {\n\t\t\t\t\t\t\ttarget: '#panel-content-audit',\n\t\t\t\t\t\t\tswap: 'innerHTML'\n\t\t\t\t\t\t});\n\t\t\t\t\t}\n\t\t\t\t\tauditLoaded = true;\n\t\t\t\t}\n\t\t\t};\n\n\t\t\t// Close on ESC key\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key === 'Escape') {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Close when clicking outside panel (on overlay)\n\t\t\tdocument.getElementById('detail-panel-overlay').addEventListener('click', function(e) {\n\t\t\t\tif (e.target === this) {\n\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Check if we're on /installs/:install_id route (used after accepting install link)\n\t\t\t// Wrapped in DOMContentLoaded to ensure table rows are rendered\n\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\t// Trigger HTMX request to load panel\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\n\t\t\t// Handle back/forward button navigation\n\t\t\twindow.addEventListener('popstate', function(event) {\n\t\t\t\tvar pathMatch = window.location.pathname.match(/\\/installs\\/([^\\/\\?]+)/);\n\n\t\t\t\tif (pathMatch && pathMatch[1]) {\n\t\t\t\t\t// URL has install ID - open panel\n\t\t\t\t\tvar installId = pathMatch[1];\n\t\t\t\t\tvar row = document.querySelector('[data-install-id=\"' + installId + '\"]');\n\t\t\t\t\tif (row && currentInstallId !== installId) {\n\t\t\t\t\t\tif (typeof htmx !== 'undefined') {\n\t\t\t\t\t\t\thtmx.trigger(row, 'click');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\t// URL is just /installs - close panel\n\t\t\t\t\tif (currentInstallId) {\n\t\t\t\t\t\tcloseInstallPanel();\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -466,9 +435,9 @@ func paginationFooter(props InstallsPageProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var19 == nil {
+			templ_7745c5c3_Var19 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = components.Pagination(components.PaginationProps{

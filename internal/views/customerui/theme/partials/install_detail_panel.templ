@@ -111,6 +111,7 @@ type InstallDetailPanelProps struct {
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
 templ InstallDetailPanel(props InstallDetailPanelProps) {
+<div></div>
 	{{
 		platform := platformFromRegion(props.Install.Region)
 	}}
@@ -176,27 +177,31 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				</div>
 			</div>
 		}
-		<!-- Active Provision / Accordion -->
-		if !props.APIDeletedError {
-			if props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
-			} else {
-				<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows -->
-				<div
-					id="active-provision-banner"
-					hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
-					hx-trigger="every 5s"
-					hx-swap="outerHTML"
-				></div>
-			}
-		}
-		<!-- App Config + Platform (side by side) — hidden during active provision -->
-		if !(props.HasActiveProvision && len(props.ProvisionPhases) > 0) {
-			<div class="grid grid-cols-2 gap-4">
-				@appConfigCard(props)
-				@platformCard(platform, props.Install.Region)
+		<div class="overview-layout space-y-4">
+			<div class="overview-cards">
+				<!-- App Config + Platform (side by side) -->
+				<div class="grid grid-cols-2 gap-4">
+					@appConfigCard(props)
+					@platformCard(platform, props.Install.Region)
+				</div>
 			</div>
-		}
+			<div class="overview-workflow">
+				<!-- Active Provision / Accordion -->
+				if !props.APIDeletedError {
+					if props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
+						@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
+					} else {
+						<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows -->
+						<div
+							id="active-provision-banner"
+							hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
+							hx-trigger="every 5s"
+							hx-swap="outerHTML"
+						></div>
+					}
+				}
+			</div>
+		</div>
 	</div>
 	<!-- Config data for JavaScript -->
 	<div
@@ -324,6 +329,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							type="button"
 							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+							data-workflow-name={ workflow.Name }
 						>
 							Cancel
 						</button>
@@ -342,7 +348,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		} else if stackSetup.Platform == "gcp" {
 			@gcpStackSetup(stackSetup, workflow, installID, basePath)
 		} else if workflow != nil && workflow.CurrentStepType == "initializing" {
-			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
+			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
 				<div class="flex items-center gap-3 px-4 py-3">
 					<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
 					<div>
@@ -398,6 +404,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							type="button"
 							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+							data-workflow-name={ workflow.Name }
 						>
 							Cancel
 						</button>
@@ -506,7 +513,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 						e.preventDefault();
 						var details = sum.parentElement;
 						if(details.open){
-							details.removeAttribute('open');
 							return;
 						}
 						acc.querySelectorAll('details.provision-phase[open]').forEach(function(d){
@@ -593,6 +599,7 @@ cd install-stacks/gcp</code></pre>
 					type="button"
 					class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
 					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+					data-workflow-name={ workflow.Name }
 				>
 					Cancel
 				</button>
@@ -858,6 +865,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 						type="button"
 						class="button button-neutral workflow-cancel-btn px-3 py-1 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-cool-grey-100 dark:bg-dark-grey-700 hover:bg-cool-grey-200 dark:hover:bg-dark-grey-600 rounded"
 						data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
+						data-workflow-name={ workflow.Name }
 					>
 						Cancel
 					</button>
@@ -927,8 +935,11 @@ templ installDetailPanelScripts() {
 					});
 
 					if (response.ok) {
-						showToast('Reprovision initiated. Refreshing...', 'success');
-						setTimeout(function() { window.location.reload(); }, 1500);
+						showToast('Reprovision initiated', 'success');
+						var overview = document.getElementById('panel-content-overview');
+						if (overview) {
+							htmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});
+						}
 					} else {
 						showToast('Failed to reprovision installation', 'error');
 					}
@@ -1088,13 +1099,14 @@ templ installDetailPanelScripts() {
 				// Handle Cancel button
 				else if (e.target.classList.contains('workflow-cancel-btn')) {
 					var endpoint = e.target.getAttribute('data-endpoint');
+					var wfName = e.target.getAttribute('data-workflow-name') || 'Workflow';
 					showWorkflowActionModal({
 						endpoint: endpoint,
 						target: target,
 						swap: swap,
-						title: 'Cancel Update?',
-						message: 'Are you sure you want to cancel this update? This may leave your application in an incomplete state.',
-						confirmText: 'Cancel Update',
+						title: 'Cancel ' + wfName + '?',
+						message: 'Are you sure you want to cancel this ' + wfName.toLowerCase() + '? This may leave your application in an incomplete state.',
+						confirmText: 'Cancel ' + wfName,
 						cancelText: 'Keep Running'
 					});
 				}

@@ -51,7 +51,7 @@ templ TeamPage(props TeamPageProps) {
 			<div class="relative bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl border border-cool-grey-200 dark:border-dark-grey-600 w-full max-w-md mx-4 p-6">
 				<h2 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-1">Add members</h2>
 				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-4">Enter email addresses, separated by commas.</p>
-				<form id="inviteForm">
+				<form id="inviteForm" onsubmit="return window.handleInviteSubmit(event)">
 					<textarea
 						id="inviteEmails"
 						name="emails"
@@ -277,8 +277,8 @@ templ teamPageScript() {
 				}
 			};
 
-			// Invite form submission
-			document.getElementById('inviteForm').addEventListener('submit', async function(e) {
+			// Invite form submission (called via onsubmit attribute)
+			window.handleInviteSubmit = async function(e) {
 				e.preventDefault();
 
 				var btn = document.getElementById('inviteSubmitBtn');
@@ -331,7 +331,7 @@ templ teamPageScript() {
 				if (succeeded > 0) {
 					location.reload();
 				}
-			});
+			};
 		})();
 	</script>
 }

@@ -4,6 +4,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
 // BrandingSettingsPageProps for the branding settings page
@@ -51,7 +52,7 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 							<!-- Save Button -->
 							<div class="flex flex-col space-y-3">
 								<button type="button" id="installerSaveButton" onclick="saveInstallerSettings()" disabled class="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3 text-base rounded-md font-medium text-white bg-primary-600 hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-primary-600">
-									Save Changes
+									Save
 								</button>
 								<!-- Status Messages -->
 								<div id="installerSuccessMessage" class="hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg">
@@ -91,7 +92,14 @@ templ BrandingSettingsPage(props BrandingSettingsPageProps) {
 									@brandingPreviewApps(props.Theme)
 								</div>
 								<div id="preview-page-login" class="preview-page-section hidden">
-									@brandingPreviewLogin(props.Theme)
+									@partials.LoginPreview(partials.LoginPreviewProps{
+									Title:             props.Theme.GetLoginTitle(),
+									Subtitle:          props.Theme.GetLoginSubtitle(),
+									RightSideStyle:    getLoginPreviewRightSideStyle(props.Theme),
+									HasRightSideImage: props.Theme.GetLoginRightSideImage() != "",
+									LogoLightBase64:   props.Theme.LogoLightBase64,
+									LogoDarkBase64:    props.Theme.LogoDarkBase64,
+								})
 								</div>
 							}
 						</div>
@@ -303,15 +311,15 @@ templ installerPageColorSchemeSection(theme *models.AppTheme) {
 		</p>
 		<div class="flex items-center space-x-1 bg-cool-grey-100 dark:bg-dark-grey-700 rounded-lg p-1">
 			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "auto"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "auto") }>
-				<input type="radio" name="themeMode" value="auto" class="sr-only" checked?={ theme.GetThemeMode() == "auto" } onchange="updateThemeModeUI()"/>
+				<input type="radio" name="themeMode" value="auto" class="sr-only" checked?={ theme.GetThemeMode() == "auto" } onchange="updateThemeModeUI(); brandingCheckForChanges()"/>
 				<span class="block px-3 py-1.5 text-sm font-medium">System</span>
 			</label>
 			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "light"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "light") }>
-				<input type="radio" name="themeMode" value="light" class="sr-only" checked?={ theme.GetThemeMode() == "light" } onchange="updateThemeModeUI()"/>
+				<input type="radio" name="themeMode" value="light" class="sr-only" checked?={ theme.GetThemeMode() == "light" } onchange="updateThemeModeUI(); brandingCheckForChanges()"/>
 				<span class="block px-3 py-1.5 text-sm font-medium">Light</span>
 			</label>
 			<label class={ "flex-1 text-center cursor-pointer", templ.KV("bg-white dark:bg-dark-grey-600 text-cool-grey-800 dark:text-white shadow-sm rounded-md", theme.GetThemeMode() == "dark"), templ.KV("text-cool-grey-600 dark:text-cool-grey-400", theme.GetThemeMode() != "dark") }>
-				<input type="radio" name="themeMode" value="dark" class="sr-only" checked?={ theme.GetThemeMode() == "dark" } onchange="updateThemeModeUI()"/>
+				<input type="radio" name="themeMode" value="dark" class="sr-only" checked?={ theme.GetThemeMode() == "dark" } onchange="updateThemeModeUI(); brandingCheckForChanges()"/>
 				<span class="block px-3 py-1.5 text-sm font-medium">Dark</span>
 			</label>
 		</div>
@@ -365,16 +373,26 @@ templ installerPageBrandingSectionLight(theme *models.AppTheme) {
 				</div>
 			</div>
 			<div class="flex-1">
-				<input
-					type="file"
-					id="installerLogoLightUpload"
-					accept="image/png,image/jpeg,image/svg+xml,image/gif"
-					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
-				/>
-				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for white or light backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
-				<button type="button" id="installerRemoveLogoLight" onclick="installerRemoveLogoLight()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoLightBase64 == "") }>
-					Remove logo
-				</button>
+				<div class="flex items-center gap-2">
+					<label class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700">
+						Upload
+						<input
+							type="file"
+							id="installerLogoLightUpload"
+							accept="image/png,image/jpeg,image/svg+xml,image/gif"
+							onchange="handleLogoLightUpload(this)"
+							class="hidden"
+						/>
+					</label>
+					<button
+						type="button"
+						id="installerRemoveLogoLight"
+						onclick="installerRemoveLogoLight()"
+						disabled?={ theme.LogoLightBase64 == "" }
+						class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-dark-grey-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-grey-800"
+					>Remove</button>
+				</div>
+				<p id="installerLogoLightHelpText" class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB.</p>
 			</div>
 		</div>
 	</div>
@@ -399,16 +417,26 @@ templ installerPageBrandingSectionDark(theme *models.AppTheme) {
 				</div>
 			</div>
 			<div class="flex-1">
-				<input
-					type="file"
-					id="installerLogoDarkUpload"
-					accept="image/png,image/jpeg,image/svg+xml,image/gif"
-					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
-				/>
-				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">Best for dark backgrounds. PNG, JPG, SVG, or GIF. Max 500KB.</p>
-				<button type="button" id="installerRemoveLogoDark" onclick="installerRemoveLogoDark()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.LogoDarkBase64 == "") }>
-					Remove logo
-				</button>
+				<div class="flex items-center gap-2">
+					<label class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700">
+						Upload
+						<input
+							type="file"
+							id="installerLogoDarkUpload"
+							accept="image/png,image/jpeg,image/svg+xml,image/gif"
+							onchange="handleLogoDarkUpload(this)"
+							class="hidden"
+						/>
+					</label>
+					<button
+						type="button"
+						id="installerRemoveLogoDark"
+						onclick="installerRemoveLogoDark()"
+						disabled?={ theme.LogoDarkBase64 == "" }
+						class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-dark-grey-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-grey-800"
+					>Remove</button>
+				</div>
+				<p id="installerLogoDarkHelpText" class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">PNG, JPG, SVG, or GIF. Max 500KB.</p>
 			</div>
 		</div>
 	</div>
@@ -425,12 +453,14 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 					type="color"
 					id="installerPrimaryColorLight"
 					value={ getBrandingPrimaryColor(theme.PrimaryColor) }
+					oninput="handleColorPickerInput('installerPrimaryColorLight','installerPrimaryColorLightText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerPrimaryColorLightText"
 					value={ getBrandingPrimaryColor(theme.PrimaryColor) }
+					oninput="handleColorTextInput('installerPrimaryColorLightText','installerPrimaryColorLight')"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="#8040BF"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -446,12 +476,14 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 					type="color"
 					id="installerWhiteColor"
 					value={ getBrandingWhiteColor(theme.WhiteColor) }
+					oninput="handleColorPickerInput('installerWhiteColor','installerWhiteColorText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerWhiteColorText"
 					value={ getBrandingWhiteColor(theme.WhiteColor) }
+					oninput="handleColorTextInput('installerWhiteColorText','installerWhiteColor')"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="#ffffff"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -467,12 +499,14 @@ templ installerPageColorsSectionLight(theme *models.AppTheme) {
 					type="color"
 					id="installerBlackColorLight"
 					value={ getBrandingBlackColorLight(theme.BlackColorLight) }
+					oninput="handleColorPickerInput('installerBlackColorLight','installerBlackColorLightText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerBlackColorLightText"
 					value={ getBrandingDarkColorText(theme.BlackColorLight) }
+					oninput="handleColorTextInput('installerBlackColorLightText','installerBlackColorLight', '#121212')"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="#121212"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -497,12 +531,14 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 					type="color"
 					id="installerPrimaryColorDark"
 					value={ getBrandingDarkColor(theme.PrimaryColorDark, theme.PrimaryColor) }
+					oninput="handleColorPickerInput('installerPrimaryColorDark','installerPrimaryColorDarkText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerPrimaryColorDarkText"
 					value={ getBrandingDarkColorText(theme.PrimaryColorDark) }
+					oninput="handleColorTextInput('installerPrimaryColorDarkText','installerPrimaryColorDark', function(){return document.getElementById('installerPrimaryColorLight').value||'#8040BF'})"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="(uses light mode)"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -518,12 +554,14 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 					type="color"
 					id="installerWhiteColorDark"
 					value={ getBrandingDarkColor(theme.WhiteColorDark, theme.WhiteColor) }
+					oninput="handleColorPickerInput('installerWhiteColorDark','installerWhiteColorDarkText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerWhiteColorDarkText"
 					value={ getBrandingDarkColorText(theme.WhiteColorDark) }
+					oninput="handleColorTextInput('installerWhiteColorDarkText','installerWhiteColorDark', function(){return document.getElementById('installerWhiteColor').value||'#ffffff'})"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="(uses light mode setting)"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -539,12 +577,14 @@ templ installerPageColorsSectionDark(theme *models.AppTheme) {
 					type="color"
 					id="installerBlackColorDark"
 					value={ getBrandingBlackColorDark(theme.BlackColor, theme.BlackColorLight) }
+					oninput="handleColorPickerInput('installerBlackColorDark','installerBlackColorDarkText')"
 					class="h-10 w-14 rounded border border-cool-grey-300 dark:border-dark-grey-500 cursor-pointer"
 				/>
 				<input
 					type="text"
 					id="installerBlackColorDarkText"
 					value={ getBrandingDarkColorText(theme.BlackColor) }
+					oninput="handleColorTextInput('installerBlackColorDarkText','installerBlackColorDark', function(){return document.getElementById('installerBlackColorLight').value||'#121212'})"
 					class="flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md uppercase focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					placeholder="(uses light mode setting)"
 					pattern="^#[0-9A-Fa-f]{6}$"
@@ -562,7 +602,7 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 			<!-- Heading Font -->
 			<div>
 				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Heading Font</label>
-				<select id="installerHeadingFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+				<select id="installerHeadingFont" onchange="handleFontSelectChange(this)" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
 					<option value="">System Default</option>
 					<optgroup label="Modern Sans-Serif">
 						<option value="Inter" selected?={ theme.HeadingFont == "Inter" }>Inter</option>
@@ -611,6 +651,7 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 						type="file"
 						id="installerHeadingFontUpload"
 						accept=".woff2,.woff,font/woff2,font/woff"
+						onchange="handleBrandingFontUpload(this, '_installerHeadingFontBase64', '_installerHeadingFontName', 'customHeadingFontPreview', 'CustomHeadingPreview', 'installerHeadingFontLabel', 'installerHeadingFontCard')"
 						class={ templ.KV("hidden", theme.HeadingFontBase64 != ""), "block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800" }
 					/>
 					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">WOFF2 or WOFF format. Max 280KB.</p>
@@ -620,7 +661,7 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 			<!-- Body Font -->
 			<div>
 				<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2">Body Font</label>
-				<select id="installerBodyFont" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
+				<select id="installerBodyFont" onchange="handleFontSelectChange(this)" class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white">
 					<option value="">System Default</option>
 					<optgroup label="Modern Sans-Serif">
 						<option value="Inter" selected?={ theme.BodyFont == "Inter" }>Inter</option>
@@ -669,6 +710,7 @@ templ installerPageTypographySection(theme *models.AppTheme) {
 						type="file"
 						id="installerBodyFontUpload"
 						accept=".woff2,.woff,font/woff2,font/woff"
+						onchange="handleBrandingFontUpload(this, '_installerBodyFontBase64', '_installerBodyFontName', 'customBodyFontPreview', 'CustomBodyPreview', 'installerBodyFontLabel', 'installerBodyFontCard')"
 						class={ templ.KV("hidden", theme.BodyFontBase64 != ""), "block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800" }
 					/>
 					<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">WOFF2 or WOFF format. Max 280KB.</p>
@@ -693,7 +735,7 @@ templ installerPageHeaderTitleSection(theme *models.AppTheme, orgName string) {
 					id="installerHeaderTitle"
 					value={ theme.HeaderTitle }
 					placeholder={ theme.GetHeaderTitle(orgName) }
-					oninput="updatePreview()"
+					oninput="brandingPreviewAndCheck()"
 					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md text-sm bg-white dark:bg-dark-grey-700 text-cool-grey-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
@@ -707,7 +749,7 @@ templ installerPageHeaderTitleSection(theme *models.AppTheme, orgName string) {
 					if theme.HeaderTitleHidden {
 						checked
 					}
-					onchange="updatePreview()"
+					onchange="brandingPreviewAndCheck()"
 					class="h-4 w-4 rounded border-cool-grey-300 text-primary-600 focus:ring-primary-500"
 				/>
 				<label class="text-sm text-cool-grey-700 dark:text-cool-grey-300" for="installerHeaderTitleHidden">Hide header title</label>
@@ -734,16 +776,26 @@ templ installerPageFaviconSection(theme *models.AppTheme) {
 				</div>
 			</div>
 			<div class="flex-1">
-				<input
-					type="file"
-					id="installerFaviconUpload"
-					accept="image/x-icon,image/png,image/svg+xml"
-					class="block w-full text-sm text-cool-grey-500 dark:text-cool-grey-400 file:mr-3 file:py-1.5 file:px-3 file:rounded file:border-0 file:text-sm file:font-medium file:bg-primary-50 dark:file:bg-primary-900 file:text-primary-700 dark:file:text-primary-300 hover:file:bg-primary-100 dark:hover:file:bg-primary-800"
-				/>
-				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">ICO, PNG, or SVG. Max 100KB.</p>
-				<button type="button" id="installerRemoveFavicon" onclick="installerRemoveFavicon()" class={ "mt-2 text-xs text-red-600 hover:text-red-800", templ.KV("hidden", theme.FaviconBase64 == "") }>
-					Remove favicon
-				</button>
+				<div class="flex items-center gap-2">
+					<label class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700">
+						Upload
+						<input
+							type="file"
+							id="installerFaviconUpload"
+							accept="image/x-icon,image/png,image/svg+xml"
+							onchange="handleFaviconUpload(this)"
+							class="hidden"
+						/>
+					</label>
+					<button
+						type="button"
+						id="installerRemoveFavicon"
+						onclick="installerRemoveFavicon()"
+						disabled?={ theme.FaviconBase64 == "" }
+						class="cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-dark-grey-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-grey-800"
+					>Remove</button>
+				</div>
+				<p id="installerFaviconHelpText" class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">ICO, PNG, or SVG. Max 100KB.</p>
 			</div>
 		</div>
 	</div>
@@ -757,6 +809,7 @@ templ installerPageCustomCSSSection(theme *models.AppTheme) {
 		</p>
 		<textarea
 			id="installerCustomCSS"
+			oninput="brandingCheckForChanges()"
 			rows="10"
 			class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md text-sm bg-white dark:bg-dark-grey-700 text-cool-grey-800 dark:text-white font-mono focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
 			placeholder="/* Add your custom CSS here */&#10;.my-class { color: red; }"
@@ -885,53 +938,6 @@ templ brandingPreviewApps(theme *models.AppTheme) {
 	</div>
 }
 
-templ brandingPreviewLogin(theme *models.AppTheme) {
-	<div class="preview-page-bg h-full flex">
-		<!-- Left panel -->
-		<div class="flex-1 flex flex-col justify-center px-8 py-8">
-			<div class="preview-card p-6 rounded-lg w-full max-w-xs mx-auto flex flex-col gap-5">
-				<!-- Logo (centered) -->
-				<div class="flex justify-center">
-					<img class="h-8 w-auto max-w-[120px] object-contain preview-logo-light" style="display:none" alt=""/>
-					<img class="h-8 w-auto max-w-[120px] object-contain preview-logo-dark" style="display:none" alt=""/>
-				</div>
-				<!-- Title + Subtitle -->
-				<div class="flex flex-col gap-2">
-					<h1 class="text-xl font-bold preview-text-heading preview-heading-font preview-login-title">Customer Portal</h1>
-					<p class="text-xs preview-text-muted preview-body-font preview-login-subtitle">Manage your installs.</p>
-				</div>
-				<!-- Sign up button (primary) -->
-				<button class="w-full text-white py-2 text-xs font-semibold rounded" style="background-color: var(--preview-primary);">
-					Sign up
-				</button>
-				<!-- Divider -->
-				<div class="flex items-center gap-2">
-					<hr class="flex-1 preview-status-border" style="border: none; border-top: 1px solid; border-color: inherit;"/>
-					<span class="text-[10px] preview-text-muted preview-body-font">or</span>
-					<hr class="flex-1 preview-status-border" style="border: none; border-top: 1px solid; border-color: inherit;"/>
-				</div>
-				<!-- Log in button (outline) -->
-				<button class="w-full py-2 text-xs font-semibold rounded preview-text-heading preview-body-font" style="border: 1px solid var(--preview-primary); color: var(--preview-primary);">
-					Log in
-				</button>
-			</div>
-		</div>
-		<!-- Right panel -->
-		<div class="w-2/5 flex-shrink-0 relative overflow-hidden" style="background-color: var(--preview-primary);">
-			<!-- Grid pattern overlay -->
-			<div class="absolute inset-0 opacity-10">
-				<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
-					<defs>
-						<pattern id="preview-grid" width="10" height="10" patternUnits="userSpaceOnUse">
-							<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"></path>
-						</pattern>
-					</defs>
-					<rect width="100" height="100" fill="url(#preview-grid)"></rect>
-				</svg>
-			</div>
-		</div>
-	</div>
-}
 
 func getBrandingPrimaryColor(color string) string {
 	if color == "" {
@@ -1219,8 +1225,10 @@ templ installerPageScript() {
 				document.getElementById("installerLogoLightPreview").classList.add("hidden");
 				document.getElementById("installerLogoLightPlaceholder").classList.remove("hidden");
 				document.getElementById("installerLogoLightUpload").value = "";
-				document.getElementById("installerRemoveLogoLight").classList.add("hidden");
+				document.getElementById("installerRemoveLogoLight").disabled = true;
+				document.getElementById("installerLogoLightHelpText").textContent = "PNG, JPG, SVG, or GIF. Max 500KB.";
 				updatePreview();
+				checkForChanges();
 			};
 
 			window.installerRemoveLogoDark = function() {
@@ -1228,8 +1236,10 @@ templ installerPageScript() {
 				document.getElementById("installerLogoDarkPreview").classList.add("hidden");
 				document.getElementById("installerLogoDarkPlaceholder").classList.remove("hidden");
 				document.getElementById("installerLogoDarkUpload").value = "";
-				document.getElementById("installerRemoveLogoDark").classList.add("hidden");
+				document.getElementById("installerRemoveLogoDark").disabled = true;
+				document.getElementById("installerLogoDarkHelpText").textContent = "PNG, JPG, SVG, or GIF. Max 500KB.";
 				updatePreview();
+				checkForChanges();
 			};
 
 			window.installerRemoveFavicon = function() {
@@ -1237,7 +1247,9 @@ templ installerPageScript() {
 				document.getElementById("installerFaviconPreview").classList.add("hidden");
 				document.getElementById("installerFaviconPlaceholder").classList.remove("hidden");
 				document.getElementById("installerFaviconUpload").value = "";
-				document.getElementById("installerRemoveFavicon").classList.add("hidden");
+				document.getElementById("installerRemoveFavicon").disabled = true;
+				document.getElementById("installerFaviconHelpText").textContent = "ICO, PNG, or SVG. Max 100KB.";
+				checkForChanges();
 			};
 
 			window.installerRemoveHeadingFont = function() {
@@ -1357,7 +1369,7 @@ templ installerPageScript() {
 					errorMessage.classList.remove("hidden");
 				}
 
-				saveButton.textContent = "Save Changes";
+				saveButton.textContent = "Save";
 				checkForChanges();
 			};
 
@@ -1408,148 +1420,43 @@ templ installerPageScript() {
 				saveButton.disabled = !hasChanges;
 			}
 
-			// Event listeners for light mode color inputs
-			document.getElementById("installerPrimaryColorLight")?.addEventListener("input", function(e) {
-				document.getElementById("installerPrimaryColorLightText").value = e.target.value.toUpperCase();
+			// Color picker → text sync (used via oninput on color picker elements)
+			window.handleColorPickerInput = function(pickerId, textId) {
+				document.getElementById(textId).value = document.getElementById(pickerId).value.toUpperCase();
 				updatePreview();
 				checkForChanges();
-			});
+			};
 
-			document.getElementById("installerPrimaryColorLightText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerPrimaryColorLight").value = value;
-					updatePreview();
-				}
-				checkForChanges();
-			});
-
-			// Event listeners for dark mode color inputs
-			document.getElementById("installerPrimaryColorDark")?.addEventListener("input", function(e) {
-				var textInput = document.getElementById("installerPrimaryColorDarkText");
-				textInput.value = e.target.value.toUpperCase();
-				updatePreview();
-				checkForChanges();
-			});
-
-			document.getElementById("installerPrimaryColorDarkText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				var lightColor = document.getElementById("installerPrimaryColorLight").value || '#8040BF';
-				if (value === '') {
-					// Reset color picker to light mode fallback when cleared
-					document.getElementById("installerPrimaryColorDark").value = lightColor;
+			// Text → color picker sync (used via oninput on text input elements)
+			window.handleColorTextInput = function(textId, pickerId, fallbackExpr) {
+				var value = document.getElementById(textId).value;
+				if (value === '' && fallbackExpr !== undefined) {
+					document.getElementById(pickerId).value = typeof fallbackExpr === 'function' ? fallbackExpr() : fallbackExpr;
 					updatePreview();
 				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerPrimaryColorDark").value = value;
+					document.getElementById(pickerId).value = value;
 					updatePreview();
 				}
 				checkForChanges();
-			});
+			};
 
-			// Event listeners for white (light background) color
-			document.getElementById("installerWhiteColor")?.addEventListener("input", function(e) {
-				document.getElementById("installerWhiteColorText").value = e.target.value.toUpperCase();
+			// Font select change (used via onchange on font select elements)
+			window.handleFontSelectChange = function(selectEl) {
+				loadGoogleFont(selectEl.value);
 				updatePreview();
 				checkForChanges();
-			});
+			};
 
-			document.getElementById("installerWhiteColorText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerWhiteColor").value = value;
-					updatePreview();
-				}
+			// Simple change detection (used via oninput/onchange on various elements)
+			window.brandingCheckForChanges = function() {
 				checkForChanges();
-			});
+			};
 
-			// Event listeners for black (dark background) color
-			document.getElementById("installerBlackColorDark")?.addEventListener("input", function(e) {
-				document.getElementById("installerBlackColorDarkText").value = e.target.value.toUpperCase();
+			// Update preview + change detection
+			window.brandingPreviewAndCheck = function() {
 				updatePreview();
 				checkForChanges();
-			});
-
-			document.getElementById("installerBlackColorDarkText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				if (value === '') {
-					var lightModeBlack = document.getElementById("installerBlackColorLight").value || '#121212';
-					document.getElementById("installerBlackColorDark").value = lightModeBlack;
-					updatePreview();
-				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerBlackColorDark").value = value;
-					updatePreview();
-				}
-				checkForChanges();
-			});
-
-			// Event listeners for white color dark mode override
-			document.getElementById("installerWhiteColorDark")?.addEventListener("input", function(e) {
-				document.getElementById("installerWhiteColorDarkText").value = e.target.value.toUpperCase();
-				updatePreview();
-				checkForChanges();
-			});
-
-			document.getElementById("installerWhiteColorDarkText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				var lightColor = document.getElementById("installerWhiteColor").value || '#ffffff';
-				if (value === '') {
-					document.getElementById("installerWhiteColorDark").value = lightColor;
-					updatePreview();
-				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerWhiteColorDark").value = value;
-					updatePreview();
-				}
-				checkForChanges();
-			});
-
-			// Event listeners for black color light mode override
-			document.getElementById("installerBlackColorLight")?.addEventListener("input", function(e) {
-				document.getElementById("installerBlackColorLightText").value = e.target.value.toUpperCase();
-				updatePreview();
-				checkForChanges();
-			});
-
-			document.getElementById("installerBlackColorLightText")?.addEventListener("input", function(e) {
-				var value = e.target.value;
-				if (value === '') {
-					document.getElementById("installerBlackColorLight").value = '#121212';
-					updatePreview();
-				} else if (/^#[0-9A-Fa-f]{6}$/.test(value)) {
-					document.getElementById("installerBlackColorLight").value = value;
-					updatePreview();
-				}
-				checkForChanges();
-			});
-
-			document.getElementById("installerHeadingFont")?.addEventListener("change", function(e) {
-				loadGoogleFont(e.target.value);
-				updatePreview();
-				checkForChanges();
-			});
-
-			document.getElementById("installerBodyFont")?.addEventListener("change", function(e) {
-				loadGoogleFont(e.target.value);
-				updatePreview();
-				checkForChanges();
-			});
-
-			// Event listeners for inputs without existing listeners
-			document.getElementById("installerCustomCSS")?.addEventListener("input", function() {
-				checkForChanges();
-			});
-			document.getElementById("installerHeaderTitle")?.addEventListener("input", function() {
-				updatePreview();
-				checkForChanges();
-			});
-			document.getElementById("installerHeaderTitleHidden")?.addEventListener("change", function() {
-				updatePreview();
-				checkForChanges();
-			});
-			document.querySelectorAll('input[name="themeMode"]').forEach(function(radio) {
-				radio.addEventListener("change", function() {
-					checkForChanges();
-				});
-			});
+			};
 
 			// Load initial fonts
 			var headingFont = config.dataset.headingFont;
@@ -1613,183 +1520,98 @@ templ installerPageScript() {
 			// Initial preview update
 			updatePreview();
 
-			// Light mode logo upload handler
-			document.getElementById("installerLogoLightUpload")?.addEventListener("change", async function(e) {
-				var file = e.target.files[0];
+			// Logo light upload — wraps shared handler and updates help text with filename
+			window.handleLogoLightUpload = function(input) {
+				var file = input.files[0];
+				var fileName = file ? file.name : '';
+				handleBrandingImageUpload(input, '_installerLogoLightBase64', 'installerLogoLightPreview', 'installerLogoLightPlaceholder', 'installerRemoveLogoLight', 500, ['image/png','image/jpeg','image/svg+xml','image/gif'], 'Logo file', true);
+				if (input.files[0] && fileName) {
+					document.getElementById('installerLogoLightHelpText').textContent = fileName;
+				}
+			};
+
+			// Logo dark upload — wraps shared handler and updates help text with filename
+			window.handleLogoDarkUpload = function(input) {
+				var file = input.files[0];
+				var fileName = file ? file.name : '';
+				handleBrandingImageUpload(input, '_installerLogoDarkBase64', 'installerLogoDarkPreview', 'installerLogoDarkPlaceholder', 'installerRemoveLogoDark', 500, ['image/png','image/jpeg','image/svg+xml','image/gif'], 'Logo file', true);
+				if (input.files[0] && fileName) {
+					document.getElementById('installerLogoDarkHelpText').textContent = fileName;
+				}
+			};
+
+			// Favicon upload — wraps shared handler and updates help text with filename
+			window.handleFaviconUpload = function(input) {
+				var file = input.files[0];
+				var fileName = file ? file.name : '';
+				handleBrandingImageUpload(input, '_installerFaviconBase64', 'installerFaviconPreview', 'installerFaviconPlaceholder', 'installerRemoveFavicon', 100, ['image/x-icon','image/png','image/svg+xml'], 'Favicon file', false);
+				// If validation failed, input.value was cleared — check before updating text
+				if (input.files[0] && fileName) {
+					document.getElementById('installerFaviconHelpText').textContent = fileName;
+				}
+			};
+
+			// Image upload handler (used via onchange on file inputs)
+			window.handleBrandingImageUpload = function(input, globalVar, previewId, placeholderId, removeBtnId, maxKB, validTypes, errorMsg, withPreview) {
+				var file = input.files[0];
 				if (!file) return;
-
-				if (file.size > 500 * 1024) {
-					showToast("Logo file must be under 500KB", "error");
-					e.target.value = "";
+				if (file.size > maxKB * 1024) {
+					showToast(errorMsg + " must be under " + maxKB + "KB", "error");
+					input.value = "";
 					return;
 				}
-
-				var validTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/gif"];
 				if (!validTypes.includes(file.type)) {
-					showToast("Please upload a PNG, JPG, SVG, or GIF image", "error");
-					e.target.value = "";
+					showToast("Invalid file type", "error");
+					input.value = "";
 					return;
 				}
-
 				var reader = new FileReader();
 				reader.onload = function() {
-					window._installerLogoLightBase64 = reader.result;
-					var preview = document.getElementById("installerLogoLightPreview");
-					var placeholder = document.getElementById("installerLogoLightPlaceholder");
-					var removeBtn = document.getElementById("installerRemoveLogoLight");
-
-					preview.src = window._installerLogoLightBase64;
-					preview.classList.remove("hidden");
-					placeholder.classList.add("hidden");
-					removeBtn.classList.remove("hidden");
-					updatePreview();
+					window[globalVar] = reader.result;
+					document.getElementById(previewId).src = reader.result;
+					document.getElementById(previewId).classList.remove("hidden");
+					document.getElementById(placeholderId).classList.add("hidden");
+					document.getElementById(removeBtnId).disabled = false;
+					if (withPreview) updatePreview();
 					checkForChanges();
 				};
 				reader.readAsDataURL(file);
-			});
+			};
 
-			// Dark mode logo upload handler
-			document.getElementById("installerLogoDarkUpload")?.addEventListener("change", async function(e) {
-				var file = e.target.files[0];
-				if (!file) return;
-
-				if (file.size > 500 * 1024) {
-					showToast("Logo file must be under 500KB", "error");
-					e.target.value = "";
-					return;
-				}
-
-				var validTypes = ["image/png", "image/jpeg", "image/svg+xml", "image/gif"];
-				if (!validTypes.includes(file.type)) {
-					showToast("Please upload a PNG, JPG, SVG, or GIF image", "error");
-					e.target.value = "";
-					return;
-				}
-
-				var reader = new FileReader();
-				reader.onload = function() {
-					window._installerLogoDarkBase64 = reader.result;
-					var preview = document.getElementById("installerLogoDarkPreview");
-					var placeholder = document.getElementById("installerLogoDarkPlaceholder");
-					var removeBtn = document.getElementById("installerRemoveLogoDark");
-
-					preview.src = window._installerLogoDarkBase64;
-					preview.classList.remove("hidden");
-					placeholder.classList.add("hidden");
-					removeBtn.classList.remove("hidden");
-					updatePreview();
-					checkForChanges();
-				};
-				reader.readAsDataURL(file);
-			});
-
-			// Favicon upload handler
-			document.getElementById("installerFaviconUpload")?.addEventListener("change", async function(e) {
-				var file = e.target.files[0];
-				if (!file) return;
-
-				if (file.size > 100 * 1024) {
-					showToast("Favicon file must be under 100KB", "error");
-					e.target.value = "";
-					return;
-				}
-
-				var validTypes = ["image/x-icon", "image/png", "image/svg+xml"];
-				if (!validTypes.includes(file.type)) {
-					showToast("Please upload an ICO, PNG, or SVG image", "error");
-					e.target.value = "";
-					return;
-				}
-
-				var reader = new FileReader();
-				reader.onload = function() {
-					window._installerFaviconBase64 = reader.result;
-					var preview = document.getElementById("installerFaviconPreview");
-					var placeholder = document.getElementById("installerFaviconPlaceholder");
-					var removeBtn = document.getElementById("installerRemoveFavicon");
-
-					preview.src = window._installerFaviconBase64;
-					preview.classList.remove("hidden");
-					placeholder.classList.add("hidden");
-					removeBtn.classList.remove("hidden");
-					checkForChanges();
-				};
-				reader.readAsDataURL(file);
-			});
-
-			// Heading font upload handler
-			document.getElementById("installerHeadingFontUpload")?.addEventListener("change", async function(e) {
-				var file = e.target.files[0];
+			// Font upload handler (used via onchange on font file inputs)
+			window.handleBrandingFontUpload = function(input, globalVarBase64, globalVarName, styleId, fontFamily, labelId, cardId) {
+				var file = input.files[0];
 				if (!file) return;
 				if (file.size > 280 * 1024) {
 					showToast("Font file must be under 280KB", "error");
-					e.target.value = "";
+					input.value = "";
 					return;
 				}
 				var validTypes = ["font/woff2", "font/woff", "application/font-woff2", "application/font-woff", "application/octet-stream"];
 				var validExt = file.name.endsWith('.woff2') || file.name.endsWith('.woff');
 				if (!validTypes.includes(file.type) && !validExt) {
 					showToast("Please upload a WOFF2 or WOFF font file", "error");
-					e.target.value = "";
+					input.value = "";
 					return;
 				}
 				var reader = new FileReader();
 				reader.onload = function() {
-					window._installerHeadingFontBase64 = reader.result;
-					window._installerHeadingFontName = file.name;
-					var styleId = 'customHeadingFontPreview';
+					window[globalVarBase64] = reader.result;
+					window[globalVarName] = file.name;
 					var existing = document.getElementById(styleId);
 					if (existing) existing.remove();
 					var style = document.createElement('style');
 					style.id = styleId;
-					style.textContent = "@font-face { font-family: 'CustomHeadingPreview'; src: url('" + reader.result + "'); }";
+					style.textContent = "@font-face { font-family: '" + fontFamily + "'; src: url('" + reader.result + "'); }";
 					document.head.appendChild(style);
-					// Show card, hide input
-					document.getElementById("installerHeadingFontLabel").textContent = file.name;
-					document.getElementById("installerHeadingFontCard").classList.remove("hidden");
-					document.getElementById("installerHeadingFontUpload").classList.add("hidden");
+					document.getElementById(labelId).textContent = file.name;
+					document.getElementById(cardId).classList.remove("hidden");
+					input.classList.add("hidden");
 					updatePreview();
 					checkForChanges();
 				};
 				reader.readAsDataURL(file);
-			});
-
-			// Body font upload handler
-			document.getElementById("installerBodyFontUpload")?.addEventListener("change", async function(e) {
-				var file = e.target.files[0];
-				if (!file) return;
-				if (file.size > 280 * 1024) {
-					showToast("Font file must be under 280KB", "error");
-					e.target.value = "";
-					return;
-				}
-				var validTypes = ["font/woff2", "font/woff", "application/font-woff2", "application/font-woff", "application/octet-stream"];
-				var validExt = file.name.endsWith('.woff2') || file.name.endsWith('.woff');
-				if (!validTypes.includes(file.type) && !validExt) {
-					showToast("Please upload a WOFF2 or WOFF font file", "error");
-					e.target.value = "";
-					return;
-				}
-				var reader = new FileReader();
-				reader.onload = function() {
-					window._installerBodyFontBase64 = reader.result;
-					window._installerBodyFontName = file.name;
-					var styleId = 'customBodyFontPreview';
-					var existing = document.getElementById(styleId);
-					if (existing) existing.remove();
-					var style = document.createElement('style');
-					style.id = styleId;
-					style.textContent = "@font-face { font-family: 'CustomBodyPreview'; src: url('" + reader.result + "'); }";
-					document.head.appendChild(style);
-					// Show card, hide input
-					document.getElementById("installerBodyFontLabel").textContent = file.name;
-					document.getElementById("installerBodyFontCard").classList.remove("hidden");
-					document.getElementById("installerBodyFontUpload").classList.add("hidden");
-					updatePreview();
-					checkForChanges();
-				};
-				reader.readAsDataURL(file);
-			});
+			};
 		})();
 	</script>
 }

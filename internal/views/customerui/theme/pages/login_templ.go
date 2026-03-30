@@ -5,10 +5,9 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
@@ -154,7 +153,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</head><body><div class=\"flex h-screen w-full\"><!-- Left Side - Content --><div class=\"flex flex-col gap-10 justify-center w-full lg:w-[840px] px-8 md:px-20 py-16\"><!-- Card -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</head><body><div class=\"flex h-screen w-full\"><!-- Left Side - Content --><div class=\"flex flex-col gap-10 justify-center items-center w-full lg:w-1/2 px-8 md:px-20 py-16\"><!-- Card -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -320,7 +319,7 @@ func CustomerLoginPage(props CustomerLoginPageProps) templ.Component {
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = components.Card(components.CardProps{Class: "px-8 md:px-[70px] py-12 md:py-16 w-full flex flex-col gap-8"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Card(components.CardProps{Class: "px-8 md:px-[70px] py-12 md:py-16 w-full max-w-xl flex flex-col gap-8"}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

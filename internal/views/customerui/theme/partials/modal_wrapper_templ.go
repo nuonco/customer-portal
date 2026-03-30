@@ -5,8 +5,10 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
+import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+)
 
 // ModalWrapper provides consistent modal styling across all customer UI modals.
 // It renders a fixed backdrop with centered card content using theme-aware classes.
@@ -44,7 +46,7 @@ func ModalWrapper(id string, maxWidth string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto\" style=\"z-index: 100\" onclick=\"if (event.target === this) { this.classList.add('hidden'); }\"><div class=\"flex items-center justify-center min-h-full p-4\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto\" style=\"z-index: 100\" onclick=\"if (event.target === this) { this.classList.add('hidden'); }\"><div class=\"flex items-center justify-center min-h-full p-4\" onclick=\"if (event.target === this) this.parentElement.classList.add('hidden');\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

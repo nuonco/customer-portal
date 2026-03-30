@@ -5,12 +5,12 @@ package components
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
 	"fmt"
 	"strings"
+
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 )
 
 // PlatformFromRegion determines cloud platform from a region string
@@ -23,6 +23,18 @@ func PlatformFromRegion(region string) string {
 		return "gcp"
 	}
 	return "unknown"
+}
+
+// NormalizePlatform maps runner types (e.g. "aws-eks", "azure-aks") to base platform names.
+func NormalizePlatform(platform string) string {
+	if strings.HasPrefix(platform, "aws") {
+		return "aws"
+	} else if strings.HasPrefix(platform, "azure") {
+		return "azure"
+	} else if platform == "gcp" {
+		return "gcp"
+	}
+	return platform
 }
 
 // PlatformChip renders a cloud platform logo
@@ -47,7 +59,7 @@ func PlatformChip(platform string) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		switch platform {
+		switch NormalizePlatform(platform) {
 		case "aws":
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<img src=\"/static/images/logos/aws.svg\" class=\"platform-logo dark:hidden\" alt=\"AWS\"> <img src=\"/static/images/logos/aws.svg\" class=\"platform-logo hidden dark:block dark:invert\" alt=\"AWS\">")
 			if templ_7745c5c3_Err != nil {
@@ -116,7 +128,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d passed", props.Passed))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 48, Col: 95}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 60, Col: 95}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
@@ -129,7 +141,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", props.Passed))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 50, Col: 38}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 62, Col: 38}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -148,7 +160,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d failed", props.Failed))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 54, Col: 95}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 66, Col: 95}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -161,7 +173,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", props.Failed))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 56, Col: 38}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 68, Col: 38}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -180,7 +192,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d pending", props.Pending))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 60, Col: 98}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 72, Col: 98}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -193,7 +205,7 @@ func HealthPills(props HealthPillsProps) templ.Component {
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", props.Pending))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 62, Col: 39}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/install_chips.templ`, Line: 74, Col: 39}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {

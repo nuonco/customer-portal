@@ -56,6 +56,7 @@ templ AppOverviewPage(props AppOverviewPageProps) {
 									id="overviewMarkdown"
 									rows="6"
 									style="field-sizing: content"
+									oninput="window.updateOverviewSaveBtn && window.updateOverviewSaveBtn()"
 									class="w-full min-h-[12rem] resize-none rounded-md border border-cool-grey-300 dark:border-dark-grey-600 bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-cool-grey-100 text-sm px-3 py-2 font-mono focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
 									placeholder="# App Overview&#10;&#10;Describe your app here..."
 								>{ props.OverviewMarkdown }</textarea>
@@ -71,11 +72,11 @@ templ AppOverviewPage(props AppOverviewPageProps) {
 								type="button"
 								id="appOverviewSaveBtn"
 								onclick="saveAppOverview()"
-								class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500"
+								disabled
+								class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								Save
 							</button>
-							<span id="appOverviewSaveStatus" class="text-sm text-cool-grey-500 dark:text-cool-grey-400 hidden"></span>
 						</div>
 					</div>
 				</section>
@@ -85,113 +86,127 @@ templ AppOverviewPage(props AppOverviewPageProps) {
 	}
 }
 
-script appOverviewScript(orgID, appID, basePath string) {
-	(function() {
-		var activeTabClass = 'border-primary-500 text-primary-600 dark:text-primary-400';
-		var inactiveTabClass = 'border-transparent text-cool-grey-500 dark:text-cool-grey-400 hover:text-cool-grey-700 dark:hover:text-cool-grey-300';
+templ appOverviewScript(orgID, appID, basePath string) {
+	<div id="appOverviewScriptData" class="hidden" data-org-id={ orgID } data-app-id={ appID } data-base-path={ basePath }></div>
+	<script>
+		// Inline script (not templ `script`) so it re-executes on hx-boost navigations.
+		(function() {
+			var _sd = document.getElementById('appOverviewScriptData');
+			var _d = _sd.dataset;
+			var _orgID = _d.orgId;
+			var _appID = _d.appId;
+			var _basePath = _d.basePath;
 
-		function setTabClasses(tab, active) {
-			var add = active ? activeTabClass : inactiveTabClass;
-			var remove = active ? inactiveTabClass : activeTabClass;
-			remove.split(' ').forEach(function(c) { tab.classList.remove(c); });
-			add.split(' ').forEach(function(c) { tab.classList.add(c); });
-		}
+			// Store initial value on DOM so it survives dev-reload morphs.
+			if (!_sd.hasAttribute('data-initial')) {
+				_sd.setAttribute('data-initial', document.getElementById('overviewMarkdown').value);
+			}
 
-		window.switchTab = function(which) {
-			var writePane = document.getElementById('writePane');
-			var previewPane = document.getElementById('previewPane');
-			var tabWrite = document.getElementById('tabWrite');
-			var tabPreview = document.getElementById('tabPreview');
+			function updateSaveBtn() {
+				var initial = _sd.getAttribute('data-initial') || '';
+				document.getElementById('appOverviewSaveBtn').disabled = (document.getElementById('overviewMarkdown').value === initial);
+			}
 
-			if (which === 'write') {
-				writePane.classList.remove('hidden');
-				previewPane.classList.add('hidden');
-				setTabClasses(tabWrite, true);
-				setTabClasses(tabPreview, false);
-			} else {
-				writePane.classList.add('hidden');
-				previewPane.classList.remove('hidden');
-				setTabClasses(tabWrite, false);
-				setTabClasses(tabPreview, true);
+			window.updateOverviewSaveBtn = updateSaveBtn;
+			updateSaveBtn();
+
+			var activeTabClass = 'border-primary-500 text-primary-600 dark:text-primary-400';
+			var inactiveTabClass = 'border-transparent text-cool-grey-500 dark:text-cool-grey-400 hover:text-cool-grey-700 dark:hover:text-cool-grey-300';
+
+			function setTabClasses(tab, active) {
+				var add = active ? activeTabClass : inactiveTabClass;
+				var remove = active ? inactiveTabClass : activeTabClass;
+				remove.split(' ').forEach(function(c) { tab.classList.remove(c); });
+				add.split(' ').forEach(function(c) { tab.classList.add(c); });
+			}
+
+			window.switchTab = function(which) {
+				var writePane = document.getElementById('writePane');
+				var previewPane = document.getElementById('previewPane');
+				var tabWrite = document.getElementById('tabWrite');
+				var tabPreview = document.getElementById('tabPreview');
+
+				if (which === 'write') {
+					writePane.classList.remove('hidden');
+					previewPane.classList.add('hidden');
+					setTabClasses(tabWrite, true);
+					setTabClasses(tabPreview, false);
+				} else {
+					writePane.classList.add('hidden');
+					previewPane.classList.remove('hidden');
+					setTabClasses(tabWrite, false);
+					setTabClasses(tabPreview, true);
+
+					var markdown = document.getElementById('overviewMarkdown').value;
+					var preview = document.getElementById('overviewPreview');
+					if (!markdown.trim()) {
+						preview.innerHTML = '<p class="text-cool-grey-400 italic">Nothing to preview</p>';
+						return;
+					}
+					preview.innerHTML = '<p class="text-cool-grey-400 italic">Loading preview…</p>';
+					fetch(_basePath + '/orgs/' + _orgID + '/apps/' + _appID + '/overview/preview', {
+						method: 'POST',
+						headers: {'Content-Type': 'application/json'},
+						body: JSON.stringify({overview_markdown: markdown})
+					}).then(function(r) {
+						if (!r.ok) throw new Error('Failed');
+						return r.text();
+					}).then(function(html) {
+						preview.innerHTML = html;
+						var codes = preview.querySelectorAll('pre > code.language-mermaid');
+						if (codes.length > 0) {
+							var divs = [];
+							codes.forEach(function(code) {
+								var pre = code.parentElement;
+								var div = document.createElement('div');
+								div.className = 'mermaid';
+								div.textContent = code.textContent;
+								pre.parentElement.replaceChild(div, pre);
+								divs.push(div);
+							});
+							function runMermaid() {
+								mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
+								mermaid.run({ nodes: divs });
+							}
+							if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
+								runMermaid();
+							} else {
+								var s = document.createElement('script');
+								s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+								s.onload = runMermaid;
+								document.head.appendChild(s);
+							}
+						}
+					}).catch(function() {
+						preview.innerHTML = '<p class="text-red-600">Failed to load preview.</p>';
+					});
+				}
+			};
+
+			window.saveAppOverview = function() {
+				var btn = document.getElementById('appOverviewSaveBtn');
+				btn.disabled = true;
+				btn.textContent = 'Saving...';
 
 				var markdown = document.getElementById('overviewMarkdown').value;
-				var preview = document.getElementById('overviewPreview');
-				if (!markdown.trim()) {
-					preview.innerHTML = '<p class="text-cool-grey-400 italic">Nothing to preview</p>';
-					return;
-				}
-				preview.innerHTML = '<p class="text-cool-grey-400 italic">Loading preview…</p>';
-				fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/overview/preview', {
-					method: 'POST',
+
+				fetch(_basePath + '/orgs/' + _orgID + '/apps/' + _appID + '/overview', {
+					method: 'PUT',
 					headers: {'Content-Type': 'application/json'},
 					body: JSON.stringify({overview_markdown: markdown})
 				}).then(function(r) {
-					if (!r.ok) throw new Error('Failed');
-					return r.text();
-				}).then(function(html) {
-					preview.innerHTML = html;
-					// Render mermaid diagrams in preview
-					var codes = preview.querySelectorAll('pre > code.language-mermaid');
-					if (codes.length > 0) {
-						var divs = [];
-						codes.forEach(function(code) {
-							var pre = code.parentElement;
-							var div = document.createElement('div');
-							div.className = 'mermaid';
-							div.textContent = code.textContent;
-							pre.parentElement.replaceChild(div, pre);
-							divs.push(div);
-						});
-						function runMermaid() {
-							mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
-							mermaid.run({ nodes: divs });
-						}
-						if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
-							runMermaid();
-						} else {
-							var s = document.createElement('script');
-							s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
-							s.onload = runMermaid;
-							document.head.appendChild(s);
-						}
+					btn.textContent = 'Save';
+					if (!r.ok) {
+						btn.disabled = false;
+					} else {
+						_sd.setAttribute('data-initial', markdown);
+						updateSaveBtn();
 					}
 				}).catch(function() {
-					preview.innerHTML = '<p class="text-red-600">Failed to load preview.</p>';
+					btn.disabled = false;
+					btn.textContent = 'Save';
 				});
-			}
-		};
-
-		function showStatus(msg, isErr) {
-			var el = document.getElementById('appOverviewSaveStatus');
-			el.textContent = msg;
-			el.className = 'text-sm ' + (isErr ? 'text-red-600' : 'text-cool-grey-500 dark:text-cool-grey-400');
-			el.classList.remove('hidden');
-		}
-
-		window.saveAppOverview = function() {
-			var btn = document.getElementById('appOverviewSaveBtn');
-			btn.disabled = true;
-			btn.textContent = 'Saving...';
-
-			var markdown = document.getElementById('overviewMarkdown').value;
-
-			fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/overview', {
-				method: 'PUT',
-				headers: {'Content-Type': 'application/json'},
-				body: JSON.stringify({overview_markdown: markdown})
-			}).then(function(r) {
-				btn.disabled = false;
-				btn.textContent = 'Save';
-				if (!r.ok) {
-					showStatus('Failed to save overview.', true);
-				} else {
-					showStatus('Saved.', false);
-				}
-			}).catch(function() {
-				btn.disabled = false;
-				btn.textContent = 'Save';
-				showStatus('Failed to save overview.', true);
-			});
-		};
-	})();
+			};
+		})();
+	</script>
 }

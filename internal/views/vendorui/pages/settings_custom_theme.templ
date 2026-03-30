@@ -44,6 +44,11 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 					class="hidden"
 					data-base-path={ props.BasePath }
 					data-org-id={ props.CurrentOrg.ID }
+					if props.GitHubConfig != nil {
+						data-saved-repo-owner={ props.GitHubConfig.RepoOwner }
+						data-saved-repo-name={ props.GitHubConfig.RepoName }
+						data-saved-branch={ props.GitHubConfig.Branch }
+					}
 				></div>
 				@customThemeSettingsScript()
 			</div>
@@ -85,6 +90,7 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 							value={ config.RepoOwner }
 						}
 						placeholder="acme-corp"
+						oninput="customThemeCheckForChanges()"
 						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					/>
 				</div>
@@ -97,6 +103,7 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 							value={ config.RepoName }
 						}
 						placeholder="customer-theme"
+						oninput="customThemeCheckForChanges()"
 						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					/>
 				</div>
@@ -111,6 +118,7 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 							value="main"
 						}
 						placeholder="main"
+						oninput="customThemeCheckForChanges()"
 						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 					/>
 				</div>
@@ -121,6 +129,7 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 					type="password"
 					id="customThemeAccessToken"
 					placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
+					oninput="customThemeCheckForChanges()"
 					class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600 text-sm bg-white dark:bg-dark-grey-700 dark:text-white"
 				/>
 				<p class="mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400">
@@ -133,14 +142,12 @@ templ customThemeGitHubSection(config *models.GitHubRepoConfig, templates []mode
 			<div class="flex flex-wrap gap-2">
 				<button
 					type="button"
+					id="customThemeSaveBtn"
+					disabled
 					onclick="customThemeSaveGitHubConfig()"
-					class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md"
+					class="px-4 py-2 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
 				>
-					if config != nil {
-						Update Config
-					} else {
-						Save Config
-					}
+					Save
 				</button>
 				if config != nil {
 					<button
@@ -249,6 +256,7 @@ templ customThemeSyncedFilesSection(config *models.GitHubRepoConfig, templates [
 						type="text"
 						id="syncedFilesSearch"
 						placeholder="Search files..."
+						oninput="window.customThemeFilterFiles(this.value)"
 						class="w-full px-3 py-2 pl-10 text-sm border border-cool-grey-300 dark:border-dark-grey-600 rounded-md bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
 					/>
 					<svg class="absolute left-3 top-2.5 w-4 h-4 text-cool-grey-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -282,19 +290,19 @@ templ customThemeSyncedFilesSection(config *models.GitHubRepoConfig, templates [
 				<table class="w-full text-sm" id="syncedFilesTable">
 					<thead class="bg-cool-grey-50 dark:bg-dark-grey-800 border-b border-cool-grey-200 dark:border-dark-grey-700">
 						<tr>
-							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="type">
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="type" onclick="window.customThemeSortBy('type')">
 								Type <span class="sort-indicator"></span>
 							</th>
-							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="name">
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="name" onclick="window.customThemeSortBy('name')">
 								File Name <span class="sort-indicator"></span>
 							</th>
-							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="source">
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="source" onclick="window.customThemeSortBy('source')">
 								Source Path <span class="sort-indicator"></span>
 							</th>
-							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="size">
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="size" onclick="window.customThemeSortBy('size')">
 								Size <span class="sort-indicator"></span>
 							</th>
-							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="status">
+							<th class="px-4 py-3 text-left font-medium text-cool-grey-700 dark:text-cool-grey-300 cursor-pointer hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700" data-sort="status" onclick="window.customThemeSortBy('status')">
 								Status <span class="sort-indicator"></span>
 							</th>
 						</tr>
@@ -330,6 +338,7 @@ templ customThemeSyncedFilesSection(config *models.GitHubRepoConfig, templates [
 											type="checkbox"
 											checked?={ tmpl.IsEnabled }
 											data-page-name={ tmpl.PageName }
+											onchange="window.customThemeToggleTemplate(this.dataset.pageName, this.checked)"
 											class="custom-theme-page-template-toggle w-4 h-4 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-dark-grey-800 focus:ring-2 dark:bg-dark-grey-700 dark:border-dark-grey-600"
 										/>
 										<span class="ml-2 text-sm text-cool-grey-700 dark:text-cool-grey-300">
@@ -379,6 +388,7 @@ templ customThemeSyncedFilesSection(config *models.GitHubRepoConfig, templates [
 											type="checkbox"
 											checked?={ asset.IsEnabled }
 											data-asset-path={ asset.AssetPath }
+											onchange="window.customThemeToggleAsset(this.dataset.assetPath, this.checked)"
 											class="custom-theme-asset-toggle w-4 h-4 text-primary-600 bg-cool-grey-100 border-cool-grey-300 rounded focus:ring-primary-500 dark:focus:ring-primary-600 dark:ring-offset-dark-grey-800 focus:ring-2 dark:bg-dark-grey-700 dark:border-dark-grey-600"
 										/>
 										<span class="ml-2 text-sm text-cool-grey-700 dark:text-cool-grey-300">
@@ -423,6 +433,30 @@ templ customThemeSettingsScript() {
 			var config = document.getElementById('custom-theme-settings-config');
 			var basePath = config.dataset.basePath;
 			var orgId = config.dataset.orgId;
+
+			function checkForChanges() {
+				var btn = document.getElementById('customThemeSaveBtn');
+				if (!btn) return;
+				var current = {
+					repoOwner: document.getElementById('customThemeRepoOwner').value.trim(),
+					repoName: document.getElementById('customThemeRepoName').value.trim(),
+					branch: document.getElementById('customThemeRepoBranch').value.trim() || 'main',
+					accessToken: document.getElementById('customThemeAccessToken').value
+				};
+				var saved = {
+					repoOwner: config.dataset.savedRepoOwner || '',
+					repoName: config.dataset.savedRepoName || '',
+					branch: config.dataset.savedBranch || 'main',
+					accessToken: ''
+				};
+				var hasChanges = current.repoOwner !== saved.repoOwner ||
+					current.repoName !== saved.repoName ||
+					current.branch !== saved.branch ||
+					current.accessToken !== '';
+				btn.disabled = !hasChanges;
+			}
+
+			window.customThemeCheckForChanges = checkForChanges;
 
 			window.customThemeSaveGitHubConfig = async function() {
 				var successMsg = document.getElementById('customThemeGithubSuccessMessage');
@@ -562,15 +596,6 @@ templ customThemeSettingsScript() {
 				}
 			};
 
-			// Wire up template toggle checkboxes
-			document.querySelectorAll('.custom-theme-page-template-toggle').forEach(function(checkbox) {
-				checkbox.addEventListener('change', function(e) {
-					var pageName = e.target.dataset.pageName;
-					var enabled = e.target.checked;
-					window.customThemeToggleTemplate(pageName, enabled);
-				});
-			});
-
 			window.customThemeToggleAsset = async function(assetPath, enabled) {
 				var errorMsg = document.getElementById('customThemeGithubErrorMessage');
 				errorMsg.classList.add('hidden');
@@ -604,15 +629,6 @@ templ customThemeSettingsScript() {
 					});
 				}
 			};
-
-			// Wire up asset toggle checkboxes
-			document.querySelectorAll('.custom-theme-asset-toggle').forEach(function(checkbox) {
-				checkbox.addEventListener('change', function(e) {
-					var assetPath = e.target.dataset.assetPath;
-					var enabled = e.target.checked;
-					window.customThemeToggleAsset(assetPath, enabled);
-				});
-			});
 
 			window.customThemeBulkEnable = function() {
 				customThemeBulkToggle(true);
@@ -680,66 +696,58 @@ templ customThemeSettingsScript() {
 			};
 
 		// Search functionality
-		var searchInput = document.getElementById('syncedFilesSearch');
-		var tableRows = document.querySelectorAll('.synced-file-row');
-		var noResultsMessage = document.getElementById('noResultsMessage');
-		var tableBody = document.querySelector('#syncedFilesTable tbody');
+		window.customThemeFilterFiles = function(value) {
+			var tableRows = document.querySelectorAll('.synced-file-row');
+			var noResultsMessage = document.getElementById('noResultsMessage');
+			var tableBody = document.querySelector('#syncedFilesTable tbody');
+			var searchTerm = value.toLowerCase();
+			var visibleCount = 0;
 
-		if (searchInput) {
-			searchInput.addEventListener('input', function(e) {
-				var searchTerm = e.target.value.toLowerCase();
-				var visibleCount = 0;
+			tableRows.forEach(function(row) {
+				var type = row.dataset.type.toLowerCase();
+				var name = row.dataset.name.toLowerCase();
+				var source = row.dataset.source.toLowerCase();
+				var status = row.dataset.status.toLowerCase();
 
-				tableRows.forEach(function(row) {
-					var type = row.dataset.type.toLowerCase();
-					var name = row.dataset.name.toLowerCase();
-					var source = row.dataset.source.toLowerCase();
-					var status = row.dataset.status.toLowerCase();
+				var matches =
+					type.includes(searchTerm) ||
+					name.includes(searchTerm) ||
+					source.includes(searchTerm) ||
+					status.includes(searchTerm);
 
-					var matches =
-						type.includes(searchTerm) ||
-						name.includes(searchTerm) ||
-						source.includes(searchTerm) ||
-						status.includes(searchTerm);
-
-					if (matches) {
-						row.style.display = '';
-						visibleCount++;
-					} else {
-						row.style.display = 'none';
-					}
-				});
-
-				// Show/hide empty state
-				if (visibleCount === 0) {
-					tableBody.style.display = 'none';
-					noResultsMessage.classList.remove('hidden');
+				if (matches) {
+					row.style.display = '';
+					visibleCount++;
 				} else {
-					tableBody.style.display = '';
-					noResultsMessage.classList.add('hidden');
+					row.style.display = 'none';
 				}
 			});
-		}
+
+			// Show/hide empty state
+			if (visibleCount === 0) {
+				tableBody.style.display = 'none';
+				noResultsMessage.classList.remove('hidden');
+			} else {
+				tableBody.style.display = '';
+				noResultsMessage.classList.add('hidden');
+			}
+		};
 
 		// Sort functionality
 		var currentSort = { column: 'name', direction: 'asc' };
 
-		document.querySelectorAll('[data-sort]').forEach(function(header) {
-			header.addEventListener('click', function() {
-				var column = this.dataset.sort;
+		window.customThemeSortBy = function(column) {
+			// Toggle direction if same column, otherwise default to asc
+			if (currentSort.column === column) {
+				currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+			} else {
+				currentSort.column = column;
+				currentSort.direction = 'asc';
+			}
 
-				// Toggle direction if same column, otherwise default to asc
-				if (currentSort.column === column) {
-					currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-				} else {
-					currentSort.column = column;
-					currentSort.direction = 'asc';
-				}
-
-				sortTable(column, currentSort.direction);
-				updateSortIndicators(column, currentSort.direction);
-			});
-		});
+			sortTable(column, currentSort.direction);
+			updateSortIndicators(column, currentSort.direction);
+		};
 
 		function sortTable(column, direction) {
 			var tbody = document.querySelector('#syncedFilesTable tbody');

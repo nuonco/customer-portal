@@ -5,10 +5,9 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
@@ -76,14 +75,14 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<form id=\"installForm\" class=\"max-w-2xl mx-auto space-y-6\" hx-boost=\"false\" hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-2xl mx-auto mb-4 flex justify-end\"><button type=\"button\" onclick=\"history.back()\" class=\"button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 transition-colors\" aria-label=\"Close\"><i class=\"ph-bold ph-x text-xl\"></i></button></div><form id=\"installForm\" class=\"max-w-2xl mx-auto space-y-6\" hx-boost=\"false\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.formAction())
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 44, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 49, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
@@ -112,7 +111,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.SHA)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 55, Col: 53}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 60, Col: 53}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -152,7 +151,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var6 string
 						templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoLightBase64)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 62, Col: 39}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 67, Col: 39}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 						if templ_7745c5c3_Err != nil {
@@ -165,7 +164,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var7 string
 						templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 62, Col: 61}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 67, Col: 61}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 						if templ_7745c5c3_Err != nil {
@@ -178,7 +177,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var8 string
 						templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoDarkBase64)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 63, Col: 38}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 68, Col: 38}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 						if templ_7745c5c3_Err != nil {
@@ -191,7 +190,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var9 string
 						templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 63, Col: 60}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 68, Col: 60}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 						if templ_7745c5c3_Err != nil {
@@ -209,7 +208,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var10 string
 						templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoLightBase64)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 65, Col: 39}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 70, Col: 39}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 						if templ_7745c5c3_Err != nil {
@@ -222,7 +221,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var11 string
 						templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 65, Col: 61}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 70, Col: 61}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 						if templ_7745c5c3_Err != nil {
@@ -241,7 +240,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(props.AppName)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 68, Col: 83}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 73, Col: 83}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
@@ -287,7 +286,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 					var templ_7745c5c3_Var14 templ.SafeURL
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.AuthURL))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 80, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 85, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 					if templ_7745c5c3_Err != nil {
@@ -300,7 +299,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 					var templ_7745c5c3_Var15 templ.SafeURL
 					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.AuthURL))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 86, Col: 43}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 91, Col: 43}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
@@ -361,7 +360,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Email)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 107, Col: 79}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 112, Col: 79}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {
@@ -379,7 +378,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 						var templ_7745c5c3_Var18 string
 						templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(props.LoggedInUser.Name)
 						if templ_7745c5c3_Err != nil {
-							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 110, Col: 93}
+							return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 115, Col: 93}
 						}
 						_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 						if templ_7745c5c3_Err != nil {
@@ -397,7 +396,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 					var templ_7745c5c3_Var19 templ.SafeURL
 					templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/login"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 113, Col: 57}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 118, Col: 57}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 					if templ_7745c5c3_Err != nil {
@@ -425,7 +424,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 				var templ_7745c5c3_Var20 string
 				templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(props.formFieldsURL())
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 137, Col: 35}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/create_install.templ`, Line: 142, Col: 35}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 				if templ_7745c5c3_Err != nil {

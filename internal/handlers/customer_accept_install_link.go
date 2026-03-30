@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -29,16 +31,29 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	var req struct {
-		SHA      string            `json:"sha" binding:"required"`
-		Region   string            `json:"region"`   // AWS region (customer chooses)
-		Location string            `json:"location"` // Azure location (customer chooses)
-		Inputs   map[string]string `json:"inputs"`   // Customer-facing inputs
+	// Read raw body so we can parse both nested and bracket-notation inputs
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		respondError(http.StatusBadRequest, "Failed to read request body")
+		return
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		respondError(http.StatusBadRequest, err.Error())
+	var req struct {
+		SHA      string            `json:"sha" binding:"required"`
+		Region   string            `json:"region"`
+		Location string            `json:"location"`
+		Inputs   map[string]string `json:"inputs"`
+	}
+
+	if err := json.Unmarshal(bodyBytes, &req); err != nil || req.SHA == "" {
+		respondError(http.StatusBadRequest, "SHA is required")
 		return
+	}
+
+	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them
+	var raw map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &raw); err == nil {
+		req.Inputs = extractBracketInputs(raw, req.Inputs)
 	}
 
 	// Find the install link
@@ -79,12 +94,12 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	// Determine platform to decide region defaulting
 	region := req.Region
 	location := req.Location
+	platform := ""
+	if app, err := nuonClient.GetApp(c.Request.Context(), link.AppID); err == nil && app != nil && app.RunnerConfig != nil {
+		platform = string(app.RunnerConfig.AppRunnerType)
+	}
 	if region == "" && location == "" {
 		// Only default to us-east-1 for AWS; GCP installs don't need a region
-		platform := ""
-		if app, err := nuonClient.GetApp(c.Request.Context(), link.AppID); err == nil && app != nil && app.RunnerConfig != nil {
-			platform = string(app.RunnerConfig.AppRunnerType)
-		}
 		if platform != "gcp" && platform != "azure-aks" && platform != "azure-acs" && platform != "azure" {
 			region = "us-east-1"
 		}
@@ -97,7 +112,7 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	installName := link.Name
 
 	// Create the install via Nuon API with merged inputs
-	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, mergedInputs)
+	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), link.AppID, link.AppName, installName, region, location, platform, mergedInputs)
 	if err != nil {
 		if nuon.IsConflict(err) {
 			respondError(http.StatusConflict, "An install with that name already exists. Please choose a different name.")

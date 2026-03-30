@@ -1,6 +1,7 @@
 package nuon
 
 import (
+	"bytes"
 	"context"
 	"encoding/csv"
 	"encoding/json"
@@ -168,6 +169,34 @@ func (c *Client) GetAppInputConfig(ctx context.Context, appID string) (interface
 	return inputCfg, nil
 }
 
+// GetAppInputConfigRaw retrieves the input configuration as raw JSON,
+// preserving all fields (including user_configurable) that the SDK struct may drop.
+func (c *Client) GetAppInputConfigRaw(ctx context.Context, appID string) (map[string]interface{}, error) {
+	url := fmt.Sprintf("%s/v1/apps/%s/input-latest-config", c.apiURL, appID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return result, nil
+}
+
 // GetAppSecretsConfig retrieves the secrets configuration for an app.
 // Uses a direct HTTP call because the SDK path doesn't match the ctl-api route.
 func (c *Client) GetAppSecretsConfig(ctx context.Context, appID string) (*models.AppAppSecretsConfig, error) {
@@ -209,11 +238,11 @@ func (c *Client) CreateInstall(ctx context.Context, appID, appName, region strin
 
 // CreateInstallWithInputs creates a new install for the given app with specified inputs
 func (c *Client) CreateInstallWithInputs(ctx context.Context, appID, appName, region string, inputs map[string]string) (*models.AppInstall, error) {
-	return c.CreateInstallWithCustomName(ctx, appID, appName, "", region, "", inputs)
+	return c.CreateInstallWithCustomName(ctx, appID, appName, "", region, "", "", inputs)
 }
 
 // CreateInstallWithCustomName creates a new install with custom name and platform configuration
-func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName, customName, region, location string, inputs map[string]string) (*models.AppInstall, error) {
+func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName, customName, region, location, platform string, inputs map[string]string) (*models.AppInstall, error) {
 	// Use custom name or generate one
 	var installName string
 	if customName != "" {
@@ -242,6 +271,13 @@ func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName
 		}
 	}
 
+	// For GCP, the published SDK lacks GcpAccount so we make a raw HTTP call
+	if platform == "gcp" && request.AwsAccount == nil && request.AzureAccount == nil {
+		return c.createInstallRaw(ctx, appID, installName, inputs, map[string]interface{}{
+			"gcp_account": map[string]interface{}{},
+		})
+	}
+
 	// Create install with platform-specific configuration
 	install, _, err := c.client.CreateInstall(ctx, appID, request)
 	if err != nil {
@@ -249,6 +285,56 @@ func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName
 	}
 
 	return install, nil
+}
+
+// createInstallRaw creates an install via direct HTTP POST, used when the SDK
+// struct is missing fields (e.g. gcp_account).
+func (c *Client) createInstallRaw(ctx context.Context, appID, name string, inputs map[string]string, extraFields map[string]interface{}) (*models.AppInstall, error) {
+	body := map[string]interface{}{
+		"name":   name,
+		"inputs": inputs,
+	}
+	for k, v := range extraFields {
+		body[k] = v
+	}
+
+	jsonBody, err := json.Marshal(body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	apiURL := strings.TrimRight(c.apiURL, "/")
+	reqURL := fmt.Sprintf("%s/v1/apps/%s/installs", apiURL, url.PathEscape(appID))
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, reqURL, bytes.NewReader(jsonBody))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create install '%s' for app %s: %w", name, appID, err)
+	}
+	defer resp.Body.Close()
+
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	if resp.StatusCode >= 400 {
+		return nil, fmt.Errorf("failed to create install '%s' for app %s: %s", name, appID, string(respBody))
+	}
+
+	var install models.AppInstall
+	if err := json.Unmarshal(respBody, &install); err != nil {
+		return nil, fmt.Errorf("failed to decode install response: %w", err)
+	}
+
+	return &install, nil
 }
 
 // GetInstall retrieves install details
@@ -261,9 +347,9 @@ func (c *Client) GetInstall(ctx context.Context, installID string) (*models.AppI
 	return install, nil
 }
 
-// DeprovisionInstall deprovisions an install
+// DeprovisionInstall deprovisions an install (tears down infrastructure without deleting the install record)
 func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error {
-	_, err := c.client.DeleteInstall(ctx, installID)
+	err := c.client.DeprovisionInstallSandbox(ctx, installID)
 	if err != nil {
 		return fmt.Errorf("failed to deprovision install: %w", err)
 	}

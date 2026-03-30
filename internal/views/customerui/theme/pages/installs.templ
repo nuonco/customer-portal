@@ -65,7 +65,7 @@ templ InstallsPage(props InstallsPageProps) {
 		}
 
 		<!-- Panel Overlay -->
-		<div id="detail-panel-overlay" class="panel-overlay" onclick="closeInstallPanel()"></div>
+		<div id="detail-panel-overlay" class="panel-overlay"></div>
 
 		<!-- Sliding Detail Panel -->
 		<div id="detail-panel" class="detail-panel">
@@ -76,20 +76,20 @@ templ InstallsPage(props InstallsPageProps) {
 				</div>
 				<div class="flex items-center gap-2 flex-shrink-0">
 					<div id="panel-actions-container"></div>
-					<button id="panel-expand-btn" type="button" onclick="togglePanelSize()" class="button button-icon panel-header-btn" title="Expand to full screen">
+					<button id="panel-expand-btn" type="button" data-panel-action="toggle-size" class="button button-icon panel-header-btn" title="Expand to full screen">
 						<i id="panel-expand-icon" class="ph-bold ph-arrows-out text-xl"></i>
 						<i id="panel-collapse-icon" class="ph-bold ph-arrows-in text-xl hidden"></i>
 					</button>
-					<button class="button button-icon panel-close-btn" onclick="closeInstallPanel()" aria-label="Close panel">
+					<button class="button button-icon panel-close-btn" data-panel-action="close" aria-label="Close panel">
 						<i class="ph-bold ph-x text-xl"></i>
 					</button>
 				</div>
 			</div>
 			<!-- Tab Headers -->
 			<div class="panel-tab-headers">
-				<button id="tab-overview-btn" class="button button-nav nav-item active" onclick="switchPanelTab('overview')">Overview</button>
-				<button id="tab-history-btn" class="button button-nav nav-item" onclick="switchPanelTab('history')">History</button>
-				<button id="tab-audit-btn" class="button button-nav nav-item" onclick="switchPanelTab('audit')">Audit Log</button>
+				<button id="tab-overview-btn" class="button button-nav nav-item active" data-panel-action="switch-tab" data-tab="overview">Overview</button>
+				<button id="tab-history-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="history">History</button>
+				<button id="tab-audit-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="audit">Audit Log</button>
 			</div>
 			<div class="panel-content">
 				<!-- Overview Tab -->
@@ -129,8 +129,7 @@ templ InstallsPage(props InstallsPageProps) {
 			data-base-path={ props.BasePath }
 		></div>
 
-		<!-- Panel JavaScript -->
-		@installsPanelScripts()
+		<!-- Panel JavaScript (static/js/install-panel.js loaded in layout head) -->
 	}
 }
 
@@ -146,7 +145,10 @@ templ installsTableHeader() {
 
 templ installTableRow(install customerui.InstallWithApprovalStatus, basePath string) {
 	{{
-		platform := components.PlatformFromRegion(install.Region)
+		platform := install.Platform
+		if platform == "" {
+			platform = components.PlatformFromRegion(install.Region)
+		}
 		panelURL := basePath + "/installs/" + install.ID + "/panel"
 		detailURL := basePath + "/installs/" + install.ID
 		// Escape single quotes in names for JavaScript
@@ -200,206 +202,6 @@ templ installTableRow(install customerui.InstallWithApprovalStatus, basePath str
 	</tr>
 }
 
-templ installsPanelScripts() {
-	<script>
-		(function() {
-			// Get config
-			var configEl = document.getElementById('installs-page-config');
-			var basePath = configEl ? configEl.dataset.basePath : '';
-
-			// State
-			var currentInstallId = null;
-			var historyLoaded = false;
-			var auditLoaded = false;
-
-			// Prepare panel state before HTMX loads content
-			window.preparePanel = function(rowElement, installId, installName) {
-				// Store current install context
-				currentInstallId = installId;
-				historyLoaded = false;
-				auditLoaded = false;
-
-				// Update panel header with provided values (from HTMX call)
-				document.getElementById('panel-install-name').textContent = installName;
-				document.getElementById('panel-install-id').textContent = installId;
-
-				// Clear actions container until panel content loads
-				document.getElementById('panel-actions-container').innerHTML = '';
-
-				// Highlight the active row
-				document.querySelectorAll('.install-row').forEach(function(row) {
-					row.classList.remove('active');
-				});
-				rowElement.classList.add('active');
-
-				// Show the panel and overlay
-				document.getElementById('detail-panel-overlay').classList.add('open');
-				document.getElementById('detail-panel').classList.add('open');
-				document.body.style.overflow = 'hidden';
-
-				// Ensure overview tab is active
-				switchPanelTab('overview');
-
-				// Show loading spinner in the container (HTMX will replace it)
-				document.getElementById('panel-content-overview').innerHTML =
-					'<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
-			};
-
-			// Finalize panel after HTMX loads and settles content
-			window.finalizePanelLoad = function() {
-				// HTMX has already injected the content and processed all HTMX attributes
-				// The banner polling is now active!
-
-				// Enable panel expand button
-				var expandBtn = document.getElementById('panel-expand-btn');
-				if (expandBtn) {
-					expandBtn.disabled = false;
-				}
-			};
-
-			// Close panel
-			window.closeInstallPanel = function() {
-				document.getElementById('detail-panel-overlay').classList.remove('open');
-				document.getElementById('detail-panel').classList.remove('open');
-
-				// Remove row highlight
-				document.querySelectorAll('.install-row').forEach(function(row) {
-					row.classList.remove('active');
-				});
-
-				// Push new URL state when closing panel
-				var currentPath = window.location.pathname;
-				// Only push state if we're currently on an install detail URL
-				if (currentPath.match(/\/installs\/[^\/]+/)) {
-					var params = new URLSearchParams(window.location.search);
-					var newUrl = basePath + '/installs' + (params.toString() ? '?' + params.toString() : '');
-					history.pushState({panelClosed: true}, '', newUrl);
-				}
-
-				// Reset state
-				currentInstallId = null;
-				historyLoaded = false;
-				auditLoaded = false;
-
-				// Reset expand state
-				var panel = document.getElementById('detail-panel');
-				panel.classList.remove('panel-full');
-				document.getElementById('panel-expand-icon').classList.remove('hidden');
-				document.getElementById('panel-collapse-icon').classList.add('hidden');
-				document.getElementById('panel-expand-btn').setAttribute('title', 'Expand to full screen');
-
-				// Restore body scroll
-				document.body.style.overflow = '';
-			};
-
-			// Toggle panel between default and full width
-			window.togglePanelSize = function() {
-				var panel = document.getElementById('detail-panel');
-				var expandIcon = document.getElementById('panel-expand-icon');
-				var collapseIcon = document.getElementById('panel-collapse-icon');
-				var expandBtn = document.getElementById('panel-expand-btn');
-
-				if (panel.classList.contains('panel-full')) {
-					panel.classList.remove('panel-full');
-					expandIcon.classList.remove('hidden');
-					collapseIcon.classList.add('hidden');
-					expandBtn.setAttribute('title', 'Expand to full screen');
-				} else {
-					panel.classList.add('panel-full');
-					expandIcon.classList.add('hidden');
-					collapseIcon.classList.remove('hidden');
-					expandBtn.setAttribute('title', 'Resize to default size');
-				}
-			};
-
-			// Switch tabs
-			window.switchPanelTab = function(tabName) {
-				// Update tab buttons
-				document.getElementById('tab-overview-btn').classList.toggle('active', tabName === 'overview');
-				document.getElementById('tab-history-btn').classList.toggle('active', tabName === 'history');
-				document.getElementById('tab-audit-btn').classList.toggle('active', tabName === 'audit');
-
-				// Update tab panes
-				document.getElementById('tab-overview').classList.toggle('active', tabName === 'overview');
-				document.getElementById('tab-history').classList.toggle('active', tabName === 'history');
-				document.getElementById('tab-audit').classList.toggle('active', tabName === 'audit');
-
-				// Lazy load history tab using HTMX
-				if (tabName === 'history' && !historyLoaded && currentInstallId) {
-					if (typeof htmx !== 'undefined') {
-						htmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/history', {
-							target: '#panel-content-history',
-							swap: 'innerHTML'
-						});
-					}
-					historyLoaded = true;
-				}
-
-				// Lazy load audit tab using HTMX
-				if (tabName === 'audit' && !auditLoaded && currentInstallId) {
-					if (typeof htmx !== 'undefined') {
-						htmx.ajax('GET', basePath + '/installs/' + currentInstallId + '/panel/audit', {
-							target: '#panel-content-audit',
-							swap: 'innerHTML'
-						});
-					}
-					auditLoaded = true;
-				}
-			};
-
-			// Close on ESC key
-			document.addEventListener('keydown', function(e) {
-				if (e.key === 'Escape') {
-					closeInstallPanel();
-				}
-			});
-
-			// Close when clicking outside panel (on overlay)
-			document.getElementById('detail-panel-overlay').addEventListener('click', function(e) {
-				if (e.target === this) {
-					closeInstallPanel();
-				}
-			});
-
-			// Check if we're on /installs/:install_id route (used after accepting install link)
-			// Wrapped in DOMContentLoaded to ensure table rows are rendered
-			document.addEventListener('DOMContentLoaded', function() {
-				var pathMatch = window.location.pathname.match(/\/installs\/([^\/\?]+)/);
-				if (pathMatch && pathMatch[1]) {
-					var installId = pathMatch[1];
-					var row = document.querySelector('[data-install-id="' + installId + '"]');
-					if (row) {
-						// Trigger HTMX request to load panel
-						if (typeof htmx !== 'undefined') {
-							htmx.trigger(row, 'click');
-						}
-					}
-				}
-			});
-
-			// Handle back/forward button navigation
-			window.addEventListener('popstate', function(event) {
-				var pathMatch = window.location.pathname.match(/\/installs\/([^\/\?]+)/);
-
-				if (pathMatch && pathMatch[1]) {
-					// URL has install ID - open panel
-					var installId = pathMatch[1];
-					var row = document.querySelector('[data-install-id="' + installId + '"]');
-					if (row && currentInstallId !== installId) {
-						if (typeof htmx !== 'undefined') {
-							htmx.trigger(row, 'click');
-						}
-					}
-				} else {
-					// URL is just /installs - close panel
-					if (currentInstallId) {
-						closeInstallPanel();
-					}
-				}
-			});
-		})();
-	</script>
-}
 
 templ paginationFooter(props InstallsPageProps) {
 	@components.Pagination(components.PaginationProps{

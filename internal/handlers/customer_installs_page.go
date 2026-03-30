@@ -240,10 +240,12 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 	}
 
 	// Fetch app details in parallel with bounded concurrency
+	appPlatformMap := make(map[string]string)
 	if len(toFetch) > 0 {
 		type appResult struct {
-			appID   string
-			appName string
+			appID    string
+			appName  string
+			platform string
 		}
 		results := make([]appResult, len(toFetch))
 		var wg sync.WaitGroup
@@ -260,6 +262,9 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 					app, err := nuonClient.GetApp(c.Request.Context(), info.appID)
 					if err == nil && app != nil {
 						res.appName = appDisplayName(app)
+						if app.RunnerConfig != nil {
+							res.platform = string(app.RunnerConfig.AppRunnerType)
+						}
 					}
 				}
 				results[i] = res
@@ -270,13 +275,20 @@ func (h *Handler) InstallsPage(c *gin.Context) {
 			if res.appName != "" {
 				appNameMap[res.appID] = res.appName
 			}
+			if res.platform != "" {
+				appPlatformMap[res.appID] = res.platform
+			}
 		}
 	}
 
-	// Set AppName on each paginated install from the fetched map (preserve existing name if API lookup failed)
+	// Set AppName and Platform on each paginated install from the fetched maps
 	for i, inst := range paginatedInstalls {
-		if name := appNameMap[inst.Install.GetAppID()]; name != "" {
+		appID := inst.Install.GetAppID()
+		if name := appNameMap[appID]; name != "" {
 			paginatedInstalls[i].AppName = name
+		}
+		if platform := appPlatformMap[appID]; platform != "" {
+			paginatedInstalls[i].Platform = platform
 		}
 	}
 

@@ -94,17 +94,31 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	// If active or failed provision, render accordion; otherwise render banner
 	if provisionWorkflow != nil && (isActiveWorkflowStatus(provisionWorkflow.Status) || provisionWorkflow.Status == "error") && rawWorkflow != nil {
 		phases := groupStepsIntoPhases(rawWorkflow, provisionWorkflow.IsReprovision)
-		if len(phases) > 0 {
-			h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
-				phases,
-				provisionWorkflow,
-				stackSetup,
-				install.ID,
-				h.basePath,
-				primaryColor,
-			))
-			return
+		if len(phases) == 0 {
+			// Workflow exists but steps haven't populated yet — show placeholder phases
+			if provisionWorkflow.IsReprovision {
+				phases = []partials.ProvisionPhase{
+					{Name: "Update stack", Status: "not_started"},
+					{Name: "Update sandbox", Status: "not_started"},
+					{Name: "Update app", Status: "not_started"},
+				}
+			} else {
+				phases = []partials.ProvisionPhase{
+					{Name: "Install stack", Status: "not_started"},
+					{Name: "Provision sandbox", Status: "not_started"},
+					{Name: "Deploy app", Status: "not_started"},
+				}
+			}
 		}
+		h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(
+			phases,
+			provisionWorkflow,
+			stackSetup,
+			install.ID,
+			h.basePath,
+			primaryColor,
+		))
+		return
 	}
 
 	// If the most recent provision workflow reached a terminal state, transition install status
@@ -152,36 +166,40 @@ func (h *Handler) InstallWorkflowStatus(c *gin.Context) {
 	}
 }
 
-// findMostRecentProvisionWorkflow finds the most recently created workflow across all provision types.
+// provisionWorkflowTypes is the set of workflow types that represent provision/reprovision operations.
+var provisionWorkflowTypes = map[string]bool{
+	"provision":           true,
+	"provision_sandbox":   true,
+	"reprovision":         true,
+	"reprovision_sandbox": true,
+}
+
+// findMostRecentProvisionWorkflow finds the most recently created provision/reprovision workflow.
+// Uses a single API call to fetch recent workflows and filters client-side.
 func (h *Handler) findMostRecentProvisionWorkflow(ctx context.Context, client *nuon.Client, nuonInstallID string) (*nuonmodels.AppWorkflow, *partials.WorkflowDataPanel) {
-	provisionTypes := []string{"provision", "provision_sandbox", "reprovision", "reprovision_sandbox"}
+	// Fetch a small batch of recent workflows (sorted by created_at desc by the API)
+	workflows, _, err := client.GetInstallWorkflowsByType(ctx, nuonInstallID, 0, 10, "")
+	if err != nil || len(workflows) == 0 {
+		return nil, nil
+	}
 
-	var bestWf *nuonmodels.AppWorkflow
-	var bestPanel *partials.WorkflowDataPanel
-	var bestCreatedAt string
-
-	for _, wfType := range provisionTypes {
-		workflows, _, err := client.GetInstallWorkflowsByType(ctx, nuonInstallID, 0, 1, wfType)
-		if err != nil || len(workflows) == 0 {
-			continue
-		}
-		wf := workflows[0]
+	// Find the most recent provision-type workflow
+	for _, wf := range workflows {
 		if wf.Status == nil {
 			continue
 		}
-		if bestWf == nil || wf.CreatedAt > bestCreatedAt {
-			bestCreatedAt = wf.CreatedAt
-			bestWf = wf
-			processed := processWorkflowForCustomer(wf)
-			panel := ginHToWorkflowDataPanel(processed)
-			panel.IsReprovision = strings.Contains(string(wf.Type), "reprovision")
-			if panel.IsReprovision {
-				panel.Name = "Reprovision"
-			}
-			bestPanel = &panel
+		if !provisionWorkflowTypes[string(wf.Type)] {
+			continue
 		}
+		processed := processWorkflowForCustomer(wf)
+		panel := ginHToWorkflowDataPanel(processed)
+		panel.IsReprovision = strings.Contains(string(wf.Type), "reprovision")
+		if panel.IsReprovision {
+			panel.Name = "Reprovision"
+		}
+		return wf, &panel
 	}
-	return bestWf, bestPanel
+	return nil, nil
 }
 
 // getStackSetupData checks for an active "await install stack" step and returns platform-specific setup data.

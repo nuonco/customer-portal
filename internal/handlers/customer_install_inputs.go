@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -47,11 +48,29 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 		// The input config will tell us what fields to display
 		currentInputs = nil
 	}
-	// Fetch app input config for field definitions
-	inputConfig, err := nuonClient.GetAppInputConfig(c.Request.Context(), install.GetAppID())
+	// Fetch app input config as raw JSON to preserve all fields (including source)
+	rawConfig, err := nuonClient.GetAppInputConfigRaw(c.Request.Context(), install.GetAppID())
+	var inputConfig interface{} = rawConfig
 	if err != nil {
-		// Input config may not exist, that's okay - return empty
 		inputConfig = nil
+	}
+
+	// Build set of install_stack input names from top-level inputs array.
+	// Inputs with source="customer" are managed by the install stack and
+	// cannot be updated via the API after install creation.
+	installStackInputs := make(map[string]bool)
+	if rawConfig != nil {
+		if topInputs, ok := rawConfig["inputs"].([]interface{}); ok {
+			for _, inp := range topInputs {
+				if im, ok := inp.(map[string]interface{}); ok {
+					source, _ := im["source"].(string)
+					name, _ := im["name"].(string)
+					if source == "customer" && name != "" {
+						installStackInputs[name] = true
+					}
+				}
+			}
+		}
 	}
 
 	// Fetch local customer input config for this app
@@ -67,13 +86,16 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 
 	// Filter input config to only show customer-facing inputs and apply ordering
 	if inputConfig != nil && len(customerInputNames) > 0 {
-		jsonBytes, err := json.Marshal(inputConfig)
-		if err == nil {
-			var configMap map[string]interface{}
-			if err := json.Unmarshal(jsonBytes, &configMap); err == nil {
-				inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeCustomer)
-				inputConfig = applyInputOrdering(inputConfig, groupOrder, inputOrder)
-			}
+		if configMap, ok := inputConfig.(map[string]interface{}); ok {
+			inputConfig = filterInputConfigByLocalConfig(configMap, customerInputNames, FilterTypeCustomer)
+			inputConfig = applyInputOrdering(inputConfig, groupOrder, inputOrder)
+		}
+	}
+
+	// Remove install_stack inputs from input_groups
+	if len(installStackInputs) > 0 {
+		if configMap, ok := inputConfig.(map[string]interface{}); ok {
+			inputConfig = filterInputsByName(configMap, installStackInputs)
 		}
 	}
 
@@ -86,6 +108,11 @@ func (h *Handler) GetInstallInputs(c *gin.Context) {
 		} else if len(currentInputs.RedactedValues) > 0 {
 			inputs = currentInputs.RedactedValues
 		}
+	}
+
+	// Strip install_stack inputs from values map
+	for name := range installStackInputs {
+		delete(inputs, name)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -106,12 +133,30 @@ func (h *Handler) UpdateInstallInputs(c *gin.Context) {
 
 	install := installInterface.(*models.Install)
 
-	var req struct {
-		Inputs map[string]string `json:"inputs" binding:"required"`
+	// Read raw body so we can parse both nested and bracket-notation inputs
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Failed to read request body"})
+		return
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
+	var req struct {
+		Inputs map[string]string `json:"inputs"`
+	}
+
+	if err := json.Unmarshal(bodyBytes, &req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them
+	var raw map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &raw); err == nil {
+		req.Inputs = extractBracketInputs(raw, req.Inputs)
+	}
+
+	if len(req.Inputs) == 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "No inputs provided"})
 		return
 	}
 

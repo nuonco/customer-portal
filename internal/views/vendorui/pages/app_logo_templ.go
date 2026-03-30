@@ -5,10 +5,9 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
@@ -142,29 +141,17 @@ func AppLogoPage(props AppLogoPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">No logo</div></div><div class=\"flex flex-col gap-2\"><label class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\">Upload <input type=\"file\" id=\"appLogoLightUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"hidden\"></label> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\">No logo</div></div><div class=\"flex flex-col gap-2\"><label class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\">Upload <input type=\"file\" id=\"appLogoLightUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" onchange=\"window.handleLogoUpload(this, 'light')\" class=\"hidden\"></label> <button type=\"button\" id=\"appRemoveLogoLight\" onclick=\"appRemoveLogoLight()\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var8 = []any{"text-xs text-red-600 hover:text-red-800 text-left", templ.KV("hidden", props.LogoLightBase64 == "")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var8...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
+			if props.LogoLightBase64 == "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " disabled")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<button type=\"button\" id=\"appRemoveLogoLight\" onclick=\"appRemoveLogoLight()\" class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var8).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\">Remove</button></div></div></div><!-- Dark mode logo --><div><h3 class=\"text-sm font-medium text-cool-grey-900 dark:text-white mb-3\">Dark mode logo</h3><p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3\">Best for dark backgrounds. PNG, JPG, SVG, GIF. Max 500KB.</p><div class=\"flex items-start gap-4\"><div class=\"w-32 h-32 rounded-lg border-2 border-dashed border-cool-grey-300 dark:border-dark-grey-600 bg-dark-grey-900 flex items-center justify-center overflow-hidden flex-shrink-0\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, " class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-dark-grey-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-grey-800\">Remove</button></div></div></div><!-- Dark mode logo --><div><h3 class=\"text-sm font-medium text-cool-grey-900 dark:text-white mb-3\">Dark mode logo</h3><p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3\">Best for dark backgrounds. PNG, JPG, SVG, GIF. Max 500KB.</p><div class=\"flex items-start gap-4\"><div class=\"w-32 h-32 rounded-lg border-2 border-dashed border-cool-grey-300 dark:border-dark-grey-600 bg-dark-grey-900 flex items-center justify-center overflow-hidden flex-shrink-0\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -173,12 +160,12 @@ func AppLogoPage(props AppLogoPageProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var10 string
-				templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoDarkBase64)
+				var templ_7745c5c3_Var8 string
+				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.LogoDarkBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 83, Col: 65}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 85, Col: 65}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -192,8 +179,8 @@ func AppLogoPage(props AppLogoPageProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 			}
-			var templ_7745c5c3_Var11 = []any{"text-cool-grey-500 text-xs text-center px-2", templ.KV("hidden", props.LogoDarkBase64 != "")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
+			var templ_7745c5c3_Var9 = []any{"text-cool-grey-500 text-xs text-center px-2", templ.KV("hidden", props.LogoDarkBase64 != "")}
+			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var9...)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -201,38 +188,26 @@ func AppLogoPage(props AppLogoPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var11).String())
+			var templ_7745c5c3_Var10 string
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var9).String())
 			if templ_7745c5c3_Err != nil {
 				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 1, Col: 0}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">No logo</div></div><div class=\"flex flex-col gap-2\"><label class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\">Upload <input type=\"file\" id=\"appLogoDarkUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" class=\"hidden\"></label> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\">No logo</div></div><div class=\"flex flex-col gap-2\"><label class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-800 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\">Upload <input type=\"file\" id=\"appLogoDarkUpload\" accept=\"image/png,image/jpeg,image/svg+xml,image/gif\" onchange=\"window.handleLogoUpload(this, 'dark')\" class=\"hidden\"></label> <button type=\"button\" id=\"appRemoveLogoDark\" onclick=\"appRemoveLogoDark()\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var13 = []any{"text-xs text-red-600 hover:text-red-800 text-left", templ.KV("hidden", props.LogoDarkBase64 == "")}
-			templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var13...)
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
+			if props.LogoDarkBase64 == "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, " disabled")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<button type=\"button\" id=\"appRemoveLogoDark\" onclick=\"appRemoveLogoDark()\" class=\"")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var13).String())
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 1, Col: 0}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">Remove</button></div></div></div><!-- Save button --><div class=\"flex items-center gap-3 pt-2 border-t border-cool-grey-200 dark:border-dark-grey-700\"><button type=\"button\" id=\"appLogoSaveBtn\" onclick=\"saveAppLogo()\" class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500\">Save</button> <span id=\"appLogoSaveStatus\" class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 hidden\"></span></div></div></section></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, " class=\"cursor-pointer inline-flex items-center px-3 py-1.5 border border-cool-grey-300 dark:border-dark-grey-600 rounded-md text-sm font-medium text-red-600 dark:text-red-400 bg-white dark:bg-dark-grey-800 hover:bg-red-50 dark:hover:bg-red-900/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-white dark:disabled:hover:bg-dark-grey-800\">Remove</button></div></div></div><!-- Save button --><div class=\"flex items-center gap-3 pt-2 border-t border-cool-grey-200 dark:border-dark-grey-700\"><button type=\"button\" id=\"appLogoSaveBtn\" onclick=\"saveAppLogo()\" disabled class=\"inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed\">Save</button> <span id=\"appLogoSaveStatus\" class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400 hidden\"></span></div></div></section></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -250,125 +225,72 @@ func AppLogoPage(props AppLogoPageProps) templ.Component {
 	})
 }
 
-func appLogoScript(orgID, appID, basePath string) templ.ComponentScript {
-	return templ.ComponentScript{
-		Name: `__templ_appLogoScript_15f8`,
-		Function: `function __templ_appLogoScript_15f8(orgID, appID, basePath){(function() {
-		var _lightBase64 = null;
-		var _darkBase64 = null;
-
-		function showStatus(msg, isErr) {
-			var el = document.getElementById('appLogoSaveStatus');
-			el.textContent = msg;
-			el.className = 'text-sm ' + (isErr ? 'text-red-600' : 'text-cool-grey-500 dark:text-cool-grey-400');
-			el.classList.remove('hidden');
+func appLogoScript(orgID, appID, basePath string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
 		}
-
-		document.getElementById('appLogoLightUpload')?.addEventListener('change', function(e) {
-			var file = e.target.files[0];
-			if (!file) return;
-			if (file.size > 500 * 1024) { alert('Logo must be under 500KB'); return; }
-			var reader = new FileReader();
-			reader.onload = function() {
-				_lightBase64 = reader.result;
-				var preview = document.getElementById('appLogoLightPreview');
-				preview.src = _lightBase64;
-				preview.classList.remove('hidden');
-				document.getElementById('appLogoLightPlaceholder').classList.add('hidden');
-				document.getElementById('appRemoveLogoLight').classList.remove('hidden');
-			};
-			reader.readAsDataURL(file);
-		});
-
-		document.getElementById('appLogoDarkUpload')?.addEventListener('change', function(e) {
-			var file = e.target.files[0];
-			if (!file) return;
-			if (file.size > 500 * 1024) { alert('Logo must be under 500KB'); return; }
-			var reader = new FileReader();
-			reader.onload = function() {
-				_darkBase64 = reader.result;
-				var preview = document.getElementById('appLogoDarkPreview');
-				preview.src = _darkBase64;
-				preview.classList.remove('hidden');
-				document.getElementById('appLogoDarkPlaceholder').classList.add('hidden');
-				document.getElementById('appRemoveLogoDark').classList.remove('hidden');
-			};
-			reader.readAsDataURL(file);
-		});
-
-		window.appRemoveLogoLight = function() {
-			_lightBase64 = 'REMOVE';
-			var preview = document.getElementById('appLogoLightPreview');
-			preview.src = '';
-			preview.classList.add('hidden');
-			document.getElementById('appLogoLightPlaceholder').classList.remove('hidden');
-			document.getElementById('appRemoveLogoLight').classList.add('hidden');
-		};
-
-		window.appRemoveLogoDark = function() {
-			_darkBase64 = 'REMOVE';
-			var preview = document.getElementById('appLogoDarkPreview');
-			preview.src = '';
-			preview.classList.add('hidden');
-			document.getElementById('appLogoDarkPlaceholder').classList.remove('hidden');
-			document.getElementById('appRemoveLogoDark').classList.add('hidden');
-		};
-
-		window.saveAppLogo = function() {
-			var btn = document.getElementById('appLogoSaveBtn');
-			btn.disabled = true;
-			btn.textContent = 'Saving...';
-
-			var config = document.getElementById('appLogoConfig');
-			var body = {};
-			var original = {
-				light: config.dataset.logoLightBase64 || '',
-				dark: config.dataset.logoDarkBase64 || ''
-			};
-
-			if (_lightBase64 !== null) {
-				body.logo_light_base64 = _lightBase64;
-			} else {
-				body.logo_light_base64 = original.light;
-			}
-			if (_darkBase64 !== null) {
-				body.logo_dark_base64 = _darkBase64;
-			} else {
-				body.logo_dark_base64 = original.dark;
-			}
-
-			fetch(basePath + '/orgs/' + orgID + '/apps/' + appID + '/logo', {
-				method: 'PUT',
-				headers: {'Content-Type': 'application/json'},
-				body: JSON.stringify(body)
-			}).then(function(r) {
-				btn.disabled = false;
-				btn.textContent = 'Save';
-				if (!r.ok) {
-					showStatus('Failed to save logos.', true);
-				} else {
-					// Update data attributes so subsequent saves use updated values
-					if (_lightBase64 !== null) {
-						config.dataset.logoLightBase64 = _lightBase64 === 'REMOVE' ? '' : _lightBase64;
-						_lightBase64 = null;
-					}
-					if (_darkBase64 !== null) {
-						config.dataset.logoDarkBase64 = _darkBase64 === 'REMOVE' ? '' : _darkBase64;
-						_darkBase64 = null;
-					}
-					showStatus('Saved.', false);
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
 				}
-			}).catch(function() {
-				btn.disabled = false;
-				btn.textContent = 'Save';
-				showStatus('Failed to save logos.', true);
-			});
-		};
-	})();
-}`,
-		Call:       templ.SafeScript(`__templ_appLogoScript_15f8`, orgID, appID, basePath),
-		CallInline: templ.SafeScriptInline(`__templ_appLogoScript_15f8`, orgID, appID, basePath),
-	}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div id=\"appLogoScriptData\" class=\"hidden\" data-org-id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(orgID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 136, Col: 63}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\" data-app-id=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var13 string
+		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(appID)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 136, Col: 85}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\" data-base-path=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var14 string
+		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/app_logo.templ`, Line: 136, Col: 113}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"></div><script>\n\t\t// Inline script so it re-executes on hx-boost navigations.\n\t\t// State is stored on the DOM (data-dirty-light, data-dirty-dark) so it\n\t\t// survives dev-reload morphs that re-execute this script.\n\t\t(function() {\n\t\t\tvar _sd = document.getElementById('appLogoScriptData');\n\t\t\tvar _d = _sd.dataset;\n\t\t\tvar _orgID = _d.orgId;\n\t\t\tvar _appID = _d.appId;\n\t\t\tvar _basePath = _d.basePath;\n\n\t\t\t// Dirty state accessors — stored on the DOM element so morphs don't lose them.\n\t\t\tfunction getDirtyLight() { return _sd.getAttribute('data-dirty-light'); }\n\t\t\tfunction getDirtyDark() { return _sd.getAttribute('data-dirty-dark'); }\n\t\t\tfunction setDirtyLight(v) { if (v === null) _sd.removeAttribute('data-dirty-light'); else _sd.setAttribute('data-dirty-light', v); }\n\t\t\tfunction setDirtyDark(v) { if (v === null) _sd.removeAttribute('data-dirty-dark'); else _sd.setAttribute('data-dirty-dark', v); }\n\n\t\t\tfunction updateSaveBtn() {\n\t\t\t\tdocument.getElementById('appLogoSaveBtn').disabled = (getDirtyLight() === null && getDirtyDark() === null);\n\t\t\t}\n\n\t\t\t// Restore button state on re-execution (after morph)\n\t\t\tupdateSaveBtn();\n\n\t\t\tfunction showStatus(msg, isErr) {\n\t\t\t\tvar el = document.getElementById('appLogoSaveStatus');\n\t\t\t\tel.textContent = msg;\n\t\t\t\tel.className = 'text-sm ' + (isErr ? 'text-red-600' : 'text-cool-grey-500 dark:text-cool-grey-400');\n\t\t\t\tel.classList.remove('hidden');\n\t\t\t}\n\n\t\t\twindow.handleLogoUpload = function(input, mode) {\n\t\t\t\tvar file = input.files[0];\n\t\t\t\tif (!file) return;\n\t\t\t\tif (file.size > 500 * 1024) { alert('Logo must be under 500KB'); return; }\n\t\t\t\tvar reader = new FileReader();\n\t\t\t\treader.onload = function() {\n\t\t\t\t\tvar suffix = mode === 'light' ? 'Light' : 'Dark';\n\t\t\t\t\tif (mode === 'light') setDirtyLight(reader.result); else setDirtyDark(reader.result);\n\t\t\t\t\tvar preview = document.getElementById('appLogo' + suffix + 'Preview');\n\t\t\t\t\tpreview.src = reader.result;\n\t\t\t\t\tpreview.classList.remove('hidden');\n\t\t\t\t\tdocument.getElementById('appLogo' + suffix + 'Placeholder').classList.add('hidden');\n\t\t\t\t\tdocument.getElementById('appRemoveLogo' + suffix).disabled = false;\n\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t};\n\t\t\t\treader.readAsDataURL(file);\n\t\t\t};\n\n\t\t\twindow.appRemoveLogoLight = function() {\n\t\t\t\tsetDirtyLight('REMOVE');\n\t\t\t\tvar preview = document.getElementById('appLogoLightPreview');\n\t\t\t\tpreview.src = '';\n\t\t\t\tpreview.classList.add('hidden');\n\t\t\t\tdocument.getElementById('appLogoLightPlaceholder').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('appRemoveLogoLight').disabled = true;\n\t\t\t\tupdateSaveBtn();\n\t\t\t};\n\n\t\t\twindow.appRemoveLogoDark = function() {\n\t\t\t\tsetDirtyDark('REMOVE');\n\t\t\t\tvar preview = document.getElementById('appLogoDarkPreview');\n\t\t\t\tpreview.src = '';\n\t\t\t\tpreview.classList.add('hidden');\n\t\t\t\tdocument.getElementById('appLogoDarkPlaceholder').classList.remove('hidden');\n\t\t\t\tdocument.getElementById('appRemoveLogoDark').disabled = true;\n\t\t\t\tupdateSaveBtn();\n\t\t\t};\n\n\t\t\twindow.saveAppLogo = function() {\n\t\t\t\tvar btn = document.getElementById('appLogoSaveBtn');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\tbtn.textContent = 'Saving...';\n\n\t\t\t\tvar config = document.getElementById('appLogoConfig');\n\t\t\t\tvar body = {};\n\t\t\t\tvar original = {\n\t\t\t\t\tlight: config.dataset.logoLightBase64 || '',\n\t\t\t\t\tdark: config.dataset.logoDarkBase64 || ''\n\t\t\t\t};\n\n\t\t\t\tvar dirtyLight = getDirtyLight();\n\t\t\t\tvar dirtyDark = getDirtyDark();\n\n\t\t\t\tbody.logo_light_base64 = dirtyLight !== null ? dirtyLight : original.light;\n\t\t\t\tbody.logo_dark_base64 = dirtyDark !== null ? dirtyDark : original.dark;\n\n\t\t\t\tfetch(_basePath + '/orgs/' + _orgID + '/apps/' + _appID + '/logo', {\n\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\theaders: {'Content-Type': 'application/json'},\n\t\t\t\t\tbody: JSON.stringify(body)\n\t\t\t\t}).then(function(r) {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtn.textContent = 'Save';\n\t\t\t\t\tif (!r.ok) {\n\t\t\t\t\t\tshowStatus('Failed to save logos.', true);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif (dirtyLight !== null) {\n\t\t\t\t\t\t\tconfig.dataset.logoLightBase64 = dirtyLight === 'REMOVE' ? '' : dirtyLight;\n\t\t\t\t\t\t\tsetDirtyLight(null);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tif (dirtyDark !== null) {\n\t\t\t\t\t\t\tconfig.dataset.logoDarkBase64 = dirtyDark === 'REMOVE' ? '' : dirtyDark;\n\t\t\t\t\t\t\tsetDirtyDark(null);\n\t\t\t\t\t\t}\n\t\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t\t}\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\tbtn.textContent = 'Save';\n\t\t\t\t\tshowStatus('Failed to save logos.', true);\n\t\t\t\t});\n\t\t\t};\n\t\t})();\n\t</script>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
 }
 
 var _ = templruntime.GeneratedTemplate

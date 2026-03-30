@@ -1,0 +1,84 @@
+package partials
+
+// LoginPreviewProps contains data for the shared login preview partial
+type LoginPreviewProps struct {
+	Title          string // from theme.GetLoginTitle()
+	Subtitle       string // from theme.GetLoginSubtitle()
+	RightSideStyle string // from getLoginPreviewRightSideStyle(theme)
+	HasRightSideImage bool // theme.GetLoginRightSideImage() != ""
+	LogoLightBase64 string
+	LogoDarkBase64  string
+}
+
+// LoginPreview renders the login page preview used by both branding and login settings pages.
+// CSS classes (preview-page-bg, preview-card, preview-text-*, preview-heading-font, etc.)
+// are styled by the PreviewContainer parent. Element IDs (loginPreview*) are used by the
+// login settings page's JS for live editing.
+templ LoginPreview(props LoginPreviewProps) {
+	<div class="preview-page-bg h-full flex">
+		<!-- Left panel -->
+		<div class="login-preview-left w-1/2 flex flex-col justify-center items-center px-8 py-8">
+			<div class="preview-card p-6 rounded-lg w-full max-w-xs flex flex-col gap-5">
+				<!-- Logo (centered) -->
+				<div class="flex justify-center">
+					if props.LogoLightBase64 != "" {
+						<img id="loginPreviewLogoLight" src={ props.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[120px] object-contain preview-logo-light"/>
+					} else {
+						<img id="loginPreviewLogoLight" src="" alt="Logo" class="h-8 w-auto max-w-[120px] object-contain hidden preview-logo-light"/>
+					}
+					if props.LogoDarkBase64 != "" {
+						<img id="loginPreviewLogoDark" src={ props.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-[120px] object-contain hidden preview-logo-dark"/>
+					} else {
+						<img id="loginPreviewLogoDark" src="" alt="Logo" class="h-8 w-auto max-w-[120px] object-contain hidden preview-logo-dark"/>
+					}
+				</div>
+				<!-- Title + Subtitle -->
+				<div class="flex flex-col gap-2">
+					<h1 id="loginPreviewTitle" class="text-xl font-bold preview-text-heading preview-heading-font preview-login-title">{ props.Title }</h1>
+					<p id="loginPreviewSubtitle" class="text-xs preview-text-muted preview-body-font preview-login-subtitle">{ props.Subtitle }</p>
+				</div>
+				<!-- Sign up button (primary) -->
+				<button id="loginPreviewSignUpBtn" class="w-full text-white py-2 text-xs font-semibold rounded" style="background-color: var(--preview-primary);">
+					Sign up
+				</button>
+				<!-- Divider -->
+				<div class="flex items-center gap-2">
+					<hr class="flex-1 preview-status-border" style="border: none; border-top: 1px solid; border-color: inherit;"/>
+					<span class="text-[10px] preview-text-muted preview-body-font">or</span>
+					<hr class="flex-1 preview-status-border" style="border: none; border-top: 1px solid; border-color: inherit;"/>
+				</div>
+				<!-- Log in button (outline) -->
+				<button id="loginPreviewSignInBtn" class="w-full py-2 text-xs font-semibold rounded preview-text-heading preview-body-font" style="border: 1px solid var(--preview-primary); color: var(--preview-primary);">
+					Log in
+				</button>
+			</div>
+		</div>
+		<!-- Right panel -->
+		<div id="loginPreviewRightSide" class="login-preview-right w-1/2 flex-shrink-0 relative overflow-hidden" style={ props.RightSideStyle }>
+			if !props.HasRightSideImage {
+				<!-- Grid pattern overlay (shown when no image) -->
+				<div id="loginPreviewGridOverlay" class="absolute inset-0 opacity-10">
+					<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+						<defs>
+							<pattern id="loginPreviewGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+								<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"></path>
+							</pattern>
+						</defs>
+						<rect width="100" height="100" fill="url(#loginPreviewGrid)"></rect>
+					</svg>
+				</div>
+			} else {
+				<div id="loginPreviewGridOverlay" class="absolute inset-0 opacity-10 hidden">
+					<svg class="w-full h-full" viewBox="0 0 100 100" preserveAspectRatio="none">
+						<defs>
+							<pattern id="loginPreviewGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+								<path d="M 10 0 L 0 0 0 10" fill="none" stroke="white" stroke-width="0.5"></path>
+							</pattern>
+						</defs>
+						<rect width="100" height="100" fill="url(#loginPreviewGrid)"></rect>
+					</svg>
+				</div>
+			}
+		</div>
+	</div>
+}

@@ -32,6 +32,13 @@ func isHTMXRequest(c *gin.Context) bool {
 	return c.GetHeader("HX-Request") == "true"
 }
 
+// isHTMXPartialRequest returns true for HTMX requests that expect a partial response
+// (e.g., hx-get on a filter input), but false for hx-boost navigations which expect
+// a full page response.
+func isHTMXPartialRequest(c *gin.Context) bool {
+	return c.GetHeader("HX-Request") == "true" && c.GetHeader("HX-Boosted") == ""
+}
+
 // constructCustomerDashboardInstallURL builds the URL for viewing an install in the customer dashboard.
 // If a subdomain is provided, it constructs a full URL with the subdomain (e.g., https://acme.portal.nuon.co/installs/{id}).
 // Otherwise, it falls back to the base URL path.

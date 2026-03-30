@@ -143,9 +143,11 @@ General vendor journeys.
 
 ## Development Guide
 
-Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. When run in dev mode, the service will listen on port :7331, and a dev proxy will listen to :8080. This is to support live reloading in the browser while making changes. When run in container mode, and in stage and prod, the service itself will listen to port :8080.
+Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. The service listens on port :8080 in all modes (local dev, container, stage, prod).
 
-The dev script uses `go build` + `exec` (instead of `go run`) so the compiled binary runs directly in the shell's process group. This ensures clean process cleanup when nuonctl restarts the service — no orphaned processes holding ports.
+Nuonctl's built-in file watcher detects changes and runs the build commands defined in `service.yml` (`templ generate`, CSS build, `go build`), then restarts the binary. The compiled binary runs via `exec` so it inherits the shell's process group for clean cleanup.
+
+**Hot reload**: In dev mode (`LIVE_RELOAD=true`), the app exposes a `GET /dev/version` endpoint that returns the server's start timestamp. A client-side script (`static/js/dev-reload.js`) polls this endpoint every 1.5 seconds. When the version changes (i.e. the Go app was rebuilt and restarted), the script fetches the current page and uses Idiomorph to morph the DOM in-place — preserving form state, scroll position, and open/closed UI elements. If the server is unreachable during a build, the script checks nuonctl's webview API (`localhost:7777`) for build status — showing a "Rebuilding..." spinner or a red "Build failed" overlay with the compiler error text.
 
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
 

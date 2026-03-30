@@ -34,9 +34,12 @@ type AppSubnavProps struct {
 // PageSubnav renders a configurable sub-navigation sidebar
 templ PageSubnav(props PageSubnavProps) {
 	<style>
-		#page-sidebar.collapsed { width: 4.5rem; }
-		#page-sidebar.collapsed .subnav-text { display: none; }
-		#page-sidebar.collapsed .subnav-link { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
+		#page-sidebar.collapsed,
+		:root.page-sidebar-collapsed #page-sidebar { width: 4.5rem; }
+		#page-sidebar.collapsed .subnav-text,
+		:root.page-sidebar-collapsed #page-sidebar .subnav-text { display: none; }
+		#page-sidebar.collapsed .subnav-link,
+		:root.page-sidebar-collapsed #page-sidebar .subnav-link { justify-content: center; padding-left: 0.5rem; padding-right: 0.5rem; }
 
 		/* Nav link hover */
 		#page-sidebar .subnav-link:hover { background-color: rgb(0 0 0 / 0.05); }

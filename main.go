@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
+	"time"
 
 	jwt "github.com/appleboy/gin-jwt/v2"
 	"github.com/gin-gonic/gin"
@@ -137,6 +139,14 @@ func main() {
 
 	// Serve static files (shared across both interfaces)
 	router.Static("/static", "./static")
+
+	// Dev hot-reload version endpoint (only in local development)
+	if os.Getenv("LIVE_RELOAD") == "true" {
+		startVersion := fmt.Sprintf("%d", time.Now().UnixNano())
+		router.GET("/dev/version", func(c *gin.Context) {
+			c.String(200, startVersion)
+		})
+	}
 
 	// Health check endpoints for Kubernetes probes (at root level)
 	router.GET("/livez", func(c *gin.Context) {

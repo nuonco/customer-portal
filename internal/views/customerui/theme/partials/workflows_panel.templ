@@ -138,10 +138,11 @@ templ workflowsPanelScripts() {
 			};
 
 			window.confirmCancelWorkflow = window.confirmCancelWorkflow || function(btn) {
+				var wfName = btn.getAttribute('data-workflow-name') || 'Workflow';
 				showConfirmModal({
-					title: 'Cancel Workflow',
-					message: 'This will cancel the workflow. This action cannot be undone. Are you sure?',
-					confirmText: 'Cancel Workflow',
+					title: 'Cancel ' + wfName + '?',
+					message: 'Are you sure you want to cancel this ' + wfName.toLowerCase() + '? This action cannot be undone.',
+					confirmText: 'Cancel ' + wfName,
 					cancelText: 'Keep Running'
 				}).then(function(confirmed) {
 					if (confirmed) {

@@ -49,6 +49,7 @@ templ Layout(props LayoutProps) {
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
 			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
+			<script src="/static/js/install-panel.js"></script>
 		</head>
 		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
@@ -124,7 +125,7 @@ templ Layout(props LayoutProps) {
 				})();
 			</script>
 		if isLiveReload() {
-				<script src="/_templ/reload/script.js"></script>
+				<script src="/static/js/dev-reload.js"></script>
 			}
 		</body>
 	</html>
@@ -197,6 +198,7 @@ func buildThemeCSS(props LayoutProps) string {
 	darkCSS := ""
 	if props.PrimaryColorDarkMode != "" {
 		darkCSS += "--theme-primary: " + props.PrimaryColorDarkMode + ";"
+		darkCSS += "--theme-primary-hover: " + props.PrimaryColorDarkModeHover + ";"
 	}
 	if props.WhiteColorDark != "" {
 		darkCSS += "--theme-white: " + props.WhiteColorDark + ";"

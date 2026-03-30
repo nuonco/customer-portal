@@ -125,6 +125,7 @@ templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID stri
 												type="checkbox"
 												class="sr-only peer collapsed-by-default-checkbox"
 												data-group-name={ group.Name }
+												onchange="updateSaveBtn()"
 												if group.CollapsedDefault {
 													checked
 												}
@@ -221,6 +222,7 @@ templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID stri
 												type="checkbox"
 												class="sr-only peer customer-facing-checkbox"
 												data-input-name={ input.Name }
+												onchange="updateSaveBtn()"
 												if input.CustomerFacing {
 													checked
 												}
@@ -243,7 +245,7 @@ templ inputGroupsWithCheckboxes(groups []AppInputGroup, orgID string, appID stri
 				disabled
 				class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
 			>
-				<span id="saveConfigText">Save Configuration</span>
+				<span id="saveConfigText">Save</span>
 				<svg id="saveConfigSpinner" class="hidden animate-spin ml-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
 					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -380,11 +382,6 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 
 			// Capture baseline after sortable is set up
 			initialConfigSnapshot = getConfigSnapshot();
-
-			// Listen for checkbox changes
-			document.querySelectorAll('.customer-facing-checkbox, .collapsed-by-default-checkbox').forEach(function(cb) {
-				cb.addEventListener('change', updateSaveBtn);
-			});
 		}
 
 		// Collect current group order from DOM
@@ -473,12 +470,13 @@ templ appInputsScript(orgID string, appID string, basePath string) {
 				btn.disabled = false;
 			})
 			.finally(function() {
-				text.textContent = 'Save Configuration';
+				text.textContent = 'Save';
 				spinner.classList.add('hidden');
 			});
 		}
 
-		// Initialize on page load
-		document.addEventListener('DOMContentLoaded', initSortable);
+		// Run immediately — with hx-boost the DOM is already settled when
+		// inline scripts execute, so DOMContentLoaded won't fire again.
+		initSortable();
 	</script>
 }

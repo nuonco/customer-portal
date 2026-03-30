@@ -6,6 +6,16 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
+// orgDashboardURL derives the dashboard-ui URL for an org from its API URL
+// by replacing "api." with "app." in the host and appending /orgs/{orgID}.
+func orgDashboardURL(org *models.NuonOrg) string {
+	apiURL := org.APIURL
+	if apiURL == "" {
+		apiURL = "https://api.nuon.co"
+	}
+	return strings.Replace(apiURL, "api.", "app.", 1) + "/" + org.NuonOrgID
+}
+
 // SidebarProps for the sidebar navigation
 type SidebarProps struct {
 	ActivePage       string
@@ -97,7 +107,7 @@ templ Sidebar(props SidebarProps) {
 				</div>
 			</div>
 			<!-- Links Section -->
-			if props.CurrentOrg != nil && (props.DashboardURL != "" || (props.CurrentOrg.Subdomain != "" && props.PortalBaseDomain != "")) {
+			if props.CurrentOrg != nil {
 				<div class="stratus-sidebar-section">
 					<div class="stratus-sidebar-label">Links</div>
 					<nav class="stratus-sidebar-nav">
@@ -110,18 +120,16 @@ templ Sidebar(props SidebarProps) {
 								<span class="sidebar-text">View Portal</span>
 							</a>
 						}
-						if props.DashboardURL != "" {
-							<a
-								href={ templ.SafeURL(props.DashboardURL) }
-								target="_blank"
-								rel="noopener noreferrer"
-								class="stratus-sidebar-link"
-							>
-								@buildingIcon()
-								<span class="sidebar-text">View Org</span>
-								@externalLinkSmallIcon()
-							</a>
-						}
+						<a
+							href={ templ.SafeURL(orgDashboardURL(props.CurrentOrg)) }
+							target="_blank"
+							rel="noopener noreferrer"
+							class="stratus-sidebar-link"
+						>
+							@buildingIcon()
+							<span class="sidebar-text">View Org</span>
+							@externalLinkSmallIcon()
+						</a>
 					</nav>
 				</div>
 				<hr class="stratus-sidebar-divider"/>
@@ -227,7 +235,7 @@ templ Sidebar(props SidebarProps) {
 			<div class="stratus-sidebar-section">
 				<div class="stratus-sidebar-label">Resources</div>
 				<nav class="stratus-sidebar-nav">
-					<a href="https://docs.nuon.co" target="_blank" rel="noopener noreferrer" class="stratus-sidebar-link">
+					<a href="https://docs.nuon.co/guides/customer-portal" target="_blank" rel="noopener noreferrer" class="stratus-sidebar-link">
 						@bookIcon()
 						<span class="sidebar-text">Documentation</span>
 						@externalLinkSmallIcon()

@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -30,6 +32,13 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 
 	appID := c.Param("app_id")
 
+	// Read raw body so we can parse both nested and bracket-notation inputs
+	bodyBytes, err := io.ReadAll(c.Request.Body)
+	if err != nil {
+		respondError(http.StatusBadRequest, "Failed to read request body")
+		return
+	}
+
 	var req struct {
 		Name     string            `json:"name" binding:"required"`
 		Region   string            `json:"region"`
@@ -37,9 +46,15 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		Inputs   map[string]string `json:"inputs"`
 	}
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		respondError(http.StatusBadRequest, err.Error())
+	if err := json.Unmarshal(bodyBytes, &req); err != nil || req.Name == "" {
+		respondError(http.StatusBadRequest, "Name is required")
 		return
+	}
+
+	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them
+	var raw map[string]interface{}
+	if err := json.Unmarshal(bodyBytes, &raw); err == nil {
+		req.Inputs = extractBracketInputs(raw, req.Inputs)
 	}
 
 	org, err := h.getOrgForCustomerPage(c)
@@ -89,7 +104,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	// Merge in defaults for non-customer-facing inputs
 	mergedInputs := h.mergeDefaultInputs(c.Request.Context(), nuonClient, appID, org.ID, req.Inputs)
 
-	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, mergedInputs)
+	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, platform, mergedInputs)
 	if err != nil {
 		if nuon.IsConflict(err) {
 			respondError(http.StatusConflict, "An install with that name already exists. Please choose a different name.")
