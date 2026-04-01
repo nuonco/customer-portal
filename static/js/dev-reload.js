@@ -3,59 +3,118 @@
 // the page in-place instead of doing a full reload.
 (function () {
   var POLL_MS = 1500;
-  var FAIL_THRESHOLD = 4; // after ~6s unreachable, assume build error
+  var NUONCTL_STATUS_URL = "http://localhost:7777/api/status/poll";
+  var NUONCTL_FAIL_THRESHOLD = 10; // fallback if nuonctl itself is unreachable (~15s)
   var currentVersion = null;
-  var overlay = null;
+  var indicator = null;
   var failCount = 0;
+  var currentState = "idle"; // idle | building | error
 
-  // --- Overlay UI ---
-
-  function createOverlay() {
-    overlay = document.createElement("div");
-    overlay.id = "dev-reload-overlay";
-    overlay.style.cssText =
-      "position:fixed;bottom:20px;right:20px;z-index:99999;" +
-      "background:#1a1a2e;color:#e0e0e0;padding:12px 20px;border-radius:8px;" +
-      "font:14px/1.4 Inter,system-ui,sans-serif;box-shadow:0 4px 12px rgba(0,0,0,.3);" +
-      "transition:background .3s ease;max-width:600px;";
-    var style = document.createElement("style");
-    style.textContent = "@keyframes dev-spin{to{transform:rotate(360deg)}}";
-    overlay.appendChild(style);
-    overlay.innerHTML +=
-      '<div style="display:flex;align-items:center;gap:12px">' +
-      '<span class="dev-reload-icon"></span>' +
-      '<span class="dev-reload-label"></span></div>';
-    document.body.appendChild(overlay);
-  }
+  // --- Nuon logo SVG (white, sized to fit the pill) ---
+  var nuonSVG =
+    '<svg width="32" height="32" viewBox="0 0 201 201" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<path d="M121.15 40.3118L97.9645 53.715V75.4151L79.1959 64.5597H79.1852L56.8232 77.492V148.651L79.1852 161.584H79.1959L103.205 147.699V126.951L121.161 137.325L144.346 123.922V53.715L121.161 40.3118H121.15ZM62.0528 80.5216L79.1745 70.6297H79.1852L97.9538 81.4744V117.862L62.0528 97.1151V80.5216ZM97.9538 144.669L79.1745 155.514L62.0528 145.622V103.174L97.9538 123.922V144.669ZM139.095 120.881L121.15 131.255L103.205 120.892V84.504L139.106 105.251V120.881H139.095ZM139.095 99.192L103.194 78.4447V56.7447L121.15 46.3711L139.095 56.7447V99.192Z" fill="white"/>' +
+    '</svg>';
 
   var spinnerSVG =
-    '<svg width="20" height="20" viewBox="0 0 24 24" style="animation:dev-spin 1s linear infinite">' +
-    '<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" fill="none" stroke-dasharray="31 31"/></svg>';
+    '<svg width="24" height="24" viewBox="0 0 24 24" style="animation:dev-spin 1s linear infinite">' +
+    '<circle cx="12" cy="12" r="10" stroke="white" stroke-width="3" fill="none" stroke-dasharray="31 31"/></svg>';
 
   var errorSVG =
-    '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2">' +
+    '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ff6b6b" stroke-width="2">' +
     '<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>';
 
-  function showRebuilding() {
-    if (!overlay) createOverlay();
-    overlay.style.background = "#1a1a2e";
-    overlay.querySelector(".dev-reload-icon").innerHTML = spinnerSVG;
-    overlay.querySelector(".dev-reload-label").textContent = "Rebuilding\u2026";
+  // --- Indicator UI ---
+
+  function createIndicator() {
+    var style = document.createElement("style");
+    style.textContent =
+      "@keyframes dev-spin{to{transform:rotate(360deg)}}" +
+      "#dev-reload-indicator{" +
+        "position:fixed;bottom:20px;right:20px;z-index:99999;" +
+        "display:flex;align-items:center;gap:10px;flex-wrap:wrap;" +
+        "background:rgba(17,17,17,0.5);color:#e0e0e0;border-radius:999px;" +
+        "font:13px/1.4 Inter,system-ui,sans-serif;" +
+        "box-shadow:0 2px 8px rgba(0,0,0,.4);" +
+        "transition:all .3s ease;cursor:default;" +
+        "padding:10px;" +
+      "}" +
+      "#dev-reload-indicator.state-error{" +
+        "padding:10px 16px;border-radius:999px;" +
+        "background:rgba(74,16,32,0.5);" +
+      "}" +
+      "#dev-reload-indicator .dev-icon{" +
+        "flex-shrink:0;width:24px;height:24px;display:flex;align-items:center;justify-content:center;" +
+      "}" +
+      "#dev-reload-indicator .dev-detail{" +
+        "display:none;white-space:nowrap;" +
+      "}" +
+      "#dev-reload-indicator.state-error .dev-detail{display:inline;}" +
+      "#dev-reload-indicator .dev-error-msg{" +
+        "display:none;margin-top:6px;padding:6px 8px;" +
+        "background:rgba(0,0,0,.3);border-radius:4px;" +
+        "font-size:12px;max-height:200px;overflow:auto;" +
+        "white-space:pre-wrap;color:#ff9999;" +
+      "}" +
+      "#dev-reload-indicator.state-error .dev-error-msg.has-content{display:block;}" +
+      "#dev-reload-indicator:hover{background:rgba(17,17,17,0.9);}" +
+      "#dev-reload-indicator.state-error:hover{background:rgba(74,16,32,0.9);}";
+    document.head.appendChild(style);
+
+    indicator = document.createElement("div");
+    indicator.id = "dev-reload-indicator";
+    indicator.className = "state-idle";
+    indicator.innerHTML =
+      '<span class="dev-icon"></span>' +
+      '<span class="dev-detail"></span>' +
+      '<pre class="dev-error-msg"></pre>';
+    indicator.style.cursor = "pointer";
+    indicator.addEventListener("click", function () {
+      window.open("http://localhost:7777/logs.html?service=customer-dashboard", "_blank");
+    });
+    document.body.appendChild(indicator);
+    setIdle();
   }
 
-  function showBuildError() {
-    if (!overlay) createOverlay();
-    overlay.style.background = "#4a1020";
-    overlay.querySelector(".dev-reload-icon").innerHTML = errorSVG;
-    var label = overlay.querySelector(".dev-reload-label");
-    label.innerHTML = 'Build failed \u2014 <a href="http://localhost:7777/logs.html?service=customer-dashboard" target="_blank" style="color:#ff6b6b;text-decoration:underline">view logs</a>';
+  function setIdle() {
+    if (!indicator) createIndicator();
+    currentState = "idle";
+    indicator.className = "state-idle";
+    indicator.querySelector(".dev-icon").innerHTML = nuonSVG;
+    indicator.querySelector(".dev-detail").textContent = "";
+    var pre = indicator.querySelector(".dev-error-msg");
+    pre.textContent = "";
+    pre.classList.remove("has-content");
   }
 
-  function hideOverlay() {
-    if (!overlay) return;
-    overlay.remove();
-    overlay = null;
-    failCount = 0;
+  function setBuilding() {
+    if (!indicator) createIndicator();
+    if (currentState === "building") return;
+    currentState = "building";
+    indicator.className = "state-building";
+    indicator.querySelector(".dev-icon").innerHTML = spinnerSVG;
+    indicator.querySelector(".dev-detail").textContent = "";
+    var pre = indicator.querySelector(".dev-error-msg");
+    pre.textContent = "";
+    pre.classList.remove("has-content");
+  }
+
+  function setError(errorMsg) {
+    if (!indicator) createIndicator();
+    currentState = "error";
+    indicator.className = "state-error";
+    indicator.querySelector(".dev-icon").innerHTML = errorSVG;
+    indicator.querySelector(".dev-detail").innerHTML =
+      'Build failed \u2014 <a href="http://localhost:7777/logs.html?service=customer-dashboard" ' +
+      'target="_blank" style="color:#ff6b6b;text-decoration:underline">view logs</a>';
+    var pre = indicator.querySelector(".dev-error-msg");
+    if (errorMsg) {
+      pre.textContent = errorMsg;
+      pre.classList.add("has-content");
+    } else {
+      pre.textContent = "";
+      pre.classList.remove("has-content");
+    }
   }
 
   // --- Head diffing ---
@@ -115,6 +174,10 @@
         return;
       }
       diffHead(newDoc);
+      // Re-append indicator — the morph replaced body innerHTML
+      if (indicator && !document.body.contains(indicator)) {
+        document.body.appendChild(indicator);
+      }
     } catch (e) {
       console.error("[dev-reload] morphPage error:", e);
     }
@@ -130,22 +193,42 @@
       if (currentVersion === null) {
         console.log("[dev-reload] connected, version:", version);
         currentVersion = version;
-        hideOverlay();
+        setIdle();
       } else if (version !== currentVersion) {
         console.log("[dev-reload] version changed:", currentVersion, "→", version);
         currentVersion = version;
         await morphPage();
         console.log("[dev-reload] morph complete");
-        hideOverlay();
+        setIdle();
       } else {
-        hideOverlay();
+        setIdle();
       }
+      failCount = 0;
     } catch (e) {
       failCount++;
-      if (failCount >= FAIL_THRESHOLD) {
-        showBuildError();
-      } else {
-        showRebuilding();
+      // Ask nuonctl for the real build status instead of guessing from a timeout.
+      try {
+        var statusResp = await fetch(NUONCTL_STATUS_URL, { cache: "no-store" });
+        var statusData = await statusResp.json();
+        var svc = (statusData.services || []).find(function (s) {
+          return s.name === "customer-dashboard";
+        });
+        if (svc) {
+          if (svc.status === "Failed" || svc.status === "CrashLoop") {
+            setError(svc.lastError || null);
+          } else {
+            setBuilding();
+          }
+        } else {
+          setBuilding();
+        }
+      } catch (_) {
+        // nuonctl itself is unreachable — fall back to threshold
+        if (failCount >= NUONCTL_FAIL_THRESHOLD) {
+          setError();
+        } else {
+          setBuilding();
+        }
       }
     }
     setTimeout(poll, POLL_MS);

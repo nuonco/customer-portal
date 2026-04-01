@@ -10,6 +10,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	"github.com/nuonco/nuon-go/client/operations"
+	nuonmodels "github.com/nuonco/nuon-go/models"
 	"go.uber.org/zap"
 )
 
@@ -159,9 +160,35 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
+	// Fetch app logo from PublishedApp
+	var appLogoLight, appLogoDark string
+	var pa models.PublishedApp
+	if err := h.db.Where("org_id = ? AND app_id = ?", install.OrgID, install.GetAppID()).First(&pa).Error; err == nil {
+		appLogoLight = pa.LogoLightBase64
+		appLogoDark = pa.LogoDarkBase64
+	}
+
+	// Fetch stack and sandbox info for overview cards
+	var stackInfo *partials.StackInfo
+	var sandboxInfo *partials.SandboxInfo
+	var components []*nuonmodels.AppInstallComponent
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
+		apiClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+		if err == nil {
+			ctx := c.Request.Context()
+			stackInfo = h.buildStackInfo(ctx, apiClient, install)
+			sandboxInfo = h.buildSandboxInfo(ctx, apiClient, install)
+			if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
+				components = comps
+			}
+		}
+	}
+
 	props := partials.InstallDetailPanelProps{
 		Install:                install,
 		AppName:                appName,
+		AppLogoLightBase64:     appLogoLight,
+		AppLogoDarkBase64:      appLogoDark,
 		APIDeletedError:        apiDeletedError,
 		BasePath:               h.basePath,
 		PrimaryColor:           primaryColor,
@@ -173,6 +200,9 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		StackSetup:             stackSetup,
 		ProvisionPhases:        provisionPhases,
 		HasActiveProvision:     hasActiveProvision,
+		StackInfo:              stackInfo,
+		SandboxInfo:            sandboxInfo,
+		Components:             components,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
 }

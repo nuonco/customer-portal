@@ -88,8 +88,12 @@ templ InstallsPage(props InstallsPageProps) {
 			<!-- Tab Headers -->
 			<div class="panel-tab-headers">
 				<button id="tab-overview-btn" class="button button-nav nav-item active" data-panel-action="switch-tab" data-tab="overview">Overview</button>
-				<button id="tab-history-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="history">History</button>
-				<button id="tab-audit-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="audit">Audit Log</button>
+				<button id="tab-stack-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="stack">Stack</button>
+				<button id="tab-sandbox-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="sandbox">Sandbox</button>
+				<button id="tab-components-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="components">Components</button>
+				<button id="tab-roles-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="roles">Roles</button>
+				<button id="tab-policies-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="policies">Policies</button>
+				<button id="tab-audit-btn" class="button button-nav nav-item" data-panel-action="switch-tab" data-tab="audit">Audit log</button>
 			</div>
 			<div class="panel-content">
 				<!-- Overview Tab -->
@@ -100,9 +104,41 @@ templ InstallsPage(props InstallsPageProps) {
 						</div>
 					</div>
 				</div>
-				<!-- History Tab -->
-				<div id="tab-history" class="panel-tab-pane">
-					<div id="panel-content-history" class="panel-body">
+				<!-- Stack Tab -->
+				<div id="tab-stack" class="panel-tab-pane">
+					<div id="panel-content-stack" class="panel-body">
+						<div class="panel-loading">
+							<div class="panel-loading-spinner"></div>
+						</div>
+					</div>
+				</div>
+				<!-- Sandbox Tab -->
+				<div id="tab-sandbox" class="panel-tab-pane">
+					<div id="panel-content-sandbox" class="panel-body">
+						<div class="panel-loading">
+							<div class="panel-loading-spinner"></div>
+						</div>
+					</div>
+				</div>
+				<!-- Components Tab -->
+				<div id="tab-components" class="panel-tab-pane">
+					<div id="panel-content-components" class="panel-body">
+						<div class="panel-loading">
+							<div class="panel-loading-spinner"></div>
+						</div>
+					</div>
+				</div>
+				<!-- Roles Tab -->
+				<div id="tab-roles" class="panel-tab-pane">
+					<div id="panel-content-roles" class="panel-body">
+						<div class="panel-loading">
+							<div class="panel-loading-spinner"></div>
+						</div>
+					</div>
+				</div>
+				<!-- Policies Tab -->
+				<div id="tab-policies" class="panel-tab-pane">
+					<div id="panel-content-policies" class="panel-body">
 						<div class="panel-loading">
 							<div class="panel-loading-spinner"></div>
 						</div>
@@ -119,8 +155,32 @@ templ InstallsPage(props InstallsPageProps) {
 			</div>
 		</div>
 
+		<!-- Secondary panel overlay -->
+		<div id="secondary-panel-overlay" class="secondary-panel-overlay" onclick="closeSecondaryPanel()"></div>
+		<!-- Secondary sliding panel (for policy details, etc.) -->
+		<script>
+			window.closeSecondaryPanel = function() {
+				var panel = document.getElementById('secondary-panel');
+				if (panel) panel.classList.remove('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.remove('open');
+			};
+		</script>
+		<div id="secondary-panel" class="secondary-panel">
+			<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+				<h3 id="secondary-panel-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+				<button type="button" class="button button-icon panel-close-btn" onclick="closeSecondaryPanel()">
+					<i class="ph-bold ph-x text-lg"></i>
+				</button>
+			</div>
+			<div id="secondary-panel-content" class="flex-1 overflow-y-auto px-6 py-4"></div>
+		</div>
+
 		<!-- Edit Inputs Modal (page-level so it overlays everything) -->
 		@partials.EditInputsModalPanel()
+
+		<!-- Access role info modal (page-level so it overlays everything) -->
+		@partials.AccessEnableRoleModal()
 
 		<!-- Config data for JavaScript -->
 		<div

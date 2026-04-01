@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
 // ProvisionPhase represents a logical grouping of workflow steps
@@ -49,7 +50,19 @@ type WorkflowDataPanel struct {
 	FailedStepID             string // ID of the failed step (for retry)
 	FailedStepName           string // Name of the failed step (for display)
 	FailedStepRetryable      bool   // Whether the failed step can be retried
-	IsReprovision            bool   // Whether this is a reprovision workflow
+	CurrentStepRole          string              // IAM role used by the current step target
+	IsReprovision            bool                // Whether this is a reprovision workflow
+	DenyViolations           []PolicyViolation   // Policy deny violations for current step
+	WarnViolations           []PolicyViolation   // Policy warn violations for current step
+	HasPolicyData            bool                // Whether the current step has any policy evaluation data
+	DisablePolling           bool                // When true, disables HTMX polling (e.g. secondary panel views)
+}
+
+// PolicyViolation represents a single policy evaluation violation.
+type PolicyViolation struct {
+	PolicyID string
+	Message  string
+	Severity string // "deny" or "warn"
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -58,7 +71,25 @@ type ApprovalStepDataPanel struct {
 	ApprovalID string
 }
 
+func policyPluralize(count int, singular, plural string) string {
+	if count == 1 {
+		return singular
+	}
+	return plural
+}
+
+func policyViolationMsg(v PolicyViolation) string {
+	if v.Message != "" {
+		return v.Message
+	}
+	return "Policy check failed"
+}
+
 // platformFromRegion determines cloud platform from a region string
+func isTerminalWorkflowStatus(status string) bool {
+	return status == "completed" || status == "success" || status == "error" || status == "cancelled"
+}
+
 func platformFromRegion(region string) string {
 	if strings.Contains(region, "us-") || strings.Contains(region, "eu-") || strings.Contains(region, "ap-") {
 		return "aws"
@@ -96,6 +127,8 @@ type StackSetupData struct {
 type InstallDetailPanelProps struct {
 	Install                *models.Install
 	AppName                string // Fetched from Nuon API at runtime
+	AppLogoLightBase64     string
+	AppLogoDarkBase64      string
 	APIDeletedError        bool
 	BasePath               string
 	PrimaryColor           string
@@ -107,14 +140,14 @@ type InstallDetailPanelProps struct {
 	StackSetup             StackSetupData
 	ProvisionPhases        []ProvisionPhase
 	HasActiveProvision     bool
+	StackInfo              *StackInfo
+	SandboxInfo            *SandboxInfo
+	Components             []*nuonmodels.AppInstallComponent
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
 templ InstallDetailPanel(props InstallDetailPanelProps) {
 <div></div>
-	{{
-		platform := platformFromRegion(props.Install.Region)
-	}}
 	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
 	if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
 		<div id="panel-actions-source" class="hidden">
@@ -177,30 +210,43 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				</div>
 			</div>
 		}
+		if !props.APIDeletedError && !props.HasActiveProvision {
+			<div
+				id="active-provision-banner"
+				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
+				hx-trigger="every 5s"
+				hx-swap="outerHTML"
+			></div>
+		}
 		<div class="overview-layout space-y-4">
-			<div class="overview-cards">
-				<!-- App Config + Platform (side by side) -->
-				<div class="grid grid-cols-2 gap-4">
-					@appConfigCard(props)
-					@platformCard(platform, props.Install.Region)
+			if !props.APIDeletedError && props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
+				<!-- With active workflow: workflow left, cards right -->
+				<div class="overview-workflow">
+					@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
 				</div>
-			</div>
-			<div class="overview-workflow">
-				<!-- Active Provision / Accordion -->
-				if !props.APIDeletedError {
-					if props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-						@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
-					} else {
-						<!-- Empty polling div — polls until accordion data is ready, or stays empty for terminal workflows -->
-						<div
-							id="active-provision-banner"
-							hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
-							hx-trigger="every 5s"
-							hx-swap="outerHTML"
-						></div>
+				<div class="space-y-4">
+					<div class="grid grid-cols-2 gap-4">
+						@overviewSection("Stack", "") {
+							@stackDetailsCard(props.StackInfo, "")
+						}
+						@overviewSection("Sandbox", "") {
+							@sandboxDetailsCard(props.SandboxInfo, "")
+						}
+					</div>
+					@overviewComponentsGrid(props.Components)
+				</div>
+			} else {
+				<!-- No active workflow: stack+sandbox side by side, components below -->
+				<div class="grid grid-cols-2 gap-4">
+					@overviewSection("Stack", "") {
+						@stackDetailsCard(props.StackInfo, "")
 					}
-				}
-			</div>
+					@overviewSection("Sandbox", "") {
+						@sandboxDetailsCard(props.SandboxInfo, "")
+					}
+				</div>
+				@overviewComponentsGrid(props.Components)
+			}
 		</div>
 	</div>
 	<!-- Config data for JavaScript -->
@@ -254,14 +300,17 @@ templ platformCard(platform string, region string) {
 templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, stackSetup StackSetupData, installID string, basePath string, primaryColor string) {
 	<div
 		id="active-provision-banner"
-		hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
-		hx-trigger="every 5s"
-		hx-ext="morph"
-		hx-swap="morph:outerHTML"
+		if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
+			hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
+			hx-trigger="every 5s"
+			hx-ext="morph"
+			hx-swap="morph:outerHTML"
+		}
 		if workflow != nil {
 			data-workflow-status={ workflow.Status }
 		}
 	>
+		<div id="step-detail-card">
 		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
 			<div class="card-base !p-0 mb-3" style="border-top: 2px solid #ef4444">
@@ -321,7 +370,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 						>
-							Approve Installation
+							Approve
 						</button>
 					}
 					if workflow != nil && workflow.CanCancel {
@@ -361,7 +410,15 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
 				<!-- Header -->
 				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ workflow.CurrentStepName }</h4>
+					<div class="flex items-center gap-2">
+						<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ workflow.CurrentStepName }</h4>
+						if workflow.CurrentStepRole != "" {
+							<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
+								<i class="ph-bold ph-shield-check text-xs"></i>
+								{ workflow.CurrentStepRole }
+							</span>
+						}
+					</div>
 					if workflow.CurrentStepType == "approval-awaiting" {
 						<span class="badge-warning text-xs px-2 py-0.5 rounded-full">Awaiting Approval</span>
 					} else if workflow.CurrentStepType == "in-progress" {
@@ -377,9 +434,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 				</div>
 				<!-- Body -->
 				<div class="px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					if workflow.TotalSteps > 0 {
-						<p class="text-xs text-[var(--theme-text-muted)]">Step { fmt.Sprintf("%d", workflow.CurrentStepNumber) } of { fmt.Sprintf("%d", workflow.TotalSteps) }</p>
-					}
 					if workflow.CurrentStepType == "approval-awaiting" {
 						<p class="text-sm mt-1">This step requires your approval to continue.</p>
 					} else if workflow.CurrentStepType == "in-progress" {
@@ -388,6 +442,72 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 						<p class="text-sm mt-1">Waiting to start.</p>
 					}
 				</div>
+				<!-- Policy Evaluation -->
+				if workflow.HasPolicyData {
+					<div style="border-bottom: 1px solid var(--theme-border-subtle)">
+						<div class="flex items-center justify-between px-4 py-3">
+							<span class="text-sm font-medium" style="color: var(--theme-text)">Policy Evaluations</span>
+							<div class="flex items-center gap-2">
+								if len(workflow.DenyViolations) > 0 {
+									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+										<i class="ph-bold ph-x-circle text-xs"></i>
+										{ fmt.Sprintf("%d", len(workflow.DenyViolations)) } { policyPluralize(len(workflow.DenyViolations), "Deny", "Denies") }
+									</span>
+								}
+								if len(workflow.WarnViolations) > 0 {
+									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
+										<i class="ph-bold ph-warning text-xs"></i>
+										{ fmt.Sprintf("%d", len(workflow.WarnViolations)) } { policyPluralize(len(workflow.WarnViolations), "Warning", "Warnings") }
+									</span>
+								}
+								if len(workflow.DenyViolations) == 0 && len(workflow.WarnViolations) == 0 {
+									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+										<i class="ph-bold ph-check-circle text-xs"></i>
+										Passed
+									</span>
+								}
+							</div>
+						</div>
+						if len(workflow.DenyViolations) > 0 {
+							<details class="group policy-eval-details" data-policy-section="deny" style="border-top: 1px solid var(--theme-border-subtle)">
+								<summary class="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+									<i class="ph-bold ph-caret-right text-xs transition-transform group-open:rotate-90" style="color: var(--theme-text-muted)"></i>
+									<i class="ph-bold ph-x-circle text-sm text-red-600 dark:text-red-500"></i>
+									<span class="text-sm font-medium" style="color: var(--theme-text)">
+										{ fmt.Sprintf("%d", len(workflow.DenyViolations)) } Policy { policyPluralize(len(workflow.DenyViolations), "Violation", "Violations") }
+									</span>
+								</summary>
+								<ul class="px-4 pb-3 space-y-1.5">
+									for _, v := range workflow.DenyViolations {
+										<li class="flex items-start gap-2 text-red-700 dark:text-red-400">
+											<i class="ph-bold ph-caret-right text-xs mt-1 shrink-0"></i>
+											<span class="text-xs">{ policyViolationMsg(v) }</span>
+										</li>
+									}
+								</ul>
+							</details>
+						}
+						if len(workflow.WarnViolations) > 0 {
+							<details class="group policy-eval-details" data-policy-section="warn" style="border-top: 1px solid var(--theme-border-subtle)">
+								<summary class="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+									<i class="ph-bold ph-caret-right text-xs transition-transform group-open:rotate-90" style="color: var(--theme-text-muted)"></i>
+									<i class="ph-bold ph-warning text-sm text-orange-600 dark:text-orange-500"></i>
+									<span class="text-sm font-medium" style="color: var(--theme-text)">
+										{ fmt.Sprintf("%d", len(workflow.WarnViolations)) } Policy { policyPluralize(len(workflow.WarnViolations), "Warning", "Warnings") }
+									</span>
+								</summary>
+								<ul class="px-4 pb-3 space-y-1.5">
+									for _, v := range workflow.WarnViolations {
+										<li class="flex items-start gap-2 text-orange-700 dark:text-orange-400">
+											<i class="ph-bold ph-caret-right text-xs mt-1 shrink-0"></i>
+											<span class="text-xs">{ policyViolationMsg(v) }</span>
+										</li>
+									}
+								</ul>
+							</details>
+						}
+					</div>
+				}
 				<!-- Footer -->
 				<div class="flex items-center justify-end gap-2 px-4 py-3">
 					if workflow.HasApprovalSteps && workflow.CanApproveAll {
@@ -396,7 +516,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 						>
-							Approve Installation
+							Approve
 						</button>
 					}
 					if workflow.CanCancel {
@@ -411,7 +531,24 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 					}
 				</div>
 			</div>
+		} else if workflow != nil && isTerminalWorkflowStatus(workflow.Status) {
+			<div class="card-base !p-0 mb-3" style={ "border-top: 2px solid " + templ.SafeCSS(primaryColor) }>
+				<div class="flex items-center justify-between px-4 py-3">
+					<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ workflow.Name }</h4>
+					if workflow.Status == "completed" || workflow.Status == "success" {
+						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+							<i class="ph-bold ph-check-circle text-xs"></i>
+							Completed
+						</span>
+					} else if workflow.Status == "cancelled" {
+						<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-700 dark:bg-cool-grey-800 dark:text-cool-grey-300">
+							Cancelled
+						</span>
+					}
+				</div>
+			</div>
 		}
+		</div>
 		<div class="space-y-2 provision-accordion">
 			for i, phase := range phases {
 				@provisionPhaseAccordion(phase, i+1) {
@@ -423,7 +560,13 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							</div>
 						}
 						for _, step := range phase.Steps {
-							<div class="flex items-center gap-2 py-1 text-sm">
+							<div
+								class="flex items-center gap-2 py-1 text-sm cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 rounded px-1 -mx-1"
+								if workflow != nil {
+									data-step-url={ basePath + "/installs/" + installID + "/panel/workflow/" + workflow.ID + "/step/" + step.ID }
+									onclick="loadStepDetail(this.getAttribute('data-step-url'), this)"
+								}
+							>
 								switch step.Status {
 								case "completed", "success", "approved":
 									<i class="ph-bold ph-check-circle text-green-500 dark:text-green-400 text-sm"></i>
@@ -449,11 +592,32 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		<!-- Open active/failed phase on first load; one-at-a-time toggle -->
 		<script>
 		(function(){
+			window.loadStepDetail = function(url, clickedEl) {
+				// Update selected state
+				var container = clickedEl ? clickedEl.closest('.provision-accordion') : document.querySelector('.provision-accordion');
+				if (container) {
+					container.querySelectorAll('[data-step-url]').forEach(function(el) {
+						el.classList.remove('step-selected');
+					});
+				}
+				if (clickedEl) {
+					clickedEl.classList.add('step-selected');
+				}
+				var target = document.querySelector('#secondary-panel-content #step-detail-card')
+					|| document.getElementById('step-detail-card');
+				if (!target) return;
+				fetch(url)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { target.innerHTML = html; })
+					.catch(function() { target.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load step details.</p>'; });
+			};
+
 			// Preserve <details> open state across idiomorph morph swaps
 			if(!window._apsMorphBound){
 				window._apsMorphBound = true;
 				var _apsOpenPhases = [];
 				var _apsPhaseStatuses = {};
+				var _apsOpenPolicySections = [];
 				document.body.addEventListener('htmx:beforeSwap', function(evt){
 					var el = evt.detail.target || evt.detail.elt;
 					if(!el || el.id !== 'active-provision-banner') return;
@@ -463,6 +627,10 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 						var idx = d.getAttribute('data-phase-index');
 						if(d.open) _apsOpenPhases.push(idx);
 						_apsPhaseStatuses[idx] = d.getAttribute('data-phase-status');
+					});
+					_apsOpenPolicySections = [];
+					el.querySelectorAll('details.policy-eval-details').forEach(function(d){
+						if(d.open) _apsOpenPolicySections.push(d.getAttribute('data-policy-section'));
 					});
 				});
 				document.body.addEventListener('htmx:afterSwap', function(evt){
@@ -493,6 +661,11 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 							}
 						});
 					}
+					el.querySelectorAll('details.policy-eval-details').forEach(function(d){
+						if(_apsOpenPolicySections.indexOf(d.getAttribute('data-policy-section')) >= 0){
+							d.setAttribute('open','');
+						}
+					});
 				});
 			}
 
@@ -539,7 +712,7 @@ templ gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, inst
 					class="button button-primary workflow-approve-all-btn inline-flex items-center gap-2 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded px-3 py-1.5"
 					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 				>
-					Approve Installation
+					Approve
 				</button>
 			}
 		</div>
@@ -658,9 +831,6 @@ templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
 				<!-- Title and status -->
 				<div class="flex-1 min-w-0">
 					<span class="text-sm font-medium text-cool-grey-900 dark:text-white">{ phase.Name }</span>
-					if phase.StepProgress != "" && phase.Status == "in_progress" {
-						<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 ml-2">{ phase.StepProgress }</span>
-					}
 				</div>
 				<!-- Status badge -->
 				switch phase.Status {
@@ -686,58 +856,74 @@ templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
 }
 
 // appConfigCard renders the app configuration card
+func stackStatus(info *StackInfo) string {
+	if info != nil {
+		return info.Status
+	}
+	return ""
+}
+
+func sandboxStatus(info *SandboxInfo) string {
+	if info != nil {
+		return info.Status
+	}
+	return ""
+}
+
+templ overviewSection(title string, status string) {
+	<div>
+		<div class="flex items-center justify-between mb-3">
+			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ title }</h3>
+			if status != "" {
+				<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
+					{ status }
+				</span>
+			}
+		</div>
+		{ children... }
+	</div>
+}
+
+templ overviewComponentsGrid(components []*nuonmodels.AppInstallComponent) {
+	if len(components) > 0 {
+		<div>
+			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Components</h3>
+			<div class="grid grid-cols-4 gap-3">
+				for _, comp := range components {
+					<div class="card-base !p-3 relative">
+						if comp.Status != "" {
+							<span class={ "absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(comp.Status) }>
+								{ comp.Status }
+							</span>
+						}
+						<div class="flex items-center gap-1.5 mb-2">
+							@auditComponentTypeIcon(componentType(comp))
+							<span class="text-sm font-medium text-cool-grey-900 dark:text-white truncate">{ componentName(comp) }</span>
+						</div>
+						<div class="space-y-1 text-xs">
+							<p class="text-cool-grey-500 dark:text-cool-grey-400">{ componentTypeLabel(componentType(comp)) }</p>
+							<p class="text-cool-grey-400 dark:text-cool-grey-500 font-mono truncate" title={ comp.ID }>{ comp.ID }</p>
+						</div>
+					</div>
+				}
+			</div>
+		</div>
+	}
+}
+
 templ appConfigCard(props InstallDetailPanelProps) {
 	<div class="card-base">
 		<div class="flex items-center gap-2 mb-3">
-			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.AppName }</h3>
-			if props.AppConfigVersion > 0 {
-				if props.InstallConfigVersion < props.AppConfigVersion {
-					<span class="chip-sm-warning">update available</span>
-				} else {
-					<span class="chip-sm-success">up to date</span>
-				}
+			if props.AppLogoLightBase64 != "" && props.AppLogoDarkBase64 != "" {
+				<img src={ props.AppLogoLightBase64 } class="h-6 dark:hidden" alt=""/>
+				<img src={ props.AppLogoDarkBase64 } class="h-6 hidden dark:block" alt=""/>
+			} else if props.AppLogoLightBase64 != "" {
+				<img src={ props.AppLogoLightBase64 } class="h-6" alt=""/>
 			}
-		</div>
-		<div class="grid grid-cols-2 gap-6 text-sm">
-			<!-- First column: Installed Version -->
-			<div class="space-y-2">
-				if props.InstallConfigVersion > 0 {
-					<div>
-						<span class="text-cool-grey-500 dark:text-cool-grey-400">Installed Version</span>
-						if props.AppConfigVersion > 0 && props.InstallConfigVersion < props.AppConfigVersion {
-							<p class="font-medium text-amber-600 dark:text-amber-400">{ fmt.Sprintf("v%d", props.InstallConfigVersion) }</p>
-						} else {
-							<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ fmt.Sprintf("v%d", props.InstallConfigVersion) }</p>
-						}
-					</div>
-					if props.InstallConfigUpdatedAt != "" {
-						<div>
-							<span class="text-cool-grey-500 dark:text-cool-grey-400">Last Updated</span>
-							<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ formatConfigDate(props.InstallConfigUpdatedAt) }</p>
-						</div>
-					}
-				} else {
-					<div>
-						<span class="text-cool-grey-500 dark:text-cool-grey-400">Installed Version</span>
-						<p class="font-medium text-cool-grey-400 dark:text-cool-grey-500">—</p>
-					</div>
-				}
-			</div>
-			<!-- Second column: Latest Version + Published -->
-			<div class="space-y-2">
-				if props.AppConfigVersion > 0 {
-					<div>
-						<span class="text-cool-grey-500 dark:text-cool-grey-400">Latest Version</span>
-						<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ fmt.Sprintf("v%d", props.AppConfigVersion) }</p>
-					</div>
-				}
-				if props.AppConfigUpdatedAt != "" {
-					<div>
-						<span class="text-cool-grey-500 dark:text-cool-grey-400">Published</span>
-						<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ formatConfigDate(props.AppConfigUpdatedAt) }</p>
-					</div>
-				}
-			</div>
+			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ props.AppName }</h3>
+			if props.AppConfigVersion > 0 && props.InstallConfigVersion < props.AppConfigVersion {
+				<span class="chip-sm-warning">update available</span>
+			}
 		</div>
 	</div>
 }
@@ -788,10 +974,6 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 						<div class="flex items-center gap-2 mt-1 text-sm text-cool-grey-600 dark:text-cool-grey-400">
 							<i class="ph-bold ph-circle-notch animate-spin text-base"></i>
 							<span>
-								if workflow.TotalSteps > 0 {
-									<span class="font-medium">Step { fmt.Sprintf("%d", workflow.CurrentStepNumber) } of { fmt.Sprintf("%d", workflow.TotalSteps) }:</span>
-									{ " " }
-								}
 								if workflow.CurrentStepName != "" {
 									if workflow.CurrentStepType == "pending" {
 										Waiting to start: { workflow.CurrentStepName }
@@ -847,7 +1029,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 							class="button button-primary workflow-approve-all-btn px-3 py-1 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover rounded"
 							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
 						>
-							Approve Installation
+							Approve
 						</button>
 					} else {
 						<button
@@ -856,7 +1038,7 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 							class="button button-primary px-3 py-1 text-sm font-medium text-cool-grey-400 dark:text-cool-grey-500 bg-cool-grey-200 dark:bg-dark-grey-700 rounded cursor-not-allowed"
 							title={ workflow.ApproveAllDisabledReason }
 						>
-							Approve Installation
+							Approve
 						</button>
 					}
 				}
@@ -1070,7 +1252,7 @@ templ installDetailPanelScripts() {
 				var target = inBanner ? '#active-provision-banner' : '#workflow-status-display';
 				var swap = inBanner ? 'none' : 'innerHTML';
 
-				// Handle Approve Installation button — no confirmation needed
+				// Handle Approve button — no confirmation needed
 				if (e.target.classList.contains('workflow-approve-all-btn')) {
 					var btn = e.target;
 					var endpoint = btn.getAttribute('data-endpoint');

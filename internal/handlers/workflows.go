@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"cmp"
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
 	"slices"
-	"strconv"
 	"strings"
 	"time"
 
@@ -19,101 +19,179 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows/steps"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
-// WorkflowsPanel renders the workflow history content for the sliding panel (no layout wrapper)
-func (h *Handler) WorkflowsPanel(c *gin.Context) {
-	// Get install from middleware (RequireInstallOwnership sets this)
+// WorkflowDetailPanel renders a workflow's ProvisionAccordion for the secondary panel.
+func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 	installInterface, exists := c.Get("install")
 	if !exists {
-		h.logger.Error("install not found in context")
 		c.String(http.StatusNotFound, "Install not found")
 		return
 	}
-
 	install := installInterface.(*localModels.Install)
-	h.logger.Debug("WorkflowsPanel: install loaded",
-		zap.String("install_id", install.ID),
-		zap.String("nuon_install_id", install.NuonInstallID),
-	)
+	workflowID := c.Param("workflow_id")
 
-	// Get pagination parameters
-	offsetParam := c.DefaultQuery("offset", "0")
-	offset, err := strconv.Atoi(offsetParam)
-	if err != nil {
-		offset = 0
-	}
-
-	limit := 10
-
-	// Fetch workflow data using helper function
-	processedWorkflows, hasMoreFromAPI, err := h.fetchWorkflowData(c, install, offset, limit)
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
 		return
 	}
 
-	// Group workflows by date and sort in descending order - convert to panel types
-	orderedWorkflowGroups := groupAndSortWorkflowsByDatePanel(processedWorkflows)
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		c.String(http.StatusInternalServerError, "No API credentials")
+		return
+	}
 
-	// Get theme
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to create API client")
+		return
+	}
+
+	ctx := c.Request.Context()
+	workflow, err := nuonClient.GetWorkflow(ctx, workflowID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch workflow")
+		return
+	}
+
+	processed := processWorkflowForCustomer(workflow)
+	processed["current_step_role"] = resolveCurrentStepRole(ctx, nuonClient, install.NuonInstallID, processed)
+	panel := ginHToWorkflowDataPanel(processed)
+	panel.DisablePolling = true // Secondary panel views should not poll
+
+	var stackSetup partials.StackSetupData
+	if isActiveWorkflowStatus(panel.Status) {
+		stackSetup = h.getStackSetupData(ctx, nuonClient, install, workflow)
+	}
+	phases := groupStepsIntoPhases(workflow, panel.IsReprovision)
+
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := localModels.GetOrCreateAppTheme(h.db, orgID)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
-	props := partials.WorkflowsPanelProps{
-		Install:        install,
-		WorkflowGroups: orderedWorkflowGroups,
-		CurrentOffset:  offset,
-		Limit:          limit,
-		HasNext:        hasMoreFromAPI,
-		HasPrev:        offset > 0,
-		NextOffset:     offset + limit,
-		PrevOffset:     max(0, offset-limit),
-		BasePath:       h.basePath,
-		PrimaryColor:   primaryColor,
-	}
-	h.RenderTempl(c, http.StatusOK, partials.WorkflowsPanel(props))
+	h.RenderTempl(c, http.StatusOK, partials.ProvisionAccordion(phases, &panel, stackSetup, install.ID, h.basePath, primaryColor))
 }
 
-// groupAndSortWorkflowsByDatePanel groups workflows by date for panel display
-func groupAndSortWorkflowsByDatePanel(workflows []gin.H) []partials.WorkflowGroupPanel {
-	grouped := make(map[string][]partials.WorkflowDataPanel)
+// StepDetailCard renders a step detail card for the step-detail-card target.
+func (h *Handler) StepDetailCard(c *gin.Context) {
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+	install := installInterface.(*localModels.Install)
+	workflowID := c.Param("workflow_id")
+	stepID := c.Param("step_id")
 
-	for _, workflow := range workflows {
-		var dateKey string
-		if createdAt, ok := workflow["created_at"].(time.Time); ok && !createdAt.IsZero() {
-			dateKey = createdAt.Format("2006-01-02")
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		c.String(http.StatusInternalServerError, "No API credentials")
+		return
+	}
+
+	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to create API client")
+		return
+	}
+
+	ctx := c.Request.Context()
+	workflow, err := nuonClient.GetWorkflow(ctx, workflowID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch workflow")
+		return
+	}
+
+	// Find the step by ID
+	var step *models.AppWorkflowStep
+	var stepIdx int
+	for i, s := range workflow.Steps {
+		if s.ID == stepID {
+			step = s
+			stepIdx = i
+			break
 		}
-		if dateKey != "" {
-			wfData := ginHToWorkflowDataPanel(workflow)
-			grouped[dateKey] = append(grouped[dateKey], wfData)
+	}
+	if step == nil {
+		c.String(http.StatusNotFound, "Step not found")
+		return
+	}
+
+	stepStatus := ""
+	if step.Status != nil {
+		stepStatus = string(step.Status.Status)
+	}
+
+	// Build a workflows.WorkflowDataPanel focused on this step
+	wfPanel := &workflows.WorkflowDataPanel{
+		ID:                workflowID,
+		Name:              string(workflow.Name),
+		Status:            stepStatus,
+		CurrentStepName:   formatStepName(step.Name),
+		CurrentStepStatus: stepStatus,
+		CurrentStepType:   stepStatus,
+		CurrentStepNumber: stepIdx + 1,
+		TotalSteps:        len(workflow.Steps),
+	}
+
+	// Resolve IAM role
+	if step.StepTargetID != "" && step.StepTargetType != "" {
+		if role, err := nuonClient.GetStepTargetRole(ctx, step.StepTargetID, step.StepTargetType, install.NuonInstallID); err == nil {
+			wfPanel.CurrentStepRole = role
 		}
 	}
 
-	var dates []string
-	for date := range grouped {
-		dates = append(dates, date)
+	// Extract policy violations from step metadata
+	if step.Metadata != nil {
+		metadataMap := make(map[string]any)
+		for k, v := range step.Metadata {
+			metadataMap[k] = v
+		}
+		deny, warn := extractPolicyViolations(metadataMap)
+		for _, v := range deny {
+			wfPanel.DenyViolations = append(wfPanel.DenyViolations, workflows.PolicyViolation{PolicyID: v.PolicyID, Message: v.Message, Severity: v.Severity})
+		}
+		for _, v := range warn {
+			wfPanel.WarnViolations = append(wfPanel.WarnViolations, workflows.PolicyViolation{PolicyID: v.PolicyID, Message: v.Message, Severity: v.Severity})
+		}
+		wfPanel.HasPolicyData = len(deny) > 0 || len(warn) > 0
 	}
-	for i := 0; i < len(dates); i++ {
-		for j := i + 1; j < len(dates); j++ {
-			if dates[i] < dates[j] {
-				dates[i], dates[j] = dates[j], dates[i]
-			}
+
+	// Handle failed/retryable steps
+	if stepStatus == "error" {
+		wfPanel.FailedStepID = step.ID
+		wfPanel.FailedStepName = formatStepName(step.Name)
+		wfPanel.FailedStepRetryable = step.Retryable
+	}
+
+	// Handle approval
+	if stepStatus == "approval-awaiting" {
+		wfPanel.HasApprovalSteps = true
+		wfPanel.CanApprove = true
+		wfPanel.CanApproveAll = true
+	}
+
+	// Check if workflow can be cancelled
+	if workflow.Status != nil {
+		wfStatus := string(workflow.Status.Status)
+		if wfStatus == "in-progress" || wfStatus == "approval-awaiting" {
+			wfPanel.CanCancel = true
 		}
 	}
 
-	var orderedGroups []partials.WorkflowGroupPanel
-	for _, date := range dates {
-		orderedGroups = append(orderedGroups, partials.WorkflowGroupPanel{
-			Date:        date,
-			DisplayDate: formatDateForDisplay(date),
-			Workflows:   grouped[date],
-		})
-	}
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := localModels.GetOrCreateAppTheme(h.db, orgID)
+	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 
-	return orderedGroups
+	h.RenderTempl(c, http.StatusOK, steps.CurrentStep(wfPanel, install.ID, h.basePath, primaryColor))
 }
 
 // ApproveWorkflowStep handles workflow step approval
@@ -551,7 +629,10 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 	var currentStepStatus string
 	var currentStepType string
 	var currentStepNumber int = 0
+	var currentStepTargetID string
+	var currentStepTargetType string
 	var totalSteps int
+	var currentStepMetadata map[string]any
 
 	slices.SortFunc(workflow.Steps, func(a, b *models.AppWorkflowStep) int {
 		return cmp.Compare(a.Idx, b.Idx)
@@ -573,12 +654,26 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 				currentStepStatus = stepStatus
 				currentStepType = "in-progress"
 				currentStepNumber += i
+				currentStepTargetID = step.StepTargetID
+				currentStepTargetType = step.StepTargetType
+				if step.Status != nil {
+					if m, ok := step.Status.Metadata.(map[string]interface{}); ok {
+						currentStepMetadata = m
+					}
+				}
 				break
 			} else if stepStatus == "approval-awaiting" {
 				currentStepName = formatStepName(step.Name)
 				currentStepStatus = stepStatus
 				currentStepType = "approval-awaiting"
 				currentStepNumber += i
+				currentStepTargetID = step.StepTargetID
+				currentStepTargetType = step.StepTargetType
+				if step.Status != nil {
+					if m, ok := step.Status.Metadata.(map[string]interface{}); ok {
+						currentStepMetadata = m
+					}
+				}
 				break
 			}
 		}
@@ -597,6 +692,8 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 					currentStepName = formatStepName(step.Name)
 					currentStepType = "pending"
 					currentStepNumber += i
+					currentStepTargetID = step.StepTargetID
+					currentStepTargetType = step.StepTargetType
 					break
 				}
 			}
@@ -613,6 +710,11 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 				failedStepID = step.ID
 				failedStepName = formatStepName(step.Name)
 				failedStepRetryable = step.Retryable
+				if currentStepMetadata == nil {
+					if m, ok := step.Status.Metadata.(map[string]interface{}); ok {
+						currentStepMetadata = m
+					}
+				}
 				break
 			}
 		}
@@ -626,6 +728,10 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		currentStepStatus = status
 		// currentStepNumber remains 0 (no progress indicator)
 	}
+
+	// Extract policy violations from current step metadata
+	denyViolations, warnViolations := extractPolicyViolations(currentStepMetadata)
+	hasPolicyData := len(denyViolations) > 0 || len(warnViolations) > 0
 
 	return gin.H{
 		"id":                          workflow.ID,
@@ -646,11 +752,75 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		"current_step_status":         currentStepStatus,
 		"current_step_type":           currentStepType,
 		"current_step_number":         currentStepNumber,
+		"current_step_target_id":      currentStepTargetID,
+		"current_step_target_type":    currentStepTargetType,
 		"total_steps":                 totalSteps,
 		"failed_step_id":              failedStepID,
 		"failed_step_name":            failedStepName,
 		"failed_step_retryable":       failedStepRetryable,
+		"deny_violations":             denyViolations,
+		"warn_violations":             warnViolations,
+		"has_policy_data":             hasPolicyData,
 	}
+}
+
+// extractPolicyViolations extracts deny and warn violations from workflow step metadata.
+func extractPolicyViolations(metadata map[string]any) ([]workflows.PolicyViolation, []workflows.PolicyViolation) {
+	if metadata == nil {
+		return nil, nil
+	}
+
+	extract := func(key string, severity string) []workflows.PolicyViolation {
+		raw, ok := metadata[key]
+		if !ok {
+			return nil
+		}
+		items, ok := raw.([]interface{})
+		if !ok {
+			return nil
+		}
+		var violations []workflows.PolicyViolation
+		for _, item := range items {
+			m, ok := item.(map[string]interface{})
+			if !ok {
+				continue
+			}
+			policyID, _ := m["policy_id"].(string)
+			message, _ := m["message"].(string)
+			violations = append(violations, workflows.PolicyViolation{
+				PolicyID: policyID,
+				Message:  message,
+				Severity: severity,
+			})
+		}
+		return violations
+	}
+
+	return extract("deny_violations", "deny"), extract("warn_violations", "warn")
+}
+
+// workflowViolationsToPartials converts workflows.PolicyViolation to partials.PolicyViolation.
+func workflowViolationsToPartials(wvs []workflows.PolicyViolation) []partials.PolicyViolation {
+	pvs := make([]partials.PolicyViolation, len(wvs))
+	for i, v := range wvs {
+		pvs[i] = partials.PolicyViolation{PolicyID: v.PolicyID, Message: v.Message, Severity: v.Severity}
+	}
+	return pvs
+}
+
+// resolveCurrentStepRole fetches the IAM role for the current workflow step's target.
+// Returns empty string if no role is available or on any error (non-fatal).
+func resolveCurrentStepRole(ctx context.Context, client *nuon.Client, installID string, processed gin.H) string {
+	targetID := getString(processed, "current_step_target_id")
+	targetType := getString(processed, "current_step_target_type")
+	if targetID == "" || targetType == "" {
+		return ""
+	}
+	role, err := client.GetStepTargetRole(ctx, targetID, targetType, installID)
+	if err != nil {
+		return ""
+	}
+	return role
 }
 
 // parseWorkflowTime converts various time formats to time.Time for template usage
@@ -796,6 +966,16 @@ func ginHToWorkflowDataPanel(wf gin.H) partials.WorkflowDataPanel {
 		FailedStepID:             getString(wf, "failed_step_id"),
 		FailedStepName:           getString(wf, "failed_step_name"),
 		FailedStepRetryable:      getBool(wf, "failed_step_retryable"),
+		CurrentStepRole:          getString(wf, "current_step_role"),
+		HasPolicyData:            getBool(wf, "has_policy_data"),
+	}
+
+	// Map policy violations
+	if dv, ok := wf["deny_violations"].([]workflows.PolicyViolation); ok {
+		data.DenyViolations = workflowViolationsToPartials(dv)
+	}
+	if wv, ok := wf["warn_violations"].([]workflows.PolicyViolation); ok {
+		data.WarnViolations = workflowViolationsToPartials(wv)
 	}
 
 	// Handle time fields
@@ -1055,6 +1235,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 
 	// Process the workflow for customer display
 	processed := processWorkflowForCustomer(workflow)
+	processed["current_step_role"] = resolveCurrentStepRole(c.Request.Context(), nuonClient, install.NuonInstallID, processed)
 
 	// Get global app theme for styling
 	theme, _ := localModels.GetOrCreateAppTheme(h.db, h.getOrgIDForTheme(c))
@@ -1139,6 +1320,7 @@ func (h *Handler) fetchRecentWorkflows(c *gin.Context, install *localModels.Inst
 	}
 
 	processed := processWorkflowForCustomer(mostRecentWorkflow)
+	processed["current_step_role"] = resolveCurrentStepRole(c.Request.Context(), nuonClient, install.NuonInstallID, processed)
 	return []gin.H{processed}, nil
 }
 

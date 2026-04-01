@@ -580,8 +580,7 @@ details[open] > summary .input-group-chevron {
   @apply transform translate-x-full transition-all duration-300 ease-out;
   @apply flex flex-col;
   border-left: 1px solid var(--theme-border-subtle);
-  width: 70%;
-  max-width: 900px;
+  width: 75%;
   z-index: 51;
 }
 
@@ -590,6 +589,35 @@ details[open] > summary .input-group-chevron {
 }
 
 .detail-panel.open {
+  @apply translate-x-0;
+}
+
+.secondary-panel-overlay {
+  @apply fixed inset-0 bg-dark-grey-900/50 backdrop-blur-sm;
+  @apply opacity-0 invisible transition-all duration-300;
+  z-index: 51;
+}
+
+.secondary-panel-overlay.open {
+  @apply opacity-100 visible;
+}
+
+/* Secondary sliding panel (overlays the detail panel) */
+.secondary-panel {
+  @apply fixed top-0 right-0 h-full;
+  background-color: var(--theme-white, #ffffff);
+  @apply transform translate-x-full transition-all duration-300 ease-out;
+  @apply flex flex-col;
+  border-left: 1px solid var(--theme-border-subtle);
+  width: 50%;
+  z-index: 52;
+}
+
+.dark .secondary-panel {
+  background-color: var(--theme-black, #1e2433);
+}
+
+.secondary-panel.open {
   @apply translate-x-0;
 }
 
@@ -607,6 +635,10 @@ details[open] > summary .input-group-chevron {
   align-items: start;
 }
 
+.detail-panel.panel-full .overview-layout > * {
+  margin-top: 0 !important;
+}
+
 /* Full width on mobile */
 @media (max-width: 768px) {
   .detail-panel {
@@ -615,7 +647,8 @@ details[open] > summary .input-group-chevron {
 }
 
 /* When vendor admin bar is present, offset panel below it */
-body.has-vendor-bar .detail-panel {
+body.has-vendor-bar .detail-panel,
+body.has-vendor-bar .secondary-panel {
   top: 40px;
   height: calc(100% - 40px);
 }
@@ -721,6 +754,15 @@ body.has-vendor-bar .panel-overlay {
 .panel-tab-pane.active {
   @apply block;
 }
+
+.audit-sub-pane {
+  @apply hidden;
+}
+
+.audit-sub-pane.active {
+  @apply block;
+}
+
 
 /* ─────────────────────────────────────────────────────────────────────────────
  * PANEL LOADING STATE
@@ -1192,6 +1234,10 @@ body {
 
 .provision-phase + .provision-phase {
   margin-top: -1px;
+}
+
+.step-selected {
+  @apply bg-cool-grey-100 dark:bg-dark-grey-700 rounded;
 }
 
 .provision-phase-summary {
@@ -1916,5 +1962,256 @@ details[open] > summary .provision-phase-chevron {
 }
 
 .dark .gcp-copy-btn:hover {
+  color: var(--theme-text-primary, #f1f5f9);
+}
+
+/* Access Panel */
+.access-panel {
+  padding: 1rem;
+}
+
+.access-section {
+  background: var(--theme-bg-card, #fff);
+  border: 1px solid var(--theme-border, #e2e8f0);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+}
+
+.dark .access-section {
+  background: var(--theme-bg-card, #1e293b);
+  border-color: var(--theme-border, #334155);
+}
+
+.access-section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.access-section-header-icon {
+  color: var(--theme-text-secondary, #64748b);
+  margin-top: 0.125rem;
+}
+
+.access-section-title {
+  font-weight: 600;
+  font-size: 0.9375rem;
+  color: var(--theme-text-primary, #0f172a);
+}
+
+.dark .access-section-title {
+  color: var(--theme-text-primary, #f1f5f9);
+}
+
+.access-section-subtitle {
+  font-size: 0.8125rem;
+  color: var(--theme-text-secondary, #64748b);
+  margin-top: 0.125rem;
+}
+
+.access-role-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.access-role-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.875rem 1rem;
+  border: 1px solid var(--theme-border, #e2e8f0);
+  border-radius: 0.5rem;
+}
+
+.dark .access-role-item {
+  border-color: var(--theme-border, #334155);
+}
+
+.access-role-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.access-role-name {
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: var(--theme-text-primary, #0f172a);
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.dark .access-role-name {
+  color: var(--theme-text-primary, #f1f5f9);
+}
+
+.access-role-info-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--theme-text-secondary, #94a3b8);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.access-role-info-btn:hover {
+  color: var(--theme-text-primary, #0f172a);
+}
+
+.dark .access-role-info-btn:hover {
+  color: var(--theme-text-primary, #f1f5f9);
+}
+
+.access-role-description {
+  font-size: 0.8125rem;
+  color: var(--theme-text-secondary, #64748b);
+  margin-top: 0.125rem;
+}
+
+.access-role-status {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  flex-shrink: 0;
+}
+
+.access-role-status-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.access-role-enabled {
+  color: var(--theme-text-secondary, #64748b);
+}
+
+.access-role-disabled {
+  color: var(--theme-text-secondary, #94a3b8);
+}
+
+.access-role-inactive .access-role-name {
+  color: #94a3b8;
+}
+
+.dark .access-role-inactive .access-role-name {
+  color: #475569;
+}
+
+.access-role-inactive .access-role-description {
+  color: #cbd5e1;
+}
+
+.dark .access-role-inactive .access-role-description {
+  color: #334155;
+}
+
+.access-role-inactive .access-toggle {
+  opacity: 0.5;
+}
+
+.access-toggle {
+  width: 2.5rem;
+  height: 1.375rem;
+  border-radius: 9999px;
+  background: #cbd5e1;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.dark .access-toggle {
+  background: #475569;
+}
+
+.access-toggle-on {
+  background: var(--theme-primary, #6366f1);
+}
+
+.dark .access-toggle-on {
+  background: var(--theme-primary, #818cf8);
+}
+
+.access-toggle-knob {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 9999px;
+  background: #fff;
+  position: absolute;
+  top: 0.1875rem;
+  left: 0.1875rem;
+  transition: transform 0.2s;
+}
+
+.access-toggle-on .access-toggle-knob {
+  transform: translateX(1.125rem);
+}
+
+.access-empty {
+  text-align: center;
+  color: var(--theme-text-secondary, #64748b);
+  font-size: 0.875rem;
+  padding: 1.5rem 0;
+}
+
+.access-modal-callout {
+  display: flex;
+  gap: 0.625rem;
+  padding: 0.875rem 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  line-height: 1.5;
+  align-items: flex-start;
+}
+
+.access-modal-callout p {
+  margin: 0;
+}
+
+.access-modal-callout-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #fde68a;
+}
+
+.dark .access-modal-callout-warning {
+  background: rgba(251, 191, 36, 0.1);
+  color: #fcd34d;
+  border-color: rgba(251, 191, 36, 0.2);
+}
+
+.access-modal-callout-info {
+  background: #eff6ff;
+  color: #1e40af;
+  border: 1px solid #bfdbfe;
+}
+
+.dark .access-modal-callout-info {
+  background: rgba(59, 130, 246, 0.1);
+  color: #93c5fd;
+  border-color: rgba(59, 130, 246, 0.2);
+}
+
+.access-modal-list {
+  list-style: disc;
+  padding-left: 1.25rem;
+  font-size: 0.8125rem;
+  color: var(--theme-text-secondary, #475569);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dark .access-modal-list {
+  color: var(--theme-text-secondary, #94a3b8);
+}
+
+.access-modal-list strong {
+  color: var(--theme-text-primary, #0f172a);
+}
+
+.dark .access-modal-list strong {
   color: var(--theme-text-primary, #f1f5f9);
 }

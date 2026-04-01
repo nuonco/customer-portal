@@ -192,6 +192,7 @@ func (h *Handler) findMostRecentProvisionWorkflow(ctx context.Context, client *n
 			continue
 		}
 		processed := processWorkflowForCustomer(wf)
+		processed["current_step_role"] = resolveCurrentStepRole(ctx, client, nuonInstallID, processed)
 		panel := ginHToWorkflowDataPanel(processed)
 		panel.IsReprovision = strings.Contains(string(wf.Type), "reprovision")
 		if panel.IsReprovision {
@@ -384,16 +385,54 @@ func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow, isReprovision ...bool) []p
 		return cmp.Compare(a.Idx, b.Idx)
 	})
 
-	reprov := len(isReprovision) > 0 && isReprovision[0]
-	var phaseNames []string
-	if reprov {
-		phaseNames = []string{"Update stack", "Update sandbox", "Update app"}
-	} else {
-		phaseNames = []string{"Install stack", "Provision sandbox", "Deploy app"}
+	// Determine phase layout based on workflow type
+	type phaseLayout struct {
+		names      []string
+		phaseCount int // 1, 2, or 3
 	}
 
-	// Assign each step to a phase by index: 0-4 stack, 5-9 sandbox, 10+ components
-	phaseSteps := make([][]partials.PhaseStep, len(phaseNames))
+	layout := phaseLayout{}
+	wfType := string(wf.Type)
+
+	switch wfType {
+	case "provision":
+		layout = phaseLayout{names: []string{"Install stack", "Provision sandbox", "Deploy app"}, phaseCount: 3}
+	case "reprovision":
+		layout = phaseLayout{names: []string{"Update stack", "Update sandbox", "Update app"}, phaseCount: 3}
+	case "deprovision":
+		layout = phaseLayout{names: []string{"Teardown components", "Deprovision sandbox", "Remove stack"}, phaseCount: 3}
+	case "reprovision_sandbox", "drift_run_reprovision_sandbox":
+		layout = phaseLayout{names: []string{"Provision sandbox", "Deploy app"}, phaseCount: 2}
+	case "input_update":
+		layout = phaseLayout{names: []string{"Update inputs", "Deploy components"}, phaseCount: 2}
+	case "app_branches_manual_update", "app_branches_config_repo_update", "app_branches_component_repo_update":
+		layout = phaseLayout{names: []string{"Update branches", "Deploy components"}, phaseCount: 2}
+	case "deprovision_sandbox":
+		layout = phaseLayout{names: []string{"Deprovision sandbox"}, phaseCount: 1}
+	case "manual_deploy", "deploy_components":
+		layout = phaseLayout{names: []string{"Deploy components"}, phaseCount: 1}
+	case "teardown_component":
+		layout = phaseLayout{names: []string{"Teardown component"}, phaseCount: 1}
+	case "teardown_components":
+		layout = phaseLayout{names: []string{"Teardown components"}, phaseCount: 1}
+	case "action_workflow_run":
+		layout = phaseLayout{names: []string{"Run action"}, phaseCount: 1}
+	case "sync_secrets":
+		layout = phaseLayout{names: []string{"Sync secrets"}, phaseCount: 1}
+	case "drift_run":
+		layout = phaseLayout{names: []string{"Drift check"}, phaseCount: 1}
+	default:
+		// Fallback: use isReprovision param or default provision layout
+		reprov := len(isReprovision) > 0 && isReprovision[0]
+		if reprov {
+			layout = phaseLayout{names: []string{"Update stack", "Update sandbox", "Update app"}, phaseCount: 3}
+		} else {
+			layout = phaseLayout{names: []string{"Install stack", "Provision sandbox", "Deploy app"}, phaseCount: 3}
+		}
+	}
+
+	// Assign steps to phases based on layout
+	phaseSteps := make([][]partials.PhaseStep, layout.phaseCount)
 
 	for i, step := range steps {
 		stepStatus := ""
@@ -408,19 +447,30 @@ func groupStepsIntoPhases(wf *nuonmodels.AppWorkflow, isReprovision ...bool) []p
 			Retryable: step.Retryable,
 		}
 
-		switch {
-		case i < 5:
+		switch layout.phaseCount {
+		case 1:
 			phaseSteps[0] = append(phaseSteps[0], ps)
-		case i < 10:
-			phaseSteps[1] = append(phaseSteps[1], ps)
-		default:
-			phaseSteps[2] = append(phaseSteps[2], ps)
+		case 2:
+			if i < 5 {
+				phaseSteps[0] = append(phaseSteps[0], ps)
+			} else {
+				phaseSteps[1] = append(phaseSteps[1], ps)
+			}
+		default: // 3
+			switch {
+			case i < 5:
+				phaseSteps[0] = append(phaseSteps[0], ps)
+			case i < 10:
+				phaseSteps[1] = append(phaseSteps[1], ps)
+			default:
+				phaseSteps[2] = append(phaseSteps[2], ps)
+			}
 		}
 	}
 
-	// Build phases — always include all three for consistent layout
+	// Build phases — include all defined phases for consistent layout
 	var phases []partials.ProvisionPhase
-	for i, name := range phaseNames {
+	for i, name := range layout.names {
 		phase := partials.ProvisionPhase{
 			Name:  name,
 			Steps: phaseSteps[i],

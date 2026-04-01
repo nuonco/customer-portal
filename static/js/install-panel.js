@@ -2,7 +2,12 @@
 // Uses event delegation so it survives Idiomorph DOM morphing.
 (function () {
   var currentInstallId = null;
-  var historyLoaded = false;
+
+  var stackLoaded = false;
+  var sandboxLoaded = false;
+  var componentsLoaded = false;
+  var rolesLoaded = false;
+  var policiesLoaded = false;
   var auditLoaded = false;
 
   function basePath() {
@@ -13,6 +18,11 @@
   function preparePanel(row, installId, installName) {
     currentInstallId = installId;
     historyLoaded = false;
+    stackLoaded = false;
+    sandboxLoaded = false;
+    componentsLoaded = false;
+    rolesLoaded = false;
+    policiesLoaded = false;
     auditLoaded = false;
 
     document.getElementById("panel-install-name").textContent = installName;
@@ -60,7 +70,11 @@
     }
 
     currentInstallId = null;
-    historyLoaded = false;
+    stackLoaded = false;
+    sandboxLoaded = false;
+    componentsLoaded = false;
+    rolesLoaded = false;
+    policiesLoaded = false;
     auditLoaded = false;
 
     if (panel) {
@@ -96,7 +110,7 @@
   }
 
   function switchTab(tabName) {
-    var tabs = ["overview", "history", "audit"];
+    var tabs = ["overview", "stack", "sandbox", "components", "roles", "policies", "audit"];
     tabs.forEach(function (t) {
       var btn = document.getElementById("tab-" + t + "-btn");
       var pane = document.getElementById("tab-" + t);
@@ -105,17 +119,73 @@
     });
 
     if (
-      tabName === "history" &&
-      !historyLoaded &&
+      tabName === "stack" &&
+      !stackLoaded &&
       currentInstallId &&
       typeof htmx !== "undefined"
     ) {
       htmx.ajax(
         "GET",
-        basePath() + "/installs/" + currentInstallId + "/panel/history",
-        { target: "#panel-content-history", swap: "innerHTML" }
+        basePath() + "/installs/" + currentInstallId + "/panel/audit?tab=stack",
+        { target: "#panel-content-stack", swap: "innerHTML" }
       );
-      historyLoaded = true;
+      stackLoaded = true;
+    }
+
+    if (
+      tabName === "sandbox" &&
+      !sandboxLoaded &&
+      currentInstallId &&
+      typeof htmx !== "undefined"
+    ) {
+      htmx.ajax(
+        "GET",
+        basePath() + "/installs/" + currentInstallId + "/panel/audit?tab=sandbox",
+        { target: "#panel-content-sandbox", swap: "innerHTML" }
+      );
+      sandboxLoaded = true;
+    }
+
+    if (
+      tabName === "components" &&
+      !componentsLoaded &&
+      currentInstallId &&
+      typeof htmx !== "undefined"
+    ) {
+      htmx.ajax(
+        "GET",
+        basePath() + "/installs/" + currentInstallId + "/panel/audit?tab=components",
+        { target: "#panel-content-components", swap: "innerHTML" }
+      );
+      componentsLoaded = true;
+    }
+
+    if (
+      tabName === "roles" &&
+      !rolesLoaded &&
+      currentInstallId &&
+      typeof htmx !== "undefined"
+    ) {
+      htmx.ajax(
+        "GET",
+        basePath() + "/installs/" + currentInstallId + "/panel/audit?tab=roles",
+        { target: "#panel-content-roles", swap: "innerHTML" }
+      );
+      rolesLoaded = true;
+    }
+
+    if (
+      tabName === "policies" &&
+      !policiesLoaded &&
+      currentInstallId &&
+      typeof htmx !== "undefined"
+    ) {
+      htmx.ajax(
+        "GET",
+        basePath() + "/installs/" + currentInstallId + "/panel/policies",
+        { target: "#panel-content-policies", swap: "innerHTML" }
+      );
+      policiesLoaded = true;
     }
 
     if (
@@ -126,7 +196,7 @@
     ) {
       htmx.ajax(
         "GET",
-        basePath() + "/installs/" + currentInstallId + "/panel/audit",
+        basePath() + "/installs/" + currentInstallId + "/panel/audit?tab=audit",
         { target: "#panel-content-audit", swap: "innerHTML" }
       );
       auditLoaded = true;

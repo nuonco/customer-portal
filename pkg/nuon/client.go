@@ -3,14 +3,14 @@ package nuon
 import (
 	"bytes"
 	"context"
-	"encoding/csv"
+
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
-	"sort"
+
 	"strconv"
 	"strings"
 	"time"
@@ -579,97 +579,71 @@ func (c *Client) UpdateInstallInputs(ctx context.Context, installID string, inpu
 	return workflowID, nil
 }
 
-// AuditLogEntry represents a single audit log entry from the Nuon API
-type AuditLogEntry struct {
-	InstallID string
-	LogLine   string
-	TimeStamp time.Time
-	Type      string
+// StackRun represents a single stack run from the Nuon API.
+// The SDK does not include a generated model for this resource.
+type StackRun struct {
+	ID                    string        `json:"id"`
+	InstallID             string        `json:"install_id"`
+	InstallStackVersionID string        `json:"install_stack_version_id"`
+	StatusDescription     string        `json:"status_description"`
+	CreatedAt             string        `json:"created_at"`
+	UpdatedAt             string        `json:"updated_at"`
+	Data                  *StackRunData `json:"data,omitempty"`
+	VersionStatus         string        // populated by the handler from the parent stack version
 }
 
-// GetInstallAuditLogs retrieves audit logs for an install within a time range
-// The API returns CSV format with columns: install_id, log_line, time_stamp, type
-func (c *Client) GetInstallAuditLogs(ctx context.Context, installID string, start, end time.Time) ([]AuditLogEntry, error) {
-	// Build URL with required start and end parameters (RFC3339 format)
-	url := fmt.Sprintf("%s/v1/installs/%s/audit_logs?start=%s&end=%s",
-		c.apiURL, installID,
-		start.Format(time.RFC3339),
-		end.Format(time.RFC3339))
+// StackRunData holds optional metadata returned by the API.
+type StackRunData struct {
+	RequestType string `json:"request_type"`
+}
 
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+// GetInstallStackRuns retrieves stack runs for an install.
+func (c *Client) GetInstallStackRuns(ctx context.Context, installID string) ([]StackRun, error) {
+	reqURL := fmt.Sprintf("%s/v1/installs/%s/stack-runs", c.apiURL, installID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
-
-	// Add authentication headers
 	req.Header.Set("Authorization", "Bearer "+c.apiToken)
 	req.Header.Set("X-Nuon-Org-ID", c.orgID)
 
-	// Make the request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("failed to execute request: %w", err)
+		return nil, fmt.Errorf("request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response: %w", err)
 	}
-
 	if resp.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
 	}
 
-	// Parse CSV response
-	// Columns: install_id, log_line, time_stamp, type
-	csvReader := csv.NewReader(strings.NewReader(string(body)))
-
-	var entries []AuditLogEntry
-
-	// Read all records (skip header if present)
-	records, err := csvReader.ReadAll()
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse CSV response: %w", err)
+	var runs []StackRun
+	if err := json.Unmarshal(body, &runs); err != nil {
+		return nil, fmt.Errorf("failed to parse stack runs: %w", err)
 	}
+	return runs, nil
+}
 
-	for i, record := range records {
-		// Skip header row (if first row contains column names)
-		if i == 0 && len(record) > 0 && record[0] == "install_id" {
-			continue
-		}
+// GetInstallSandboxRuns retrieves sandbox runs for an install.
+func (c *Client) GetInstallSandboxRuns(ctx context.Context, installID string) ([]*models.AppInstallSandboxRun, error) {
+	runs, _, err := c.client.GetInstallSandboxRuns(ctx, installID, &models.GetPaginatedQuery{Offset: 0, Limit: 100})
+	return runs, err
+}
 
-		// Expect 4 columns: install_id, log_line, time_stamp, type
-		if len(record) < 4 {
-			continue
-		}
+// GetInstallComponents retrieves install components for an install.
+func (c *Client) GetInstallComponents(ctx context.Context, installID string) ([]*models.AppInstallComponent, error) {
+	components, _, err := c.client.GetInstallComponents(ctx, installID, &models.GetPaginatedQuery{Offset: 0, Limit: 100})
+	return components, err
+}
 
-		// Parse timestamp
-		timestamp, err := time.Parse(time.RFC3339, record[2])
-		if err != nil {
-			// Try alternate formats
-			timestamp, err = time.Parse(time.RFC3339Nano, record[2])
-			if err != nil {
-				// Use current time as fallback
-				timestamp = time.Now()
-			}
-		}
-
-		entries = append(entries, AuditLogEntry{
-			InstallID: record[0],
-			LogLine:   record[1],
-			TimeStamp: timestamp,
-			Type:      record[3],
-		})
-	}
-
-	// Sort by timestamp (newest first)
-	sort.Slice(entries, func(i, j int) bool {
-		return entries[i].TimeStamp.After(entries[j].TimeStamp)
-	})
-
-	return entries, nil
+// GetInstallDeploys retrieves deploys for an install.
+func (c *Client) GetInstallDeploys(ctx context.Context, installID string) ([]*models.AppInstallDeploy, error) {
+	deploys, _, err := c.client.GetInstallDeploys(ctx, installID, &models.GetPaginatedQuery{Offset: 0, Limit: 100})
+	return deploys, err
 }
 
 // GetAppComponents retrieves all components for an app
@@ -725,6 +699,97 @@ func (c *Client) GetLatestAppPoliciesConfigFull(ctx context.Context, appID strin
 		return nil, fmt.Errorf("failed to decode response: %w", err)
 	}
 	return result.Policies, nil
+}
+
+// PolicyReport represents a policy evaluation report from the Nuon API.
+type PolicyReport struct {
+	ID            string              `json:"id"`
+	OwnerID       string              `json:"owner_id"`
+	OwnerType     string              `json:"owner_type"`
+	Status        *PolicyReportStatus `json:"status,omitempty"`
+	DenyCount     int                 `json:"deny_count"`
+	WarnCount     int                 `json:"warn_count"`
+	PassCount     int                 `json:"pass_count"`
+	EvaluatedAt   string              `json:"evaluated_at"`
+	CreatedAt     string              `json:"created_at"`
+	ComponentName string              `json:"component_name"`
+}
+
+// PolicyReportStatus holds the composite status of a policy report.
+type PolicyReportStatus struct {
+	Status string `json:"status"`
+}
+
+// GetInstallPolicyReports retrieves policy reports for an install, optionally filtered by owner type.
+func (c *Client) GetInstallPolicyReports(ctx context.Context, installID, ownerType string) ([]PolicyReport, error) {
+	reqURL := fmt.Sprintf("%s/v1/policy-reports?install_id=%s", c.apiURL, installID)
+	if ownerType != "" {
+		reqURL += "&owner_type=" + ownerType
+	}
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+
+	var reports []PolicyReport
+	if err := json.NewDecoder(resp.Body).Decode(&reports); err != nil {
+		return nil, fmt.Errorf("failed to decode policy reports: %w", err)
+	}
+	return reports, nil
+}
+
+// stepTargetRoleResponse is a minimal struct to extract the role from a sandbox run or deploy.
+type stepTargetRoleResponse struct {
+	Role string `json:"role"`
+}
+
+// GetStepTargetRole fetches the role associated with a workflow step's target (deploy or sandbox run).
+// Returns empty string if the target type doesn't support roles or on any error.
+func (c *Client) GetStepTargetRole(ctx context.Context, targetID, targetType, installID string) (string, error) {
+	var reqURL string
+	switch targetType {
+	case "install_sandbox_runs":
+		reqURL = fmt.Sprintf("%s/v1/installs/sandbox-runs/%s", c.apiURL, targetID)
+	case "install_deploys":
+		reqURL = fmt.Sprintf("%s/v1/installs/%s/deploys/%s", c.apiURL, installID, targetID)
+	default:
+		return "", nil
+	}
+
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return "", fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return "", nil
+	}
+	var result stepTargetRoleResponse
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return "", nil
+	}
+	return result.Role, nil
 }
 
 // GetAppSandboxLatestConfig retrieves the latest sandbox config for an app

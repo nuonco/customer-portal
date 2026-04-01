@@ -5,10 +5,8 @@ package components
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
 
 func ExpandableRow(detail templ.Component) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
@@ -39,7 +37,7 @@ func ExpandableRow(detail templ.Component) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button type=\"button\" class=\"w-8 shrink-0 flex items-center justify-center text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 cursor-pointer\" onclick=\"var d=this.closest('details');var p=d.closest('.panel-tab-pane')||d.parentElement;p.querySelectorAll('details[open]').forEach(function(s){if(s!==d)s.removeAttribute('open')});d.toggleAttribute('open')\"><i class=\"ph-bold ph-caret-down group-open:hidden\"></i> <i class=\"ph-bold ph-caret-up hidden group-open:inline\"></i></button></summary> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button type=\"button\" class=\"w-8 shrink-0 flex items-center justify-center text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 cursor-pointer\" onclick=\"event.stopPropagation();var d=this.closest('details');var p=d.parentElement;p.querySelectorAll(':scope > details[open]').forEach(function(s){if(s!==d)s.removeAttribute('open')});d.toggleAttribute('open')\"><i class=\"ph-bold ph-caret-down group-open:hidden\"></i> <i class=\"ph-bold ph-caret-up hidden group-open:inline\"></i></button></summary> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -52,13 +52,6 @@ type ApprovalStepData struct {
 	ApprovalID string
 }
 
-// AuditLogEntry holds audit log entry data for display
-type AuditLogEntry struct {
-	LogLine   string
-	TimeStamp time.Time
-	Type      string
-}
-
 // Partial Component Props (for theme/partials/ components)
 
 // HeaderProps contains props for the customer header component

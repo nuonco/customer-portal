@@ -468,10 +468,13 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installOwnership.Use(middleware.RequireInstallOwnership(db))
 		{
 			// Panel endpoints (for sliding panel content)
-			installOwnership.GET("/panel", h.InstallDetailPanel)              // Panel manage tab
-			installOwnership.GET("/panel/history", h.WorkflowsPanel)          // Panel history tab
-			installOwnership.GET("/panel/audit", h.AuditLogsPanel)            // Panel audit tab
-			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus) // HTMX polling endpoint for active provision workflow
+			installOwnership.GET("/panel", h.InstallDetailPanel)                                 // Panel manage tab
+			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
+			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
+			installOwnership.GET("/panel/policies", h.PoliciesPanel)                             // Panel policies tab
+			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
+			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion
+			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus)                    // HTMX polling endpoint for active provision workflow
 
 			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install

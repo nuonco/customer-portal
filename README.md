@@ -90,6 +90,9 @@ General vendor journeys.
 - **Platform-Aware Region Selector**: The install form detects the app platform from `RunnerConfig.AppRunnerType` and renders the appropriate region selector. AWS apps show a full AWS region list, Azure apps show Azure locations, and GCP apps show no region selector (GCP installs don't require a region). The submission handlers also skip the default `us-east-1` fallback for non-AWS platforms.
 - Install management dashboard
 - Install status tracking
+- **Access Panel**: The install detail panel includes an "Access" tab that displays all IAM roles defined for the app. Roles are fetched from the app's permissions config via `GetAppConfigFull()`. Each role shows its name, description, and whether it is enabled or disabled. Standard roles (provision, deprovision, maintenance) are shown as enabled; break-glass roles are shown as disabled. The tab lazy-loads on first click via HTMX.
+- **Workflow Step Role Display**: The active workflow step card shows the IAM role used by the step's target (deploy or sandbox run). The role is fetched from the Nuon API using the step's `StepTargetID` and `StepTargetType`. Only the current step's role is fetched (not historical steps). If the role is empty or the fetch fails, no role badge is shown.
+- **Workflow Step Policy Evaluation**: The active workflow step card displays policy evaluation results when available. Policy violations (denies and warnings) are extracted from the workflow step's status metadata. The section shows a summary header with deny/warn/pass badges, and collapsible `<details>` sections listing individual violations with their messages. The section is only rendered when the step has policy evaluation data.
 - **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes.
 - **GCP Stack Setup Guide**: For GCP apps, the "await install stack" provision step displays a 4-step setup guide (clone install stack module, configure GCS remote state, save tfvars, run Terraform). The platform is detected from the app's `RunnerConfig.AppRunnerType`. Tfvars content is parsed from `stack.Versions[0].Contents`.
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
@@ -250,7 +253,6 @@ There are some conventions that are specific to the admin UI.
 - **CustomerAccount** - Company account that groups customers together within a vendor org. Scoped to org via `OrgID`.
 - **CustomerAccountMember** - Links a user to a customer account with role (owner/member). A user can belong to multiple accounts in the same org and switch between them via a cookie.
 - **CustomerAccountInvite** - Email-based invite for joining a customer account. When a user with a matching email logs in, they are automatically added as a member.
-
 **Configuration Models:**
 
 - **AppInputConfig** - App-specific input field configurations
@@ -479,6 +481,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /installs/:install_id/panel` - Install detail panel (HTMX)
 - `GET /installs/:install_id/panel/history` - Workflow history panel (HTMX)
 - `GET /installs/:install_id/panel/audit` - Audit logs panel (HTMX)
+- `GET /installs/:install_id/panel/access` - Access roles panel (HTMX)
 - `GET /installs/:install_id/inputs` - Get current install inputs
 - `PUT /installs/:install_id/inputs` - Update install inputs
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps

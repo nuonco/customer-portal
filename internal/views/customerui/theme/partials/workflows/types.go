@@ -38,15 +38,26 @@ type WorkflowDataPanel struct {
 	ApproveAllDisabledReason string
 	CancelDisabledReason     string
 	ApprovalStep             *ApprovalStepDataPanel
-	CurrentStepName          string // Name of the currently executing step
-	CurrentStepStatus        string // Status of the current step (in-progress, approval-awaiting)
-	CurrentStepType          string // Type of current step: "pending", "in-progress", "approval-awaiting", or "initializing"
-	CurrentStepNumber        int    // 1-indexed position of current step (1, 2, 3...)
-	TotalSteps               int    // Total number of steps in workflow
-	FailedStepID             string // ID of the failed step (for retry)
-	FailedStepName           string // Name of the failed step (for display)
-	FailedStepRetryable      bool   // Whether the failed step can be retried
-	IsReprovision            bool   // Whether this is a reprovision workflow
+	CurrentStepName          string            // Name of the currently executing step
+	CurrentStepStatus        string            // Status of the current step (in-progress, approval-awaiting)
+	CurrentStepType          string            // Type of current step: "pending", "in-progress", "approval-awaiting", or "initializing"
+	CurrentStepNumber        int               // 1-indexed position of current step (1, 2, 3...)
+	TotalSteps               int               // Total number of steps in workflow
+	FailedStepID             string            // ID of the failed step (for retry)
+	FailedStepName           string            // Name of the failed step (for display)
+	FailedStepRetryable      bool              // Whether the failed step can be retried
+	CurrentStepRole          string            // IAM role used by the current step target
+	IsReprovision            bool              // Whether this is a reprovision workflow
+	DenyViolations           []PolicyViolation // Policy deny violations for current step
+	WarnViolations           []PolicyViolation // Policy warn violations for current step
+	HasPolicyData            bool              // Whether the current step has any policy evaluation data
+}
+
+// PolicyViolation represents a single policy evaluation violation.
+type PolicyViolation struct {
+	PolicyID string
+	Message  string
+	Severity string // "deny" or "warn"
 }
 
 // ApprovalStepDataPanel for workflow approval steps
@@ -63,13 +74,6 @@ type StackSetupData struct {
 	NuonInstallID      string // GCP + Azure (for backend snippet / resource naming)
 	AzureTemplateURL   string // Azure only — ARM template URL
 	AzureLocation      string // Azure only — deployment location (e.g. "eastus")
-}
-
-// WorkflowGroupPanel represents a group of workflows for a specific date (panel version)
-type WorkflowGroupPanel struct {
-	Date        string
-	DisplayDate string
-	Workflows   []WorkflowDataPanel
 }
 
 // FormatConfigDate formats a date string for display

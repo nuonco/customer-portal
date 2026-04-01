@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"context"
 	"encoding/base64"
 	"testing"
 
+	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -224,6 +227,82 @@ func TestGroupStepsIntoPhases(t *testing.T) {
 	})
 }
 
+func stepWithTarget(name, status string, idx int64, targetID, targetType string) *nuonmodels.AppWorkflowStep {
+	s := stepWithStatus(name, status, idx)
+	s.StepTargetID = targetID
+	s.StepTargetType = targetType
+	return s
+}
+
+func TestProcessWorkflowForCustomer_StepTargetFields(t *testing.T) {
+	t.Run("in-progress step target fields are extracted", func(t *testing.T) {
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "in-progress"},
+			Steps: []*nuonmodels.AppWorkflowStep{
+				stepWithTarget("provision sandbox", "in-progress", 0, "sr-123", "install_sandbox_runs"),
+			},
+		}
+		result := processWorkflowForCustomer(wf)
+		if got := result["current_step_target_id"]; got != "sr-123" {
+			t.Errorf("expected target_id 'sr-123', got %q", got)
+		}
+		if got := result["current_step_target_type"]; got != "install_sandbox_runs" {
+			t.Errorf("expected target_type 'install_sandbox_runs', got %q", got)
+		}
+	})
+
+	t.Run("approval-awaiting step target fields are extracted", func(t *testing.T) {
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "approval-awaiting"},
+			Steps: []*nuonmodels.AppWorkflowStep{
+				stepWithTarget("deploy app", "approval-awaiting", 0, "dp-456", "install_deploys"),
+			},
+		}
+		result := processWorkflowForCustomer(wf)
+		if got := result["current_step_target_id"]; got != "dp-456" {
+			t.Errorf("expected target_id 'dp-456', got %q", got)
+		}
+		if got := result["current_step_target_type"]; got != "install_deploys" {
+			t.Errorf("expected target_type 'install_deploys', got %q", got)
+		}
+	})
+
+	t.Run("pending step target fields are extracted", func(t *testing.T) {
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "pending"},
+			Steps: []*nuonmodels.AppWorkflowStep{
+				stepWithTarget("create stack", "pending", 0, "st-789", "install_stack_versions"),
+			},
+		}
+		result := processWorkflowForCustomer(wf)
+		if got := result["current_step_target_id"]; got != "st-789" {
+			t.Errorf("expected target_id 'st-789', got %q", got)
+		}
+	})
+
+	t.Run("no steps returns empty target fields", func(t *testing.T) {
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "pending"},
+		}
+		result := processWorkflowForCustomer(wf)
+		if got := result["current_step_target_id"]; got != "" {
+			t.Errorf("expected empty target_id, got %q", got)
+		}
+	})
+}
+
+func TestResolveCurrentStepRole_NoTarget(t *testing.T) {
+	// When no target ID/type, should return empty without making API calls
+	processed := gin.H{
+		"current_step_target_id":   "",
+		"current_step_target_type": "",
+	}
+	role := resolveCurrentStepRole(context.Background(), nil, "install-1", processed)
+	if role != "" {
+		t.Errorf("expected empty role, got %q", role)
+	}
+}
+
 func TestPhaseStepStatus(t *testing.T) {
 	ps := partials.PhaseStep{Name: "test", Status: "completed"}
 	if ps.Status != "completed" {
@@ -289,6 +368,160 @@ func TestParseTfvars(t *testing.T) {
 	t.Run("non-JSON string returns empty", func(t *testing.T) {
 		if got := parseTfvars("not json"); got != "" {
 			t.Errorf("expected empty, got %q", got)
+		}
+	})
+}
+
+func TestExtractPolicyViolations(t *testing.T) {
+	t.Run("nil metadata returns nil", func(t *testing.T) {
+		deny, warn := extractPolicyViolations(nil)
+		if deny != nil || warn != nil {
+			t.Errorf("expected nil, got deny=%v warn=%v", deny, warn)
+		}
+	})
+
+	t.Run("empty metadata returns nil", func(t *testing.T) {
+		deny, warn := extractPolicyViolations(map[string]any{})
+		if deny != nil || warn != nil {
+			t.Errorf("expected nil, got deny=%v warn=%v", deny, warn)
+		}
+	})
+
+	t.Run("extracts deny violations", func(t *testing.T) {
+		metadata := map[string]any{
+			"deny_violations": []interface{}{
+				map[string]interface{}{
+					"policy_id": "pol-1",
+					"message":   "container must not run as root",
+					"severity":  "deny",
+				},
+				map[string]interface{}{
+					"policy_id": "pol-2",
+					"message":   "must set resource limits",
+					"severity":  "deny",
+				},
+			},
+		}
+		deny, warn := extractPolicyViolations(metadata)
+		if len(deny) != 2 {
+			t.Fatalf("expected 2 deny violations, got %d", len(deny))
+		}
+		if deny[0].PolicyID != "pol-1" || deny[0].Message != "container must not run as root" {
+			t.Errorf("unexpected deny[0]: %+v", deny[0])
+		}
+		if warn != nil {
+			t.Errorf("expected nil warnings, got %v", warn)
+		}
+	})
+
+	t.Run("extracts warn violations", func(t *testing.T) {
+		metadata := map[string]any{
+			"warn_violations": []interface{}{
+				map[string]interface{}{
+					"policy_id": "pol-3",
+					"message":   "should set memory limits",
+					"severity":  "warn",
+				},
+			},
+		}
+		deny, warn := extractPolicyViolations(metadata)
+		if deny != nil {
+			t.Errorf("expected nil denies, got %v", deny)
+		}
+		if len(warn) != 1 {
+			t.Fatalf("expected 1 warn violation, got %d", len(warn))
+		}
+		if warn[0].Message != "should set memory limits" {
+			t.Errorf("unexpected warn[0]: %+v", warn[0])
+		}
+	})
+
+	t.Run("extracts both deny and warn", func(t *testing.T) {
+		metadata := map[string]any{
+			"deny_violations": []interface{}{
+				map[string]interface{}{"policy_id": "p1", "message": "denied"},
+			},
+			"warn_violations": []interface{}{
+				map[string]interface{}{"policy_id": "p2", "message": "warned"},
+			},
+		}
+		deny, warn := extractPolicyViolations(metadata)
+		if len(deny) != 1 || len(warn) != 1 {
+			t.Errorf("expected 1 deny + 1 warn, got %d deny + %d warn", len(deny), len(warn))
+		}
+	})
+
+	t.Run("wrong type in metadata is handled gracefully", func(t *testing.T) {
+		metadata := map[string]any{
+			"deny_violations": "not an array",
+		}
+		deny, warn := extractPolicyViolations(metadata)
+		if deny != nil || warn != nil {
+			t.Errorf("expected nil, got deny=%v warn=%v", deny, warn)
+		}
+	})
+}
+
+func TestProcessWorkflowForCustomer_PolicyViolations(t *testing.T) {
+	t.Run("in-progress step with policy violations", func(t *testing.T) {
+		step := stepWithStatus("sync and plan", "in-progress", 0)
+		step.Status.Metadata = map[string]any{
+			"deny_violations": []interface{}{
+				map[string]interface{}{"policy_id": "p1", "message": "must not run privileged"},
+			},
+			"warn_violations": []interface{}{
+				map[string]interface{}{"policy_id": "p2", "message": "should set limits"},
+			},
+		}
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "in-progress"},
+			Steps:  []*nuonmodels.AppWorkflowStep{step},
+		}
+		result := processWorkflowForCustomer(wf)
+		if !result["has_policy_data"].(bool) {
+			t.Error("expected has_policy_data to be true")
+		}
+		deny := result["deny_violations"].([]workflows.PolicyViolation)
+		warn := result["warn_violations"].([]workflows.PolicyViolation)
+		if len(deny) != 1 || deny[0].Message != "must not run privileged" {
+			t.Errorf("unexpected deny violations: %+v", deny)
+		}
+		if len(warn) != 1 || warn[0].Message != "should set limits" {
+			t.Errorf("unexpected warn violations: %+v", warn)
+		}
+	})
+
+	t.Run("error step with policy violations", func(t *testing.T) {
+		step := stepWithStatus("sync and plan", "error", 0)
+		step.Status.Metadata = map[string]any{
+			"deny_violations": []interface{}{
+				map[string]interface{}{"policy_id": "p1", "message": "denied"},
+			},
+		}
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "error"},
+			Steps:  []*nuonmodels.AppWorkflowStep{step},
+		}
+		result := processWorkflowForCustomer(wf)
+		if !result["has_policy_data"].(bool) {
+			t.Error("expected has_policy_data to be true")
+		}
+		deny := result["deny_violations"].([]workflows.PolicyViolation)
+		if len(deny) != 1 {
+			t.Errorf("expected 1 deny violation, got %d", len(deny))
+		}
+	})
+
+	t.Run("step without policy data", func(t *testing.T) {
+		wf := &nuonmodels.AppWorkflow{
+			Status: &nuonmodels.AppCompositeStatus{Status: "in-progress"},
+			Steps: []*nuonmodels.AppWorkflowStep{
+				stepWithStatus("await runner", "in-progress", 0),
+			},
+		}
+		result := processWorkflowForCustomer(wf)
+		if result["has_policy_data"].(bool) {
+			t.Error("expected has_policy_data to be false")
 		}
 	})
 }

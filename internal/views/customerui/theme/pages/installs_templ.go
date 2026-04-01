@@ -5,12 +5,13 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"fmt"
 	"strings"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
@@ -152,7 +153,7 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 					}
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <!-- Panel Overlay --> <div id=\"detail-panel-overlay\" class=\"panel-overlay\"></div><!-- Sliding Detail Panel --> <div id=\"detail-panel\" class=\"detail-panel\"><div class=\"panel-header\"><div class=\"min-w-0 flex-1\"><h2 id=\"panel-install-name\">Loading...</h2><span id=\"panel-install-id\" class=\"text-xs font-mono text-cool-grey-500 dark:text-cool-grey-400 truncate block\"></span></div><div class=\"flex items-center gap-2 flex-shrink-0\"><div id=\"panel-actions-container\"></div><button id=\"panel-expand-btn\" type=\"button\" data-panel-action=\"toggle-size\" class=\"button button-icon panel-header-btn\" title=\"Expand to full screen\"><i id=\"panel-expand-icon\" class=\"ph-bold ph-arrows-out text-xl\"></i> <i id=\"panel-collapse-icon\" class=\"ph-bold ph-arrows-in text-xl hidden\"></i></button> <button class=\"button button-icon panel-close-btn\" data-panel-action=\"close\" aria-label=\"Close panel\"><i class=\"ph-bold ph-x text-xl\"></i></button></div></div><!-- Tab Headers --><div class=\"panel-tab-headers\"><button id=\"tab-overview-btn\" class=\"button button-nav nav-item active\" data-panel-action=\"switch-tab\" data-tab=\"overview\">Overview</button> <button id=\"tab-history-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"history\">History</button> <button id=\"tab-audit-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"audit\">Audit Log</button></div><div class=\"panel-content\"><!-- Overview Tab --><div id=\"tab-overview\" class=\"panel-tab-pane active\"><div id=\"panel-content-overview\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- History Tab --><div id=\"tab-history\" class=\"panel-tab-pane\"><div id=\"panel-content-history\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Audit Log Tab --><div id=\"tab-audit\" class=\"panel-tab-pane\"><div id=\"panel-content-audit\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div></div></div><!-- Edit Inputs Modal (page-level so it overlays everything) --> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, " <!-- Panel Overlay --> <div id=\"detail-panel-overlay\" class=\"panel-overlay\"></div><!-- Sliding Detail Panel --> <div id=\"detail-panel\" class=\"detail-panel\"><div class=\"panel-header\"><div class=\"min-w-0 flex-1\"><h2 id=\"panel-install-name\">Loading...</h2><span id=\"panel-install-id\" class=\"text-xs font-mono text-cool-grey-500 dark:text-cool-grey-400 truncate block\"></span></div><div class=\"flex items-center gap-2 flex-shrink-0\"><div id=\"panel-actions-container\"></div><button id=\"panel-expand-btn\" type=\"button\" data-panel-action=\"toggle-size\" class=\"button button-icon panel-header-btn\" title=\"Expand to full screen\"><i id=\"panel-expand-icon\" class=\"ph-bold ph-arrows-out text-xl\"></i> <i id=\"panel-collapse-icon\" class=\"ph-bold ph-arrows-in text-xl hidden\"></i></button> <button class=\"button button-icon panel-close-btn\" data-panel-action=\"close\" aria-label=\"Close panel\"><i class=\"ph-bold ph-x text-xl\"></i></button></div></div><!-- Tab Headers --><div class=\"panel-tab-headers\"><button id=\"tab-overview-btn\" class=\"button button-nav nav-item active\" data-panel-action=\"switch-tab\" data-tab=\"overview\">Overview</button> <button id=\"tab-stack-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"stack\">Stack</button> <button id=\"tab-sandbox-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"sandbox\">Sandbox</button> <button id=\"tab-components-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"components\">Components</button> <button id=\"tab-roles-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"roles\">Roles</button> <button id=\"tab-policies-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"policies\">Policies</button> <button id=\"tab-audit-btn\" class=\"button button-nav nav-item\" data-panel-action=\"switch-tab\" data-tab=\"audit\">Audit log</button></div><div class=\"panel-content\"><!-- Overview Tab --><div id=\"tab-overview\" class=\"panel-tab-pane active\"><div id=\"panel-content-overview\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Stack Tab --><div id=\"tab-stack\" class=\"panel-tab-pane\"><div id=\"panel-content-stack\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Sandbox Tab --><div id=\"tab-sandbox\" class=\"panel-tab-pane\"><div id=\"panel-content-sandbox\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Components Tab --><div id=\"tab-components\" class=\"panel-tab-pane\"><div id=\"panel-content-components\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Roles Tab --><div id=\"tab-roles\" class=\"panel-tab-pane\"><div id=\"panel-content-roles\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Policies Tab --><div id=\"tab-policies\" class=\"panel-tab-pane\"><div id=\"panel-content-policies\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div><!-- Audit Log Tab --><div id=\"tab-audit\" class=\"panel-tab-pane\"><div id=\"panel-content-audit\" class=\"panel-body\"><div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div></div></div></div></div><!-- Secondary panel overlay --> <div id=\"secondary-panel-overlay\" class=\"secondary-panel-overlay\" onclick=\"closeSecondaryPanel()\"></div><!-- Secondary sliding panel (for policy details, etc.) --> <script>\n\t\t\twindow.closeSecondaryPanel = function() {\n\t\t\t\tvar panel = document.getElementById('secondary-panel');\n\t\t\t\tif (panel) panel.classList.remove('open');\n\t\t\t\tvar overlay = document.getElementById('secondary-panel-overlay');\n\t\t\t\tif (overlay) overlay.classList.remove('open');\n\t\t\t};\n\t\t</script> <div id=\"secondary-panel\" class=\"secondary-panel\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600\"><h3 id=\"secondary-panel-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\"></h3><button type=\"button\" class=\"button button-icon panel-close-btn\" onclick=\"closeSecondaryPanel()\"><i class=\"ph-bold ph-x text-lg\"></i></button></div><div id=\"secondary-panel-content\" class=\"flex-1 overflow-y-auto px-6 py-4\"></div></div><!-- Edit Inputs Modal (page-level so it overlays everything) --> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -160,20 +161,28 @@ func InstallsPage(props InstallsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " <!-- Config data for JavaScript --> <div id=\"installs-page-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, " <!-- Access role info modal (page-level so it overlays everything) --> ")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = partials.AccessEnableRoleModal().Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, " <!-- Config data for JavaScript --> <div id=\"installs-page-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 129, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 189, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div><!-- Panel JavaScript (static/js/install-panel.js loaded in layout head) -->")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"></div><!-- Panel JavaScript (static/js/install-panel.js loaded in layout head) -->")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -208,7 +217,7 @@ func installsTableHeader() templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<tr><th>Name</th><th>App</th><th>Platform</th><th class=\"hide-mobile\">Region</th><th class=\"hide-mobile\">Created</th></tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<tr><th>Name</th><th>App</th><th>Platform</th><th class=\"hide-mobile\">Region</th><th class=\"hide-mobile\">Created</th></tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -250,64 +259,64 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<tr class=\"install-row\" data-install-id=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<tr class=\"install-row\" data-install-id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 160, Col: 30}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 220, Col: 30}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" data-install-name=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" data-install-name=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 161, Col: 34}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 221, Col: 34}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if !install.APIDeleted {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, " hx-get=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, " hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(panelURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 163, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 223, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" hx-target=\"#panel-content-overview\" hx-swap=\"innerHTML show:no-scroll\" hx-push-url=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" hx-target=\"#panel-content-overview\" hx-swap=\"innerHTML show:no-scroll\" hx-push-url=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(detailURL)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 166, Col: 26}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 226, Col: 26}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" hx-on::before-request=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-on::before-request=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -316,65 +325,57 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" hx-on::after-settle=\"finalizePanelLoad()\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "\" hx-on::after-settle=\"finalizePanelLoad()\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "><td><span class=\"install-name-link\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "><td><span class=\"install-name-link\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 172, Col: 49}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 232, Col: 49}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if install.APIDeleted {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300\">Removed</span><form class=\"inline ml-2\" hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<span class=\"ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300\">Removed</span><form class=\"inline ml-2\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(basePath + "/installs/" + install.ID + "/forget")
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 177, Col: 63}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 237, Col: 63}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\" hx-target=\"closest tr\" hx-swap=\"outerHTML\" hx-confirm=\"Remove this install from your list?\"><button type=\"submit\" class=\"button button-danger inline-flex items-center px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors\">Forget</button></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" hx-target=\"closest tr\" hx-swap=\"outerHTML\" hx-confirm=\"Remove this install from your list?\"><button type=\"submit\" class=\"button button-danger inline-flex items-center px-2 py-0.5 text-xs font-medium text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 border border-red-300 dark:border-red-700 rounded hover:bg-red-50 dark:hover:bg-red-950 transition-colors\">Forget</button></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(install.AppName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 188, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 248, Col: 23}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</td><td>")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.PlatformChip(platform).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -382,36 +383,44 @@ func installTableRow(install customerui.InstallWithApprovalStatus, basePath stri
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
+		templ_7745c5c3_Err = components.PlatformChip(platform).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</td><td>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
 		if install.Region != "" {
 			var templ_7745c5c3_Var17 string
 			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(install.Region)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 194, Col: 20}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 254, Col: 20}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">—</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">—</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "</td><td>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td><td>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(install.CreatedAt.Format("Jan 2, 2006"))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 200, Col: 44}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/installs.templ`, Line: 260, Col: 44}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td></tr>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</td></tr>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

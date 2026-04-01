@@ -1,0 +1,110 @@
+package partials
+
+import "fmt"
+
+// PoliciesPolicy holds display info for a single deployment policy.
+type PoliciesPolicy struct {
+	Name     string
+	Type     string // raw type, formatted by formatPolicyType
+	Engine   string // "kyverno" or "opa"
+	Contents string // full policy definition
+}
+
+type PoliciesPanelProps struct {
+	Policies []PoliciesPolicy
+}
+
+func formatPolicyType(t string) string {
+	switch t {
+	case "kubernetes_cluster":
+		return "Kubernetes Cluster"
+	case "terraform_module":
+		return "Terraform Module"
+	case "helm_chart":
+		return "Helm Chart"
+	case "kubernetes_manifest":
+		return "Kubernetes Manifest"
+	case "docker_build":
+		return "Docker Build"
+	case "container_image":
+		return "Container Image"
+	case "sandbox":
+		return "Sandbox"
+	default:
+		return t
+	}
+}
+
+templ PoliciesPanel(props PoliciesPanelProps) {
+	<div class="policies-panel">
+		if len(props.Policies) == 0 {
+			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured for this app.</p>
+		} else {
+			<table class="w-full text-sm table-fixed">
+				<colgroup>
+					<col class="w-[40%]"/>
+					<col class="w-[30%]"/>
+					<col class="w-[30%]"/>
+				</colgroup>
+				<thead>
+					<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+						<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+						<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+						<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Engine</th>
+					</tr>
+				</thead>
+				<tbody>
+					for i, pol := range props.Policies {
+						<tr
+							class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyPanel(%d)", i)} }
+						>
+							<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ pol.Name }>{ pol.Name }</td>
+							<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">{ formatPolicyType(pol.Type) }</td>
+							<td class="py-2">
+								if pol.Engine != "" {
+									<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ pol.Engine }</span>
+								}
+							</td>
+						</tr>
+					}
+				</tbody>
+			</table>
+			<!-- Hidden policy contents for JS to read -->
+			for i, pol := range props.Policies {
+				<div class="hidden" data-policy-index={ fmt.Sprintf("%d", i) } data-policy-name={ pol.Name } data-policy-contents={ pol.Contents }></div>
+			}
+		}
+	</div>
+	@policiesPanelScripts()
+}
+
+templ policiesPanelScripts() {
+	<script>
+		(function() {
+			window.openPolicyPanel = function(index) {
+				var el = document.querySelector('[data-policy-index="' + index + '"]');
+				if (!el) return;
+				var name = el.getAttribute('data-policy-name');
+				var contents = el.getAttribute('data-policy-contents');
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = name;
+				content.innerHTML = '<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-4 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(contents) + '</code></pre>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+			};
+
+
+			function escapeHtml(text) {
+				var div = document.createElement('div');
+				div.appendChild(document.createTextNode(text));
+				return div.innerHTML;
+			}
+
+		})();
+	</script>
+}

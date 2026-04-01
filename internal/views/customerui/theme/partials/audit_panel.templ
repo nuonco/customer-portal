@@ -1,0 +1,1016 @@
+package partials
+
+import (
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// AuditTabPagination holds pagination state for one audit sub-tab.
+type AuditTabPagination struct {
+	Total      int
+	HasNext    bool
+	HasPrev    bool
+	NextOffset int
+	PrevOffset int
+}
+
+// RolePolicy holds display info for one IAM policy within a role.
+type RolePolicy struct {
+	Name              string
+	ManagedPolicyName string
+	Contents          string
+}
+
+// StackInfoRole holds display info for one IAM role shown in the stack info view.
+type StackInfoRole struct {
+	Name                string // e.g. "Default Provision"
+	Type                string // e.g. "Runner Provision", "Breakglass", "Custom"
+	Arn                 string // The provisioned ARN from stack outputs
+	Active              bool   // true = active, false = pending
+	PermissionsBoundary string
+	Policies            []RolePolicy
+}
+
+// StackInfo holds the stack detail fields for the Info sub-tab.
+type StackInfo struct {
+	ID        string
+	Status    string
+	Region    string
+	AccountID string
+	VPC       string
+	CreatedAt string
+	UpdatedAt string
+	Roles     []StackInfoRole
+	Outputs   map[string]string
+}
+
+// SandboxInfo holds the sandbox detail fields for the Info sub-tab.
+type SandboxInfo struct {
+	ID        string
+	Status    string
+	CreatedAt string
+	UpdatedAt string
+	Repo      string
+	Directory string
+	Branch    string
+	Outputs   map[string]string
+}
+
+// AuditPanelProps contains data needed for the audit panel with sub-tabs.
+type AuditPanelProps struct {
+	Install           *models.Install
+	StackRuns         []nuon.StackRun
+	SandboxRuns       []*nuonmodels.AppInstallSandboxRun
+	Deploys           []*nuonmodels.AppInstallDeploy
+	BasePath          string
+	ActiveTab         string // "stack", "sandbox", or "components"
+	StackSubTab       string // "info" or "history" (only used when ActiveTab == "stack")
+	SandboxSubTab     string // "info" or "history" (only used when ActiveTab == "sandbox")
+	StackInfo         *StackInfo
+	SandboxInfo       *SandboxInfo
+	SandboxPolicyReports    []nuon.PolicyReport
+	Components              []*nuonmodels.AppInstallComponent
+	ComponentsPolicyReports []nuon.PolicyReport
+	ComponentsSubTab        string // "info", "history", or "policies" (only used when ActiveTab == "components")
+	Workflows               []*nuonmodels.AppWorkflow
+	StackPagination         AuditTabPagination
+	SandboxPagination       AuditTabPagination
+	DeploysPagination       AuditTabPagination
+	WorkflowsPagination     AuditTabPagination
+}
+
+templ AuditPanel(props AuditPanelProps) {
+	<div class="w-full" id={ "audit-content-" + props.ActiveTab }>
+		if props.ActiveTab == "stack" {
+			@stackPanel(props)
+		} else if props.ActiveTab == "sandbox" {
+			@sandboxPanel(props)
+		} else if props.ActiveTab == "components" {
+			@componentsPanel(props)
+		} else if props.ActiveTab == "roles" {
+			@stackRolesView(props.StackInfo)
+			@rolesScripts()
+		} else if props.ActiveTab == "audit" {
+			@auditWorkflowList(props.Workflows)
+			@auditPagination("audit", props.WorkflowsPagination)
+		}
+	</div>
+	<div
+		id="audit-panel-config"
+		class="hidden"
+		data-base-path={ props.BasePath }
+		data-install-id={ props.Install.ID }
+	></div>
+	@auditPanelScripts()
+}
+
+templ stackPanel(props AuditPanelProps) {
+	@stackDetailsCard(props.StackInfo, "")
+	<!-- Sub-tab headers -->
+	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.StackSubTab == "history") }
+			data-subtab="history"
+			onclick="switchStackSubTab('history')"
+		>
+			History
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.StackSubTab == "outputs") }
+			data-subtab="outputs"
+			onclick="switchStackSubTab('outputs')"
+		>
+			Outputs
+		</button>
+	</div>
+	<div id="stack-sub-outputs" class={ "audit-sub-pane", templ.KV("active", props.StackSubTab == "outputs") }>
+		@stackOutputsView(props.StackInfo)
+	</div>
+	<div id="stack-sub-history" class={ "audit-sub-pane", templ.KV("active", props.StackSubTab == "history") }>
+		@auditStackList(props.StackRuns)
+		@auditPagination("stack", props.StackPagination)
+	</div>
+}
+
+templ sandboxPanel(props AuditPanelProps) {
+	@sandboxDetailsCard(props.SandboxInfo, "")
+	<!-- Sub-tab headers -->
+	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "history") }
+			data-subtab="history"
+			onclick="switchSandboxSubTab('history')"
+		>
+			History
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "outputs") }
+			data-subtab="outputs"
+			onclick="switchSandboxSubTab('outputs')"
+		>
+			Outputs
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "policies") }
+			data-subtab="policies"
+			onclick="switchSandboxSubTab('policies')"
+		>
+			Policy evaluations
+		</button>
+	</div>
+	<div id="sandbox-sub-history" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "history") }>
+		@auditSandboxList(props.SandboxRuns)
+		@auditPagination("sandbox", props.SandboxPagination)
+	</div>
+	<div id="sandbox-sub-outputs" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "outputs") }>
+		@sandboxOutputsView(props.SandboxInfo)
+	</div>
+	<div id="sandbox-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "policies") }>
+		@policyReportList(props.SandboxPolicyReports, "sandbox policy evaluations")
+	</div>
+}
+
+templ componentsPanel(props AuditPanelProps) {
+	@componentsSummaryCard(props.Components)
+	<!-- Sub-tab headers -->
+	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "history") }
+			data-subtab="history"
+			onclick="switchComponentsSubTab('history')"
+		>
+			History
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "components") }
+			data-subtab="components"
+			onclick="switchComponentsSubTab('components')"
+		>
+			Components
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "policies") }
+			data-subtab="policies"
+			onclick="switchComponentsSubTab('policies')"
+		>
+			Policy evaluations
+		</button>
+	</div>
+	<div id="components-sub-history" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "history") }>
+		@auditDeployList(props.Deploys)
+		@auditPagination("components", props.DeploysPagination)
+	</div>
+	<div id="components-sub-components" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "components") }>
+		@componentsInfoView(props.Components)
+	</div>
+	<div id="components-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "policies") }>
+		@policyReportList(props.ComponentsPolicyReports, "deploy policy evaluations")
+	</div>
+}
+
+func componentTypeCounts(components []*nuonmodels.AppInstallComponent) map[string]int {
+	counts := make(map[string]int)
+	for _, comp := range components {
+		t := componentType(comp)
+		if t == "" {
+			t = "unknown"
+		}
+		counts[t]++
+	}
+	return counts
+}
+
+func componentTypeLabel(t string) string {
+	switch t {
+	case "terraform_module":
+		return "Terraform"
+	case "helm_chart":
+		return "Helm"
+	case "docker_build":
+		return "Docker"
+	case "external_image":
+		return "Image"
+	case "job":
+		return "Job"
+	case "kubernetes_manifest":
+		return "K8s Manifest"
+	default:
+		return t
+	}
+}
+
+templ componentsSummaryCard(components []*nuonmodels.AppInstallComponent) {
+	if len(components) == 0 {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-puzzle-piece text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No components</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Component information is not available for this install.</p>
+		</div>
+	} else {
+		<div class="card-base">
+			<div class="flex items-center gap-4 text-sm">
+				<span class="font-medium text-cool-grey-900 dark:text-white">
+					{ fmt.Sprintf("%d", len(components)) } { "components" }
+				</span>
+				<span class="text-cool-grey-300 dark:text-cool-grey-600">|</span>
+				for t, count := range componentTypeCounts(components) {
+					<span class="text-cool-grey-600 dark:text-cool-grey-400">
+						{ fmt.Sprintf("%d %s", count, componentTypeLabel(t)) }
+					</span>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ componentsInfoView(components []*nuonmodels.AppInstallComponent) {
+	if len(components) == 0 {
+		@auditEmptyState("components", "ph-puzzle-piece")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[25%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[35%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">ID</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, comp := range components {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ componentName(comp) }>{ componentName(comp) }</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400">
+							<div class="flex items-center gap-1.5">
+								@auditComponentTypeIcon(componentType(comp))
+								<span class="truncate">{ componentTypeLabel(componentType(comp)) }</span>
+							</div>
+						</td>
+						<td class="py-2 pr-3">
+							if comp.Status != "" {
+								<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(comp.Status) }>
+									{ comp.Status }
+								</span>
+							}
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ comp.ID }>{ comp.ID }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+func componentName(comp *nuonmodels.AppInstallComponent) string {
+	if comp.Component != nil && comp.Component.Name != "" {
+		return comp.Component.Name
+	}
+	return "Component"
+}
+
+func componentType(comp *nuonmodels.AppInstallComponent) string {
+	if comp.Component != nil {
+		return string(comp.Component.Type)
+	}
+	return ""
+}
+
+templ sandboxDetailsCard(info *SandboxInfo, title string) {
+	if info == nil {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No sandbox data</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox information is not available for this install.</p>
+		</div>
+	} else {
+		<div class="card-base relative">
+			if info.Status != "" {
+				<span class={ "absolute top-4 right-4 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(info.Status) }>
+					{ info.Status }
+				</span>
+			}
+			<div class="grid grid-cols-2 gap-6 text-sm">
+				<div class="space-y-3">
+					if info.Repo != "" {
+						@infoRow("Repo", info.Repo)
+					}
+					if info.Directory != "" {
+						@infoRow("Directory", info.Directory)
+					}
+					if info.Branch != "" {
+						@infoRow("Branch", info.Branch)
+					}
+				</div>
+				<div class="space-y-3">
+					@infoRow("ID", info.ID)
+					@infoRow("Created", info.CreatedAt)
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ sandboxOutputsView(info *SandboxInfo) {
+	if info == nil || len(info.Outputs) == 0 {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-terminal text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No outputs</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox outputs are not available for this install.</p>
+		</div>
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[35%]"/>
+				<col class="w-[65%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Key</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Value</th>
+				</tr>
+			</thead>
+			<tbody>
+				for key, value := range info.Outputs {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ key }>{ key }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ value }>{ value }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ stackDetailsCard(info *StackInfo, title string) {
+	if info == nil {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-stack text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No stack data</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Stack information is not available for this install.</p>
+		</div>
+	} else {
+		<div class="card-base relative">
+			if info.Status != "" {
+				<span class={ "absolute top-4 right-4 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(info.Status) }>
+					{ info.Status }
+				</span>
+			}
+			<div class="grid grid-cols-2 gap-6 text-sm">
+				<div class="space-y-3">
+					@infoRow("Region", info.Region)
+					@infoRow("Account ID", info.AccountID)
+					@infoRow("VPC", info.VPC)
+				</div>
+				<div class="space-y-3">
+					@infoRow("ID", info.ID)
+					@infoRow("Created", info.CreatedAt)
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ stackOutputsView(info *StackInfo) {
+	if info == nil || len(info.Outputs) == 0 {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-terminal text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No outputs</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Stack outputs are not available for this install.</p>
+		</div>
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[35%]"/>
+				<col class="w-[65%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Key</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Value</th>
+				</tr>
+			</thead>
+			<tbody>
+				for key, value := range info.Outputs {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ key }>{ key }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ value }>{ value }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ stackRolesView(info *StackInfo) {
+	if info == nil || len(info.Roles) == 0 {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-shield-check text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No roles</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Role information is not available for this install.</p>
+		</div>
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[25%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[40%]"/>
+				<col class="w-[15%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">ARN</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, role := range info.Roles {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openRolePanel(%d)", i)} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ role.Name }>{ role.Name }</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate" title={ role.Type }>{ role.Type }</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ role.Arn }>{ role.Arn }</td>
+						<td class="py-2">
+							if role.Active {
+								<span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400 whitespace-nowrap">
+									Provisioned
+								</span>
+							} else {
+								<span class="text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400 whitespace-nowrap">
+									Not provisioned
+								</span>
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- Hidden role data for JS -->
+		for i, role := range info.Roles {
+			<div
+				class="hidden"
+				data-role-index={ fmt.Sprintf("%d", i) }
+				data-role-name={ role.Name }
+				data-role-type={ role.Type }
+				data-role-arn={ role.Arn }
+				data-role-active={ fmt.Sprintf("%t", role.Active) }
+				data-role-permissions-boundary={ role.PermissionsBoundary }
+				data-role-policies={ rolePoliciesJSON(role.Policies) }
+			></div>
+		}
+	}
+}
+
+templ rolesScripts() {
+	<script>
+		(function() {
+			window.openRolePanel = function(index) {
+				var el = document.querySelector('[data-role-index="' + index + '"]');
+				if (!el) return;
+				var name = el.getAttribute('data-role-name');
+				var roleType = el.getAttribute('data-role-type');
+				var arn = el.getAttribute('data-role-arn');
+				var active = el.getAttribute('data-role-active') === 'true';
+				var permsBoundary = el.getAttribute('data-role-permissions-boundary') || '';
+				var policies = [];
+				try { policies = JSON.parse(el.getAttribute('data-role-policies') || '[]'); } catch(e) {}
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = name;
+				var statusBadge = active
+					? '<span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">Provisioned</span>'
+					: '<span class="text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400">Not provisioned</span>';
+				var html =
+					'<div class="space-y-4 text-sm">' +
+						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">Type</span><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(roleType) + '</p></div>' +
+						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">ARN</span><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 font-mono break-all">' + escapeHtml(arn) + '</p></div>' +
+						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">Status</span><div class="mt-1">' + statusBadge + '</div></div>';
+				if (policies.length > 0) {
+					html += '<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600"><h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Policies</h4>';
+					policies.forEach(function(p) {
+						var policyLabel = p.Name || p.ManagedPolicyName || 'Policy';
+						html += '<div class="mb-3"><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 mb-1">' + escapeHtml(policyLabel) + '</p>';
+						if (p.ManagedPolicyName) {
+							html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-1">Managed: ' + escapeHtml(p.ManagedPolicyName) + '</p>';
+						}
+						if (p.Contents) {
+							html += '<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(p.Contents) + '</code></pre>';
+						}
+						html += '</div>';
+					});
+					html += '</div>';
+				}
+				if (permsBoundary) {
+					html += '<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600"><h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Permissions Boundary</h4><pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(permsBoundary) + '</code></pre></div>';
+				}
+				html += '</div>';
+				content.innerHTML = html;
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+			};
+
+			function escapeHtml(text) {
+				var div = document.createElement('div');
+				div.appendChild(document.createTextNode(text));
+				return div.innerHTML;
+			}
+		})();
+	</script>
+}
+
+templ infoRow(label, value string) {
+	<div>
+		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
+		<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ value }</p>
+	</div>
+}
+
+templ auditStackList(runs []nuon.StackRun) {
+	if len(runs) == 0 {
+		@auditEmptyState("stack runs", "ph-stack")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[35%]"/>
+				<col class="w-[25%]"/>
+				<col class="w-[40%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, run := range runs {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ stackRunType(run) }>{ stackRunType(run) }</td>
+						<td class="py-2 pr-3">
+							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.VersionStatus) }>
+								{ run.VersionStatus }
+							</span>
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+func stackRunType(run nuon.StackRun) string {
+	if run.Data != nil && run.Data.RequestType != "" {
+		return run.Data.RequestType
+	}
+	return "Run"
+}
+
+templ auditSandboxList(runs []*nuonmodels.AppInstallSandboxRun) {
+	if len(runs) == 0 {
+		@auditEmptyState("sandbox runs", "ph-cube")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[30%]"/>
+				<col class="w-[30%]"/>
+				<col class="w-[40%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, run := range runs {
+					<tr
+						class={ "border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0", templ.KV("cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700", run.WorkflowID != "") }
+						if run.WorkflowID != "" {
+							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', 'Sandbox %s')", run.WorkflowID, string(run.RunType))} }
+						}
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(run.RunType) }</td>
+						<td class="py-2 pr-3">
+							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.Status) }>
+								{ run.Status }
+							</span>
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+func rolePoliciesJSON(policies []RolePolicy) string {
+	if len(policies) == 0 {
+		return "[]"
+	}
+	b, _ := json.Marshal(policies)
+	return string(b)
+}
+
+func policyReportName(report nuon.PolicyReport) string {
+	if report.ComponentName != "" {
+		return report.ComponentName
+	}
+	return "Policy evaluation"
+}
+
+templ policyReportList(reports []nuon.PolicyReport, emptyLabel string) {
+	if len(reports) == 0 {
+		@auditEmptyState(emptyLabel, "ph-shield-check")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[25%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[30%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Component</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Denied</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Warnings</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Passed</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Evaluated</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, report := range reports {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ policyReportName(report) }>{ policyReportName(report) }</td>
+						<td class="py-2 pr-3">
+							if report.DenyCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+									{ fmt.Sprintf("%d", report.DenyCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 pr-3">
+							if report.WarnCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+									{ fmt.Sprintf("%d", report.WarnCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 pr-3">
+							if report.PassCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+									{ fmt.Sprintf("%d", report.PassCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(report.EvaluatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ auditDeployList(deploys []*nuonmodels.AppInstallDeploy) {
+	if len(deploys) == 0 {
+		@auditEmptyState("deploys", "ph-rocket-launch")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[20%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[25%]"/>
+				<col class="w-[35%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Component</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, deploy := range deploys {
+					<tr
+						class={ "border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0", templ.KV("cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700", deploy.WorkflowID != "") }
+						if deploy.WorkflowID != "" {
+							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", deploy.WorkflowID, deploy.ComponentName)} }
+						}
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(deploy.InstallDeployType) }</td>
+						<td class="py-2 pr-3">
+							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(deploy.Status) }>
+								{ deploy.Status }
+							</span>
+						</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate" title={ deploy.ComponentName }>{ deploy.ComponentName }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(deploy.CreatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+func workflowStatus(wf *nuonmodels.AppWorkflow) string {
+	if wf.Status != nil {
+		return string(wf.Status.Status)
+	}
+	return ""
+}
+
+func workflowType(wf *nuonmodels.AppWorkflow) string {
+	if wf.Type != "" {
+		return string(wf.Type)
+	}
+	return ""
+}
+
+templ auditWorkflowList(workflows []*nuonmodels.AppWorkflow) {
+	if len(workflows) == 0 {
+		@auditEmptyState("workflows", "ph-clipboard-text")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[30%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[25%]"/>
+				<col class="w-[25%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, wf := range workflows {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", wf.ID, wf.Name)} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ wf.Name }>{ wf.Name }</td>
+						<td class="py-2 pr-3">
+							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(workflowStatus(wf)) }>
+								{ workflowStatus(wf) }
+							</span>
+						</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">{ workflowType(wf) }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(wf.CreatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ auditEmptyState(itemType, icon string) {
+	<div class="text-center py-12">
+		<i class={ fmt.Sprintf("ph-bold %s text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block", icon) }></i>
+		<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">{ fmt.Sprintf("No %s yet", itemType) }</h3>
+		<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">{ fmt.Sprintf("Run history for %s will appear here.", itemType) }</p>
+	</div>
+}
+
+func auditStatusClass(status string) string {
+	switch status {
+	case "active", "succeeded", "success", "completed":
+		return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+	case "failed", "error":
+		return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+	case "in-progress", "running", "deploying":
+		return "bg-blue-100 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300"
+	case "pending", "queued":
+		return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+	case "cancelled":
+		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-700 dark:text-cool-grey-300"
+	default:
+		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-700 dark:text-cool-grey-300"
+	}
+}
+
+func FormatAPITime(ts string) string {
+	t, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		t, err = time.Parse(time.RFC3339, ts)
+		if err != nil {
+			return ts
+		}
+	}
+	return t.Format("Jan 2, 2006 3:04 PM")
+}
+
+templ auditPagination(tab string, p AuditTabPagination) {
+	if p.HasPrev || p.HasNext {
+		<div class="mt-6 flex items-center justify-between">
+			<div>
+				if p.HasPrev {
+					<button
+						type="button"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadAuditPage('%s', %d)", tab, p.PrevOffset)} }
+						class="button button-pagination pagination-nav-btn"
+					>
+						<i class="ph-bold ph-caret-left text-base mr-2"></i>
+						Previous
+					</button>
+				}
+			</div>
+			<div>
+				if p.HasNext {
+					<button
+						type="button"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadAuditPage('%s', %d)", tab, p.NextOffset)} }
+						class="button button-pagination pagination-nav-btn"
+					>
+						Next
+						<i class="ph-bold ph-caret-right text-base ml-2"></i>
+					</button>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ auditComponentTypeIcon(t string) {
+	switch t {
+	case "helm_chart":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M12.337 0c-.475 0-.861 1.016-.861 2.269 0 .527.069 1.011.183 1.396a8.514 8.514 0 0 0-3.961 1.22 5.229 5.229 0 0 0-.595-1.093c-.606-.866-1.34-1.436-1.79-1.43a.381.381 0 0 0-.217.066c-.39.273-.123 1.326.596 2.353.267.381.559.705.84.948a8.683 8.683 0 0 0-1.528 1.716h1.734a7.179 7.179 0 0 1 5.381-2.421 7.18 7.18 0 0 1 5.382 2.42h1.733a8.687 8.687 0 0 0-1.32-1.53c.35-.249.735-.643 1.078-1.133.719-1.027.986-2.08.596-2.353a.382.382 0 0 0-.217-.065c-.45-.007-1.184.563-1.79 1.43a4.897 4.897 0 0 0-.676 1.325 8.52 8.52 0 0 0-3.899-1.42c.12-.39.193-.887.193-1.429 0-1.253-.386-2.269-.862-2.269zM1.624 9.443v5.162h1.358v-1.968h1.64v1.968h1.357V9.443H4.62v1.838H2.98V9.443zm5.912 0v5.162h3.21v-1.108H8.893v-.95h1.64v-1.142h-1.64v-.84h1.853V9.443zm4.698 0v5.162h3.218v-1.362h-1.86v-3.8zm4.706 0v5.162h1.364v-2.643l1.357 1.225 1.35-1.232v2.65h1.365V9.443h-.614l-2.1 1.914-2.109-1.914zm-11.82 7.28a8.688 8.688 0 0 0 1.412 1.548 5.206 5.206 0 0 0-.841.948c-.719 1.027-.985 2.08-.596 2.353.39.273 1.289-.338 2.007-1.364a5.23 5.23 0 0 0 .595-1.092 8.514 8.514 0 0 0 3.961 1.219 5.01 5.01 0 0 0-.183 1.396c0 1.253.386 2.269.861 2.269.476 0 .862-1.016.862-2.269 0-.542-.072-1.04-.193-1.43a8.52 8.52 0 0 0 3.9-1.42c.121.4.352.865.675 1.327.719 1.026 1.617 1.637 2.007 1.364.39-.273.123-1.326-.596-2.353-.343-.49-.727-.885-1.077-1.135a8.69 8.69 0 0 0 1.202-1.36h-1.771a7.174 7.174 0 0 1-5.227 2.252 7.174 7.174 0 0 1-5.226-2.252z"></path>
+		</svg>
+	case "terraform_module":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M1.44 0v7.575l6.561 3.79V3.787zm21.12 4.227l-6.561 3.791v7.574l6.56-3.787zM8.72 4.23v7.575l6.561 3.787V8.018zm0 8.405v7.575L15.28 24v-7.578z"></path>
+		</svg>
+	case "docker_build":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M13.983 11.078h2.119a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.119a.185.185 0 00-.185.185v1.888c0 .102.083.185.185.185m-2.954-5.43h2.118a.186.186 0 00.186-.186V3.574a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m0 2.716h2.118a.187.187 0 00.186-.186V6.29a.186.186 0 00-.186-.185h-2.118a.185.185 0 00-.185.185v1.887c0 .102.082.185.185.186m-2.93 0h2.12a.186.186 0 00.184-.186V6.29a.185.185 0 00-.185-.185H8.1a.185.185 0 00-.185.185v1.887c0 .102.083.185.185.186m-2.964 0h2.119a.186.186 0 00.185-.186V6.29a.185.185 0 00-.185-.185H5.136a.186.186 0 00-.186.185v1.887c0 .102.084.185.186.186m5.893 2.715h2.118a.186.186 0 00.186-.185V9.006a.186.186 0 00-.186-.186h-2.118a.185.185 0 00-.185.185v1.888c0 .102.082.185.185.185m-2.93 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.083.185.185.185m-2.964 0h2.119a.185.185 0 00.185-.185V9.006a.185.185 0 00-.184-.186h-2.12a.186.186 0 00-.186.186v1.887c0 .102.084.185.186.185m-2.92 0h2.12a.185.185 0 00.184-.185V9.006a.185.185 0 00-.184-.186h-2.12a.185.185 0 00-.184.185v1.888c0 .102.082.185.185.185M23.763 9.89c-.065-.051-.672-.51-1.954-.51-.338.001-.676.03-1.01.087-.248-1.7-1.653-2.53-1.716-2.566l-.344-.199-.226.327c-.284.438-.49.922-.612 1.43-.23.97-.09 1.882.403 2.661-.595.332-1.55.413-1.744.42H.751a.751.751 0 00-.75.748 11.376 11.376 0 00.692 4.062c.545 1.428 1.355 2.48 2.41 3.124 1.18.723 3.1 1.137 5.275 1.137.983.003 1.963-.086 2.93-.266a12.248 12.248 0 003.823-1.389c.98-.567 1.86-1.288 2.61-2.136 1.252-1.418 1.998-2.997 2.553-4.4h.221c1.372 0 2.215-.549 2.68-1.009.309-.293.55-.65.707-1.046l.098-.288Z"></path>
+		</svg>
+	case "external_image":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M3.629 0v24H20.37V0zM17.59 21.208H6.421V10.604h7.812V6.692h3.346v14.516zm-7.823-7.812h4.466v5.02H9.767z"></path>
+		</svg>
+	case "kubernetes_manifest":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M10.204 14.35l.007.01-.999 2.413a5.171 5.171 0 0 1-2.075-2.597l2.578-.437.004.005a.44.44 0 0 1 .484.606zm-.833-2.129a.44.44 0 0 0 .173-.756l.002-.011L7.585 9.7a5.143 5.143 0 0 0-.73 3.255l2.514-.725.002-.009zm1.145-1.98a.44.44 0 0 0 .699-.337l.01-.005.15-2.62a5.144 5.144 0 0 0-3.01 1.442l2.147 1.523.004-.002zm.76 2.75l.723.349.722-.347.18-.78-.5-.623h-.804l-.5.623.179.779zm1.5-3.095a.44.44 0 0 0 .7.336l.008.003 2.134-1.513a5.188 5.188 0 0 0-2.992-1.442l.148 2.615.002.001zm10.876 5.97l-5.773 7.181a1.6 1.6 0 0 1-1.248.594l-9.261.003a1.6 1.6 0 0 1-1.247-.596l-5.776-7.18a1.583 1.583 0 0 1-.307-1.34L2.1 5.573c.108-.47.425-.864.863-1.073L11.305.513a1.606 1.606 0 0 1 1.385 0l8.345 3.985c.438.209.755.604.863 1.073l2.062 8.955c.108.47-.005.963-.308 1.34zm-3.289-2.057c-.042-.01-.103-.026-.145-.034-.174-.033-.315-.025-.479-.038-.35-.037-.638-.067-.895-.148-.105-.04-.18-.165-.216-.216l-.201-.059a6.45 6.45 0 0 0-.105-2.332 6.465 6.465 0 0 0-.936-2.163c.052-.047.15-.133.177-.159.008-.09.001-.183.094-.282.197-.185.444-.338.743-.522.142-.084.273-.137.415-.242.032-.024.076-.062.11-.089.24-.191.295-.52.123-.736-.172-.216-.506-.236-.745-.045-.034.027-.08.062-.111.088-.134.116-.217.23-.33.35-.246.25-.45.458-.673.609-.097.056-.239.037-.303.033l-.19.135a6.545 6.545 0 0 0-4.146-2.003l-.012-.223c-.065-.062-.143-.115-.163-.25-.022-.268.015-.557.057-.905.023-.163.061-.298.068-.475.001-.04-.001-.099-.001-.142 0-.306-.224-.555-.5-.555-.275 0-.499.249-.499.555l.001.014c0 .041-.002.092 0 .128.006.177.044.312.067.475.042.348.078.637.056.906a.545.545 0 0 1-.162.258l-.012.211a6.424 6.424 0 0 0-4.166 2.003 8.373 8.373 0 0 1-.18-.128c-.09.012-.18.04-.297-.029-.223-.15-.427-.358-.673-.608-.113-.12-.195-.234-.329-.349-.03-.026-.077-.062-.111-.088a.594.594 0 0 0-.348-.132.481.481 0 0 0-.398.176c-.172.216-.117.546.123.737l.007.005.104.083c.142.105.272.159.414.242.299.185.546.338.743.522.076.082.09.226.1.288l.16.143a6.462 6.462 0 0 0-1.02 4.506l-.208.06c-.055.072-.133.184-.215.217-.257.081-.546.11-.895.147-.164.014-.305.006-.48.039-.037.007-.09.02-.133.03l-.004.002-.007.002c-.295.071-.484.342-.423.608.061.267.349.429.645.365l.007-.001.01-.003.129-.029c.17-.046.294-.113.448-.172.33-.118.604-.217.87-.256.112-.009.23.069.288.101l.217-.037a6.5 6.5 0 0 0 2.88 3.596l-.09.218c.033.084.069.199.044.282-.097.252-.263.517-.452.813-.091.136-.185.242-.268.399-.02.037-.045.095-.064.134-.128.275-.034.591.213.71.248.12.556-.007.69-.282v-.002c.02-.039.046-.09.062-.127.07-.162.094-.301.144-.458.132-.332.205-.68.387-.897.05-.06.13-.082.215-.105l.113-.205a6.453 6.453 0 0 0 4.609.012l.106.192c.086.028.18.042.256.155.136.232.229.507.342.84.05.156.074.295.145.457.016.037.043.09.062.129.133.276.442.402.69.282.247-.118.341-.435.213-.71-.02-.039-.045-.096-.065-.134-.083-.156-.177-.261-.268-.398-.19-.296-.346-.541-.443-.793-.04-.13.007-.21.038-.294-.018-.022-.059-.144-.083-.202a6.499 6.499 0 0 0 2.88-3.622c.064.01.176.03.213.038.075-.05.144-.114.28-.104.266.039.54.138.87.256.154.06.277.128.448.173.036.01.088.019.13.028l.009.003.007.001c.297.064.584-.098.645-.365.06-.266-.128-.537-.423-.608zM16.4 9.701l-1.95 1.746v.005a.44.44 0 0 0 .173.757l.003.01 2.526.728a5.199 5.199 0 0 0-.108-1.674A5.208 5.208 0 0 0 16.4 9.7zm-4.013 5.325a.437.437 0 0 0-.404-.232.44.44 0 0 0-.372.233h-.002l-1.268 2.292a5.164 5.164 0 0 0 3.326.003l-1.27-2.296h-.01zm1.888-1.293a.44.44 0 0 0-.27.036.44.44 0 0 0-.214.572l-.003.004 1.01 2.438a5.15 5.15 0 0 0 2.081-2.615l-2.6-.44-.004.005z"></path>
+		</svg>
+	case "job":
+		<svg class="w-4 h-4 shrink-0 text-cool-grey-500" viewBox="0 0 24 24" fill="currentColor">
+			<path d="M10.617 11.473l4.686 3.695-3.102-7.662zM12 0C5.371 0 0 5.371 0 12s5.371 12 12 12 12-5.371 12-12S18.629 0 12 0zm5.797 17.305c-.011.471-.403.842-.875.83-.236 0-.416-.09-.664-.293l-6.19-5-2.079 5.203H6.191L11.438 5.44c.124-.314.427-.52.764-.506.326-.014.63.189.742.506l4.774 11.494c.045.111.08.234.08.348-.001.009-.001.009-.001.023z"></path>
+		</svg>
+	default:
+		<i class="ph-bold ph-question text-base shrink-0 text-cool-grey-400"></i>
+	}
+}
+
+templ auditPanelScripts() {
+	<script>
+		(function() {
+			window.loadAuditPage = function(tab, offset) {
+				var config = document.getElementById('audit-panel-config');
+				if (!config) return;
+				var basePath = config.getAttribute('data-base-path');
+				var installId = config.getAttribute('data-install-id');
+				var url = basePath + '/installs/' + installId + '/panel/audit?tab=' + tab + '&' + tab + '_offset=' + offset;
+				if (typeof htmx !== 'undefined') {
+					htmx.ajax('GET', url, { target: '#panel-content-' + tab, swap: 'innerHTML' });
+				}
+			};
+
+			function switchSubTab(prefix, subTab) {
+				var container = document.getElementById('audit-content-' + prefix);
+				if (!container) return;
+				container.querySelectorAll('.audit-sub-tabs .nav-item').forEach(function(b) {
+					b.classList.remove('active');
+				});
+				container.querySelectorAll('.audit-sub-pane').forEach(function(p) {
+					p.classList.remove('active');
+				});
+				var btn = container.querySelector('.audit-sub-tabs .nav-item[data-subtab="' + subTab + '"]');
+				if (btn) btn.classList.add('active');
+				var pane = container.querySelector('#' + prefix + '-sub-' + subTab);
+				if (pane) pane.classList.add('active');
+			}
+
+			window.switchStackSubTab = function(subTab) {
+				switchSubTab('stack', subTab);
+			};
+			window.switchSandboxSubTab = function(subTab) {
+				switchSubTab('sandbox', subTab);
+			};
+			window.switchComponentsSubTab = function(subTab) {
+				switchSubTab('components', subTab);
+			};
+
+			window.openWorkflowPanel = function(workflowID, workflowName) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = workflowName || 'Workflow';
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/workflow/' + workflowID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) {
+						content.innerHTML = html;
+						var scripts = content.querySelectorAll('script');
+						scripts.forEach(function(s) {
+							var ns = document.createElement('script');
+							ns.textContent = s.textContent;
+							s.parentNode.replaceChild(ns, s);
+						});
+						if (typeof htmx !== 'undefined') {
+							htmx.process(content);
+						}
+						// Auto-open the first phase and select the first step
+						var firstPhase = content.querySelector('details.provision-phase');
+						if (firstPhase) {
+							firstPhase.setAttribute('open', '');
+						}
+						var firstStep = content.querySelector('[data-step-url]');
+						if (firstStep && typeof loadStepDetail === 'function') {
+							loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
+						}
+					})
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500">Failed to load workflow details.</p>';
+					});
+			};
+		})();
+	</script>
+}
