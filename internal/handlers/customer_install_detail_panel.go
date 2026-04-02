@@ -170,8 +170,10 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	// Fetch stack and sandbox info for overview cards
 	var stackInfo *partials.StackInfo
+	var latestStackRuns []nuon.StackRun
 	var sandboxInfo *partials.SandboxInfo
-	var components []*nuonmodels.AppInstallComponent
+	var latestSandboxRuns []*nuonmodels.AppInstallSandboxRun
+	var componentInfos []partials.ComponentInfo
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		apiClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 		if err == nil {
@@ -179,7 +181,29 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 			stackInfo = h.buildStackInfo(ctx, apiClient, install)
 			sandboxInfo = h.buildSandboxInfo(ctx, apiClient, install)
 			if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
-				components = comps
+				componentInfos = h.buildComponentInfos(ctx, apiClient, install, comps)
+			}
+			if runs, err := apiClient.GetInstallStackRuns(ctx, install.NuonInstallID); err == nil && len(runs) > 0 {
+				// Populate VersionStatus from the stack version if available
+				if stack, err := apiClient.GetInstallStack(ctx, install.NuonInstallID); err == nil && stack != nil && len(stack.Versions) > 0 {
+					for i := range runs {
+						for _, v := range stack.Versions {
+							if runs[i].InstallStackVersionID == v.ID && v.CompositeStatus != nil {
+								runs[i].VersionStatus = string(v.CompositeStatus.Status)
+							}
+						}
+					}
+				}
+				if len(runs) > 5 {
+					runs = runs[:5]
+				}
+				latestStackRuns = runs
+			}
+			if runs, err := apiClient.GetInstallSandboxRuns(ctx, install.NuonInstallID); err == nil && len(runs) > 0 {
+				if len(runs) > 5 {
+					runs = runs[:5]
+				}
+				latestSandboxRuns = runs
 			}
 		}
 	}
@@ -201,10 +225,75 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		ProvisionPhases:        provisionPhases,
 		HasActiveProvision:     hasActiveProvision,
 		StackInfo:              stackInfo,
+		LatestStackRuns:        latestStackRuns,
 		SandboxInfo:            sandboxInfo,
-		Components:             components,
+		LatestSandboxRuns:      latestSandboxRuns,
+		Components:             componentInfos,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
+}
+
+// buildComponentInfos builds display info for each install component, including repo data from the app config.
+func (h *Handler) buildComponentInfos(ctx context.Context, apiClient *nuon.Client, install *models.Install, comps []*nuonmodels.AppInstallComponent) []partials.ComponentInfo {
+	// Build a map of component_id → config connection from the app config
+	ccMap := map[string]*nuonmodels.AppComponentConfigConnection{}
+	app, err := apiClient.GetApp(ctx, install.GetAppID())
+	if err == nil && app != nil && len(app.AppConfigs) > 0 {
+		appConfigID := app.AppConfigs[0].ID
+		if cfg, err := apiClient.GetAppConfigFull(ctx, install.GetAppID(), appConfigID); err == nil && cfg != nil {
+			for _, cc := range cfg.ComponentConfigConnections {
+				if cc != nil && cc.ComponentID != "" {
+					ccMap[cc.ComponentID] = cc
+				}
+			}
+		}
+	}
+
+	var infos []partials.ComponentInfo
+	for _, comp := range comps {
+		ci := partials.ComponentInfo{
+			Status: comp.Status,
+			Name:   "Component",
+		}
+		if comp.Component != nil {
+			if comp.Component.Name != "" {
+				ci.Name = comp.Component.Name
+			}
+			ci.Type = string(comp.Component.Type)
+		}
+
+		// Extract VCS info from the component config connection
+		if cc, ok := ccMap[comp.ComponentID]; ok {
+			type vcsSource struct {
+				Public *nuonmodels.AppPublicGitVCSConfig
+				GitHub *nuonmodels.AppConnectedGithubVCSConfig
+			}
+			var vcs vcsSource
+			switch {
+			case cc.TerraformModule != nil:
+				vcs.Public = cc.TerraformModule.PublicGitVcsConfig
+				vcs.GitHub = cc.TerraformModule.ConnectedGithubVcsConfig
+			case cc.Helm != nil:
+				vcs.Public = cc.Helm.PublicGitVcsConfig
+				vcs.GitHub = cc.Helm.ConnectedGithubVcsConfig
+			case cc.DockerBuild != nil:
+				vcs.Public = cc.DockerBuild.PublicGitVcsConfig
+				vcs.GitHub = cc.DockerBuild.ConnectedGithubVcsConfig
+			}
+			if vcs.Public != nil {
+				ci.Repo = vcs.Public.Repo
+				ci.Directory = vcs.Public.Directory
+				ci.Branch = vcs.Public.Branch
+				ci.RepoPublic = true
+			} else if vcs.GitHub != nil {
+				ci.Repo = vcs.GitHub.Repo
+				ci.Directory = vcs.GitHub.Directory
+				ci.Branch = vcs.GitHub.Branch
+			}
+		}
+		infos = append(infos, ci)
+	}
+	return infos
 }
 
 // InstallWorkflowStatus returns the active provision workflow banner for HTMX polling

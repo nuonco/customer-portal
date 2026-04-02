@@ -638,6 +638,9 @@ func processWorkflowForCustomer(workflow *models.AppWorkflow) gin.H {
 		return cmp.Compare(a.Idx, b.Idx)
 	})
 
+	// Merge related steps (stack setup + component plan/apply/action-runs)
+	workflow.Steps = mergeStepGroups(workflow.Steps)
+
 	if workflow.Steps != nil {
 		totalSteps = len(workflow.Steps)
 		currentStepNumber = 1

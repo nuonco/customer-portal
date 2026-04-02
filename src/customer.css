@@ -383,6 +383,137 @@ details[open] > summary .input-group-chevron {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
+ * SIDEBAR NAVIGATION
+ * Left sidebar for customer portal navigation
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.customer-sidebar {
+  @apply w-64 border-r flex flex-col flex-shrink-0 h-full;
+  background-color: var(--theme-white, #ffffff);
+  border-color: var(--theme-border);
+}
+
+.dark .customer-sidebar {
+  background-color: var(--theme-surface-raised);
+  border-color: transparent;
+}
+
+.customer-sidebar-header {
+  @apply h-14 px-4 flex items-center gap-3 border-b;
+  border-color: var(--theme-border);
+}
+
+.dark .customer-sidebar-header {
+  border-color: transparent;
+}
+
+.customer-sidebar-content {
+  @apply px-3 py-3 flex flex-col gap-1;
+}
+
+.customer-sidebar-link {
+  @apply flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium;
+  @apply text-cool-grey-600 dark:text-cool-grey-400;
+  @apply transition-colors;
+}
+
+.customer-sidebar-link:hover {
+  @apply bg-black/5 dark:bg-white/10;
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+.customer-sidebar-link.active {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 15%, transparent);
+  color: var(--theme-primary, #3b82f6);
+}
+
+.dark .customer-sidebar-link.active {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
+}
+
+.customer-sidebar-footer {
+  @apply mt-auto px-3 py-3 border-t;
+  border-color: var(--theme-border);
+}
+
+.dark .customer-sidebar-footer {
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.customer-sidebar-dropdown {
+  @apply absolute bottom-full left-0 right-0 mb-1 py-1 rounded-md shadow-lg z-50;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+}
+
+.dark .customer-sidebar-dropdown {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
+ * INSTALL SWITCHER
+ * Dropdown switcher for navigating between installs (sidebar)
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.install-switcher-button {
+  @apply w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm;
+  @apply transition-colors cursor-pointer;
+  @apply border;
+  border-color: var(--theme-border);
+}
+
+.install-switcher-button:hover {
+  @apply bg-black/5 dark:bg-white/10;
+}
+
+.install-switcher-dropdown {
+  @apply absolute left-0 right-0 top-full mt-1 rounded-md shadow-lg z-50;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+}
+
+.dark .install-switcher-dropdown {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.install-switcher-search {
+  @apply w-full px-2 py-1.5 text-sm rounded border bg-transparent;
+  @apply text-cool-grey-900 dark:text-white;
+  @apply placeholder-cool-grey-400 dark:placeholder-cool-grey-500;
+  border-color: var(--theme-border);
+  outline: none;
+}
+
+.install-switcher-search:focus {
+  border-color: var(--theme-primary, #3b82f6);
+}
+
+.install-switcher-item {
+  @apply flex items-center gap-3 px-3 py-2 text-sm transition-colors cursor-pointer;
+  @apply text-cool-grey-800 dark:text-cool-grey-300;
+}
+
+.install-switcher-item:hover {
+  @apply bg-black/5 dark:bg-white/10;
+}
+
+.install-switcher-item.active {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 10%, transparent);
+  color: var(--theme-primary, #3b82f6);
+}
+
+.install-switcher-icon {
+  @apply w-7 h-7 rounded object-contain flex-shrink-0;
+}
+
+.install-switcher-icon-placeholder {
+  @apply w-7 h-7 rounded flex items-center justify-center flex-shrink-0;
+  @apply bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-500 dark:text-cool-grey-400;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════
  * MAIN WRAPPER LAYOUT
  * Flex container for proper panel positioning
  * ═══════════════════════════════════════════════════════════════════════════════ */
@@ -561,37 +692,9 @@ details[open] > summary .input-group-chevron {
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
- * SLIDING DETAIL PANEL
- * Right-side panel that slides in from the edge
+ * SECONDARY SLIDING PANEL
+ * Overlay panel for workflow details, etc.
  * ═══════════════════════════════════════════════════════════════════════════════ */
-
-.panel-overlay {
-  @apply fixed inset-0 bg-dark-grey-900/50 backdrop-blur-sm;
-  @apply opacity-0 invisible transition-all duration-300;
-  z-index: 50;
-}
-
-.panel-overlay.open {
-  @apply opacity-100 visible;
-}
-
-.detail-panel {
-  @apply fixed top-0 right-0 h-full;
-  background-color: var(--theme-white, #ffffff);
-  @apply transform translate-x-full transition-all duration-300 ease-out;
-  @apply flex flex-col;
-  border-left: 1px solid var(--theme-border-subtle);
-  width: 75%;
-  z-index: 51;
-}
-
-.dark .detail-panel {
-  background-color: var(--theme-black, #1e2433);
-}
-
-.detail-panel.open {
-  @apply translate-x-0;
-}
 
 .secondary-panel-overlay {
   @apply fixed inset-0 bg-dark-grey-900/50 backdrop-blur-sm;
@@ -622,63 +725,13 @@ details[open] > summary .input-group-chevron {
   @apply translate-x-0;
 }
 
-/* Full-width expanded panel state */
-.detail-panel.panel-full {
-  width: 100%;
-  max-width: 100%;
-}
-
-/* Two-column layout for overview in full-screen panel */
-.detail-panel.panel-full .overview-layout {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  align-items: start;
-}
-
-.detail-panel.panel-full .overview-layout > * {
-  margin-top: 0 !important;
-}
-
-/* Full width on mobile */
-@media (max-width: 768px) {
-  .detail-panel {
-    width: 100%;
-  }
-}
-
-/* When vendor admin bar is present, offset panel below it */
-body.has-vendor-bar .detail-panel,
+/* When vendor admin bar is present, offset secondary panel below it */
 body.has-vendor-bar .secondary-panel {
   top: 40px;
   height: calc(100% - 40px);
 }
 
-body.has-vendor-bar .panel-overlay {
-  top: 40px;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────────
- * PANEL HEADER
- * Sticky header with title and close button
- * ───────────────────────────────────────────────────────────────────────────── */
-
-.panel-header {
-  @apply flex items-center justify-between gap-4 px-6 py-4;
-  background-color: var(--theme-white, #ffffff);
-  @apply sticky top-0;
-  border-bottom: 1px solid var(--theme-border-subtle);
-  z-index: 1;
-}
-
-.dark .panel-header {
-  background-color: var(--theme-black, #1e2433);
-}
-
-.panel-header h2 {
-  @apply text-lg font-semibold text-cool-grey-900 dark:text-white truncate;
-}
-
+/* Close button for secondary panel */
 .panel-close-btn {
   @apply flex items-center justify-center w-8 h-8 rounded-full;
   @apply text-cool-grey-500 hover:text-cool-grey-700 dark:text-cool-grey-400 dark:hover:text-white;
@@ -689,19 +742,6 @@ body.has-vendor-bar .panel-overlay {
 }
 
 .panel-close-btn:hover {
-  background-color: var(--theme-surface-raised);
-}
-
-/* Header action button (expand/collapse) */
-.panel-header-btn {
-  @apply flex items-center justify-center w-8 h-8 rounded-md;
-  @apply text-cool-grey-500 hover:text-cool-grey-700;
-  @apply dark:text-cool-grey-400 dark:hover:text-cool-grey-200;
-  @apply dark:hover:bg-dark-grey-700;
-  @apply transition-colors duration-150;
-}
-
-.panel-header-btn:hover {
   background-color: var(--theme-surface-raised);
 }
 

@@ -218,13 +218,11 @@ func StackGCP(stackSetup workflows.StackSetupData, workflow *workflows.WorkflowD
 
 func copyToClipboard(text string) templ.ComponentScript {
 	return templ.ComponentScript{
-		Name: `__templ_copyToClipboard_4821`,
-		Function: `function __templ_copyToClipboard_4821(text){navigator.clipboard.writeText(text).then(function() {
-		if (typeof showToast === 'function') showToast('Copied to clipboard', 'success');
-	});
+		Name: `__templ_copyToClipboard_c455`,
+		Function: `function __templ_copyToClipboard_c455(text){navigator.clipboard.writeText(text);
 }`,
-		Call:       templ.SafeScript(`__templ_copyToClipboard_4821`, text),
-		CallInline: templ.SafeScriptInline(`__templ_copyToClipboard_4821`, text),
+		Call:       templ.SafeScript(`__templ_copyToClipboard_c455`, text),
+		CallInline: templ.SafeScriptInline(`__templ_copyToClipboard_c455`, text),
 	}
 }
 

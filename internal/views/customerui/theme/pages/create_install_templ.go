@@ -76,7 +76,7 @@ func CreateInstallPage(props CreateInstallPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-2xl mx-auto mb-4 flex justify-end\"><button type=\"button\" onclick=\"history.back()\" class=\"button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 transition-colors\" aria-label=\"Close\"><i class=\"ph-bold ph-x text-xl\"></i></button></div><form id=\"installForm\" class=\"max-w-2xl mx-auto space-y-6\" hx-boost=\"false\" hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"max-w-2xl mx-auto mb-4 flex justify-end pt-6\"><button type=\"button\" onclick=\"history.back()\" class=\"button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 transition-colors\" aria-label=\"Close\"><i class=\"ph-bold ph-x text-xl\"></i></button></div><form id=\"installForm\" class=\"max-w-2xl mx-auto space-y-6 pb-6\" hx-boost=\"false\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

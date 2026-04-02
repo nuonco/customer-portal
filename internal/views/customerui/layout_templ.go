@@ -175,11 +175,11 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js\"></script><script src=\"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js\"></script><script src=\"/static/js/install-panel.js\"></script></head>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js\"></script><script src=\"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js\"></script><script src=\"/static/js/install-detail.js\"></script></head>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var9 = []any{"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor)}
+		var templ_7745c5c3_Var9 = []any{"bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white overflow-hidden", props.RadiusClass, templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var9...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -220,11 +220,29 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<!-- Header -->")
+		var templ_7745c5c3_Var11 = []any{"flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor)}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.Header(partials.HeaderProps{
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var12 string
+		templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var11).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><!-- Sidebar -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = partials.Sidebar(partials.SidebarProps{
 			Theme:            convertPropsToTheme(props),
 			User:             props.User,
 			BasePath:         props.BasePath,
@@ -233,11 +251,14 @@ func Layout(props LayoutProps) templ.Component {
 			HeaderTitle:      props.HeaderTitle,
 			ActiveAccount:    props.ActiveAccount,
 			OtherAccounts:    props.OtherAccounts,
+			Installs:         props.Installs,
+			CurrentInstallID: props.CurrentInstallID,
+			ActiveTab:        props.ActiveTab,
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<!-- Main wrapper for panel support --><div id=\"main-wrapper\" class=\"main-wrapper\"><!-- Main content --><main class=\"mx-auto px-6 lg:px-8 pt-6 flex-1 w-full max-w-5xl\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<!-- Main content area --><div id=\"main-wrapper\" class=\"flex-1 flex flex-col overflow-auto\"><main class=\"flex-1 w-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -245,25 +266,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</main><!-- Footer -->")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = partials.Footer(partials.FooterProps{
-			Theme: convertPropsToTheme(props),
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div><!-- Toast notifications -->")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = partials.Toast().Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Modals -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</main></div></div><!-- Modals -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -275,17 +278,17 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) --><script>\n\t\t\t\t(function initMermaid() {\n\t\t\t\t\tvar codes = document.querySelectorAll('pre > code.language-mermaid');\n\t\t\t\t\tif (codes.length === 0) return;\n\t\t\t\t\tvar divs = [];\n\t\t\t\t\tcodes.forEach(function(code) {\n\t\t\t\t\t\tvar pre = code.parentElement;\n\t\t\t\t\t\tvar div = document.createElement('div');\n\t\t\t\t\t\tdiv.className = 'mermaid';\n\t\t\t\t\t\tdiv.textContent = code.textContent;\n\t\t\t\t\t\tpre.parentElement.replaceChild(div, pre);\n\t\t\t\t\t\tdivs.push(div);\n\t\t\t\t\t});\n\t\t\t\t\tfunction renderDiagrams() {\n\t\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t\t\tmermaid.run({ nodes: divs });\n\t\t\t\t\t}\n\t\t\t\t\tif (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {\n\t\t\t\t\t\trenderDiagrams();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar s = document.createElement('script');\n\t\t\t\t\t\ts.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';\n\t\t\t\t\t\ts.onload = renderDiagrams;\n\t\t\t\t\t\tdocument.head.appendChild(s);\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) --><script>\n\t\t\t\t(function initMermaid() {\n\t\t\t\t\tvar codes = document.querySelectorAll('pre > code.language-mermaid');\n\t\t\t\t\tif (codes.length === 0) return;\n\t\t\t\t\tvar divs = [];\n\t\t\t\t\tcodes.forEach(function(code) {\n\t\t\t\t\t\tvar pre = code.parentElement;\n\t\t\t\t\t\tvar div = document.createElement('div');\n\t\t\t\t\t\tdiv.className = 'mermaid';\n\t\t\t\t\t\tdiv.textContent = code.textContent;\n\t\t\t\t\t\tpre.parentElement.replaceChild(div, pre);\n\t\t\t\t\t\tdivs.push(div);\n\t\t\t\t\t});\n\t\t\t\t\tfunction renderDiagrams() {\n\t\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t\t\tmermaid.run({ nodes: divs });\n\t\t\t\t\t}\n\t\t\t\t\tif (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {\n\t\t\t\t\t\trenderDiagrams();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar s = document.createElement('script');\n\t\t\t\t\t\ts.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';\n\t\t\t\t\t\ts.onload = renderDiagrams;\n\t\t\t\t\t\tdocument.head.appendChild(s);\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if isLiveReload() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<script src=\"/static/js/dev-reload.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<script src=\"/static/js/dev-reload.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -310,67 +313,67 @@ func fontLinks(props LayoutProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<!-- Inter font (default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom font @font-face declarations are emitted by themeStyles() via buildThemeCSS() --><!-- Google Fonts -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<!-- Inter font (default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom font @font-face declarations are emitted by themeStyles() via buildThemeCSS() --><!-- Google Fonts -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if (props.HeadingFont != "" && props.HeadingFontBase64 == "") || (props.BodyFont != "" && props.BodyFontBase64 == "") {
 			if props.HeadingFont != "" && props.HeadingFontBase64 == "" && props.BodyFont != "" && props.BodyFontBase64 == "" && props.HeadingFont != props.BodyFont {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<link href=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var12 templ.SafeURL
-				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@500;600;700&family=" + props.BodyFont + ":wght@400;500;600&display=swap")
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 146, Col: 161}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" rel=\"stylesheet\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else if props.HeadingFont != "" && props.HeadingFontBase64 == "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<link href=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var13 templ.SafeURL
-				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@400;500;600;700&display=swap")
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 148, Col: 118}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" rel=\"stylesheet\">")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			} else if props.BodyFont != "" && props.BodyFontBase64 == "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<link href=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<link href=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var14 templ.SafeURL
-				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.BodyFont + ":wght@400;500;600;700&display=swap")
+				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@500;600;700&family=" + props.BodyFont + ":wght@400;500;600&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 150, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 142, Col: 161}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\" rel=\"stylesheet\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\" rel=\"stylesheet\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else if props.HeadingFont != "" && props.HeadingFontBase64 == "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<link href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var15 templ.SafeURL
+				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@400;500;600;700&display=swap")
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 144, Col: 118}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\" rel=\"stylesheet\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else if props.BodyFont != "" && props.BodyFontBase64 == "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<link href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var16 templ.SafeURL
+				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.BodyFont + ":wght@400;500;600;700&display=swap")
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 146, Col: 115}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" rel=\"stylesheet\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -397,9 +400,9 @@ func themeStyles(props LayoutProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templ.Raw(buildThemeCSS(props)).Render(ctx, templ_7745c5c3_Buffer)

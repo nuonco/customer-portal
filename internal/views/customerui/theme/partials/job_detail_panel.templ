@@ -1,0 +1,178 @@
+package partials
+
+import (
+	"fmt"
+
+	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// JobDetailProps holds data for the job detail sliding panel.
+type JobDetailProps struct {
+	JobType      string // "stack", "sandbox", "deploy", "action"
+	StackRun     *nuon.StackRun
+	StackOutputs map[string]string
+	SandboxRun   *nuonmodels.AppInstallSandboxRun
+	Deploy       *nuonmodels.AppInstallDeploy
+	Workflow     *nuonmodels.AppWorkflow // for action workflows
+}
+
+// actionWorkflowOutputs extracts outputs from the first action workflow run in a workflow.
+func actionWorkflowOutputs(wf *nuonmodels.AppWorkflow) map[string]string {
+	if wf == nil {
+		return nil
+	}
+	for _, run := range wf.InstallActionWorkflowRuns {
+		if m := toStringMap(run.Outputs); len(m) > 0 {
+			return m
+		}
+	}
+	return nil
+}
+
+func toStringMap(v interface{}) map[string]string {
+	m, ok := v.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	result := make(map[string]string, len(m))
+	for k, val := range m {
+		result[k] = fmt.Sprintf("%v", val)
+	}
+	return result
+}
+
+templ JobDetailPanel(props JobDetailProps) {
+	<div class="p-4 space-y-4">
+		switch props.JobType {
+		case "stack":
+			if props.StackRun != nil {
+				@stackRunDetail(props.StackRun, props.StackOutputs)
+			}
+		case "sandbox":
+			if props.SandboxRun != nil {
+				@sandboxRunDetail(props.SandboxRun)
+			}
+		case "deploy":
+			if props.Deploy != nil {
+				@deployDetail(props.Deploy)
+			}
+		case "action":
+			if props.Workflow != nil {
+				@actionWorkflowDetail(props.Workflow)
+			}
+		default:
+			<p class="text-sm text-cool-grey-500">Unknown job type.</p>
+		}
+	</div>
+}
+
+templ stackRunDetail(run *nuon.StackRun, outputs map[string]string) {
+	@jobDetailSection("Details") {
+		@jobDetailRow("Type", stackRunType(*run))
+		@jobDetailRow("Status", run.VersionStatus)
+		@jobDetailRow("Created", FormatAPITime(run.CreatedAt))
+		@jobDetailRow("Updated", FormatAPITime(run.UpdatedAt))
+		@jobDetailRow("ID", run.ID)
+	}
+	if len(outputs) > 0 {
+		@jobDetailSection("Outputs") {
+			for key, val := range outputs {
+				@jobDetailRow(key, val)
+			}
+		}
+	}
+}
+
+templ sandboxRunDetail(run *nuonmodels.AppInstallSandboxRun) {
+	@jobDetailSection("Details") {
+		@jobDetailRow("Operation", string(run.RunType))
+		@jobDetailRow("Status", run.Status)
+		if run.StatusDescription != "" {
+			@jobDetailRow("Description", run.StatusDescription)
+		}
+		@jobDetailRow("Created", FormatAPITime(run.CreatedAt))
+		@jobDetailRow("Updated", FormatAPITime(run.UpdatedAt))
+		@jobDetailRow("ID", run.ID)
+	}
+	if outputsMap := toStringMap(run.Outputs); len(outputsMap) > 0 {
+		@jobDetailSection("Outputs") {
+			for key, val := range outputsMap {
+				@jobDetailRow(key, val)
+			}
+		}
+	}
+}
+
+templ deployDetail(deploy *nuonmodels.AppInstallDeploy) {
+	@jobDetailSection("Details") {
+		@jobDetailRow("Component", deploy.ComponentName)
+		@jobDetailRow("Type", string(deploy.InstallDeployType))
+		@jobDetailRow("Status", deploy.Status)
+		if deploy.StatusDescription != "" {
+			@jobDetailRow("Description", deploy.StatusDescription)
+		}
+		@jobDetailRow("Created", FormatAPITime(deploy.CreatedAt))
+		@jobDetailRow("Updated", FormatAPITime(deploy.UpdatedAt))
+		@jobDetailRow("ID", deploy.ID)
+	}
+	if outputsMap := toStringMap(deploy.Outputs); len(outputsMap) > 0 {
+		@jobDetailSection("Outputs") {
+			for key, val := range outputsMap {
+				@jobDetailRow(key, val)
+			}
+		}
+	}
+}
+
+templ actionWorkflowDetail(wf *nuonmodels.AppWorkflow) {
+	@jobDetailSection("Details") {
+		@jobDetailRow("Name", wf.Name)
+		@jobDetailRow("Type", string(wf.Type))
+		if wf.Status != nil {
+			@jobDetailRow("Status", string(wf.Status.Status))
+		}
+		@jobDetailRow("Created", FormatAPITime(wf.CreatedAt))
+		if wf.FinishedAt != "" {
+			@jobDetailRow("Finished", FormatAPITime(wf.FinishedAt))
+		}
+		@jobDetailRow("ID", wf.ID)
+	}
+	if outputsMap := actionWorkflowOutputs(wf); len(outputsMap) > 0 {
+		@jobDetailSection("Outputs") {
+			for key, val := range outputsMap {
+				@jobDetailRow(key, val)
+			}
+		}
+	} else {
+		@jobDetailSection("Outputs") {
+			@jobDetailEmpty("No outputs defined")
+		}
+	}
+}
+
+templ jobDetailEmpty(msg string) {
+	<tr>
+		<td colspan="2" class="py-3 text-xs text-cool-grey-500 dark:text-cool-grey-400 italic">{ msg }</td>
+	</tr>
+}
+
+templ jobDetailSection(title string) {
+	<div class="space-y-2">
+		<h4 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400">{ title }</h4>
+		<table class="w-full text-sm">
+			<tbody>
+				{ children... }
+			</tbody>
+		</table>
+	</div>
+}
+
+templ jobDetailRow(label string, value string) {
+	if value != "" {
+		<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+			<td class="py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top">{ label }</td>
+			<td class="py-2 text-xs text-cool-grey-900 dark:text-white break-all">{ value }</td>
+		</tr>
+	}
+}

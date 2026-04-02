@@ -1,0 +1,300 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+)
+
+// SidebarProps contains props for the customer sidebar navigation
+type SidebarProps struct {
+	Theme            *models.AppTheme
+	User             *models.User
+	BasePath         string
+	HasPublishedApps bool
+	ActiveNav        string // "apps" or "installs"
+	HeaderTitle      string // Resolved header title (empty = hidden)
+	ActiveAccount    *models.CustomerAccount
+	OtherAccounts    []models.CustomerAccount
+	Installs         []models.SidebarInstall // Installs for the switcher
+	CurrentInstallID string                  // Currently viewed install (empty if not on detail page)
+	ActiveTab        string                  // Active install detail tab ("overview", "stack", etc.)
+}
+
+// Sidebar renders the customer sidebar navigation with logo, install switcher, and user menu.
+templ Sidebar(props SidebarProps) {
+	<aside class="customer-sidebar" id="customer-sidebar">
+		<!-- Header: Logo + Title -->
+		<div class="customer-sidebar-header">
+			if props.Theme != nil && (props.Theme.LogoLightBase64 != "" || props.Theme.LogoDarkBase64 != "") {
+				if props.Theme.LogoDarkBase64 != "" {
+					<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[8rem] object-contain dark:hidden"/>
+					<img src={ props.Theme.LogoDarkBase64 } alt="Logo" class="h-8 w-auto max-w-[8rem] object-contain hidden dark:block"/>
+				} else {
+					<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-8 w-auto max-w-[8rem] object-contain"/>
+				}
+			}
+			if props.HeaderTitle != "" {
+				<span class="header-title text-sm font-semibold text-[var(--theme-black)] dark:text-[var(--theme-white)] truncate">{ props.HeaderTitle }</span>
+			}
+		</div>
+		<!-- Install Switcher -->
+		<div class="customer-sidebar-content">
+			@installSwitcher(props)
+			<!-- Install detail tabs (shown when viewing an install) -->
+			if props.CurrentInstallID != "" {
+				<div class="mt-2 pt-2 border-t border-[var(--theme-border)] flex flex-col gap-0.5">
+					@installTabLink(props, "overview", "ph-house-simple", "Overview")
+					@installTabLink(props, "stack", "ph-stack", "Stack")
+					@installTabLink(props, "sandbox", "ph-shipping-container", "Sandbox")
+					@installTabLink(props, "components", "ph-cards", "Components")
+					@installTabLink(props, "roles", "ph-file-lock", "Roles")
+					@installTabLink(props, "policies", "ph-shield-check", "Policies")
+					@installTabLink(props, "history", "ph-clock", "History")
+					@installTabLink(props, "audit", "ph-clock-counter-clockwise", "Audit Log")
+				</div>
+			}
+			<!-- Divider + App Catalog -->
+			<div class="mt-2 pt-2 border-t border-[var(--theme-border)]">
+				<a
+					href={ templ.SafeURL(props.BasePath + "/apps") }
+					class={ "button button-nav customer-sidebar-link", templ.KV("active", props.ActiveNav == "apps") }
+				>
+					<i class="ph-bold ph-squares-four text-lg"></i>
+					<span>App Catalog</span>
+				</a>
+			</div>
+		</div>
+		<!-- Bottom section: User menu -->
+		<div class="mt-auto">
+			<div class="customer-sidebar-footer">
+			if props.User != nil {
+				<div class="relative" id="customerSidebarMenuContainer">
+					<button
+						type="button"
+						onclick="toggleCustomerSidebarMenu()"
+						class="button button-dropdown-trigger w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+						id="customerSidebarMenuButton"
+					>
+						<!-- Avatar -->
+						<div class="w-8 h-8 rounded-full bg-[var(--theme-primary,#3b82f6)] text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+							if props.User.Email != "" {
+								{ string([]rune(props.User.Email)[:1]) }
+							}
+						</div>
+						<div class="flex-1 min-w-0 text-left">
+							<div class="text-sm font-medium text-[var(--theme-black)] dark:text-[var(--theme-white)] truncate">
+								if props.ActiveAccount != nil {
+									{ props.ActiveAccount.Name }
+								} else {
+									{ props.User.Email }
+								}
+							</div>
+							if props.ActiveAccount != nil {
+								<div class="text-xs text-cool-grey-500 dark:text-cool-grey-400 truncate">{ props.User.Email }</div>
+							}
+						</div>
+						<i class="ph-bold ph-caret-up-down text-cool-grey-400 text-sm flex-shrink-0"></i>
+					</button>
+					<!-- Dropdown (opens upward) -->
+					<div id="customerSidebarDropdown" class="customer-sidebar-dropdown hidden">
+						<!-- Switch Accounts -->
+						if len(props.OtherAccounts) > 0 {
+							<div class="px-2 py-1.5">
+								<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 px-2 pb-1">Switch Account</div>
+								for _, account := range props.OtherAccounts {
+									<form method="post" action={ templ.SafeURL(props.BasePath + "/account/switch") } hx-post={ props.BasePath + "/account/switch" } hx-swap="none">
+										<input type="hidden" name="account_id" value={ account.ID }/>
+										<button
+											type="submit"
+											class="button button-dropdown-item w-full flex items-center gap-2 px-2 py-1.5 text-sm rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer"
+										>
+											<i class="ph-bold ph-swap text-base text-cool-grey-400"></i>
+											<span class="truncate">{ account.Name }</span>
+										</button>
+									</form>
+								}
+							</div>
+							<div class="border-t border-[var(--theme-border)] my-1"></div>
+						}
+						<!-- Create New Account -->
+						<a
+							href={ templ.SafeURL(props.BasePath + "/account/new") }
+							class="button button-dropdown-item flex items-center gap-2 px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+						>
+							<i class="ph-bold ph-plus text-base text-cool-grey-400"></i>
+							<span>New Account</span>
+						</a>
+						<!-- Account Settings -->
+						<a
+							href={ templ.SafeURL(props.BasePath + "/account") }
+							class="button button-dropdown-item flex items-center gap-2 px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors"
+						>
+							<i class="ph-bold ph-user-circle text-base text-cool-grey-400"></i>
+							<span>Account Settings</span>
+						</a>
+						<div class="border-t border-[var(--theme-border)] my-1"></div>
+						<!-- Log out -->
+						<button
+							type="button"
+							onclick="logout()"
+							class="button button-danger w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer"
+						>
+							<i class="ph-bold ph-sign-out text-base"></i>
+							<span>Log out</span>
+						</button>
+					</div>
+				</div>
+			} else {
+				<a
+					href={ templ.SafeURL(props.BasePath + "/login") }
+					class="button button-nav customer-sidebar-link"
+				>
+					<i class="ph-bold ph-sign-in text-lg"></i>
+					<span>Log in</span>
+				</a>
+			}
+			</div>
+		</div>
+	</aside>
+	@sidebarScripts()
+}
+
+// installTabLink renders a sidebar nav link for an install detail tab.
+templ installTabLink(props SidebarProps, tab string, icon string, label string) {
+	<a
+		href={ templ.SafeURL(props.BasePath + "/installs/" + props.CurrentInstallID + "/" + tab) }
+		class={ "button button-nav customer-sidebar-link", templ.KV("active", props.ActiveTab == tab) }
+	>
+		<i class={ "ph-bold " + icon + " text-lg" }></i>
+		<span>{ label }</span>
+	</a>
+}
+
+// installSwitcher renders the install switcher dropdown, modeled after the admin org switcher.
+templ installSwitcher(props SidebarProps) {
+	<div class="relative" id="install-switcher">
+		<button type="button" onclick="toggleInstallSwitcher()" class="install-switcher-button">
+			if props.CurrentInstallID != "" {
+				// Show current install
+				for _, inst := range props.Installs {
+					if inst.ID == props.CurrentInstallID {
+						@installSwitcherIcon(inst)
+						<div class="flex-1 min-w-0 flex flex-col text-left">
+							<span class="text-xs font-semibold truncate text-[var(--theme-black)] dark:text-[var(--theme-white)]">{ inst.Name }</span>
+							if inst.AppName != "" {
+								<span class="text-[11px] text-cool-grey-500 dark:text-cool-grey-400 truncate">{ inst.AppName }</span>
+							}
+						</div>
+					}
+				}
+			} else {
+				<span class="install-switcher-icon-placeholder">
+					<i class="ph-bold ph-minus text-sm"></i>
+				</span>
+				<span class="flex-1 text-left text-xs text-cool-grey-500 dark:text-cool-grey-400">No install selected</span>
+			}
+			<i class="ph-bold ph-caret-up-down text-cool-grey-400 text-xs flex-shrink-0"></i>
+		</button>
+		<!-- Dropdown -->
+		<div id="install-switcher-dropdown" class="install-switcher-dropdown hidden">
+			if len(props.Installs) > 6 {
+				<div class="px-3 py-2 border-b border-[var(--theme-border)]">
+					<input
+						type="text"
+						placeholder="Search installs..."
+						class="install-switcher-search"
+						oninput="filterInstalls(this.value)"
+					/>
+				</div>
+			}
+			<div id="install-list" class="py-1 max-h-64 overflow-y-auto">
+				if len(props.Installs) > 0 {
+					for _, inst := range props.Installs {
+						<a
+							href={ templ.SafeURL(props.BasePath + "/installs/" + inst.ID + "/overview") }
+							class={ "install-switcher-item", templ.KV("active", inst.ID == props.CurrentInstallID) }
+							data-name={ inst.Name }
+						>
+							@installSwitcherIcon(inst)
+							<div class="flex-1 min-w-0">
+								<div class="text-sm truncate">{ inst.Name }</div>
+								if inst.AppName != "" {
+									<div class="text-[11px] text-cool-grey-500 dark:text-cool-grey-400 truncate">{ inst.AppName }</div>
+								}
+							</div>
+						</a>
+					}
+				} else {
+					<div class="px-4 py-3 text-sm text-cool-grey-500 dark:text-cool-grey-400 text-center">
+						No installs yet
+					</div>
+				}
+			</div>
+			<!-- Create Install -->
+			<div class="border-t border-[var(--theme-border)] pt-1 pb-1">
+				<a
+					href={ templ.SafeURL(props.BasePath + "/apps") }
+					class="install-switcher-item"
+				>
+					<span class="install-switcher-icon-placeholder">
+						<i class="ph-bold ph-plus text-sm"></i>
+					</span>
+					<span class="text-sm">Create Install</span>
+				</a>
+			</div>
+		</div>
+	</div>
+}
+
+// installSwitcherIcon renders the app logo or a fallback icon for a sidebar install.
+templ installSwitcherIcon(inst models.SidebarInstall) {
+	if inst.AppLogoLight != "" {
+		if inst.AppLogoDark != "" {
+			<img src={ inst.AppLogoLight } alt="" class="install-switcher-icon dark:hidden"/>
+			<img src={ inst.AppLogoDark } alt="" class="install-switcher-icon hidden dark:block"/>
+		} else {
+			<img src={ inst.AppLogoLight } alt="" class="install-switcher-icon"/>
+		}
+	} else {
+		<span class="install-switcher-icon-placeholder">
+			<i class="ph-bold ph-package text-sm"></i>
+		</span>
+	}
+}
+
+templ sidebarScripts() {
+	<script>
+		function toggleCustomerSidebarMenu() {
+			var dropdown = document.getElementById('customerSidebarDropdown');
+			if (dropdown) dropdown.classList.toggle('hidden');
+		}
+
+		function toggleInstallSwitcher() {
+			var dropdown = document.getElementById('install-switcher-dropdown');
+			if (dropdown) dropdown.classList.toggle('hidden');
+		}
+
+		function filterInstalls(query) {
+			var items = document.querySelectorAll('#install-list .install-switcher-item');
+			var lq = query.toLowerCase();
+			items.forEach(function(item) {
+				var name = (item.getAttribute('data-name') || '').toLowerCase();
+				item.style.display = name.includes(lq) ? '' : 'none';
+			});
+		}
+
+		document.addEventListener('click', function(event) {
+			// Close user menu
+			var menuContainer = document.getElementById('customerSidebarMenuContainer');
+			var menuDropdown = document.getElementById('customerSidebarDropdown');
+			if (menuContainer && !menuContainer.contains(event.target)) {
+				if (menuDropdown) menuDropdown.classList.add('hidden');
+			}
+			// Close install switcher
+			var switcherContainer = document.getElementById('install-switcher');
+			var switcherDropdown = document.getElementById('install-switcher-dropdown');
+			if (switcherContainer && !switcherContainer.contains(event.target)) {
+				if (switcherDropdown) switcherDropdown.classList.add('hidden');
+			}
+		});
+	</script>
+}

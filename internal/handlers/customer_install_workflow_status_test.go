@@ -24,6 +24,205 @@ func stepWithStatus(name string, status string, idx int64) *nuonmodels.AppWorkfl
 	return s
 }
 
+func TestMergeComponentSteps(t *testing.T) {
+	t.Run("merges plan+apply pair with underscores", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("sync_and_plan_mycomp", "completed", 0),
+			stepWithStatus("apply_mycomp", "in-progress", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_mycomp" {
+			t.Errorf("expected name 'deploy_mycomp', got %q", merged[0].Name)
+		}
+		if string(merged[0].Status.Status) != "in-progress" {
+			t.Errorf("expected status 'in-progress', got %q", string(merged[0].Status.Status))
+		}
+	})
+
+	t.Run("merges plan+apply pair with spaces", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Sync and plan certificate", "completed", 0),
+			stepWithStatus("Apply certificate", "in-progress", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_certificate" {
+			t.Errorf("expected name 'deploy_certificate', got %q", merged[0].Name)
+		}
+		if string(merged[0].Status.Status) != "in-progress" {
+			t.Errorf("expected status 'in-progress', got %q", string(merged[0].Status.Status))
+		}
+	})
+
+	t.Run("merges multi-word component names with spaces", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Sync and plan rds subnet", "completed", 0),
+			stepWithStatus("Apply rds subnet", "completed", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_rds_subnet" {
+			t.Errorf("expected name 'deploy_rds_subnet', got %q", merged[0].Name)
+		}
+	})
+
+	t.Run("uses plan step status when plan is active", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Sync and plan foo", "approval-awaiting", 0),
+			stepWithStatus("Apply foo", "", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if string(merged[0].Status.Status) != "approval-awaiting" {
+			t.Errorf("expected status 'approval-awaiting', got %q", string(merged[0].Status.Status))
+		}
+	})
+
+	t.Run("unpaired plan step passes through", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("sync_and_plan_orphan", "in-progress", 0),
+			stepWithStatus("other_step", "pending", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 2 {
+			t.Fatalf("expected 2 steps, got %d", len(merged))
+		}
+		if merged[0].Name != "sync_and_plan_orphan" {
+			t.Errorf("expected original name preserved, got %q", merged[0].Name)
+		}
+	})
+
+	t.Run("non-component steps pass through unchanged", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("create_install_stack", "completed", 0),
+			stepWithStatus("await_install_stack", "in-progress", 1),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 2 {
+			t.Fatalf("expected 2 steps, got %d", len(merged))
+		}
+	})
+
+	t.Run("retryable from either step", func(t *testing.T) {
+		plan := stepWithStatus("sync_and_plan_bar", "completed", 0)
+		apply := stepWithStatus("apply_bar", "error", 1)
+		apply.Retryable = true
+		merged := mergeComponentSteps([]*nuonmodels.AppWorkflowStep{plan, apply})
+		if !merged[0].Retryable {
+			t.Error("expected merged step to be retryable")
+		}
+	})
+
+	t.Run("post-deploy action run folded into deploy step", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Sync and plan certificate", "completed", 0),
+			stepWithStatus("Apply certificate", "completed", 1),
+			stepWithStatus("Certificate status Action Run (post-deploy-component)", "in-progress", 2),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_certificate" {
+			t.Errorf("expected 'deploy_certificate', got %q", merged[0].Name)
+		}
+		// Action run is in-progress so it should be the active step
+		if string(merged[0].Status.Status) != "in-progress" {
+			t.Errorf("expected status 'in-progress', got %q", string(merged[0].Status.Status))
+		}
+	})
+
+	t.Run("pre-deploy action run folded into deploy step", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Cert check Action Run (pre-deploy-component)", "completed", 0),
+			stepWithStatus("Sync and plan certificate", "completed", 1),
+			stepWithStatus("Apply certificate", "in-progress", 2),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_certificate" {
+			t.Errorf("expected 'deploy_certificate', got %q", merged[0].Name)
+		}
+	})
+
+	t.Run("multiple component pairs merge independently", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("sync_and_plan_a", "completed", 0),
+			stepWithStatus("apply_a", "completed", 1),
+			stepWithStatus("sync_and_plan_b", "in-progress", 2),
+			stepWithStatus("apply_b", "", 3),
+		}
+		merged := mergeComponentSteps(steps)
+		if len(merged) != 2 {
+			t.Fatalf("expected 2 steps, got %d", len(merged))
+		}
+		if merged[0].Name != "deploy_a" {
+			t.Errorf("expected 'deploy_a', got %q", merged[0].Name)
+		}
+		if merged[1].Name != "deploy_b" {
+			t.Errorf("expected 'deploy_b', got %q", merged[1].Name)
+		}
+	})
+}
+
+func TestMergeStackSteps(t *testing.T) {
+	t.Run("absorbs generate_install_state and provision_runner into generate_install_stack", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Generate install state", "completed", 0),
+			stepWithStatus("Reprovision runner service account", "completed", 1),
+			stepWithStatus("Generate install stack", "completed", 2),
+			stepWithStatus("Await install stack", "completed", 3),
+		}
+		merged := mergeStackSteps(steps)
+		if len(merged) != 2 {
+			t.Fatalf("expected 2 steps, got %d", len(merged))
+		}
+		if normalizeStepName(merged[0].Name) != "generate_install_stack" {
+			t.Errorf("expected 'Generate install stack', got %q", merged[0].Name)
+		}
+		if normalizeStepName(merged[1].Name) != "await_install_stack" {
+			t.Errorf("expected 'Await install stack', got %q", merged[1].Name)
+		}
+	})
+
+	t.Run("active status from absorbed step surfaces", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Generate install state", "in-progress", 0),
+			stepWithStatus("Provision runner service account", "", 1),
+			stepWithStatus("Generate install stack", "", 2),
+		}
+		merged := mergeStackSteps(steps)
+		if len(merged) != 1 {
+			t.Fatalf("expected 1 step, got %d", len(merged))
+		}
+		if string(merged[0].Status.Status) != "in-progress" {
+			t.Errorf("expected 'in-progress', got %q", string(merged[0].Status.Status))
+		}
+	})
+
+	t.Run("no generate_install_stack leaves steps unchanged", func(t *testing.T) {
+		steps := []*nuonmodels.AppWorkflowStep{
+			stepWithStatus("Generate install state", "completed", 0),
+			stepWithStatus("Some other step", "completed", 1),
+		}
+		merged := mergeStackSteps(steps)
+		if len(merged) != 2 {
+			t.Fatalf("expected 2 steps, got %d", len(merged))
+		}
+	})
+}
+
 func TestGroupStepsIntoPhases(t *testing.T) {
 	t.Run("nil workflow returns nil", func(t *testing.T) {
 		phases := groupStepsIntoPhases(nil)

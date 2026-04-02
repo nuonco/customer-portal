@@ -6,29 +6,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
-// InstallWithApprovalStatus extends Install with approval status info
-type InstallWithApprovalStatus struct {
-	models.Install
-	AppName  string `json:"app_name"` // Fetched from Nuon API at runtime
-	Platform string `json:"platform"` // Cloud platform (e.g. "aws", "azure", "gcp") from Nuon API
-}
-
-// InstallPaginationData holds pagination metadata for customer installs
-type InstallPaginationData struct {
-	Installs     []InstallWithApprovalStatus `json:"installs"`
-	CurrentPage  int                         `json:"current_page"`
-	TotalPages   int                         `json:"total_pages"`
-	HasPrevious  bool                        `json:"has_previous"`
-	HasNext      bool                        `json:"has_next"`
-	PreviousPage int                         `json:"previous_page"`
-	NextPage     int                         `json:"next_page"`
-	TotalCount   int64                       `json:"total_count"`
-	PerPage      int                         `json:"per_page"`
-	ShowingFrom  int                         `json:"showing_from"`
-	ShowingTo    int                         `json:"showing_to"`
-	PageNumbers  []int                       `json:"page_numbers"`
-}
-
 // WorkflowData holds processed workflow information for display
 type WorkflowData struct {
 	ID                       string
@@ -108,6 +85,11 @@ type LayoutProps struct {
 	// Navigation
 	HasPublishedApps bool   // Whether the org has published apps (shows nav links when true)
 	ActiveNav        string // "apps" or "installs" — highlights the current nav item
+
+	// Install switcher
+	Installs         []models.SidebarInstall // All installs visible in sidebar switcher
+	CurrentInstallID string                  // ID of the currently viewed install (empty if not on detail page)
+	ActiveTab        string                  // Active install detail tab ("overview", "stack", etc.)
 
 	// Account switching
 	ActiveAccount *models.CustomerAccount  // Currently active account (nil if no account)

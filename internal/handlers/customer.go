@@ -507,6 +507,9 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		headerTitle = theme.GetHeaderTitle(orgName)
 	}
 
+	// Load installs for sidebar switcher
+	sidebarInstalls := h.loadSidebarInstalls(user, activeAccount)
+
 	return customerui.LayoutProps{
 		Title:                     title,
 		User:                      user,
@@ -534,9 +537,76 @@ func (h *Handler) buildCustomerLayoutProps(title string, user *models.User, them
 		OrgName:                   orgName,
 		PortalDomain:              portalDomain,
 		AdminURL:                  adminURL,
+		Installs:                  sidebarInstalls,
 		ActiveAccount:             activeAccount,
 		OtherAccounts:             otherAccounts,
 	}
+}
+
+// loadSidebarInstalls loads all installs visible to the user for the sidebar switcher.
+func (h *Handler) loadSidebarInstalls(user *models.User, activeAccount *models.CustomerAccount) []models.SidebarInstall {
+	if user == nil || activeAccount == nil {
+		return nil
+	}
+
+	var installs []models.Install
+	err := h.db.
+		Where(
+			"(user_id = ? AND customer_account_id = ?) OR (customer_account_id = ? AND visibility = ?)",
+			user.ID, activeAccount.ID, activeAccount.ID, models.VisibilityAccount,
+		).
+		Order("created_at DESC").
+		Find(&installs).Error
+	if err != nil {
+		return nil
+	}
+
+	// Collect unique app IDs to fetch logos from PublishedApp
+	appIDs := make(map[string]bool)
+	for _, inst := range installs {
+		appID := inst.GetAppID()
+		if appID != "" {
+			appIDs[appID] = true
+		}
+	}
+
+	// Fetch app logos from PublishedApp records
+	type appLogo struct {
+		Light string
+		Dark  string
+	}
+	logoMap := make(map[string]appLogo)
+	if len(appIDs) > 0 {
+		ids := make([]string, 0, len(appIDs))
+		for id := range appIDs {
+			ids = append(ids, id)
+		}
+		var publishedApps []models.PublishedApp
+		h.db.Where("app_id IN ?", ids).Find(&publishedApps)
+		for _, pa := range publishedApps {
+			logoMap[pa.AppID] = appLogo{Light: pa.LogoLightBase64, Dark: pa.LogoDarkBase64}
+		}
+	}
+
+	result := make([]models.SidebarInstall, 0, len(installs))
+	for _, inst := range installs {
+		appID := inst.GetAppID()
+		logo := logoMap[appID]
+		name := inst.Name
+		if name == "" {
+			name = inst.NuonInstallID
+		}
+		appName := inst.AppName
+		result = append(result, models.SidebarInstall{
+			ID:           inst.ID,
+			Name:         name,
+			AppName:      appName,
+			AppLogoLight: logo.Light,
+			AppLogoDark:  logo.Dark,
+		})
+	}
+
+	return result
 }
 
 // GetInstallLinkAppConfig returns the app configuration for a customer install link

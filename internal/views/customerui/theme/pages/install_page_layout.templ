@@ -1,0 +1,67 @@
+package pages
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+)
+
+// InstallPageProps shared props for all install detail tab pages
+type InstallPageProps struct {
+	customerui.LayoutProps
+	Install         *models.Install
+	AppName         string
+	APIDeletedError bool
+	PageTitle       string // Display title for the current tab ("Overview", "Stack", etc.)
+}
+
+// installPageShell renders the shared shell for install detail pages:
+// page header, content slot, secondary panel, modals, and config div.
+templ installPageShell(props InstallPageProps) {
+	<!-- Page Header -->
+	<div class="page-header flex items-center justify-between gap-4 mb-6 px-6 pt-6">
+		<div class="min-w-0 flex-1">
+			<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate">{ props.PageTitle }</h1>
+		</div>
+		<div class="flex items-center gap-2 flex-shrink-0">
+			<div id="page-actions-container"></div>
+		</div>
+	</div>
+
+	<!-- Tab content -->
+	{ children... }
+
+	<!-- Secondary panel overlay -->
+	<div id="secondary-panel-overlay" class="secondary-panel-overlay" onclick="closeSecondaryPanel()"></div>
+	<script>
+		window.closeSecondaryPanel = function() {
+			var panel = document.getElementById('secondary-panel');
+			if (panel) panel.classList.remove('open');
+			var overlay = document.getElementById('secondary-panel-overlay');
+			if (overlay) overlay.classList.remove('open');
+		};
+	</script>
+	<div id="secondary-panel" class="secondary-panel">
+		<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+			<h3 id="secondary-panel-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+			<button type="button" class="button button-icon panel-close-btn" onclick="closeSecondaryPanel()">
+				<i class="ph-bold ph-x text-lg"></i>
+			</button>
+		</div>
+		<div id="secondary-panel-content" class="flex-1 overflow-y-auto px-6 py-4"></div>
+	</div>
+
+	<!-- Edit Inputs Modal -->
+	@partials.EditInputsModalPanel()
+
+	<!-- Access role info modal -->
+	@partials.AccessEnableRoleModal()
+
+	<!-- Config data for JavaScript -->
+	<div
+		id="install-detail-page-config"
+		class="hidden"
+		data-base-path={ props.BasePath }
+		data-install-id={ props.Install.ID }
+	></div>
+}

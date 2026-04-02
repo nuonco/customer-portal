@@ -132,18 +132,60 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 			case "roles":
 				props.StackInfo = h.buildStackInfo(ctx, apiClient, install)
 			case "audit":
+				props.AuditSubTab = c.DefaultQuery("audit_sub", "stack")
 				offset := queryInt(c, "audit_offset", 0)
-				if workflows, hasMore, err := apiClient.GetInstallWorkflows(ctx, installID, offset, auditPageSize); err == nil {
-					props.Workflows = workflows
-					props.WorkflowsPagination = partials.AuditTabPagination{
-						Total:      offset + len(workflows),
-						HasPrev:    offset > 0,
-						HasNext:    hasMore,
-						PrevOffset: max(0, offset-auditPageSize),
-						NextOffset: offset + auditPageSize,
+
+				switch props.AuditSubTab {
+				case "stack":
+					if runs, err := apiClient.GetInstallStackRuns(ctx, installID); err == nil {
+						if stack, err := apiClient.GetInstallStack(ctx, installID); err == nil && stack != nil {
+							versionStatus := make(map[string]string)
+							for _, v := range stack.Versions {
+								if v.CompositeStatus != nil {
+									versionStatus[v.ID] = string(v.CompositeStatus.Status)
+								}
+							}
+							for i := range runs {
+								if s, ok := versionStatus[runs[i].InstallStackVersionID]; ok {
+									runs[i].VersionStatus = s
+								}
+							}
+						}
+						props.StackPagination = auditPagination(len(runs), offset)
+						props.StackRuns = paginateStackRuns(runs, offset)
+					} else {
+						zap.L().Warn("failed to fetch stack runs", zap.Error(err))
 					}
-				} else {
-					zap.L().Warn("failed to fetch workflows", zap.Error(err))
+				case "sandbox":
+					if runs, err := apiClient.GetInstallSandboxRuns(ctx, installID); err == nil {
+						props.SandboxPagination = auditPagination(len(runs), offset)
+						props.SandboxRuns = paginateSandboxRuns(runs, offset)
+					} else {
+						zap.L().Warn("failed to fetch sandbox runs", zap.Error(err))
+					}
+				case "components":
+					if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
+						props.Components = components
+					}
+					if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
+						props.DeploysPagination = auditPagination(len(deploys), offset)
+						props.Deploys = paginateDeploys(deploys, offset)
+					} else {
+						zap.L().Warn("failed to fetch deploys", zap.Error(err))
+					}
+				case "actions":
+					if workflows, hasMore, err := apiClient.GetInstallWorkflowsByType(ctx, installID, offset, auditPageSize, "action_workflow_run"); err == nil {
+						props.ActionWorkflows = workflows
+						props.ActionsPagination = partials.AuditTabPagination{
+							Total:      offset + len(workflows),
+							HasPrev:    offset > 0,
+							HasNext:    hasMore,
+							PrevOffset: max(0, offset-auditPageSize),
+							NextOffset: offset + auditPageSize,
+						}
+					} else {
+						zap.L().Warn("failed to fetch action workflows", zap.Error(err))
+					}
 				}
 			}
 		}
@@ -306,6 +348,7 @@ func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, 
 			info.Repo = pg.Repo
 			info.Directory = pg.Directory
 			info.Branch = pg.Branch
+			info.RepoPublic = true
 		}
 	}
 

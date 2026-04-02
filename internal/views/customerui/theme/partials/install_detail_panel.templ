@@ -6,6 +6,8 @@ import (
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -123,6 +125,17 @@ type StackSetupData struct {
 	NuonInstallID      string // GCP only (for backend snippet)
 }
 
+// ComponentInfo holds display data for a component card on the overview.
+type ComponentInfo struct {
+	Name       string
+	Type       string
+	Status     string
+	Repo       string
+	Directory  string
+	Branch     string
+	RepoPublic bool
+}
+
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
 	Install                *models.Install
@@ -141,8 +154,10 @@ type InstallDetailPanelProps struct {
 	ProvisionPhases        []ProvisionPhase
 	HasActiveProvision     bool
 	StackInfo              *StackInfo
+	LatestStackRuns        []nuon.StackRun
 	SandboxInfo            *SandboxInfo
-	Components             []*nuonmodels.AppInstallComponent
+	LatestSandboxRuns      []*nuonmodels.AppInstallSandboxRun
+	Components             []ComponentInfo
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -225,26 +240,34 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 					@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
 				</div>
 				<div class="space-y-4">
-					<div class="grid grid-cols-2 gap-4">
-						@overviewSection("Stack", "") {
-							@stackDetailsCard(props.StackInfo, "")
-						}
-						@overviewSection("Sandbox", "") {
-							@sandboxDetailsCard(props.SandboxInfo, "")
-						}
-					</div>
+					@overviewSection("Stack", "") {
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							@stackDetailsCard(props.StackInfo, "Status")
+							@latestStackRunsCard(props.LatestStackRuns, props.BasePath+"/installs/"+props.Install.ID+"/stack", props.BasePath, props.Install.ID)
+						</div>
+					}
+					@overviewSection("Sandbox", "") {
+						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+							@sandboxDetailsCard(props.SandboxInfo, "Status")
+							@latestSandboxRunsCard(props.LatestSandboxRuns, props.BasePath+"/installs/"+props.Install.ID+"/sandbox", props.BasePath, props.Install.ID)
+						</div>
+					}
 					@overviewComponentsGrid(props.Components)
 				</div>
 			} else {
-				<!-- No active workflow: stack+sandbox side by side, components below -->
-				<div class="grid grid-cols-2 gap-4">
-					@overviewSection("Stack", "") {
-						@stackDetailsCard(props.StackInfo, "")
-					}
-					@overviewSection("Sandbox", "") {
-						@sandboxDetailsCard(props.SandboxInfo, "")
-					}
-				</div>
+				<!-- No active workflow: stack full width, sandbox below -->
+				@overviewSection("Stack", "") {
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						@stackDetailsCard(props.StackInfo, "Status")
+						@latestStackRunsCard(props.LatestStackRuns, props.BasePath+"/installs/"+props.Install.ID+"/stack", props.BasePath, props.Install.ID)
+					</div>
+				}
+				@overviewSection("Sandbox", "") {
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+						@sandboxDetailsCard(props.SandboxInfo, "Status")
+						@latestSandboxRunsCard(props.LatestSandboxRuns, props.BasePath+"/installs/"+props.Install.ID+"/sandbox", props.BasePath, props.Install.ID)
+					</div>
+				}
 				@overviewComponentsGrid(props.Components)
 			}
 		</div>
@@ -300,6 +323,7 @@ templ platformCard(platform string, region string) {
 templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, stackSetup StackSetupData, installID string, basePath string, primaryColor string) {
 	<div
 		id="active-provision-banner"
+		class="@container"
 		if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
 			hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
 			hx-trigger="every 5s"
@@ -310,6 +334,11 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 			data-workflow-status={ workflow.Status }
 		}
 	>
+		if workflow != nil && workflow.Name != "" {
+			<h3 class="text-base font-semibold mb-3" style="color: var(--theme-text)">{ workflow.Name }</h3>
+		}
+		<div class="flex flex-col @3xl:flex-row gap-4">
+		<div class="@3xl:w-1/2">
 		<div id="step-detail-card">
 		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
@@ -549,6 +578,8 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 			</div>
 		}
 		</div>
+		</div>
+		<div class="@3xl:w-1/2">
 		<div class="space-y-2 provision-accordion">
 			for i, phase := range phases {
 				@provisionPhaseAccordion(phase, i+1) {
@@ -588,6 +619,8 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 					</div>
 				}
 			}
+		</div>
+		</div>
 		</div>
 		<!-- Open active/failed phase on first load; one-at-a-time toggle -->
 		<script>
@@ -686,6 +719,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 						e.preventDefault();
 						var details = sum.parentElement;
 						if(details.open){
+							details.removeAttribute('open');
 							return;
 						}
 						acc.querySelectorAll('details.provision-phase[open]').forEach(function(d){
@@ -697,6 +731,7 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 			});
 		})();
 		</script>
+		<hr class="my-6" style="border-color: var(--theme-border-subtle)" />
 	</div>
 }
 
@@ -795,9 +830,7 @@ func gcpApplyCmd() string {
 }
 
 script copyToClipboard(text string) {
-	navigator.clipboard.writeText(text).then(function() {
-		if (typeof showToast === 'function') showToast('Copied to clipboard', 'success');
-	});
+	navigator.clipboard.writeText(text);
 }
 
 // provisionPhaseAccordion renders a single phase as a details/summary accordion
@@ -855,6 +888,108 @@ templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
 	</details>
 }
 
+templ runsCardHeader(title string, viewMoreHref string) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
+		<a href={ templ.SafeURL(viewMoreHref) } class="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">View more <i class="ph-bold ph-caret-right text-xs"></i></a>
+	</div>
+}
+
+func openJobPanelCall(basePath, installID, jobType, jobID, jobTitle string) templ.ComponentScript {
+	return templ.ComponentScript{
+		Call:    fmt.Sprintf("__openJobPanel('%s','%s')", jobTitle, basePath+"/installs/"+installID+"/panel/job/"+jobType+"/"+jobID),
+		Function: `window.__openJobPanel=window.__openJobPanel||function(t,u){var p=document.getElementById('secondary-panel'),h=document.getElementById('secondary-panel-title'),c=document.getElementById('secondary-panel-content');if(!p||!h||!c)return;h.textContent=t;c.innerHTML='<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';p.classList.add('open');var o=document.getElementById('secondary-panel-overlay');if(o)o.classList.add('open');fetch(u).then(function(r){return r.text()}).then(function(html){c.innerHTML=html}).catch(function(){c.innerHTML='<p class="text-sm text-red-500 p-4">Failed to load job details.</p>'})}`,
+	}
+}
+
+templ latestStackRunsCard(runs []nuon.StackRun, viewMoreHref string, basePath string, installID string) {
+	if len(runs) == 0 {
+		@components.Card(components.CardProps{Class: "text-center py-8"}) {
+			<i class="ph-bold ph-clock-counter-clockwise text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No stack runs yet.</p>
+		}
+	} else {
+		@components.Card(components.CardProps{Header: runsCardHeader("Latest stack runs", viewMoreHref)}) {
+			<div class="-mx-4 -mb-4">
+				<table class="w-full text-sm table-fixed">
+					<colgroup>
+						<col class="w-[35%]"/>
+						<col class="w-[25%]"/>
+						<col class="w-[40%]"/>
+					</colgroup>
+					<thead>
+						<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+							<th class="text-left py-2 pl-4 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+							<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+							<th class="text-left py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, run := range runs {
+							<tr
+								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+								onclick={ openJobPanelCall(basePath, installID, "stack", run.ID, "Stack "+stackRunType(run)) }
+							>
+								<td class="py-2 pl-4 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ stackRunType(run) }>{ stackRunType(run) }</td>
+								<td class="py-2 pr-3">
+									<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.VersionStatus) }>
+										{ run.VersionStatus }
+									</span>
+								</td>
+								<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	}
+}
+
+templ latestSandboxRunsCard(runs []*nuonmodels.AppInstallSandboxRun, viewMoreHref string, basePath string, installID string) {
+	if len(runs) == 0 {
+		@components.Card(components.CardProps{Class: "text-center py-8"}) {
+			<i class="ph-bold ph-clock-counter-clockwise text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No sandbox runs yet.</p>
+		}
+	} else {
+		@components.Card(components.CardProps{Header: runsCardHeader("Latest sandbox runs", viewMoreHref)}) {
+			<div class="-mx-4 -mb-4">
+				<table class="w-full text-sm table-fixed">
+					<colgroup>
+						<col class="w-[35%]"/>
+						<col class="w-[25%]"/>
+						<col class="w-[40%]"/>
+					</colgroup>
+					<thead>
+						<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+							<th class="text-left py-2 pl-4 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
+							<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+							<th class="text-left py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, run := range runs {
+							<tr
+								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+								onclick={ openJobPanelCall(basePath, installID, "sandbox", run.ID, "Sandbox "+string(run.RunType)) }
+							>
+								<td class="py-2 pl-4 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(run.RunType) }</td>
+								<td class="py-2 pr-3">
+									<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.Status) }>
+										{ run.Status }
+									</span>
+								</td>
+								<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+	}
+}
+
 // appConfigCard renders the app configuration card
 func stackStatus(info *StackInfo) string {
 	if info != nil {
@@ -884,31 +1019,54 @@ templ overviewSection(title string, status string) {
 	</div>
 }
 
-templ overviewComponentsGrid(components []*nuonmodels.AppInstallComponent) {
-	if len(components) > 0 {
+templ overviewComponentsGrid(compInfos []ComponentInfo) {
+	if len(compInfos) > 0 {
 		<div>
 			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Components</h3>
-			<div class="grid grid-cols-4 gap-3">
-				for _, comp := range components {
-					<div class="card-base !p-3 relative">
-						if comp.Status != "" {
-							<span class={ "absolute top-2 right-2 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(comp.Status) }>
-								{ comp.Status }
-							</span>
-						}
-						<div class="flex items-center gap-1.5 mb-2">
-							@auditComponentTypeIcon(componentType(comp))
-							<span class="text-sm font-medium text-cool-grey-900 dark:text-white truncate">{ componentName(comp) }</span>
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+				for _, comp := range compInfos {
+					@components.Card(components.CardProps{Header: componentCardHeader(comp), AccentColor: statusAccentColor(comp.Status)}) {
+						<div class="space-y-2 text-sm">
+							@infoRow("Type", componentTypeLabel(comp.Type))
+							if comp.Repo != "" {
+								if comp.RepoPublic {
+									@infoRowLink("Repo", comp.Repo, repoURL(comp.Repo))
+								} else {
+									@infoRow("Repo", comp.Repo)
+								}
+							}
+							if comp.Directory != "" {
+								if comp.RepoPublic && comp.Branch != "" {
+									@infoRowLink("Directory", comp.Directory, repoURL(comp.Repo)+"/tree/"+comp.Branch+"/"+comp.Directory)
+								} else {
+									@infoRow("Directory", comp.Directory)
+								}
+							}
+							if comp.Branch != "" {
+								if comp.RepoPublic {
+									@infoRowLink("Branch", comp.Branch, repoURL(comp.Repo)+"/tree/"+comp.Branch)
+								} else {
+									@infoRow("Branch", comp.Branch)
+								}
+							}
 						</div>
-						<div class="space-y-1 text-xs">
-							<p class="text-cool-grey-500 dark:text-cool-grey-400">{ componentTypeLabel(componentType(comp)) }</p>
-							<p class="text-cool-grey-400 dark:text-cool-grey-500 font-mono truncate" title={ comp.ID }>{ comp.ID }</p>
-						</div>
-					</div>
+					}
 				}
 			</div>
 		</div>
 	}
+}
+
+templ componentCardHeader(comp ComponentInfo) {
+	<div class="flex items-center gap-2">
+		@auditComponentTypeIcon(comp.Type)
+		<span class="text-base text-cool-grey-900 dark:text-white truncate">{ comp.Name }</span>
+		if comp.Status != "" {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(comp.Status) }>
+				{ comp.Status }
+			</span>
+		}
+	</div>
 }
 
 templ appConfigCard(props InstallDetailPanelProps) {
@@ -1073,9 +1231,9 @@ templ installDetailPanelScripts() {
 				installIdEl.textContent = nuonInstallID;
 			}
 
-			// Move actions dropdown into panel header
+			// Move actions dropdown into page/panel header
 			var actionsSource = document.getElementById('panel-actions-source');
-			var actionsContainer = document.getElementById('panel-actions-container');
+			var actionsContainer = document.getElementById('page-actions-container') || document.getElementById('panel-actions-container');
 			if (actionsSource && actionsContainer) {
 				actionsContainer.innerHTML = actionsSource.innerHTML;
 			}
@@ -1117,16 +1275,13 @@ templ installDetailPanelScripts() {
 					});
 
 					if (response.ok) {
-						showToast('Reprovision initiated', 'success');
 						var overview = document.getElementById('panel-content-overview');
 						if (overview) {
 							htmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});
 						}
-					} else {
-						showToast('Failed to reprovision installation', 'error');
 					}
 				} catch (error) {
-					showToast('Network error. Please try again.', 'error');
+					console.error('Reprovision failed:', error);
 				}
 			};
 
@@ -1150,13 +1305,10 @@ templ installDetailPanelScripts() {
 					});
 
 					if (response.ok) {
-						showToast('Deprovision initiated. Refreshing...', 'success');
 						setTimeout(function() { window.location.reload(); }, 1500);
-					} else {
-						showToast('Failed to deprovision installation', 'error');
 					}
 				} catch (error) {
-					showToast('Network error. Please try again.', 'error');
+					console.error('Deprovision failed:', error);
 				}
 			};
 
@@ -1167,15 +1319,12 @@ templ installDetailPanelScripts() {
 				btn.textContent = 'Retrying...';
 				try {
 					var response = await fetch(endpoint, { method: 'POST' });
-					if (response.ok) {
-						showToast('Retry initiated', 'success');
-					} else {
-						showToast('Failed to retry step', 'error');
+					if (!response.ok) {
 						btn.disabled = false;
 						btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
 					}
 				} catch (error) {
-					showToast('Network error. Please try again.', 'error');
+					console.error('Retry failed:', error);
 					btn.disabled = false;
 					btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
 				}
@@ -1263,14 +1412,8 @@ templ installDetailPanelScripts() {
 					// Pause banner polling so HTMX doesn't replace the disabled button
 					var banner = document.querySelector('#active-provision-banner');
 					if (banner) { banner.removeAttribute('hx-trigger'); htmx.process(banner); }
-					fetch(endpoint, { method: 'POST' }).then(function(resp) {
-						if (resp.ok) {
-							showToast('Approved', 'success');
-						} else {
-							showToast('Failed to approve. Please try again.', 'error');
-						}
-					}).catch(function() {
-						showToast('Network error. Please try again.', 'error');
+					fetch(endpoint, { method: 'POST' }).catch(function(err) {
+						console.error('Approve failed:', err);
 					}).finally(function() {
 						// Resume polling — the next poll will render updated state
 						if (banner) {
@@ -1294,11 +1437,6 @@ templ installDetailPanelScripts() {
 						cancelText: 'Keep Running'
 					});
 				}
-			});
-
-			// Handle HTMX response errors
-			document.body.addEventListener('htmx:responseError', function(evt) {
-				showToast('An error occurred. Please try again.', 'error');
 			});
 
 			// Edit Inputs Modal functionality
@@ -1488,7 +1626,6 @@ templ installDetailPanelScripts() {
 					var data = await response.json();
 
 					if (response.ok) {
-						showToast('Inputs updated. A workflow has been triggered to apply changes.', 'success');
 						closeEditInputsModal();
 						setTimeout(function() { window.location.reload(); }, 1500);
 					} else {
@@ -1505,17 +1642,8 @@ templ installDetailPanelScripts() {
 		// Handle HTMX authentication errors
 		document.body.addEventListener('auth-error', function(event) {
 			console.warn('Authentication expired during HTMX polling, redirecting to login...');
-
-			// Show a toast notification (if toast functionality exists)
-			if (typeof showToast === 'function') {
-				showToast('Your session has expired. Redirecting to login...', 'warning');
-			}
-
-			// Redirect to login after a short delay
-			setTimeout(function() {
-				const currentPath = window.location.pathname;
-				window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
-			}, 2000);
+			const currentPath = window.location.pathname;
+			window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
 		});
 
 		// Optional: Log HTMX errors for debugging

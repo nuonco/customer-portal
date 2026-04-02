@@ -658,6 +658,37 @@ func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.
 	return components, nil
 }
 
+// GetAppComponentLatestBuild retrieves the latest build for a component.
+func (c *Client) GetAppComponentLatestBuild(ctx context.Context, appID, componentID string) (*models.AppComponentBuild, error) {
+	reqURL := fmt.Sprintf("%s/v1/apps/%s/components/%s/builds/latest", c.apiURL, appID, componentID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var build models.AppComponentBuild
+	if err := json.Unmarshal(body, &build); err != nil {
+		return nil, fmt.Errorf("failed to parse build: %w", err)
+	}
+	return &build, nil
+}
+
 // appPoliciesConfigFull is the raw response shape for the policies config endpoint.
 // The nuon-go generated model omits the Policies array, so we decode it manually.
 type appPoliciesConfigFull struct {

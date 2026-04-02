@@ -437,7 +437,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// Public install list routes (auth is optional — unauthenticated visitors see login CTA)
 	rg.GET("/installs", h.InstallsPage)
-	rg.GET("/installs/:install_id", h.InstallsPage) // Detail view with panel open
+	// Note: /installs/:install_id is handled by installOwnership.GET("/") below
 
 	// Customer account routes (require auth but exempt from account middleware)
 	account := rg.Group("/account")
@@ -467,11 +467,24 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installOwnership := installs.Group("/:install_id")
 		installOwnership.Use(middleware.RequireInstallOwnership(db))
 		{
-			// Panel endpoints (for sliding panel content)
-			installOwnership.GET("/panel", h.InstallDetailPanel)                                 // Panel manage tab
+			// Install detail pages (each tab is a separate route)
+			installOwnership.GET("/", h.InstallDetailPage) // Redirects to /overview
+			installOwnership.GET("/overview", h.InstallOverviewPage)
+			installOwnership.GET("/stack", h.InstallStackPage)
+			installOwnership.GET("/sandbox", h.InstallSandboxPage)
+			installOwnership.GET("/components", h.InstallComponentsPage)
+			installOwnership.GET("/roles", h.InstallRolesPage)
+			installOwnership.GET("/policies", h.InstallPoliciesPage)
+			installOwnership.GET("/history", h.InstallHistoryPage)
+			installOwnership.GET("/audit", h.InstallAuditPage)
+
+			// Panel endpoints (HTMX fragments loaded by the tab pages)
+			installOwnership.GET("/panel", h.InstallDetailPanel) // Overview tab content
+			installOwnership.GET("/panel/history", h.HistoryPanel)
 			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
 			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
 			installOwnership.GET("/panel/policies", h.PoliciesPanel)                             // Panel policies tab
+			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel
 			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
 			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion
 			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus)                    // HTMX polling endpoint for active provision workflow

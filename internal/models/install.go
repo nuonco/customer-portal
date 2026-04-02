@@ -73,6 +73,15 @@ func (i *Install) GetAppID() string {
 	return i.AppID
 }
 
+// SidebarInstall holds minimal install data for the sidebar install switcher.
+type SidebarInstall struct {
+	ID           string
+	Name         string
+	AppName      string
+	AppLogoLight string // base64 data URI (from PublishedApp)
+	AppLogoDark  string // base64 data URI (from PublishedApp)
+}
+
 // GetNuonOrg returns the NuonOrg for this install.
 // For install-link based installs, returns the org from the install link.
 // For published-app installs (no install link), returns the org directly from OrgID relationship.

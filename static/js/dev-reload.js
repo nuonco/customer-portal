@@ -178,6 +178,11 @@
       if (indicator && !document.body.contains(indicator)) {
         document.body.appendChild(indicator);
       }
+      // After morphing, HTMX needs to re-process new elements so that
+      // hx-trigger="load" fires again for freshly inserted content.
+      if (typeof htmx !== "undefined") {
+        htmx.process(document.body);
+      }
     } catch (e) {
       console.error("[dev-reload] morphPage error:", e);
     }

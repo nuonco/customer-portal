@@ -150,7 +150,7 @@ type CustomerAppDetailPageProps struct {
 // CustomerAppsPage renders the customer-facing app catalog
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div>
+		<div class="p-6">
 			if len(props.Apps) == 1 {
 				@appFullWidthCard(props.Apps[0], props.BasePath)
 			} else if len(props.Apps) > 1 {
@@ -487,7 +487,7 @@ templ appCatalogCard(app PublishedAppDisplay, basePath string) {
 }
 
 templ inputDetail(input InputDisplay) {
-	<div class="px-4 pb-4 grid grid-cols-2 gap-8 text-sm">
+	<div class="px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm">
 		<div>
 			<dt class="font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Description</dt>
 			<dd class="text-cool-grey-600 dark:text-cool-grey-300">
@@ -562,7 +562,7 @@ templ iamPolicyDetailContent(pol IAMPolicyDisplay) {
 // CustomerAppDetailPage renders the full detail view for a single published app.
 templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div>
+		<div class="p-6">
 			<div class="mb-6">
 				<a href={ templ.SafeURL(props.BasePath + "/apps") } class="back-link">
 					<i class="ph-bold ph-arrow-left text-base mr-1"></i>

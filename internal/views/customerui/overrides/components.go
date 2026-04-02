@@ -125,38 +125,6 @@ func extractPaginationProps(data interface{}) components.PaginationProps {
 		}
 	}
 
-	// Handle InstallsPageData directly
-	if ipd, ok := data.(InstallsPageData); ok {
-		return components.PaginationProps{
-			CurrentPage:  ipd.CurrentPage,
-			TotalPages:   ipd.TotalPages,
-			HasPrevious:  ipd.HasPrevious,
-			HasNext:      ipd.HasNext,
-			PreviousPage: ipd.PreviousPage,
-			NextPage:     ipd.NextPage,
-			BaseURL:      "?page=",
-			ShowingFrom:  ipd.ShowingFrom,
-			ShowingTo:    ipd.ShowingTo,
-			TotalCount:   int(ipd.TotalCount),
-		}
-	}
-
-	// Handle pointer to InstallsPageData
-	if ipd, ok := data.(*InstallsPageData); ok && ipd != nil {
-		return components.PaginationProps{
-			CurrentPage:  ipd.CurrentPage,
-			TotalPages:   ipd.TotalPages,
-			HasPrevious:  ipd.HasPrevious,
-			HasNext:      ipd.HasNext,
-			PreviousPage: ipd.PreviousPage,
-			NextPage:     ipd.NextPage,
-			BaseURL:      "?page=",
-			ShowingFrom:  ipd.ShowingFrom,
-			ShowingTo:    ipd.ShowingTo,
-			TotalCount:   int(ipd.TotalCount),
-		}
-	}
-
 	// Handle map (for flexibility with custom structures)
 	if m, ok := data.(map[string]interface{}); ok {
 		return extractPaginationFromMap(m)

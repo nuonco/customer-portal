@@ -166,19 +166,22 @@ func TestRenderHeader(t *testing.T) {
 		notContains []string
 	}{
 		{
-			name: "header with user",
+			name: "sidebar with user",
 			ctx: &TemplateContext{
 				User: &UserData{Email: "test@example.com"},
 			},
 			contains: []string{
-				"<header",
+				"<aside",
+				"customer-sidebar",
 				"test@example.com",
 				"logout()",
-				"Logout",
+				"Log out",
+				"Installs",
+				"App Catalog",
 			},
 		},
 		{
-			name: "header with logo",
+			name: "sidebar with logo",
 			ctx: &TemplateContext{
 				User: &UserData{Email: "user@test.com"},
 				Theme: &ThemeData{
@@ -191,12 +194,12 @@ func TestRenderHeader(t *testing.T) {
 			},
 		},
 		{
-			name:     "header without user",
+			name:     "sidebar without user",
 			ctx:      &TemplateContext{},
-			contains: []string{"<header"},
+			contains: []string{"<aside", "customer-sidebar"},
 			notContains: []string{
 				"logout()",
-				"Logout",
+				"Log out",
 			},
 		},
 		{
@@ -276,8 +279,6 @@ func TestRenderScripts(t *testing.T) {
 		`data-base-path="/app"`,
 		"customer-layout-config",
 		"function logout()",
-		"window.showToast",
-		"toast-container",
 		"window.showConfirmModal",
 		"confirm-modal",
 		"window.showPromptModal",
@@ -324,7 +325,7 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 			ctx: &TemplateContext{
 				User: &UserData{Email: "user@test.com"},
 			},
-			contains: []string{"<header", "user@test.com"},
+			contains: []string{"<aside", "customer-sidebar", "user@test.com"},
 		},
 		{
 			name:     "footer in template",
@@ -338,7 +339,7 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 			ctx: &TemplateContext{
 				BasePath: "/dashboard",
 			},
-			contains: []string{"showToast", "showConfirmModal"},
+			contains: []string{"showConfirmModal"},
 		},
 		{
 			name: "full layout template",
@@ -368,7 +369,6 @@ func TestLayoutComponentsInTemplate(t *testing.T) {
 				"--theme-primary: #123456",
 				"radius-rounded",
 				"test@example.com",
-				"showToast",
 			},
 		},
 	}

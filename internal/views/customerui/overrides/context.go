@@ -63,20 +63,6 @@ type RegisterPageData struct {
 	Error   string `json:"error,omitempty"`
 }
 
-// InstallsPageData contains data for the installs list page.
-type InstallsPageData struct {
-	Installs     []InstallData `json:"installs"`
-	TotalCount   int64         `json:"total_count"`
-	CurrentPage  int           `json:"current_page"`
-	TotalPages   int           `json:"total_pages"`
-	HasPrevious  bool          `json:"has_previous"`
-	HasNext      bool          `json:"has_next"`
-	PreviousPage int           `json:"previous_page"`
-	NextPage     int           `json:"next_page"`
-	ShowingFrom  int           `json:"showing_from"`
-	ShowingTo    int           `json:"showing_to"`
-}
-
 // InstallData contains data for a single install.
 type InstallData struct {
 	ID        string `json:"id"`

@@ -189,7 +189,7 @@ func CustomerAppsPage(props CustomerAppsPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"p-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -1436,7 +1436,7 @@ func inputDetail(input InputDisplay) templ.Component {
 			templ_7745c5c3_Var58 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "<div class=\"px-4 pb-4 grid grid-cols-2 gap-8 text-sm\"><div><dt class=\"font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Description</dt><dd class=\"text-cool-grey-600 dark:text-cool-grey-300\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 127, "<div class=\"px-4 pb-4 grid grid-cols-1 sm:grid-cols-2 gap-8 text-sm\"><div><dt class=\"font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1\">Description</dt><dd class=\"text-cool-grey-600 dark:text-cool-grey-300\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -1715,7 +1715,7 @@ func CustomerAppDetailPage(props CustomerAppDetailPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "<div><div class=\"mb-6\"><a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 151, "<div class=\"p-6\"><div class=\"mb-6\"><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

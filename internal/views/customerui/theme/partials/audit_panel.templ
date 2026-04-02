@@ -3,9 +3,11 @@ package partials
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
@@ -51,14 +53,15 @@ type StackInfo struct {
 
 // SandboxInfo holds the sandbox detail fields for the Info sub-tab.
 type SandboxInfo struct {
-	ID        string
-	Status    string
-	CreatedAt string
-	UpdatedAt string
-	Repo      string
-	Directory string
-	Branch    string
-	Outputs   map[string]string
+	ID         string
+	Status     string
+	CreatedAt  string
+	UpdatedAt  string
+	Repo       string
+	Directory  string
+	Branch     string
+	RepoPublic bool
+	Outputs    map[string]string
 }
 
 // AuditPanelProps contains data needed for the audit panel with sub-tabs.
@@ -78,10 +81,13 @@ type AuditPanelProps struct {
 	ComponentsPolicyReports []nuon.PolicyReport
 	ComponentsSubTab        string // "info", "history", or "policies" (only used when ActiveTab == "components")
 	Workflows               []*nuonmodels.AppWorkflow
+	ActionWorkflows         []*nuonmodels.AppWorkflow
 	StackPagination         AuditTabPagination
 	SandboxPagination       AuditTabPagination
 	DeploysPagination       AuditTabPagination
 	WorkflowsPagination     AuditTabPagination
+	ActionsPagination       AuditTabPagination
+	AuditSubTab             string // "stack", "sandbox", "components", "actions" (only used when ActiveTab == "audit")
 }
 
 templ AuditPanel(props AuditPanelProps) {
@@ -96,8 +102,7 @@ templ AuditPanel(props AuditPanelProps) {
 			@stackRolesView(props.StackInfo)
 			@rolesScripts()
 		} else if props.ActiveTab == "audit" {
-			@auditWorkflowList(props.Workflows)
-			@auditPagination("audit", props.WorkflowsPagination)
+			@auditJobsPanel(props)
 		}
 	</div>
 	<div
@@ -334,30 +339,36 @@ templ sandboxDetailsCard(info *SandboxInfo, title string) {
 			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox information is not available for this install.</p>
 		</div>
 	} else {
-		<div class="card-base relative">
-			if info.Status != "" {
-				<span class={ "absolute top-4 right-4 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(info.Status) }>
-					{ info.Status }
-				</span>
-			}
-			<div class="grid grid-cols-2 gap-6 text-sm">
+		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
 				<div class="space-y-3">
 					if info.Repo != "" {
-						@infoRow("Repo", info.Repo)
+						if info.RepoPublic {
+							@infoRowLink("Repo", info.Repo, repoURL(info.Repo))
+						} else {
+							@infoRow("Repo", info.Repo)
+						}
 					}
 					if info.Directory != "" {
-						@infoRow("Directory", info.Directory)
+						if info.RepoPublic && info.Branch != "" {
+							@infoRowLink("Directory", info.Directory, repoURL(info.Repo)+"/tree/"+info.Branch+"/"+info.Directory)
+						} else {
+							@infoRow("Directory", info.Directory)
+						}
 					}
 					if info.Branch != "" {
-						@infoRow("Branch", info.Branch)
+						if info.RepoPublic {
+							@infoRowLink("Branch", info.Branch, repoURL(info.Repo)+"/tree/"+info.Branch)
+						} else {
+							@infoRow("Branch", info.Branch)
+						}
 					}
 				</div>
 				<div class="space-y-3">
-					@infoRow("ID", info.ID)
 					@infoRow("Created", info.CreatedAt)
 				</div>
 			</div>
-		</div>
+		}
 	}
 }
 
@@ -392,6 +403,19 @@ templ sandboxOutputsView(info *SandboxInfo) {
 	}
 }
 
+templ stackCardHeader(title string, status string) {
+	<div class="flex items-center gap-2">
+		if title != "" {
+			<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
+		}
+		if status != "" {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
+				{ status }
+			</span>
+		}
+	</div>
+}
+
 templ stackDetailsCard(info *StackInfo, title string) {
 	if info == nil {
 		<div class="text-center py-12">
@@ -400,24 +424,18 @@ templ stackDetailsCard(info *StackInfo, title string) {
 			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Stack information is not available for this install.</p>
 		</div>
 	} else {
-		<div class="card-base relative">
-			if info.Status != "" {
-				<span class={ "absolute top-4 right-4 px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(info.Status) }>
-					{ info.Status }
-				</span>
-			}
-			<div class="grid grid-cols-2 gap-6 text-sm">
+		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
+			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
 				<div class="space-y-3">
-					@infoRow("Region", info.Region)
-					@infoRow("Account ID", info.AccountID)
-					@infoRow("VPC", info.VPC)
+					@infoRowLink("Account ID", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console")
+					@infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region)
+					@infoRowLink("VPC", info.VPC, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPC)
 				</div>
 				<div class="space-y-3">
-					@infoRow("ID", info.ID)
 					@infoRow("Created", info.CreatedAt)
 				</div>
 			</div>
-		</div>
+		}
 	}
 }
 
@@ -582,6 +600,18 @@ templ infoRow(label, value string) {
 	</div>
 }
 
+templ infoRowLink(label, value, href string) {
+	<div>
+		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
+		<p class="font-medium">
+			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+				{ value }
+				<i class="ph-bold ph-arrow-square-out text-xs"></i>
+			</a>
+		</p>
+	</div>
+}
+
 templ auditStackList(runs []nuon.StackRun) {
 	if len(runs) == 0 {
 		@auditEmptyState("stack runs", "ph-stack")
@@ -601,7 +631,10 @@ templ auditStackList(runs []nuon.StackRun) {
 			</thead>
 			<tbody>
 				for _, run := range runs {
-					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('stack', '%s', 'Stack %s')", run.ID, stackRunType(run))} }
+					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ stackRunType(run) }>{ stackRunType(run) }</td>
 						<td class="py-2 pr-3">
 							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.VersionStatus) }>
@@ -643,10 +676,8 @@ templ auditSandboxList(runs []*nuonmodels.AppInstallSandboxRun) {
 			<tbody>
 				for _, run := range runs {
 					<tr
-						class={ "border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0", templ.KV("cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700", run.WorkflowID != "") }
-						if run.WorkflowID != "" {
-							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', 'Sandbox %s')", run.WorkflowID, string(run.RunType))} }
-						}
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('sandbox', '%s', 'Sandbox %s')", run.ID, string(run.RunType))} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(run.RunType) }</td>
 						<td class="py-2 pr-3">
@@ -759,10 +790,8 @@ templ auditDeployList(deploys []*nuonmodels.AppInstallDeploy) {
 			<tbody>
 				for _, deploy := range deploys {
 					<tr
-						class={ "border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0", templ.KV("cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700", deploy.WorkflowID != "") }
-						if deploy.WorkflowID != "" {
-							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", deploy.WorkflowID, deploy.ComponentName)} }
-						}
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('deploy', '%s', '%s')", deploy.ID, deploy.ComponentName)} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(deploy.InstallDeployType) }</td>
 						<td class="py-2 pr-3">
@@ -816,7 +845,7 @@ templ auditWorkflowList(workflows []*nuonmodels.AppWorkflow) {
 				for _, wf := range workflows {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", wf.ID, wf.Name)} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('action', '%s', '%s')", wf.ID, wf.Name)} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ wf.Name }>{ wf.Name }</td>
 						<td class="py-2 pr-3">
@@ -856,6 +885,32 @@ func auditStatusClass(status string) string {
 	default:
 		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-700 dark:text-cool-grey-300"
 	}
+}
+
+func statusAccentColor(status string) string {
+	switch status {
+	case "active", "succeeded", "success", "completed":
+		return "#16a34a"
+	case "failed", "error":
+		return "#dc2626"
+	case "in-progress", "running", "deploying":
+		return "#2563eb"
+	case "pending", "queued":
+		return "#ca8a04"
+	default:
+		return ""
+	}
+}
+
+func repoURL(repo string) string {
+	if strings.HasPrefix(repo, "https://") || strings.HasPrefix(repo, "http://") {
+		return repo
+	}
+	// Bare org/repo slug — assume GitHub
+	if strings.Contains(repo, "/") && !strings.Contains(repo, ".") {
+		return "https://github.com/" + repo
+	}
+	return "https://" + repo
 }
 
 func FormatAPITime(ts string) string {
@@ -931,6 +986,86 @@ templ auditComponentTypeIcon(t string) {
 	}
 }
 
+templ auditJobsPagination(subTab string, p AuditTabPagination) {
+	if p.HasPrev || p.HasNext {
+		<div class="mt-6 flex items-center justify-between">
+			<div>
+				if p.HasPrev {
+					<button
+						type="button"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadAuditJobsPage('%s', %d)", subTab, p.PrevOffset)} }
+						class="button button-pagination pagination-nav-btn"
+					>
+						<i class="ph-bold ph-caret-left text-base mr-2"></i>
+						Previous
+					</button>
+				}
+			</div>
+			<div>
+				if p.HasNext {
+					<button
+						type="button"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("loadAuditJobsPage('%s', %d)", subTab, p.NextOffset)} }
+						class="button button-pagination pagination-nav-btn"
+					>
+						Next
+						<i class="ph-bold ph-caret-right text-base ml-2"></i>
+					</button>
+				}
+			</div>
+		</div>
+	}
+}
+
+templ auditJobsPanel(props AuditPanelProps) {
+	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "stack") }
+			data-subtab="stack"
+			onclick="switchAuditSubTab('stack')"
+		>
+			Stack
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "sandbox") }
+			data-subtab="sandbox"
+			onclick="switchAuditSubTab('sandbox')"
+		>
+			Sandbox
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "components") }
+			data-subtab="components"
+			onclick="switchAuditSubTab('components')"
+		>
+			Components
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "actions") }
+			data-subtab="actions"
+			onclick="switchAuditSubTab('actions')"
+		>
+			Actions
+		</button>
+	</div>
+	<div id="audit-sub-stack" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "stack") }>
+		@auditStackList(props.StackRuns)
+		@auditJobsPagination("stack", props.StackPagination)
+	</div>
+	<div id="audit-sub-sandbox" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "sandbox") }>
+		@auditSandboxList(props.SandboxRuns)
+		@auditJobsPagination("sandbox", props.SandboxPagination)
+	</div>
+	<div id="audit-sub-components" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "components") }>
+		@auditDeployList(props.Deploys)
+		@auditJobsPagination("components", props.DeploysPagination)
+	</div>
+	<div id="audit-sub-actions" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "actions") }>
+		@auditWorkflowList(props.ActionWorkflows)
+		@auditJobsPagination("actions", props.ActionsPagination)
+	</div>
+}
+
 templ auditPanelScripts() {
 	<script>
 		(function() {
@@ -968,6 +1103,48 @@ templ auditPanelScripts() {
 			};
 			window.switchComponentsSubTab = function(subTab) {
 				switchSubTab('components', subTab);
+			};
+			window.loadAuditJobsPage = function(subTab, offset) {
+				var config = document.getElementById('audit-panel-config');
+				if (!config) return;
+				var basePath = config.getAttribute('data-base-path');
+				var installId = config.getAttribute('data-install-id');
+				var url = basePath + '/installs/' + installId + '/panel/audit?tab=audit&audit_sub=' + subTab + '&audit_offset=' + offset;
+				if (typeof htmx !== 'undefined') {
+					htmx.ajax('GET', url, { target: '#audit-content-audit', swap: 'innerHTML' });
+				}
+			};
+			window.switchAuditSubTab = function(subTab) {
+				var config = document.getElementById('audit-panel-config');
+				if (!config) return;
+				var basePath = config.getAttribute('data-base-path');
+				var installId = config.getAttribute('data-install-id');
+				var url = basePath + '/installs/' + installId + '/panel/audit?tab=audit&audit_sub=' + subTab;
+				if (typeof htmx !== 'undefined') {
+					htmx.ajax('GET', url, { target: '#audit-content-audit', swap: 'innerHTML' });
+				}
+			};
+
+			window.openJobPanel = function(jobType, jobID, jobTitle) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = jobTitle || 'Job Details';
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/job/' + jobType + '/' + jobID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load job details.</p>';
+					});
 			};
 
 			window.openWorkflowPanel = function(workflowID, workflowName) {

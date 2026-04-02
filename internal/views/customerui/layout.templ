@@ -49,9 +49,9 @@ templ Layout(props LayoutProps) {
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js"></script>
 			<script src="https://unpkg.com/htmx.org@1.9.10/dist/ext/json-enc.js"></script>
 			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
-			<script src="/static/js/install-panel.js"></script>
+			<script src="/static/js/install-detail.js"></script>
 		</head>
-		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white min-h-screen flex flex-col", props.RadiusClass, templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
+		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white overflow-hidden", props.RadiusClass, templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
 			@scripts.Auth(props.BasePath)
 
@@ -65,33 +65,29 @@ templ Layout(props LayoutProps) {
 				})
 			}
 
-			<!-- Header -->
-			@partials.Header(partials.HeaderProps{
-				Theme:            convertPropsToTheme(props),
-				User:             props.User,
-				BasePath:         props.BasePath,
-				HasPublishedApps: props.HasPublishedApps,
-				ActiveNav:        props.ActiveNav,
-				HeaderTitle:      props.HeaderTitle,
-				ActiveAccount:    props.ActiveAccount,
-				OtherAccounts:    props.OtherAccounts,
-			})
-
-			<!-- Main wrapper for panel support -->
-			<div id="main-wrapper" class="main-wrapper">
-				<!-- Main content -->
-				<main class="mx-auto px-6 lg:px-8 pt-6 flex-1 w-full max-w-5xl">
-					{ children... }
-				</main>
-
-				<!-- Footer -->
-				@partials.Footer(partials.FooterProps{
-					Theme: convertPropsToTheme(props),
+			<div class={ "flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor) }>
+				<!-- Sidebar -->
+				@partials.Sidebar(partials.SidebarProps{
+					Theme:            convertPropsToTheme(props),
+					User:             props.User,
+					BasePath:         props.BasePath,
+					HasPublishedApps: props.HasPublishedApps,
+					ActiveNav:        props.ActiveNav,
+					HeaderTitle:      props.HeaderTitle,
+					ActiveAccount:    props.ActiveAccount,
+					OtherAccounts:    props.OtherAccounts,
+					Installs:         props.Installs,
+					CurrentInstallID: props.CurrentInstallID,
+					ActiveTab:        props.ActiveTab,
 				})
-			</div>
 
-			<!-- Toast notifications -->
-			@partials.Toast()
+				<!-- Main content area -->
+				<div id="main-wrapper" class="flex-1 flex flex-col overflow-auto">
+					<main class="flex-1 w-full">
+						{ children... }
+					</main>
+				</div>
+			</div>
 
 			<!-- Modals -->
 			@partials.ConfirmModal()

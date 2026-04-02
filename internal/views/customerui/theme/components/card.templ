@@ -10,10 +10,13 @@ const (
 )
 
 type CardProps struct {
-	Size  CardSize
-	Class string
-	ID    string
-	Style string
+	Size        CardSize
+	Title       string          // simple title text; ignored when Header is set
+	Header      templ.Component // custom header content; takes precedence over Title
+	AccentColor string          // top border accent color (e.g. "var(--theme-primary)")
+	Class       string
+	ID          string
+	Style       string
 }
 
 templ Card(props CardProps) {
@@ -22,16 +25,46 @@ templ Card(props CardProps) {
 			id={ props.ID }
 		}
 		class={ cardClasses(props) }
-		if props.Style != "" {
-			style={ props.Style }
-		}
+		style={ cardStyle(props) }
 	>
-		{ children... }
+		if props.Header != nil {
+			<div class="px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600">
+				@props.Header
+			</div>
+			<div class="p-4">
+				{ children... }
+			</div>
+		} else if props.Title != "" {
+			<div class="px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600">
+				<h4 class="text-base text-cool-grey-900 dark:text-white">{ props.Title }</h4>
+			</div>
+			<div class="p-4">
+				{ children... }
+			</div>
+		} else {
+			{ children... }
+		}
 	</div>
+}
+
+func cardStyle(props CardProps) string {
+	s := props.Style
+	if props.AccentColor != "" {
+		accent := "border-top: 2px solid " + props.AccentColor + ";"
+		if s != "" {
+			s = accent + " " + s
+		} else {
+			s = accent
+		}
+	}
+	return s
 }
 
 func cardClasses(props CardProps) string {
 	classes := "card-base"
+	if props.Header != nil || props.Title != "" {
+		classes += " !p-0"
+	}
 	if props.Size == CardLarge {
 		classes += " card-lg"
 	}

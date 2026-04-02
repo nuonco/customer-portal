@@ -38,7 +38,8 @@ General vendor journeys.
   - if I have a single install, I am shown that install's detail page on the home page of the portal.
   - if I have multiple installs, I am shown the installs list on the homepage.
 - As a customer,
-  - I always see "App Catalog", "Installs", and "My Account" navigation links in the header.
+  - I always see an install switcher (dropdown list of my installs with search) and "App Catalog" navigation link in the sidebar, with my account menu at the bottom.
+  - the install switcher shows each install's name and app name, with the app's logo as the icon. Selecting an install navigates to its detail page. A "Create Install" button links to the App Catalog.
   - when I visit the App Catalog and no apps are published, I see a friendly empty state message.
 - As a customer,
   - after logging in via OIDC, if I don't have a customer account, one is automatically created with the name "<first-name>'s Account" (or "My Account" if no name is available).
@@ -93,7 +94,7 @@ General vendor journeys.
 - **Access Panel**: The install detail panel includes an "Access" tab that displays all IAM roles defined for the app. Roles are fetched from the app's permissions config via `GetAppConfigFull()`. Each role shows its name, description, and whether it is enabled or disabled. Standard roles (provision, deprovision, maintenance) are shown as enabled; break-glass roles are shown as disabled. The tab lazy-loads on first click via HTMX.
 - **Workflow Step Role Display**: The active workflow step card shows the IAM role used by the step's target (deploy or sandbox run). The role is fetched from the Nuon API using the step's `StepTargetID` and `StepTargetType`. Only the current step's role is fetched (not historical steps). If the role is empty or the fetch fails, no role badge is shown.
 - **Workflow Step Policy Evaluation**: The active workflow step card displays policy evaluation results when available. Policy violations (denies and warnings) are extracted from the workflow step's status metadata. The section shows a summary header with deny/warn/pass badges, and collapsible `<details>` sections listing individual violations with their messages. The section is only rendered when the step has policy evaluation data.
-- **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes.
+- **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes. Consecutive component steps — pre-deploy action runs, "sync and plan", "apply", and post-deploy action runs — are automatically merged into a single "Deploy \<name\>" step for a cleaner customer view; the merged step surfaces the plan step's approval status when applicable.
 - **GCP Stack Setup Guide**: For GCP apps, the "await install stack" provision step displays a 4-step setup guide (clone install stack module, configure GCS remote state, save tfvars, run Terraform). The platform is detected from the app's `RunnerConfig.AppRunnerType`. Tfvars content is parsed from `stack.Versions[0].Contents`.
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
@@ -461,8 +462,8 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /login` - Customer authentication (existing accounts only)
 - `GET /install-link?sha=<sha>` - Install link acceptance page
 - `POST /install-link` - Accept link and create account/install
-- `GET /installs` - Customer installations list
-- `GET /installs/:install_id` - Installs list with specific install panel open
+- `GET /installs` - Redirects to first install detail page (or `/apps` if none)
+- `GET /installs/:install_id` - Install detail page
 - `PUT /installs/:install_id` - Update install
 - `DELETE /installs/:install_id` - Deprovision install
 - `POST /installs/:install_id/forget` - Remove install from local DB
@@ -478,10 +479,10 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /install-form-fields` - Get install form HTML partials (region selector + input fields) via `?sha=X` or `?app_id=X`
 - `GET /custom/css/:org_id` - Serve organization-specific CSS
 - `GET /custom/assets/:org_id/*path` - Serve organization-specific assets
-- `GET /installs/:install_id/panel` - Install detail panel (HTMX)
-- `GET /installs/:install_id/panel/history` - Workflow history panel (HTMX)
-- `GET /installs/:install_id/panel/audit` - Audit logs panel (HTMX)
-- `GET /installs/:install_id/panel/access` - Access roles panel (HTMX)
+- `GET /installs/:install_id/panel` - Install overview tab content (HTMX)
+- `GET /installs/:install_id/panel/audit` - Audit/stack/sandbox/components tab content (HTMX)
+- `GET /installs/:install_id/panel/access` - Access roles tab content (HTMX)
+- `GET /installs/:install_id/panel/policies` - Policies tab content (HTMX)
 - `GET /installs/:install_id/inputs` - Get current install inputs
 - `PUT /installs/:install_id/inputs` - Update install inputs
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
@@ -537,7 +538,7 @@ Every button element in the customer UI templates carries two semantic CSS class
 | `button button-neutral`          | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
 | `button button-danger`           | Destructive actions — Forget, logout, `.dropdown-item-danger`                 |
 | `button button-icon`             | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`)     |
-| `button button-nav`              | Navigation and tab buttons (`.nav-item`)                                      |
+| `button button-nav`              | Sidebar navigation links (`.customer-sidebar-link`) and tab buttons (`.nav-item`) |
 | `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`)                                |
 | `button button-dropdown-item`    | Dropdown menu item buttons (`.dropdown-item`)                                 |
 | `button button-pagination`       | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`)      |

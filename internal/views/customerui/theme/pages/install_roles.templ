@@ -1,0 +1,21 @@
+package pages
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+
+templ InstallRolesPage(props InstallPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		@installPageShell(props) {
+			<div
+				id="panel-content-roles"
+				class="panel-body"
+				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/access" }
+				hx-trigger="load"
+				hx-swap="innerHTML"
+			>
+				<div class="panel-loading">
+					<div class="panel-loading-spinner"></div>
+				</div>
+			</div>
+		}
+	}
+}

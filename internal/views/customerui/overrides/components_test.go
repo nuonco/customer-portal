@@ -174,18 +174,6 @@ func TestRenderPagination(t *testing.T) {
 			contains: []string{"Page", "2", "5"},
 		},
 		{
-			name: "with InstallsPageData",
-			data: InstallsPageData{
-				CurrentPage:  1,
-				TotalPages:   3,
-				HasPrevious:  false,
-				HasNext:      true,
-				PreviousPage: 0,
-				NextPage:     2,
-			},
-			contains: []string{"Page", "1", "3"},
-		},
-		{
 			name: "single page returns empty",
 			data: PaginationData{
 				CurrentPage: 1,

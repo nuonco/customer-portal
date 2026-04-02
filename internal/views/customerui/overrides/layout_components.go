@@ -34,28 +34,6 @@ function logout() {
 }
 </script>`
 
-const toastHTML = `<div id="toast-container" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
-<script>
-window.showToast = function(message, type) {
-	type = type || 'info';
-	var container = document.getElementById('toast-container');
-	var toast = document.createElement('div');
-	var bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-	toast.className = bgColor + ' text-white px-4 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full opacity-0';
-	toast.textContent = message;
-	container.appendChild(toast);
-	setTimeout(function() {
-		toast.classList.remove('translate-x-full', 'opacity-0');
-	}, 10);
-	setTimeout(function() {
-		toast.classList.add('translate-x-full', 'opacity-0');
-		setTimeout(function() {
-			toast.remove();
-		}, 300);
-	}, 3000);
-};
-</script>`
-
 const confirmModalHTML = `<div id="confirm-modal" class="fixed inset-0 bg-black/50 hidden z-50 overflow-y-auto">
 <div class="flex items-center justify-center min-h-full p-4">
 <div class="bg-white dark:bg-dark-grey-800 rounded-lg shadow-xl max-w-md w-full p-6 my-8">
@@ -370,38 +348,8 @@ func RenderHeader(ctx *TemplateContext, renderer *TemplateRenderer) template.HTM
 		return override
 	}
 
-	// Default header rendering
-	var b strings.Builder
-
-	b.WriteString(`<header class="max-w-5xl mx-auto px-6 lg:px-8 pt-6">`)
-	b.WriteString(`<div class="flex items-center justify-between">`)
-	b.WriteString(`<div class="flex items-center gap-4">`)
-
-	// Logo
-	if ctx.Theme != nil && ctx.Theme.LogoBase64 != "" {
-		b.WriteString(`<img src="`)
-		b.WriteString(ctx.Theme.LogoBase64)
-		b.WriteString(`" alt="Logo" class="h-8 w-auto max-w-32 object-contain"/>`)
-	}
-
-	// User email
-	if ctx.User != nil {
-		b.WriteString(`<span class="text-sm text-cool-grey-600 dark:text-cool-grey-400 font-body">`)
-		b.WriteString(template.HTMLEscapeString(ctx.User.Email))
-		b.WriteString(`</span>`)
-	}
-
-	b.WriteString(`</div>`)
-
-	// Logout button
-	if ctx.User != nil {
-		b.WriteString(`<button onclick="logout()" class="text-sm text-cool-grey-600 dark:text-cool-grey-400 hover:text-cool-grey-900 dark:hover:text-white transition-colors font-body">Logout</button>`)
-	}
-
-	b.WriteString(`</div>`)
-	b.WriteString(`</header>`)
-
-	return template.HTML(b.String())
+	// Default header rendering (sidebar layout)
+	return renderDefaultSidebar(ctx)
 }
 
 // RenderSidebar generates the sidebar navigation HTML.
@@ -415,9 +363,7 @@ func RenderSidebar(ctx *TemplateContext, renderer *TemplateRenderer) template.HT
 		return override
 	}
 
-	// No default sidebar - return empty
-	// Organizations must provide their own sidebar.html partial
-	return ""
+	return renderDefaultSidebar(ctx)
 }
 
 // RenderFooter generates the footer HTML with branding and support link.
@@ -441,10 +387,45 @@ func RenderFooter(ctx *TemplateContext, renderer *TemplateRenderer) template.HTM
 	return template.HTML(b.String())
 }
 
+// renderDefaultSidebar generates the default sidebar HTML for the customer portal.
+func renderDefaultSidebar(ctx *TemplateContext) template.HTML {
+	var b strings.Builder
+
+	b.WriteString(`<aside class="customer-sidebar">`)
+
+	// Header: logo + title
+	b.WriteString(`<div class="customer-sidebar-header">`)
+	if ctx.Theme != nil && ctx.Theme.LogoBase64 != "" {
+		b.WriteString(`<img src="`)
+		b.WriteString(ctx.Theme.LogoBase64)
+		b.WriteString(`" alt="Logo" class="h-8 w-auto max-w-[8rem] object-contain"/>`)
+	}
+	b.WriteString(`</div>`)
+
+	// Nav links
+	b.WriteString(`<nav class="customer-sidebar-content">`)
+	b.WriteString(`<a href="/installs" class="button button-nav customer-sidebar-link"><span>Installs</span></a>`)
+	b.WriteString(`<a href="/apps" class="button button-nav customer-sidebar-link"><span>App Catalog</span></a>`)
+	b.WriteString(`</nav>`)
+
+	// Footer: user
+	b.WriteString(`<div class="customer-sidebar-footer">`)
+	if ctx.User != nil {
+		b.WriteString(`<div class="px-3 py-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">`)
+		b.WriteString(template.HTMLEscapeString(ctx.User.Email))
+		b.WriteString(`</div>`)
+		b.WriteString(`<button onclick="logout()" class="button button-danger w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors cursor-pointer">Log out</button>`)
+	}
+	b.WriteString(`</div>`)
+
+	b.WriteString(`</aside>`)
+
+	return template.HTML(b.String())
+}
+
 // RenderScripts generates all utility scripts including:
 // - Config data element (for basePath)
 // - Logout script
-// - Toast container and showToast()
 // - Confirm modal and showConfirmModal()
 // - Prompt modal and showPromptModal()
 // - Auth script (fetch credentials)
@@ -461,14 +442,6 @@ func RenderScripts(ctx *TemplateContext, renderer *TemplateRenderer) template.HT
 
 	// Logout script (always included)
 	b.WriteString(logoutScript)
-	b.WriteString("\n")
-
-	// Toast - check for override
-	if override := renderPartialOverride(ctx, renderer, "toast"); override != "" {
-		b.WriteString(string(override))
-	} else {
-		b.WriteString(toastHTML)
-	}
 	b.WriteString("\n")
 
 	// Modal - check for override

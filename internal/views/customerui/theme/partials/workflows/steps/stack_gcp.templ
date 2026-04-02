@@ -84,7 +84,5 @@ cd install-stacks/gcp</code></pre>
 }
 
 script copyToClipboard(text string) {
-	navigator.clipboard.writeText(text).then(function() {
-		if (typeof showToast === 'function') showToast('Copied to clipboard', 'success');
-	});
+	navigator.clipboard.writeText(text);
 }
