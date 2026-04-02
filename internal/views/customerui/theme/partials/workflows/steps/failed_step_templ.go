@@ -50,7 +50,7 @@ func FailedStep(workflow *workflows.WorkflowDataPanel, installID string, basePat
 			return templ_7745c5c3_Err
 		}
 		if workflow.FailedStepRetryable {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-xs text-[var(--theme-text-muted)]\">You can retry this step.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" data-endpoint=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<p class=\"text-xs text-[var(--theme-text-muted)]\">You can retry this step.</p><button type=\"button\" class=\"button button-danger inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" data-endpoint=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -68,7 +68,7 @@ func FailedStep(workflow *workflows.WorkflowDataPanel, installID string, basePat
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-xs text-red-600 dark:text-red-300\">This step cannot be retried. Please reprovision the install.</p><button type=\"button\" class=\"button button-primary inline-flex items-center gap-2 text-sm font-medium text-white rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" onclick=\"confirmReprovision()\">Reprovision <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-xs text-red-600 dark:text-red-300\">This step cannot be retried. Please reprovision the install.</p><button type=\"button\" class=\"button button-danger inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5\" style=\"background-color: #ef4444; border: 1px solid #dc2626\" onclick=\"confirmReprovision()\">Reprovision <i class=\"ph-bold ph-arrow-clockwise text-base\"></i></button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

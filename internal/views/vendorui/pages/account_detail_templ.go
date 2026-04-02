@@ -165,7 +165,7 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 			templ_7745c5c3_Err = components.Button(components.ButtonProps{
 				Text:    "Add Member",
 				Variant: "primary",
-				OnClick: "document.getElementById('invite-member-modal').classList.remove('hidden')",
+				OnClick: "openModal('invite-member-modal')",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -418,7 +418,7 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 			templ_7745c5c3_Err = components.Button(components.ButtonProps{
 				Text:    "Add Install",
 				Variant: "primary",
-				OnClick: "document.getElementById('assign-install-modal').classList.remove('hidden')",
+				OnClick: "openModal('assign-install-modal')",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -566,53 +566,79 @@ func assignInstallModal(basePath, orgID, accountID string) templ.Component {
 			templ_7745c5c3_Var26 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<div id=\"assign-install-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-cool-grey-200 dark:border-dark-grey-600\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Add Install</h2><button type=\"button\" onclick=\"closeAssignModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><!-- Search step --><div id=\"assign-step-search\" class=\"px-6 py-4\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an existing install in this organization to assign it to this account.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"assign-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+		templ_7745c5c3_Var27 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<!-- Search step --> <div id=\"assign-step-search\" class=\"px-6 py-6\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an existing install in this organization to assign it to this account.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"assign-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var28 string
+			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/search", basePath, orgID, accountID))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 232, Col: 94}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#assign-search-results\" hx-include=\"this\" name=\"q\"><div id=\"assign-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div><!-- Confirm step --> <div id=\"assign-step-confirm\" class=\"hidden px-6 py-6\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"assign-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"assign-install-form\" hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var29 string
+			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/assign", basePath, orgID, accountID))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 248, Col: 95}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" hx-target=\"#assign-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"install_id\" id=\"assign-install-id\"><div id=\"assign-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><div class=\"flex items-center justify-between mt-4\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "← Back",
+				Variant: "secondary",
+				OnClick: "showAssignSearch()",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "Assign Install",
+				Variant: "primary",
+				Type:    "submit",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></form></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = components.Modal(components.ModalProps{
+			ID:      "assign-install-modal",
+			Title:   "Add Install",
+			OnClose: "closeAssignModal()",
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var27), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/search", basePath, orgID, accountID))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 237, Col: 95}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#assign-search-results\" hx-include=\"this\" name=\"q\"><div id=\"assign-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div><!-- Confirm step --><div id=\"assign-step-confirm\" class=\"hidden px-6 py-4\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"assign-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"assign-install-form\" hx-post=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var28 string
-		templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/assign", basePath, orgID, accountID))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 253, Col: 96}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" hx-target=\"#assign-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"install_id\" id=\"assign-install-id\"><div id=\"assign-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><div class=\"flex items-center justify-between mt-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "← Back",
-			Variant: "secondary",
-			OnClick: "showAssignSearch()",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "Assign Install",
-			Variant: "primary",
-			Type:    "submit",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></form></div></div></div><script>\n\t\tfunction closeAssignModal() {\n\t\t\tdocument.getElementById('assign-install-modal').classList.add('hidden');\n\t\t\tshowAssignSearch();\n\t\t\tdocument.getElementById('assign-search-input').value = '';\n\t\t\tdocument.getElementById('assign-search-results').innerHTML = '';\n\t\t\tdocument.getElementById('assign-form-error').innerHTML = '';\n\t\t}\n\n\t\tfunction showAssignSearch() {\n\t\t\tdocument.getElementById('assign-step-search').classList.remove('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectAccountInstall(installID, displayText) {\n\t\t\tdocument.getElementById('assign-install-id').value = installID;\n\t\t\tdocument.getElementById('assign-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('assign-step-search').classList.add('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.remove('hidden');\n\t\t}\n\n\t\tdocument.getElementById('assign-install-modal').addEventListener('click', function(e) {\n\t\t\tif (e.target === this) closeAssignModal();\n\t\t});\n\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<script>\n\t\tfunction closeAssignModal() {\n\t\t\tcloseModal('assign-install-modal', function() {\n\t\t\t\tshowAssignSearch();\n\t\t\t\tdocument.getElementById('assign-search-input').value = '';\n\t\t\t\tdocument.getElementById('assign-search-results').innerHTML = '';\n\t\t\t\tdocument.getElementById('assign-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\n\t\tfunction showAssignSearch() {\n\t\t\tdocument.getElementById('assign-step-search').classList.remove('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectAccountInstall(installID, displayText) {\n\t\t\tdocument.getElementById('assign-install-id').value = installID;\n\t\t\tdocument.getElementById('assign-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('assign-step-search').classList.add('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.remove('hidden');\n\t\t}\n\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -636,45 +662,72 @@ func inviteMemberModal(basePath, orgID, accountID string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var29 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var29 == nil {
-			templ_7745c5c3_Var29 = templ.NopComponent
+		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var30 == nil {
+			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<div id=\"invite-member-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-md mx-4 border border-cool-grey-200 dark:border-dark-grey-600\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Add Member</h2><button type=\"button\" onclick=\"closeInviteModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><form class=\"px-6 py-4\" hx-post=\"")
+		templ_7745c5c3_Var31 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<form class=\"px-6 py-6\" hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var32 string
+			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/invite", basePath, orgID, accountID))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 309, Col: 85}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" hx-target=\"#invite-form-error\" hx-swap=\"innerHTML\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Invite a user by email. If they already have an account, they will be added immediately. Otherwise, a pending invite will be created.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\" for=\"invite-email\">Email address</label> <input type=\"email\" id=\"invite-email\" name=\"email\" required placeholder=\"user@example.com\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><div id=\"invite-form-error\" class=\"mt-3 empty:hidden\"></div><div class=\"flex items-center justify-end gap-3 mt-4\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "Cancel",
+				Variant: "secondary",
+				OnClick: "closeInviteModal()",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "Send Invite",
+				Variant: "primary",
+				Type:    "submit",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></form>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = components.Modal(components.ModalProps{
+			ID:       "invite-member-modal",
+			Title:    "Add Member",
+			MaxWidth: "max-w-md",
+			OnClose:  "closeInviteModal()",
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var31), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var30 string
-		templ_7745c5c3_Var30, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/invite", basePath, orgID, accountID))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 322, Col: 86}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var30))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "\" hx-target=\"#invite-form-error\" hx-swap=\"innerHTML\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Invite a user by email. If they already have an account, they will be added immediately. Otherwise, a pending invite will be created.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\" for=\"invite-email\">Email address</label> <input type=\"email\" id=\"invite-email\" name=\"email\" required placeholder=\"user@example.com\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><div id=\"invite-form-error\" class=\"mt-3 empty:hidden\"></div><div class=\"flex items-center justify-end gap-3 mt-4\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "Cancel",
-			Variant: "secondary",
-			OnClick: "closeInviteModal()",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "Send Invite",
-			Variant: "primary",
-			Type:    "submit",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "</div></form></div></div><script>\n\t\tfunction closeInviteModal() {\n\t\t\tdocument.getElementById('invite-member-modal').classList.add('hidden');\n\t\t\tdocument.getElementById('invite-email').value = '';\n\t\t\tdocument.getElementById('invite-form-error').innerHTML = '';\n\t\t}\n\n\t\tdocument.getElementById('invite-member-modal').addEventListener('click', function(e) {\n\t\t\tif (e.target === this) closeInviteModal();\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\n\t\tfunction closeInviteModal() {\n\t\t\tcloseModal('invite-member-modal', function() {\n\t\t\t\tdocument.getElementById('invite-email').value = '';\n\t\t\t\tdocument.getElementById('invite-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

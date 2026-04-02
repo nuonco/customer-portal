@@ -109,6 +109,30 @@ html.sidebar-collapsed .stratus-sidebar .stratus-org-dropdown {
   right: auto;
 }
 
+html.sidebar-collapsed .stratus-sidebar .stratus-sidebar-label {
+  @apply hidden;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-sidebar-link {
+  @apply justify-center px-2;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-sidebar-link .sidebar-text {
+  @apply hidden;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-org-switcher {
+  @apply justify-center px-2;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-org-switcher .sidebar-text {
+  @apply hidden;
+}
+
+html.sidebar-collapsed .stratus-sidebar .stratus-org-switcher svg:last-child {
+  @apply hidden;
+}
+
 .stratus-sidebar.collapsed .stratus-sidebar-label {
   @apply hidden;
 }

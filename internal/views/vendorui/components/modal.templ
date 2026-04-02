@@ -1,0 +1,181 @@
+package components
+
+// Modal provides a reusable Stratus-styled modal wrapper with enter/exit transitions.
+//
+// Usage:
+//
+//	@components.Modal(components.ModalProps{
+//	    ID:       "my-modal",
+//	    Title:    "My Modal Title",
+//	    MaxWidth: "max-w-md",
+//	}) {
+//	    <div class="px-6 py-6">
+//	        <!-- modal body content -->
+//	    </div>
+//	}
+//
+// Open/close from JavaScript:
+//
+//	openModal('my-modal')
+//	closeModal('my-modal')
+//	closeModal('my-modal', function() { /* after close callback */ })
+
+type ModalProps struct {
+	// ID is the unique identifier for the modal container div.
+	ID string
+	// Title is displayed in the modal header.
+	Title string
+	// MaxWidth is a Tailwind max-width class (e.g. "max-w-md", "max-w-lg", "max-w-2xl").
+	// Defaults to "max-w-lg".
+	MaxWidth string
+	// OnClose is optional JavaScript to run when the modal is closed via X or backdrop click.
+	// Example: "closeMyModal()" — this function should call closeModal('my-modal').
+	OnClose string
+}
+
+templ Modal(props ModalProps) {
+	<div
+		id={ props.ID }
+		class="fixed inset-0 hidden overflow-y-auto backdrop-blur-xs bg-black/2 dark:bg-black/10"
+		style="z-index: 100;"
+		{ modalOverlayAttrs(props)... }
+	>
+		<div
+			class="flex items-center justify-center min-h-full p-4"
+			{ modalOverlayAttrs(props)... }
+		>
+			<div
+				id={ props.ID + "-dialog" }
+				class={ "bg-white dark:bg-dark-grey-900 w-full my-8 overflow-clip", modalMaxWidth(props) }
+				style="border-radius: 10px; border: 1px solid rgba(158,168,179,0.24); box-shadow: 0px 16px 56px -16px rgba(0,0,0,0.08), 0px 1px 4px 0px rgba(0,0,0,0.08), 0px 0px 16px -4px rgba(0,0,0,0.08);"
+			>
+				<!-- Modal Header -->
+				<div class="px-4 py-6 border-b flex items-center justify-between" style="border-color: rgba(158,168,179,0.24);">
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">{ props.Title }</h3>
+					<button
+						type="button"
+						class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-200"
+						{ modalCloseBtnAttrs(props)... }
+					>
+						<i class="ph-bold ph-x text-lg"></i>
+					</button>
+				</div>
+				<!-- Modal Content (caller provides body + footer) -->
+				{ children... }
+			</div>
+		</div>
+	</div>
+}
+
+func modalMaxWidth(props ModalProps) string {
+	if props.MaxWidth != "" {
+		return props.MaxWidth
+	}
+	return "max-w-lg"
+}
+
+func modalCloseExpr(props ModalProps) string {
+	if props.OnClose != "" {
+		return props.OnClose
+	}
+	return "closeModal('" + props.ID + "')"
+}
+
+func modalOverlayAttrs(props ModalProps) templ.Attributes {
+	return templ.Attributes{
+		"onclick": "if(event.target===this){" + modalCloseExpr(props) + "}",
+	}
+}
+
+func modalCloseBtnAttrs(props ModalProps) templ.Attributes {
+	return templ.Attributes{
+		"onclick": modalCloseExpr(props),
+	}
+}
+
+// ModalScript provides the global openModal/closeModal functions and keyframe CSS.
+// Include once per layout that uses Modal components.
+templ ModalScript() {
+	<style>
+		@keyframes enter-overlay { 0% { opacity: 0; } 100% { opacity: 1; } }
+		@keyframes exit-overlay { 0% { opacity: 1; } 100% { opacity: 0; } }
+		@keyframes enter-below { 0% { opacity: 0; transform: translateY(1rem); } 100% { opacity: 1; transform: translateY(0); } }
+		@keyframes exit-below { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(1rem); } }
+	</style>
+	<script>
+		(function() {
+			var modalEasing = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
+			window.openModal = function(id) {
+				var overlay = document.getElementById(id);
+				var dialog = document.getElementById(id + '-dialog');
+				if (!overlay || !dialog) return;
+				overlay.classList.remove('hidden');
+				overlay.style.animation = '0.15s ' + modalEasing + ' forwards enter-overlay';
+				dialog.style.animation = '0.15s ' + modalEasing + ' 0.15s forwards enter-below';
+				dialog.style.opacity = '0';
+			};
+
+			window.closeModal = function(id, callback) {
+				var overlay = document.getElementById(id);
+				var dialog = document.getElementById(id + '-dialog');
+				if (!overlay || !dialog) return;
+				overlay.style.animation = '0.15s ' + modalEasing + ' forwards exit-overlay';
+				dialog.style.animation = '0.15s ' + modalEasing + ' forwards exit-below';
+				dialog.addEventListener('animationend', function handler() {
+					dialog.removeEventListener('animationend', handler);
+					overlay.classList.add('hidden');
+					overlay.style.animation = '';
+					dialog.style.animation = '';
+					dialog.style.opacity = '';
+					if (callback) callback();
+				}, { once: true });
+			};
+
+			// Close topmost visible modal on Escape key
+			document.addEventListener('keydown', function(e) {
+				if (e.key !== 'Escape') return;
+				// Find all visible modals (they have the backdrop-blur-xs class and are not hidden)
+				var modals = document.querySelectorAll('.backdrop-blur-xs:not(.hidden)');
+				if (modals.length > 0) {
+					var topModal = modals[modals.length - 1];
+					// Trigger click on the X button to use the modal's own close handler
+					var closeBtn = topModal.querySelector('button .ph-x');
+					if (closeBtn) closeBtn.closest('button').click();
+				}
+			});
+		})();
+	</script>
+}
+
+// ModalFooter provides consistent Stratus-styled footer for modals.
+// Use inside a Modal component after the body content.
+templ ModalFooter() {
+	<div class="px-4 py-6 bg-white dark:bg-dark-grey-900 flex justify-end space-x-2" style="border-top: 1px solid rgba(158,168,179,0.24); border-radius: 0 0 10px 10px;">
+		{ children... }
+	</div>
+}
+
+// ModalButtonSecondary renders a Stratus-styled secondary button for modal footers.
+templ ModalButtonSecondary(text string, onclick string) {
+	<button
+		type="button"
+		class="h-8 px-3 text-sm font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-grey-700 rounded-lg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600"
+		style="border: 1px solid rgba(158,168,179,0.24); box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.08);"
+		{ templ.Attributes{"onclick": onclick}... }
+	>
+		{ text }
+	</button>
+}
+
+// ModalButtonPrimary renders a Stratus-styled primary button for modal footers.
+templ ModalButtonPrimary(text string, attrs templ.Attributes) {
+	<button
+		type="button"
+		class="h-8 px-3 text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 rounded-lg inline-flex items-center gap-1.5"
+		style="box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.08);"
+		{ attrs... }
+	>
+		{ text }
+	</button>
+}

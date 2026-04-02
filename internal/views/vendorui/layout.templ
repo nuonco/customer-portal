@@ -154,6 +154,7 @@ templ Layout(props LayoutProps) {
 				</div>
 			</div>
 			<!-- Toast and Modal components -->
+			@components.ModalScript()
 			@components.Toast()
 			@components.ConfirmModal()
 			@createOrgModal(props.BasePath)
@@ -281,10 +282,7 @@ templ layoutScripts(basePath string) {
 
 		// Keyboard Shortcuts Modal
 		function openKeyboardShortcutsModal() {
-			const modal = document.getElementById('keyboard-shortcuts-modal');
-			if (modal) {
-				modal.classList.add('modal-visible');
-			}
+			openModal('keyboard-shortcuts-modal');
 			const userDropdown = document.getElementById('userDropdown');
 			if (userDropdown) {
 				userDropdown.classList.add('hidden');
@@ -292,22 +290,17 @@ templ layoutScripts(basePath string) {
 		}
 
 		function closeKeyboardShortcutsModal() {
-			const modal = document.getElementById('keyboard-shortcuts-modal');
-			if (modal) {
-				modal.classList.remove('modal-visible');
-			}
+			closeModal('keyboard-shortcuts-modal');
 		}
 
 		// Connect Org Modal
 		function openCreateOrgModal() {
 			const modal = document.getElementById('create-org-modal');
-			if (modal) {
-				modal.classList.remove('hidden');
-				// Focus on org ID input
-				const orgIdInput = document.getElementById('org-org-id');
-				if (orgIdInput) {
-					orgIdInput.focus();
-				}
+			openModal('create-org-modal');
+			// Focus on org ID input
+			const orgIdInput = document.getElementById('org-org-id');
+			if (orgIdInput) {
+				setTimeout(function() { orgIdInput.focus(); }, 200);
 			}
 			// Close user dropdown if open
 			const userDropdown = document.getElementById('userDropdown');
@@ -317,15 +310,12 @@ templ layoutScripts(basePath string) {
 		}
 
 		function closeCreateOrgModal() {
-			const modal = document.getElementById('create-org-modal');
-			if (modal) {
-				modal.classList.add('hidden');
-				// Clear form and errors
+			closeModal('create-org-modal', function() {
 				const form = document.getElementById('create-org-form');
 				if (form) form.reset();
 				const errorDiv = document.getElementById('create-org-error');
 				if (errorDiv) errorDiv.classList.add('hidden');
-			}
+			});
 		}
 
 		// Global Keyboard Shortcuts
@@ -374,79 +364,83 @@ templ layoutScripts(basePath string) {
 				document.documentElement.classList.add('page-sidebar-collapsed');
 			}
 		});
+
+		// Re-apply collapsed classes after hx-boost navigation replaces <body>
+		document.body.addEventListener('htmx:afterSettle', function() {
+			if (document.documentElement.classList.contains('sidebar-collapsed')) {
+				const sidebar = document.getElementById('main-sidebar');
+				if (sidebar && !sidebar.classList.contains('collapsed')) {
+					sidebar.classList.add('collapsed');
+				}
+			}
+			if (document.documentElement.classList.contains('page-sidebar-collapsed')) {
+				const subnav = document.getElementById('page-sidebar');
+				if (subnav && !subnav.classList.contains('collapsed')) {
+					subnav.classList.add('collapsed');
+				}
+			}
+		});
 	</script>
 }
 
 templ createOrgModal(basePath string) {
-	<div id="create-org-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;">
-		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500 my-8">
-				<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
-					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Connect Org</h3>
-					<button type="button" onclick="closeCreateOrgModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
-						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-						</svg>
-					</button>
-				</div>
-				<form id="create-org-form" class="px-6 py-4 space-y-4">
-					<div>
-						<label for="org-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							Nuon Org ID <span class="text-red-500">*</span>
-						</label>
-						<input
-							type="text"
-							id="org-org-id"
-							name="org_id"
-							required
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="org_..."
-						/>
-					</div>
-					<div>
-						<label for="org-api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							API Token <span class="text-red-500">*</span>
-						</label>
-						<input
-							type="password"
-							id="org-api-token"
-							name="api_token"
-							required
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="nuon_pat_..."
-						/>
-						<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
-							To get a new token, run: <code>nuon orgs api-token -j</code>
-						</p>
-					</div>
-					<div>
-						<label for="org-api-url" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
-							API URL
-						</label>
-						<input
-							type="text"
-							id="org-api-url"
-							name="api_url"
-							class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-							placeholder="https://api.nuon.co"
-						/>
-						<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
-							Leave blank to use the default API URL.
-						</p>
-					</div>
-					<div id="create-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
-				</form>
-				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
-					<button type="button" onclick="closeCreateOrgModal()" class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600">
-						Cancel
-					</button>
-					<button type="button" onclick="submitCreateOrg()" class="px-4 py-2 text-sm font-medium text-white bg-primary-600 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-500">
-						Connect
-					</button>
-				</div>
+	@components.Modal(components.ModalProps{
+		ID:      "create-org-modal",
+		Title:   "Connect Org",
+		OnClose: "closeCreateOrgModal()",
+	}) {
+		<form id="create-org-form" class="px-6 py-6 space-y-4">
+			<div>
+				<label for="org-org-id" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					Nuon Org ID <span class="text-red-500">*</span>
+				</label>
+				<input
+					type="text"
+					id="org-org-id"
+					name="org_id"
+					required
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+					placeholder="org_..."
+				/>
 			</div>
-		</div>
-	</div>
+			<div>
+				<label for="org-api-token" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					API Token <span class="text-red-500">*</span>
+				</label>
+				<input
+					type="password"
+					id="org-api-token"
+					name="api_token"
+					required
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+					placeholder="nuon_pat_..."
+				/>
+				<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
+					To get a new token, run: <code>nuon orgs api-token -j</code>
+				</p>
+			</div>
+			<div>
+				<label for="org-api-url" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
+					API URL
+				</label>
+				<input
+					type="text"
+					id="org-api-url"
+					name="api_url"
+					class="w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+					placeholder="https://api.nuon.co"
+				/>
+				<p class="mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400">
+					Leave blank to use the default API URL.
+				</p>
+			</div>
+			<div id="create-org-error" class="hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm"></div>
+		</form>
+		@components.ModalFooter() {
+			@components.ModalButtonSecondary("Cancel", "closeCreateOrgModal()")
+			@components.ModalButtonPrimary("Connect", templ.Attributes{"onclick": "submitCreateOrg()"})
+		}
+	}
 	<!-- Config data for JavaScript -->
 	<div
 		id="create-org-config"
@@ -499,51 +493,40 @@ templ createOrgScript() {
 }
 
 templ keyboardShortcutsModal() {
-	<div id="keyboard-shortcuts-modal" class="fixed inset-0 bg-dark-grey-600/50 flex items-center justify-center z-50 opacity-0 pointer-events-none transition-opacity duration-200" style="z-index: 100;">
-		<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md border border-cool-grey-300 dark:border-dark-grey-500">
-			<div class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600 flex justify-between items-center">
-				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">Keyboard Shortcuts</h3>
-				<button type="button" onclick="closeKeyboardShortcutsModal()" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-					</svg>
-				</button>
+	@components.Modal(components.ModalProps{
+		ID:       "keyboard-shortcuts-modal",
+		Title:    "Keyboard Shortcuts",
+		MaxWidth: "max-w-md",
+		OnClose:  "closeKeyboardShortcutsModal()",
+	}) {
+		<div class="px-6 py-6 space-y-3">
+			<div class="flex justify-between items-center">
+				<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle main sidebar</span>
+				<div class="flex gap-1">
+					<kbd class="stratus-kbd">Alt</kbd>
+					<kbd class="stratus-kbd">S</kbd>
+				</div>
 			</div>
-			<div class="px-6 py-4 space-y-3">
-				<div class="flex justify-between items-center">
-					<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle main sidebar</span>
-					<div class="flex gap-1">
-						<kbd class="stratus-kbd">Alt</kbd>
-						<kbd class="stratus-kbd">S</kbd>
-					</div>
+			<div class="flex justify-between items-center">
+				<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle page sidebar</span>
+				<div class="flex gap-1">
+					<kbd class="stratus-kbd">Alt</kbd>
+					<kbd class="stratus-kbd">Shift</kbd>
+					<kbd class="stratus-kbd">S</kbd>
 				</div>
-				<div class="flex justify-between items-center">
-					<span class="text-cool-grey-600 dark:text-cool-grey-400">Toggle page sidebar</span>
-					<div class="flex gap-1">
-						<kbd class="stratus-kbd">Alt</kbd>
-						<kbd class="stratus-kbd">Shift</kbd>
-						<kbd class="stratus-kbd">S</kbd>
-					</div>
+			</div>
+			<div class="flex justify-between items-center">
+				<span class="text-cool-grey-600 dark:text-cool-grey-400">Show keyboard shortcuts</span>
+				<div class="flex gap-1">
+					<kbd class="stratus-kbd">?</kbd>
 				</div>
-				<div class="flex justify-between items-center">
-					<span class="text-cool-grey-600 dark:text-cool-grey-400">Show keyboard shortcuts</span>
-					<div class="flex gap-1">
-						<kbd class="stratus-kbd">?</kbd>
-					</div>
-				</div>
-				<div class="flex justify-between items-center">
-					<span class="text-cool-grey-600 dark:text-cool-grey-400">Close modal</span>
-					<div class="flex gap-1">
-						<kbd class="stratus-kbd">Esc</kbd>
-					</div>
+			</div>
+			<div class="flex justify-between items-center">
+				<span class="text-cool-grey-600 dark:text-cool-grey-400">Close modal</span>
+				<div class="flex gap-1">
+					<kbd class="stratus-kbd">Esc</kbd>
 				</div>
 			</div>
 		</div>
-	</div>
-	<style>
-		#keyboard-shortcuts-modal.modal-visible {
-			opacity: 1;
-			pointer-events: auto;
-		}
-	</style>
+	}
 }

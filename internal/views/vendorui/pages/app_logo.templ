@@ -168,7 +168,7 @@ templ appLogoScript(orgID, appID, basePath string) {
 			window.handleLogoUpload = function(input, mode) {
 				var file = input.files[0];
 				if (!file) return;
-				if (file.size > 500 * 1024) { alert('Logo must be under 500KB'); return; }
+				if (file.size > 500 * 1024) { showToast('Logo must be under 500KB', 'warning'); return; }
 				var reader = new FileReader();
 				reader.onload = function() {
 					var suffix = mode === 'light' ? 'Light' : 'Dark';

@@ -142,9 +142,10 @@
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .btn-theme-primary {
-  @apply inline-flex items-center justify-center font-medium text-white;
+  @apply inline-flex items-center justify-center font-medium;
   @apply focus:outline-none focus:ring-2 focus:ring-offset-2;
   @apply transition-colors duration-150;
+  color: var(--theme-button-primary-text, white);
   background-color: var(--theme-primary);
   padding: var(--spacing-input-padding-y) var(--spacing-input-padding-x);
   border-radius: var(--theme-radius);

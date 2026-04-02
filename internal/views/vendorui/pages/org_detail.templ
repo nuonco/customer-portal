@@ -218,71 +218,56 @@ templ linkIcon() {
 }
 
 templ createInstallModal(basePath, orgID string) {
-	<div
-		id="createInstallModal"
-		class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
-		style="z-index: 50"
-	>
-		<div class="flex items-center justify-center min-h-full p-4">
-			<div class="bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-lg border border-cool-grey-300 dark:border-dark-grey-500 w-full max-w-2xl my-8">
-				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-4">Create Install Link</h3>
-				<form id="createInstallForm" class="space-y-6">
-					<!-- App Selection -->
-					<div>
-						<label for="appSelect" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Select Application *</label>
-						<select
-							id="appSelect"
-							required
-							class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-						>
-							<option value="">Loading apps...</option>
-						</select>
-					</div>
-					<!-- Install Name -->
-					<div>
-						<label for="installNameInput" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Install Name *</label>
-						<input
-							type="text"
-							id="installNameInput"
-							required
-							placeholder="e.g., customer-acme-prod"
-							class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
-						/>
-						<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">Letters, numbers, spaces, dashes, and underscores only.</p>
-					</div>
-					<!-- Vendor-facing Inputs (dynamic based on app config) -->
-					<div id="vendorInputsContainer">
-						<!-- Will be populated by JavaScript -->
-					</div>
-					<!-- Loading indicator for input config -->
-					<div id="inputConfigLoading" class="hidden">
-						<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Loading configuration...</p>
-					</div>
-					<!-- Form Actions -->
-					<div class="flex space-x-3 pt-4">
-						<button
-							type="submit"
-							id="createLinkSubmitBtn"
-							class="flex-1 bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:ring-2 focus:ring-primary-400 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-						>
-							Create Link
-						</button>
-						<button
-							type="button"
-							onclick="closeCreateInstallModal()"
-							class="flex-1 bg-cool-grey-300 text-cool-grey-700 dark:bg-dark-grey-600 dark:text-cool-grey-300 py-3 px-4 rounded-md hover:bg-cool-grey-400 dark:hover:bg-dark-grey-500 focus:ring-2 focus:ring-cool-grey-400 font-medium"
-						>
-							Cancel
-						</button>
-					</div>
-				</form>
-				<div
-					id="createInstallError"
-					class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden"
-				></div>
-			</div>
+	@components.Modal(components.ModalProps{
+		ID:       "createInstallModal",
+		Title:    "Create Install Link",
+		MaxWidth: "max-w-2xl",
+		OnClose:  "closeCreateInstallModal()",
+	}) {
+		<div class="px-6 py-6">
+			<form id="createInstallForm" class="space-y-6">
+				<!-- App Selection -->
+				<div>
+					<label for="appSelect" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Select Application *</label>
+					<select
+						id="appSelect"
+						required
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+					>
+						<option value="">Loading apps...</option>
+					</select>
+				</div>
+				<!-- Install Name -->
+				<div>
+					<label for="installNameInput" class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">Install Name *</label>
+					<input
+						type="text"
+						id="installNameInput"
+						required
+						placeholder="e.g., customer-acme-prod"
+						class="block w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-400 focus:border-primary-600"
+					/>
+					<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">Letters, numbers, spaces, dashes, and underscores only.</p>
+				</div>
+				<!-- Vendor-facing Inputs (dynamic based on app config) -->
+				<div id="vendorInputsContainer">
+					<!-- Will be populated by JavaScript -->
+				</div>
+				<!-- Loading indicator for input config -->
+				<div id="inputConfigLoading" class="hidden">
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Loading configuration...</p>
+				</div>
+				@components.ModalFooter() {
+					@components.ModalButtonSecondary("Cancel", "closeCreateInstallModal()")
+					@components.ModalButtonPrimary("Create Link", templ.Attributes{"type": "submit", "id": "createLinkSubmitBtn"})
+				}
+			</form>
+			<div
+				id="createInstallError"
+				class="mt-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-400 rounded hidden"
+			></div>
 		</div>
-	</div>
+	}
 	<!-- Config data for JavaScript -->
 	<div
 		id="create-install-config"
@@ -303,10 +288,9 @@ templ createInstallModalScript() {
 			let currentInputConfig = null;
 
 			window.openCreateInstallModal = async function() {
-				const modal = document.getElementById("createInstallModal");
 				const appSelect = document.getElementById("appSelect");
 
-				modal.classList.remove("hidden");
+				openModal("createInstallModal");
 				appSelect.innerHTML = '<option value="">Loading apps...</option>';
 				clearInputs();
 
@@ -342,10 +326,11 @@ templ createInstallModalScript() {
 			};
 
 			window.closeCreateInstallModal = function() {
-				document.getElementById("createInstallModal").classList.add("hidden");
-				document.getElementById("createInstallForm").reset();
-				document.getElementById("createInstallError").classList.add("hidden");
-				clearInputs();
+				closeModal("createInstallModal", function() {
+					document.getElementById("createInstallForm").reset();
+					document.getElementById("createInstallError").classList.add("hidden");
+					clearInputs();
+				});
 			};
 
 			function clearInputs() {

@@ -79,7 +79,7 @@ func AuthErrorPage(props AuthErrorPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" class=\"inline-flex items-center px-6 py-3 text-sm font-medium text-white bg-theme-primary hover:bg-theme-primary-hover transition-colors\" style=\"border-radius: var(--theme-radius)\"><i class=\"ph-bold ph-sign-in text-base mr-2\"></i> Try Again</a></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" class=\"button button-primary btn-theme-primary px-6 py-3 text-sm\"><i class=\"ph-bold ph-sign-in text-base mr-2\"></i> Try Again</a></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

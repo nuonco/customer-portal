@@ -265,7 +265,7 @@ templ appsScript(basePath, orgID string) {
 					spinner.classList.add('hidden');
 					if (!r.ok) {
 						btn.disabled = false;
-						alert('Failed to save configuration');
+						showToast('Failed to save configuration', 'error');
 					} else {
 						initialSnapshot = getSnapshot();
 						btn.disabled = true;
@@ -274,7 +274,7 @@ templ appsScript(basePath, orgID string) {
 					btn.disabled = false;
 					text.textContent = 'Save';
 					spinner.classList.add('hidden');
-					alert('Failed to save configuration');
+					showToast('Failed to save configuration', 'error');
 				});
 			};
 

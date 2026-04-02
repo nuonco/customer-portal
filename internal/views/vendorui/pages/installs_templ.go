@@ -85,7 +85,7 @@ func CustomerInstallsPage(props CustomerInstallsPageProps) templ.Component {
 			templ_7745c5c3_Err = components.Button(components.ButtonProps{
 				Text:    "Import Install",
 				Variant: "primary",
-				OnClick: "document.getElementById('import-install-modal').classList.remove('hidden')",
+				OnClick: "openModal('import-install-modal')",
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -563,7 +563,7 @@ func emptyInstallsState() templ.Component {
 		templ_7745c5c3_Err = components.Button(components.ButtonProps{
 			Text:    "Import Install",
 			Variant: "primary",
-			OnClick: "document.getElementById('import-install-modal').classList.remove('hidden')",
+			OnClick: "openModal('import-install-modal')",
 		}).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -598,53 +598,79 @@ func importInstallModal(basePath, orgID string) templ.Component {
 			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<div id=\"import-install-modal\" class=\"hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-xl shadow-2xl w-full max-w-lg mx-4 border border-cool-grey-200 dark:border-dark-grey-600\"><!-- Step 1: Search --><div id=\"import-step-1\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an install in the Nuon API to import it into the customer portal.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"import-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+		templ_7745c5c3_Var26 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+			if !templ_7745c5c3_IsBuffer {
+				defer func() {
+					templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+					if templ_7745c5c3_Err == nil {
+						templ_7745c5c3_Err = templ_7745c5c3_BufErr
+					}
+				}()
+			}
+			ctx = templ.InitializeContext(ctx)
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<!-- Step 1: Search --> <div id=\"import-step-1\"><div class=\"px-6 py-6\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an install in the Nuon API to import it into the customer portal.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"import-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var27 string
+			templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/search-nuon", basePath, orgID))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 291, Col: 77}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#import-search-results\" hx-include=\"this\" name=\"q\"><div id=\"import-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div></div><!-- Step 2: Assign to customer --> <div id=\"import-step-2\" class=\"hidden\"><div class=\"px-6 py-6\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"import-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"import-install-form\" hx-post=\"")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var28 string
+			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/import", basePath, orgID))
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 309, Col: 73}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" hx-target=\"#import-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"nuon_install_id\" id=\"import-nuon-install-id\"> <input type=\"hidden\" name=\"app_id\" id=\"import-app-id\"><div id=\"import-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Assign to customer</label> <input type=\"email\" name=\"customer_email\" placeholder=\"customer@example.com\" required class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Enter the customer&#39;s email. A new account will be created if this email isn&#39;t already in the portal.</p><div class=\"flex items-center justify-between mt-6\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "← Back",
+				Variant: "secondary",
+				OnClick: "showImportStep1()",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.Button(components.ButtonProps{
+				Text:    "Import Install",
+				Variant: "primary",
+				Type:    "submit",
+			}).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></form></div></div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			return nil
+		})
+		templ_7745c5c3_Err = components.Modal(components.ModalProps{
+			ID:      "import-install-modal",
+			Title:   "Import Install",
+			OnClose: "closeImportModal()",
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var26), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var26 string
-		templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/search-nuon", basePath, orgID))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 296, Col: 78}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#import-search-results\" hx-include=\"this\" name=\"q\"><div id=\"import-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div></div><!-- Step 2: Assign to customer --><div id=\"import-step-2\" class=\"hidden\"><div class=\"flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-700\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">Import Install</h2><button type=\"button\" onclick=\"closeImportModal()\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\"><svg class=\"h-5 w-5\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M6 18L18 6M6 6l12 12\"></path></svg></button></div><div class=\"px-6 py-4\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"import-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"import-install-form\" hx-post=\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		var templ_7745c5c3_Var27 string
-		templ_7745c5c3_Var27, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/installs/import", basePath, orgID))
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/installs.templ`, Line: 322, Col: 74}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var27))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "\" hx-target=\"#import-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"nuon_install_id\" id=\"import-nuon-install-id\"> <input type=\"hidden\" name=\"app_id\" id=\"import-app-id\"><div id=\"import-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Assign to customer</label> <input type=\"email\" name=\"customer_email\" placeholder=\"customer@example.com\" required class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Enter the customer&#39;s email. A new account will be created if this email isn&#39;t already in the portal.</p><div class=\"flex items-center justify-between mt-6\">")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "← Back",
-			Variant: "secondary",
-			OnClick: "showImportStep1()",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = components.Button(components.ButtonProps{
-			Text:    "Import Install",
-			Variant: "primary",
-			Type:    "submit",
-		}).Render(ctx, templ_7745c5c3_Buffer)
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "</div></form></div></div></div></div><script>\n\t\tasync function adminForgetInstall(installID, installName, forgetURL) {\n\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\ttitle: 'Important Warning',\n\t\t\t\tmessage: 'Only use \"Forget\" after the install has been deprovisioned and the CloudFormation stack removed.\\n\\n\"Forget\" only removes this install from the portal — it does NOT deprovision any infrastructure.\\n\\nAre you sure you want to forget this install?',\n\t\t\t\tvariant: 'warning',\n\t\t\t\tconfirmText: 'Forget',\n\t\t\t\tcancelText: 'Cancel'\n\t\t\t});\n\n\t\t\tif (!confirmed) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\tvar confirmName = await showPromptModal({\n\t\t\t\ttitle: 'Confirm Action',\n\t\t\t\tmessage: 'To confirm, please type the install name: ' + installName,\n\t\t\t\tplaceholder: 'Enter install name',\n\t\t\t\texpectedValue: installName,\n\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\tconfirmText: 'Forget Install',\n\t\t\t\tvariant: 'danger'\n\t\t\t});\n\n\t\t\tif (confirmName === null) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tvar response = await fetch(forgetURL, {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: { 'Content-Type': 'application/json' }\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Install forgotten successfully.', 'success');\n\t\t\t\t\tvar row = document.querySelector('tr[data-install-id=\"' + installID + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1000);\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\tshowToast(data.error || 'Failed to forget install', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeImportModal() {\n\t\t\tdocument.getElementById('import-install-modal').classList.add('hidden');\n\t\t\t// Reset to step 1\n\t\t\tshowImportStep1();\n\t\t\tdocument.getElementById('import-search-input').value = '';\n\t\t\tdocument.getElementById('import-search-results').innerHTML = '';\n\t\t\tdocument.getElementById('import-form-error').innerHTML = '';\n\t\t}\n\n\t\tfunction showImportStep1() {\n\t\t\tdocument.getElementById('import-step-1').classList.remove('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectImportInstall(nuonInstallID, appID, displayText) {\n\t\t\tdocument.getElementById('import-nuon-install-id').value = nuonInstallID;\n\t\t\tdocument.getElementById('import-app-id').value = appID;\n\t\t\tdocument.getElementById('import-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('import-step-1').classList.add('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.remove('hidden');\n\t\t}\n\n\t\t// Close modal on backdrop click\n\t\tdocument.getElementById('import-install-modal').addEventListener('click', function(e) {\n\t\t\tif (e.target === this) closeImportModal();\n\t\t});\n\n\t\t// Handle HTMX redirect after successful import\n\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t// Error handling is done via hx-target=\"#import-form-error\"\n\t\t});\n\n\t\t// Listen for HX-Redirect header\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<script>\n\t\tasync function adminForgetInstall(installID, installName, forgetURL) {\n\t\t\tvar confirmName = await showPromptModal({\n\t\t\t\ttitle: 'Forget ' + installName,\n\t\t\t\ticon: 'ph-bold ph-trash',\n\t\t\t\twarningBanner: '<strong>Warning:</strong> This should only be used in cases where an install was broken in an unordinary way and needs to be manually removed.',\n\t\t\t\tbodyHTML: '<p class=\"font-semibold text-cool-grey-900 dark:text-white mb-1\">Are you sure you want to forget ' + installName + '?</p>' +\n\t\t\t\t\t'<p class=\"mb-3\">This action will remove the install and can not be undone.</p>' +\n\t\t\t\t\t'<p class=\"mb-1\">You should only do this after you have:</p>' +\n\t\t\t\t\t'<ul class=\"list-disc list-inside mb-3 ml-1 space-y-0.5\">' +\n\t\t\t\t\t\t'<li>Successfully deprovisioned the install</li>' +\n\t\t\t\t\t\t'<li>Deprovisioned the CloudFormation stack for this install</li>' +\n\t\t\t\t\t'</ul>' +\n\t\t\t\t\t'<p>To verify, type <code class=\"text-red-600 dark:text-red-400 font-medium\">' + installName + '</code> below.</p>',\n\t\t\t\tplaceholder: 'install name',\n\t\t\t\texpectedValue: installName,\n\t\t\t\tvalidationMessage: 'Install name does not match. Please try again.',\n\t\t\t\tconfirmText: 'Forget install',\n\t\t\t\tconfirmIcon: 'ph-bold ph-trash',\n\t\t\t\tvariant: 'danger',\n\t\t\t\tdisableUntilMatch: true\n\t\t\t});\n\n\t\t\tif (confirmName === null) {\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\ttry {\n\t\t\t\tvar response = await fetch(forgetURL, {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: { 'Content-Type': 'application/json' }\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tshowToast('Install forgotten successfully.', 'success');\n\t\t\t\t\tvar row = document.querySelector('tr[data-install-id=\"' + installID + '\"]');\n\t\t\t\t\tif (row) {\n\t\t\t\t\t\trow.remove();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1000);\n\t\t\t\t\t}\n\t\t\t\t} else {\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\tshowToast(data.error || 'Failed to forget install', 'error');\n\t\t\t\t}\n\t\t\t} catch (error) {\n\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeImportModal() {\n\t\t\tcloseModal('import-install-modal', function() {\n\t\t\t\tshowImportStep1();\n\t\t\t\tdocument.getElementById('import-search-input').value = '';\n\t\t\t\tdocument.getElementById('import-search-results').innerHTML = '';\n\t\t\t\tdocument.getElementById('import-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\n\t\tfunction showImportStep1() {\n\t\t\tdocument.getElementById('import-step-1').classList.remove('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectImportInstall(nuonInstallID, appID, displayText) {\n\t\t\tdocument.getElementById('import-nuon-install-id').value = nuonInstallID;\n\t\t\tdocument.getElementById('import-app-id').value = appID;\n\t\t\tdocument.getElementById('import-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('import-step-1').classList.add('hidden');\n\t\t\tdocument.getElementById('import-step-2').classList.remove('hidden');\n\t\t}\n\n\t\t// Handle HTMX redirect after successful import\n\t\tdocument.body.addEventListener('htmx:responseError', function(evt) {\n\t\t\t// Error handling is done via hx-target=\"#import-form-error\"\n\t\t});\n\n\t\t// Listen for HX-Redirect header\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -668,12 +694,12 @@ func eyeIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var28 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var28 == nil {
-			templ_7745c5c3_Var28 = templ.NopComponent
+		templ_7745c5c3_Var29 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var29 == nil {
+			templ_7745c5c3_Var29 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<svg class=\"h-4 w-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<svg class=\"h-4 w-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M15 12a3 3 0 11-6 0 3 3 0 016 0z\"></path> <path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -697,12 +723,12 @@ func externalLinkIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var29 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var29 == nil {
-			templ_7745c5c3_Var29 = templ.NopComponent
+		templ_7745c5c3_Var30 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var30 == nil {
+			templ_7745c5c3_Var30 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<svg class=\"h-4 w-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<svg class=\"h-4 w-4\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"2\" d=\"M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

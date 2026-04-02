@@ -32,16 +32,36 @@ package components
 //   if (value !== null) { ... }
 templ ConfirmModal() {
 	<!-- Confirmation Modal Container -->
-	<div id="confirm-modal" class="fixed inset-0 bg-dark-grey-600/50 hidden overflow-y-auto" style="z-index: 100;" onclick="if(event.target===this) closeConfirmModal(confirmModalOptions.isPrompt ? null : false)">
+	<div id="confirm-modal" class="fixed inset-0 hidden overflow-y-auto backdrop-blur-xs bg-black/2 dark:bg-black/10" style="z-index: 100;" onclick="if(event.target===this) closeConfirmModal(confirmModalOptions.isPrompt ? null : false)">
 		<div class="flex items-center justify-center min-h-full p-4" onclick="if(event.target===this) closeConfirmModal(confirmModalOptions.isPrompt ? null : false)">
-			<div class="bg-white dark:bg-dark-grey-900 rounded-lg shadow-xl w-full max-w-md transform transition-all border border-cool-grey-300 dark:border-dark-grey-500 my-8">
+			<div id="confirm-modal-dialog" class="bg-white dark:bg-dark-grey-900 w-full max-w-lg my-8 overflow-clip" style="border-radius: 10px; border: 1px solid rgba(158,168,179,0.24); box-shadow: 0px 16px 56px -16px rgba(0,0,0,0.08), 0px 1px 4px 0px rgba(0,0,0,0.08), 0px 0px 16px -4px rgba(0,0,0,0.08);">
 				<!-- Modal Header -->
-				<div id="confirm-modal-header" class="px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
-					<h3 id="confirm-modal-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+				<div id="confirm-modal-header" class="px-4 py-6 border-b flex items-center justify-between" style="border-color: rgba(158,168,179,0.24);">
+					<div class="flex items-center gap-3">
+						<i id="confirm-modal-icon" class="hidden text-xl text-cool-grey-500 dark:text-cool-grey-400"></i>
+						<h3 id="confirm-modal-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+					</div>
+					<button
+						type="button"
+						class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-200"
+						onclick="closeConfirmModal(confirmModalOptions.isPrompt ? null : false)"
+					>
+						<i class="ph-bold ph-x text-lg"></i>
+					</button>
 				</div>
 				<!-- Modal Body -->
-				<div class="px-6 py-4">
+				<div class="px-6 py-6">
+					<!-- Warning Banner (hidden by default) -->
+					<div id="confirm-modal-warning" class="hidden mb-4 px-4 py-3 rounded-md bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800">
+						<div class="flex items-start gap-2">
+							<i class="ph-bold ph-warning text-amber-600 dark:text-amber-400 mt-0.5"></i>
+							<p id="confirm-modal-warning-text" class="text-sm text-amber-800 dark:text-amber-200"></p>
+						</div>
+					</div>
+					<!-- Message (plain text mode) -->
 					<p id="confirm-modal-message" class="text-cool-grey-600 dark:text-cool-grey-400"></p>
+					<!-- Rich body HTML (hidden by default) -->
+					<div id="confirm-modal-body-html" class="hidden text-sm text-cool-grey-600 dark:text-cool-grey-400"></div>
 					<!-- Input Field (hidden by default, shown for prompt modals) -->
 					<div id="confirm-modal-input-container" class="hidden mt-4">
 						<input
@@ -54,11 +74,12 @@ templ ConfirmModal() {
 					</div>
 				</div>
 				<!-- Modal Footer -->
-				<div class="px-6 py-4 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-b-lg flex justify-end space-x-3">
+				<div class="px-4 py-6 bg-white dark:bg-dark-grey-900 flex justify-end space-x-2" style="border-top: 1px solid rgba(158,168,179,0.24); border-radius: 0 0 10px 10px;">
 					<button
 						type="button"
 						id="confirm-modal-cancel"
-						class="px-4 py-2 text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 bg-white dark:bg-dark-grey-700 border border-cool-grey-300 dark:border-dark-grey-500 rounded-md hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600 focus:ring-2 focus:ring-cool-grey-500"
+						class="h-8 px-3 text-sm font-medium text-primary-600 dark:text-primary-400 bg-white dark:bg-dark-grey-700 rounded-lg hover:bg-cool-grey-50 dark:hover:bg-dark-grey-600"
+						style="border: 1px solid rgba(158,168,179,0.24); box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.08);"
 						onclick="closeConfirmModal(confirmModalOptions.isPrompt ? null : false)"
 					>
 						Cancel
@@ -66,7 +87,8 @@ templ ConfirmModal() {
 					<button
 						type="button"
 						id="confirm-modal-confirm"
-						class="px-4 py-2 text-sm font-medium text-white rounded-md focus:ring-2"
+						class="h-8 px-3 text-sm font-medium text-white rounded-lg inline-flex items-center gap-1.5"
+						style="box-shadow: 0px 1px 2px 0px rgba(0,0,0,0.08);"
 						onclick="closeConfirmModal(confirmModalOptions.isPrompt ? 'confirm' : true)"
 					>
 						Confirm
@@ -99,12 +121,17 @@ templ confirmModalScript() {
 				};
 
 				renderConfirmModal();
-				document.getElementById('confirm-modal').classList.remove('hidden');
+				openConfirmModalAnimated();
 			});
 		}
 
 		// Show prompt modal (replaces prompt())
 		// Returns Promise<string | null>
+		// Options:
+		//   icon: CSS class for header icon (e.g. 'ph-bold ph-trash')
+		//   warningBanner: text for amber warning banner
+		//   bodyHTML: rich HTML body content (replaces message)
+		//   disableUntilMatch: if true, confirm button disabled until input matches expectedValue
 		function showPromptModal(options) {
 			return new Promise((resolve) => {
 				confirmModalResolve = resolve;
@@ -117,7 +144,12 @@ templ confirmModalScript() {
 					isPrompt: true,
 					placeholder: options.placeholder || '',
 					expectedValue: options.expectedValue || null,
-					validationMessage: options.validationMessage || 'Invalid input'
+					validationMessage: options.validationMessage || 'Invalid input',
+					icon: options.icon || null,
+					warningBanner: options.warningBanner || null,
+					bodyHTML: options.bodyHTML || null,
+					disableUntilMatch: options.disableUntilMatch || false,
+					confirmIcon: options.confirmIcon || null
 				};
 
 				renderConfirmModal();
@@ -128,9 +160,33 @@ templ confirmModalScript() {
 				input.placeholder = confirmModalOptions.placeholder;
 				input.value = '';
 
-				document.getElementById('confirm-modal').classList.remove('hidden');
+				// Disable confirm button until input matches
+				if (confirmModalOptions.disableUntilMatch && confirmModalOptions.expectedValue) {
+					const confirmBtn = document.getElementById('confirm-modal-confirm');
+					confirmBtn.disabled = true;
+					confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+					input.oninput = function() {
+						if (input.value === confirmModalOptions.expectedValue) {
+							confirmBtn.disabled = false;
+							confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+						} else {
+							confirmBtn.disabled = true;
+							confirmBtn.classList.add('opacity-50', 'cursor-not-allowed');
+						}
+					};
+				}
+
+				openConfirmModalAnimated();
 				input.focus();
 			});
+		}
+
+		function openConfirmModalAnimated() {
+			openModal('confirm-modal');
+		}
+
+		function closeConfirmModalAnimated(callback) {
+			closeModal('confirm-modal', callback);
 		}
 
 		function renderConfirmModal() {
@@ -141,39 +197,83 @@ templ confirmModalScript() {
 			const cancelBtn = document.getElementById('confirm-modal-cancel');
 			const inputContainer = document.getElementById('confirm-modal-input-container');
 			const validation = document.getElementById('confirm-modal-validation');
+			const iconEl = document.getElementById('confirm-modal-icon');
+			const warningEl = document.getElementById('confirm-modal-warning');
+			const warningText = document.getElementById('confirm-modal-warning-text');
+			const bodyHTML = document.getElementById('confirm-modal-body-html');
 
 			title.textContent = confirmModalOptions.title;
-			message.textContent = confirmModalOptions.message;
-			confirmBtn.textContent = confirmModalOptions.confirmText;
 			cancelBtn.textContent = confirmModalOptions.cancelText;
+
+			// Header icon
+			if (confirmModalOptions.icon) {
+				iconEl.className = confirmModalOptions.icon + ' text-xl text-cool-grey-500 dark:text-cool-grey-400';
+				iconEl.classList.remove('hidden');
+			} else {
+				iconEl.className = 'hidden';
+			}
+
+			// Warning banner
+			if (confirmModalOptions.warningBanner) {
+				warningText.innerHTML = confirmModalOptions.warningBanner;
+				warningEl.classList.remove('hidden');
+			} else {
+				warningEl.classList.add('hidden');
+			}
+
+			// Body content: rich HTML or plain message
+			if (confirmModalOptions.bodyHTML) {
+				bodyHTML.innerHTML = confirmModalOptions.bodyHTML;
+				bodyHTML.classList.remove('hidden');
+				message.classList.add('hidden');
+			} else {
+				message.textContent = confirmModalOptions.message;
+				message.classList.remove('hidden');
+				bodyHTML.classList.add('hidden');
+			}
 
 			// Reset input container
 			inputContainer.classList.add('hidden');
 			validation.classList.add('hidden');
 
+			// Confirm button content (icon + text)
+			if (confirmModalOptions.confirmIcon) {
+				confirmBtn.innerHTML = '<i class="' + confirmModalOptions.confirmIcon + '"></i> ' + confirmModalOptions.confirmText;
+			} else {
+				confirmBtn.textContent = confirmModalOptions.confirmText;
+			}
+
+			// Reset disabled state
+			confirmBtn.disabled = false;
+			confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
 			// Set button variant styling - Stratus Design System
-			// Note: warning uses orange instead of yellow in Stratus
-			confirmBtn.className = 'px-4 py-2 text-sm font-medium text-white rounded-md focus:ring-2';
+			confirmBtn.className = 'h-8 px-3 text-sm font-medium text-white rounded-lg inline-flex items-center gap-1.5';
+			confirmBtn.style.boxShadow = '0px 1px 2px 0px rgba(0,0,0,0.08)';
 			switch (confirmModalOptions.variant) {
 				case 'danger':
-					confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500');
+					confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
 					break;
 				case 'warning':
-					confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'focus:ring-red-500');
+					confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700');
 					break;
 				default:
-					confirmBtn.classList.add('bg-primary-600', 'hover:bg-primary-700', 'focus:ring-primary-500');
+					confirmBtn.classList.add('bg-primary-600', 'hover:bg-primary-700');
+			}
+
+			// Re-apply icon + text after className reset
+			if (confirmModalOptions.confirmIcon) {
+				confirmBtn.innerHTML = '<i class="' + confirmModalOptions.confirmIcon + '"></i> ' + confirmModalOptions.confirmText;
 			}
 		}
 
 		function closeConfirmModal(result) {
-			const modal = document.getElementById('confirm-modal');
-			const validation = document.getElementById('confirm-modal-validation');
+			var validation = document.getElementById('confirm-modal-validation');
 
 			// For prompt modals, validate input if expectedValue is set
 			if (confirmModalOptions.isPrompt && result !== null) {
-				const input = document.getElementById('confirm-modal-input');
-				const value = input.value;
+				var input = document.getElementById('confirm-modal-input');
+				var value = input.value;
 
 				if (confirmModalOptions.expectedValue && value !== confirmModalOptions.expectedValue) {
 					validation.textContent = confirmModalOptions.validationMessage;
@@ -182,26 +282,22 @@ templ confirmModalScript() {
 					return; // Don't close modal
 				}
 
-				modal.classList.add('hidden');
-				if (confirmModalResolve) {
-					confirmModalResolve(value);
-					confirmModalResolve = null;
-				}
+				closeConfirmModalAnimated(function() {
+					if (confirmModalResolve) {
+						confirmModalResolve(value);
+						confirmModalResolve = null;
+					}
+				});
 				return;
 			}
 
-			modal.classList.add('hidden');
-			if (confirmModalResolve) {
-				confirmModalResolve(result);
-				confirmModalResolve = null;
-			}
+			closeConfirmModalAnimated(function() {
+				if (confirmModalResolve) {
+					confirmModalResolve(result);
+					confirmModalResolve = null;
+				}
+			});
 		}
 
-		// Close on Escape key (document listener survives morphing)
-		document.addEventListener('keydown', (e) => {
-			if (e.key === 'Escape' && !document.getElementById('confirm-modal').classList.contains('hidden')) {
-				closeConfirmModal(confirmModalOptions.isPrompt ? null : false);
-			}
-		});
 	</script>
 }
