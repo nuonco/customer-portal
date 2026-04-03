@@ -29,11 +29,18 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 					<i class="ph-bold ph-squares-four text-xl"></i>
 					App Catalog
 				</h1>
+				if len(props.Apps) == 1 && props.Apps[0].Status == "coming_soon" {
+					<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
+				} else if len(props.Apps) == 1 {
+					<a href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", props.BasePath, props.Apps[0].AppID)) } class="button button-primary btn-theme-primary">Install</a>
+				}
 			</div>
 			if len(props.Apps) == 1 {
-				@appFullWidthCard(props.Apps[0], props.BasePath)
+				<div class="mt-8">
+					@appFullWidthCard(props.Apps[0], props.BasePath)
+				</div>
 			} else if len(props.Apps) > 1 {
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
 					for _, app := range props.Apps {
 						@appCatalogCard(app, props.BasePath)
 					}
@@ -101,7 +108,9 @@ templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
 					<a href={ templ.SafeURL(props.BasePath + "/apps/" + props.App.AppID + "/install") } class="button button-primary btn-theme-primary">Install</a>
 				}
 			</div>
-			@appFullWidthCard(props.App, props.BasePath)
+			<div class="mt-10">
+				@appFullWidthCard(props.App, props.BasePath)
+			</div>
 		</div>
 	}
 }

@@ -392,10 +392,10 @@ templ overviewSummaryCards(props InstallDetailPanelProps) {
 			@components.Card(components.CardProps{Header: overviewStackCardHeader(props.StackStatus, props.BasePath+"/installs/"+props.Install.ID+"/stack"), AccentColor: statusAccentColor(props.StackStatus)}) {
 				<div class="space-y-3 text-sm">
 					if props.StackAccountID != "" {
-						@overviewInfoRowLink("Account ID", props.StackAccountID, "https://"+props.StackAccountID+".signin.aws.amazon.com/console")
+						@overviewInfoRowLink("Account ID", props.StackAccountID, "https://console.aws.amazon.com/console/home")
 					}
 					if props.StackRegion != "" {
-						@overviewInfoRowLink("Region", props.StackRegion, "https://"+props.StackRegion+".console.aws.amazon.com/console/home?region="+props.StackRegion)
+						@overviewInfoRowLink("Region", props.StackRegion, "https://console.aws.amazon.com/console/home?region="+props.StackRegion)
 					}
 				</div>
 			}

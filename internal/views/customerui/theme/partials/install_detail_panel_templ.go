@@ -5,13 +5,14 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
@@ -856,13 +857,13 @@ func overviewSummaryCards(props InstallDetailPanelProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if props.StackAccountID != "" {
-				templ_7745c5c3_Err = overviewInfoRowLink("Account ID", props.StackAccountID, "https://"+props.StackAccountID+".signin.aws.amazon.com/console").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = overviewInfoRowLink("Account ID", props.StackAccountID, "https://console.aws.amazon.com/console/home").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 			if props.StackRegion != "" {
-				templ_7745c5c3_Err = overviewInfoRowLink("Region", props.StackRegion, "https://"+props.StackRegion+".console.aws.amazon.com/console/home?region="+props.StackRegion).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = overviewInfoRowLink("Region", props.StackRegion, "https://console.aws.amazon.com/console/home?region="+props.StackRegion).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

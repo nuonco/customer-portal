@@ -5,18 +5,18 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -1163,13 +1163,13 @@ func sandboxDetailsCard(info *SandboxInfo, title string) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				if info.AccountID != "" {
-					templ_7745c5c3_Err = infoRowLink("Account", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console").Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = infoRowLink("Account", info.AccountID, "https://console.aws.amazon.com/console/home").Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 				if info.Region != "" {
-					templ_7745c5c3_Err = infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = infoRowLink("Region", info.Region, "https://console.aws.amazon.com/console/home?region="+info.Region).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -1447,11 +1447,11 @@ func stackDetailsCard(info *StackInfo, title string) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = infoRowLink("Account ID", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console").Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = infoRowLink("Account ID", info.AccountID, "https://console.aws.amazon.com/console/home").Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region).Render(ctx, templ_7745c5c3_Buffer)
+				templ_7745c5c3_Err = infoRowLink("Region", info.Region, "https://console.aws.amazon.com/console/home?region="+info.Region).Render(ctx, templ_7745c5c3_Buffer)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
