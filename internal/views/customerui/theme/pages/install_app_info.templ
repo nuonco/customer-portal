@@ -2,13 +2,13 @@ package pages
 
 import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 
-templ InstallHistoryPage(props InstallPageProps) {
+templ InstallAppInfoPage(props InstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
 		@installPageShell(props) {
 			<div
-				id="panel-content-history"
+				id="panel-content-app-info"
 				class="panel-body"
-				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/history" }
+				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/app-info" }
 				hx-trigger="load"
 				hx-swap="innerHTML"
 			>

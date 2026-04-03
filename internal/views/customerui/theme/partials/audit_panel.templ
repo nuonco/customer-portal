@@ -62,6 +62,14 @@ type SandboxInfo struct {
 	Branch     string
 	RepoPublic bool
 	Outputs    map[string]string
+	// AWS fields extracted from nested output maps
+	AccountID  string
+	Region     string
+	VPCID      string
+	VPCARN     string
+	ECRID      string
+	ECRARN     string
+	ClusterARN string
 }
 
 // AuditPanelProps contains data needed for the audit panel with sub-tabs.
@@ -77,7 +85,10 @@ type AuditPanelProps struct {
 	StackInfo         *StackInfo
 	SandboxInfo       *SandboxInfo
 	SandboxPolicyReports    []nuon.PolicyReport
+	ActiveStackRun          *nuon.StackRun
+	ActiveSandboxRun        *nuonmodels.AppInstallSandboxRun
 	Components              []*nuonmodels.AppInstallComponent
+	ComponentInfos          []ComponentInfo
 	ComponentsPolicyReports []nuon.PolicyReport
 	ComponentsSubTab        string // "info", "history", or "policies" (only used when ActiveTab == "components")
 	Workflows               []*nuonmodels.AppWorkflow
@@ -87,7 +98,7 @@ type AuditPanelProps struct {
 	DeploysPagination       AuditTabPagination
 	WorkflowsPagination     AuditTabPagination
 	ActionsPagination       AuditTabPagination
-	AuditSubTab             string // "stack", "sandbox", "components", "actions" (only used when ActiveTab == "audit")
+	AuditSubTab             string // "workflows", "stack", "sandbox", "components", "actions" (only used when ActiveTab == "audit")
 }
 
 templ AuditPanel(props AuditPanelProps) {
@@ -115,22 +126,25 @@ templ AuditPanel(props AuditPanelProps) {
 }
 
 templ stackPanel(props AuditPanelProps) {
-	@stackDetailsCard(props.StackInfo, "")
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+		@stackDetailsCard(props.StackInfo, "Status")
+		@activeStackRunCard(props.ActiveStackRun, props.BasePath, props.Install.ID)
+	</div>
 	<!-- Sub-tab headers -->
 	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
-		<button
-			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.StackSubTab == "history") }
-			data-subtab="history"
-			onclick="switchStackSubTab('history')"
-		>
-			History
-		</button>
 		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.StackSubTab == "outputs") }
 			data-subtab="outputs"
 			onclick="switchStackSubTab('outputs')"
 		>
 			Outputs
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.StackSubTab == "history") }
+			data-subtab="history"
+			onclick="switchStackSubTab('history')"
+		>
+			Audit Log
 		</button>
 	</div>
 	<div id="stack-sub-outputs" class={ "audit-sub-pane", templ.KV("active", props.StackSubTab == "outputs") }>
@@ -143,16 +157,12 @@ templ stackPanel(props AuditPanelProps) {
 }
 
 templ sandboxPanel(props AuditPanelProps) {
-	@sandboxDetailsCard(props.SandboxInfo, "")
+	<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+		@sandboxDetailsCard(props.SandboxInfo, "Status")
+		@activeSandboxRunCard(props.ActiveSandboxRun, props.SandboxInfo)
+	</div>
 	<!-- Sub-tab headers -->
 	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
-		<button
-			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "history") }
-			data-subtab="history"
-			onclick="switchSandboxSubTab('history')"
-		>
-			History
-		</button>
 		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "outputs") }
 			data-subtab="outputs"
@@ -165,7 +175,14 @@ templ sandboxPanel(props AuditPanelProps) {
 			data-subtab="policies"
 			onclick="switchSandboxSubTab('policies')"
 		>
-			Policy evaluations
+			Policy Evaluations
+		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "history") }
+			data-subtab="history"
+			onclick="switchSandboxSubTab('history')"
+		>
+			Audit Log
 		</button>
 	</div>
 	<div id="sandbox-sub-history" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "history") }>
@@ -176,21 +193,13 @@ templ sandboxPanel(props AuditPanelProps) {
 		@sandboxOutputsView(props.SandboxInfo)
 	</div>
 	<div id="sandbox-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "policies") }>
-		@policyReportList(props.SandboxPolicyReports, "sandbox policy evaluations")
+		@sandboxPolicyReportList(props.SandboxPolicyReports, "sandbox policy evaluations")
 	</div>
 }
 
 templ componentsPanel(props AuditPanelProps) {
-	@componentsSummaryCard(props.Components)
 	<!-- Sub-tab headers -->
-	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4 mt-4">
-		<button
-			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "history") }
-			data-subtab="history"
-			onclick="switchComponentsSubTab('history')"
-		>
-			History
-		</button>
+	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
 		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "components") }
 			data-subtab="components"
@@ -203,31 +212,26 @@ templ componentsPanel(props AuditPanelProps) {
 			data-subtab="policies"
 			onclick="switchComponentsSubTab('policies')"
 		>
-			Policy evaluations
+			Policy Evaluations
 		</button>
+		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "history") }
+			data-subtab="history"
+			onclick="switchComponentsSubTab('history')"
+		>
+			Audit Log
+		</button>
+	</div>
+	<div id="components-sub-components" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "components") }>
+		@componentsInfoView(props.Components, props.ComponentInfos)
+	</div>
+	<div id="components-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "policies") }>
+		@componentsPolicyReportList(props.ComponentsPolicyReports, "deploy policy evaluations")
 	</div>
 	<div id="components-sub-history" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "history") }>
 		@auditDeployList(props.Deploys)
 		@auditPagination("components", props.DeploysPagination)
 	</div>
-	<div id="components-sub-components" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "components") }>
-		@componentsInfoView(props.Components)
-	</div>
-	<div id="components-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "policies") }>
-		@policyReportList(props.ComponentsPolicyReports, "deploy policy evaluations")
-	</div>
-}
-
-func componentTypeCounts(components []*nuonmodels.AppInstallComponent) map[string]int {
-	counts := make(map[string]int)
-	for _, comp := range components {
-		t := componentType(comp)
-		if t == "" {
-			t = "unknown"
-		}
-		counts[t]++
-	}
-	return counts
 }
 
 func componentTypeLabel(t string) string {
@@ -249,67 +253,65 @@ func componentTypeLabel(t string) string {
 	}
 }
 
-templ componentsSummaryCard(components []*nuonmodels.AppInstallComponent) {
-	if len(components) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-puzzle-piece text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No components</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Component information is not available for this install.</p>
-		</div>
-	} else {
-		<div class="card-base">
-			<div class="flex items-center gap-4 text-sm">
-				<span class="font-medium text-cool-grey-900 dark:text-white">
-					{ fmt.Sprintf("%d", len(components)) } { "components" }
-				</span>
-				<span class="text-cool-grey-300 dark:text-cool-grey-600">|</span>
-				for t, count := range componentTypeCounts(components) {
-					<span class="text-cool-grey-600 dark:text-cool-grey-400">
-						{ fmt.Sprintf("%d %s", count, componentTypeLabel(t)) }
-					</span>
-				}
-			</div>
-		</div>
-	}
-}
-
-templ componentsInfoView(components []*nuonmodels.AppInstallComponent) {
+templ componentsInfoView(components []*nuonmodels.AppInstallComponent, infos []ComponentInfo) {
 	if len(components) == 0 {
 		@auditEmptyState("components", "ph-puzzle-piece")
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
+				<col class="w-[20%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[15%]"/>
 				<col class="w-[25%]"/>
-				<col class="w-[20%]"/>
-				<col class="w-[20%]"/>
-				<col class="w-[35%]"/>
+				<col class="w-[25%]"/>
 			</colgroup>
 			<thead>
 				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
 					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
-					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
 					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
-					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">ID</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Repo</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Git ref</th>
 				</tr>
 			</thead>
 			<tbody>
-				for _, comp := range components {
-					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+				for i, comp := range components {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openComponentPanel('%s', '%s')", comp.ComponentID, componentName(comp))} }
+					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ componentName(comp) }>{ componentName(comp) }</td>
+						<td class="py-2 pr-3">
+							if i < len(infos) && infos[i].Status != "" {
+								<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(infos[i].Status) }>
+									{ infos[i].Status }
+								</span>
+							}
+						</td>
 						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400">
 							<div class="flex items-center gap-1.5">
 								@auditComponentTypeIcon(componentType(comp))
 								<span class="truncate">{ componentTypeLabel(componentType(comp)) }</span>
 							</div>
 						</td>
-						<td class="py-2 pr-3">
-							if comp.Status != "" {
-								<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(comp.Status) }>
-									{ comp.Status }
-								</span>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">
+							if i < len(infos) && infos[i].Repo != "" {
+								if infos[i].RepoPublic {
+									<a href={ templ.SafeURL(repoURL(infos[i].Repo)) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-theme-primary hover:underline" onclick="event.stopPropagation()" title={ infos[i].Repo }><span class="truncate">{ infos[i].Repo }</span><i class="ph-bold ph-arrow-square-out text-xs flex-shrink-0"></i></a>
+								} else {
+									<span class="truncate" title={ infos[i].Repo }>{ infos[i].Repo }</span>
+								}
 							}
 						</td>
-						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ comp.ID }>{ comp.ID }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 truncate">
+							if i < len(infos) && infos[i].Branch != "" {
+								if infos[i].RepoPublic {
+									<a href={ templ.SafeURL(repoURL(infos[i].Repo) + "/tree/" + infos[i].Branch) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-theme-primary hover:underline" onclick="event.stopPropagation()" title={ infos[i].Branch }><span class="truncate">{ infos[i].Branch }</span><i class="ph-bold ph-arrow-square-out text-xs flex-shrink-0"></i></a>
+								} else {
+									<span class="truncate" title={ infos[i].Branch }>{ infos[i].Branch }</span>
+								}
+							}
+						</td>
 					</tr>
 				}
 			</tbody>
@@ -322,6 +324,23 @@ func componentName(comp *nuonmodels.AppInstallComponent) string {
 		return comp.Component.Name
 	}
 	return "Component"
+}
+
+func componentStatus(comp *nuonmodels.AppInstallComponent) string {
+	if comp.StatusV2 != nil && comp.StatusV2.Status != "" {
+		return string(comp.StatusV2.Status)
+	}
+	if comp.Status != "" {
+		return comp.Status
+	}
+	if len(comp.InstallDeploys) > 0 {
+		latest := comp.InstallDeploys[0]
+		if latest.StatusV2 != nil && latest.StatusV2.Status != "" {
+			return string(latest.StatusV2.Status)
+		}
+		return latest.Status
+	}
+	return ""
 }
 
 func componentType(comp *nuonmodels.AppInstallComponent) string {
@@ -340,33 +359,26 @@ templ sandboxDetailsCard(info *SandboxInfo, title string) {
 		</div>
 	} else {
 		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
-			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-				<div class="space-y-3">
-					if info.Repo != "" {
-						if info.RepoPublic {
-							@infoRowLink("Repo", info.Repo, repoURL(info.Repo))
-						} else {
-							@infoRow("Repo", info.Repo)
-						}
-					}
-					if info.Directory != "" {
-						if info.RepoPublic && info.Branch != "" {
-							@infoRowLink("Directory", info.Directory, repoURL(info.Repo)+"/tree/"+info.Branch+"/"+info.Directory)
-						} else {
-							@infoRow("Directory", info.Directory)
-						}
-					}
-					if info.Branch != "" {
-						if info.RepoPublic {
-							@infoRowLink("Branch", info.Branch, repoURL(info.Repo)+"/tree/"+info.Branch)
-						} else {
-							@infoRow("Branch", info.Branch)
-						}
-					}
-				</div>
-				<div class="space-y-3">
-					@infoRow("Created", info.CreatedAt)
-				</div>
+			<div class="space-y-3 text-sm">
+				if info.AccountID != "" {
+					@infoRowLink("Account", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console")
+				}
+				if info.Region != "" {
+					@infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region)
+				}
+				if info.VPCARN != "" {
+					@infoRowLink("VPC", info.VPCARN, "https://console.aws.amazon.com/go/view?arn="+info.VPCARN)
+				} else if info.VPCID != "" {
+					@infoRowLink("VPC", info.VPCID, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPCID)
+				}
+				if info.ECRARN != "" {
+					@infoRowLink("ECR", info.ECRARN, "https://console.aws.amazon.com/go/view?arn="+info.ECRARN)
+				} else if info.ECRID != "" {
+					@infoRowLink("ECR", info.ECRID, "https://"+info.Region+".console.aws.amazon.com/ecr/repositories?region="+info.Region)
+				}
+				if info.ClusterARN != "" {
+					@infoRowLink("Cluster", info.ClusterARN, "https://console.aws.amazon.com/go/view?arn="+info.ClusterARN)
+				}
 			</div>
 		}
 	}
@@ -425,15 +437,10 @@ templ stackDetailsCard(info *StackInfo, title string) {
 		</div>
 	} else {
 		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
-			<div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
-				<div class="space-y-3">
-					@infoRowLink("Account ID", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console")
-					@infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region)
-					@infoRowLink("VPC", info.VPC, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPC)
-				</div>
-				<div class="space-y-3">
-					@infoRow("Created", info.CreatedAt)
-				</div>
+			<div class="space-y-3 text-sm">
+				@infoRowLink("Account ID", info.AccountID, "https://"+info.AccountID+".signin.aws.amazon.com/console")
+				@infoRowLink("Region", info.Region, "https://"+info.Region+".console.aws.amazon.com/console/home?region="+info.Region)
+				@infoRowLink("VPC", info.VPC, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPC)
 			</div>
 		}
 	}
@@ -467,6 +474,66 @@ templ stackOutputsView(info *StackInfo) {
 				}
 			</tbody>
 		</table>
+	}
+}
+
+templ activeStackRunCard(run *nuon.StackRun, basePath string, installID string) {
+	if run == nil {
+		@components.Card(components.CardProps{Class: "text-center py-8"}) {
+			<i class="ph-bold ph-check-circle text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No active stack run.</p>
+		}
+	} else {
+		@components.Card(components.CardProps{Header: activeRunCardHeader("Active stack run", "")}) {
+			<div class="space-y-3 text-sm">
+				@infoRow("Ran on", FormatAPITime(run.CreatedAt))
+				if run.TemplateURL != "" {
+					@infoRowLink("Template", run.TemplateURL, run.TemplateURL)
+				}
+			</div>
+		}
+	}
+}
+
+templ activeRunCardHeader(title string, status string) {
+	<div class="flex items-center gap-2">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
+		if status != "" {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
+				{ status }
+			</span>
+		}
+	</div>
+}
+
+templ activeSandboxRunCard(run *nuonmodels.AppInstallSandboxRun, info *SandboxInfo) {
+	if run == nil {
+		@components.Card(components.CardProps{Class: "text-center py-8"}) {
+			<i class="ph-bold ph-check-circle text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No active sandbox run.</p>
+		}
+	} else {
+		@components.Card(components.CardProps{Header: activeRunCardHeader("Active sandbox run", "")}) {
+			<div class="space-y-3 text-sm">
+				@infoRow("Ran on", FormatAPITime(run.CreatedAt))
+				if info != nil {
+					if info.Repo != "" {
+						if info.RepoPublic {
+							@infoRowLink("Repo", info.Repo, repoURL(info.Repo))
+						} else {
+							@infoRow("Repo", info.Repo)
+						}
+					}
+					if info.Branch != "" {
+						if info.RepoPublic {
+							@infoRowLink("Git ref", info.Branch, repoURL(info.Repo)+"/tree/"+info.Branch)
+						} else {
+							@infoRow("Git ref", info.Branch)
+						}
+					}
+					}
+			</div>
+		}
 	}
 }
 
@@ -701,14 +768,45 @@ func rolePoliciesJSON(policies []RolePolicy) string {
 	return string(b)
 }
 
-func policyReportName(report nuon.PolicyReport) string {
-	if report.ComponentName != "" {
-		return report.ComponentName
+func policyReportPolicyName(report nuon.PolicyReport) string {
+	if report.PolicyName != "" {
+		return report.PolicyName
 	}
 	return "Policy evaluation"
 }
 
-templ policyReportList(reports []nuon.PolicyReport, emptyLabel string) {
+templ policyReportCountCells(report nuon.PolicyReport) {
+	<td class="py-2 pr-3">
+		if report.DenyCount > 0 {
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+				{ fmt.Sprintf("%d", report.DenyCount) }
+			</span>
+		} else {
+			<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+		}
+	</td>
+	<td class="py-2 pr-3">
+		if report.WarnCount > 0 {
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+				{ fmt.Sprintf("%d", report.WarnCount) }
+			</span>
+		} else {
+			<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+		}
+	</td>
+	<td class="py-2 pr-3">
+		if report.PassCount > 0 {
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+				{ fmt.Sprintf("%d", report.PassCount) }
+			</span>
+		} else {
+			<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+		}
+	</td>
+	<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(report.EvaluatedAt) }</td>
+}
+
+templ sandboxPolicyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 	if len(reports) == 0 {
 		@auditEmptyState(emptyLabel, "ph-shield-check")
 	} else {
@@ -722,7 +820,7 @@ templ policyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 			</colgroup>
 			<thead>
 				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Component</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Policy</th>
 					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Denied</th>
 					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Warnings</th>
 					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Passed</th>
@@ -731,36 +829,51 @@ templ policyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 			</thead>
 			<tbody>
 				for _, report := range reports {
-					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
-						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ policyReportName(report) }>{ policyReportName(report) }</td>
-						<td class="py-2 pr-3">
-							if report.DenyCount > 0 {
-								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-									{ fmt.Sprintf("%d", report.DenyCount) }
-								</span>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
-							}
-						</td>
-						<td class="py-2 pr-3">
-							if report.WarnCount > 0 {
-								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
-									{ fmt.Sprintf("%d", report.WarnCount) }
-								</span>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
-							}
-						</td>
-						<td class="py-2 pr-3">
-							if report.PassCount > 0 {
-								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-									{ fmt.Sprintf("%d", report.PassCount) }
-								</span>
-							} else {
-								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
-							}
-						</td>
-						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(report.EvaluatedAt) }</td>
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyReportPanel('%s', '%s')", report.ID, policyReportPolicyName(report))} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ policyReportPolicyName(report) }>{ policyReportPolicyName(report) }</td>
+						@policyReportCountCells(report)
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ componentsPolicyReportList(reports []nuon.PolicyReport, emptyLabel string) {
+	if len(reports) == 0 {
+		@auditEmptyState(emptyLabel, "ph-shield-check")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[20%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[12%]"/>
+				<col class="w-[12%]"/>
+				<col class="w-[12%]"/>
+				<col class="w-[24%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Component</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Policy</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Denied</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Warnings</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Passed</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Evaluated</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, report := range reports {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyReportPanel('%s', '%s')", report.ID, policyReportPolicyName(report))} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ report.ComponentName }>{ report.ComponentName }</td>
+						<td class="py-2 pr-3 text-cool-grey-900 dark:text-white truncate" title={ policyReportPolicyName(report) }>{ policyReportPolicyName(report) }</td>
+						@policyReportCountCells(report)
 					</tr>
 				}
 			</tbody>
@@ -801,6 +914,100 @@ templ auditDeployList(deploys []*nuonmodels.AppInstallDeploy) {
 						</td>
 						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate" title={ deploy.ComponentName }>{ deploy.ComponentName }</td>
 						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(deploy.CreatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
+}
+
+func allWorkflowsTypeLabel(t nuonmodels.AppWorkflowType) string {
+	switch t {
+	case "provision":
+		return "Provision"
+	case "deprovision":
+		return "Deprovision"
+	case "deprovision_sandbox":
+		return "Deprovision Sandbox"
+	case "manual_deploy":
+		return "Manual Deploy"
+	case "input_update":
+		return "Input Update"
+	case "deploy_components":
+		return "Deploy Components"
+	case "teardown_component":
+		return "Teardown Component"
+	default:
+		return strings.ReplaceAll(string(t), "_", " ")
+	}
+}
+
+func allWorkflowsDuration(wf *nuonmodels.AppWorkflow) string {
+	if wf.ExecutionTime > 0 {
+		d := time.Duration(wf.ExecutionTime) * time.Millisecond
+		if d < time.Minute {
+			return fmt.Sprintf("%ds", int(d.Seconds()))
+		}
+		if d < time.Hour {
+			return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
+		}
+		return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
+	}
+	if wf.CreatedAt != "" && wf.FinishedAt != "" {
+		start, err1 := time.Parse(time.RFC3339Nano, wf.CreatedAt)
+		end, err2 := time.Parse(time.RFC3339Nano, wf.FinishedAt)
+		if err1 == nil && err2 == nil {
+			d := end.Sub(start)
+			if d < time.Minute {
+				return fmt.Sprintf("%ds", int(d.Seconds()))
+			}
+			if d < time.Hour {
+				return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
+			}
+			return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
+		}
+	}
+	if !wf.Finished {
+		return "running..."
+	}
+	return "—"
+}
+
+templ allWorkflowsList(workflows []*nuonmodels.AppWorkflow) {
+	if len(workflows) == 0 {
+		@auditEmptyState("workflows", "ph-clock")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[30%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[25%]"/>
+				<col class="w-[25%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Duration</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, wf := range workflows {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s')", wf.ID)} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ allWorkflowsTypeLabel(wf.Type) }>
+							{ allWorkflowsTypeLabel(wf.Type) }
+						</td>
+						<td class="py-2 pr-3">
+							<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(workflowStatus(wf)) }>
+								{ workflowStatus(wf) }
+							</span>
+						</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(wf.CreatedAt) }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ allWorkflowsDuration(wf) }</td>
 					</tr>
 				}
 			</tbody>
@@ -898,7 +1105,7 @@ func statusAccentColor(status string) string {
 	case "pending", "queued":
 		return "#ca8a04"
 	default:
-		return ""
+		return "#9ca3af"
 	}
 }
 
@@ -1020,6 +1227,13 @@ templ auditJobsPagination(subTab string, p AuditTabPagination) {
 templ auditJobsPanel(props AuditPanelProps) {
 	<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
 		<button
+			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "workflows") }
+			data-subtab="workflows"
+			onclick="switchAuditSubTab('workflows')"
+		>
+			Workflows
+		</button>
+		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.AuditSubTab == "stack") }
 			data-subtab="stack"
 			onclick="switchAuditSubTab('stack')"
@@ -1047,6 +1261,10 @@ templ auditJobsPanel(props AuditPanelProps) {
 		>
 			Actions
 		</button>
+	</div>
+	<div id="audit-sub-workflows" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "workflows") }>
+		@allWorkflowsList(props.Workflows)
+		@auditJobsPagination("workflows", props.WorkflowsPagination)
 	</div>
 	<div id="audit-sub-stack" class={ "audit-sub-pane", templ.KV("active", props.AuditSubTab == "stack") }>
 		@auditStackList(props.StackRuns)
@@ -1125,6 +1343,28 @@ templ auditPanelScripts() {
 				}
 			};
 
+			window.openPolicyReportPanel = function(reportID, reportName) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = reportName || 'Policy Evaluation';
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/policies/report/' + reportID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy evaluation details.</p>';
+					});
+			};
+
 			window.openJobPanel = function(jobType, jobID, jobTitle) {
 				var panel = document.getElementById('secondary-panel');
 				var title = document.getElementById('secondary-panel-title');
@@ -1147,7 +1387,29 @@ templ auditPanelScripts() {
 					});
 			};
 
-			window.openWorkflowPanel = function(workflowID, workflowName) {
+			window.openComponentPanel = function(componentID, componentName) {
+					var panel = document.getElementById('secondary-panel');
+					var title = document.getElementById('secondary-panel-title');
+					var content = document.getElementById('secondary-panel-content');
+					if (!panel || !title || !content) return;
+					title.textContent = componentName || 'Component Details';
+					content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+					panel.classList.add('open');
+					var overlay = document.getElementById('secondary-panel-overlay');
+					if (overlay) overlay.classList.add('open');
+
+					var config = document.getElementById('audit-panel-config');
+					var basePath = config ? config.getAttribute('data-base-path') : '';
+					var installId = config ? config.getAttribute('data-install-id') : '';
+					fetch(basePath + '/installs/' + installId + '/panel/component/' + componentID)
+						.then(function(resp) { return resp.text(); })
+						.then(function(html) { content.innerHTML = html; })
+						.catch(function() {
+							content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load component details.</p>';
+						});
+				};
+
+				window.openWorkflowPanel = function(workflowID, workflowName) {
 				var panel = document.getElementById('secondary-panel');
 				var title = document.getElementById('secondary-panel-title');
 				var content = document.getElementById('secondary-panel-content');

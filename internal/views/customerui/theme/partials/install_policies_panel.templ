@@ -1,6 +1,9 @@
 package partials
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
 
 // PoliciesPolicy holds display info for a single deployment policy.
 type PoliciesPolicy struct {
@@ -11,7 +14,11 @@ type PoliciesPolicy struct {
 }
 
 type PoliciesPanelProps struct {
-	Policies []PoliciesPolicy
+	Policies      []PoliciesPolicy
+	PolicyReports []nuon.PolicyReport
+	ActiveSubTab  string // "policies" or "evaluations"
+	BasePath      string
+	InstallID     string
 }
 
 func formatPolicyType(t string) string {
@@ -37,51 +44,170 @@ func formatPolicyType(t string) string {
 
 templ PoliciesPanel(props PoliciesPanelProps) {
 	<div class="policies-panel">
-		if len(props.Policies) == 0 {
-			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured for this app.</p>
-		} else {
-			<table class="w-full text-sm table-fixed">
-				<colgroup>
-					<col class="w-[40%]"/>
-					<col class="w-[30%]"/>
-					<col class="w-[30%]"/>
-				</colgroup>
-				<thead>
-					<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-						<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
-						<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
-						<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Engine</th>
-					</tr>
-				</thead>
-				<tbody>
-					for i, pol := range props.Policies {
-						<tr
-							class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-							onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyPanel(%d)", i)} }
-						>
-							<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ pol.Name }>{ pol.Name }</td>
-							<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">{ formatPolicyType(pol.Type) }</td>
-							<td class="py-2">
-								if pol.Engine != "" {
-									<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ pol.Engine }</span>
-								}
-							</td>
-						</tr>
-					}
-				</tbody>
-			</table>
-			<!-- Hidden policy contents for JS to read -->
-			for i, pol := range props.Policies {
-				<div class="hidden" data-policy-index={ fmt.Sprintf("%d", i) } data-policy-name={ pol.Name } data-policy-contents={ pol.Contents }></div>
-			}
-		}
+		<!-- Sub-tab headers -->
+		<div class="audit-sub-tabs flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
+			<button
+				class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ActiveSubTab == "policies") }
+				data-subtab="policies"
+				onclick="switchPoliciesSubTab('policies')"
+			>
+				Policies
+			</button>
+			<button
+				class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ActiveSubTab == "evaluations") }
+				data-subtab="evaluations"
+				onclick="switchPoliciesSubTab('evaluations')"
+			>
+				Policy Evaluations
+			</button>
+		</div>
+		<!-- Policies sub-pane -->
+		<div id="policies-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ActiveSubTab == "policies") }>
+			@policiesListContent(props.Policies)
+		</div>
+		<!-- Policy Evaluations sub-pane -->
+		<div id="policies-sub-evaluations" class={ "audit-sub-pane", templ.KV("active", props.ActiveSubTab == "evaluations") }>
+			@policiesEvalList(props.PolicyReports)
+		</div>
+		<div
+			id="policies-panel-config"
+			class="hidden"
+			data-base-path={ props.BasePath }
+			data-install-id={ props.InstallID }
+		></div>
 	</div>
 	@policiesPanelScripts()
+}
+
+templ policiesListContent(policies []PoliciesPolicy) {
+	if len(policies) == 0 {
+		<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured for this app.</p>
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[40%]"/>
+				<col class="w-[30%]"/>
+				<col class="w-[30%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Name</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Engine</th>
+				</tr>
+			</thead>
+			<tbody>
+				for i, pol := range policies {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyPanel(%d)", i)} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ pol.Name }>{ pol.Name }</td>
+						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">{ formatPolicyType(pol.Type) }</td>
+						<td class="py-2">
+							if pol.Engine != "" {
+								<span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ pol.Engine }</span>
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+		<!-- Hidden policy contents for JS to read -->
+		for i, pol := range policies {
+			<div class="hidden" data-policy-index={ fmt.Sprintf("%d", i) } data-policy-name={ pol.Name } data-policy-contents={ pol.Contents }></div>
+		}
+	}
+}
+
+func policiesEvalReportName(report nuon.PolicyReport) string {
+	if report.PolicyName != "" {
+		return report.PolicyName
+	}
+	return "Policy evaluation"
+}
+
+templ policiesEvalList(reports []nuon.PolicyReport) {
+	if len(reports) == 0 {
+		@auditEmptyState("policy evaluations", "ph-shield-check")
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[25%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[15%]"/>
+				<col class="w-[30%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Policy</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Denied</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Warnings</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Passed</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Evaluated</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, report := range reports {
+					<tr
+						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyReportPanel('%s', '%s')", report.ID, policiesEvalReportName(report))} }
+					>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ policiesEvalReportName(report) }>{ policiesEvalReportName(report) }</td>
+						<td class="py-2 pr-3">
+							if report.DenyCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+									{ fmt.Sprintf("%d", report.DenyCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 pr-3">
+							if report.WarnCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+									{ fmt.Sprintf("%d", report.WarnCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 pr-3">
+							if report.PassCount > 0 {
+								<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+									{ fmt.Sprintf("%d", report.PassCount) }
+								</span>
+							} else {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+							}
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(report.EvaluatedAt) }</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
 }
 
 templ policiesPanelScripts() {
 	<script>
 		(function() {
+			window.switchPoliciesSubTab = function(subTab) {
+				var container = document.querySelector('.policies-panel');
+				if (!container) return;
+				container.querySelectorAll('.audit-sub-tabs .nav-item').forEach(function(b) {
+					b.classList.remove('active');
+				});
+				container.querySelectorAll('.audit-sub-pane').forEach(function(p) {
+					p.classList.remove('active');
+				});
+				var btn = container.querySelector('.audit-sub-tabs .nav-item[data-subtab="' + subTab + '"]');
+				if (btn) btn.classList.add('active');
+				var pane = container.querySelector('#policies-sub-' + subTab);
+				if (pane) pane.classList.add('active');
+			};
+
 			window.openPolicyPanel = function(index) {
 				var el = document.querySelector('[data-policy-index="' + index + '"]');
 				if (!el) return;
@@ -98,13 +224,33 @@ templ policiesPanelScripts() {
 				if (overlay) overlay.classList.add('open');
 			};
 
+			window.openPolicyReportPanel = function(reportID, reportName) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = reportName || 'Policy Evaluation';
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('policies-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/policies/report/' + reportID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy evaluation details.</p>';
+					});
+			};
 
 			function escapeHtml(text) {
 				var div = document.createElement('div');
 				div.appendChild(document.createTextNode(text));
 				return div.innerHTML;
 			}
-
 		})();
 	</script>
 }

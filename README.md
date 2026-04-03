@@ -468,7 +468,6 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `DELETE /installs/:install_id` - Deprovision install
 - `POST /installs/:install_id/forget` - Remove install from local DB
 - `POST /installs/:install_id/reprovision` - Reprovision install
-- `GET /installs/:install_id/workflows` - Workflow history
 - `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
 - `GET /install-link/:sha/app-config` - Get app configuration for install link
 - `GET /apps` - Customer app catalog (shows empty state if no published apps)
@@ -480,7 +479,7 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `GET /custom/css/:org_id` - Serve organization-specific CSS
 - `GET /custom/assets/:org_id/*path` - Serve organization-specific assets
 - `GET /installs/:install_id/panel` - Install overview tab content (HTMX)
-- `GET /installs/:install_id/panel/audit` - Audit/stack/sandbox/components tab content (HTMX)
+- `GET /installs/:install_id/panel/audit` - Audit/workflows/stack/sandbox/components tab content (HTMX)
 - `GET /installs/:install_id/panel/access` - Access roles tab content (HTMX)
 - `GET /installs/:install_id/panel/policies` - Policies tab content (HTMX)
 - `GET /installs/:install_id/inputs` - Get current install inputs

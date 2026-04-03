@@ -28,14 +28,14 @@ templ Card(props CardProps) {
 		style={ cardStyle(props) }
 	>
 		if props.Header != nil {
-			<div class="px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600">
+			<div class="px-4 py-3 border-b" style="border-color: var(--theme-border-subtle)">
 				@props.Header
 			</div>
 			<div class="p-4">
 				{ children... }
 			</div>
 		} else if props.Title != "" {
-			<div class="px-4 py-3 border-b border-cool-grey-200 dark:border-dark-grey-600">
+			<div class="px-4 py-3 border-b" style="border-color: var(--theme-border-subtle)">
 				<h4 class="text-base text-cool-grey-900 dark:text-white">{ props.Title }</h4>
 			</div>
 			<div class="p-4">

@@ -5,10 +5,9 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
-
 import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -165,11 +164,11 @@ func Sidebar(props SidebarProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = installTabLink(props, "history", "ph-clock", "History").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = installTabLink(props, "audit", "ph-clock-counter-clockwise", "Audit Log").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = installTabLink(props, "audit", "ph-clock-counter-clockwise", "Audit Log").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = installTabLink(props, "app-info", "ph-book-open", "App Info").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

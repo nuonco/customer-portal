@@ -97,7 +97,19 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 		"roles":      "Roles",
 		"policies":   "Policies",
 		"history":    "History",
+		"app-info":   "App Info",
 		"audit":      "Audit Log",
+	}
+
+	tabIcons := map[string]string{
+		"overview":   "house-simple",
+		"stack":      "stack",
+		"sandbox":    "shipping-container",
+		"components": "cards",
+		"roles":      "file-lock",
+		"policies":   "shield-check",
+		"audit":      "clock-counter-clockwise",
+		"app-info":   "book-open",
 	}
 
 	return &customerpages.InstallPageProps{
@@ -106,6 +118,7 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 		AppName:         appName,
 		APIDeletedError: apiDeletedError,
 		PageTitle:       tabTitles[activeTab],
+		PageIcon:        tabIcons[activeTab],
 	}, nil
 }
 
@@ -174,13 +187,13 @@ func (h *Handler) InstallPoliciesPage(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallPoliciesPage(*props))
 }
 
-func (h *Handler) InstallHistoryPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "history")
+func (h *Handler) InstallAppInfoPage(c *gin.Context) {
+	props, err := h.buildInstallPageProps(c, "app-info")
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallHistoryPage(*props))
+	h.RenderTempl(c, http.StatusOK, customerpages.InstallAppInfoPage(*props))
 }
 
 func (h *Handler) InstallAuditPage(c *gin.Context) {

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -16,9 +17,9 @@ import (
 	"go.uber.org/zap"
 )
 
-const stackSubTabDefault = "history"
-const sandboxSubTabDefault = "history"
-const componentsSubTabDefault = "history"
+const stackSubTabDefault = "outputs"
+const sandboxSubTabDefault = "outputs"
+const componentsSubTabDefault = "components"
 
 const auditPageSize = 10
 
@@ -67,16 +68,27 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 					// Build version ID → status lookup from the stack
 					if stack, err := apiClient.GetInstallStack(ctx, installID); err == nil && stack != nil {
 						versionStatus := make(map[string]string)
+						versionTemplateURL := make(map[string]string)
 						for _, v := range stack.Versions {
 							if v.CompositeStatus != nil {
 								versionStatus[v.ID] = string(v.CompositeStatus.Status)
 							}
-						}
-						for i := range runs {
-							if s, ok := versionStatus[runs[i].InstallStackVersionID]; ok {
-								runs[i].VersionStatus = s
+							if v.TemplateURL != "" {
+								versionTemplateURL[v.ID] = v.TemplateURL
 							}
 						}
+						for i := range runs {
+							vid := runs[i].InstallStackVersionID
+							if s, ok := versionStatus[vid]; ok {
+								runs[i].VersionStatus = s
+							}
+							if u, ok := versionTemplateURL[vid]; ok {
+								runs[i].TemplateURL = u
+							}
+						}
+					}
+					if len(runs) > 0 {
+						props.ActiveStackRun = &runs[0]
 					}
 					props.StackPagination = auditPagination(len(runs), offset)
 					props.StackRuns = paginateStackRuns(runs, offset)
@@ -92,6 +104,9 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 				// Fetch sandbox runs for the history sub-tab
 				offset := queryInt(c, "sandbox_offset", 0)
 				if runs, err := apiClient.GetInstallSandboxRuns(ctx, installID); err == nil {
+					if len(runs) > 0 {
+						props.ActiveSandboxRun = runs[0]
+					}
 					props.SandboxPagination = auditPagination(len(runs), offset)
 					props.SandboxRuns = paginateSandboxRuns(runs, offset)
 				} else {
@@ -100,6 +115,7 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 
 				// Fetch policy reports for the policy evaluations sub-tab
 				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_sandbox_runs"); err == nil {
+					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
 					props.SandboxPolicyReports = reports
 				} else {
 					zap.L().Warn("failed to fetch sandbox policy reports", zap.Error(err))
@@ -107,24 +123,49 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 			case "components":
 				props.ComponentsSubTab = c.DefaultQuery("components_sub", componentsSubTabDefault)
 
-				// Fetch install components for the info sub-tab
-				if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
-					props.Components = components
-				} else {
-					zap.L().Warn("failed to fetch install components", zap.Error(err))
-				}
-
-				// Fetch deploys for the history sub-tab
+				// Fetch deploys first — used for history sub-tab and component status
 				offset := queryInt(c, "components_offset", 0)
+				deployStatus := make(map[string]string)
 				if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
 					props.DeploysPagination = auditPagination(len(deploys), offset)
 					props.Deploys = paginateDeploys(deploys, offset)
+
+					// Build component_id → latest deploy status (deploys are newest-first)
+					for _, d := range deploys {
+						if _, exists := deployStatus[d.ComponentID]; !exists && d.ComponentID != "" {
+							if d.StatusV2 != nil && d.StatusV2.Status != "" {
+								deployStatus[d.ComponentID] = string(d.StatusV2.Status)
+							} else if d.Status != "" {
+								deployStatus[d.ComponentID] = d.Status
+							}
+						}
+					}
 				} else {
 					zap.L().Warn("failed to fetch deploys", zap.Error(err))
 				}
 
+				// Fetch install components for the info sub-tab
+				if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
+					props.Components = components
+					props.ComponentInfos = h.buildComponentInfos(ctx, apiClient, install, components)
+
+					// Merge deploy status into ComponentInfos
+					for i := range props.ComponentInfos {
+						if props.ComponentInfos[i].Status == "" && i < len(components) {
+							if s, ok := deployStatus[components[i].ComponentID]; ok {
+								props.ComponentInfos[i].Status = s
+							} else {
+								props.ComponentInfos[i].Status = "not deployed"
+							}
+						}
+					}
+				} else {
+					zap.L().Warn("failed to fetch install components", zap.Error(err))
+				}
+
 				// Fetch policy reports for the policy evaluations sub-tab
 				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_deploys"); err == nil {
+					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
 					props.ComponentsPolicyReports = reports
 				} else {
 					zap.L().Warn("failed to fetch component policy reports", zap.Error(err))
@@ -132,10 +173,23 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 			case "roles":
 				props.StackInfo = h.buildStackInfo(ctx, apiClient, install)
 			case "audit":
-				props.AuditSubTab = c.DefaultQuery("audit_sub", "stack")
+				props.AuditSubTab = c.DefaultQuery("audit_sub", "workflows")
 				offset := queryInt(c, "audit_offset", 0)
 
 				switch props.AuditSubTab {
+				case "workflows":
+					if workflows, hasMore, err := apiClient.GetInstallWorkflows(ctx, installID, offset, auditPageSize); err == nil {
+						props.Workflows = workflows
+						props.WorkflowsPagination = partials.AuditTabPagination{
+							Total:      offset + len(workflows),
+							HasPrev:    offset > 0,
+							HasNext:    hasMore,
+							PrevOffset: max(0, offset-auditPageSize),
+							NextOffset: offset + auditPageSize,
+						}
+					} else {
+						zap.L().Warn("failed to fetch workflows", zap.Error(err))
+					}
 				case "stack":
 					if runs, err := apiClient.GetInstallStackRuns(ctx, installID); err == nil {
 						if stack, err := apiClient.GetInstallStack(ctx, installID); err == nil && stack != nil {
@@ -191,6 +245,34 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 		}
 	}
 	h.RenderTempl(c, http.StatusOK, partials.AuditPanel(props))
+}
+
+// resolvePolicyReportNames populates PolicyName on each report by cross-referencing
+// PolicyIds with the app's policies config.
+func resolvePolicyReportNames(ctx context.Context, apiClient *nuon.Client, appID string, reports []nuon.PolicyReport) {
+	policies, err := apiClient.GetLatestAppPoliciesConfigFull(ctx, appID)
+	if err != nil || len(policies) == 0 {
+		return
+	}
+	nameByID := make(map[string]string, len(policies))
+	for _, p := range policies {
+		if p.ID != "" {
+			nameByID[p.ID] = p.Name
+		}
+	}
+	for i := range reports {
+		if len(reports[i].PolicyIds) > 0 {
+			var names []string
+			for _, pid := range reports[i].PolicyIds {
+				if name, ok := nameByID[pid]; ok {
+					names = append(names, name)
+				}
+			}
+			if len(names) > 0 {
+				reports[i].PolicyName = strings.Join(names, ", ")
+			}
+		}
+	}
 }
 
 // buildStackInfo fetches install stack data from the Nuon API and maps it to a StackInfo for display.
@@ -358,6 +440,39 @@ func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, 
 			info.Outputs = make(map[string]string, len(outputMap))
 			for k, v := range outputMap {
 				info.Outputs[k] = fmt.Sprintf("%v", v)
+			}
+			// Extract structured AWS fields from nested output maps
+			if acct, ok := outputMap["account"].(map[string]interface{}); ok {
+				if id, ok := acct["id"].(string); ok {
+					info.AccountID = id
+				}
+				if region, ok := acct["region"].(string); ok && info.Region == "" {
+					info.Region = region
+				}
+			}
+			if region, ok := outputMap["region"].(string); ok {
+				info.Region = region
+			}
+			if vpc, ok := outputMap["vpc"].(map[string]interface{}); ok {
+				if id, ok := vpc["id"].(string); ok {
+					info.VPCID = id
+				}
+				if arn, ok := vpc["arn"].(string); ok {
+					info.VPCARN = arn
+				}
+			}
+			if ecr, ok := outputMap["ecr"].(map[string]interface{}); ok {
+				if id, ok := ecr["registry_id"].(string); ok {
+					info.ECRID = id
+				}
+				if arn, ok := ecr["repository_arn"].(string); ok {
+					info.ECRARN = arn
+				}
+			}
+			if cluster, ok := outputMap["cluster"].(map[string]interface{}); ok {
+				if arn, ok := cluster["arn"].(string); ok {
+					info.ClusterARN = arn
+				}
 			}
 		}
 	}

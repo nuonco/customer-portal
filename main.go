@@ -475,15 +475,18 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/components", h.InstallComponentsPage)
 			installOwnership.GET("/roles", h.InstallRolesPage)
 			installOwnership.GET("/policies", h.InstallPoliciesPage)
-			installOwnership.GET("/history", h.InstallHistoryPage)
+			installOwnership.GET("/app-info", h.InstallAppInfoPage)
 			installOwnership.GET("/audit", h.InstallAuditPage)
 
 			// Panel endpoints (HTMX fragments loaded by the tab pages)
 			installOwnership.GET("/panel", h.InstallDetailPanel) // Overview tab content
-			installOwnership.GET("/panel/history", h.HistoryPanel)
+			installOwnership.GET("/panel/app-info", h.AppInfoPanel)
 			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
 			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
+			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)                   // Role detail sliding panel
 			installOwnership.GET("/panel/policies", h.PoliciesPanel)                             // Panel policies tab
+			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)       // Policy report detail panel
+			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)       // Component detail sliding panel
 			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel
 			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
 			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion

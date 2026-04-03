@@ -1,0 +1,43 @@
+package components
+
+// DataTableColumn defines a single column in a DataTable.
+type DataTableColumn struct {
+	Label    string // Header text (empty for action columns)
+	Width    string // CSS percentage width, e.g. "25%"
+	HideMobile bool   // If true, column gets hide-mobile class
+}
+
+// DataTableProps configures the DataTable component.
+type DataTableProps struct {
+	Columns []DataTableColumn
+	ID      string // optional id on <tbody>
+}
+
+// DataTable renders a table matching the install page panel style.
+templ DataTable(props DataTableProps) {
+	<table class="w-full text-sm table-fixed">
+		<colgroup>
+			for _, col := range props.Columns {
+				<col class={ "w-[" + col.Width + "]" }/>
+			}
+		</colgroup>
+		<thead>
+			<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+				for i, col := range props.Columns {
+					if i == len(props.Columns) - 1 {
+						<th class={ "text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400", templ.KV("hide-mobile", col.HideMobile) }>{ col.Label }</th>
+					} else {
+						<th class={ "text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400", templ.KV("hide-mobile", col.HideMobile) }>{ col.Label }</th>
+					}
+				}
+			</tr>
+		</thead>
+		<tbody
+			if props.ID != "" {
+				id={ props.ID }
+			}
+		>
+			{ children... }
+		</tbody>
+	</table>
+}

@@ -590,6 +590,7 @@ type StackRun struct {
 	UpdatedAt             string        `json:"updated_at"`
 	Data                  *StackRunData `json:"data,omitempty"`
 	VersionStatus         string        // populated by the handler from the parent stack version
+	TemplateURL           string        // populated by the handler from the parent stack version
 }
 
 // StackRunData holds optional metadata returned by the API.
@@ -697,6 +698,7 @@ type appPoliciesConfigFull struct {
 
 // AppPoliciesConfigPolicy is an individual policy from the app policies config.
 type AppPoliciesConfigPolicy struct {
+	ID          string `json:"id"`
 	Name        string `json:"name"`
 	Type        string `json:"type"`
 	Engine      string `json:"engine"`
@@ -744,11 +746,37 @@ type PolicyReport struct {
 	EvaluatedAt   string              `json:"evaluated_at"`
 	CreatedAt     string              `json:"created_at"`
 	ComponentName string              `json:"component_name"`
+	PolicyIds     []string            `json:"policy_ids"`
+	Policies      []PolicyResult      `json:"policies"`
+	Violations    []PolicyViolation   `json:"violations"`
+	// PolicyName is not from the API — it is resolved by the handler.
+	PolicyName string `json:"-"`
 }
 
 // PolicyReportStatus holds the composite status of a policy report.
 type PolicyReportStatus struct {
 	Status string `json:"status"`
+}
+
+// PolicyResult holds per-policy evaluation results within a report.
+type PolicyResult struct {
+	PolicyID   string `json:"policy_id"`
+	PolicyName string `json:"policy_name"`
+	Status     string `json:"status"`
+	DenyCount  int    `json:"deny_count"`
+	WarnCount  int    `json:"warn_count"`
+	PassCount  int    `json:"pass_count"`
+	InputCount int    `json:"input_count"`
+}
+
+// PolicyViolation holds a single policy violation within a report.
+type PolicyViolation struct {
+	PolicyID      string `json:"policy_id"`
+	PolicyName    string `json:"policy_name"`
+	Severity      string `json:"severity"`
+	Message       string `json:"message"`
+	InputIdentity string `json:"input_identity"`
+	InputIndex    int    `json:"input_index"`
 }
 
 // GetInstallPolicyReports retrieves policy reports for an install, optionally filtered by owner type.
@@ -782,6 +810,36 @@ func (c *Client) GetInstallPolicyReports(ctx context.Context, installID, ownerTy
 		return nil, fmt.Errorf("failed to decode policy reports: %w", err)
 	}
 	return reports, nil
+}
+
+// GetPolicyReport retrieves a single policy report by ID.
+func (c *Client) GetPolicyReport(ctx context.Context, reportID string) (*PolicyReport, error) {
+	reqURL := fmt.Sprintf("%s/v1/policy-reports/%s", c.apiURL, reportID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, fmt.Errorf("policy report not found")
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+
+	var report PolicyReport
+	if err := json.NewDecoder(resp.Body).Decode(&report); err != nil {
+		return nil, fmt.Errorf("failed to decode policy report: %w", err)
+	}
+	return &report, nil
 }
 
 // stepTargetRoleResponse is a minimal struct to extract the role from a sandbox run or deploy.

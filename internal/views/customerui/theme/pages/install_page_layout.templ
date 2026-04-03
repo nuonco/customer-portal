@@ -13,6 +13,7 @@ type InstallPageProps struct {
 	AppName         string
 	APIDeletedError bool
 	PageTitle       string // Display title for the current tab ("Overview", "Stack", etc.)
+	PageIcon        string // Phosphor icon name for the current tab (e.g. "house-simple")
 }
 
 // installPageShell renders the shared shell for install detail pages:
@@ -21,7 +22,12 @@ templ installPageShell(props InstallPageProps) {
 	<!-- Page Header -->
 	<div class="page-header flex items-center justify-between gap-4 mb-6 px-6 pt-6">
 		<div class="min-w-0 flex-1">
-			<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate">{ props.PageTitle }</h1>
+			<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate flex items-center gap-2">
+				if props.PageIcon != "" {
+					<i class={ "ph-bold ph-" + props.PageIcon, "text-xl" }></i>
+				}
+				{ props.PageTitle }
+			</h1>
 		</div>
 		<div class="flex items-center gap-2 flex-shrink-0">
 			<div id="page-actions-container"></div>

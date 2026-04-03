@@ -1,0 +1,51 @@
+package partials
+
+import nuonmodels "github.com/nuonco/nuon-go/models"
+
+// ComponentDetailProps holds data for the component detail sliding panel.
+type ComponentDetailProps struct {
+	Component *nuonmodels.AppInstallComponent
+	Info      ComponentInfo
+	Build     *nuonmodels.AppComponentBuild
+}
+
+templ ComponentDetailPanel(props ComponentDetailProps) {
+	<div class="p-4 space-y-4">
+		@jobDetailSection("Details") {
+			@jobDetailRow("Name", props.Info.Name)
+			@jobDetailRow("Type", componentTypeLabel(props.Info.Type))
+			@jobDetailRow("Status", props.Info.Status)
+			if props.Component.StatusDescription != "" {
+				@jobDetailRow("Description", props.Component.StatusDescription)
+			}
+			@jobDetailRow("ID", props.Component.ID)
+			@jobDetailRow("Created", FormatAPITime(props.Component.CreatedAt))
+			@jobDetailRow("Updated", FormatAPITime(props.Component.UpdatedAt))
+		}
+		if props.Info.Repo != "" || props.Build != nil {
+			@jobDetailSection("Source") {
+				@jobDetailRow("Repository", props.Info.Repo)
+				@jobDetailRow("Directory", props.Info.Directory)
+				@jobDetailRow("Branch", props.Info.Branch)
+				if props.Build != nil {
+					@jobDetailRow("Build Status", props.Build.Status)
+					@jobDetailRow("Git Ref", props.Build.GitRef)
+					if props.Build.VcsConnectionCommit != nil {
+						@jobDetailRow("Commit SHA", props.Build.VcsConnectionCommit.Sha)
+						@jobDetailRow("Commit Message", props.Build.VcsConnectionCommit.Message)
+						@jobDetailRow("Author", props.Build.VcsConnectionCommit.AuthorName)
+					}
+				}
+			}
+		}
+		if len(props.Component.InstallDeploys) > 0 {
+			if outputsMap := toStringMap(props.Component.InstallDeploys[0].Outputs); len(outputsMap) > 0 {
+				@jobDetailSection("Outputs") {
+					for key, val := range outputsMap {
+						@jobDetailRow(key, val)
+					}
+				}
+			}
+		}
+	</div>
+}

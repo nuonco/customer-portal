@@ -24,9 +24,11 @@ func (h *Handler) PoliciesPanel(c *gin.Context) {
 		return
 	}
 
+	activeSubTab := c.DefaultQuery("sub", "policies")
+
 	nuonOrg := install.GetNuonOrg()
 	if nuonOrg == nil || nuonOrg.APIToken == "" {
-		h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{}))
+		h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{ActiveSubTab: activeSubTab}))
 		return
 	}
 
@@ -37,31 +39,41 @@ func (h *Handler) PoliciesPanel(c *gin.Context) {
 	)
 	if err != nil {
 		zap.L().Warn("failed to create nuon client for policies panel", zap.Error(err))
-		h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{}))
+		h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{ActiveSubTab: activeSubTab}))
 		return
 	}
 
 	ctx := c.Request.Context()
 	appID := install.GetAppID()
+	installID := install.NuonInstallID
+
+	props := partials.PoliciesPanelProps{
+		ActiveSubTab: activeSubTab,
+		BasePath:     h.basePath,
+		InstallID:    install.ID,
+	}
 
 	policies, err := apiClient.GetLatestAppPoliciesConfigFull(ctx, appID)
 	if err != nil {
 		zap.L().Warn("failed to fetch policies config", zap.String("app_id", appID), zap.Error(err))
-		h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{}))
-		return
+	} else {
+		for _, p := range policies {
+			props.Policies = append(props.Policies, partials.PoliciesPolicy{
+				Name:     p.Name,
+				Type:     p.Type,
+				Engine:   p.Engine,
+				Contents: p.Contents,
+			})
+		}
 	}
 
-	var displayPolicies []partials.PoliciesPolicy
-	for _, p := range policies {
-		displayPolicies = append(displayPolicies, partials.PoliciesPolicy{
-			Name:     p.Name,
-			Type:     p.Type,
-			Engine:   p.Engine,
-			Contents: p.Contents,
-		})
+	reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "")
+	if err != nil {
+		zap.L().Warn("failed to fetch policy reports", zap.String("install_id", installID), zap.Error(err))
+	} else {
+		resolvePolicyReportNames(ctx, apiClient, appID, reports)
+		props.PolicyReports = reports
 	}
 
-	h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(partials.PoliciesPanelProps{
-		Policies: displayPolicies,
-	}))
+	h.RenderTempl(c, http.StatusOK, partials.PoliciesPanel(props))
 }

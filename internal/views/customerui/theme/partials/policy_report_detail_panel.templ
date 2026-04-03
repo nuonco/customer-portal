@@ -1,0 +1,116 @@
+package partials
+
+import (
+	"fmt"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+templ PolicyReportDetailPanel(report nuon.PolicyReport) {
+	<div class="p-4 space-y-4">
+		@jobDetailSection("Summary") {
+			@jobDetailRow("Component", policiesEvalReportName(report))
+			@jobDetailRow("Owner Type", report.OwnerType)
+			@jobDetailRow("Evaluated", FormatAPITime(report.EvaluatedAt))
+			@jobDetailRow("Denied", fmt.Sprintf("%d", report.DenyCount))
+			@jobDetailRow("Warnings", fmt.Sprintf("%d", report.WarnCount))
+			@jobDetailRow("Passed", fmt.Sprintf("%d", report.PassCount))
+		}
+		if len(report.Policies) > 0 {
+			<div class="space-y-2">
+				<h4 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400">Policies</h4>
+				<table class="w-full text-sm table-fixed">
+					<colgroup>
+						<col class="w-[40%]"/>
+						<col class="w-[20%]"/>
+						<col class="w-[15%]"/>
+						<col class="w-[15%]"/>
+						<col class="w-[10%]"/>
+					</colgroup>
+					<thead>
+						<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+							<th class="text-left py-2 pr-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Policy</th>
+							<th class="text-left py-2 pr-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+							<th class="text-left py-2 pr-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Denied</th>
+							<th class="text-left py-2 pr-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Warnings</th>
+							<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Passed</th>
+						</tr>
+					</thead>
+					<tbody>
+						for _, pol := range report.Policies {
+							<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+								<td class="py-2 pr-2 text-cool-grey-900 dark:text-white truncate" title={ pol.PolicyName }>{ pol.PolicyName }</td>
+								<td class="py-2 pr-2">
+									@policyResultStatusBadge(pol.Status)
+								</td>
+								<td class="py-2 pr-2">
+									if pol.DenyCount > 0 {
+										<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">{ fmt.Sprintf("%d", pol.DenyCount) }</span>
+									} else {
+										<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+									}
+								</td>
+								<td class="py-2 pr-2">
+									if pol.WarnCount > 0 {
+										<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">{ fmt.Sprintf("%d", pol.WarnCount) }</span>
+									} else {
+										<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+									}
+								</td>
+								<td class="py-2">
+									if pol.PassCount > 0 {
+										<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">{ fmt.Sprintf("%d", pol.PassCount) }</span>
+									} else {
+										<span class="text-cool-grey-400 dark:text-cool-grey-500">0</span>
+									}
+								</td>
+							</tr>
+						}
+					</tbody>
+				</table>
+			</div>
+		}
+		if len(report.Violations) > 0 {
+			<div class="space-y-2">
+				<h4 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400">Violations</h4>
+				<div class="space-y-2">
+					for _, v := range report.Violations {
+						<div class="rounded-md border border-cool-grey-200 dark:border-dark-grey-600 p-3">
+							<div class="flex items-center gap-2 mb-1">
+								@violationSeverityBadge(v.Severity)
+								<span class="text-xs font-medium text-cool-grey-700 dark:text-cool-grey-300">{ v.PolicyName }</span>
+							</div>
+							<p class="text-sm text-cool-grey-900 dark:text-white">{ v.Message }</p>
+							if v.InputIdentity != "" {
+								<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-1">{ v.InputIdentity }</p>
+							}
+						</div>
+					}
+				</div>
+			</div>
+		}
+	</div>
+}
+
+templ policyResultStatusBadge(status string) {
+	switch status {
+		case "deny":
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Deny</span>
+		case "warn":
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">Warn</span>
+		case "pass":
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">Pass</span>
+		default:
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ status }</span>
+	}
+}
+
+templ violationSeverityBadge(severity string) {
+	switch severity {
+		case "deny":
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">Deny</span>
+		case "warn":
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">Warn</span>
+		default:
+			<span class="px-2 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ severity }</span>
+	}
+}

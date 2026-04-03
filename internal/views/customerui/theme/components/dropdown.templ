@@ -1,0 +1,74 @@
+package components
+
+type DropdownDirection string
+
+const (
+	DropdownDown DropdownDirection = "down"
+	DropdownUp   DropdownDirection = "up"
+)
+
+type DropdownAlign string
+
+const (
+	DropdownAlignRight DropdownAlign = "right"
+	DropdownAlignFull  DropdownAlign = "full"
+)
+
+type DropdownProps struct {
+	ID        string
+	Label     string
+	Icon      string
+	Direction DropdownDirection
+	Align     DropdownAlign
+	Class     string
+}
+
+templ Dropdown(props DropdownProps) {
+	<div class={ "relative", props.Class } id={ props.ID }>
+		<button
+			type="button"
+			class="button button-dropdown-trigger dropdown-trigger"
+			data-dropdown-menu={ props.ID + "-menu" }
+			onclick="var m=document.getElementById(this.dataset.dropdownMenu);if(m)m.classList.toggle('hidden')"
+		>
+			{ props.Label }
+			if props.Icon != "" {
+				<i class={ props.Icon + " text-base ml-2" }></i>
+			}
+		</button>
+		<div
+			id={ props.ID + "-menu" }
+			class={ "hidden dropdown-panel", dropdownDirectionClass(props.Direction), dropdownAlignClass(props.Align) }
+		>
+			{ children... }
+		</div>
+	</div>
+	<script>
+		(function() {
+			var el = document.currentScript.previousElementSibling;
+			var id = el.id;
+			var menuId = id + '-menu';
+			document.addEventListener('click', function(event) {
+				var wrapper = document.getElementById(id);
+				var menu = document.getElementById(menuId);
+				if (wrapper && menu && !wrapper.contains(event.target)) {
+					menu.classList.add('hidden');
+				}
+			});
+		})();
+	</script>
+}
+
+func dropdownDirectionClass(d DropdownDirection) string {
+	if d == DropdownUp {
+		return "dropdown-up"
+	}
+	return "dropdown-down"
+}
+
+func dropdownAlignClass(a DropdownAlign) string {
+	if a == DropdownAlignFull {
+		return "dropdown-align-full"
+	}
+	return "dropdown-align-right"
+}

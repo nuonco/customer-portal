@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -66,8 +67,71 @@ func (h *Handler) AccessPanel(c *gin.Context) {
 	roles := extractRoles(ctx, fullCfg)
 
 	h.RenderTempl(c, http.StatusOK, partials.AccessPanel(partials.AccessPanelProps{
-		Roles: roles,
+		Roles:     roles,
+		BasePath:  h.basePath,
+		InstallID: install.ID,
 	}))
+}
+
+func (h *Handler) RoleDetailPanel(c *gin.Context) {
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	roleIndexStr := c.Param("role_index")
+	var roleIndex int
+	if _, err := fmt.Sscanf(roleIndexStr, "%d", &roleIndex); err != nil {
+		c.String(http.StatusBadRequest, "Invalid role index")
+		return
+	}
+
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		c.String(http.StatusNotFound, "No API connection")
+		return
+	}
+
+	apiClient, err := nuon.NewClientWithURL(
+		nuonOrg.APIToken,
+		nuonOrg.NuonOrgID,
+		h.nuonAPIURLForOrg(nuonOrg),
+	)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to create API client")
+		return
+	}
+
+	ctx := c.Request.Context()
+	appID := install.GetAppID()
+
+	app, err := apiClient.GetApp(ctx, appID)
+	if err != nil || app == nil || len(app.AppConfigs) == 0 {
+		c.String(http.StatusNotFound, "App not found")
+		return
+	}
+
+	fullCfg, err := apiClient.GetAppConfigFull(ctx, appID, app.AppConfigs[0].ID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch app config")
+		return
+	}
+
+	roles := extractRoles(ctx, fullCfg)
+	if roleIndex < 0 || roleIndex >= len(roles) {
+		c.String(http.StatusNotFound, "Role not found")
+		return
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.RoleDetailPanel(roles[roleIndex]))
 }
 
 func extractRoles(_ context.Context, cfg *nuonmodels.AppAppConfig) []partials.AccessRole {

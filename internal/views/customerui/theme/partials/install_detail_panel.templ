@@ -7,8 +7,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
 // ProvisionPhase represents a logical grouping of workflow steps
@@ -153,11 +151,15 @@ type InstallDetailPanelProps struct {
 	StackSetup             StackSetupData
 	ProvisionPhases        []ProvisionPhase
 	HasActiveProvision     bool
-	StackInfo              *StackInfo
-	LatestStackRuns        []nuon.StackRun
-	SandboxInfo            *SandboxInfo
-	LatestSandboxRuns      []*nuonmodels.AppInstallSandboxRun
-	Components             []ComponentInfo
+	// Overview summary card data
+	StackStatus    string
+	StackRegion    string
+	StackAccountID string
+	SandboxStatus     string
+	SandboxRepo       string
+	SandboxBranch     string
+	SandboxRepoPublic bool
+	Components     []ComponentInfo
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -166,45 +168,24 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
 	if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
 		<div id="panel-actions-source" class="hidden">
-			<div class="relative" id="actionsDropdown">
-				<button
-					type="button"
-					onclick="toggleActionsDropdown()"
-					class="button button-dropdown-trigger dropdown-trigger"
-				>
-					Actions
-					<i class="ph-bold ph-caret-down text-base ml-2"></i>
+			@components.Dropdown(components.DropdownProps{
+				ID:    "actionsDropdown",
+				Label: "Actions",
+				Icon:  "ph-bold ph-caret-down",
+			}) {
+				<button type="button" onclick="openEditInputsModal()" class="dropdown-item">
+					Edit Inputs
 				</button>
-				<div
-					id="actionsDropdownMenu"
-					class="hidden dropdown-menu"
-				>
-					<button
-						type="button"
-						onclick="openEditInputsModal(); toggleActionsDropdown();"
-						class="dropdown-item"
-					>
-						Edit Inputs
-					</button>
-					<button
-						type="button"
-						onclick="confirmReprovision(); toggleActionsDropdown();"
-						class="dropdown-item"
-					>
-						Reprovision
-					</button>
-					<button
-						type="button"
-						onclick="confirmDeprovision(); toggleActionsDropdown();"
-						class="dropdown-item"
-					>
-						Deprovision
-					</button>
-				</div>
-			</div>
+				<button type="button" onclick="confirmReprovision()" class="dropdown-item">
+					Reprovision
+				</button>
+				<button type="button" onclick="confirmDeprovision()" class="dropdown-item">
+					Deprovision
+				</button>
+			}
 		</div>
 	}
-	<div class="space-y-4 mt-4">
+	<div class="space-y-4">
 		<!-- API Deletion Warning Banner -->
 		if props.APIDeletedError {
 			<div class="alert-warning">
@@ -233,44 +214,15 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				hx-swap="outerHTML"
 			></div>
 		}
-		<div class="overview-layout space-y-4">
-			if !props.APIDeletedError && props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-				<!-- With active workflow: workflow left, cards right -->
-				<div class="overview-workflow">
-					@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
-				</div>
-				<div class="space-y-4">
-					@overviewSection("Stack", "") {
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							@stackDetailsCard(props.StackInfo, "Status")
-							@latestStackRunsCard(props.LatestStackRuns, props.BasePath+"/installs/"+props.Install.ID+"/stack", props.BasePath, props.Install.ID)
-						</div>
-					}
-					@overviewSection("Sandbox", "") {
-						<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-							@sandboxDetailsCard(props.SandboxInfo, "Status")
-							@latestSandboxRunsCard(props.LatestSandboxRuns, props.BasePath+"/installs/"+props.Install.ID+"/sandbox", props.BasePath, props.Install.ID)
-						</div>
-					}
-					@overviewComponentsGrid(props.Components)
-				</div>
-			} else {
-				<!-- No active workflow: stack full width, sandbox below -->
-				@overviewSection("Stack", "") {
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						@stackDetailsCard(props.StackInfo, "Status")
-						@latestStackRunsCard(props.LatestStackRuns, props.BasePath+"/installs/"+props.Install.ID+"/stack", props.BasePath, props.Install.ID)
-					</div>
-				}
-				@overviewSection("Sandbox", "") {
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						@sandboxDetailsCard(props.SandboxInfo, "Status")
-						@latestSandboxRunsCard(props.LatestSandboxRuns, props.BasePath+"/installs/"+props.Install.ID+"/sandbox", props.BasePath, props.Install.ID)
-					</div>
-				}
-				@overviewComponentsGrid(props.Components)
-			}
-		</div>
+		if !props.APIDeletedError {
+			@overviewSummaryCards(props)
+		}
+		if !props.APIDeletedError && props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
+			<hr class="my-6" style="border-color: var(--theme-border-subtle)" />
+			<div class="overview-workflow">
+				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
+			</div>
+		}
 	</div>
 	<!-- Config data for JavaScript -->
 	<div
@@ -283,6 +235,206 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 	></div>
 	<!-- JavaScript for actions -->
 	@installDetailPanelScripts()
+}
+
+// componentStatusDot returns a Tailwind color class for a status indicator dot.
+type statusCount struct {
+	Status string
+	Count  int
+}
+
+func componentStatusCounts(components []ComponentInfo) []statusCount {
+	counts := make(map[string]int)
+	for _, c := range components {
+		s := c.Status
+		if s == "" {
+			s = "unknown"
+		}
+		counts[s]++
+	}
+	// Priority order: errors first, then active, then in-progress, then pending, then rest
+	priority := []string{"failed", "error", "active", "succeeded", "success", "completed", "in-progress", "running", "deploying", "pending", "queued"}
+	var result []statusCount
+	seen := make(map[string]bool)
+	for _, s := range priority {
+		if n, ok := counts[s]; ok {
+			result = append(result, statusCount{Status: s, Count: n})
+			seen[s] = true
+		}
+	}
+	for s, n := range counts {
+		if !seen[s] {
+			result = append(result, statusCount{Status: s, Count: n})
+		}
+	}
+	return result
+}
+
+func componentsAccentColor(components []ComponentInfo) string {
+	if len(components) == 0 {
+		return "#9ca3af"
+	}
+	hasError := false
+	allActive := true
+	for _, c := range components {
+		switch c.Status {
+		case "failed", "error":
+			hasError = true
+		case "active", "succeeded", "success", "completed":
+			// ok
+		default:
+			allActive = false
+		}
+	}
+	if hasError {
+		return "#dc2626"
+	}
+	if allActive {
+		return "#16a34a"
+	}
+	return "#9ca3af"
+}
+
+func componentStatusDot(status string) string {
+	switch status {
+	case "active", "succeeded", "success", "completed":
+		return "bg-green-500"
+	case "failed", "error":
+		return "bg-red-500"
+	case "in-progress", "running", "deploying":
+		return "bg-blue-500"
+	case "pending", "queued":
+		return "bg-yellow-500"
+	default:
+		return "bg-cool-grey-400"
+	}
+}
+
+templ overviewCardDetailsLink(href string) {
+	<a href={ templ.SafeURL(href) } class="inline-flex items-center gap-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline ml-auto flex-shrink-0">
+		Details
+		<i class="ph-bold ph-caret-right text-[10px]"></i>
+	</a>
+}
+
+templ overviewStackCardHeader(status, href string) {
+	<div class="flex items-center gap-2">
+		<i class="ph-bold ph-stack text-lg text-cool-grey-500 dark:text-cool-grey-400"></i>
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Stack</h4>
+		if status != "" {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
+				{ status }
+			</span>
+		}
+		@overviewCardDetailsLink(href)
+	</div>
+}
+
+templ overviewSandboxCardHeader(status, href string) {
+	<div class="flex items-center gap-2">
+		<i class="ph-bold ph-shipping-container text-lg text-cool-grey-500 dark:text-cool-grey-400"></i>
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Sandbox</h4>
+		if status != "" {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
+				{ status }
+			</span>
+		}
+		@overviewCardDetailsLink(href)
+	</div>
+}
+
+templ overviewComponentsCardHeader(components []ComponentInfo, href string) {
+	<div class="flex items-center gap-2">
+		<i class="ph-bold ph-cards text-lg text-cool-grey-500 dark:text-cool-grey-400"></i>
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Components</h4>
+		for _, sc := range componentStatusCounts(components) {
+			<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(sc.Status) }>
+				{ fmt.Sprintf("%d %s", sc.Count, sc.Status) }
+			</span>
+		}
+		@overviewCardDetailsLink(href)
+	</div>
+}
+
+func overviewRepoURL(repo string) string {
+	if strings.HasPrefix(repo, "https://") || strings.HasPrefix(repo, "http://") {
+		return repo
+	}
+	if strings.Contains(repo, "/") && !strings.Contains(repo, ".") {
+		return "https://github.com/" + repo
+	}
+	return "https://" + repo
+}
+
+templ overviewInfoRow(label, value string) {
+	<div>
+		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
+		<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ value }</p>
+	</div>
+}
+
+templ overviewInfoRowLink(label, value, href string) {
+	<div>
+		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
+		<p class="font-medium">
+			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+				{ value }
+				<i class="ph-bold ph-arrow-square-out text-xs"></i>
+			</a>
+		</p>
+	</div>
+}
+
+templ overviewSummaryCards(props InstallDetailPanelProps) {
+	<div class="space-y-4">
+		<!-- Stack + Sandbox row -->
+		<div class="grid grid-cols-2 gap-4">
+			@components.Card(components.CardProps{Header: overviewStackCardHeader(props.StackStatus, props.BasePath+"/installs/"+props.Install.ID+"/stack"), AccentColor: statusAccentColor(props.StackStatus)}) {
+				<div class="space-y-3 text-sm">
+					if props.StackAccountID != "" {
+						@overviewInfoRowLink("Account ID", props.StackAccountID, "https://"+props.StackAccountID+".signin.aws.amazon.com/console")
+					}
+					if props.StackRegion != "" {
+						@overviewInfoRowLink("Region", props.StackRegion, "https://"+props.StackRegion+".console.aws.amazon.com/console/home?region="+props.StackRegion)
+					}
+				</div>
+			}
+			@components.Card(components.CardProps{Header: overviewSandboxCardHeader(props.SandboxStatus, props.BasePath+"/installs/"+props.Install.ID+"/sandbox"), AccentColor: statusAccentColor(props.SandboxStatus)}) {
+				<div class="space-y-3 text-sm">
+					if props.SandboxRepo != "" {
+						if props.SandboxRepoPublic {
+							@overviewInfoRowLink("Repo", props.SandboxRepo, overviewRepoURL(props.SandboxRepo))
+						} else {
+							@overviewInfoRow("Repo", props.SandboxRepo)
+						}
+					}
+					if props.SandboxBranch != "" {
+						if props.SandboxRepoPublic {
+							@overviewInfoRowLink("Git Ref", props.SandboxBranch, overviewRepoURL(props.SandboxRepo)+"/tree/"+props.SandboxBranch)
+						} else {
+							@overviewInfoRow("Git Ref", props.SandboxBranch)
+						}
+					}
+				</div>
+			}
+		</div>
+		<!-- Components card -->
+		@components.Card(components.CardProps{Header: overviewComponentsCardHeader(props.Components, props.BasePath+"/installs/"+props.Install.ID+"/components"), AccentColor: componentsAccentColor(props.Components)}) {
+			if len(props.Components) > 0 {
+				<div class="flex flex-wrap gap-2">
+					for _, comp := range props.Components {
+						<div class="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-cool-grey-50 dark:bg-dark-grey-700 text-xs">
+							<span class={ "w-1.5 h-1.5 rounded-full flex-shrink-0", componentStatusDot(comp.Status) }></span>
+							@auditComponentTypeIcon(comp.Type)
+							<span class="font-medium text-cool-grey-700 dark:text-cool-grey-300">{ comp.Name }</span>
+						</div>
+					}
+				</div>
+			} else {
+				<p class="text-xs text-cool-grey-400 dark:text-cool-grey-500">No components</p>
+			}
+		}
+	</div>
 }
 
 // overviewPlatformChip renders a platform logo inline (avoids import cycle with components)
@@ -731,7 +883,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 			});
 		})();
 		</script>
-		<hr class="my-6" style="border-color: var(--theme-border-subtle)" />
 	</div>
 }
 
@@ -886,137 +1037,6 @@ templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
 			{ children... }
 		</div>
 	</details>
-}
-
-templ runsCardHeader(title string, viewMoreHref string) {
-	<div class="flex items-center justify-between">
-		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
-		<a href={ templ.SafeURL(viewMoreHref) } class="inline-flex items-center gap-1 text-sm text-blue-600 dark:text-blue-400 hover:underline">View more <i class="ph-bold ph-caret-right text-xs"></i></a>
-	</div>
-}
-
-func openJobPanelCall(basePath, installID, jobType, jobID, jobTitle string) templ.ComponentScript {
-	return templ.ComponentScript{
-		Call:    fmt.Sprintf("__openJobPanel('%s','%s')", jobTitle, basePath+"/installs/"+installID+"/panel/job/"+jobType+"/"+jobID),
-		Function: `window.__openJobPanel=window.__openJobPanel||function(t,u){var p=document.getElementById('secondary-panel'),h=document.getElementById('secondary-panel-title'),c=document.getElementById('secondary-panel-content');if(!p||!h||!c)return;h.textContent=t;c.innerHTML='<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';p.classList.add('open');var o=document.getElementById('secondary-panel-overlay');if(o)o.classList.add('open');fetch(u).then(function(r){return r.text()}).then(function(html){c.innerHTML=html}).catch(function(){c.innerHTML='<p class="text-sm text-red-500 p-4">Failed to load job details.</p>'})}`,
-	}
-}
-
-templ latestStackRunsCard(runs []nuon.StackRun, viewMoreHref string, basePath string, installID string) {
-	if len(runs) == 0 {
-		@components.Card(components.CardProps{Class: "text-center py-8"}) {
-			<i class="ph-bold ph-clock-counter-clockwise text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No stack runs yet.</p>
-		}
-	} else {
-		@components.Card(components.CardProps{Header: runsCardHeader("Latest stack runs", viewMoreHref)}) {
-			<div class="-mx-4 -mb-4">
-				<table class="w-full text-sm table-fixed">
-					<colgroup>
-						<col class="w-[35%]"/>
-						<col class="w-[25%]"/>
-						<col class="w-[40%]"/>
-					</colgroup>
-					<thead>
-						<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-							<th class="text-left py-2 pl-4 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
-							<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
-							<th class="text-left py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
-						</tr>
-					</thead>
-					<tbody>
-						for _, run := range runs {
-							<tr
-								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-								onclick={ openJobPanelCall(basePath, installID, "stack", run.ID, "Stack "+stackRunType(run)) }
-							>
-								<td class="py-2 pl-4 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ stackRunType(run) }>{ stackRunType(run) }</td>
-								<td class="py-2 pr-3">
-									<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.VersionStatus) }>
-										{ run.VersionStatus }
-									</span>
-								</td>
-								<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
-							</tr>
-						}
-					</tbody>
-				</table>
-			</div>
-		}
-	}
-}
-
-templ latestSandboxRunsCard(runs []*nuonmodels.AppInstallSandboxRun, viewMoreHref string, basePath string, installID string) {
-	if len(runs) == 0 {
-		@components.Card(components.CardProps{Class: "text-center py-8"}) {
-			<i class="ph-bold ph-clock-counter-clockwise text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No sandbox runs yet.</p>
-		}
-	} else {
-		@components.Card(components.CardProps{Header: runsCardHeader("Latest sandbox runs", viewMoreHref)}) {
-			<div class="-mx-4 -mb-4">
-				<table class="w-full text-sm table-fixed">
-					<colgroup>
-						<col class="w-[35%]"/>
-						<col class="w-[25%]"/>
-						<col class="w-[40%]"/>
-					</colgroup>
-					<thead>
-						<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
-							<th class="text-left py-2 pl-4 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Operation</th>
-							<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
-							<th class="text-left py-2 pr-4 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
-						</tr>
-					</thead>
-					<tbody>
-						for _, run := range runs {
-							<tr
-								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-								onclick={ openJobPanelCall(basePath, installID, "sandbox", run.ID, "Sandbox "+string(run.RunType)) }
-							>
-								<td class="py-2 pl-4 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(run.RunType) }</td>
-								<td class="py-2 pr-3">
-									<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(run.Status) }>
-										{ run.Status }
-									</span>
-								</td>
-								<td class="py-2 pr-4 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ FormatAPITime(run.CreatedAt) }</td>
-							</tr>
-						}
-					</tbody>
-				</table>
-			</div>
-		}
-	}
-}
-
-// appConfigCard renders the app configuration card
-func stackStatus(info *StackInfo) string {
-	if info != nil {
-		return info.Status
-	}
-	return ""
-}
-
-func sandboxStatus(info *SandboxInfo) string {
-	if info != nil {
-		return info.Status
-	}
-	return ""
-}
-
-templ overviewSection(title string, status string) {
-	<div>
-		<div class="flex items-center justify-between mb-3">
-			<h3 class="text-lg font-medium text-cool-grey-700 dark:text-cool-grey-300">{ title }</h3>
-			if status != "" {
-				<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", auditStatusClass(status) }>
-					{ status }
-				</span>
-			}
-		</div>
-		{ children... }
-	</div>
 }
 
 templ overviewComponentsGrid(compInfos []ComponentInfo) {
@@ -1237,23 +1257,6 @@ templ installDetailPanelScripts() {
 			if (actionsSource && actionsContainer) {
 				actionsContainer.innerHTML = actionsSource.innerHTML;
 			}
-
-			// Actions dropdown toggle
-			window.toggleActionsDropdown = function() {
-				var menu = document.getElementById('actionsDropdownMenu');
-				if (menu) {
-					menu.classList.toggle('hidden');
-				}
-			};
-
-			// Close dropdown when clicking outside
-			document.addEventListener('click', function(event) {
-				var dropdown = document.getElementById('actionsDropdown');
-				var menu = document.getElementById('actionsDropdownMenu');
-				if (dropdown && menu && !dropdown.contains(event.target)) {
-					menu.classList.add('hidden');
-				}
-			});
 
 			// Reprovision install with custom modal confirmation
 			window.confirmReprovision = async function() {

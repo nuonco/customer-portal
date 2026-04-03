@@ -11,6 +11,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	customerpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 	"go.uber.org/zap"
@@ -32,7 +33,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
-	appDisplays := make([]customerpages.PublishedAppDisplay, len(publishedApps))
+	appDisplays := make([]customerpartials.PublishedAppDisplay, len(publishedApps))
 	if len(publishedApps) == 1 {
 		// Single app: full detail fetch so the full-width card has all tab data
 		pa := publishedApps[0]
@@ -67,7 +68,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 				if status == "" {
 					status = "published"
 				}
-				display := customerpages.PublishedAppDisplay{
+				display := customerpartials.PublishedAppDisplay{
 					AppID:           pa.AppID,
 					AppName:         pa.AppID,
 					Platform:        "unknown",
@@ -114,8 +115,8 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 }
 
 // buildAppDisplay builds a PublishedAppDisplay for a single app, fetching details from the Nuon API.
-func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nuonClient *nuon.Client, nuonClientErr error) customerpages.PublishedAppDisplay {
-	display := customerpages.PublishedAppDisplay{
+func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nuonClient *nuon.Client, nuonClientErr error) customerpartials.PublishedAppDisplay {
+	display := customerpartials.PublishedAppDisplay{
 		AppID:    appID,
 		AppName:  appID, // fallback to AppID if name can't be fetched
 		Platform: "unknown",
@@ -173,7 +174,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		zap.L().Warn("failed to fetch app components", zap.String("app_id", appID), zap.Error(compErr))
 	} else {
 		for _, comp := range comps {
-			display.Components = append(display.Components, customerpages.ComponentDisplay{
+			display.Components = append(display.Components, customerpartials.ComponentDisplay{
 				Name: comp.Name,
 				Type: string(comp.Type),
 			})
@@ -203,7 +204,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		// Secrets
 		if secretsCfg := fullCfg.Secrets; secretsCfg != nil {
 			for _, s := range secretsCfg.Secrets {
-				display.Secrets = append(display.Secrets, customerpages.SecretDisplay{
+				display.Secrets = append(display.Secrets, customerpartials.SecretDisplay{
 					Name:         s.Name,
 					DisplayName:  s.DisplayName,
 					Description:  s.Description,
@@ -240,7 +241,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 				if len(inputs) == 0 {
 					inputs = inputsByGroup[group.ID]
 				}
-				gd := customerpages.InputGroupDisplay{
+				gd := customerpartials.InputGroupDisplay{
 					Name:        group.Name,
 					DisplayName: group.DisplayName,
 				}
@@ -252,7 +253,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 					if !customerInputSet[input.Name] {
 						continue
 					}
-					gd.Inputs = append(gd.Inputs, customerpages.InputDisplay{
+					gd.Inputs = append(gd.Inputs, customerpartials.InputDisplay{
 						Name:         input.Name,
 						DisplayName:  input.DisplayName,
 						Description:  input.Description,
@@ -288,7 +289,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 						}
 					}
 				}
-				rd := customerpages.IAMRoleDisplay{
+				rd := customerpartials.IAMRoleDisplay{
 					Label:               label,
 					Name:                name,
 					Description:         role.Description,
@@ -307,7 +308,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 					if pName == "" {
 						pName = p.ManagedPolicyName
 					}
-					rd.Policies = append(rd.Policies, customerpages.IAMPolicyDisplay{
+					rd.Policies = append(rd.Policies, customerpartials.IAMPolicyDisplay{
 						Name:             pName,
 						Type:             policyType,
 						ManagedPolicyARN: p.ManagedPolicyName,
@@ -357,7 +358,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		zap.L().Warn("failed to fetch app policies config", zap.String("app_id", appID), zap.Error(polErr))
 	} else {
 		for _, p := range policies {
-			display.Policies = append(display.Policies, customerpages.PolicyDisplay{
+			display.Policies = append(display.Policies, customerpartials.PolicyDisplay{
 				Name:        p.Name,
 				Type:        p.Type,
 				Engine:      p.Engine,

@@ -97,6 +97,53 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		}
 	}
 
+	// Fetch overview summary card data (stack, sandbox, components)
+	var stackStatus, stackRegion, stackAccountID string
+	var sandboxStatus, sandboxRepo, sandboxBranch string
+	var sandboxRepoPublic bool
+	var componentInfos []partials.ComponentInfo
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
+		summaryClient, summaryErr := nuon.NewClientWithURL(
+			nuonOrg.APIToken,
+			nuonOrg.NuonOrgID,
+			h.nuonAPIURLForOrg(nuonOrg),
+		)
+		if summaryErr == nil {
+			ctx := c.Request.Context()
+
+			// Stack summary
+			if stack, err := summaryClient.GetInstallStack(ctx, install.NuonInstallID); err == nil && stack != nil {
+				if len(stack.Versions) > 0 && stack.Versions[0].CompositeStatus != nil {
+					stackStatus = string(stack.Versions[0].CompositeStatus.Status)
+				}
+				if outputs := stack.InstallStackOutputs; outputs != nil && outputs.Aws != nil {
+					stackRegion = outputs.Aws.Region
+					stackAccountID = outputs.Aws.AccountID
+				}
+			}
+
+			// Sandbox summary
+			if nuonInst, err := summaryClient.GetInstall(ctx, install.NuonInstallID); err == nil && nuonInst != nil && nuonInst.Sandbox != nil {
+				sandboxStatus = nuonInst.Sandbox.Status
+			}
+			if cfg, err := summaryClient.GetAppSandboxLatestConfig(ctx, install.GetAppID()); err == nil && cfg != nil {
+				if gh := cfg.ConnectedGithubVcsConfig; gh != nil {
+					sandboxRepo = gh.Repo
+					sandboxBranch = gh.Branch
+				} else if pg := cfg.PublicGitVcsConfig; pg != nil {
+					sandboxRepo = pg.Repo
+					sandboxBranch = pg.Branch
+					sandboxRepoPublic = true
+				}
+			}
+
+			// Components summary
+			if comps, err := summaryClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
+				componentInfos = h.buildComponentInfos(ctx, summaryClient, install, comps)
+			}
+		}
+	}
+
 	// Fetch most recent provision workflow (any status)
 	var provisionWorkflow *partials.WorkflowDataPanel
 	var stackSetup partials.StackSetupData
@@ -168,46 +215,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		appLogoDark = pa.LogoDarkBase64
 	}
 
-	// Fetch stack and sandbox info for overview cards
-	var stackInfo *partials.StackInfo
-	var latestStackRuns []nuon.StackRun
-	var sandboxInfo *partials.SandboxInfo
-	var latestSandboxRuns []*nuonmodels.AppInstallSandboxRun
-	var componentInfos []partials.ComponentInfo
-	if nuonOrg != nil && nuonOrg.APIToken != "" {
-		apiClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
-		if err == nil {
-			ctx := c.Request.Context()
-			stackInfo = h.buildStackInfo(ctx, apiClient, install)
-			sandboxInfo = h.buildSandboxInfo(ctx, apiClient, install)
-			if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
-				componentInfos = h.buildComponentInfos(ctx, apiClient, install, comps)
-			}
-			if runs, err := apiClient.GetInstallStackRuns(ctx, install.NuonInstallID); err == nil && len(runs) > 0 {
-				// Populate VersionStatus from the stack version if available
-				if stack, err := apiClient.GetInstallStack(ctx, install.NuonInstallID); err == nil && stack != nil && len(stack.Versions) > 0 {
-					for i := range runs {
-						for _, v := range stack.Versions {
-							if runs[i].InstallStackVersionID == v.ID && v.CompositeStatus != nil {
-								runs[i].VersionStatus = string(v.CompositeStatus.Status)
-							}
-						}
-					}
-				}
-				if len(runs) > 5 {
-					runs = runs[:5]
-				}
-				latestStackRuns = runs
-			}
-			if runs, err := apiClient.GetInstallSandboxRuns(ctx, install.NuonInstallID); err == nil && len(runs) > 0 {
-				if len(runs) > 5 {
-					runs = runs[:5]
-				}
-				latestSandboxRuns = runs
-			}
-		}
-	}
-
 	props := partials.InstallDetailPanelProps{
 		Install:                install,
 		AppName:                appName,
@@ -224,10 +231,13 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		StackSetup:             stackSetup,
 		ProvisionPhases:        provisionPhases,
 		HasActiveProvision:     hasActiveProvision,
-		StackInfo:              stackInfo,
-		LatestStackRuns:        latestStackRuns,
-		SandboxInfo:            sandboxInfo,
-		LatestSandboxRuns:      latestSandboxRuns,
+		StackStatus:            stackStatus,
+		StackRegion:            stackRegion,
+		StackAccountID:         stackAccountID,
+		SandboxStatus:          sandboxStatus,
+		SandboxRepo:            sandboxRepo,
+		SandboxBranch:          sandboxBranch,
+		SandboxRepoPublic:      sandboxRepoPublic,
 		Components:             componentInfos,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
@@ -251,8 +261,20 @@ func (h *Handler) buildComponentInfos(ctx context.Context, apiClient *nuon.Clien
 
 	var infos []partials.ComponentInfo
 	for _, comp := range comps {
+		status := comp.Status
+		if comp.StatusV2 != nil && comp.StatusV2.Status != "" {
+			status = string(comp.StatusV2.Status)
+		}
+		if status == "" && len(comp.InstallDeploys) > 0 {
+			latest := comp.InstallDeploys[0]
+			if latest.StatusV2 != nil && latest.StatusV2.Status != "" {
+				status = string(latest.StatusV2.Status)
+			} else if latest.Status != "" {
+				status = latest.Status
+			}
+		}
 		ci := partials.ComponentInfo{
-			Status: comp.Status,
+			Status: status,
 			Name:   "Component",
 		}
 		if comp.Component != nil {

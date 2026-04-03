@@ -388,27 +388,27 @@ details[open] > summary .input-group-chevron {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .customer-sidebar {
-  @apply w-64 border-r flex flex-col flex-shrink-0 h-full;
+  @apply w-64 flex flex-col flex-shrink-0 h-full shadow-md;
   background-color: var(--theme-white, #ffffff);
-  border-color: var(--theme-border);
+  border-right: 1px solid var(--theme-border);
 }
 
 .dark .customer-sidebar {
   background-color: var(--theme-surface-raised);
-  border-color: transparent;
+  border-right-color: transparent;
 }
 
 .customer-sidebar-header {
-  @apply h-14 px-4 flex items-center gap-3 border-b;
+  @apply px-7 py-6 flex items-center gap-3 border-b;
   border-color: var(--theme-border);
 }
 
 .dark .customer-sidebar-header {
-  border-color: transparent;
+  border-color: var(--theme-border);
 }
 
 .customer-sidebar-content {
-  @apply px-3 py-3 flex flex-col gap-1;
+  @apply px-3 pt-5 pb-3 flex flex-col gap-1;
 }
 
 .customer-sidebar-link {
@@ -916,11 +916,15 @@ body {
   border: 1px solid var(--theme-border);
   border-radius: var(--theme-radius);
   padding: var(--spacing-card-padding);
+  overflow-wrap: break-word;
+  word-break: break-all;
+  min-width: 0;
 }
 
 .dark .card-base {
   background-color: var(--theme-surface-raised);
   border-color: transparent;
+  border-top-color: var(--theme-border);
 }
 
 /* Large card: 32px padding (install/form pages) — always paired with .card-base */
@@ -992,14 +996,31 @@ body {
 .dropdown-menu {
   background-color: var(--theme-white, #ffffff);
   @apply absolute right-0;
-  @apply shadow-lg z-10;
+  @apply shadow-lg z-50 rounded-md py-1;
   border: 1px solid var(--theme-border);
 }
 
 .dark .dropdown-menu {
   background-color: var(--theme-surface-raised);
-  border-color: transparent;
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
 }
+
+/* Shared dropdown panel — used by the Dropdown component */
+.dropdown-panel {
+  @apply absolute rounded-md shadow-lg z-50 py-1;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+}
+
+.dark .dropdown-panel {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.dropdown-panel.dropdown-down { @apply top-full mt-1; }
+.dropdown-panel.dropdown-up { @apply bottom-full mb-1; }
+.dropdown-panel.dropdown-align-right { @apply right-0; min-width: 160px; }
+.dropdown-panel.dropdown-align-full { @apply left-0 right-0; }
 
 .dropdown-item {
   @apply block w-full text-left px-4 py-2 text-sm;
@@ -1263,8 +1284,9 @@ body {
 
 .provision-phase {
   background-color: var(--theme-white, #ffffff);
-  border: 1px solid var(--theme-border-subtle);
+  border: 1px solid var(--theme-border);
   border-radius: var(--theme-radius);
+  @apply shadow-md;
   overflow: hidden;
 }
 

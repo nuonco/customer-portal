@@ -37,10 +37,18 @@ func (p CreateInstallPageProps) formAction() string {
 // CreateInstallPage renders the unified install form
 templ CreateInstallPage(props CreateInstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="max-w-2xl mx-auto mb-4 flex justify-end pt-6">
-			<button type="button" onclick="history.back()" class="button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:text-cool-grey-500 dark:hover:text-cool-grey-300 transition-colors" aria-label="Close">
-				<i class="ph-bold ph-x text-xl"></i>
-			</button>
+		<div class="max-w-2xl mx-auto mb-4 pt-6">
+			if props.AppID != "" && props.SHA == "" {
+				<a href={ templ.SafeURL(props.BasePath + "/apps/" + props.AppID) } class="back-link">
+					<i class="ph-bold ph-caret-left text-base mr-1"></i>
+					Back to app
+				</a>
+			} else {
+				<a href="#" onclick="history.back(); return false" class="back-link">
+					<i class="ph-bold ph-caret-left text-base mr-1"></i>
+					Back
+				</a>
+			}
 		</div>
 		<form
 			id="installForm"

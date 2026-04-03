@@ -21,13 +21,16 @@ type AccountPageProps struct {
 // AccountPage renders the account settings page with name editing, members, and invites.
 templ AccountPage(props AccountPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="max-w-4xl mx-auto px-4 py-8">
-			<!-- Account Name Section -->
-			<div class="mb-8">
+		<!-- Page Header -->
+		<div class="page-header flex items-center justify-between gap-4 mb-6 px-6 pt-6">
+			<div class="min-w-0 flex-1">
 				if props.IsOwner {
 					<!-- Display state -->
-					<div id="account-name-display" class="flex items-center gap-3">
-						<h2 class="page-title" id="account-name-title">{ props.Account.Name }</h2>
+					<div id="account-name-display" class="flex items-center gap-2">
+						<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate flex items-center gap-2">
+							<i class="ph-bold ph-user-circle text-xl"></i>
+							<span id="account-name-title">{ props.Account.Name }</span>
+						</h1>
 						<button
 							onclick="document.getElementById('account-name-display').classList.add('hidden');document.getElementById('account-name-edit').classList.remove('hidden');document.getElementById('account-name-input').focus();"
 							class="button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300"
@@ -84,77 +87,93 @@ templ AccountPage(props AccountPageProps) {
 						<div id="account-name-result" class="mt-1"></div>
 					</div>
 				} else {
-					<h2 class="page-title">{ props.Account.Name }</h2>
+					<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate flex items-center gap-2">
+						<i class="ph-bold ph-user-circle text-xl"></i>
+						{ props.Account.Name }
+					</h1>
 				}
 			</div>
-			<!-- Add button -->
-			if props.IsOwner {
-				<div class="flex justify-end">
+			<div class="flex items-center gap-2 flex-shrink-0">
+				if props.IsOwner {
 					<button
 						onclick="document.getElementById('invite-modal').classList.remove('hidden')"
 						class="button button-primary btn-theme-primary px-3 py-1.5 text-sm"
 					>
 						Add members
 					</button>
-				</div>
-			}
-			<!-- Tabs -->
-			<div class="mb-6">
-				<div class="flex items-center border-b" style="border-color: var(--theme-border);">
-					<div class="flex">
-						<button
-							onclick="document.getElementById('tab-members').classList.remove('hidden');document.getElementById('tab-invited').classList.add('hidden');this.classList.add('border-b-2','font-semibold');this.style.borderColor='var(--theme-primary)';this.style.color='var(--theme-primary)';this.nextElementSibling.classList.remove('border-b-2','font-semibold');this.nextElementSibling.style.borderColor='';this.nextElementSibling.style.color='';"
-							class="button button-nav px-4 py-2 text-sm border-b-2 font-semibold"
-							style={ fmt.Sprintf("border-color: var(--theme-primary); color: var(--theme-primary);") }
-						>
-							Members
-							<span class="ml-1 text-xs opacity-70">({ fmt.Sprintf("%d", len(props.Members)) })</span>
-						</button>
-						<button
-							onclick="document.getElementById('tab-invited').classList.remove('hidden');document.getElementById('tab-members').classList.add('hidden');this.classList.add('border-b-2','font-semibold');this.style.borderColor='var(--theme-primary)';this.style.color='var(--theme-primary)';this.previousElementSibling.classList.remove('border-b-2','font-semibold');this.previousElementSibling.style.borderColor='';this.previousElementSibling.style.color='';"
-							class="button button-nav px-4 py-2 text-sm text-cool-grey-500 dark:text-cool-grey-400"
-						>
-							Invited
-							<span class="ml-1 text-xs opacity-70">({ fmt.Sprintf("%d", len(props.Invites)) })</span>
-						</button>
-					</div>
-				</div>
+				}
 			</div>
+		</div>
+		<!-- Content -->
+		<div class="px-6">
+			<!-- Sub-tabs -->
+			<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600 mb-4">
+				<button
+					class="button button-nav nav-item active"
+					data-subtab="members"
+					onclick="switchAccountTab('members')"
+				>
+					Members
+					<span class="ml-1 text-xs opacity-70">({ fmt.Sprintf("%d", len(props.Members)) })</span>
+				</button>
+				<button
+					class="button button-nav nav-item"
+					data-subtab="invited"
+					onclick="switchAccountTab('invited')"
+				>
+					Invited
+					<span class="ml-1 text-xs opacity-70">({ fmt.Sprintf("%d", len(props.Invites)) })</span>
+				</button>
+			</div>
+			<script>
+				function switchAccountTab(tab) {
+					document.querySelectorAll('[data-subtab]').forEach(function(btn) {
+						btn.classList.toggle('active', btn.getAttribute('data-subtab') === tab);
+					});
+					document.getElementById('tab-members').classList.toggle('hidden', tab !== 'members');
+					document.getElementById('tab-invited').classList.toggle('hidden', tab !== 'invited');
+				}
+			</script>
 			<!-- Members Tab -->
 			<div id="tab-members">
-				@components.Table(components.TableProps{
-					Header: membersTableHeader(props.IsOwner),
-				}) {
-							for _, member := range props.Members {
-								<tr id={ fmt.Sprintf("member-%s", member.ID) }>
-									<td class="font-medium">{ member.User.Name }</td>
-									<td>{ member.User.Email }</td>
-									<td class="capitalize">{ string(member.Role) }</td>
-									<td class="hide-mobile">{ member.JoinedAt.Format("Jan 2, 2006") }</td>
-									if props.IsOwner {
-										<td>
-											if member.Role != models.CustomerAccountRoleOwner {
-												<button
-													onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)} }
-													class="button button-primary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm"
-												>
-													Transfer Ownership
-												</button>
-											}
-										</td>
-										<td>
-											if member.Role != models.CustomerAccountRoleOwner {
-												<button
-													onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)} }
-													class="button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
-												>
-													Remove
-												</button>
-											}
-										</td>
-									}
-								</tr>
-							}
+				if len(props.Members) == 0 {
+					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No members yet.</p>
+				} else {
+					@components.DataTable(membersTableColumns(props.IsOwner)) {
+						for _, member := range props.Members {
+							<tr
+								id={ fmt.Sprintf("member-%s", member.ID) }
+								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors"
+							>
+								<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ member.User.Name }</td>
+								<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-300 truncate">{ member.User.Email }</td>
+								<td class="py-2 pr-3 capitalize text-cool-grey-600 dark:text-cool-grey-300">{ string(member.Role) }</td>
+								<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 hide-mobile">{ member.JoinedAt.Format("Jan 2, 2006") }</td>
+								if props.IsOwner {
+									<td class="py-2 pr-3">
+										if member.Role != models.CustomerAccountRoleOwner {
+											<button
+												onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Transfer Ownership', message: 'Transfer ownership to this member? You will become a regular member.', confirmText: 'Transfer' }).then(function(ok) { if (ok) fetch('/account/members/%s/transfer-ownership', { method: 'POST' }).then(function() { window.location = '/account'; }) })", member.ID)} }
+												class="button button-primary text-cool-grey-600 hover:text-cool-grey-800 dark:text-cool-grey-400 dark:hover:text-cool-grey-200 text-sm"
+											>
+												Transfer Ownership
+											</button>
+										}
+									</td>
+									<td class="py-2">
+										if member.Role != models.CustomerAccountRoleOwner {
+											<button
+												onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Remove Member', message: 'Remove this member from the account?', confirmText: 'Remove' }).then(function(ok) { if (ok) fetch('/account/members/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('member-%s').remove(); }) })", member.ID, member.ID)} }
+												class="button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+											>
+												Remove
+											</button>
+										}
+									</td>
+								}
+							</tr>
+						}
+					}
 				}
 			</div>
 			<!-- Invited Tab -->
@@ -165,25 +184,26 @@ templ AccountPage(props AccountPageProps) {
 						<p class="text-sm">No pending invites.</p>
 					</div>
 				} else {
-					@components.Table(components.TableProps{
-						Header: invitesTableHeader(props.IsOwner),
-					}) {
+					@components.DataTable(invitesTableColumns(props.IsOwner)) {
 						for _, invite := range props.Invites {
-									<tr id={ fmt.Sprintf("invite-%s", invite.ID) }>
-										<td class="font-medium">{ invite.Email }</td>
-										<td>{ invite.CreatedBy.Name }</td>
-										<td class="hide-mobile">{ invite.CreatedAt.Format("Jan 2, 2006") }</td>
-										if props.IsOwner {
-											<td>
-												<button
-													onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)} }
-													class="button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
-												>
-													Revoke
-												</button>
-											</td>
-										}
-									</tr>
+							<tr
+								id={ fmt.Sprintf("invite-%s", invite.ID) }
+								class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors"
+							>
+								<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ invite.Email }</td>
+								<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-300">{ invite.CreatedBy.Name }</td>
+								<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 hide-mobile">{ invite.CreatedAt.Format("Jan 2, 2006") }</td>
+								if props.IsOwner {
+									<td class="py-2">
+										<button
+											onclick={ templ.ComponentScript{Call: fmt.Sprintf("showConfirmModal({ title: 'Revoke Invite', message: 'Revoke this pending invite?', confirmText: 'Revoke' }).then(function(ok) { if (ok) fetch('/account/invite/%s', { method: 'DELETE' }).then(function(r) { if (r.ok) document.getElementById('invite-%s').remove(); }) })", invite.ID, invite.ID)} }
+											class="button button-danger text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 text-sm"
+										>
+											Revoke
+										</button>
+									</td>
+								}
+							</tr>
 						}
 					}
 				}
@@ -283,26 +303,33 @@ templ AccountPage(props AccountPageProps) {
 	}
 }
 
-templ membersTableHeader(isOwner bool) {
-	<tr>
-		<th>Name</th>
-		<th>Email</th>
-		<th>Role</th>
-		<th class="hide-mobile">Joined</th>
-		if isOwner {
-			<th class="w-20"></th>
-			<th class="w-20"></th>
-		}
-	</tr>
+func membersTableColumns(isOwner bool) components.DataTableProps {
+	cols := []components.DataTableColumn{
+		{Label: "Name", Width: "25%"},
+		{Label: "Email", Width: "30%"},
+		{Label: "Role", Width: "10%"},
+		{Label: "Joined", Width: "15%", HideMobile: true},
+	}
+	if isOwner {
+		cols[0].Width = "20%"
+		cols[1].Width = "25%"
+		cols = append(cols,
+			components.DataTableColumn{Width: "15%"},
+			components.DataTableColumn{Width: "10%"},
+		)
+	}
+	return components.DataTableProps{Columns: cols}
 }
 
-templ invitesTableHeader(isOwner bool) {
-	<tr>
-		<th>Email</th>
-		<th>Invited By</th>
-		<th class="hide-mobile">Date</th>
-		if isOwner {
-			<th class="w-20"></th>
-		}
-	</tr>
+func invitesTableColumns(isOwner bool) components.DataTableProps {
+	cols := []components.DataTableColumn{
+		{Label: "Email", Width: "40%"},
+		{Label: "Invited By", Width: "30%"},
+		{Label: "Date", Width: "30%", HideMobile: true},
+	}
+	if isOwner {
+		cols[2].Width = "20%"
+		cols = append(cols, components.DataTableColumn{Width: "10%"})
+	}
+	return components.DataTableProps{Columns: cols}
 }
