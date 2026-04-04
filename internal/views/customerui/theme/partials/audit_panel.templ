@@ -1,7 +1,6 @@
 package partials
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -144,7 +143,7 @@ templ stackPanel(props AuditPanelProps) {
 			data-subtab="history"
 			onclick="switchStackSubTab('history')"
 		>
-			Audit Log
+			History
 		</button>
 	</div>
 	<div id="stack-sub-outputs" class={ "audit-sub-pane", templ.KV("active", props.StackSubTab == "outputs") }>
@@ -182,7 +181,7 @@ templ sandboxPanel(props AuditPanelProps) {
 			data-subtab="history"
 			onclick="switchSandboxSubTab('history')"
 		>
-			Audit Log
+			History
 		</button>
 	</div>
 	<div id="sandbox-sub-history" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "history") }>
@@ -219,7 +218,7 @@ templ componentsPanel(props AuditPanelProps) {
 			data-subtab="history"
 			onclick="switchComponentsSubTab('history')"
 		>
-			Audit Log
+			History
 		</button>
 	</div>
 	<div id="components-sub-components" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "components") }>
@@ -406,8 +405,10 @@ templ sandboxOutputsView(info *SandboxInfo) {
 			<tbody>
 				for key, value := range info.Outputs {
 					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
-						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ key }>{ key }</td>
-						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ value }>{ value }</td>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate align-top" title={ key }>{ key }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400">
+							@components.CodeBlock(value, outputLang(value))
+						</td>
 					</tr>
 				}
 			</tbody>
@@ -468,8 +469,10 @@ templ stackOutputsView(info *StackInfo) {
 			<tbody>
 				for key, value := range info.Outputs {
 					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
-						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ key }>{ key }</td>
-						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400 font-mono truncate" title={ value }>{ value }</td>
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate align-top" title={ key }>{ key }</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-400">
+							@components.CodeBlock(value, outputLang(value))
+						</td>
 					</tr>
 				}
 			</tbody>
@@ -564,6 +567,7 @@ templ stackRolesView(info *StackInfo) {
 				for i, role := range info.Roles {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+						data-role-name={ role.Name }
 						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openRolePanel(%d)", i)} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ role.Name }>{ role.Name }</td>
@@ -584,19 +588,6 @@ templ stackRolesView(info *StackInfo) {
 				}
 			</tbody>
 		</table>
-		<!-- Hidden role data for JS -->
-		for i, role := range info.Roles {
-			<div
-				class="hidden"
-				data-role-index={ fmt.Sprintf("%d", i) }
-				data-role-name={ role.Name }
-				data-role-type={ role.Type }
-				data-role-arn={ role.Arn }
-				data-role-active={ fmt.Sprintf("%t", role.Active) }
-				data-role-permissions-boundary={ role.PermissionsBoundary }
-				data-role-policies={ rolePoliciesJSON(role.Policies) }
-			></div>
-		}
 	}
 }
 
@@ -604,60 +595,83 @@ templ rolesScripts() {
 	<script>
 		(function() {
 			window.openRolePanel = function(index) {
-				var el = document.querySelector('[data-role-index="' + index + '"]');
-				if (!el) return;
-				var name = el.getAttribute('data-role-name');
-				var roleType = el.getAttribute('data-role-type');
-				var arn = el.getAttribute('data-role-arn');
-				var active = el.getAttribute('data-role-active') === 'true';
-				var permsBoundary = el.getAttribute('data-role-permissions-boundary') || '';
-				var policies = [];
-				try { policies = JSON.parse(el.getAttribute('data-role-policies') || '[]'); } catch(e) {}
+				var rows = document.querySelectorAll('[data-role-name]');
+				var row = rows[index];
+				var name = row ? row.getAttribute('data-role-name') : 'Role Details';
 				var panel = document.getElementById('secondary-panel');
 				var title = document.getElementById('secondary-panel-title');
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = name;
-				var statusBadge = active
-					? '<span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">Provisioned</span>'
-					: '<span class="text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400">Not provisioned</span>';
-				var html =
-					'<div class="space-y-4 text-sm">' +
-						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">Type</span><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(roleType) + '</p></div>' +
-						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">ARN</span><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 font-mono break-all">' + escapeHtml(arn) + '</p></div>' +
-						'<div><span class="text-cool-grey-500 dark:text-cool-grey-400">Status</span><div class="mt-1">' + statusBadge + '</div></div>';
-				if (policies.length > 0) {
-					html += '<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600"><h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Policies</h4>';
-					policies.forEach(function(p) {
-						var policyLabel = p.Name || p.ManagedPolicyName || 'Policy';
-						html += '<div class="mb-3"><p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 mb-1">' + escapeHtml(policyLabel) + '</p>';
-						if (p.ManagedPolicyName) {
-							html += '<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-1">Managed: ' + escapeHtml(p.ManagedPolicyName) + '</p>';
-						}
-						if (p.Contents) {
-							html += '<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(p.Contents) + '</code></pre>';
-						}
-						html += '</div>';
-					});
-					html += '</div>';
-				}
-				if (permsBoundary) {
-					html += '<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600"><h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Permissions Boundary</h4><pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-3 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(permsBoundary) + '</code></pre></div>';
-				}
-				html += '</div>';
-				content.innerHTML = html;
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/audit/role/' + index)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load role details.</p>';
+					});
 			};
-
-			function escapeHtml(text) {
-				var div = document.createElement('div');
-				div.appendChild(document.createTextNode(text));
-				return div.innerHTML;
-			}
 		})();
 	</script>
+}
+
+templ AuditRoleDetailContent(role StackInfoRole) {
+	<div class="space-y-4 text-sm">
+		<div>
+			<span class="text-cool-grey-500 dark:text-cool-grey-400">Type</span>
+			<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200">{ role.Type }</p>
+		</div>
+		<div>
+			<span class="text-cool-grey-500 dark:text-cool-grey-400">ARN</span>
+			<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 font-mono break-all">{ role.Arn }</p>
+		</div>
+		<div>
+			<span class="text-cool-grey-500 dark:text-cool-grey-400">Status</span>
+			<div class="mt-1">
+				if role.Active {
+					<span class="text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">Provisioned</span>
+				} else {
+					<span class="text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400">Not provisioned</span>
+				}
+			</div>
+		</div>
+		if len(role.Policies) > 0 {
+			<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
+				<h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Policies</h4>
+				for _, pol := range role.Policies {
+					<div class="mb-3">
+						<p class="font-medium text-cool-grey-800 dark:text-cool-grey-200 mb-1">
+							if pol.Name != "" {
+								{ pol.Name }
+							} else if pol.ManagedPolicyName != "" {
+								{ pol.ManagedPolicyName }
+							} else {
+								Policy
+							}
+						</p>
+						if pol.ManagedPolicyName != "" {
+							<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-1">Managed: { pol.ManagedPolicyName }</p>
+						}
+						if pol.Contents != "" {
+							@components.CodeBlock(pol.Contents, "json")
+						}
+					</div>
+				}
+			</div>
+		}
+		if role.PermissionsBoundary != "" {
+			<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600">
+				<h4 class="font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-3">Permissions Boundary</h4>
+				@components.CodeBlock(role.PermissionsBoundary, "json")
+			</div>
+		}
+	</div>
 }
 
 templ infoRow(label, value string) {
@@ -758,14 +772,6 @@ templ auditSandboxList(runs []*nuonmodels.AppInstallSandboxRun) {
 			</tbody>
 		</table>
 	}
-}
-
-func rolePoliciesJSON(policies []RolePolicy) string {
-	if len(policies) == 0 {
-		return "[]"
-	}
-	b, _ := json.Marshal(policies)
-	return string(b)
 }
 
 func policyReportPolicyName(report nuon.PolicyReport) string {
@@ -944,7 +950,7 @@ func allWorkflowsTypeLabel(t nuonmodels.AppWorkflowType) string {
 
 func allWorkflowsDuration(wf *nuonmodels.AppWorkflow) string {
 	if wf.ExecutionTime > 0 {
-		d := time.Duration(wf.ExecutionTime) * time.Millisecond
+		d := time.Duration(wf.ExecutionTime)
 		if d < time.Minute {
 			return fmt.Sprintf("%ds", int(d.Seconds()))
 		}

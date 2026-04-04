@@ -1,6 +1,10 @@
 package partials
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+)
 
 // AccessRolePolicy holds display info for a single IAM policy within a role.
 type AccessRolePolicy struct {
@@ -125,9 +129,9 @@ templ RoleDetailPanel(role AccessRole) {
 		<div class="space-y-2">
 			<h4 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400">Permissions Boundary</h4>
 			if role.PermissionsBoundary != "" {
-				<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto"><code>{ role.PermissionsBoundary }</code></pre>
+				@components.CodeBlock(role.PermissionsBoundary, "json")
 			} else {
-				<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto text-cool-grey-400 dark:text-cool-grey-500 italic">No permissions boundary defined</pre>
+				@components.CodeBlock("No permissions boundary defined", "")
 			}
 		</div>
 	</div>

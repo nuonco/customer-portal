@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -62,9 +64,25 @@ func (h *Handler) JobDetailPanel(c *gin.Context) {
 					runs[i].VersionStatus = s
 				}
 			}
-			// Collect stack outputs
-			if stack.InstallStackOutputs != nil && len(stack.InstallStackOutputs.Data) > 0 {
-				props.StackOutputs = stack.InstallStackOutputs.Data
+			// Collect stack outputs — prefer DataContents for JSON-encoded nested values
+			if stack.InstallStackOutputs != nil {
+				if dc, ok := stack.InstallStackOutputs.DataContents.(map[string]interface{}); ok && len(dc) > 0 {
+					props.StackOutputs = make(map[string]string, len(dc))
+					for k, v := range dc {
+						switch s := v.(type) {
+						case string:
+							props.StackOutputs[k] = prettyIfJSON(s)
+						default:
+							if b, err := json.MarshalIndent(s, "", "  "); err == nil {
+								props.StackOutputs[k] = string(b)
+							} else {
+								props.StackOutputs[k] = fmt.Sprintf("%v", v)
+							}
+						}
+					}
+				} else if len(stack.InstallStackOutputs.Data) > 0 {
+					props.StackOutputs = stack.InstallStackOutputs.Data
+				}
 			}
 		}
 		for i := range runs {

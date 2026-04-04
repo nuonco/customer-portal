@@ -42,7 +42,7 @@ templ ComponentDetailPanel(props ComponentDetailProps) {
 			if outputsMap := toStringMap(props.Component.InstallDeploys[0].Outputs); len(outputsMap) > 0 {
 				@jobDetailSection("Outputs") {
 					for key, val := range outputsMap {
-						@jobDetailRow(key, val)
+						@jobDetailOutputRow(key, val)
 					}
 				}
 			}

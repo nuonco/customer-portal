@@ -1,6 +1,9 @@
 package steps
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+)
 
 // StackGCP renders the 4-step GCP install stack setup guide.
 templ StackGCP(stackSetup workflows.StackSetupData, workflow *workflows.WorkflowDataPanel, installID string, basePath string) {
@@ -23,48 +26,27 @@ templ StackGCP(stackSetup workflows.StackSetupData, workflow *workflows.Workflow
 			<!-- Step 1: Clone -->
 			<div>
 				<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
-				<div class="gcp-setup-code-block">
-					<pre class="text-xs overflow-x-auto"><code>git clone https://github.com/nuonco/install-stacks.git
-cd install-stacks/gcp</code></pre>
-					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp") }>
-						<i class="ph-bold ph-copy text-sm"></i>
-					</button>
-				</div>
+				@components.CodeBlock("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp", "bash")
 			</div>
 			<!-- Step 2: Configure remote state -->
 			<div>
 				<p class="text-sm font-medium mb-1">2. Configure remote state (recommended)</p>
 				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Create a <code class="text-xs">backend.tf</code> file to store Terraform state in GCS</p>
-				<div class="gcp-setup-code-block">
-					<pre class="text-xs overflow-x-auto"><code>{ workflows.GcpBackendSnippet(stackSetup.NuonInstallID) }</code></pre>
-					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(workflows.GcpBackendSnippet(stackSetup.NuonInstallID)) }>
-						<i class="ph-bold ph-copy text-sm"></i>
-					</button>
-				</div>
+				@components.CodeBlock(workflows.GcpBackendSnippet(stackSetup.NuonInstallID), "hcl")
 			</div>
 			<!-- Step 3: Save install configuration -->
 			if stackSetup.TfvarsContent != "" {
 				<div>
 					<p class="text-sm font-medium mb-1">3. Save the install configuration</p>
 					<p class="text-xs text-[var(--theme-text-muted)] mb-2">Save this as <code class="text-xs">install.tfvars</code></p>
-					<div class="gcp-setup-code-block">
-						<pre class="text-xs overflow-x-auto"><code>{ stackSetup.TfvarsContent }</code></pre>
-						<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(stackSetup.TfvarsContent) }>
-							<i class="ph-bold ph-copy text-sm"></i>
-						</button>
-					</div>
+					@components.CodeBlock(stackSetup.TfvarsContent, "hcl")
 				</div>
 			}
 			<!-- Step 4: Apply with Terraform -->
 			<div>
 				<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
 				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Initialize and apply the Terraform configuration.</p>
-				<div class="gcp-setup-code-block">
-					<pre class="text-xs overflow-x-auto"><code>{ workflows.GcpApplyCmd() }</code></pre>
-					<button type="button" class="gcp-copy-btn" onclick={ copyToClipboard(workflows.GcpApplyCmd()) }>
-						<i class="ph-bold ph-copy text-sm"></i>
-					</button>
-				</div>
+				@components.CodeBlock(workflows.GcpApplyCmd(), "bash")
 			</div>
 		</div>
 		<!-- Footer -->
@@ -83,6 +65,3 @@ cd install-stacks/gcp</code></pre>
 	</div>
 }
 
-script copyToClipboard(text string) {
-	navigator.clipboard.writeText(text);
-}

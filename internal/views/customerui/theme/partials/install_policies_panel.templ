@@ -2,8 +2,21 @@ package partials
 
 import (
 	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
+
+func policyLang(engine string) string {
+	if engine == "opa" {
+		return "rego"
+	}
+	return ""
+}
+
+templ PolicyDetailContent(pol PoliciesPolicy) {
+	@components.CodeBlock(pol.Contents, policyLang(pol.Engine))
+}
 
 // PoliciesPolicy holds display info for a single deployment policy.
 type PoliciesPolicy struct {
@@ -97,10 +110,10 @@ templ policiesListContent(policies []PoliciesPolicy) {
 				</tr>
 			</thead>
 			<tbody>
-				for i, pol := range policies {
+				for _, pol := range policies {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyPanel(%d)", i)} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openPolicyPanel('%s')", templ.EscapeString(pol.Name))} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ pol.Name }>{ pol.Name }</td>
 						<td class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate">{ formatPolicyType(pol.Type) }</td>
@@ -113,10 +126,6 @@ templ policiesListContent(policies []PoliciesPolicy) {
 				}
 			</tbody>
 		</table>
-		<!-- Hidden policy contents for JS to read -->
-		for i, pol := range policies {
-			<div class="hidden" data-policy-index={ fmt.Sprintf("%d", i) } data-policy-name={ pol.Name } data-policy-contents={ pol.Contents }></div>
-		}
 	}
 }
 
@@ -208,20 +217,25 @@ templ policiesPanelScripts() {
 				if (pane) pane.classList.add('active');
 			};
 
-			window.openPolicyPanel = function(index) {
-				var el = document.querySelector('[data-policy-index="' + index + '"]');
-				if (!el) return;
-				var name = el.getAttribute('data-policy-name');
-				var contents = el.getAttribute('data-policy-contents');
+			window.openPolicyPanel = function(name) {
 				var panel = document.getElementById('secondary-panel');
 				var title = document.getElementById('secondary-panel-title');
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = name;
-				content.innerHTML = '<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-4 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">' + escapeHtml(contents) + '</code></pre>';
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
+				var config = document.getElementById('policies-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/policies/detail/' + encodeURIComponent(name))
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy details.</p>';
+					});
 			};
 
 			window.openPolicyReportPanel = function(reportID, reportName) {
@@ -246,11 +260,6 @@ templ policiesPanelScripts() {
 					});
 			};
 
-			function escapeHtml(text) {
-				var div = document.createElement('div');
-				div.appendChild(document.createTextNode(text));
-				return div.innerHTML;
-			}
 		})();
 	</script>
 }

@@ -275,6 +275,48 @@ func resolvePolicyReportNames(ctx context.Context, apiClient *nuon.Client, appID
 	}
 }
 
+// AuditRoleDetailPanel renders a single role's detail content for the secondary sliding panel.
+func (h *Handler) AuditRoleDetailPanel(c *gin.Context) {
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	roleIndex, err := strconv.Atoi(c.Param("role_index"))
+	if err != nil {
+		c.String(http.StatusBadRequest, "Invalid role index")
+		return
+	}
+
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		c.String(http.StatusNotFound, "Role not found")
+		return
+	}
+
+	apiClient, apiErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+	if apiErr != nil {
+		c.String(http.StatusInternalServerError, "Failed to create API client")
+		return
+	}
+
+	info := h.buildStackInfo(c.Request.Context(), apiClient, install)
+	if info == nil || roleIndex < 0 || roleIndex >= len(info.Roles) {
+		c.String(http.StatusNotFound, "Role not found")
+		return
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.AuditRoleDetailContent(info.Roles[roleIndex]))
+}
+
 // buildStackInfo fetches install stack data from the Nuon API and maps it to a StackInfo for display.
 func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, install *models.Install) *partials.StackInfo {
 	stack, err := apiClient.GetInstallStack(ctx, install.NuonInstallID)
@@ -298,8 +340,27 @@ func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, in
 		return info
 	}
 
-	if len(outputs.Data) > 0 {
-		info.Outputs = outputs.Data
+	// Prefer DataContents (interface{}) over Data (map[string]string) so nested
+	// values are JSON-encoded instead of Go-formatted "map[...]" strings.
+	if dc, ok := outputs.DataContents.(map[string]interface{}); ok && len(dc) > 0 {
+		info.Outputs = make(map[string]string, len(dc))
+		for k, v := range dc {
+			switch s := v.(type) {
+			case string:
+				info.Outputs[k] = prettyIfJSON(s)
+			default:
+				if b, err := json.MarshalIndent(s, "", "  "); err == nil {
+					info.Outputs[k] = string(b)
+				} else {
+					info.Outputs[k] = fmt.Sprintf("%v", v)
+				}
+			}
+		}
+	} else if len(outputs.Data) > 0 {
+		info.Outputs = make(map[string]string, len(outputs.Data))
+		for k, v := range outputs.Data {
+			info.Outputs[k] = prettyIfJSON(v)
+		}
 	}
 
 	if aws := outputs.Aws; aws != nil {
@@ -439,7 +500,16 @@ func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, 
 		if outputMap, ok := runs[0].Outputs.(map[string]interface{}); ok && len(outputMap) > 0 {
 			info.Outputs = make(map[string]string, len(outputMap))
 			for k, v := range outputMap {
-				info.Outputs[k] = fmt.Sprintf("%v", v)
+				switch s := v.(type) {
+				case string:
+					info.Outputs[k] = prettyIfJSON(s)
+				default:
+					if b, err := json.MarshalIndent(s, "", "  "); err == nil {
+						info.Outputs[k] = string(b)
+					} else {
+						info.Outputs[k] = fmt.Sprintf("%v", v)
+					}
+				}
 			}
 			// Extract structured AWS fields from nested output maps
 			if acct, ok := outputMap["account"].(map[string]interface{}); ok {
@@ -529,4 +599,20 @@ func paginateDeploys(deploys []*nuonmodels.AppInstallDeploy, offset int) []*nuon
 		end = len(deploys)
 	}
 	return deploys[offset:end]
+}
+
+// prettyIfJSON pretty-prints a string if it's valid JSON, otherwise returns it unchanged.
+func prettyIfJSON(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	if (s[0] == '{' && s[len(s)-1] == '}') || (s[0] == '[' && s[len(s)-1] == ']') {
+		var raw json.RawMessage
+		if err := json.Unmarshal([]byte(s), &raw); err == nil {
+			if pretty, err := json.MarshalIndent(raw, "", "  "); err == nil {
+				return string(pretty)
+			}
+		}
+	}
+	return s
 }

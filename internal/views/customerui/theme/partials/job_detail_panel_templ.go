@@ -6,10 +6,12 @@ package partials
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 
 	nuonmodels "github.com/nuonco/nuon-go/models"
@@ -45,9 +47,50 @@ func toStringMap(v interface{}) map[string]string {
 	}
 	result := make(map[string]string, len(m))
 	for k, val := range m {
-		result[k] = fmt.Sprintf("%v", val)
+		switch s := val.(type) {
+		case string:
+			result[k] = prettyIfJSON(s)
+		default:
+			if b, err := json.MarshalIndent(s, "", "  "); err == nil {
+				result[k] = string(b)
+			} else {
+				result[k] = fmt.Sprintf("%v", val)
+			}
+		}
 	}
 	return result
+}
+
+// prettyIfJSON pretty-prints a string if it's valid JSON, otherwise returns it unchanged.
+func prettyIfJSON(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	if (s[0] == '{' && s[len(s)-1] == '}') || (s[0] == '[' && s[len(s)-1] == ']') {
+		var raw json.RawMessage
+		if err := json.Unmarshal([]byte(s), &raw); err == nil {
+			if pretty, err := json.MarshalIndent(raw, "", "  "); err == nil {
+				return string(pretty)
+			}
+		}
+	}
+	return s
+}
+
+// isJSON returns true if the string looks like a JSON object or array.
+func isJSON(s string) bool {
+	if len(s) < 2 {
+		return false
+	}
+	return (s[0] == '{' && s[len(s)-1] == '}') || (s[0] == '[' && s[len(s)-1] == ']')
+}
+
+// outputLang returns "json" if the value looks like JSON, otherwise "".
+func outputLang(s string) string {
+	if isJSON(s) {
+		return "json"
+	}
+	return ""
 }
 
 func JobDetailPanel(props JobDetailProps) templ.Component {
@@ -207,7 +250,7 @@ func stackRunDetail(run *nuon.StackRun, outputs map[string]string) templ.Compone
 				}
 				ctx = templ.InitializeContext(ctx)
 				for key, val := range outputs {
-					templ_7745c5c3_Err = jobDetailRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = jobDetailOutputRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -322,7 +365,7 @@ func sandboxRunDetail(run *nuonmodels.AppInstallSandboxRun) templ.Component {
 				}
 				ctx = templ.InitializeContext(ctx)
 				for key, val := range outputsMap {
-					templ_7745c5c3_Err = jobDetailRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = jobDetailOutputRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -445,7 +488,7 @@ func deployDetail(deploy *nuonmodels.AppInstallDeploy) templ.Component {
 				}
 				ctx = templ.InitializeContext(ctx)
 				for key, val := range outputsMap {
-					templ_7745c5c3_Err = jobDetailRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = jobDetailOutputRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -562,7 +605,7 @@ func actionWorkflowDetail(wf *nuonmodels.AppWorkflow) templ.Component {
 				}
 				ctx = templ.InitializeContext(ctx)
 				for key, val := range outputsMap {
-					templ_7745c5c3_Err = jobDetailRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
+					templ_7745c5c3_Err = jobDetailOutputRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -629,7 +672,7 @@ func jobDetailEmpty(msg string) templ.Component {
 		var templ_7745c5c3_Var16 string
 		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(msg)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 156, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 199, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
@@ -671,7 +714,7 @@ func jobDetailSection(title string) templ.Component {
 		var templ_7745c5c3_Var18 string
 		templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 162, Col: 111}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 205, Col: 111}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 		if templ_7745c5c3_Err != nil {
@@ -722,7 +765,7 @@ func jobDetailRow(label string, value string) templ.Component {
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 174, Col: 123}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 217, Col: 123}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {
@@ -735,13 +778,65 @@ func jobDetailRow(label string, value string) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templ.JoinStringErrs(value)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 175, Col: 80}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 218, Col: 80}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var21))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</td></tr>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+func jobDetailOutputRow(label string, value string) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		if value != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0\"><td class=\"py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var23 string
+			templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(label)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 226, Col: 123}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td><td class=\"py-2 text-xs text-cool-grey-900 dark:text-white break-all\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = components.CodeBlock(value, outputLang(value)).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

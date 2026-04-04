@@ -215,7 +215,7 @@ func ComponentDetailPanel(props ComponentDetailProps) templ.Component {
 					}
 					ctx = templ.InitializeContext(ctx)
 					for key, val := range outputsMap {
-						templ_7745c5c3_Err = jobDetailRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
+						templ_7745c5c3_Err = jobDetailOutputRow(key, val).Render(ctx, templ_7745c5c3_Buffer)
 						if templ_7745c5c3_Err != nil {
 							return templ_7745c5c3_Err
 						}

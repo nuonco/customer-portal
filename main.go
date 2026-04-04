@@ -484,7 +484,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
 			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
 			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)                   // Role detail sliding panel
+			installOwnership.GET("/panel/audit/role/:role_index", h.AuditRoleDetailPanel)        // Audit role detail sliding panel
 			installOwnership.GET("/panel/policies", h.PoliciesPanel)                             // Panel policies tab
+			installOwnership.GET("/panel/policies/detail/:policy_name", h.PolicyDetailPanel)     // Policy detail sliding panel
 			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)       // Policy report detail panel
 			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)       // Component detail sliding panel
 			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel

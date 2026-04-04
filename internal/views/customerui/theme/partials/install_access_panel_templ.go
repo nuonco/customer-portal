@@ -10,6 +10,7 @@ import (
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // AccessRolePolicy holds display info for a single IAM policy within a role.
@@ -76,7 +77,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 				var templ_7745c5c3_Var2 string
 				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(role.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 47, Col: 33}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 51, Col: 33}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 				if templ_7745c5c3_Err != nil {
@@ -98,7 +99,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(role.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 50, Col: 102}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 54, Col: 102}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
@@ -111,7 +112,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 				var templ_7745c5c3_Var5 string
 				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(role.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 50, Col: 116}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 54, Col: 116}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 				if templ_7745c5c3_Err != nil {
@@ -124,7 +125,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(role.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 51, Col: 105}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 55, Col: 105}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -137,7 +138,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(role.Description)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 51, Col: 126}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 55, Col: 126}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
@@ -175,7 +176,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 70, Col: 77}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 74, Col: 77}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
@@ -188,7 +189,7 @@ func AccessPanel(props AccessPanelProps) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.InstallID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 70, Col: 113}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 74, Col: 113}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -336,30 +337,17 @@ func RoleDetailPanel(role AccessRole) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if role.PermissionsBoundary != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<pre class=\"text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto\"><code>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var14 string
-			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(role.PermissionsBoundary)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/install_access_panel.templ`, Line: 128, Col: 124}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</code></pre>")
+			templ_7745c5c3_Err = components.CodeBlock(role.PermissionsBoundary, "json").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<pre class=\"text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto text-cool-grey-400 dark:text-cool-grey-500 italic\">No permissions boundary defined</pre>")
+			templ_7745c5c3_Err = components.CodeBlock("No permissions boundary defined", "").Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -383,12 +371,12 @@ func AccessEnableRoleModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var14 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var14 == nil {
+			templ_7745c5c3_Var14 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var16 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var15 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -400,13 +388,13 @@ func AccessEnableRoleModal() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<!-- Header --> <div class=\"flex items-center justify-between mb-5\"><div class=\"flex items-center gap-2\"><i class=\"ph-bold ph-shield-chevron text-lg text-cool-grey-600 dark:text-cool-grey-400\"></i><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">How to provision a role</h3></div><button class=\"button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\" onclick=\"document.getElementById('access-enable-role-modal').classList.add('hidden')\" aria-label=\"Close\"><i class=\"ph-bold ph-x text-lg\"></i></button></div><!-- Warning callout --> <div class=\"access-modal-callout access-modal-callout-warning mb-5\"><i class=\"ph-bold ph-warning text-base\"></i><p><strong>Manual Action Required:</strong> This role was not created in your account. It must be created before you can use it.</p></div><!-- Instructions --> <p class=\"font-semibold text-sm text-cool-grey-900 dark:text-white mb-3\">How to create this role using the Cloudformation stack:</p><ul class=\"access-modal-list mb-5\"><li>Navigate to the AWS CloudFormation console in your account.</li><li>Find the stack associated with this install.</li><li>Select the stack and click \"Update stack\". In the dropdown select \"Create a change set\".</li><li>Follow the guided flow and execute the changeset.</li><li>Once the change has been applied, this UI will update.</li></ul><!-- Actions --> <div class=\"flex justify-end border-t border-cool-grey-200 dark:border-cool-grey-700 pt-4\"><button class=\"button button-primary btn-theme-primary\" onclick=\"document.getElementById('access-enable-role-modal').classList.add('hidden')\">Got it</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Header --> <div class=\"flex items-center justify-between mb-5\"><div class=\"flex items-center gap-2\"><i class=\"ph-bold ph-shield-chevron text-lg text-cool-grey-600 dark:text-cool-grey-400\"></i><h3 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white\">How to provision a role</h3></div><button class=\"button button-icon text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-300\" onclick=\"document.getElementById('access-enable-role-modal').classList.add('hidden')\" aria-label=\"Close\"><i class=\"ph-bold ph-x text-lg\"></i></button></div><!-- Warning callout --> <div class=\"access-modal-callout access-modal-callout-warning mb-5\"><i class=\"ph-bold ph-warning text-base\"></i><p><strong>Manual Action Required:</strong> This role was not created in your account. It must be created before you can use it.</p></div><!-- Instructions --> <p class=\"font-semibold text-sm text-cool-grey-900 dark:text-white mb-3\">How to create this role using the Cloudformation stack:</p><ul class=\"access-modal-list mb-5\"><li>Navigate to the AWS CloudFormation console in your account.</li><li>Find the stack associated with this install.</li><li>Select the stack and click \"Update stack\". In the dropdown select \"Create a change set\".</li><li>Follow the guided flow and execute the changeset.</li><li>Once the change has been applied, this UI will update.</li></ul><!-- Actions --> <div class=\"flex justify-end border-t border-cool-grey-200 dark:border-cool-grey-700 pt-4\"><button class=\"button button-primary btn-theme-primary\" onclick=\"document.getElementById('access-enable-role-modal').classList.add('hidden')\">Got it</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ModalWrapper("access-enable-role-modal", "max-w-lg").Render(templ.WithChildren(ctx, templ_7745c5c3_Var16), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ModalWrapper("access-enable-role-modal", "max-w-lg").Render(templ.WithChildren(ctx, templ_7745c5c3_Var15), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

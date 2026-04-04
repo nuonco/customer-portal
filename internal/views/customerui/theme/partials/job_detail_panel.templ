@@ -1,9 +1,11 @@
 package partials
 
 import (
+	"encoding/json"
 	"fmt"
 
 	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -37,9 +39,50 @@ func toStringMap(v interface{}) map[string]string {
 	}
 	result := make(map[string]string, len(m))
 	for k, val := range m {
-		result[k] = fmt.Sprintf("%v", val)
+		switch s := val.(type) {
+		case string:
+			result[k] = prettyIfJSON(s)
+		default:
+			if b, err := json.MarshalIndent(s, "", "  "); err == nil {
+				result[k] = string(b)
+			} else {
+				result[k] = fmt.Sprintf("%v", val)
+			}
+		}
 	}
 	return result
+}
+
+// prettyIfJSON pretty-prints a string if it's valid JSON, otherwise returns it unchanged.
+func prettyIfJSON(s string) string {
+	if len(s) < 2 {
+		return s
+	}
+	if (s[0] == '{' && s[len(s)-1] == '}') || (s[0] == '[' && s[len(s)-1] == ']') {
+		var raw json.RawMessage
+		if err := json.Unmarshal([]byte(s), &raw); err == nil {
+			if pretty, err := json.MarshalIndent(raw, "", "  "); err == nil {
+				return string(pretty)
+			}
+		}
+	}
+	return s
+}
+
+// isJSON returns true if the string looks like a JSON object or array.
+func isJSON(s string) bool {
+	if len(s) < 2 {
+		return false
+	}
+	return (s[0] == '{' && s[len(s)-1] == '}') || (s[0] == '[' && s[len(s)-1] == ']')
+}
+
+// outputLang returns "json" if the value looks like JSON, otherwise "".
+func outputLang(s string) string {
+	if isJSON(s) {
+		return "json"
+	}
+	return ""
 }
 
 templ JobDetailPanel(props JobDetailProps) {
@@ -78,7 +121,7 @@ templ stackRunDetail(run *nuon.StackRun, outputs map[string]string) {
 	if len(outputs) > 0 {
 		@jobDetailSection("Outputs") {
 			for key, val := range outputs {
-				@jobDetailRow(key, val)
+				@jobDetailOutputRow(key, val)
 			}
 		}
 	}
@@ -98,7 +141,7 @@ templ sandboxRunDetail(run *nuonmodels.AppInstallSandboxRun) {
 	if outputsMap := toStringMap(run.Outputs); len(outputsMap) > 0 {
 		@jobDetailSection("Outputs") {
 			for key, val := range outputsMap {
-				@jobDetailRow(key, val)
+				@jobDetailOutputRow(key, val)
 			}
 		}
 	}
@@ -119,7 +162,7 @@ templ deployDetail(deploy *nuonmodels.AppInstallDeploy) {
 	if outputsMap := toStringMap(deploy.Outputs); len(outputsMap) > 0 {
 		@jobDetailSection("Outputs") {
 			for key, val := range outputsMap {
-				@jobDetailRow(key, val)
+				@jobDetailOutputRow(key, val)
 			}
 		}
 	}
@@ -141,7 +184,7 @@ templ actionWorkflowDetail(wf *nuonmodels.AppWorkflow) {
 	if outputsMap := actionWorkflowOutputs(wf); len(outputsMap) > 0 {
 		@jobDetailSection("Outputs") {
 			for key, val := range outputsMap {
-				@jobDetailRow(key, val)
+				@jobDetailOutputRow(key, val)
 			}
 		}
 	} else {
@@ -173,6 +216,17 @@ templ jobDetailRow(label string, value string) {
 		<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
 			<td class="py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top">{ label }</td>
 			<td class="py-2 text-xs text-cool-grey-900 dark:text-white break-all">{ value }</td>
+		</tr>
+	}
+}
+
+templ jobDetailOutputRow(label string, value string) {
+	if value != "" {
+		<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+			<td class="py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top">{ label }</td>
+			<td class="py-2 text-xs text-cool-grey-900 dark:text-white break-all">
+				@components.CodeBlock(value, outputLang(value))
+			</td>
 		</tr>
 	}
 }

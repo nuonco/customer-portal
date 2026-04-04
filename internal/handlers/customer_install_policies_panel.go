@@ -10,6 +10,56 @@ import (
 	"go.uber.org/zap"
 )
 
+func (h *Handler) PolicyDetailPanel(c *gin.Context) {
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+
+	install := installInterface.(*models.Install)
+
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, "Failed to load install details")
+		return
+	}
+
+	policyName := c.Param("policy_name")
+
+	nuonOrg := install.GetNuonOrg()
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		c.String(http.StatusNotFound, "Policy not found")
+		return
+	}
+
+	apiClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to create API client")
+		return
+	}
+
+	policies, err := apiClient.GetLatestAppPoliciesConfigFull(c.Request.Context(), install.GetAppID())
+	if err != nil {
+		c.String(http.StatusInternalServerError, "Failed to fetch policies")
+		return
+	}
+
+	for _, p := range policies {
+		if p.Name == policyName {
+			pol := partials.PoliciesPolicy{
+				Name:     p.Name,
+				Type:     p.Type,
+				Engine:   p.Engine,
+				Contents: p.Contents,
+			}
+			h.RenderTempl(c, http.StatusOK, partials.PolicyDetailContent(pol))
+			return
+		}
+	}
+
+	c.String(http.StatusNotFound, "Policy not found")
+}
+
 func (h *Handler) PoliciesPanel(c *gin.Context) {
 	installInterface, exists := c.Get("install")
 	if !exists {

@@ -183,13 +183,16 @@ func (h *Handler) findMostRecentProvisionWorkflow(ctx context.Context, client *n
 		return nil, nil
 	}
 
-	// Find the most recent provision-type workflow
+	// Find the most recent provision-type workflow, but only if it's the latest
+	// workflow overall. If a newer non-provision workflow exists, the provision
+	// is stale and should not be shown on the overview page.
 	for _, wf := range workflows {
 		if wf.Status == nil {
 			continue
 		}
 		if !provisionWorkflowTypes[string(wf.Type)] {
-			continue
+			// A newer non-provision workflow exists — provision is stale
+			return nil, nil
 		}
 		processed := processWorkflowForCustomer(wf)
 		processed["current_step_role"] = resolveCurrentStepRole(ctx, client, nuonInstallID, processed)

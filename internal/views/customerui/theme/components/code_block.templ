@@ -1,0 +1,18 @@
+package components
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/highlight"
+
+templ CodeBlock(copyContent string, lang string) {
+	<div class="code-block">
+		<div class="chroma overflow-x-auto text-xs leading-relaxed">
+			@templ.Raw(highlight.Highlight(copyContent, lang))
+		</div>
+		<button type="button" class="code-block-copy" onclick={ copyToClipboard(copyContent) }>
+			<i class="ph-bold ph-copy text-sm"></i>
+		</button>
+	</div>
+}
+
+script copyToClipboard(text string) {
+	navigator.clipboard.writeText(text);
+}

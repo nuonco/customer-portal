@@ -462,21 +462,21 @@ templ appInfoRoleDetail(role IAMRoleDisplay) {
 		}
 		<h5 class="text-xs font-semibold text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wide mb-1">Permission Boundary</h5>
 		if role.PermissionsBoundary != "" {
-			<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto"><code>{ role.PermissionsBoundary }</code></pre>
+			@components.CodeBlock(role.PermissionsBoundary, "json")
 		} else {
-			<pre class="text-xs bg-cool-grey-100 dark:bg-dark-grey-700 p-2 rounded overflow-x-auto text-cool-grey-400 dark:text-cool-grey-500 italic">No permissions boundary defined</pre>
+			@components.CodeBlock("No permissions boundary defined", "")
 		}
 	</div>
 }
 
 templ appInfoPolicyDetailContent(pol PolicyDisplay) {
 	<div class="px-4 pb-4">
-		<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-4 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">{ pol.Contents }</code></pre>
+		@components.CodeBlock(pol.Contents, "json")
 	</div>
 }
 
 templ appInfoIAMPolicyDetailContent(pol IAMPolicyDisplay) {
 	<div class="px-4 pb-4">
-		<pre class="overflow-x-auto rounded-md bg-cool-grey-50 dark:bg-dark-grey-800 p-4 text-xs leading-relaxed"><code class="font-mono text-cool-grey-800 dark:text-cool-grey-200">{ pol.Contents }</code></pre>
+		@components.CodeBlock(pol.Contents, "json")
 	</div>
 }
