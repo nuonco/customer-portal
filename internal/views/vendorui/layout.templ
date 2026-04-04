@@ -438,7 +438,7 @@ templ createOrgModal(basePath string) {
 		</form>
 		@components.ModalFooter() {
 			@components.ModalButtonSecondary("Cancel", "closeCreateOrgModal()")
-			@components.ModalButtonPrimary("Connect", templ.Attributes{"onclick": "submitCreateOrg()"})
+			@components.ModalButtonPrimary("Connect", templ.Attributes{"type": "button", "onclick": "submitCreateOrg()"})
 		}
 	}
 	<!-- Config data for JavaScript -->
