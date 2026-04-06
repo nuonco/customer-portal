@@ -28,6 +28,7 @@ templ AppOverviewPage(props AppOverviewPageProps) {
 				class="stratus-page-content overflow-auto"
 				id="appOverviewConfig"
 			>
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<section class="stratus-page-section">
 					<div class="stratus-card space-y-4">
 						<div>

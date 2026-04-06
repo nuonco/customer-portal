@@ -19,6 +19,7 @@ type LinkDetailPageProps struct {
 templ LinkDetailPage(props LinkDetailPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="stratus-page-content overflow-auto">
+			@vendorui.APIErrorBanner(props.LayoutProps)
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
 					<h1 class="stratus-page-title">Install Link Details</h1>

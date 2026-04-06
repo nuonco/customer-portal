@@ -31,6 +31,7 @@ templ AppLogoPage(props AppLogoPageProps) {
 				data-logo-dark-base64={ props.LogoDarkBase64 }
 				id="appLogoConfig"
 			>
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<div class="px-4 pt-4 md:px-6 md:pt-6">
 					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-6">
 						Upload logos for your app. The light mode logo is shown on light backgrounds; the dark mode logo is shown on dark backgrounds.

@@ -23,24 +23,26 @@ type CustomerAppDetailPageProps struct {
 // CustomerAppsPage renders the customer-facing app catalog
 templ CustomerAppsPage(props CustomerAppsPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="p-6">
-			<div class="page-header flex items-center justify-between gap-4 mb-6">
-				<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate flex items-center gap-2">
-					<i class="ph-bold ph-squares-four text-xl"></i>
-					App Catalog
-				</h1>
-				if len(props.Apps) == 1 && props.Apps[0].Status == "coming_soon" {
-					<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
-				} else if len(props.Apps) == 1 {
-					<a href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", props.BasePath, props.Apps[0].AppID)) } class="button button-primary btn-theme-primary">Install</a>
-				}
-			</div>
-			if len(props.Apps) == 1 {
-				<div class="mt-8">
-					@appFullWidthCard(props.Apps[0], props.BasePath)
+		@components.PageHeader(components.PageHeaderProps{Title: "App Catalog", Icon: "squares-four"}) {
+			if len(props.Apps) == 1 && props.Apps[0].Status == "coming_soon" {
+				<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
+			} else if len(props.Apps) == 1 {
+				<a href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", props.BasePath, props.Apps[0].AppID)) } class="button button-primary btn-theme-primary">Install</a>
+			}
+		}
+		<div class="px-6">
+			if props.NuonAPIError != "" {
+				<div class="mb-6">
+					@components.Alert(components.AlertProps{
+						Type:    "error",
+						Message: props.NuonAPIError,
+					})
 				</div>
+			}
+			if len(props.Apps) == 1 {
+				@appFullWidthCard(props.Apps[0], props.BasePath)
 			} else if len(props.Apps) > 1 {
-				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-12">
+				<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 					for _, app := range props.Apps {
 						@appCatalogCard(app, props.BasePath)
 					}
@@ -96,21 +98,23 @@ templ appCatalogCard(app partials.PublishedAppDisplay, basePath string) {
 // CustomerAppDetailPage renders the full detail view for a single published app.
 templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		<div class="p-6">
-			<div class="mb-6 flex items-center justify-between">
-				<a href={ templ.SafeURL(props.BasePath + "/apps") } class="back-link">
-					<i class="ph-bold ph-caret-left text-base mr-1"></i>
-					Back to catalog
-				</a>
-				if props.App.Status == "coming_soon" {
-					<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
-				} else {
-					<a href={ templ.SafeURL(props.BasePath + "/apps/" + props.App.AppID + "/install") } class="button button-primary btn-theme-primary">Install</a>
-				}
-			</div>
-			<div class="mt-10">
-				@appFullWidthCard(props.App, props.BasePath)
-			</div>
+		@components.PageHeader(components.PageHeaderProps{BackLink: props.BasePath + "/apps", BackText: "Back to catalog"}) {
+			if props.App.Status == "coming_soon" {
+				<span class="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200">Coming Soon</span>
+			} else {
+				<a href={ templ.SafeURL(props.BasePath + "/apps/" + props.App.AppID + "/install") } class="button button-primary btn-theme-primary">Install</a>
+			}
+		}
+		<div class="px-6">
+			if props.NuonAPIError != "" {
+				<div class="mb-6">
+					@components.Alert(components.AlertProps{
+						Type:    "error",
+						Message: props.NuonAPIError,
+					})
+				</div>
+			}
+			@appFullWidthCard(props.App, props.BasePath)
 		</div>
 	}
 }

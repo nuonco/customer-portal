@@ -93,21 +93,6 @@ func (h *Handler) AccountSetupPage(c *gin.Context) {
 	c.Redirect(http.StatusFound, "/installs")
 }
 
-// NewAccountPage renders the account creation form so customers can create additional accounts.
-func (h *Handler) NewAccountPage(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	orgID := h.getOrgIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
-	layoutProps := h.buildCustomerLayoutProps("Create Account", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
-	layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
-
-	h.RenderTempl(c, http.StatusOK, customerpages.AccountSetupPage(customerpages.AccountSetupPageProps{
-		LayoutProps:      layoutProps,
-		HasOtherAccounts: acctActive != nil,
-	}))
-}
-
 // createAccountForUser creates a CustomerAccount and makes the given user the owner.
 // It associates any orphaned installs with the new account.
 func (h *Handler) createAccountForUser(userID, orgID, accountName string) (*models.CustomerAccount, error) {
@@ -157,18 +142,30 @@ func (h *Handler) CreateAccount(c *gin.Context) {
 		Name string `json:"name" form:"name" binding:"required"`
 	}
 	if err := c.ShouldBind(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Company name is required"})
+		if isHTMXRequest(c) {
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Group name is required.</div>`)
+			return
+		}
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Group name is required"})
 		return
 	}
 
 	org, err := h.getOrgForCustomerPage(c)
 	if err != nil {
+		if isHTMXRequest(c) {
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Organization not found.</div>`)
+			return
+		}
 		c.JSON(http.StatusNotFound, gin.H{"error": "Organization not found"})
 		return
 	}
 
 	account, err := h.createAccountForUser(user.ID, org.ID, req.Name)
 	if err != nil {
+		if isHTMXRequest(c) {
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Failed to create group.</div>`)
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create account"})
 		return
 	}
@@ -246,10 +243,10 @@ func (h *Handler) UpdateAccount(c *gin.Context) {
 	if err := c.ShouldBind(&req); err != nil {
 		if isHTMXRequest(c) {
 			c.Header("Content-Type", "text/html")
-			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Account name is required.</div>`)
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Group name is required.</div>`)
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Account name is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Group name is required"})
 		return
 	}
 
@@ -257,10 +254,10 @@ func (h *Handler) UpdateAccount(c *gin.Context) {
 	if name == "" {
 		if isHTMXRequest(c) {
 			c.Header("Content-Type", "text/html")
-			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Account name is required.</div>`)
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-red-600 dark:text-red-400">Group name is required.</div>`)
 			return
 		}
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Account name is required"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Group name is required"})
 		return
 	}
 
@@ -271,7 +268,7 @@ func (h *Handler) UpdateAccount(c *gin.Context) {
 
 	if isHTMXRequest(c) {
 		c.Header("Content-Type", "text/html")
-		c.String(http.StatusOK, `<div class="p-3 text-sm text-green-600 dark:text-green-400">Account name updated.</div>`)
+		c.String(http.StatusOK, `<div class="p-3 text-sm text-green-600 dark:text-green-400">Group name updated.</div>`)
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Account updated", "account": account})
@@ -297,7 +294,7 @@ func (h *Handler) AccountPage(c *gin.Context) {
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
 	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
-	layoutProps := h.buildCustomerLayoutProps("My Account", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
+	layoutProps := h.buildCustomerLayoutProps("My Group", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.ActiveNav = "account"
 	layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 
@@ -351,7 +348,7 @@ func (h *Handler) CreateAccountInvite(c *gin.Context) {
 		First(&existingMember).Error; err == nil {
 		if isHTMXRequest(c) {
 			c.Header("Content-Type", "text/html")
-			c.String(http.StatusOK, `<div class="p-3 text-sm text-amber-600 dark:text-amber-400">That user is already a member of this account.</div>`)
+			c.String(http.StatusOK, `<div class="p-3 text-sm text-amber-600 dark:text-amber-400">That user is already a member of this group.</div>`)
 			return
 		}
 		c.JSON(http.StatusConflict, gin.H{"error": "User is already a member"})

@@ -447,7 +447,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		account.GET("/", h.AccountPage)
 		account.PUT("/", h.UpdateAccount)
 		account.GET("/setup", h.AccountSetupPage)
-		account.GET("/new", h.NewAccountPage)
 		account.POST("/create", h.CreateAccount)
 		account.POST("/switch", h.SwitchAccount)
 		account.GET("/members", h.AccountMembersRedirect)

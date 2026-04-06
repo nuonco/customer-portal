@@ -46,7 +46,8 @@ type LayoutProps struct {
 	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
 
 	// Inline error for Nuon API failures (token expired, unreachable, etc.)
-	NuonAPIError         string
+	NuonAPIErrorTitle    string // banner heading (e.g. "Token Is Expired")
+	NuonAPIError         string // banner body (e.g. "Generate a new token...")
 	NuonAPIShowUpdateCTA bool
 
 	// Asset paths (cache-busted)
@@ -54,6 +55,30 @@ type LayoutProps struct {
 
 	// Superuser access
 	IsSuperuser bool
+}
+
+// APIErrorBanner renders an inline error banner for Nuon API failures.
+// Pages should call this as the first child of their stratus-page-content div.
+templ APIErrorBanner(props LayoutProps) {
+	if props.NuonAPIError != "" || props.NuonAPIErrorTitle != "" {
+		<div class="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg">
+			if props.NuonAPIErrorTitle != "" {
+				<p class="text-sm font-medium text-red-800 dark:text-red-200">{ props.NuonAPIErrorTitle }</p>
+			} else {
+				<p class="text-sm font-medium text-red-800 dark:text-red-200">Unable to connect to Nuon API</p>
+			}
+			if props.NuonAPIShowUpdateCTA && props.CurrentOrg != nil {
+				<p class="text-sm text-red-700 dark:text-red-300 mt-0.5">
+					Generate a new token and update your
+					<a href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection") }
+						class="font-medium underline hover:text-red-900 dark:hover:text-red-100">Org Connection</a>
+					settings.
+				</p>
+			} else if props.NuonAPIError != "" {
+				<p class="text-sm text-red-700 dark:text-red-300 mt-0.5">{ props.NuonAPIError }</p>
+			}
+		</div>
+	}
 }
 
 // Layout renders the vendor layout with sidebar, topbar, and content area
@@ -135,20 +160,6 @@ templ Layout(props LayoutProps) {
 					})
 					<!-- Page Content -->
 					<main class="flex-1 flex flex-col overflow-hidden">
-						if props.NuonAPIError != "" {
-							<div class="mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3">
-								<div class="flex-1">
-									<p class="text-sm font-medium text-red-800 dark:text-red-200">Unable to connect to Nuon API</p>
-									<p class="text-sm text-red-700 dark:text-red-300 mt-0.5">{ props.NuonAPIError }</p>
-								</div>
-								if props.NuonAPIShowUpdateCTA && props.CurrentOrg != nil {
-									<a href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection") }
-										class="text-sm font-medium text-red-700 dark:text-red-300 underline hover:text-red-900 dark:hover:text-red-100 whitespace-nowrap">
-										Update connection →
-									</a>
-								}
-							</div>
-						}
 						{ children... }
 					</main>
 				</div>

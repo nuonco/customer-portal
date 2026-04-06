@@ -203,7 +203,7 @@ templ jobDetailEmpty(msg string) {
 templ jobDetailSection(title string) {
 	<div class="space-y-2">
 		<h4 class="text-xs font-semibold uppercase tracking-wider text-cool-grey-500 dark:text-cool-grey-400">{ title }</h4>
-		<table class="w-full text-sm">
+		<table class="w-full text-sm table-fixed">
 			<tbody>
 				{ children... }
 			</tbody>
@@ -223,8 +223,8 @@ templ jobDetailRow(label string, value string) {
 templ jobDetailOutputRow(label string, value string) {
 	if value != "" {
 		<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
-			<td class="py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top">{ label }</td>
-			<td class="py-2 text-xs text-cool-grey-900 dark:text-white break-all">
+			<td colspan="2" class="py-2">
+				<div class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">{ label }</div>
 				@components.CodeBlock(value, outputLang(value))
 			</td>
 		</tr>

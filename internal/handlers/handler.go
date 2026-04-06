@@ -196,11 +196,11 @@ func (h *Handler) schemeFromBaseURL() string {
 }
 
 // checkOrgStatus validates API connectivity for the given org.
-// Returns status ("active" or "error") and a human-readable message.
+// Returns status ("active" or "error"), a short status message, and an optional parsed API error.
 
-func (h *Handler) checkOrgStatus(ctx context.Context, org *models.NuonOrg) (string, string) {
+func (h *Handler) checkOrgStatus(ctx context.Context, org *models.NuonOrg) (string, string, *nuon.APIError) {
 	if org == nil || org.APIToken == "" {
-		return "error", "No API token configured"
+		return "error", "No API token configured", nil
 	}
 
 	checkCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -208,23 +208,37 @@ func (h *Handler) checkOrgStatus(ctx context.Context, org *models.NuonOrg) (stri
 
 	client, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
-		return "error", "Unable to reach Nuon API"
+		return "error", "Unable to reach Nuon API", nil
 	}
 
 	if err := client.ValidateOrgAccess(checkCtx); err != nil {
-		return "error", "Unable to reach Nuon API"
+		apiErr := nuon.ParseAPIError(err)
+		return "error", "Unable to reach Nuon API", &apiErr
 	}
 
-	return "active", "Connected"
+	return "active", "Connected", nil
 }
 
-// enrichLayoutWithOrgStatus sets OrgStatus and OrgStatusMessage on the layout props
+// enrichLayoutWithOrgStatus sets OrgStatus, OrgStatusMessage, and API error banner fields
 // by checking live API connectivity for the current org.
 
 func (h *Handler) enrichLayoutWithOrgStatus(ctx context.Context, layout *vendorui.LayoutProps) {
-	status, msg := h.checkOrgStatus(ctx, layout.CurrentOrg)
+	status, msg, apiErr := h.checkOrgStatus(ctx, layout.CurrentOrg)
 	layout.OrgStatus = status
 	layout.OrgStatusMessage = msg
+	if status == "error" && apiErr != nil {
+		if layout.NuonAPIErrorTitle == "" {
+			layout.NuonAPIErrorTitle = apiErr.Title
+		}
+		if layout.NuonAPIError == "" {
+			layout.NuonAPIError = apiErr.Description
+		}
+		layout.NuonAPIShowUpdateCTA = strings.EqualFold(apiErr.Title, "Token Is Expired")
+	} else if status == "error" {
+		if layout.NuonAPIError == "" {
+			layout.NuonAPIError = msg
+		}
+	}
 }
 
 // GetUserOrgs returns all active organizations for a user

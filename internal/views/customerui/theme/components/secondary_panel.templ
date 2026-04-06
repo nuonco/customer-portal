@@ -1,0 +1,54 @@
+package components
+
+templ SecondaryPanel() {
+	<!-- Secondary panel overlay -->
+	<div id="secondary-panel-overlay" class="secondary-panel-overlay" onclick="closeSecondaryPanel()"></div>
+	<script>
+		window.closeSecondaryPanel = function() {
+			var panel = document.getElementById('secondary-panel');
+			if (panel) {
+				panel.classList.remove('open');
+				panel.classList.remove('panel-full');
+			}
+			var overlay = document.getElementById('secondary-panel-overlay');
+			if (overlay) overlay.classList.remove('open');
+			var expandIcon = document.getElementById('panel-expand-icon');
+			var collapseIcon = document.getElementById('panel-collapse-icon');
+			if (expandIcon) expandIcon.classList.remove('hidden');
+			if (collapseIcon) collapseIcon.classList.add('hidden');
+		};
+		window.togglePanelExpand = function() {
+			var panel = document.getElementById('secondary-panel');
+			var expandIcon = document.getElementById('panel-expand-icon');
+			var collapseIcon = document.getElementById('panel-collapse-icon');
+			var btn = document.getElementById('panel-expand-btn');
+			if (!panel) return;
+			if (panel.classList.contains('panel-full')) {
+				panel.classList.remove('panel-full');
+				if (expandIcon) expandIcon.classList.remove('hidden');
+				if (collapseIcon) collapseIcon.classList.add('hidden');
+				if (btn) btn.title = 'Expand to full width';
+			} else {
+				panel.classList.add('panel-full');
+				if (expandIcon) expandIcon.classList.add('hidden');
+				if (collapseIcon) collapseIcon.classList.remove('hidden');
+				if (btn) btn.title = 'Collapse panel';
+			}
+		};
+	</script>
+	<div id="secondary-panel" class="secondary-panel">
+		<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+			<h3 id="secondary-panel-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white"></h3>
+			<div class="flex items-center gap-1">
+				<button type="button" class="button button-icon panel-close-btn" id="panel-expand-btn" onclick="togglePanelExpand()" title="Expand to full width">
+					<i class="ph-bold ph-corners-out text-lg" id="panel-expand-icon"></i>
+					<i class="ph-bold ph-corners-in text-lg hidden" id="panel-collapse-icon"></i>
+				</button>
+				<button type="button" class="button button-icon panel-close-btn" onclick="closeSecondaryPanel()">
+					<i class="ph-bold ph-x text-lg"></i>
+				</button>
+			</div>
+		</div>
+		<div id="secondary-panel-content" class="panel-content px-6 py-4"></div>
+	</div>
+}

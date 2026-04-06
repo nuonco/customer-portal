@@ -59,7 +59,7 @@ func AccountPage(props AccountPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Page Header --> <div class=\"page-header flex items-center justify-between gap-4 mb-6 px-6 pt-6\"><div class=\"min-w-0 flex-1\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!-- Page Header --> <div class=\"page-header flex items-center justify-between gap-4 h-19 px-6\"><div class=\"min-w-0 flex-1\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

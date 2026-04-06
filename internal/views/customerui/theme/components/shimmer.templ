@@ -1,0 +1,20 @@
+package components
+
+// ShimmerBar renders a single animated placeholder bar.
+// Height and width use Tailwind classes (e.g. "h-4", "w-3/4").
+templ ShimmerBar(height, width string) {
+	<div class={ "shimmer", height, width }></div>
+}
+
+// ShimmerLines renders a stack of shimmer bars to simulate text content.
+templ ShimmerLines(count int) {
+	<div class="space-y-3">
+		for i := 0; i < count; i++ {
+			if i % 2 == 0 {
+				@ShimmerBar("h-4", "w-3/4")
+			} else {
+				@ShimmerBar("h-4", "w-1/2")
+			}
+		}
+	</div>
+}

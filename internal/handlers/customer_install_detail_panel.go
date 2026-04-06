@@ -34,13 +34,16 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 
 	// Check if install still exists in Nuon API
 	var apiDeletedError bool
+	var nuonAPIError string
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		checkClient, checkErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
 			h.nuonAPIURLForOrg(nuonOrg),
 		)
-		if checkErr == nil {
+		if checkErr != nil {
+			nuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
+		} else {
 			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
 			if apiErr != nil {
 				// Check if error is specifically a 404 NotFound
@@ -54,6 +57,8 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 					if !install.APIDeleted {
 						h.db.Model(install).Update("api_deleted", true)
 					}
+				} else {
+					nuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
 				}
 			} else if install.APIDeleted {
 				h.db.Model(install).Update("api_deleted", false)
@@ -239,6 +244,7 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		SandboxBranch:          sandboxBranch,
 		SandboxRepoPublic:      sandboxRepoPublic,
 		Components:             componentInfos,
+		NuonAPIError:           nuonAPIError,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
 }

@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+)
 
 templ InstallOverviewPage(props InstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
@@ -10,12 +13,41 @@ templ InstallOverviewPage(props InstallPageProps) {
 				class="panel-body"
 				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel" }
 				hx-trigger="load"
-				hx-swap="innerHTML"
+				hx-swap="morph:innerHTML"
 			>
-				<div class="panel-loading">
-					<div class="panel-loading-spinner"></div>
-				</div>
+				@overviewShimmer()
 			</div>
 		}
 	}
+}
+
+templ overviewShimmer() {
+	<div class="space-y-4">
+		<div class="grid grid-cols-2 gap-4">
+			@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-stack", "Stack")}) {
+				<div class="space-y-3 text-sm">
+					@components.ShimmerLines(2)
+				</div>
+			}
+			@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-shipping-container", "Sandbox")}) {
+				<div class="space-y-3 text-sm">
+					@components.ShimmerLines(2)
+				</div>
+			}
+		</div>
+		@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-cards", "Components")}) {
+			<div class="flex flex-wrap gap-2">
+				@components.ShimmerBar("h-7", "w-24")
+				@components.ShimmerBar("h-7", "w-20")
+				@components.ShimmerBar("h-7", "w-28")
+			</div>
+		}
+	</div>
+}
+
+templ overviewShimmerCardHeader(icon, title string) {
+	<div class="flex items-center gap-2">
+		<i class={ "ph-bold text-lg text-cool-grey-500 dark:text-cool-grey-400", icon }></i>
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
+	</div>
 }

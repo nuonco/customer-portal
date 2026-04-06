@@ -48,7 +48,7 @@ func (h *Handler) AccountsPage(c *gin.Context) {
 
 	var results []AccountResult
 	if err := query.Find(&results).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch accounts: %v", err))
+		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch user groups: %v", err))
 		return
 	}
 
@@ -72,12 +72,12 @@ func (h *Handler) AccountsPage(c *gin.Context) {
 
 	props := vendorpages.AccountsPageProps{
 		LayoutProps: vendorui.LayoutProps{
-			Title:            org.Name + " - Accounts",
+			Title:            org.Name + " - User Groups",
 			ActivePage:       "accounts",
 			User:             user,
 			CurrentOrg:       org,
 			Orgs:             allOrgs,
-			Breadcrumbs:      []partials.Breadcrumb{{Text: "Accounts", Path: fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, org.ID), Active: true}},
+			Breadcrumbs:      []partials.Breadcrumb{{Text: "User Groups", Path: fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, org.ID), Active: true}},
 			BasePath:         h.basePath,
 			PortalScheme:     h.schemeFromBaseURL(),
 			DashboardURL:     h.dashboardURL,
@@ -89,6 +89,7 @@ func (h *Handler) AccountsPage(c *gin.Context) {
 		Accounts:    accounts,
 		SearchQuery: searchQuery,
 	}
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
 	h.RenderTempl(c, http.StatusOK, vendorpages.AccountsPage(props))
 }
 
@@ -111,7 +112,7 @@ func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.Nuo
 
 	var account models.CustomerAccount
 	if err := h.db.Preload("CreatedBy").Where("id = ? AND org_id = ? AND deleted_at IS NULL", accountID, org.ID).First(&account).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusNotFound, "Account not found")
+		h.RenderErrorPage(c, http.StatusNotFound, "User group not found")
 		return nil, nil, nil, vendorui.LayoutProps{}, false
 	}
 
@@ -124,7 +125,7 @@ func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.Nuo
 		CurrentOrg: org,
 		Orgs:       allOrgs,
 		Breadcrumbs: []partials.Breadcrumb{
-			{Text: "Accounts", Path: fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, org.ID)},
+			{Text: "User Groups", Path: fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, org.ID)},
 			{Text: account.Name, Path: fmt.Sprintf("%s/orgs/%s/accounts/%s", h.basePath, org.ID, accountID), Active: true},
 		},
 		BasePath:         h.basePath,
@@ -134,6 +135,8 @@ func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.Nuo
 		CSSPath:          assets.VendorCSSPath(),
 		IsSuperuser:      h.isSuperuser(user),
 	}
+
+	h.enrichLayoutWithOrgStatus(c.Request.Context(), &layout)
 
 	return user, org, &account, layout, true
 }
@@ -247,7 +250,7 @@ func (h *Handler) VendorInviteAccountMember(c *gin.Context) {
 	accountID := c.Param("account_id")
 	var account models.CustomerAccount
 	if err := h.db.Where("id = ? AND org_id = ? AND deleted_at IS NULL", accountID, org.ID).First(&account).Error; err != nil {
-		c.Data(http.StatusNotFound, "text/html", []byte(`<span class="text-red-600">Account not found.</span>`))
+		c.Data(http.StatusNotFound, "text/html", []byte(`<span class="text-red-600">User group not found.</span>`))
 		return
 	}
 
@@ -262,7 +265,7 @@ func (h *Handler) VendorInviteAccountMember(c *gin.Context) {
 	if err := h.db.Joins("JOIN users ON users.id = customer_account_members.user_id").
 		Where("customer_account_members.account_id = ? AND users.email = ? AND customer_account_members.deleted_at IS NULL", account.ID, email).
 		First(&existingMember).Error; err == nil {
-		c.Data(http.StatusOK, "text/html", []byte(`<span class="text-sm text-amber-600 dark:text-amber-400">That user is already a member of this account.</span>`))
+		c.Data(http.StatusOK, "text/html", []byte(`<span class="text-sm text-amber-600 dark:text-amber-400">That user is already a member of this user group.</span>`))
 		return
 	}
 
@@ -351,7 +354,7 @@ func (h *Handler) AssignInstallToAccount(c *gin.Context) {
 	// Verify account exists in this org
 	var account models.CustomerAccount
 	if err := h.db.Where("id = ? AND org_id = ? AND deleted_at IS NULL", accountID, org.ID).First(&account).Error; err != nil {
-		c.Data(http.StatusNotFound, "text/html", []byte(`<span class="text-red-600">Account not found.</span>`))
+		c.Data(http.StatusNotFound, "text/html", []byte(`<span class="text-red-600">User group not found.</span>`))
 		return
 	}
 

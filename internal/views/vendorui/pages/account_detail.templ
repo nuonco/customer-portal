@@ -51,6 +51,7 @@ templ AccountMembersPage(props AccountMembersPageProps) {
 				BasePath:      props.BasePath,
 			})
 			<div class="stratus-page-content overflow-auto">
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<div class="stratus-page-header">
 					<div class="stratus-heading-group">
 						<h2 class="stratus-page-title text-lg">Members</h2>
@@ -155,6 +156,7 @@ templ AccountInstallsPage(props AccountInstallsPageProps) {
 				BasePath:      props.BasePath,
 			})
 			<div class="stratus-page-content overflow-auto">
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<div class="stratus-page-header">
 					<div class="stratus-heading-group">
 						<h2 class="stratus-page-title text-lg">Installs</h2>
@@ -201,7 +203,7 @@ templ AccountInstallsPage(props AccountInstallsPageProps) {
 							</table>
 						</div>
 					} else {
-						<p class="text-cool-grey-500 dark:text-cool-grey-400">No installs associated with this account.</p>
+						<p class="text-cool-grey-500 dark:text-cool-grey-400">No installs associated with this user group.</p>
 					}
 				</div>
 			</div>
@@ -219,7 +221,7 @@ templ assignInstallModal(basePath, orgID, accountID string) {
 		<!-- Search step -->
 		<div id="assign-step-search" class="px-6 py-6">
 			<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
-				Search for an existing install in this organization to assign it to this account.
+				Search for an existing install in this organization to assign it to this user group.
 			</p>
 			<label class="block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1">
 				Search installs

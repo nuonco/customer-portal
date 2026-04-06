@@ -95,6 +95,9 @@ type LayoutProps struct {
 	ActiveAccount *models.CustomerAccount  // Currently active account (nil if no account)
 	OtherAccounts []models.CustomerAccount // Other accounts the user can switch to
 
+	// API error state
+	NuonAPIError string // Error message shown in banner at top of content area (empty = no error)
+
 	// Vendor admin bar context
 	OrgName      string // Human-readable org name shown in the vendor admin bar
 	PortalDomain string // Portal domain shown in the vendor admin bar (e.g. "acme.customers.nuon.co")

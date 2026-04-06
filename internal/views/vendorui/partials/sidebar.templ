@@ -134,9 +134,9 @@ templ Sidebar(props SidebarProps) {
 				</div>
 				<hr class="stratus-sidebar-divider"/>
 			}
-			<!-- Account Management Section -->
+			<!-- User Management Section -->
 			<div class="stratus-sidebar-section">
-				<div class="stratus-sidebar-label">Account Management</div>
+				<div class="stratus-sidebar-label">User Management</div>
 				<nav class="stratus-sidebar-nav">
 					if props.CurrentOrg != nil {
 						<a
@@ -144,7 +144,7 @@ templ Sidebar(props SidebarProps) {
 							class={ "stratus-sidebar-link", templ.KV("active", isAccountsPage(props.ActivePage)) }
 						>
 							@sidebarAccountsIcon()
-							<span class="sidebar-text">Accounts</span>
+							<span class="sidebar-text">Groups</span>
 						</a>
 						<a
 							href={ templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/install-links") }
@@ -163,7 +163,7 @@ templ Sidebar(props SidebarProps) {
 					} else {
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 							@sidebarAccountsIcon()
-							<span class="sidebar-text">Accounts</span>
+							<span class="sidebar-text">Groups</span>
 						</span>
 						<span class="stratus-sidebar-link stratus-sidebar-link-disabled" title="Select an organization first">
 							@linkIcon()

@@ -50,6 +50,14 @@ templ CreateInstallPage(props CreateInstallPageProps) {
 				</a>
 			}
 		</div>
+		if props.NuonAPIError != "" {
+			<div class="max-w-2xl mx-auto mb-4">
+				@components.Alert(components.AlertProps{
+					Type:    "error",
+					Message: props.NuonAPIError,
+				})
+			</div>
+		}
 		<form
 			id="installForm"
 			class="max-w-2xl mx-auto space-y-6 pb-6"
@@ -113,7 +121,7 @@ templ CreateInstallPage(props CreateInstallPageProps) {
 				if props.SHA != "" && props.LoggedInUser != nil {
 					<!-- Account Info - install link mode -->
 					<div class="card-section-divider">
-						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Account</h4>
+						<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Your Group</h4>
 						<div class="flex items-center justify-between">
 							<div>
 								<p class="text-sm text-green-700 dark:text-green-300">

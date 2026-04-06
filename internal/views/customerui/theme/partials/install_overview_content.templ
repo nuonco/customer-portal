@@ -160,11 +160,11 @@ type InstallDetailPanelProps struct {
 	SandboxBranch     string
 	SandboxRepoPublic bool
 	Components     []ComponentInfo
+	NuonAPIError   string // Error message when API calls fail
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
 templ InstallDetailPanel(props InstallDetailPanelProps) {
-<div></div>
 	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
 	if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
 		<div id="panel-actions-source" class="hidden">
@@ -185,10 +185,10 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			}
 		</div>
 	}
-	<div class="space-y-4">
+	<div>
 		<!-- API Deletion Warning Banner -->
 		if props.APIDeletedError {
-			<div class="alert-warning">
+			<div class="alert-warning mb-4">
 				<div class="flex items-start">
 					<div class="flex-shrink-0 mr-3 text-amber-500">
 						<i class="ph-bold ph-warning text-xl"></i>
@@ -218,7 +218,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			@overviewSummaryCards(props)
 		}
 		if !props.APIDeletedError && props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-			<hr class="my-6" style="border-color: var(--theme-border-subtle)" />
+			<hr class="mt-4 mb-6" style="border-color: var(--theme-border-subtle)" />
 			<div class="overview-workflow">
 				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
 			</div>

@@ -36,6 +36,7 @@ type PaginationData struct {
 templ OrgDetailPage(props OrgDetailPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="stratus-page-content overflow-auto">
+			@vendorui.APIErrorBanner(props.LayoutProps)
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
 					<h1 class="stratus-page-title">Install Links</h1>

@@ -32,12 +32,14 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 
 	// Check if install still exists in Nuon API
 	var apiDeletedError bool
+	var nuonClientErr error
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		checkClient, checkErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
 			h.nuonAPIURLForOrg(nuonOrg),
 		)
+		nuonClientErr = checkErr
 		if checkErr == nil {
 			_, apiErr := checkClient.GetInstall(context.Background(), install.NuonInstallID)
 			if apiErr != nil {
@@ -51,6 +53,8 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 					if !install.APIDeleted {
 						h.db.Model(install).Update("api_deleted", true)
 					}
+				} else {
+					nuonClientErr = apiErr
 				}
 			} else if install.APIDeleted {
 				h.db.Model(install).Update("api_deleted", false)
@@ -86,6 +90,9 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 	layoutProps := h.buildCustomerLayoutProps(title, user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
 	layoutProps.ActiveNav = "installs"
+	if nuonClientErr != nil {
+		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
+	}
 	layoutProps.CurrentInstallID = install.ID
 	layoutProps.ActiveTab = activeTab
 
@@ -97,7 +104,7 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 		"roles":      "Roles",
 		"policies":   "Policies",
 		"history":    "History",
-		"app-info":   "App Info",
+		"app-info":   "README",
 		"audit":      "Audit Log",
 	}
 

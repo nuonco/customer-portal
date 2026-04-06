@@ -48,6 +48,67 @@ func IsConflict(err error) bool {
 	return false
 }
 
+// APIError holds a structured error parsed from a Nuon API response.
+type APIError struct {
+	Title       string // from the "Error:" field (title-cased)
+	Description string // from the "Description:" field
+}
+
+// ParseAPIError extracts structured Title and Description from a Nuon API error.
+// The raw go-swagger error looks like: &{Description:... Error:... UserError:true}
+func ParseAPIError(err error) APIError {
+	s := err.Error()
+	title := extractField(s, "Error:")
+	desc := extractField(s, "Description:")
+
+	if title == "" && desc == "" {
+		return APIError{Description: s}
+	}
+
+	// Title-case the error for display as a banner heading
+	if title != "" {
+		title = titleCase(title)
+	}
+
+	// Override the API description for token expiry since we don't support
+	// getting tokens from the Nuon dashboard yet.
+	if strings.EqualFold(title, "Token Is Expired") {
+		desc = "Generate a new token and update your org connection."
+	}
+
+	return APIError{Title: title, Description: desc}
+}
+
+// extractField parses a "Key:value" field from a go-swagger struct string.
+func extractField(s, key string) string {
+	idx := strings.Index(s, key)
+	if idx < 0 {
+		return ""
+	}
+	val := s[idx+len(key):]
+	for _, boundary := range []string{" Description:", " Error:", " UserError:", "}"} {
+		if boundary == " "+key {
+			continue
+		}
+		if end := strings.Index(val, boundary); end >= 0 {
+			val = val[:end]
+			break
+		}
+	}
+	return strings.TrimSpace(val)
+}
+
+// titleCase capitalises the first letter of each word.
+func titleCase(s string) string {
+	words := strings.Fields(s)
+	for i, w := range words {
+		if len(w) > 0 {
+			words[i] = strings.ToUpper(w[:1]) + w[1:]
+		}
+	}
+	return strings.Join(words, " ")
+}
+
 // Client wraps the Nuon API client for the installer app
 type Client struct {
 	client     nuonpkg.Client
@@ -888,6 +949,98 @@ func (c *Client) GetAppSandboxLatestConfig(ctx context.Context, appID string) (*
 		return nil, fmt.Errorf("failed to get sandbox config: %w", err)
 	}
 	return cfg, nil
+}
+
+// GetTerraformWorkspaceStates retrieves the state JSON records for a terraform workspace.
+// Returns the list ordered by most recent first.
+func (c *Client) GetTerraformWorkspaceStates(ctx context.Context, workspaceID string) ([]*models.AppTerraformWorkspaceStateJSON, error) {
+	reqURL := fmt.Sprintf("%s/v1/terraform-workspaces/%s/state-json", c.apiURL, workspaceID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result []*models.AppTerraformWorkspaceStateJSON
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return result, nil
+}
+
+// TerraformStateJSON represents the full terraform state JSON response.
+type TerraformStateJSON struct {
+	Values struct {
+		RootModule *TerraformStateModule `json:"root_module"`
+	} `json:"values"`
+}
+
+// TerraformStateModule represents a terraform module with resources and child modules.
+type TerraformStateModule struct {
+	Resources    []TerraformResource    `json:"resources"`
+	ChildModules []TerraformStateModule `json:"child_modules"`
+}
+
+// TerraformResource represents a single resource in the terraform state.
+type TerraformResource struct {
+	Address       string                 `json:"address"`
+	Mode          string                 `json:"mode"`
+	Type          string                 `json:"type"`
+	Name          string                 `json:"name"`
+	ProviderName  string                 `json:"provider_name"`
+	SchemaVersion int                    `json:"schema_version"`
+	Values        map[string]interface{} `json:"values"`
+}
+
+// GetTerraformWorkspaceStateResources fetches the full terraform state and extracts all resources.
+func (c *Client) GetTerraformWorkspaceStateResources(ctx context.Context, workspaceID, stateID string) ([]TerraformResource, error) {
+	reqURL := fmt.Sprintf("%s/v1/runners/terraform-workspace/%s/state-json/%s", c.apiURL, workspaceID, stateID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var state TerraformStateJSON
+	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	if state.Values.RootModule == nil {
+		return nil, nil
+	}
+	return collectResources(state.Values.RootModule), nil
+}
+
+// collectResources flattens resources from a module and all its child modules.
+func collectResources(mod *TerraformStateModule) []TerraformResource {
+	var resources []TerraformResource
+	resources = append(resources, mod.Resources...)
+	for i := range mod.ChildModules {
+		resources = append(resources, collectResources(&mod.ChildModules[i])...)
+	}
+	return resources
 }
 
 // ListAppInstalls searches installs for a given app by query string.

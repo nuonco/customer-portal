@@ -68,7 +68,7 @@ func AccountSetupPage(props AccountSetupPageProps) templ.Component {
 					}()
 				}
 				ctx = templ.InitializeContext(ctx)
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"text-center mb-6\"><h2 class=\"page-title mb-2\">Create your account</h2><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">Enter your company name to get started. Team members can be invited later.</p></div><form hx-post=\"/account/create\" class=\"space-y-4\"><div><label for=\"name\" class=\"field-label\">Company Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 field-input\" placeholder=\"e.g. Acme Inc.\" autofocus></div><div class=\"flex justify-end gap-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"text-center mb-6\"><h2 class=\"page-title mb-2\">Create your group</h2><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">Enter your company name to get started. Team members can be invited later.</p></div><form hx-post=\"/account/create\" class=\"space-y-4\"><div><label for=\"name\" class=\"field-label\">Company Name</label> <input type=\"text\" id=\"name\" name=\"name\" required class=\"mt-1 field-input\" placeholder=\"e.g. Acme Inc.\" autofocus></div><div class=\"flex justify-end gap-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

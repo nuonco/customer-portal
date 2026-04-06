@@ -157,7 +157,15 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h2 class=\"stratus-page-title text-lg\">Members</h2></div><div class=\"stratus-page-actions\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div class=\"stratus-page-content overflow-auto\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = vendorui.APIErrorBanner(props.LayoutProps).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h2 class=\"stratus-page-title text-lg\">Members</h2></div><div class=\"stratus-page-actions\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -169,51 +177,51 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div><div class=\"stratus-page-section\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Email</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Role</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Joined</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div><div class=\"stratus-page-section\"><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Email</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Role</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Joined</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			for _, member := range props.Members {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<tr><td class=\"px-6 py-4 whitespace-nowrap\"><div class=\"flex items-center\"><div class=\"flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center\"><span class=\"text-xs font-medium text-primary-700 dark:text-primary-300\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<tr><td class=\"px-6 py-4 whitespace-nowrap\"><div class=\"flex items-center\"><div class=\"flex-shrink-0 h-8 w-8 rounded-full bg-primary-100 dark:bg-primary-900/30 flex items-center justify-center\"><span class=\"text-xs font-medium text-primary-700 dark:text-primary-300\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(getInitials(member.User.Name))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 83, Col: 117}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 84, Col: 117}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span></div><div class=\"ml-3\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></div><div class=\"ml-3\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var8 string
 				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Name)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 86, Col: 99}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 87, Col: 99}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</div></div></div></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var9 string
 				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(member.User.Email)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 90, Col: 120}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 91, Col: 120}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -225,7 +233,7 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<span class=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<span class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -238,70 +246,57 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var12 string
 				templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(string(member.Role))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 96, Col: 33}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 97, Col: 33}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</span></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var13 string
 				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(member.JoinedAt.Format("Jan 2, 2006"))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 99, Col: 140}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 100, Col: 140}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</tbody></table></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</tbody></table></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(props.Invites) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<h3 class=\"text-base font-semibold text-cool-grey-900 dark:text-white mt-8 mb-3\">Pending Invites</h3><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Email</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Invited By</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Date</th><th scope=\"col\" class=\"px-6 py-3 text-right text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\"></th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<h3 class=\"text-base font-semibold text-cool-grey-900 dark:text-white mt-8 mb-3\">Pending Invites</h3><div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Email</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Invited By</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Date</th><th scope=\"col\" class=\"px-6 py-3 text-right text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\"></th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, invite := range props.Invites {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<tr><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-900 dark:text-white\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<tr><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-900 dark:text-white\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var14 string
 					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(invite.Email)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 120, Col: 108}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 121, Col: 108}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
-					if templ_7745c5c3_Err != nil {
-						return templ_7745c5c3_Err
-					}
-					var templ_7745c5c3_Var15 string
-					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedBy.Name)
-					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 121, Col: 125}
-					}
-					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -309,39 +304,52 @@ func AccountMembersPage(props AccountMembersPageProps) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+					var templ_7745c5c3_Var15 string
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedBy.Name)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 122, Col: 125}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 					var templ_7745c5c3_Var16 string
 					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(invite.CreatedAt.Format("Jan 2, 2006"))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 122, Col: 142}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 123, Col: 142}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td><td class=\"px-6 py-4 whitespace-nowrap text-right\"><button type=\"button\" class=\"text-xs font-medium text-red-600 dark:text-red-400 hover:underline\" hx-delete=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td><td class=\"px-6 py-4 whitespace-nowrap text-right\"><button type=\"button\" class=\"text-xs font-medium text-red-600 dark:text-red-400 hover:underline\" hx-delete=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var17 string
 					templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/invite/%s", props.BasePath, props.Org.ID, props.Account.ID, invite.ID))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 127, Col: 131}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 128, Col: 131}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\" hx-confirm=\"Revoke this invite?\">Revoke</button></td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\" hx-confirm=\"Revoke this invite?\">Revoke</button></td></tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</tbody></table></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</tbody></table></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "</div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "</div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -397,7 +405,7 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, " <div class=\"flex flex-1 overflow-hidden\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, " <div class=\"flex flex-1 overflow-hidden\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -410,7 +418,15 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h2 class=\"stratus-page-title text-lg\">Installs</h2></div><div class=\"stratus-page-actions\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"stratus-page-content overflow-auto\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = vendorui.APIErrorBanner(props.LayoutProps).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h2 class=\"stratus-page-title text-lg\">Installs</h2></div><div class=\"stratus-page-actions\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -422,30 +438,30 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</div></div><div class=\"stratus-page-section\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</div></div><div class=\"stratus-page-section\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if len(props.Installs) > 0 {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Status</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Region</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Visibility</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 overflow-hidden\"><table class=\"min-w-full divide-y divide-cool-grey-200 dark:divide-dark-grey-700\"><thead class=\"bg-cool-grey-50 dark:bg-dark-grey-800\"><tr><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Name</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Status</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Region</th><th scope=\"col\" class=\"px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider\">Visibility</th></tr></thead> <tbody class=\"bg-white dark:bg-dark-grey-900 divide-y divide-cool-grey-200 dark:divide-dark-grey-700\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				for _, install := range props.Installs {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<tr><td class=\"px-6 py-4 whitespace-nowrap text-sm font-medium text-cool-grey-900 dark:text-white\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<tr><td class=\"px-6 py-4 whitespace-nowrap text-sm font-medium text-cool-grey-900 dark:text-white\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var20 string
 					templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(install.Name)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 185, Col: 120}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 187, Col: 120}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -459,7 +475,7 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span class=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<span class=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -472,61 +488,61 @@ func AccountInstallsPage(props AccountInstallsPageProps) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var23 string
 					templ_7745c5c3_Var23, templ_7745c5c3_Err = templ.JoinStringErrs(string(install.Status))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 193, Col: 37}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 195, Col: 37}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var23))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</span></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</span></td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var24 string
 					templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(install.Region)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 196, Col: 118}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 198, Col: 118}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</td><td class=\"px-6 py-4 whitespace-nowrap text-sm text-cool-grey-600 dark:text-cool-grey-400\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var25 string
 					templ_7745c5c3_Var25, templ_7745c5c3_Err = templ.JoinStringErrs(string(install.Visibility))
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 197, Col: 130}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 199, Col: 130}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var25))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</td></tr>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</td></tr>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</tbody></table></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</tbody></table></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<p class=\"text-cool-grey-500 dark:text-cool-grey-400\">No installs associated with this account.</p>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<p class=\"text-cool-grey-500 dark:text-cool-grey-400\">No installs associated with this user group.</p>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -577,33 +593,33 @@ func assignInstallModal(basePath, orgID, accountID string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<!-- Search step --> <div id=\"assign-step-search\" class=\"px-6 py-6\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an existing install in this organization to assign it to this account.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"assign-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<!-- Search step --> <div id=\"assign-step-search\" class=\"px-6 py-6\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Search for an existing install in this organization to assign it to this user group.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Search installs</label> <input type=\"text\" id=\"assign-search-input\" placeholder=\"Type an install name...\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\" hx-get=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var28 string
 			templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/search", basePath, orgID, accountID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 232, Col: 94}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 234, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#assign-search-results\" hx-include=\"this\" name=\"q\"><div id=\"assign-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div><!-- Confirm step --> <div id=\"assign-step-confirm\" class=\"hidden px-6 py-6\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"assign-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"assign-install-form\" hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" hx-trigger=\"keyup changed delay:400ms[this.value.length >= 3]\" hx-target=\"#assign-search-results\" hx-include=\"this\" name=\"q\"><div id=\"assign-search-results\" class=\"mt-3 max-h-64 overflow-y-auto border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg divide-y divide-cool-grey-100 dark:divide-dark-grey-700 empty:hidden\"></div></div><!-- Confirm step --> <div id=\"assign-step-confirm\" class=\"hidden px-6 py-6\"><p class=\"text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-2\">Selected install:</p><div id=\"assign-selected-display\" class=\"px-3 py-2 rounded-lg bg-cool-grey-50 dark:bg-dark-grey-800 border border-cool-grey-200 dark:border-dark-grey-600 text-sm text-cool-grey-900 dark:text-white mb-4\"></div><form id=\"assign-install-form\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var29 string
 			templ_7745c5c3_Var29, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/installs/assign", basePath, orgID, accountID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 248, Col: 95}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 250, Col: 95}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var29))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "\" hx-target=\"#assign-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"install_id\" id=\"assign-install-id\"><div id=\"assign-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><div class=\"flex items-center justify-between mt-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "\" hx-target=\"#assign-form-error\" hx-swap=\"innerHTML\"><input type=\"hidden\" name=\"install_id\" id=\"assign-install-id\"><div id=\"assign-form-error\" class=\"mb-3 text-sm text-red-600 dark:text-red-400 empty:hidden\"></div><div class=\"flex items-center justify-between mt-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -623,7 +639,7 @@ func assignInstallModal(basePath, orgID, accountID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</div></form></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "</div></form></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -637,7 +653,7 @@ func assignInstallModal(basePath, orgID, accountID string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<script>\n\t\tfunction closeAssignModal() {\n\t\t\tcloseModal('assign-install-modal', function() {\n\t\t\t\tshowAssignSearch();\n\t\t\t\tdocument.getElementById('assign-search-input').value = '';\n\t\t\t\tdocument.getElementById('assign-search-results').innerHTML = '';\n\t\t\t\tdocument.getElementById('assign-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\n\t\tfunction showAssignSearch() {\n\t\t\tdocument.getElementById('assign-step-search').classList.remove('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectAccountInstall(installID, displayText) {\n\t\t\tdocument.getElementById('assign-install-id').value = installID;\n\t\t\tdocument.getElementById('assign-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('assign-step-search').classList.add('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.remove('hidden');\n\t\t}\n\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<script>\n\t\tfunction closeAssignModal() {\n\t\t\tcloseModal('assign-install-modal', function() {\n\t\t\t\tshowAssignSearch();\n\t\t\t\tdocument.getElementById('assign-search-input').value = '';\n\t\t\t\tdocument.getElementById('assign-search-results').innerHTML = '';\n\t\t\t\tdocument.getElementById('assign-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\n\t\tfunction showAssignSearch() {\n\t\t\tdocument.getElementById('assign-step-search').classList.remove('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.add('hidden');\n\t\t}\n\n\t\tfunction selectAccountInstall(installID, displayText) {\n\t\t\tdocument.getElementById('assign-install-id').value = installID;\n\t\t\tdocument.getElementById('assign-selected-display').textContent = displayText;\n\t\t\tdocument.getElementById('assign-step-search').classList.add('hidden');\n\t\t\tdocument.getElementById('assign-step-confirm').classList.remove('hidden');\n\t\t}\n\n\t\tdocument.body.addEventListener('htmx:afterRequest', function(evt) {\n\t\t\tvar redirect = evt.detail.xhr.getResponseHeader('HX-Redirect');\n\t\t\tif (redirect) {\n\t\t\t\twindow.location.href = redirect;\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -678,20 +694,20 @@ func inviteMemberModal(basePath, orgID, accountID string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, "<form class=\"px-6 py-6\" hx-post=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<form class=\"px-6 py-6\" hx-post=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var32 string
 			templ_7745c5c3_Var32, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%s/orgs/%s/accounts/%s/invite", basePath, orgID, accountID))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 309, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/account_detail.templ`, Line: 311, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var32))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "\" hx-target=\"#invite-form-error\" hx-swap=\"innerHTML\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Invite a user by email. If they already have an account, they will be added immediately. Otherwise, a pending invite will be created.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\" for=\"invite-email\">Email address</label> <input type=\"email\" id=\"invite-email\" name=\"email\" required placeholder=\"user@example.com\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><div id=\"invite-form-error\" class=\"mt-3 empty:hidden\"></div><div class=\"flex items-center justify-end gap-3 mt-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "\" hx-target=\"#invite-form-error\" hx-swap=\"innerHTML\"><p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">Invite a user by email. If they already have an account, they will be added immediately. Otherwise, a pending invite will be created.</p><label class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\" for=\"invite-email\">Email address</label> <input type=\"email\" id=\"invite-email\" name=\"email\" required placeholder=\"user@example.com\" class=\"w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent\"><div id=\"invite-form-error\" class=\"mt-3 empty:hidden\"></div><div class=\"flex items-center justify-end gap-3 mt-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -711,7 +727,7 @@ func inviteMemberModal(basePath, orgID, accountID string) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "</div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "</div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -726,7 +742,7 @@ func inviteMemberModal(basePath, orgID, accountID string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<script>\n\t\tfunction closeInviteModal() {\n\t\t\tcloseModal('invite-member-modal', function() {\n\t\t\t\tdocument.getElementById('invite-email').value = '';\n\t\t\t\tdocument.getElementById('invite-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<script>\n\t\tfunction closeInviteModal() {\n\t\t\tcloseModal('invite-member-modal', function() {\n\t\t\t\tdocument.getElementById('invite-email').value = '';\n\t\t\t\tdocument.getElementById('invite-form-error').innerHTML = '';\n\t\t\t});\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

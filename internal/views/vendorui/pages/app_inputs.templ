@@ -63,6 +63,7 @@ templ AppInputsPage(props AppInputsPageProps) {
 				BasePath:      props.BasePath,
 			})
 			<div class="stratus-page-content overflow-auto">
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<div class="px-4 pt-4 md:px-6 md:pt-6">
 					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">
 						Configure which inputs are customer-facing. Customer-facing inputs will be shown on the

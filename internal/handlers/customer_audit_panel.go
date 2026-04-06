@@ -99,7 +99,8 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 				props.SandboxSubTab = c.DefaultQuery("sandbox_sub", sandboxSubTabDefault)
 
 				// Always fetch sandbox info for the info sub-tab
-				props.SandboxInfo = h.buildSandboxInfo(ctx, apiClient, install)
+				sandboxInfo, workspaceID := h.buildSandboxInfo(ctx, apiClient, install)
+				props.SandboxInfo = sandboxInfo
 
 				// Fetch sandbox runs for the history sub-tab
 				offset := queryInt(c, "sandbox_offset", 0)
@@ -111,6 +112,19 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 					props.SandboxRuns = paginateSandboxRuns(runs, offset)
 				} else {
 					zap.L().Warn("failed to fetch sandbox runs", zap.Error(err))
+				}
+
+				// Fetch terraform state resources for the resources sub-tab
+				if workspaceID != "" {
+					if states, err := apiClient.GetTerraformWorkspaceStates(ctx, workspaceID); err == nil && len(states) > 0 {
+						if resources, err := apiClient.GetTerraformWorkspaceStateResources(ctx, workspaceID, states[0].ID); err == nil {
+							props.SandboxResources = resources
+						} else {
+							zap.L().Warn("failed to fetch sandbox state resources", zap.Error(err))
+						}
+					} else if err != nil {
+						zap.L().Warn("failed to fetch sandbox workspace states", zap.Error(err))
+					}
 				}
 
 				// Fetch policy reports for the policy evaluations sub-tab
@@ -467,13 +481,18 @@ func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, in
 }
 
 // buildSandboxInfo fetches install sandbox data from the Nuon API and maps it to a SandboxInfo for display.
-func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, install *models.Install) *partials.SandboxInfo {
+// Returns the SandboxInfo and the terraform workspace ID (empty if unavailable).
+func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, install *models.Install) (*partials.SandboxInfo, string) {
 	nuonInstall, err := apiClient.GetInstall(ctx, install.NuonInstallID)
 	if err != nil || nuonInstall == nil || nuonInstall.Sandbox == nil {
-		return nil
+		return nil, ""
 	}
 
 	sandbox := nuonInstall.Sandbox
+	var workspaceID string
+	if sandbox.TerraformWorkspace != nil {
+		workspaceID = sandbox.TerraformWorkspace.ID
+	}
 	info := &partials.SandboxInfo{
 		ID:        sandbox.ID,
 		Status:    sandbox.Status,
@@ -547,7 +566,7 @@ func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, 
 		}
 	}
 
-	return info
+	return info, workspaceID
 }
 
 func queryInt(c *gin.Context, key string, def int) int {

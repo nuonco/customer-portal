@@ -1,0 +1,58 @@
+package components
+
+// PageHeaderProps defines properties for the shared customer page header
+type PageHeaderProps struct {
+	Title    string
+	Icon     string // Phosphor icon name (e.g. "house-simple")
+	BackLink string // Optional back navigation URL
+	BackText string // Optional back link text (default: "Back")
+}
+
+// PageHeader renders the standard page header with title, optional icon, and right-side action slot.
+// The header is always 76px (h-19) tall. When Title is set, the back link appears above the title
+// in a stacked layout. When Title is empty, the back link and actions share a single row.
+templ PageHeader(props PageHeaderProps) {
+	<div class="page-header h-19 px-6 flex flex-col justify-center">
+		if props.Title != "" {
+			if props.BackLink != "" {
+				<a href={ templ.SafeURL(props.BackLink) } class="back-link mb-1">
+					<i class="ph-bold ph-caret-left text-base mr-1"></i>
+					if props.BackText != "" {
+						{ props.BackText }
+					} else {
+						Back
+					}
+				</a>
+			}
+			<div class="flex items-center justify-between gap-4">
+				<div class="min-w-0 flex-1">
+					<h1 class="text-xl font-semibold text-cool-grey-900 dark:text-white truncate flex items-center gap-2">
+						if props.Icon != "" {
+							<i class={ "ph-bold ph-" + props.Icon, "text-xl" }></i>
+						}
+						{ props.Title }
+					</h1>
+				</div>
+				<div class="flex items-center gap-2 flex-shrink-0">
+					{ children... }
+				</div>
+			</div>
+		} else {
+			<div class="flex items-center justify-between gap-4">
+				if props.BackLink != "" {
+					<a href={ templ.SafeURL(props.BackLink) } class="back-link">
+						<i class="ph-bold ph-caret-left text-base mr-1"></i>
+						if props.BackText != "" {
+							{ props.BackText }
+						} else {
+							Back
+						}
+					</a>
+				}
+				<div class="flex items-center gap-2 flex-shrink-0 ml-auto">
+					{ children... }
+				</div>
+			</div>
+		}
+	</div>
+}

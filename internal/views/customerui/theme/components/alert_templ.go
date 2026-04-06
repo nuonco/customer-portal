@@ -43,26 +43,22 @@ func Alert(props AlertProps) templ.Component {
 		bgClass := "bg-blue-50 dark:bg-blue-900/30"
 		borderClass := "border-blue-200 dark:border-blue-800"
 		textClass := "text-blue-800 dark:text-blue-300"
-		iconColor := "text-blue-500"
 
 		switch props.Type {
 		case "success":
 			bgClass = "bg-green-50 dark:bg-green-900/30"
 			borderClass = "border-green-200 dark:border-green-800"
 			textClass = "text-green-800 dark:text-green-300"
-			iconColor = "text-green-500"
 		case "error":
 			bgClass = "bg-red-50 dark:bg-red-900/30"
 			borderClass = "border-red-200 dark:border-red-800"
 			textClass = "text-red-800 dark:text-red-300"
-			iconColor = "text-red-500"
 		case "warning":
 			bgClass = "bg-orange-50 dark:bg-orange-900/30"
 			borderClass = "border-orange-200 dark:border-orange-800"
 			textClass = "text-orange-800 dark:text-orange-300"
-			iconColor = "text-orange-500"
 		}
-		var templ_7745c5c3_Var2 = []any{"p-4 border", bgClass, borderClass, props.Class}
+		var templ_7745c5c3_Var2 = []any{"p-4 border shadow-md", bgClass, borderClass, props.Class}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var2...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -84,7 +80,7 @@ func Alert(props AlertProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 = []any{"flex-shrink-0 mr-3", iconColor}
+		var templ_7745c5c3_Var4 = []any{"flex-shrink-0 mr-3", textClass}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var4...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
@@ -112,7 +108,7 @@ func Alert(props AlertProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		} else if props.Type == "error" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<i class=\"ph-bold ph-x-circle text-xl\"></i>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<i class=\"ph-bold ph-warning-circle text-xl\"></i>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,7 +152,7 @@ func Alert(props AlertProps) templ.Component {
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/alert.templ`, Line: 50, Col: 52}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/alert.templ`, Line: 46, Col: 52}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {

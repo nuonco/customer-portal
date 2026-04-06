@@ -17,6 +17,7 @@ type OrgsPageProps struct {
 templ OrgsPage(props OrgsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="stratus-page-content overflow-auto">
+			@vendorui.APIErrorBanner(props.LayoutProps)
 			<div class="stratus-page-section">
 				if len(props.Orgs) > 0 {
 					<div class="grid gap-4">

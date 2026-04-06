@@ -347,7 +347,7 @@ func Sidebar(props SidebarProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- Account Management Section --><div class=\"stratus-sidebar-section\"><div class=\"stratus-sidebar-label\">Account Management</div><nav class=\"stratus-sidebar-nav\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<!-- User Management Section --><div class=\"stratus-sidebar-section\"><div class=\"stratus-sidebar-label\">User Management</div><nav class=\"stratus-sidebar-nav\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -391,7 +391,7 @@ func Sidebar(props SidebarProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span class=\"sidebar-text\">Accounts</span></a> ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span class=\"sidebar-text\">Groups</span></a> ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -490,7 +490,7 @@ func Sidebar(props SidebarProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"sidebar-text\">Accounts</span></span> <span class=\"stratus-sidebar-link stratus-sidebar-link-disabled\" title=\"Select an organization first\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<span class=\"sidebar-text\">Groups</span></span> <span class=\"stratus-sidebar-link stratus-sidebar-link-disabled\" title=\"Select an organization first\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

@@ -344,3 +344,156 @@ func TestNewClient_DefaultURL(t *testing.T) {
 		assert.Equal(t, "http://localhost:8081", client.apiURL)
 	}
 }
+
+func TestClient_GetTerraformWorkspaceStates(t *testing.T) {
+	mock := newMockNuonAPI()
+	defer mock.close()
+
+	workspaceID := "ws_test123"
+
+	t.Run("returns states", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/terraform-workspaces/"+workspaceID+"/state-json", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+			assert.Equal(t, "test-org", r.Header.Get("X-Nuon-Org-ID"))
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode([]map[string]interface{}{
+				{"id": "state_1", "workspace_id": workspaceID},
+				{"id": "state_2", "workspace_id": workspaceID},
+			})
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		states, err := client.GetTerraformWorkspaceStates(context.Background(), workspaceID)
+		assert.NoError(t, err)
+		assert.Len(t, states, 2)
+		assert.Equal(t, "state_1", states[0].ID)
+	})
+
+	t.Run("returns nil on 404", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/terraform-workspaces/"+workspaceID+"/state-json", func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		states, err := client.GetTerraformWorkspaceStates(context.Background(), workspaceID)
+		assert.NoError(t, err)
+		assert.Nil(t, states)
+	})
+}
+
+func TestClient_GetTerraformWorkspaceStateResources(t *testing.T) {
+	mock := newMockNuonAPI()
+	defer mock.close()
+
+	workspaceID := "ws_test123"
+	stateID := "state_test456"
+
+	t.Run("returns resources from full state", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/runners/terraform-workspace/"+workspaceID+"/state-json/"+stateID, func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"values": map[string]interface{}{
+					"root_module": map[string]interface{}{
+						"resources": []map[string]interface{}{
+							{"address": "aws_instance.web", "type": "aws_instance", "name": "web", "provider_name": "registry.terraform.io/hashicorp/aws", "mode": "managed", "schema_version": 1},
+						},
+						"child_modules": []map[string]interface{}{
+							{
+								"resources": []map[string]interface{}{
+									{"address": "module.vpc.aws_vpc.main", "type": "aws_vpc", "name": "main", "provider_name": "registry.terraform.io/hashicorp/aws", "mode": "managed"},
+								},
+							},
+						},
+					},
+				},
+			})
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		resources, err := client.GetTerraformWorkspaceStateResources(context.Background(), workspaceID, stateID)
+		assert.NoError(t, err)
+		assert.Len(t, resources, 2)
+		assert.Equal(t, "aws_instance", resources[0].Type)
+		assert.Equal(t, "web", resources[0].Name)
+		assert.Equal(t, "managed", resources[0].Mode)
+		assert.Equal(t, 1, resources[0].SchemaVersion)
+		// Child module resource
+		assert.Equal(t, "aws_vpc", resources[1].Type)
+		assert.Equal(t, "module.vpc.aws_vpc.main", resources[1].Address)
+	})
+
+	t.Run("returns nil on 404", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/runners/terraform-workspace/"+workspaceID+"/state-json/"+stateID, func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusNotFound)
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		resources, err := client.GetTerraformWorkspaceStateResources(context.Background(), workspaceID, stateID)
+		assert.NoError(t, err)
+		assert.Nil(t, resources)
+	})
+}
+
+func TestParseAPIError(t *testing.T) {
+	tests := []struct {
+		name      string
+		err       error
+		wantTitle string
+		wantDesc  string
+	}{
+		{
+			name:      "swagger error with token expired",
+			err:       fmt.Errorf("invalid API token or org access: [GET /v1/orgs][401] getOrgsUnauthorized &{Description:Please get a new token from the Nuon dashboard Error:token is expired UserError:true}"),
+			wantTitle: "Token Is Expired",
+			wantDesc:  "Generate a new token and update your org connection.",
+		},
+		{
+			name:      "plain error without struct fields",
+			err:       fmt.Errorf("connection refused"),
+			wantTitle: "",
+			wantDesc:  "connection refused",
+		},
+		{
+			name:      "swagger error with different error",
+			err:       fmt.Errorf("&{Description:Something went wrong Error:internal server error UserError:false}"),
+			wantTitle: "Internal Server Error",
+			wantDesc:  "Something went wrong",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := ParseAPIError(tt.err)
+			assert.Equal(t, tt.wantTitle, result.Title)
+			assert.Equal(t, tt.wantDesc, result.Description)
+		})
+	}
+}

@@ -42,21 +42,21 @@ General vendor journeys.
   - the install switcher shows each install's name and app name, with the app's logo as the icon. Selecting an install navigates to its detail page. A "Create Install" button links to the App Catalog.
   - when I visit the App Catalog and no apps are published, I see a friendly empty state message.
 - As a customer,
-  - after logging in via OIDC, if I don't have a customer account, one is automatically created with the name "<first-name>'s Account" (or "My Account" if no name is available).
-  - I can create additional company accounts from the "Create New Account" option in the user menu dropdown.
-  - as an account owner, I can rename my account from the Account Settings page.
-  - as an account owner, I can transfer ownership to another member from the Account Settings page.
-  - as an account owner, I can invite teammates by email from the Account Settings page.
+  - after logging in via OIDC, if I don't have a user group, one is automatically created with the name "<first-name>'s Group" (or "My Group" if no name is available).
+  - I can create additional user groups from the "New User Group" option in the user menu dropdown.
+  - as a user group owner, I can rename my user group from the User Group Settings page.
+  - as a user group owner, I can transfer ownership to another member from the User Group Settings page.
+  - as a user group owner, I can invite teammates by email from the User Group Settings page.
   - if the invited email matches an existing user, they are added as a member immediately.
   - if the invited email doesn't match an existing user, a pending invite is created and they auto-join when they next log in.
-  - I can toggle any install I own between "account" visibility (shared) and "private" (only me).
-  - I can belong to multiple accounts in the same org (e.g. via invites to different company accounts).
-  - the user menu dropdown shows the active account name instead of my email.
-  - if I have multiple accounts, the dropdown lists other accounts I can switch to.
-  - switching accounts sets a cookie and reloads the page, scoping installs to the selected account.
+  - I can toggle any install I own between "user group" visibility (shared) and "private" (only me).
+  - I can belong to multiple user groups in the same org (e.g. via invites to different user groups).
+  - the user menu dropdown shows the active user group name instead of my email.
+  - if I have multiple user groups, the dropdown lists other user groups I can switch to.
+  - switching user groups sets a cookie and reloads the page, scoping installs to the selected user group.
 - As a vendor,
-  - I can view all customer accounts in the Accounts tab under Customer Management.
-  - I can click into an account to see its members and associated installs.
+  - I can view all customer user groups in the User Groups tab under User Group Management.
+  - I can click into a user group to see its members and associated installs.
 
 ## Implementation Status
 
@@ -80,13 +80,13 @@ General vendor journeys.
 - **Publish App**: Vendors can set each app's catalog status to "Published", "Coming Soon", or "Unpublished" via a dropdown on the Apps page. Published apps appear on the customer `/apps` page without requiring an install link. Coming-soon apps appear in the catalog with a badge but cannot be installed.
 - **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of apps in the customer catalog. Ordering is preserved for all apps (published, coming soon, and unpublished) so the sort order is stable across page reloads. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
 - **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
-- **Import Install to Account**: From the account detail page, vendors can search for existing org installs (unassigned or in other accounts) and assign them to a customer account. This is useful for migrating legacy installs that lack account associations.
+- **Import Install to User Group**: From the user group detail page, vendors can search for existing org installs (unassigned or in other user groups) and assign them to a customer user group. This is useful for migrating legacy installs that lack user group associations.
 - **Archive & Restore Org**: Vendors can archive an org from the Org Connection settings page (danger zone). Archiving soft-deletes the record and clears the API token. Archived orgs appear in the Profile panel and can be restored by providing a new API token.
 
 ✅ **Customer Features**
 
 - Install link acceptance page
-- Customer account creation via install links
+- Customer user group creation via install links
 - Install creation flow
 - **Platform-Aware Region Selector**: The install form detects the app platform from `RunnerConfig.AppRunnerType` and renders the appropriate region selector. AWS apps show a full AWS region list, Azure apps show Azure locations, and GCP apps show no region selector (GCP installs don't require a region). The submission handlers also skip the default `us-east-1` fallback for non-AWS platforms.
 - Install management dashboard
@@ -95,11 +95,14 @@ General vendor journeys.
 - **Workflow Step Role Display**: The active workflow step card shows the IAM role used by the step's target (deploy or sandbox run). The role is fetched from the Nuon API using the step's `StepTargetID` and `StepTargetType`. Only the current step's role is fetched (not historical steps). If the role is empty or the fetch fails, no role badge is shown.
 - **Workflow Step Policy Evaluation**: The active workflow step card displays policy evaluation results when available. Policy violations (denies and warnings) are extracted from the workflow step's status metadata. The section shows a summary header with deny/warn/pass badges, and collapsible `<details>` sections listing individual violations with their messages. The section is only rendered when the step has policy evaluation data.
 - **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes. Consecutive component steps — pre-deploy action runs, "sync and plan", "apply", and post-deploy action runs — are automatically merged into a single "Deploy \<name\>" step for a cleaner customer view; the merged step surfaces the plan step's approval status when applicable.
+- **Sandbox Resources Tab**: The sandbox panel includes a "Resources" sub-tab that displays all Terraform state resources managed by the sandbox. Resources are fetched from the sandbox's terraform workspace state and displayed in a table with Type, Name, Provider, and Instance Count columns. The tab shows a friendly empty state when no resources are available.
 - **GCP Stack Setup Guide**: For GCP apps, the "await install stack" provision step displays a 4-step setup guide (clone install stack module, configure GCS remote state, save tfvars, run Terraform). The platform is detected from the app's `RunnerConfig.AppRunnerType`. Tfvars content is parsed from `stack.Versions[0].Contents`.
 - **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
 - **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
-- **Customer Accounts**: After OIDC login, customers are required to create or join a company account before accessing installs. Accounts group customers from the same company so they can share installs. Account owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
-- **Install Visibility**: Install owners can toggle visibility between "account" (shared with all account members) and "private" (only visible to the owner). Installs must belong to a customer account to be visible; legacy installs without an account association are excluded from all listings.
+- **Customer User Groups**: After OIDC login, customers are required to create or join a user group before accessing installs. User groups group customers from the same company so they can share installs. User group owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
+- **Install Visibility**: Install owners can toggle visibility between "user group" (shared with all user group members) and "private" (only visible to the owner). Installs must belong to a customer user group to be visible; legacy installs without a user group association are excluded from all listings.
+
+- **API Error Banner**: When the app cannot fetch data from the Nuon API (e.g., expired token, network issue), a red error banner is displayed at the top of the content area on all customer pages, advising the user to contact support. The banner uses the existing `Alert` component and is rendered in the customer layout when `LayoutProps.NuonAPIError` is set by the handler.
 
 ✅ **User Interface**
 
@@ -249,11 +252,11 @@ There are some conventions that are specific to the admin UI.
 - **User** - Email, role (vendor/customer), timestamps
 - **NuonOrg** - Connected organizations with API credentials. Has optional `APIURL` field to override the global Nuon API URL per-org (e.g., for staging or self-hosted control planes); set at org creation time.
 - **InstallLink** - Shareable links with SHA-based security
-- **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs). Has `Visibility` (account/private) and optional `CustomerAccountID` for account-based sharing.
+- **Install** - Customer installations with status tracking (`InstallLinkID` is nullable; nil for published-app installs). Has `Visibility` (account/private) and optional `CustomerAccountID` for user-group-based sharing.
 - **PublishedApp** - Tracks all apps in the catalog with their display order (org_id + app_id, soft-deletable). Has `Status` (`"published"`, `"coming_soon"`, or `"unpublished"`; default `"published"`), `LogoLightBase64` and `LogoDarkBase64` for per-app logos. All apps (including unpublished) have records so drag-and-drop sort order is preserved across page reloads. Coming-soon apps appear in the catalog with a badge but cannot be installed. Customer-facing queries filter to published/coming_soon only.
-- **CustomerAccount** - Company account that groups customers together within a vendor org. Scoped to org via `OrgID`.
-- **CustomerAccountMember** - Links a user to a customer account with role (owner/member). A user can belong to multiple accounts in the same org and switch between them via a cookie.
-- **CustomerAccountInvite** - Email-based invite for joining a customer account. When a user with a matching email logs in, they are automatically added as a member.
+- **CustomerAccount** - User group that groups customers together within a vendor org. Displayed as "User Group" in the UI. Scoped to org via `OrgID`.
+- **CustomerAccountMember** - Links a user to a user group with role (owner/member). A user can belong to multiple user groups in the same org and switch between them via a cookie.
+- **CustomerAccountInvite** - Email-based invite for joining a user group. When a user with a matching email logs in, they are automatically added as a member.
 **Configuration Models:**
 
 - **AppInputConfig** - App-specific input field configurations
@@ -428,12 +431,12 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `POST /admin/orgs/:org_id/installs/:install_id/forget` - Remove an install from the portal (vendor-only; does not deprovision infrastructure)
 - `GET /admin/orgs/:org_id/customers` - List organization customers
 - `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
-- `GET /admin/orgs/:org_id/accounts` - List customer company accounts
+- `GET /admin/orgs/:org_id/accounts` - List customer user groups
 - `GET /admin/orgs/:org_id/accounts/:account_id` - Redirects to `/members`
-- `GET /admin/orgs/:org_id/accounts/:account_id/members` - Account members tab
-- `GET /admin/orgs/:org_id/accounts/:account_id/installs` - Account installs tab
-- `GET /admin/orgs/:org_id/accounts/:account_id/installs/search` - Search org installs to assign to account (HTMX)
-- `POST /admin/orgs/:org_id/accounts/:account_id/installs/assign` - Assign an existing install to the account
+- `GET /admin/orgs/:org_id/accounts/:account_id/members` - User group members tab
+- `GET /admin/orgs/:org_id/accounts/:account_id/installs` - User group installs tab
+- `GET /admin/orgs/:org_id/accounts/:account_id/installs/search` - Search org installs to assign to user group (HTMX)
+- `POST /admin/orgs/:org_id/accounts/:account_id/installs/assign` - Assign an existing install to the user group
 - `GET /admin/orgs/:org_id/team/members` - Team page (members + invites tabs)
 - `GET /admin/orgs/:org_id/team/invites` - Redirects to team/members
 - `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
@@ -486,16 +489,36 @@ Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for d
 - `PUT /installs/:install_id/inputs` - Update install inputs
 - `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
 - `POST /installs/:install_id/workflows/:workflow_id/cancel` - Cancel running workflow
-- `GET /account` - Account settings page (name editing, members, invites)
-- `PUT /account` - Update account name (owner only)
-- `GET /account/setup` - Redirects to /installs (accounts are auto-created during auth)
-- `GET /account/new` - Account creation form for creating additional accounts
-- `POST /account/create` - Create customer account and owner membership
+- `GET /account` - User group settings page (name editing, members, invites)
+- `PUT /account` - Update user group name (owner only)
+- `GET /account/setup` - Redirects to /installs (user groups are auto-created during auth)
+- `GET /account/new` - User group creation form for creating additional user groups
+- `POST /account/create` - Create customer user group and owner membership
 - `GET /account/members` - Redirects to /account
 - `POST /account/invite` - Invite a user by email (adds immediately if user exists, creates pending invite otherwise)
-- `POST /account/switch` - Switch active account (sets cookie, redirects to /installs)
-- `POST /account/members/:member_id/transfer-ownership` - Transfer account ownership to another member
+- `POST /account/switch` - Switch active user group (sets cookie, redirects to /installs)
+- `POST /account/members/:member_id/transfer-ownership` - Transfer user group ownership to another member
 - `DELETE /account/invite/:invite_id` - Revoke a pending invite
+
+## Shared UI Components
+
+### Shimmer (Loading Placeholder)
+
+The `components.ShimmerBar` and `components.ShimmerLines` components (`internal/views/customerui/theme/components/shimmer.templ`) render animated placeholder bars for loading states.
+
+**Single bar** — specify height and width as Tailwind classes:
+
+```go
+@components.ShimmerBar("h-4", "w-3/4")
+```
+
+**Multiple lines** — renders a stack of alternating-width bars:
+
+```go
+@components.ShimmerLines(3)
+```
+
+The `.shimmer` CSS class is defined in `src/customer.css` and uses theme CSS variables for colors, supporting both light and dark mode. Use shimmer placeholders inside card shells so the page layout is visible immediately while data loads via HTMX.
 
 ## Vendor UI Components
 

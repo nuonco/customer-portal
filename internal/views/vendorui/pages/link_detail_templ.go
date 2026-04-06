@@ -56,46 +56,54 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Install Link Details</h1><p class=\"stratus-page-subtitle\">View and manage this install link.</p></div></div><div class=\"stratus-page-section\"><!-- Install Information Card --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 mb-6\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Install Information</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300\">Application</h3><p class=\"text-xl text-cool-grey-900 dark:text-white\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"stratus-page-content overflow-auto\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = vendorui.APIErrorBanner(props.LayoutProps).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">Install Link Details</h1><p class=\"stratus-page-subtitle\">View and manage this install link.</p></div></div><div class=\"stratus-page-section\"><!-- Install Information Card --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 mb-6\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Install Information</h2><div class=\"space-y-4\"><div><h3 class=\"text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300\">Application</h3><p class=\"text-xl text-cool-grey-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.AppName)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 35, Col: 81}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 36, Col: 81}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</p><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">App ID: ")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p><p class=\"text-cool-grey-600 dark:text-cool-grey-400\">App ID: ")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.AppID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 36, Col: 87}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 37, Col: 87}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p></div><div><h3 class=\"text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300\">Created</h3><p class=\"text-cool-grey-900 dark:text-cool-grey-200\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></div><div><h3 class=\"text-lg font-semibold text-cool-grey-700 dark:text-cool-grey-300\">Created</h3><p class=\"text-cool-grey-900 dark:text-cool-grey-200\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.CreatedAt.Format("January 2, 2006 at 3:04 PM"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 40, Col: 120}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 41, Col: 120}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</p></div><div class=\"pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</p></div><div class=\"pt-4 border-t border-cool-grey-200 dark:border-dark-grey-600\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -107,7 +115,7 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-2\">This will permanently remove the install and cannot be undone.</p></div></div></div><!-- Link Management Card with HTMX polling --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Link Management</h2><div class=\"space-y-4\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<p class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400 mt-2\">This will permanently remove the install and cannot be undone.</p></div></div></div><!-- Link Management Card with HTMX polling --><div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h2 class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-4\">Link Management</h2><div class=\"space-y-4\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -121,59 +129,59 @@ func LinkDetailPage(props LinkDetailPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</div></div></div></div><!-- Config data for JavaScript --> <div id=\"link-detail-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</div></div></div></div><!-- Config data for JavaScript --> <div id=\"link-detail-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 73, Col: 34}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 74, Col: 34}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-org-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-org-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.OrgID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 74, Col: 33}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 75, Col: 33}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-link-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" data-link-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var8 string
 			templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(props.Link.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 75, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 76, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\" data-link-used=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\" data-link-used=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var9 string
 			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(boolToString(props.Link.Used))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 76, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/link_detail.templ`, Line: 77, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -219,7 +227,7 @@ func linkDetailScript() templ.Component {
 			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('link-detail-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\tvar linkId = config.dataset.linkId;\n\t\t\tvar previousUsedState = config.dataset.linkUsed === 'true';\n\n\t\t\tdocument.body.addEventListener('htmx:afterSwap', function(evt) {\n\t\t\t\tif (evt.detail.target.id === 'link-status') {\n\t\t\t\t\tvar linkStatusEl = evt.detail.target;\n\t\t\t\t\tvar currentUsed = linkStatusEl.dataset.linkUsed === 'true';\n\n\t\t\t\t\tif (!previousUsedState && currentUsed) {\n\t\t\t\t\t\tshowToast('Install link has been accepted by a customer!', 'success');\n\t\t\t\t\t}\n\n\t\t\t\t\tpreviousUsedState = currentUsed;\n\t\t\t\t}\n\t\t\t});\n\n\t\t\twindow.copyToClipboard = function() {\n\t\t\t\tvar urlEl = document.getElementById('installUrl');\n\t\t\t\tif (!urlEl) {\n\t\t\t\t\tshowToast('Install URL not available - link may have been accepted', 'error');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tvar url = urlEl.textContent;\n\t\t\t\tnavigator.clipboard.writeText(url).then(function() {\n\t\t\t\t\tshowToast('Install link copied to clipboard!', 'success');\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tvar textarea = document.createElement('textarea');\n\t\t\t\t\ttextarea.value = url;\n\t\t\t\t\tdocument.body.appendChild(textarea);\n\t\t\t\t\ttextarea.select();\n\t\t\t\t\tdocument.execCommand('copy');\n\t\t\t\t\tdocument.body.removeChild(textarea);\n\t\t\t\t\tshowToast('Install link copied to clipboard!', 'success');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\twindow.deleteLink = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Delete Install Link?',\n\t\t\t\t\tmessage: 'Are you sure you want to delete this install link? This action cannot be undone.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Delete',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/install-links/' + linkId, {\n\t\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Install link deleted successfully', 'success');\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.href = basePath + '/orgs/' + orgId + '/install-links';\n\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to delete install', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('link-detail-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\tvar linkId = config.dataset.linkId;\n\t\t\tvar previousUsedState = config.dataset.linkUsed === 'true';\n\n\t\t\tdocument.body.addEventListener('htmx:afterSwap', function(evt) {\n\t\t\t\tif (evt.detail.target.id === 'link-status') {\n\t\t\t\t\tvar linkStatusEl = evt.detail.target;\n\t\t\t\t\tvar currentUsed = linkStatusEl.dataset.linkUsed === 'true';\n\n\t\t\t\t\tif (!previousUsedState && currentUsed) {\n\t\t\t\t\t\tshowToast('Install link has been accepted by a customer!', 'success');\n\t\t\t\t\t}\n\n\t\t\t\t\tpreviousUsedState = currentUsed;\n\t\t\t\t}\n\t\t\t});\n\n\t\t\twindow.copyToClipboard = function() {\n\t\t\t\tvar urlEl = document.getElementById('installUrl');\n\t\t\t\tif (!urlEl) {\n\t\t\t\t\tshowToast('Install URL not available - link may have been accepted', 'error');\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tvar url = urlEl.textContent;\n\t\t\t\tnavigator.clipboard.writeText(url).then(function() {\n\t\t\t\t\tshowToast('Install link copied to clipboard!', 'success');\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tvar textarea = document.createElement('textarea');\n\t\t\t\t\ttextarea.value = url;\n\t\t\t\t\tdocument.body.appendChild(textarea);\n\t\t\t\t\ttextarea.select();\n\t\t\t\t\tdocument.execCommand('copy');\n\t\t\t\t\tdocument.body.removeChild(textarea);\n\t\t\t\t\tshowToast('Install link copied to clipboard!', 'success');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\twindow.deleteLink = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Delete Install Link?',\n\t\t\t\t\tmessage: 'Are you sure you want to delete this install link? This action cannot be undone.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Delete',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\n\t\t\t\tif (!confirmed) {\n\t\t\t\t\treturn;\n\t\t\t\t}\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/install-links/' + linkId, {\n\t\t\t\t\t\tmethod: 'DELETE'\n\t\t\t\t\t});\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tshowToast('Install link deleted successfully', 'success');\n\t\t\t\t\t\tsetTimeout(function() {\n\t\t\t\t\t\t\twindow.location.href = basePath + '/orgs/' + orgId + '/install-links';\n\t\t\t\t\t\t}, 1000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\tshowToast('Failed to delete install', 'error');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tshowToast('Network error. Please try again.', 'error');\n\t\t\t\t}\n\t\t\t};\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

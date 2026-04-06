@@ -33,11 +33,17 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 
 	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
 
+	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
+	// Verify API connectivity
+	if nuonClientErr == nil {
+		if _, err := nuonClient.GetOrg(c.Request.Context()); err != nil {
+			nuonClientErr = err
+		}
+	}
 	appDisplays := make([]customerpartials.PublishedAppDisplay, len(publishedApps))
 	if len(publishedApps) == 1 {
 		// Single app: full detail fetch so the full-width card has all tab data
 		pa := publishedApps[0]
-		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
 		display.LogoLightBase64 = pa.LogoLightBase64
 		display.LogoDarkBase64 = pa.LogoDarkBase64
@@ -56,8 +62,6 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 			appDisplays[0] = display
 		}
 	} else if len(publishedApps) > 1 {
-		nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
-
 		// Fetch only app name/platform/description in parallel (no heavy detail calls)
 		var wg sync.WaitGroup
 		for i, pa := range publishedApps {
@@ -106,6 +110,9 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = len(appDisplays) > 0
 	layoutProps.ActiveNav = "apps"
+	if nuonClientErr != nil {
+		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
+	}
 
 	props := customerpages.CustomerAppsPageProps{
 		LayoutProps: layoutProps,

@@ -31,24 +31,23 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
-		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppInputsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:                "App - Inputs",
-				ActivePage:           "apps",
-				User:                 user,
-				CurrentOrg:           org,
-				Orgs:                 allOrgs,
-				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
-				BasePath:             h.basePath,
-				PortalScheme:         h.schemeFromBaseURL(),
-				DashboardURL:         h.dashboardURL,
-				PortalBaseDomain:     h.subdomainBaseDomain,
-				CSSPath:              assets.VendorCSSPath(),
-				IsSuperuser:          h.isSuperuser(user),
-				NuonAPIError:         err.Error(),
-				NuonAPIShowUpdateCTA: showCTA,
+				Title:             "App - Inputs",
+				ActivePage:        "apps",
+				User:              user,
+				CurrentOrg:        org,
+				Orgs:              allOrgs,
+				Breadcrumbs:       []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:          h.basePath,
+				PortalScheme:      h.schemeFromBaseURL(),
+				DashboardURL:      h.dashboardURL,
+				PortalBaseDomain:  h.subdomainBaseDomain,
+				CSSPath:           assets.VendorCSSPath(),
+				IsSuperuser:       h.isSuperuser(user),
+				NuonAPIErrorTitle: nuon.ParseAPIError(err).Title,
+				NuonAPIError:      nuon.ParseAPIError(err).Description,
 			},
 			Org:   *org,
 			AppID: appID,
@@ -62,24 +61,23 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Fetch app details from Nuon API
 	app, err := nuonClient.GetApp(c.Request.Context(), appID)
 	if err != nil {
-		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppInputsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:                "App - Inputs",
-				ActivePage:           "apps",
-				User:                 user,
-				CurrentOrg:           org,
-				Orgs:                 allOrgs,
-				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
-				BasePath:             h.basePath,
-				PortalScheme:         h.schemeFromBaseURL(),
-				DashboardURL:         h.dashboardURL,
-				PortalBaseDomain:     h.subdomainBaseDomain,
-				CSSPath:              assets.VendorCSSPath(),
-				IsSuperuser:          h.isSuperuser(user),
-				NuonAPIError:         err.Error(),
-				NuonAPIShowUpdateCTA: showCTA,
+				Title:             "App - Inputs",
+				ActivePage:        "apps",
+				User:              user,
+				CurrentOrg:        org,
+				Orgs:              allOrgs,
+				Breadcrumbs:       []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: false}, {Text: appID, Active: true}},
+				BasePath:          h.basePath,
+				PortalScheme:      h.schemeFromBaseURL(),
+				DashboardURL:      h.dashboardURL,
+				PortalBaseDomain:  h.subdomainBaseDomain,
+				CSSPath:           assets.VendorCSSPath(),
+				IsSuperuser:       h.isSuperuser(user),
+				NuonAPIErrorTitle: nuon.ParseAPIError(err).Title,
+				NuonAPIError:      nuon.ParseAPIError(err).Description,
 			},
 			Org:   *org,
 			AppID: appID,

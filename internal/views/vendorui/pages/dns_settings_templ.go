@@ -67,7 +67,15 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\"><div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">DNS Settings</h1><p class=\"stratus-page-subtitle\">Configure the subdomain for your customer portal. Customers will access their portal at this URL.</p></div></div><div class=\"stratus-page-section\"><div class=\"space-y-6\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"stratus-page-content overflow-auto\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = vendorui.APIErrorBanner(props.LayoutProps).Render(ctx, templ_7745c5c3_Buffer)
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"stratus-page-header\"><div class=\"stratus-heading-group\"><h1 class=\"stratus-page-title\">DNS Settings</h1><p class=\"stratus-page-subtitle\">Configure the subdomain for your customer portal. Customers will access their portal at this URL.</p></div></div><div class=\"stratus-page-section\"><div class=\"space-y-6\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -83,72 +91,72 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</div></div><!-- Config data for JavaScript --><div id=\"dns-settings-config\" class=\"hidden\" data-base-path=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "</div></div><!-- Config data for JavaScript --><div id=\"dns-settings-config\" class=\"hidden\" data-base-path=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var3 string
 			templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 44, Col: 36}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 45, Col: 36}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" data-org-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-org-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var4 string
 			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.CurrentOrg.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 45, Col: 38}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 46, Col: 38}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" data-base-domain=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" data-base-domain=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var5 string
 			templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 46, Col: 40}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 47, Col: 40}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" data-current-subdomain=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-current-subdomain=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var6 string
 			templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 47, Col: 49}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 48, Col: 49}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\" data-scheme=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\" data-scheme=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var7 string
 			templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinStringErrs(props.Scheme)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 48, Col: 31}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 49, Col: 31}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "\"></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -156,7 +164,7 @@ func DNSSettingsPage(props DNSSettingsPageProps) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -191,7 +199,7 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"flex items-center justify-between mb-4\"><div class=\"flex items-center gap-2\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><div class=\"flex items-center justify-between mb-4\"><div class=\"flex items-center gap-2\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -199,14 +207,14 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "<h3 class=\"text-lg font-semibold text-cool-grey-800 dark:text-white\">Customer Portal URL</h3></div></div><div class=\"flex items-center gap-3\"><div class=\"flex-1 p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg font-mono text-sm text-cool-grey-900 dark:text-white overflow-x-auto\"><span id=\"previewURL\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<h3 class=\"text-lg font-semibold text-cool-grey-800 dark:text-white\">Customer Portal URL</h3></div></div><div class=\"flex items-center gap-3\"><div class=\"flex-1 p-3 bg-cool-grey-50 dark:bg-dark-grey-800 rounded-lg font-mono text-sm text-cool-grey-900 dark:text-white overflow-x-auto\"><span id=\"previewURL\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(props.Scheme)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 66, Col: 40}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 67, Col: 40}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -215,26 +223,26 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 66, Col: 63}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 67, Col: 63}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, ".")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, ".")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var11 string
 		templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 66, Col: 84}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 67, Col: 84}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</span></div><button type=\"button\" onclick=\"copyURL()\" class=\"p-2 text-cool-grey-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-md hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700\" title=\"Copy URL\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</span></div><button type=\"button\" onclick=\"copyURL()\" class=\"p-2 text-cool-grey-500 hover:text-primary-600 dark:hover:text-primary-400 transition-colors rounded-md hover:bg-cool-grey-100 dark:hover:bg-dark-grey-700\" title=\"Copy URL\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -242,7 +250,7 @@ func dnsCurrentURLSection(props DNSSettingsPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</button></div><p class=\"mt-2 text-xs text-cool-grey-500 dark:text-cool-grey-400\">This is the URL where your customers will access their portal to manage installations.</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</button></div><p class=\"mt-2 text-xs text-cool-grey-500 dark:text-cool-grey-400\">This is the URL where your customers will access their portal to manage installations.</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -271,46 +279,46 @@ func dnsSubdomainSection(props DNSSettingsPageProps) templ.Component {
 			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Subdomain</h3><div class=\"space-y-4\"><div><label for=\"subdomain\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Subdomain</label><div class=\"flex items-center\"><span class=\"px-3 py-2 bg-cool-grey-100 dark:bg-dark-grey-700 border border-r-0 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-600 dark:text-cool-grey-400 rounded-l-md\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<div class=\"bg-white dark:bg-dark-grey-900 p-6 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500\"><h3 class=\"text-lg font-semibold mb-4 text-cool-grey-800 dark:text-white\">Subdomain</h3><div class=\"space-y-4\"><div><label for=\"subdomain\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Subdomain</label><div class=\"flex items-center\"><span class=\"px-3 py-2 bg-cool-grey-100 dark:bg-dark-grey-700 border border-r-0 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-600 dark:text-cool-grey-400 rounded-l-md\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var13 string
 		templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(props.Scheme)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 93, Col: 20}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 94, Col: 20}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "</span> <input type=\"text\" id=\"subdomain\" value=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</span> <input type=\"text\" id=\"subdomain\" value=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var14 string
 		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(props.Org.Subdomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 98, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 99, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\" placeholder=\"your-company\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" oninput=\"onSubdomainInput()\"> <span class=\"px-3 py-2 bg-cool-grey-100 dark:bg-dark-grey-700 border border-l-0 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-600 dark:text-cool-grey-400 rounded-r-md\">.")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\" placeholder=\"your-company\" class=\"flex-1 px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white focus:ring-2 focus:ring-primary-400 focus:border-primary-600\" oninput=\"onSubdomainInput()\"> <span class=\"px-3 py-2 bg-cool-grey-100 dark:bg-dark-grey-700 border border-l-0 border-cool-grey-300 dark:border-dark-grey-500 text-cool-grey-600 dark:text-cool-grey-400 rounded-r-md\">.")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var15 string
 		templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(props.BaseDomain)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 104, Col: 25}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 105, Col: 25}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</span></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Lowercase letters, numbers, and dashes only. Must start with a letter and be at least 2 characters.</p></div><!-- Availability Check --><div id=\"availabilityStatus\" class=\"hidden\"></div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</span></div><p class=\"mt-1 text-xs text-cool-grey-500 dark:text-cool-grey-400\">Lowercase letters, numbers, and dashes only. Must start with a letter and be at least 2 characters.</p></div><!-- Availability Check --><div id=\"availabilityStatus\" class=\"hidden\"></div></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -339,7 +347,7 @@ func dnsSaveSection(primaryColor string) templ.Component {
 			templ_7745c5c3_Var16 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"flex flex-col space-y-3\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<div class=\"flex flex-col space-y-3\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -350,7 +358,7 @@ func dnsSaveSection(primaryColor string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<button type=\"button\" id=\"saveButton\" onclick=\"saveDNSSettings()\" disabled class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<button type=\"button\" id=\"saveButton\" onclick=\"saveDNSSettings()\" disabled class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -363,30 +371,30 @@ func dnsSaveSection(primaryColor string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if primaryColor != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, " style=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, " style=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var19 string
 			templ_7745c5c3_Var19, templ_7745c5c3_Err = templruntime.SanitizeStyleAttributeValues("background-color: " + primaryColor)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 128, Col: 47}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/dns_settings.templ`, Line: 129, Col: 47}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, ">Save</button><div id=\"successMessage\" class=\"hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg\"><div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Settings saved successfully!</div></div><div id=\"errorMessage\" class=\"hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg\"></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, ">Save</button><div id=\"successMessage\" class=\"hidden p-4 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded-lg\"><div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg> Settings saved successfully!</div></div><div id=\"errorMessage\" class=\"hidden p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded-lg\"></div></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -415,7 +423,7 @@ func globeIcon() templ.Component {
 			templ_7745c5c3_Var20 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-5 h-5 text-cool-grey-500 dark:text-cool-grey-400\"><path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM101.63,168h52.74C149,186.34,140,202.87,128,215.89,116,202.87,107,186.34,101.63,168ZM98,152a145.72,145.72,0,0,1,0-48h60a145.72,145.72,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.79a161.79,161.79,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128Zm114.37-40H101.63C107,69.66,116,53.13,128,40.11,140,53.13,149,69.66,154.37,88Zm19.84,16h38.46a88.15,88.15,0,0,1,0,48H174.21a161.79,161.79,0,0,0,0-48Zm32.16-16H170.94a142.39,142.39,0,0,0-20.26-45A88.37,88.37,0,0,1,206.37,88ZM105.32,43A142.39,142.39,0,0,0,85.06,88H49.63A88.37,88.37,0,0,1,105.32,43ZM49.63,168H85.06a142.39,142.39,0,0,0,20.26,45A88.37,88.37,0,0,1,49.63,168Zm101.05,45a142.39,142.39,0,0,0,20.26-45h35.43A88.37,88.37,0,0,1,150.68,213Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-5 h-5 text-cool-grey-500 dark:text-cool-grey-400\"><path d=\"M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM101.63,168h52.74C149,186.34,140,202.87,128,215.89,116,202.87,107,186.34,101.63,168ZM98,152a145.72,145.72,0,0,1,0-48h60a145.72,145.72,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.79a161.79,161.79,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128Zm114.37-40H101.63C107,69.66,116,53.13,128,40.11,140,53.13,149,69.66,154.37,88Zm19.84,16h38.46a88.15,88.15,0,0,1,0,48H174.21a161.79,161.79,0,0,0,0-48Zm32.16-16H170.94a142.39,142.39,0,0,0-20.26-45A88.37,88.37,0,0,1,206.37,88ZM105.32,43A142.39,142.39,0,0,0,85.06,88H49.63A88.37,88.37,0,0,1,105.32,43ZM49.63,168H85.06a142.39,142.39,0,0,0,20.26,45A88.37,88.37,0,0,1,49.63,168Zm101.05,45a142.39,142.39,0,0,0,20.26-45h35.43A88.37,88.37,0,0,1,150.68,213Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -444,7 +452,7 @@ func copyIcon() templ.Component {
 			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-5 h-5\"><path d=\"M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 256 256\" fill=\"currentColor\" class=\"w-5 h-5\"><path d=\"M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -473,7 +481,7 @@ func dnsSettingsScript() templ.Component {
 			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('dns-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\tvar baseDomain = config.dataset.baseDomain;\n\t\t\tvar currentSubdomain = config.dataset.currentSubdomain;\n\t\t\tvar scheme = config.dataset.scheme;\n\t\t\tvar checkTimeout = null;\n\n\t\t\t// Copy URL to clipboard\n\t\t\twindow.copyURL = function() {\n\t\t\t\tvar url = document.getElementById('previewURL').textContent;\n\t\t\t\tnavigator.clipboard.writeText(url).then(function() {\n\t\t\t\t\t// Show brief feedback\n\t\t\t\t\tvar btn = event.target.closest('button');\n\t\t\t\t\tvar originalTitle = btn.title;\n\t\t\t\t\tbtn.title = 'Copied!';\n\t\t\t\t\tsetTimeout(function() { btn.title = originalTitle; }, 2000);\n\t\t\t\t});\n\t\t\t};\n\n\t\t\tfunction checkForChanges() {\n\t\t\t\tvar subdomain = document.getElementById('subdomain').value;\n\t\t\t\tdocument.getElementById('saveButton').disabled = (subdomain === currentSubdomain);\n\t\t\t}\n\n\t\t\t// Handle subdomain input\n\t\t\twindow.onSubdomainInput = function() {\n\t\t\t\tvar input = document.getElementById('subdomain');\n\t\t\t\tvar value = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');\n\t\t\t\tinput.value = value;\n\n\t\t\t\t// Update preview\n\t\t\t\tvar preview = document.getElementById('previewURL');\n\t\t\t\tpreview.textContent = scheme + (value || 'your-company') + '.' + baseDomain;\n\n\t\t\t\t// Debounce availability check\n\t\t\t\tclearTimeout(checkTimeout);\n\t\t\t\tif (value && value !== currentSubdomain) {\n\t\t\t\t\tcheckTimeout = setTimeout(function() {\n\t\t\t\t\t\tcheckAvailability(value);\n\t\t\t\t\t}, 500);\n\t\t\t\t} else {\n\t\t\t\t\thideAvailability();\n\t\t\t\t}\n\n\t\t\t\tcheckForChanges();\n\t\t\t};\n\n\t\t\tfunction hideAvailability() {\n\t\t\t\tdocument.getElementById('availabilityStatus').classList.add('hidden');\n\t\t\t}\n\n\t\t\tasync function checkAvailability(subdomain) {\n\t\t\t\tvar statusDiv = document.getElementById('availabilityStatus');\n\n\t\t\t\t// Show loading state\n\t\t\t\tstatusDiv.classList.remove('hidden');\n\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-cool-grey-500 dark:text-cool-grey-400\"><svg class=\"animate-spin w-4 h-4 mr-2\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle><path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>Checking availability...</div>';\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns/check?subdomain=' + encodeURIComponent(subdomain), {\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (data.available) {\n\t\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-green-600 dark:text-green-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>This subdomain is available</div>';\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar reason = data.reason || 'This subdomain is not available';\n\t\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-red-600 dark:text-red-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + reason + '</div>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-red-600 dark:text-red-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Error checking availability</div>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Save settings\n\t\t\twindow.saveDNSSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveButton');\n\t\t\t\tvar successMessage = document.getElementById('successMessage');\n\t\t\t\tvar errorMessage = document.getElementById('errorMessage');\n\t\t\t\tvar subdomain = document.getElementById('subdomain').value;\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ subdomain: subdomain })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tcurrentSubdomain = subdomain;\n\t\t\t\t\t\thideAvailability();\n\t\t\t\t\t\tcheckForChanges();\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + (data.error || 'Failed to save settings') + '</div>';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Network error. Please try again.</div>';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save';\n\t\t\t\tcheckForChanges();\n\t\t\t};\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<script>\n\t\t(function() {\n\t\t\tvar config = document.getElementById('dns-settings-config');\n\t\t\tvar basePath = config.dataset.basePath;\n\t\t\tvar orgId = config.dataset.orgId;\n\t\t\tvar baseDomain = config.dataset.baseDomain;\n\t\t\tvar currentSubdomain = config.dataset.currentSubdomain;\n\t\t\tvar scheme = config.dataset.scheme;\n\t\t\tvar checkTimeout = null;\n\n\t\t\t// Copy URL to clipboard\n\t\t\twindow.copyURL = function() {\n\t\t\t\tvar url = document.getElementById('previewURL').textContent;\n\t\t\t\tnavigator.clipboard.writeText(url).then(function() {\n\t\t\t\t\t// Show brief feedback\n\t\t\t\t\tvar btn = event.target.closest('button');\n\t\t\t\t\tvar originalTitle = btn.title;\n\t\t\t\t\tbtn.title = 'Copied!';\n\t\t\t\t\tsetTimeout(function() { btn.title = originalTitle; }, 2000);\n\t\t\t\t});\n\t\t\t};\n\n\t\t\tfunction checkForChanges() {\n\t\t\t\tvar subdomain = document.getElementById('subdomain').value;\n\t\t\t\tdocument.getElementById('saveButton').disabled = (subdomain === currentSubdomain);\n\t\t\t}\n\n\t\t\t// Handle subdomain input\n\t\t\twindow.onSubdomainInput = function() {\n\t\t\t\tvar input = document.getElementById('subdomain');\n\t\t\t\tvar value = input.value.toLowerCase().replace(/[^a-z0-9-]/g, '');\n\t\t\t\tinput.value = value;\n\n\t\t\t\t// Update preview\n\t\t\t\tvar preview = document.getElementById('previewURL');\n\t\t\t\tpreview.textContent = scheme + (value || 'your-company') + '.' + baseDomain;\n\n\t\t\t\t// Debounce availability check\n\t\t\t\tclearTimeout(checkTimeout);\n\t\t\t\tif (value && value !== currentSubdomain) {\n\t\t\t\t\tcheckTimeout = setTimeout(function() {\n\t\t\t\t\t\tcheckAvailability(value);\n\t\t\t\t\t}, 500);\n\t\t\t\t} else {\n\t\t\t\t\thideAvailability();\n\t\t\t\t}\n\n\t\t\t\tcheckForChanges();\n\t\t\t};\n\n\t\t\tfunction hideAvailability() {\n\t\t\t\tdocument.getElementById('availabilityStatus').classList.add('hidden');\n\t\t\t}\n\n\t\t\tasync function checkAvailability(subdomain) {\n\t\t\t\tvar statusDiv = document.getElementById('availabilityStatus');\n\n\t\t\t\t// Show loading state\n\t\t\t\tstatusDiv.classList.remove('hidden');\n\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-cool-grey-500 dark:text-cool-grey-400\"><svg class=\"animate-spin w-4 h-4 mr-2\" fill=\"none\" viewBox=\"0 0 24 24\"><circle class=\"opacity-25\" cx=\"12\" cy=\"12\" r=\"10\" stroke=\"currentColor\" stroke-width=\"4\"></circle><path class=\"opacity-75\" fill=\"currentColor\" d=\"M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z\"></path></svg>Checking availability...</div>';\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns/check?subdomain=' + encodeURIComponent(subdomain), {\n\t\t\t\t\t\tcredentials: 'same-origin'\n\t\t\t\t\t});\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (data.available) {\n\t\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-green-600 dark:text-green-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z\" clip-rule=\"evenodd\"></path></svg>This subdomain is available</div>';\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar reason = data.reason || 'This subdomain is not available';\n\t\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-red-600 dark:text-red-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + reason + '</div>';\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tstatusDiv.innerHTML = '<div class=\"flex items-center text-red-600 dark:text-red-400\"><svg class=\"w-4 h-4 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Error checking availability</div>';\n\t\t\t\t}\n\t\t\t}\n\n\t\t\t// Save settings\n\t\t\twindow.saveDNSSettings = async function() {\n\t\t\t\tvar saveButton = document.getElementById('saveButton');\n\t\t\t\tvar successMessage = document.getElementById('successMessage');\n\t\t\t\tvar errorMessage = document.getElementById('errorMessage');\n\t\t\t\tvar subdomain = document.getElementById('subdomain').value;\n\n\t\t\t\tsaveButton.textContent = 'Saving...';\n\t\t\t\tsaveButton.disabled = true;\n\t\t\t\tsuccessMessage.classList.add('hidden');\n\t\t\t\terrorMessage.classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/orgs/' + orgId + '/settings/dns', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\t\tbody: JSON.stringify({ subdomain: subdomain })\n\t\t\t\t\t});\n\n\t\t\t\t\tvar data = await response.json();\n\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsuccessMessage.classList.remove('hidden');\n\t\t\t\t\t\tcurrentSubdomain = subdomain;\n\t\t\t\t\t\thideAvailability();\n\t\t\t\t\t\tcheckForChanges();\n\t\t\t\t\t\tsetTimeout(function() { successMessage.classList.add('hidden'); }, 3000);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>' + (data.error || 'Failed to save settings') + '</div>';\n\t\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorMessage.innerHTML = '<div class=\"flex items-center\"><svg class=\"w-5 h-5 mr-2\" fill=\"currentColor\" viewBox=\"0 0 20 20\"><path fill-rule=\"evenodd\" d=\"M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z\" clip-rule=\"evenodd\"></path></svg>Network error. Please try again.</div>';\n\t\t\t\t\terrorMessage.classList.remove('hidden');\n\t\t\t\t}\n\n\t\t\t\tsaveButton.textContent = 'Save';\n\t\t\t\tcheckForChanges();\n\t\t\t};\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

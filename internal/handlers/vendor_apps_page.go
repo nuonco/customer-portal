@@ -30,24 +30,23 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Initialize Nuon client
 	nuonClient, err := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if err != nil {
-		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:                org.Name + " - Apps",
-				ActivePage:           "apps",
-				User:                 user,
-				CurrentOrg:           org,
-				Orgs:                 allOrgs,
-				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-				BasePath:             h.basePath,
-				PortalScheme:         h.schemeFromBaseURL(),
-				DashboardURL:         h.dashboardURL,
-				PortalBaseDomain:     h.subdomainBaseDomain,
-				CSSPath:              assets.VendorCSSPath(),
-				IsSuperuser:          h.isSuperuser(user),
-				NuonAPIError:         err.Error(),
-				NuonAPIShowUpdateCTA: showCTA,
+				Title:             org.Name + " - Apps",
+				ActivePage:        "apps",
+				User:              user,
+				CurrentOrg:        org,
+				Orgs:              allOrgs,
+				Breadcrumbs:       []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:          h.basePath,
+				PortalScheme:      h.schemeFromBaseURL(),
+				DashboardURL:      h.dashboardURL,
+				PortalBaseDomain:  h.subdomainBaseDomain,
+				CSSPath:           assets.VendorCSSPath(),
+				IsSuperuser:       h.isSuperuser(user),
+				NuonAPIErrorTitle: nuon.ParseAPIError(err).Title,
+				NuonAPIError:      nuon.ParseAPIError(err).Description,
 			},
 			Org: *org,
 		}
@@ -59,24 +58,23 @@ func (h *Handler) AppsPage(c *gin.Context) {
 	// Fetch apps from Nuon API
 	apps, err := nuonClient.ListApps(c.Request.Context())
 	if err != nil {
-		showCTA := nuon.IsUnauthorized(err)
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppsPageProps{
 			LayoutProps: vendorui.LayoutProps{
-				Title:                org.Name + " - Apps",
-				ActivePage:           "apps",
-				User:                 user,
-				CurrentOrg:           org,
-				Orgs:                 allOrgs,
-				Breadcrumbs:          []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
-				BasePath:             h.basePath,
-				PortalScheme:         h.schemeFromBaseURL(),
-				DashboardURL:         h.dashboardURL,
-				PortalBaseDomain:     h.subdomainBaseDomain,
-				CSSPath:              assets.VendorCSSPath(),
-				IsSuperuser:          h.isSuperuser(user),
-				NuonAPIError:         err.Error(),
-				NuonAPIShowUpdateCTA: showCTA,
+				Title:             org.Name + " - Apps",
+				ActivePage:        "apps",
+				User:              user,
+				CurrentOrg:        org,
+				Orgs:              allOrgs,
+				Breadcrumbs:       []partials.Breadcrumb{{Text: "Apps", Path: fmt.Sprintf("%s/orgs/%s/apps", h.basePath, org.ID), Active: true}},
+				BasePath:          h.basePath,
+				PortalScheme:      h.schemeFromBaseURL(),
+				DashboardURL:      h.dashboardURL,
+				PortalBaseDomain:  h.subdomainBaseDomain,
+				CSSPath:           assets.VendorCSSPath(),
+				IsSuperuser:       h.isSuperuser(user),
+				NuonAPIErrorTitle: nuon.ParseAPIError(err).Title,
+				NuonAPIError:      nuon.ParseAPIError(err).Description,
 			},
 			Org: *org,
 		}

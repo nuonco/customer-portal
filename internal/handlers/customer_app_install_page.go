@@ -50,10 +50,13 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 
 	appName := appID
 	orgName := org.NuonOrgID // fallback
+	var apiCallFailed bool
 	nuonClient, clientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
 	if clientErr == nil {
 		app, appErr := nuonClient.GetApp(c.Request.Context(), appID)
-		if appErr == nil && app != nil {
+		if appErr != nil {
+			apiCallFailed = true
+		} else if app != nil {
 			if dn := appDisplayName(app); dn != "" {
 				appName = dn
 			}
@@ -67,6 +70,9 @@ func (h *Handler) CustomerAppInstallPage(c *gin.Context) {
 	layoutProps := h.buildCustomerLayoutProps("Install "+appName, loggedInUser, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
+	if clientErr != nil || apiCallFailed {
+		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
+	}
 
 	var authURL string
 	if loggedInUser == nil {

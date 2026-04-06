@@ -28,10 +28,11 @@ type AccountsPageProps struct {
 templ AccountsPage(props AccountsPageProps) {
 	@vendorui.Layout(props.LayoutProps) {
 		<div class="stratus-page-content overflow-auto">
+			@vendorui.APIErrorBanner(props.LayoutProps)
 			<div class="stratus-page-header">
 				<div class="stratus-heading-group">
-					<h1 class="stratus-page-title">Accounts</h1>
-					<p class="stratus-page-subtitle">View customer company accounts and their members.</p>
+					<h1 class="stratus-page-title">User Groups</h1>
+					<p class="stratus-page-subtitle">View customer user groups and their members.</p>
 				</div>
 			</div>
 			<div class="stratus-page-section">
@@ -41,7 +42,7 @@ templ AccountsPage(props AccountsPageProps) {
 							type="text"
 							name="q"
 							value={ props.SearchQuery }
-							placeholder="Search by account name..."
+							placeholder="Search by user group name..."
 							class="w-full px-4 py-2 border border-cool-grey-300 dark:border-dark-grey-600 rounded-lg bg-white dark:bg-dark-grey-900 text-cool-grey-900 dark:text-white placeholder-cool-grey-500 dark:placeholder-cool-grey-400 focus:outline-none focus:ring-2 focus:ring-primary-500 dark:focus:ring-primary-400 focus:border-transparent"
 							hx-get={ fmt.Sprintf("%s/orgs/%s/accounts", props.BasePath, props.Org.ID) }
 							hx-trigger="keyup changed delay:300ms"
@@ -53,7 +54,7 @@ templ AccountsPage(props AccountsPageProps) {
 							<thead class="bg-cool-grey-50 dark:bg-dark-grey-800">
 								<tr>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
-										Account
+										User Group
 									</th>
 									<th scope="col" class="px-6 py-3 text-left text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 uppercase tracking-wider">
 										Members
@@ -75,7 +76,7 @@ templ AccountsPage(props AccountsPageProps) {
 									<tr>
 										<td colspan="4" class="px-6 py-8 text-center">
 											<p class="text-cool-grey-500 dark:text-cool-grey-400">
-												No accounts found matching "{ props.SearchQuery }"
+												No user groups found matching "{ props.SearchQuery }"
 											</p>
 										</td>
 									</tr>
@@ -101,7 +102,7 @@ templ AccountsTableBody(accounts []AccountWithCounts, orgID, basePath, searchQue
 		<tr>
 			<td colspan="4" class="px-6 py-8 text-center">
 				<p class="text-cool-grey-500 dark:text-cool-grey-400">
-					No accounts found matching "{ searchQuery }"
+					No user groups found matching "{ searchQuery }"
 				</p>
 			</td>
 		</tr>
@@ -152,9 +153,9 @@ templ emptyAccountsState() {
 		<div class="mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700">
 			@accountsEmptyIcon()
 		</div>
-		<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No Accounts Yet</h3>
+		<h3 class="text-xl font-medium text-cool-grey-900 dark:text-white mb-2">No User Groups Yet</h3>
 		<p class="text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto">
-			Customer accounts will appear here when customers set up their company accounts in the portal.
+			Customer user groups will appear here when customers set up their user groups in the portal.
 		</p>
 	</div>
 }

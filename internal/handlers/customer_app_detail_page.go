@@ -47,6 +47,9 @@ func (h *Handler) CustomerAppDetailPage(c *gin.Context) {
 	layoutProps := h.buildCustomerLayoutProps(display.AppName, user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = true
 	layoutProps.ActiveNav = "apps"
+	if nuonClientErr != nil || display.Platform == "unknown" {
+		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
+	}
 
 	props := customerpages.CustomerAppDetailPageProps{
 		LayoutProps: layoutProps,

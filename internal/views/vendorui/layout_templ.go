@@ -53,7 +53,8 @@ type LayoutProps struct {
 	OrgStatusMessage string // e.g., "Connected" or "Unable to reach Nuon API"
 
 	// Inline error for Nuon API failures (token expired, unreachable, etc.)
-	NuonAPIError         string
+	NuonAPIErrorTitle    string // banner heading (e.g. "Token Is Expired")
+	NuonAPIError         string // banner body (e.g. "Generate a new token...")
 	NuonAPIShowUpdateCTA bool
 
 	// Asset paths (cache-busted)
@@ -63,8 +64,9 @@ type LayoutProps struct {
 	IsSuperuser bool
 }
 
-// Layout renders the vendor layout with sidebar, topbar, and content area
-func Layout(props LayoutProps) templ.Component {
+// APIErrorBanner renders an inline error banner for Nuon API failures.
+// Pages should call this as the first child of their stratus-page-content div.
+func APIErrorBanner(props LayoutProps) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -85,33 +87,130 @@ func Layout(props LayoutProps) templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>")
+		if props.NuonAPIError != "" || props.NuonAPIErrorTitle != "" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			if props.NuonAPIErrorTitle != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<p class=\"text-sm font-medium text-red-800 dark:text-red-200\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var2 string
+				templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIErrorTitle)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 66, Col: 91}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<p class=\"text-sm font-medium text-red-800 dark:text-red-200\">Unable to connect to Nuon API</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			if props.NuonAPIShowUpdateCTA && props.CurrentOrg != nil {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<p class=\"text-sm text-red-700 dark:text-red-300 mt-0.5\">Generate a new token and update your <a href=\"")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var3 templ.SafeURL
+				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 73, Col: 93}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"font-medium underline hover:text-red-900 dark:hover:text-red-100\">Org Connection</a> settings.</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			} else if props.NuonAPIError != "" {
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<p class=\"text-sm text-red-700 dark:text-red-300 mt-0.5\">")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				var templ_7745c5c3_Var4 string
+				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
+				if templ_7745c5c3_Err != nil {
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 78, Col: 81}
+				}
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</p>")
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "</div>")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		return nil
+	})
+}
+
+// Layout renders the vendor layout with sidebar, topbar, and content area
+func Layout(props LayoutProps) templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var5 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var5 == nil {
+			templ_7745c5c3_Var5 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"><title>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var2 string
-		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(props.Title)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 66, Col: 23}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 91, Col: 23}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/images/favicon-admin.svg\"><!-- Stratus Design System - Vendor CSS --><link href=\"")
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 templ.SafeURL
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
-		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 69, Col: 29}
-		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</title><link rel=\"icon\" type=\"image/svg+xml\" href=\"/static/images/favicon-admin.svg\"><!-- Stratus Design System - Vendor CSS --><link href=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" rel=\"stylesheet\"><!-- Phosphor icon font (Bold weight) --><link href=\"/static/css/phosphor-bold.css\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
+		var templ_7745c5c3_Var7 templ.SafeURL
+		templ_7745c5c3_Var7, templ_7745c5c3_Err = templ.JoinURLErrs(props.CSSPath)
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 94, Col: 29}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var7))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" rel=\"stylesheet\"><!-- Phosphor icon font (Bold weight) --><link href=\"/static/css/phosphor-bold.css\" rel=\"stylesheet\"><!-- Dark mode and sidebar state detection - runs before page renders to prevent flash -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -119,7 +218,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<!-- Inter font (Stratus default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom fonts via @font-face -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<!-- Inter font (Stratus default) --><link rel=\"preconnect\" href=\"https://fonts.googleapis.com\"><link rel=\"preconnect\" href=\"https://fonts.gstatic.com\" crossorigin><link href=\"https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap\" rel=\"stylesheet\"><!-- Custom fonts via @font-face -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -135,7 +234,7 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script><script src=\"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Mermaid diagram rendering --><script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t});\n\t\t\t</script><!-- Vendor Theme Overrides -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<!-- HTMX for dynamic interactions --><script src=\"https://unpkg.com/htmx.org@1.9.10\"></script><script src=\"https://unpkg.com/htmx.org@1.9.10/dist/ext/head-support.js\"></script><script src=\"https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js\"></script><!-- SortableJS for drag-and-drop --><script src=\"/static/js/sortable.min.js\"></script><!-- Mermaid diagram rendering --><script defer src=\"https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js\"></script><script>\n\t\t\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t});\n\t\t\t</script><!-- Vendor Theme Overrides -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -149,7 +248,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</head><body hx-boost=\"true\" hx-ext=\"head-support\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</head><body hx-boost=\"true\" hx-ext=\"head-support\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"bg-cool-grey-50 dark:bg-dark-grey-900 dark:text-white overflow-hidden\"><div class=\"flex h-screen overflow-hidden\"><!-- Sidebar -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -168,7 +267,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<!-- Main Content Area --><div class=\"flex-1 flex flex-col h-full\"><!-- Topbar with Breadcrumbs -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Main Content Area --><div class=\"flex-1 flex flex-col h-full\"><!-- Topbar with Breadcrumbs -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -183,7 +282,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<!-- Entity Title Bar (shown on detail pages) -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<!-- Entity Title Bar (shown on detail pages) -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -195,57 +294,15 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<!-- Page Content --><main class=\"flex-1 flex flex-col overflow-hidden\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<!-- Page Content --><main class=\"flex-1 flex flex-col overflow-hidden\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if props.NuonAPIError != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"mx-6 mt-4 p-4 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-lg flex items-start gap-3\"><div class=\"flex-1\"><p class=\"text-sm font-medium text-red-800 dark:text-red-200\">Unable to connect to Nuon API</p><p class=\"text-sm text-red-700 dark:text-red-300 mt-0.5\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var4 string
-			templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.NuonAPIError)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 142, Col: 86}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</p></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			if props.NuonAPIShowUpdateCTA && props.CurrentOrg != nil {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<a href=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var5 templ.SafeURL
-				templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(props.BasePath + "/orgs/" + props.CurrentOrg.ID + "/connection"))
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 145, Col: 97}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"text-sm font-medium text-red-700 dark:text-red-300 underline hover:text-red-900 dark:hover:text-red-100 whitespace-nowrap\">Update connection →</a>")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templ_7745c5c3_Var1.Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = templ_7745c5c3_Var5.Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "</main></div></div><!-- Toast and Modal components -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</main></div></div><!-- Toast and Modal components -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -269,17 +326,17 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<!-- Theme Settings Panel - lazy loaded via HTMX --><div id=\"settings-panel-container\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<!-- Theme Settings Panel - lazy loaded via HTMX --><div id=\"settings-panel-container\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if isLiveReload() {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<script src=\"/static/js/dev-reload.js\"></script>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<script src=\"/static/js/dev-reload.js\"></script>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</body></html>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</body></html>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -303,12 +360,12 @@ func darkModeAndSidebarScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var6 == nil {
-			templ_7745c5c3_Var6 = templ.NopComponent
+		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var8 == nil {
+			templ_7745c5c3_Var8 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookies and apply collapsed classes to <html>\n\t\t\t// This prevents the flash where sidebars expand then collapse on page load\n\t\t\t// Classes on <html> survive Idiomorph morphs (which only touch <body>)\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t}\n\t\t\t\tif (cookie.startsWith('page_sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<script>\n\t\t(function() {\n\t\t\t// Check system preference for dark mode\n\t\t\tif (window.matchMedia('(prefers-color-scheme: dark)').matches) {\n\t\t\t\tdocument.documentElement.classList.add('dark');\n\t\t\t}\n\t\t\t// Listen for system preference changes\n\t\t\twindow.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function(e) {\n\t\t\t\tdocument.documentElement.classList.toggle('dark', e.matches);\n\t\t\t});\n\n\t\t\t// Check sidebar cookies and apply collapsed classes to <html>\n\t\t\t// This prevents the flash where sidebars expand then collapse on page load\n\t\t\t// Classes on <html> survive Idiomorph morphs (which only touch <body>)\n\t\t\tvar cookies = document.cookie.split(';');\n\t\t\tfor (var i = 0; i < cookies.length; i++) {\n\t\t\t\tvar cookie = cookies[i].trim();\n\t\t\t\tif (cookie.startsWith('sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('sidebar-collapsed');\n\t\t\t\t}\n\t\t\t\tif (cookie.startsWith('page_sidebar_open=0')) {\n\t\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -332,12 +389,12 @@ func customHeadingFont(base64URL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var7 == nil {
-			templ_7745c5c3_Var7 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomHeading';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomHeading';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -361,12 +418,12 @@ func customBodyFont(base64URL string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var8 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var8 == nil {
-			templ_7745c5c3_Var8 = templ.NopComponent
+		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var10 == nil {
+			templ_7745c5c3_Var10 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomBody';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<style>\n\t\t@font-face {\n\t\t\tfont-family: 'CustomBody';\n\t\t\tsrc: url({ templ.SafeURL(base64URL) }) format('woff2');\n\t\t\tfont-display: swap;\n\t\t}\n\t</style>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -412,9 +469,9 @@ func themeOverrides(props LayoutProps) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var9 == nil {
-			templ_7745c5c3_Var9 = templ.NopComponent
+		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var11 == nil {
+			templ_7745c5c3_Var11 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		templ_7745c5c3_Err = templ.Raw(buildVendorThemeCSS(props)).Render(ctx, templ_7745c5c3_Buffer)
@@ -441,12 +498,12 @@ func layoutScripts(basePath string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var10 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var10 == nil {
-			templ_7745c5c3_Var10 = templ.NopComponent
+		templ_7745c5c3_Var12 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var12 == nil {
+			templ_7745c5c3_Var12 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('page-sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\topenModal('keyboard-shortcuts-modal');\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tcloseModal('keyboard-shortcuts-modal');\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\topenModal('create-org-modal');\n\t\t\t// Focus on org ID input\n\t\t\tconst orgIdInput = document.getElementById('org-org-id');\n\t\t\tif (orgIdInput) {\n\t\t\t\tsetTimeout(function() { orgIdInput.focus(); }, 200);\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateOrgModal() {\n\t\t\tcloseModal('create-org-modal', function() {\n\t\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseCreateOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t}\n\t\t});\n\n\t\t// Re-apply collapsed classes after hx-boost navigation replaces <body>\n\t\tdocument.body.addEventListener('htmx:afterSettle', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar && !sidebar.classList.contains('collapsed')) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (document.documentElement.classList.contains('page-sidebar-collapsed')) {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav && !subnav.classList.contains('collapsed')) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<script>\n\t\tfunction logout() {\n\t\t\t// Redirect to server-side logout handler which clears both local JWT and WorkOS session\n\t\t\twindow.location.href = \"/admin/logout\";\n\t\t}\n\n\t\t// Cookie helpers for sidebar state persistence\n\t\tfunction getCookie(name) {\n\t\t\tconst value = document.cookie.match('(^|;)\\\\s*' + name + '\\\\s*=\\\\s*([^;]+)');\n\t\t\treturn value ? value.pop() : null;\n\t\t}\n\n\t\tfunction setCookie(name, value) {\n\t\t\tdocument.cookie = name + '=' + value + '; path=/; max-age=31536000; samesite=lax';\n\t\t}\n\n\t\t// Main Sidebar Toggle\n\t\tfunction toggleMainSidebar() {\n\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\tif (sidebar) {\n\t\t\t\tconst isCollapsed = sidebar.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Page Sidebar (Sub-nav) Toggle\n\t\tfunction togglePageSidebar() {\n\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\tif (subnav) {\n\t\t\t\tconst isCollapsed = subnav.classList.toggle('collapsed');\n\t\t\t\tdocument.documentElement.classList.toggle('page-sidebar-collapsed', isCollapsed);\n\t\t\t\tsetCookie('page_sidebar_open', isCollapsed ? '0' : '1');\n\t\t\t}\n\t\t}\n\n\t\t// Keyboard Shortcuts Modal\n\t\tfunction openKeyboardShortcutsModal() {\n\t\t\topenModal('keyboard-shortcuts-modal');\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeKeyboardShortcutsModal() {\n\t\t\tcloseModal('keyboard-shortcuts-modal');\n\t\t}\n\n\t\t// Connect Org Modal\n\t\tfunction openCreateOrgModal() {\n\t\t\tconst modal = document.getElementById('create-org-modal');\n\t\t\topenModal('create-org-modal');\n\t\t\t// Focus on org ID input\n\t\t\tconst orgIdInput = document.getElementById('org-org-id');\n\t\t\tif (orgIdInput) {\n\t\t\t\tsetTimeout(function() { orgIdInput.focus(); }, 200);\n\t\t\t}\n\t\t\t// Close user dropdown if open\n\t\t\tconst userDropdown = document.getElementById('userDropdown');\n\t\t\tif (userDropdown) {\n\t\t\t\tuserDropdown.classList.add('hidden');\n\t\t\t}\n\t\t}\n\n\t\tfunction closeCreateOrgModal() {\n\t\t\tcloseModal('create-org-modal', function() {\n\t\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\t\tif (form) form.reset();\n\t\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\t\tif (errorDiv) errorDiv.classList.add('hidden');\n\t\t\t});\n\t\t}\n\n\t\t// Global Keyboard Shortcuts\n\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t// Alt+S = Toggle main sidebar\n\t\t\tif (e.altKey && !e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttoggleMainSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Alt+Shift+S = Toggle page sidebar\n\t\t\tif (e.altKey && e.shiftKey && e.key.toLowerCase() === 's') {\n\t\t\t\ttogglePageSidebar();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// ? = Open keyboard shortcuts modal (when not typing in input)\n\t\t\tif (e.key === '?' && !['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) {\n\t\t\t\topenKeyboardShortcutsModal();\n\t\t\t\te.preventDefault();\n\t\t\t\treturn;\n\t\t\t}\n\n\t\t\t// Escape = Close any open modal\n\t\t\tif (e.key === 'Escape') {\n\t\t\t\tcloseKeyboardShortcutsModal();\n\t\t\t\tcloseCreateOrgModal();\n\t\t\t}\n\t\t});\n\n\t\t// Initialize sidebar state from cookies on page load\n\t\tdocument.addEventListener('DOMContentLoaded', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (getCookie('page_sidebar_open') === '0') {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t\tdocument.documentElement.classList.add('page-sidebar-collapsed');\n\t\t\t}\n\t\t});\n\n\t\t// Re-apply collapsed classes after hx-boost navigation replaces <body>\n\t\tdocument.body.addEventListener('htmx:afterSettle', function() {\n\t\t\tif (document.documentElement.classList.contains('sidebar-collapsed')) {\n\t\t\t\tconst sidebar = document.getElementById('main-sidebar');\n\t\t\t\tif (sidebar && !sidebar.classList.contains('collapsed')) {\n\t\t\t\t\tsidebar.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t\tif (document.documentElement.classList.contains('page-sidebar-collapsed')) {\n\t\t\t\tconst subnav = document.getElementById('page-sidebar');\n\t\t\t\tif (subnav && !subnav.classList.contains('collapsed')) {\n\t\t\t\t\tsubnav.classList.add('collapsed');\n\t\t\t\t}\n\t\t\t}\n\t\t});\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -470,12 +527,12 @@ func createOrgModal(basePath string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var11 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var11 == nil {
-			templ_7745c5c3_Var11 = templ.NopComponent
+		templ_7745c5c3_Var13 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var13 == nil {
+			templ_7745c5c3_Var13 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var12 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var14 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -487,11 +544,11 @@ func createOrgModal(basePath string) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<form id=\"create-org-form\" class=\"px-6 py-6 space-y-4\"><div><label for=\"org-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"org-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"org-api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token <span class=\"text-red-500\">*</span></label> <input type=\"password\" id=\"org-api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">To get a new token, run: <code>nuon orgs api-token -j</code></p></div><div><label for=\"org-api-url\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API URL</label> <input type=\"text\" id=\"org-api-url\" name=\"api_url\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"https://api.nuon.co\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">Leave blank to use the default API URL.</p></div><div id=\"create-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<form id=\"create-org-form\" class=\"px-6 py-6 space-y-4\"><div><label for=\"org-org-id\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">Nuon Org ID <span class=\"text-red-500\">*</span></label> <input type=\"text\" id=\"org-org-id\" name=\"org_id\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"org_...\"></div><div><label for=\"org-api-token\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API Token <span class=\"text-red-500\">*</span></label> <input type=\"password\" id=\"org-api-token\" name=\"api_token\" required class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"nuon_pat_...\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">To get a new token, run: <code>nuon orgs api-token -j</code></p></div><div><label for=\"org-api-url\" class=\"block text-sm font-medium text-cool-grey-700 dark:text-cool-grey-300 mb-1\">API URL</label> <input type=\"text\" id=\"org-api-url\" name=\"api_url\" class=\"w-full px-3 py-2 border border-cool-grey-300 dark:border-dark-grey-500 dark:bg-dark-grey-800 dark:text-white rounded-md focus:ring-2 focus:ring-primary-500 focus:border-primary-500\" placeholder=\"https://api.nuon.co\"><p class=\"mt-1 text-sm text-cool-grey-500 dark:text-cool-grey-400\">Leave blank to use the default API URL.</p></div><div id=\"create-org-error\" class=\"hidden p-3 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 rounded-md text-red-700 dark:text-red-300 text-sm\"></div></form>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Var13 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var15 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -507,7 +564,7 @@ func createOrgModal(basePath string) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, " ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, " ")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -517,7 +574,7 @@ func createOrgModal(basePath string) templ.Component {
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = components.ModalFooter().Render(templ.WithChildren(ctx, templ_7745c5c3_Var13), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.ModalFooter().Render(templ.WithChildren(ctx, templ_7745c5c3_Var15), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -527,24 +584,24 @@ func createOrgModal(basePath string) templ.Component {
 			ID:      "create-org-modal",
 			Title:   "Connect Org",
 			OnClose: "closeCreateOrgModal()",
-		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var14), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<!-- Config data for JavaScript --><div id=\"create-org-config\" class=\"hidden\" data-base-path=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<!-- Config data for JavaScript --><div id=\"create-org-config\" class=\"hidden\" data-base-path=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var14 string
-		templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
+		var templ_7745c5c3_Var16 string
+		templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(basePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 448, Col: 27}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/layout.templ`, Line: 459, Col: 27}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "\"></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -572,12 +629,12 @@ func createOrgScript() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var15 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var15 == nil {
-			templ_7745c5c3_Var15 = templ.NopComponent
+		templ_7745c5c3_Var17 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var17 == nil {
+			templ_7745c5c3_Var17 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "<script>\n\t\tasync function submitCreateOrg() {\n\t\t\tconst configEl = document.getElementById('create-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/org/create', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token'),\n\t\t\t\t\t\tapi_url: formData.get('api_url') || undefined\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t// Org connected successfully, redirect to the org's links page\n\t\t\t\t\twindow.location.href = data.redirect_to || (basePath + '/orgs/');\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect org';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<script>\n\t\tasync function submitCreateOrg() {\n\t\t\tconst configEl = document.getElementById('create-org-config');\n\t\t\tconst basePath = configEl.dataset.basePath;\n\t\t\tconst form = document.getElementById('create-org-form');\n\t\t\tconst errorDiv = document.getElementById('create-org-error');\n\t\t\tconst formData = new FormData(form);\n\n\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\ttry {\n\t\t\t\tconst response = await fetch(basePath + '/org/create', {\n\t\t\t\t\tmethod: 'POST',\n\t\t\t\t\theaders: {\n\t\t\t\t\t\t'Content-Type': 'application/json'\n\t\t\t\t\t},\n\t\t\t\t\tcredentials: 'same-origin',\n\t\t\t\t\tbody: JSON.stringify({\n\t\t\t\t\t\torg_id: formData.get('org_id'),\n\t\t\t\t\t\tapi_token: formData.get('api_token'),\n\t\t\t\t\t\tapi_url: formData.get('api_url') || undefined\n\t\t\t\t\t})\n\t\t\t\t});\n\n\t\t\t\tif (response.ok) {\n\t\t\t\t\tconst data = await response.json();\n\t\t\t\t\t// Org connected successfully, redirect to the org's links page\n\t\t\t\t\twindow.location.href = data.redirect_to || (basePath + '/orgs/');\n\t\t\t\t} else {\n\t\t\t\t\tconst error = await response.json();\n\t\t\t\t\terrorDiv.textContent = error.error || 'Failed to connect org';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t} catch (err) {\n\t\t\t\terrorDiv.textContent = 'Network error. Please try again.';\n\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t}\n\t\t}\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -601,12 +658,12 @@ func keyboardShortcutsModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var16 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var16 == nil {
-			templ_7745c5c3_Var16 = templ.NopComponent
+		templ_7745c5c3_Var18 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var18 == nil {
+			templ_7745c5c3_Var18 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var17 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var19 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -618,7 +675,7 @@ func keyboardShortcutsModal() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<div class=\"px-6 py-6 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<div class=\"px-6 py-6 space-y-3\"><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle main sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Toggle page sidebar</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Alt</kbd> <kbd class=\"stratus-kbd\">Shift</kbd> <kbd class=\"stratus-kbd\">S</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Show keyboard shortcuts</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">?</kbd></div></div><div class=\"flex justify-between items-center\"><span class=\"text-cool-grey-600 dark:text-cool-grey-400\">Close modal</span><div class=\"flex gap-1\"><kbd class=\"stratus-kbd\">Esc</kbd></div></div></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -629,7 +686,7 @@ func keyboardShortcutsModal() templ.Component {
 			Title:    "Keyboard Shortcuts",
 			MaxWidth: "max-w-md",
 			OnClose:  "closeKeyboardShortcutsModal()",
-		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var17), templ_7745c5c3_Buffer)
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var19), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

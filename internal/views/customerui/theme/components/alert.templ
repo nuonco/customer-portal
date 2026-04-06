@@ -14,33 +14,29 @@ templ Alert(props AlertProps) {
 		bgClass := "bg-blue-50 dark:bg-blue-900/30"
 		borderClass := "border-blue-200 dark:border-blue-800"
 		textClass := "text-blue-800 dark:text-blue-300"
-		iconColor := "text-blue-500"
 
 		switch props.Type {
 		case "success":
 			bgClass = "bg-green-50 dark:bg-green-900/30"
 			borderClass = "border-green-200 dark:border-green-800"
 			textClass = "text-green-800 dark:text-green-300"
-			iconColor = "text-green-500"
 		case "error":
 			bgClass = "bg-red-50 dark:bg-red-900/30"
 			borderClass = "border-red-200 dark:border-red-800"
 			textClass = "text-red-800 dark:text-red-300"
-			iconColor = "text-red-500"
 		case "warning":
 			bgClass = "bg-orange-50 dark:bg-orange-900/30"
 			borderClass = "border-orange-200 dark:border-orange-800"
 			textClass = "text-orange-800 dark:text-orange-300"
-			iconColor = "text-orange-500"
 		}
 	}}
-	<div class={ "p-4 border", bgClass, borderClass, props.Class } style="border-radius: var(--theme-radius)">
+	<div class={ "p-4 border shadow-md", bgClass, borderClass, props.Class } style="border-radius: var(--theme-radius)">
 		<div class="flex items-start">
-			<div class={ "flex-shrink-0 mr-3", iconColor }>
+			<div class={ "flex-shrink-0 mr-3", textClass }>
 				if props.Type == "success" {
 					<i class="ph-bold ph-check-circle text-xl"></i>
 				} else if props.Type == "error" {
-					<i class="ph-bold ph-x-circle text-xl"></i>
+					<i class="ph-bold ph-warning-circle text-xl"></i>
 				} else if props.Type == "warning" {
 					<i class="ph-bold ph-warning text-xl"></i>
 				} else {

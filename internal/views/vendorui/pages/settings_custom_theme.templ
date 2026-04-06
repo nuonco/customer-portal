@@ -26,6 +26,7 @@ templ CustomThemeSettingsPage(props CustomThemeSettingsPageProps) {
 				BasePath:      props.BasePath,
 			})
 			<div class="stratus-page-content overflow-auto">
+				@vendorui.APIErrorBanner(props.LayoutProps)
 				<div class="stratus-page-header">
 					<div class="stratus-heading-group">
 						<h1 class="stratus-page-title">Custom Theme</h1>
