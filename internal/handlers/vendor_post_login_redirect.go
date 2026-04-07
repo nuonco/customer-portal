@@ -2,18 +2,26 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"go.uber.org/zap"
 )
 
-func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User) {
+func (h *Handler) HandlePostLoginRedirect(c *gin.Context, user *models.User, redirectURL string) {
 	h.logger.Debug("HandlePostLoginRedirect",
 		zap.String("user_id", user.ID),
 		zap.String("email", user.Email),
 		zap.String("role", string(user.Role)),
 	)
+
+	// Use state-embedded redirect URL (relative paths only, to prevent open redirect)
+	if strings.HasPrefix(redirectURL, "/") {
+		h.logger.Debug("HandlePostLoginRedirect: found redirect URL in state, redirecting", zap.String("redirect_url", redirectURL))
+		c.Redirect(http.StatusFound, redirectURL)
+		return
+	}
 
 	// Check for return_url cookie (set by invitation flow)
 	if returnURL, err := c.Cookie("return_url"); err == nil && returnURL != "" {

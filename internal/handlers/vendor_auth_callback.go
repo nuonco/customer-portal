@@ -67,8 +67,11 @@ func (h *Handler) AuthCallback(c *gin.Context) {
 		c.SetCookie("auth_session", authResult.SessionID, maxAge, "/", "", false, true)
 	}
 
+	// Extract redirect URL from state (embedded by login page handler, may be empty)
+	redirectURL, _ := auth.ExtractRedirectFromState(receivedState)
+
 	// Handle post-login workspace selection
-	h.HandlePostLoginRedirect(c, authResult.User)
+	h.HandlePostLoginRedirect(c, authResult.User, redirectURL)
 }
 
 // VendorLogout handles logout for vendor users

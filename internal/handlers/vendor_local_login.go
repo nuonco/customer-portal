@@ -41,7 +41,7 @@ func (h *Handler) LocalLogin(c *gin.Context) {
 	}
 
 	// Handle post-login workspace selection
-	h.HandlePostLoginRedirect(c, authResult.User)
+	h.HandlePostLoginRedirect(c, authResult.User, "")
 }
 
 // VendorRegisterPageTempl renders the vendor registration page using Templ

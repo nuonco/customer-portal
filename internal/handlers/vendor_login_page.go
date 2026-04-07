@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
@@ -34,8 +35,14 @@ func (h *Handler) VendorLoginPageTempl(c *gin.Context) {
 		return
 	}
 
-	// Generate state for CSRF protection
-	state, err := auth.GenerateState()
+	// Capture redirect destination from query param (relative paths only, to prevent open redirect)
+	redirectTo := c.Query("redirect")
+	if !strings.HasPrefix(redirectTo, "/") {
+		redirectTo = ""
+	}
+
+	// Generate state for CSRF protection, embedding the redirect URL so it survives the IdP round-trip
+	state, err := auth.GenerateStateWithRedirect("", redirectTo)
 	if err != nil {
 		props.Error = "Failed to generate security token"
 		h.RenderTempl(c, http.StatusInternalServerError, vendorpages.VendorLoginPage(props))

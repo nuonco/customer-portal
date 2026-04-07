@@ -424,11 +424,12 @@ details[open] > summary .input-group-chevron {
 
 .customer-sidebar-link.active {
   background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 15%, transparent);
-  color: var(--theme-primary, #3b82f6);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 45%, black);
 }
 
 .dark .customer-sidebar-link.active {
   background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
 }
 
 .customer-sidebar-footer {
@@ -501,7 +502,11 @@ details[open] > summary .input-group-chevron {
 
 .install-switcher-item.active {
   background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 10%, transparent);
-  color: var(--theme-primary, #3b82f6);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 45%, black);
+}
+
+.dark .install-switcher-item.active {
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
 }
 
 .install-switcher-icon {
