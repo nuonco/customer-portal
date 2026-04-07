@@ -13,6 +13,9 @@ WORKDIR /src/services/${SERVICE}
 COPY internal ./internal/
 COPY pkg ./pkg/
 COPY main.go ./
+COPY static ./static/
+COPY scripts ./scripts/
+RUN ./scripts/hash-assets.sh
 RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
     --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     go generate ./...
@@ -49,8 +52,8 @@ ENV VERSION=$VERSION
 ENV DD_VERSION=$VERSION
 ENV GIT_REF=$GIT_REF
 
-# Copy static assets
-COPY static /app/static
+# Copy static assets (from build stage so hashed CSS files are included)
+COPY --from=build /src/services/customer-dashboard/static /app/static
 COPY --from=build /bin/service /bin/service
 
 EXPOSE 8080
