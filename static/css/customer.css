@@ -4104,6 +4104,18 @@ details[open] > summary .input-group-chevron {
     color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
   }
 }
+a.text-theme-primary {
+  color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    color: color-mix(in srgb, var(--theme-primary, #3b82f6) 75%, black);
+  }
+}
+.dark a.text-theme-primary {
+  color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
+  }
+}
 .install-switcher-icon {
   height: calc(var(--spacing) * 7);
   width: calc(var(--spacing) * 7);

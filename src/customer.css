@@ -519,6 +519,15 @@ details[open] > summary .input-group-chevron {
   color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
 }
 
+/* Tint inline links so the primary color isn't shown at full intensity */
+a.text-theme-primary {
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 75%, black);
+}
+
+.dark a.text-theme-primary {
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
+}
+
 .install-switcher-icon {
   @apply w-7 h-7 rounded object-contain flex-shrink-0;
 }
