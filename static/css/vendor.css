@@ -1143,9 +1143,6 @@
   .border-yellow-200 {
     border-color: var(--color-yellow-200);
   }
-  .bg-\[var\(--theme-primary\,\#3b82f6\)\] {
-    background-color: var(--theme-primary,#3b82f6);
-  }
   .bg-amber-50 {
     background-color: var(--color-amber-50);
   }

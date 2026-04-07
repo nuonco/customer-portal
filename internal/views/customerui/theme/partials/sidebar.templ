@@ -75,7 +75,7 @@ templ Sidebar(props SidebarProps) {
 						id="customerSidebarMenuButton"
 					>
 						<!-- Avatar -->
-						<div class="w-8 h-8 rounded-full bg-[var(--theme-primary,#3b82f6)] text-white flex items-center justify-center text-xs font-semibold flex-shrink-0">
+						<div class="w-8 h-8 rounded-full customer-avatar flex items-center justify-center text-xs font-semibold flex-shrink-0">
 							if props.User.Email != "" {
 								{ string([]rune(props.User.Email)[:1]) }
 							}

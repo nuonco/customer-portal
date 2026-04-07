@@ -5,9 +5,10 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
 
@@ -217,7 +218,7 @@ func Sidebar(props SidebarProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.User != nil {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"relative\" id=\"customerSidebarMenuContainer\"><button type=\"button\" onclick=\"toggleCustomerSidebarMenu()\" class=\"button button-dropdown-trigger w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer\" id=\"customerSidebarMenuButton\"><!-- Avatar --><div class=\"w-8 h-8 rounded-full bg-[var(--theme-primary,#3b82f6)] text-white flex items-center justify-center text-xs font-semibold flex-shrink-0\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<div class=\"relative\" id=\"customerSidebarMenuContainer\"><button type=\"button\" onclick=\"toggleCustomerSidebarMenu()\" class=\"button button-dropdown-trigger w-full flex items-center gap-3 px-3 py-2 rounded-md text-sm hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer\" id=\"customerSidebarMenuButton\"><!-- Avatar --><div class=\"w-8 h-8 rounded-full customer-avatar flex items-center justify-center text-xs font-semibold flex-shrink-0\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

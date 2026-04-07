@@ -432,6 +432,16 @@ details[open] > summary .input-group-chevron {
   color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
 }
 
+.customer-avatar {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 15%, transparent);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 45%, black);
+}
+
+.dark .customer-avatar {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
+}
+
 .customer-sidebar-footer {
   @apply mt-auto px-3 py-3 border-t;
   border-color: var(--theme-border);

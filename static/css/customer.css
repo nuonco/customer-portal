@@ -1145,9 +1145,6 @@
   .border-yellow-200 {
     border-color: var(--color-yellow-200);
   }
-  .bg-\[var\(--theme-primary\,\#3b82f6\)\] {
-    background-color: var(--theme-primary,#3b82f6);
-  }
   .bg-amber-50 {
     background-color: var(--color-amber-50);
   }
@@ -3941,6 +3938,26 @@ details[open] > summary .input-group-chevron {
   }
 }
 .dark .customer-sidebar-link.active {
+  background-color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
+  }
+  color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
+  }
+}
+.customer-avatar {
+  background-color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 15%, transparent);
+  }
+  color: var(--theme-primary, #3b82f6);
+  @supports (color: color-mix(in lab, red, red)) {
+    color: color-mix(in srgb, var(--theme-primary, #3b82f6) 45%, black);
+  }
+}
+.dark .customer-avatar {
   background-color: var(--theme-primary, #3b82f6);
   @supports (color: color-mix(in lab, red, red)) {
     background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
