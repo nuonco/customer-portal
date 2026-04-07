@@ -1,0 +1,45 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// StackRunDetailProps holds data for the stack run detail panel.
+type StackRunDetailProps struct {
+	Run     nuon.StackRun
+	Outputs map[string]string
+}
+
+// StackRunDetailPanel renders the stack run detail panel for the history tab.
+templ StackRunDetailPanel(props StackRunDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Stack run", props.Run.VersionStatus),
+			AccentColor: statusAccentColor(props.Run.VersionStatus),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				<div class="space-y-3">
+					@infoRow("Operation", stackRunType(props.Run))
+					@infoRow("Created", FormatAPITime(props.Run.CreatedAt))
+					@infoRow("Updated", FormatAPITime(props.Run.UpdatedAt))
+				</div>
+				<div class="space-y-3">
+					@infoRow("ID", props.Run.ID)
+					if props.Run.StatusDescription != "" {
+						@infoRow("Description", props.Run.StatusDescription)
+					}
+					if props.Run.TemplateURL != "" {
+						@infoRowLink("Template", props.Run.TemplateURL, props.Run.TemplateURL)
+					}
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+	</div>
+}

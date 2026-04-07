@@ -207,6 +207,63 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		hasActiveProvision = true
 	}
 
+	// Fetch recent workflows for the Updates tab
+	var recentWorkflows []*nuonmodels.AppWorkflow
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
+		wfClient, wfErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+		if wfErr == nil {
+			wfs, _, err := wfClient.GetInstallWorkflows(c.Request.Context(), install.NuonInstallID, 0, 20)
+			if err == nil {
+				recentWorkflows = wfs
+			}
+		}
+	}
+
+	// Fetch current input values for the Configuration tab
+	var inputFields []partials.InputFieldRow
+	if nuonOrg != nil && nuonOrg.APIToken != "" {
+		inputClient, inputErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
+		if inputErr == nil {
+			ctx := c.Request.Context()
+			currentInputs, _ := inputClient.GetInstallCurrentInputs(ctx, install.NuonInstallID)
+			rawConfig, _ := inputClient.GetAppInputConfigRaw(ctx, install.GetAppID())
+
+			// Build a lookup of name → display_name and sensitive flag from config
+			type fieldMeta struct {
+				displayName string
+				sensitive   bool
+			}
+			meta := map[string]fieldMeta{}
+			if rawConfig != nil {
+				if topInputs, ok := rawConfig["inputs"].([]interface{}); ok {
+					for _, inp := range topInputs {
+						if im, ok := inp.(map[string]interface{}); ok {
+							name, _ := im["name"].(string)
+							dn, _ := im["display_name"].(string)
+							sensitive, _ := im["sensitive"].(bool)
+							if name != "" {
+								meta[name] = fieldMeta{displayName: dn, sensitive: sensitive}
+							}
+						}
+					}
+				}
+			}
+
+			// Build rows from current values
+			if currentInputs != nil {
+				for k, v := range currentInputs.Values {
+					m := meta[k]
+					inputFields = append(inputFields, partials.InputFieldRow{
+						Name:        k,
+						DisplayName: m.displayName,
+						Value:       v,
+						Sensitive:   m.sensitive,
+					})
+				}
+			}
+		}
+	}
+
 	// Get theme colors
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
@@ -245,6 +302,8 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		SandboxRepoPublic:      sandboxRepoPublic,
 		Components:             componentInfos,
 		NuonAPIError:           nuonAPIError,
+		RecentWorkflows:        recentWorkflows,
+		InputFields:            inputFields,
 	}
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
 }

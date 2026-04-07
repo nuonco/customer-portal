@@ -1,51 +1,351 @@
 package partials
 
-import nuonmodels "github.com/nuonco/nuon-go/models"
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	nuonmodels "github.com/nuonco/nuon-go/models"
+)
 
-// ComponentDetailProps holds data for the component detail sliding panel.
-type ComponentDetailProps struct {
+// componentTabOnclick builds the inline onclick JS for a tab button.
+// It toggles active on the clicked button and shows the matching .component-sub-pane.
+func componentTabOnclick(target string) string {
+	return "var me=this,r=me.closest('.component-detail-root');r.querySelectorAll('.component-detail-tabs-btn').forEach(function(b){b.classList.toggle('active',b===me)});r.querySelectorAll('.component-sub-pane').forEach(function(el){el.classList.toggle('hidden',el.dataset.tab!=='" + target + "')})"
+}
+
+// TerraformComponentDetailProps holds data for the terraform component detail panel.
+type TerraformComponentDetailProps struct {
+	Component  *nuonmodels.AppInstallComponent
+	Info       ComponentInfo
+	Build      *nuonmodels.AppComponentBuild
+	Outputs    map[string]string
+	Resources  []nuon.TerraformResource
+	Variables  map[string]string
+}
+
+// HelmComponentDetailProps holds data for the helm chart component detail panel.
+type HelmComponentDetailProps struct {
+	Component   *nuonmodels.AppInstallComponent
+	Info        ComponentInfo
+	Build       *nuonmodels.AppComponentBuild
+	Outputs     map[string]string
+	Values      map[string]string
+	ValuesFiles []string
+	Namespace   string
+	ChartName   string
+}
+
+// DockerComponentDetailProps holds data for the docker build component detail panel.
+type DockerComponentDetailProps struct {
 	Component *nuonmodels.AppInstallComponent
 	Info      ComponentInfo
 	Build     *nuonmodels.AppComponentBuild
+	Outputs   map[string]string
+	EnvVars   map[string]string
 }
 
-templ ComponentDetailPanel(props ComponentDetailProps) {
-	<div class="p-4 space-y-4">
-		@jobDetailSection("Details") {
-			@jobDetailRow("Name", props.Info.Name)
-			@jobDetailRow("Type", componentTypeLabel(props.Info.Type))
-			@jobDetailRow("Status", props.Info.Status)
-			if props.Component.StatusDescription != "" {
-				@jobDetailRow("Description", props.Component.StatusDescription)
-			}
-			@jobDetailRow("ID", props.Component.ID)
-			@jobDetailRow("Created", FormatAPITime(props.Component.CreatedAt))
-			@jobDetailRow("Updated", FormatAPITime(props.Component.UpdatedAt))
-		}
-		if props.Info.Repo != "" || props.Build != nil {
-			@jobDetailSection("Source") {
-				@jobDetailRow("Repository", props.Info.Repo)
-				@jobDetailRow("Directory", props.Info.Directory)
-				@jobDetailRow("Branch", props.Info.Branch)
-				if props.Build != nil {
-					@jobDetailRow("Build Status", props.Build.Status)
-					@jobDetailRow("Git Ref", props.Build.GitRef)
-					if props.Build.VcsConnectionCommit != nil {
-						@jobDetailRow("Commit SHA", props.Build.VcsConnectionCommit.Sha)
-						@jobDetailRow("Commit Message", props.Build.VcsConnectionCommit.Message)
-						@jobDetailRow("Author", props.Build.VcsConnectionCommit.AuthorName)
-					}
+// ExternalImageComponentDetailProps holds data for the external image component detail panel.
+type ExternalImageComponentDetailProps struct {
+	Component *nuonmodels.AppInstallComponent
+	Info      ComponentInfo
+	Build     *nuonmodels.AppComponentBuild
+	Outputs   map[string]string
+	ImageURL  string
+	ImageTag  string
+}
+
+// JobComponentDetailProps holds data for the job component detail panel.
+type JobComponentDetailProps struct {
+	Component *nuonmodels.AppInstallComponent
+	Info      ComponentInfo
+	Build     *nuonmodels.AppComponentBuild
+	Outputs   map[string]string
+	EnvVars   map[string]string
+	ImageURL  string
+	ImageTag  string
+}
+
+// KubernetesComponentDetailProps holds data for the kubernetes manifest component detail panel.
+type KubernetesComponentDetailProps struct {
+	Component *nuonmodels.AppInstallComponent
+	Info      ComponentInfo
+	Build     *nuonmodels.AppComponentBuild
+	Outputs   map[string]string
+	Manifest  string
+}
+
+// TerraformComponentDetailPanel renders the component detail panel for terraform_module components.
+templ TerraformComponentDetailPanel(props TerraformComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
 				}
-			}
+				<div class="space-y-3">
+					@infoRow("Repository", props.Info.Repo)
+					@infoRow("Directory", props.Info.Directory)
+					@infoRow("Git Ref", props.Info.Branch)
+				</div>
+			</div>
 		}
-		if len(props.Component.InstallDeploys) > 0 {
-			if outputsMap := toStringMap(props.Component.InstallDeploys[0].Outputs); len(outputsMap) > 0 {
-				@jobDetailSection("Outputs") {
-					for key, val := range outputsMap {
-						@jobDetailOutputRow(key, val)
-					}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Resources", Target: "resources"},
+			{Label: "Variables", Target: "variables"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="resources">
+			@components.ResourceList(components.ResourceListProps{Resources: props.Resources})
+		</div>
+		<div class="component-sub-pane hidden" data-tab="variables">
+			@componentKeyValuePane(props.Variables, "ph-code", "No variables", "No variables are defined for this component.")
+		</div>
+	</div>
+}
+
+// HelmComponentDetailPanel renders the component detail panel for helm_chart components.
+templ HelmComponentDetailPanel(props HelmComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
 				}
+				<div class="space-y-3">
+					@infoRow("Chart", props.ChartName)
+					@infoRow("Namespace", props.Namespace)
+					@infoRow("Repository", props.Info.Repo)
+					@infoRow("Git Ref", props.Info.Branch)
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Values", Target: "values"},
+			{Label: "Values Files", Target: "valuesfiles"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="values">
+			@componentKeyValuePane(props.Values, "ph-sliders", "No values", "No values are defined for this component.")
+		</div>
+		<div class="component-sub-pane hidden" data-tab="valuesfiles">
+			if len(props.ValuesFiles) > 0 {
+				<div class="space-y-4">
+					for _, f := range props.ValuesFiles {
+						@components.CodeBlock(f, "yaml")
+					}
+				</div>
+			} else {
+				<div class="text-center py-12">
+					<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+					<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No values files</h3>
+					<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No values files are defined for this component.</p>
+				</div>
 			}
+		</div>
+	</div>
+}
+
+// DockerComponentDetailPanel renders the component detail panel for docker_build components.
+templ DockerComponentDetailPanel(props DockerComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
+				}
+				<div class="space-y-3">
+					@infoRow("Repository", props.Info.Repo)
+					@infoRow("Directory", props.Info.Directory)
+					@infoRow("Git Ref", props.Info.Branch)
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Env Vars", Target: "envvars"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="envvars">
+			@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+		</div>
+	</div>
+}
+
+// ExternalImageComponentDetailPanel renders the component detail panel for external_image components.
+templ ExternalImageComponentDetailPanel(props ExternalImageComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
+				}
+				<div class="space-y-3">
+					@infoRow("Image", props.ImageURL)
+					@infoRow("Tag", props.ImageTag)
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+	</div>
+}
+
+// JobComponentDetailPanel renders the component detail panel for job components.
+templ JobComponentDetailPanel(props JobComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
+				}
+				<div class="space-y-3">
+					@infoRow("Image", props.ImageURL)
+					@infoRow("Tag", props.ImageTag)
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Env Vars", Target: "envvars"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="envvars">
+			@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+		</div>
+	</div>
+}
+
+// KubernetesComponentDetailPanel renders the component detail panel for kubernetes_manifest components.
+templ KubernetesComponentDetailPanel(props KubernetesComponentDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
+			AccentColor: statusAccentColor(componentStatus(props.Component)),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				if len(props.Component.InstallDeploys) > 0 {
+					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
+				} else {
+					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
+				}
+				<div class="space-y-3">
+					@infoRow("Repository", props.Info.Repo)
+					@infoRow("Directory", props.Info.Directory)
+					@infoRow("Git Ref", props.Info.Branch)
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Manifest", Target: "manifest"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="manifest">
+			if props.Manifest != "" {
+				@components.CodeBlock(props.Manifest, "yaml")
+			} else {
+				<div class="text-center py-12">
+					<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+					<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No manifest</h3>
+					<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No manifest is defined for this component.</p>
+				</div>
+			}
+		</div>
+	</div>
+}
+
+// componentDetailTab describes a single tab button.
+type componentDetailTab struct {
+	Label  string
+	Target string
+	Active bool
+}
+
+templ componentDetailTabBar(tabs []componentDetailTab) {
+	<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600">
+		for _, tab := range tabs {
+			<button
+				class={ "button button-nav nav-item component-detail-tabs-btn", templ.KV("active", tab.Active) }
+				{ templ.Attributes{"onclick": componentTabOnclick(tab.Target)}... }
+			>{ tab.Label }</button>
 		}
 	</div>
+}
+
+templ componentOutputsPane(outputs map[string]string) {
+	if len(outputs) > 0 {
+		<div class="space-y-3">
+			for key, val := range outputs {
+				<div class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 pb-3 last:pb-0">
+					<div class="text-sm font-medium text-cool-grey-900 dark:text-white mb-1">{ key }</div>
+					@components.CodeBlock(val, outputLang(val))
+				</div>
+			}
+		</div>
+	} else {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-terminal text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No outputs</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No outputs are available for this component.</p>
+		</div>
+	}
+}
+
+templ componentKeyValuePane(data map[string]string, icon string, emptyTitle string, emptyMsg string) {
+	if len(data) > 0 {
+		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
+			for key, val := range data {
+				<div class="grid grid-cols-2 gap-4 py-2 text-sm">
+					<span class="font-mono text-cool-grey-700 dark:text-cool-grey-300 truncate">{ key }</span>
+					<span class="font-mono text-cool-grey-900 dark:text-white break-all">{ val }</span>
+				</div>
+			}
+		</div>
+	} else {
+		<div class="text-center py-12">
+			<i class={ "ph-bold text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block", icon }></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">{ emptyTitle }</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">{ emptyMsg }</p>
+		</div>
+	}
 }

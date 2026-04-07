@@ -42,6 +42,13 @@ templ overviewShimmer() {
 				@components.ShimmerBar("h-7", "w-28")
 			</div>
 		}
+		<!-- Tab bar shimmer -->
+		<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
+			@components.ShimmerBar("h-5", "w-20")
+			@components.ShimmerBar("h-5", "w-28")
+		</div>
+		<!-- Tab content shimmer -->
+		@components.ShimmerLines(4)
 	</div>
 }
 

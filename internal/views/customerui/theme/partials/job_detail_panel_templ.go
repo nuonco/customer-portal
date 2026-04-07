@@ -758,14 +758,14 @@ func jobDetailRow(label string, value string) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if value != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0\"><td class=\"py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0\"><td class=\"w-1/3 py-2 pr-3 text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 whitespace-nowrap align-top\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var20 string
 			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(label)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 217, Col: 123}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/job_detail_panel.templ`, Line: 217, Col: 129}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
 			if templ_7745c5c3_Err != nil {

@@ -30,7 +30,7 @@ templ CustomerAppsPage(props CustomerAppsPageProps) {
 				<a href={ templ.SafeURL(fmt.Sprintf("%s/apps/%s/install", props.BasePath, props.Apps[0].AppID)) } class="button button-primary btn-theme-primary">Install</a>
 			}
 		}
-		<div class="px-6">
+		<div class="px-6 pb-6">
 			if props.NuonAPIError != "" {
 				<div class="mb-6">
 					@components.Alert(components.AlertProps{
@@ -105,7 +105,7 @@ templ CustomerAppDetailPage(props CustomerAppDetailPageProps) {
 				<a href={ templ.SafeURL(props.BasePath + "/apps/" + props.App.AppID + "/install") } class="button button-primary btn-theme-primary">Install</a>
 			}
 		}
-		<div class="px-6">
+		<div class="px-6 pb-6">
 			if props.NuonAPIError != "" {
 				<div class="mb-6">
 					@components.Alert(components.AlertProps{

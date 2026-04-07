@@ -1,0 +1,48 @@
+package partials
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	nuonmodels "github.com/nuonco/nuon-go/models"
+)
+
+// SandboxRunDetailProps holds data for the sandbox run detail panel.
+type SandboxRunDetailProps struct {
+	Run       *nuonmodels.AppInstallSandboxRun
+	Outputs   map[string]string
+	Resources []nuon.TerraformResource
+}
+
+// SandboxRunDetailPanel renders the sandbox run detail panel for the history tab.
+templ SandboxRunDetailPanel(props SandboxRunDetailProps) {
+	<div class="p-4 space-y-4 component-detail-root">
+		@components.Card(components.CardProps{
+			Header:      stackCardHeader("Sandbox run", props.Run.Status),
+			AccentColor: statusAccentColor(props.Run.Status),
+		}) {
+			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+				<div class="space-y-3">
+					@infoRow("Operation", string(props.Run.RunType))
+					@infoRow("Created", FormatAPITime(props.Run.CreatedAt))
+					@infoRow("Updated", FormatAPITime(props.Run.UpdatedAt))
+				</div>
+				<div class="space-y-3">
+					@infoRow("ID", props.Run.ID)
+					if props.Run.StatusDescription != "" {
+						@infoRow("Description", props.Run.StatusDescription)
+					}
+				</div>
+			</div>
+		}
+		@componentDetailTabBar([]componentDetailTab{
+			{Label: "Outputs", Target: "outputs", Active: true},
+			{Label: "Resources", Target: "resources"},
+		})
+		<div class="component-sub-pane" data-tab="outputs">
+			@componentOutputsPane(props.Outputs)
+		</div>
+		<div class="component-sub-pane hidden" data-tab="resources">
+			@components.ResourceList(components.ResourceListProps{Resources: props.Resources})
+		</div>
+	</div>
+}

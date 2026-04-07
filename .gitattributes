@@ -1,2 +1,4 @@
 *_templ.go linguist-generated=true
 *_templ.go -diff
+static/** linguist-generated=true
+static/** -diff

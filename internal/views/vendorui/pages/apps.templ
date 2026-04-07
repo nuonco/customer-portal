@@ -106,9 +106,11 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status s
 			</td>
 			<td class="px-6 py-4 whitespace-nowrap">
 				if app.LogoLightBase64 != "" {
-					<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
 					if app.LogoDarkBase64 != "" {
+						<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
 						<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+					} else {
+						<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
 					}
 				} else if app.LogoDarkBase64 != "" {
 					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
@@ -152,9 +154,11 @@ templ appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status s
 			</td>
 			<td class="px-6 py-4 whitespace-nowrap">
 				if app.LogoLightBase64 != "" {
-					<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
 					if app.LogoDarkBase64 != "" {
+						<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden" alt=""/>
 						<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block" alt=""/>
+					} else {
+						<img src={ app.LogoLightBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>
 					}
 				} else if app.LogoDarkBase64 != "" {
 					<img src={ app.LogoDarkBase64 } class="w-8 h-8 rounded object-contain flex-shrink-0" alt=""/>

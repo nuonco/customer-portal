@@ -708,6 +708,11 @@ func (c *Client) GetInstallDeploys(ctx context.Context, installID string) ([]*mo
 	return deploys, err
 }
 
+// GetInstallDeploy retrieves a single deploy by ID with full details including outputs.
+func (c *Client) GetInstallDeploy(ctx context.Context, installID, deployID string) (*models.AppInstallDeploy, error) {
+	return c.client.GetInstallDeploy(ctx, installID, deployID)
+}
+
 // GetAppComponents retrieves all components for an app
 func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.AppComponent, error) {
 	components, _, err := c.client.GetAppComponents(ctx, appID, &models.GetPaginatedQuery{
@@ -718,6 +723,37 @@ func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.
 		return nil, fmt.Errorf("failed to get app components: %w", err)
 	}
 	return components, nil
+}
+
+// GetInstallComponentOutputs retrieves the outputs for a specific install component.
+func (c *Client) GetInstallComponentOutputs(ctx context.Context, installID, componentID string) (map[string]string, error) {
+	reqURL := fmt.Sprintf("%s/v1/installs/%s/components/%s/outputs", c.apiURL, installID, componentID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("API returned status %d: %s", resp.StatusCode, string(body))
+	}
+
+	var outputs map[string]string
+	if err := json.Unmarshal(body, &outputs); err != nil {
+		return nil, fmt.Errorf("failed to parse outputs: %w", err)
+	}
+	return outputs, nil
 }
 
 // GetAppComponentLatestBuild retrieves the latest build for a component.
@@ -979,10 +1015,17 @@ func (c *Client) GetTerraformWorkspaceStates(ctx context.Context, workspaceID st
 	return result, nil
 }
 
+// TerraformStateOutput represents a single output in the terraform state.
+type TerraformStateOutput struct {
+	Type  interface{} `json:"type"`
+	Value interface{} `json:"value"`
+}
+
 // TerraformStateJSON represents the full terraform state JSON response.
 type TerraformStateJSON struct {
 	Values struct {
-		RootModule *TerraformStateModule `json:"root_module"`
+		RootModule *TerraformStateModule           `json:"root_module"`
+		Outputs    map[string]TerraformStateOutput `json:"outputs"`
 	} `json:"values"`
 }
 
@@ -1004,6 +1047,40 @@ type TerraformResource struct {
 }
 
 // GetTerraformWorkspaceStateResources fetches the full terraform state and extracts all resources.
+func (c *Client) GetTerraformWorkspaceStateOutputs(ctx context.Context, workspaceID, stateID string) (map[string]string, error) {
+	reqURL := fmt.Sprintf("%s/v1/runners/terraform-workspace/%s/state-json/%s", c.apiURL, workspaceID, stateID)
+	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var state TerraformStateJSON
+	if err := json.NewDecoder(resp.Body).Decode(&state); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	if len(state.Values.Outputs) == 0 {
+		return nil, nil
+	}
+	outputs := make(map[string]string, len(state.Values.Outputs))
+	for k, o := range state.Values.Outputs {
+		if s, ok := o.Value.(string); ok {
+			outputs[k] = s
+		} else if b, err := json.MarshalIndent(o.Value, "", "  "); err == nil {
+			outputs[k] = string(b)
+		}
+	}
+	return outputs, nil
+}
+
 func (c *Client) GetTerraformWorkspaceStateResources(ctx context.Context, workspaceID, stateID string) ([]TerraformResource, error) {
 	reqURL := fmt.Sprintf("%s/v1/runners/terraform-workspace/%s/state-json/%s", c.apiURL, workspaceID, stateID)
 	req, err := http.NewRequestWithContext(ctx, "GET", reqURL, nil)

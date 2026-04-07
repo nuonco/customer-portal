@@ -11,3 +11,7 @@ tmp/
 node_modules/
 
 .env.*
+
+# static/ is fully build-generated; source files live in src/
+static/*
+!static/.gitkeep

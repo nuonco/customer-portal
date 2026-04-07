@@ -201,7 +201,7 @@ templ sandboxPanel(props AuditPanelProps) {
 		@sandboxOutputsView(props.SandboxInfo)
 	</div>
 	<div id="sandbox-sub-resources" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "resources") }>
-		@sandboxResourcesView(props.SandboxResources)
+		@components.ResourceList(components.ResourceListProps{Resources: props.SandboxResources})
 	</div>
 	<div id="sandbox-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "policies") }>
 		@sandboxPolicyReportList(props.SandboxPolicyReports, "sandbox policy evaluations")
@@ -414,46 +414,6 @@ templ sandboxOutputsView(info *SandboxInfo) {
 	}
 }
 
-templ sandboxResourcesView(resources []nuon.TerraformResource) {
-	if len(resources) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No resources</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox resources are not available for this install.</p>
-		</div>
-	} else {
-		<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">{ fmt.Sprintf("%d resources", len(resources)) }</p>
-		<div class="flex flex-col gap-2">
-			for _, r := range resources {
-				<details class="border border-cool-grey-200 dark:border-dark-grey-600 rounded-lg">
-					<summary class="flex items-center justify-between px-4 py-3 cursor-pointer select-none hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700">
-						<div class="flex items-center gap-3 min-w-0">
-							<span class="font-mono text-sm font-medium text-cool-grey-900 dark:text-white truncate">
-								{ r.Address }
-							</span>
-						</div>
-						<div class="flex items-center gap-2 shrink-0 ml-3">
-							<span class="px-2 py-0.5 text-xs font-mono rounded bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300">{ r.Type }</span>
-							<span class="px-2 py-0.5 text-xs rounded bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-600 dark:text-cool-grey-400">{ r.Mode }</span>
-							<i class="ph-bold ph-caret-down text-sm text-cool-grey-400 transition-transform details-open:rotate-180"></i>
-						</div>
-					</summary>
-					<div class="px-4 py-3 border-t border-cool-grey-200 dark:border-dark-grey-600">
-						<div class="flex gap-6 text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-3">
-							<span><span class="font-medium">Name:</span> { r.Name }</span>
-							<span><span class="font-medium">Provider name:</span> { r.ProviderName }</span>
-							<span><span class="font-medium">Schema version:</span> { fmt.Sprintf("%d", r.SchemaVersion) }</span>
-						</div>
-						if len(r.Values) > 0 {
-							<p class="text-xs font-medium text-cool-grey-500 dark:text-cool-grey-400 mb-1">Values</p>
-							@components.CodeBlock(formatJSON(r.Values), "json")
-						}
-					</div>
-				</details>
-			}
-		</div>
-	}
-}
 
 // formatJSON pretty-prints a value as indented JSON.
 func formatJSON(v interface{}) string {
@@ -748,7 +708,7 @@ templ auditStackList(runs []nuon.StackRun) {
 				for _, run := range runs {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('stack', '%s', 'Stack %s')", run.ID, stackRunType(run))} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openStackRunPanel('%s', '%s')", run.ID, stackRunType(run))} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ stackRunType(run) }>{ stackRunType(run) }</td>
 						<td class="py-2 pr-3">
@@ -792,7 +752,7 @@ templ auditSandboxList(runs []*nuonmodels.AppInstallSandboxRun) {
 				for _, run := range runs {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('sandbox', '%s', 'Sandbox %s')", run.ID, string(run.RunType))} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openSandboxRunPanel('%s', '%s')", run.ID, string(run.RunType))} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(run.RunType) }</td>
 						<td class="py-2 pr-3">
@@ -944,7 +904,7 @@ templ auditDeployList(deploys []*nuonmodels.AppInstallDeploy) {
 				for _, deploy := range deploys {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openJobPanel('deploy', '%s', '%s')", deploy.ID, deploy.ComponentName)} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openComponentPanel('%s', '%s')", deploy.ComponentID, deploy.ComponentName)} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">{ string(deploy.InstallDeployType) }</td>
 						<td class="py-2 pr-3">
@@ -1424,6 +1384,50 @@ templ auditPanelScripts() {
 					.then(function(html) { content.innerHTML = html; })
 					.catch(function() {
 						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load job details.</p>';
+					});
+			};
+
+			window.openStackRunPanel = function(runID, runType) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = 'Stack ' + runType;
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/stack-run/' + runID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load stack run details.</p>';
+					});
+			};
+
+			window.openSandboxRunPanel = function(runID, runType) {
+				var panel = document.getElementById('secondary-panel');
+				var title = document.getElementById('secondary-panel-title');
+				var content = document.getElementById('secondary-panel-content');
+				if (!panel || !title || !content) return;
+				title.textContent = 'Sandbox ' + runType;
+				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				panel.classList.add('open');
+				var overlay = document.getElementById('secondary-panel-overlay');
+				if (overlay) overlay.classList.add('open');
+
+				var config = document.getElementById('audit-panel-config');
+				var basePath = config ? config.getAttribute('data-base-path') : '';
+				var installId = config ? config.getAttribute('data-install-id') : '';
+				fetch(basePath + '/installs/' + installId + '/panel/sandbox-run/' + runID)
+					.then(function(resp) { return resp.text(); })
+					.then(function(html) { content.innerHTML = html; })
+					.catch(function() {
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load sandbox run details.</p>';
 					});
 			};
 

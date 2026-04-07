@@ -2,122 +2,6 @@
 
 The customer-dashboard service provides a white-label portal for Nuon vendors and their customers. Vendors configure install links and branding, customers use the portal to manage their installs.
 
-## User Journeys
-
-The app must fulfill the following user stories.
-
-### Vendor Journeys
-
-General vendor journeys.
-
-- As a vendor, when I log into the app, an account with the role "vendor" should be created for me.
-- As a vendor, after creating an account, I should be able to connect to any instance of a Nuon control plane, by providing an org ID and api token.
-- As a vendor, after connecting to a Nuon control plane, I should be able create an "install link" for any app in the connected org.
-- As a vendor, I need to be able to create, list, view, and delete install links.
-- As a vendor, I can invite team members by email. If the email matches an existing user, they are added immediately. If not, a pending invitation is created and they auto-join when they next log in.
-- As a vendor, I can archive an org I no longer need from the Org Connection settings page. Archiving soft-deletes the org and clears the API token. The org disappears from the sidebar and all queries.
-- As a vendor, I can restore an archived org from the Profile panel by providing a new API token. Restoring undeletes the org and reconnects it.
-
-- As a vendor,
-  - when I view an org in the vendor dashboard at https://app.nuon.co, there will be an item in the main nav titled "Connect Customer Portal".
-  - when I click on "Connect Customer Portal" a modal should open, explaining what the Customer Portal is, and asking me to confirm that I want to connect my org to it.
-  - when I confirm that I want to connect, I am taken to the customer portal login at https://customers.nuon.co/admin/login.
-  - when I log in, my org is automatically connected, and I land on https://customers.nuon.co/orgs/:org_id/portal/branding.
-- As a vendor,
-  - when I log in for the first time, I am entered into an onboarding flow that walks me through setting up the portal, configuring my app, and creating my first install link.
-- As a vendor,
-  - I can embed the customer portal into a page in my own website.
-
-### Customer Journeys
-
-- As a customer,
-  - when I follow an install link, I am shown the install link page, on the first step of the install creation flow.
-  - when I select the region and provide the required inputs, the page transitions to the next step in the flow, showing me a view of the provision workflow.
-  - when the provision is complete, I am redirected to the install detail page.
-- As a customer,
-  - if I have a single install, I am shown that install's detail page on the home page of the portal.
-  - if I have multiple installs, I am shown the installs list on the homepage.
-- As a customer,
-  - I always see an install switcher (dropdown list of my installs with search) and "App Catalog" navigation link in the sidebar, with my account menu at the bottom.
-  - the install switcher shows each install's name and app name, with the app's logo as the icon. Selecting an install navigates to its detail page. A "Create Install" button links to the App Catalog.
-  - when I visit the App Catalog and no apps are published, I see a friendly empty state message.
-- As a customer,
-  - after logging in via OIDC, if I don't have a user group, one is automatically created with the name "<first-name>'s Group" (or "My Group" if no name is available).
-  - I can create additional user groups from the "New User Group" option in the user menu dropdown.
-  - as a user group owner, I can rename my user group from the User Group Settings page.
-  - as a user group owner, I can transfer ownership to another member from the User Group Settings page.
-  - as a user group owner, I can invite teammates by email from the User Group Settings page.
-  - if the invited email matches an existing user, they are added as a member immediately.
-  - if the invited email doesn't match an existing user, a pending invite is created and they auto-join when they next log in.
-  - I can toggle any install I own between "user group" visibility (shared) and "private" (only me).
-  - I can belong to multiple user groups in the same org (e.g. via invites to different user groups).
-  - the user menu dropdown shows the active user group name instead of my email.
-  - if I have multiple user groups, the dropdown lists other user groups I can switch to.
-  - switching user groups sets a cookie and reloads the page, scoping installs to the selected user group.
-- As a vendor,
-  - I can view all customer user groups in the User Groups tab under User Group Management.
-  - I can click into a user group to see its members and associated installs.
-
-## Implementation Status
-
-✅ **Core Infrastructure**
-
-- Go module with all required dependencies
-- PostgreSQL database with GORM models
-  - Supports DATABASE*URL or individual DB*\* environment variables
-  - AWS RDS IAM authentication support
-- Gin web server with role-based routing
-- JWT authentication with vendor/customer roles
-- OIDC, SAML, and local password authentication providers
-
-✅ **Vendor Features**
-
-- Vendor login/signup page
-- Organization connection flow (API token + org ID storage)
-- Install link creation with SHA-based security
-- Install link management (create, view, delete)
-- Organization dashboard with link listing
-- **Publish App**: Vendors can set each app's catalog status to "Published", "Coming Soon", or "Unpublished" via a dropdown on the Apps page. Published apps appear on the customer `/apps` page without requiring an install link. Coming-soon apps appear in the catalog with a badge but cannot be installed.
-- **App Catalog Ordering**: Vendors can drag and drop rows on the Apps page to control the display order of apps in the customer catalog. Ordering is preserved for all apps (published, coming soon, and unpublished) so the sort order is stable across page reloads. Clicking "Save Configuration" persists the order and statuses via `PUT /admin/orgs/:org_id/apps/order`.
-- **Per-App Logo**: Vendors can upload separate light and dark mode logos for each app via `GET/PUT /admin/orgs/:org_id/apps/:app_id/logo`. Logos are stored as base64 data URIs in the `PublishedApp` model. The Apps table shows a read-only preview; the Logo subnav tab provides the upload UI. In the customer portal, the light logo is shown by default and the dark logo when dark mode is active.
-- **Import Install to User Group**: From the user group detail page, vendors can search for existing org installs (unassigned or in other user groups) and assign them to a customer user group. This is useful for migrating legacy installs that lack user group associations.
-- **Archive & Restore Org**: Vendors can archive an org from the Org Connection settings page (danger zone). Archiving soft-deletes the record and clears the API token. Archived orgs appear in the Profile panel and can be restored by providing a new API token.
-
-✅ **Customer Features**
-
-- Install link acceptance page
-- Customer user group creation via install links
-- Install creation flow
-- **Platform-Aware Region Selector**: The install form detects the app platform from `RunnerConfig.AppRunnerType` and renders the appropriate region selector. AWS apps show a full AWS region list, Azure apps show Azure locations, and GCP apps show no region selector (GCP installs don't require a region). The submission handlers also skip the default `us-east-1` fallback for non-AWS platforms.
-- Install management dashboard
-- Install status tracking
-- **Access Panel**: The install detail panel includes an "Access" tab that displays all IAM roles defined for the app. Roles are fetched from the app's permissions config via `GetAppConfigFull()`. Each role shows its name, description, and whether it is enabled or disabled. Standard roles (provision, deprovision, maintenance) are shown as enabled; break-glass roles are shown as disabled. The tab lazy-loads on first click via HTMX.
-- **Workflow Step Role Display**: The active workflow step card shows the IAM role used by the step's target (deploy or sandbox run). The role is fetched from the Nuon API using the step's `StepTargetID` and `StepTargetType`. Only the current step's role is fetched (not historical steps). If the role is empty or the fetch fails, no role badge is shown.
-- **Workflow Step Policy Evaluation**: The active workflow step card displays policy evaluation results when available. Policy violations (denies and warnings) are extracted from the workflow step's status metadata. The section shows a summary header with deny/warn/pass badges, and collapsible `<details>` sections listing individual violations with their messages. The section is only rendered when the step has policy evaluation data.
-- **Provision Progress Accordion**: During active provisioning (in-progress, pending, or approval-awaiting), the install detail panel replaces the overview content with a phased accordion. Workflow steps are grouped into three logical phases — "Install stack", "Provision sandbox", and "Deploy app" — based on step index. All three phases are always shown for layout consistency, even when later phases have no steps yet (empty phases display a "Waiting to start" message). Each phase shows its status (completed, in-progress, failed, not_started, or pending) with step-level detail. The accordion updates via HTMX polling every 5 seconds and reverts to the normal overview once provisioning completes. Consecutive component steps — pre-deploy action runs, "sync and plan", "apply", and post-deploy action runs — are automatically merged into a single "Deploy \<name\>" step for a cleaner customer view; the merged step surfaces the plan step's approval status when applicable.
-- **Sandbox Resources Tab**: The sandbox panel includes a "Resources" sub-tab that displays all Terraform state resources managed by the sandbox. Resources are fetched from the sandbox's terraform workspace state and displayed in a table with Type, Name, Provider, and Instance Count columns. The tab shows a friendly empty state when no resources are available.
-- **GCP Stack Setup Guide**: For GCP apps, the "await install stack" provision step displays a 4-step setup guide (clone install stack module, configure GCS remote state, save tfvars, run Terraform). The platform is detected from the app's `RunnerConfig.AppRunnerType`. Tfvars content is parsed from `stack.Versions[0].Contents`.
-- **App Catalog** (`/apps`): Customers can browse and install published apps without a link. Always accessible; shows a friendly empty state when no apps are published yet. When exactly one app is published, it is displayed as a full-width detail card (with tabs for overview, inputs, secrets, sandbox, components, roles, and policies) instead of a single small grid card. The overview tab renders the app's readme as formatted markdown (via goldmark); falls back to the app description if no readme exists. Fenced code blocks receive server-side syntax highlighting via goldmark-highlighting (Chroma) with CSS classes, supporting both light and dark mode. Mermaid diagram code blocks are rendered as interactive SVG diagrams via client-side mermaid.js.
-- **Published App Install** (`/apps/:app_id/install`): Customers can install a published app by providing a name, region, and any required inputs.
-- **Customer User Groups**: After OIDC login, customers are required to create or join a user group before accessing installs. User groups group customers from the same company so they can share installs. User group owners can invite teammates by email; if the email matches an existing user they are added immediately, otherwise they auto-join on next login.
-- **Install Visibility**: Install owners can toggle visibility between "user group" (shared with all user group members) and "private" (only visible to the owner). Installs must belong to a customer user group to be visible; legacy installs without a user group association are excluded from all listings.
-
-- **API Error Banner**: When the app cannot fetch data from the Nuon API (e.g., expired token, network issue), a red error banner is displayed at the top of the content area on all customer pages, advising the user to contact support. The banner uses the existing `Alert` component and is rendered in the customer layout when `LayoutProps.NuonAPIError` is set by the handler.
-
-✅ **User Interface**
-
-- Responsive HTML templates with Tailwind CSS
-- Interactive JavaScript for API calls
-- Modal dialogs for forms
-- Error handling and success messages
-
-🚧 **Nuon API Integration**
-
-- Basic client wrapper implemented
-- Mock data for development/testing
-- Real API calls need to be uncommented and tested
-- Non-customer-facing inputs with default values are automatically merged into install creation requests
-
 ## Quick Start
 
 1. **Build and run the application:**
@@ -257,7 +141,7 @@ There are some conventions that are specific to the admin UI.
 - **CustomerAccount** - User group that groups customers together within a vendor org. Displayed as "User Group" in the UI. Scoped to org via `OrgID`.
 - **CustomerAccountMember** - Links a user to a user group with role (owner/member). A user can belong to multiple user groups in the same org and switch between them via a cookie.
 - **CustomerAccountInvite** - Email-based invite for joining a user group. When a user with a matching email logs in, they are automatically added as a member.
-**Configuration Models:**
+  **Configuration Models:**
 
 - **AppInputConfig** - App-specific input field configurations
 - **AppTheme** - Custom theming and branding per org (colors, logos, favicon, fonts, login page, color scheme lock, custom CSS, header title). Vendors can upload a custom favicon via Branding settings; it is stored as a base64 data URI in `FaviconBase64` and rendered in the customer portal `<head>`. The `ThemeMode` field (`"auto"`, `"light"`, `"dark"`) controls whether the customer portal follows the system preference or is locked to a specific color scheme. The `CustomCSS` field allows vendors to inject arbitrary CSS into the customer portal; it is appended to the portal stylesheet after all theme variables are applied and served via the `/custom/css/:org_id.css` endpoint. The vendor logo (`LogoLightBase64`, `LogoDarkBase64`) is **not** shown in the header nav — it appears as a centered hero block (`h-16 max-w-xs`) at the top of each main customer page (`/installs`, `/apps`, install link, app install). When `LoginTitle` and `LoginSubtitle` are not customized by the vendor, the login page uses org-aware defaults: the title shows `"<OrgName> BYOC"` and the subtitle shows `"Manage your <OrgName> BYOC installs"` (falling back to `"Customer Portal"` / `"Manage your installs."` if the org name is unavailable). The `HeaderTitle` field sets a custom title displayed next to the logo in the customer portal header; when empty, it defaults to `"<OrgName> BYOC"`. The `HeaderTitleHidden` field (boolean) hides the header title entirely when set to true.
@@ -395,111 +279,6 @@ This flow solves the problem of cookies being scoped to subdomains. By authentic
 
 Note: Either `DATABASE_URL` or the individual `DB_*` variables can be used for database configuration.
 
-## API Endpoints
-
-### Vendor Routes (`/admin/*`)
-
-- `GET /admin/` - Redirects to login
-- `GET /admin/login/` - Vendor login page (supports OIDC, SAML, or local auth)
-- `GET /admin/callback` - OAuth/OIDC callback handler
-- `GET /admin/orgs/` - Redirects to first org
-- `POST /admin/orgs/` - Connect new organization
-- `DELETE /admin/orgs/:org_id` - Archive organization (soft-delete, clears API token)
-- `POST /admin/orgs/:org_id/restore` - Restore archived organization (requires new API token)
-- `GET /admin/orgs/:org_id/apps` - Organization apps
-- `GET /admin/orgs/:org_id/apps/:app_id` - Redirects to app input configuration page
-- `GET /admin/orgs/:org_id/apps/:app_id/inputs` - App input configuration
-- `PUT /admin/orgs/:org_id/apps/:app_id/inputs` - Update app input configuration
-- `GET /admin/orgs/:org_id/apps/:app_id/logo` - App logo upload page
-- `PUT /admin/orgs/:org_id/apps/:app_id/logo` - Save app light/dark logos
-- `POST /admin/orgs/:org_id/apps/:app_id/publish` - Publish app to customer catalog
-- `DELETE /admin/orgs/:org_id/apps/:app_id/publish` - Remove app from customer catalog
-- `DELETE /admin/orgs/:org_id/apps/:app_id/forget` - Soft-delete orphaned app record (deleted from Nuon API)
-- `GET /admin/orgs/:org_id/links` - Organization install links
-- `POST /admin/orgs/:org_id/links` - Create install link
-- `GET /admin/orgs/:org_id/links/:link_id` - View link details
-- `DELETE /admin/orgs/:org_id/links/:link_id` - Delete link
-- `GET /admin/register` - Vendor registration page
-- `POST /admin/register` - Create vendor account
-- `POST /admin/org/create` - Create new organization
-- `POST /admin/org/switch` - Switch active organization context
-- `GET /admin/profile/panel` - User profile panel
-- `PUT /admin/profile/` - Update user profile
-- `GET /admin/orgs/:org_id/installs` - List all customer installs tracked in the portal
-- `GET /admin/orgs/:org_id/installs/search-nuon` - Search Nuon API for installs to import (HTMX)
-- `POST /admin/orgs/:org_id/installs/import` - Import an existing Nuon install and assign to a customer
-- `POST /admin/orgs/:org_id/installs/:install_id/forget` - Remove an install from the portal (vendor-only; does not deprovision infrastructure)
-- `GET /admin/orgs/:org_id/customers` - List organization customers
-- `GET /admin/orgs/:org_id/customers/:customer_id` - Customer details
-- `GET /admin/orgs/:org_id/accounts` - List customer user groups
-- `GET /admin/orgs/:org_id/accounts/:account_id` - Redirects to `/members`
-- `GET /admin/orgs/:org_id/accounts/:account_id/members` - User group members tab
-- `GET /admin/orgs/:org_id/accounts/:account_id/installs` - User group installs tab
-- `GET /admin/orgs/:org_id/accounts/:account_id/installs/search` - Search org installs to assign to user group (HTMX)
-- `POST /admin/orgs/:org_id/accounts/:account_id/installs/assign` - Assign an existing install to the user group
-- `GET /admin/orgs/:org_id/team/members` - Team page (members + invites tabs)
-- `GET /admin/orgs/:org_id/team/invites` - Redirects to team/members
-- `GET /admin/orgs/:org_id/portal/*` - Portal settings pages (branding, custom domain, etc.)
-- `POST /admin/orgs/:org_id/invitations` - Invite a team member by email (adds immediately if user exists, creates pending invite otherwise)
-- `DELETE /admin/orgs/:org_id/invitations/:id` - Revoke organization invitation
-- `DELETE /admin/orgs/:org_id/members/:user_id` - Remove organization member
-- `PUT /admin/orgs/:org_id/settings` - Update general settings
-- `PUT /admin/orgs/:org_id/settings/login` - Update login settings
-- `POST /admin/orgs/:org_id/settings/login/test` - Test login configuration
-- `PUT /admin/orgs/:org_id/settings/dns` - Update DNS settings
-- `GET /admin/orgs/:org_id/settings/dns/check` - Verify DNS configuration
-- `GET /admin/orgs/:org_id/settings/github` - GitHub integration settings
-- `POST /admin/orgs/:org_id/settings/github` - Connect GitHub integration
-- `POST /admin/orgs/:org_id/settings/github/sync` - Sync GitHub repository
-- `DELETE /admin/orgs/:org_id/settings/github` - Remove GitHub integration
-- `PUT /admin/orgs/:org_id/settings/github/templates/:page` - Toggle template override
-- `DELETE /admin/orgs/:org_id/settings/github/templates/:page` - Delete template override
-- `PUT /admin/orgs/:org_id/settings/github/assets/*path` - Toggle asset override
-- `POST /admin/orgs/:org_id/settings/github/bulk-toggle` - Bulk enable/disable overrides
-- `GET /admin/debug/user-orgs` - Debug: View user organizations (development)
-
-### Customer Routes (`/*`)
-
-- `GET /` - Redirects to login
-- `GET /login` - Customer login page (no signup)
-- `POST /login` - Customer authentication (existing accounts only)
-- `GET /install-link?sha=<sha>` - Install link acceptance page
-- `POST /install-link` - Accept link and create account/install
-- `GET /installs` - Redirects to first install detail page (or `/apps` if none)
-- `GET /installs/:install_id` - Install detail page
-- `PUT /installs/:install_id` - Update install
-- `DELETE /installs/:install_id` - Deprovision install
-- `POST /installs/:install_id/forget` - Remove install from local DB
-- `POST /installs/:install_id/reprovision` - Reprovision install
-- `POST /installs/:install_id/workflows/:workflow_id/approve` - Approve workflow step
-- `GET /install-link/:sha/app-config` - Get app configuration for install link
-- `GET /apps` - Customer app catalog (shows empty state if no published apps)
-- `GET /apps/:app_id` - App detail page (full info, components, roles, policies)
-- `GET /apps/:app_id/install` - Install form for a published app
-- `POST /apps/:app_id/install` - Create install from a published app
-- `GET /apps/:app_id/config` - Get app config for a published app (unauthenticated)
-- `GET /install-form-fields` - Get install form HTML partials (region selector + input fields) via `?sha=X` or `?app_id=X`
-- `GET /custom/css/:org_id` - Serve organization-specific CSS
-- `GET /custom/assets/:org_id/*path` - Serve organization-specific assets
-- `GET /installs/:install_id/panel` - Install overview tab content (HTMX)
-- `GET /installs/:install_id/panel/audit` - Audit/workflows/stack/sandbox/components tab content (HTMX)
-- `GET /installs/:install_id/panel/access` - Access roles tab content (HTMX)
-- `GET /installs/:install_id/panel/policies` - Policies tab content (HTMX)
-- `GET /installs/:install_id/inputs` - Get current install inputs
-- `PUT /installs/:install_id/inputs` - Update install inputs
-- `POST /installs/:install_id/workflows/:workflow_id/approve-all` - Approve all pending steps
-- `POST /installs/:install_id/workflows/:workflow_id/cancel` - Cancel running workflow
-- `GET /account` - User group settings page (name editing, members, invites)
-- `PUT /account` - Update user group name (owner only)
-- `GET /account/setup` - Redirects to /installs (user groups are auto-created during auth)
-- `GET /account/new` - User group creation form for creating additional user groups
-- `POST /account/create` - Create customer user group and owner membership
-- `GET /account/members` - Redirects to /account
-- `POST /account/invite` - Invite a user by email (adds immediately if user exists, creates pending invite otherwise)
-- `POST /account/switch` - Switch active user group (sets cookie, redirects to /installs)
-- `POST /account/members/:member_id/transfer-ownership` - Transfer user group ownership to another member
-- `DELETE /account/invite/:invite_id` - Revoke a pending invite
-
 ## Shared UI Components
 
 ### Shimmer (Loading Placeholder)
@@ -553,17 +332,17 @@ Every button element in the customer UI templates carries two semantic CSS class
 
 ### Variants
 
-| Class                            | Applied to                                                                    |
-| -------------------------------- | ----------------------------------------------------------------------------- |
-| `button button-primary`          | Primary call-to-action buttons (`.btn-theme-primary`)                         |
-| `button button-outline`          | Outline/cancel buttons (`.btn-theme-outline`)                                 |
-| `button button-neutral`          | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons |
-| `button button-danger`           | Destructive actions — Forget, logout, `.dropdown-item-danger`                 |
-| `button button-icon`             | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`)     |
+| Class                            | Applied to                                                                        |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| `button button-primary`          | Primary call-to-action buttons (`.btn-theme-primary`)                             |
+| `button button-outline`          | Outline/cancel buttons (`.btn-theme-outline`)                                     |
+| `button button-neutral`          | Neutral/muted action buttons (`.btn-neutral`), inline workflow cancel buttons     |
+| `button button-danger`           | Destructive actions — Forget, logout, `.dropdown-item-danger`                     |
+| `button button-icon`             | Icon-only panel control buttons (`.panel-header-btn`, `.panel-close-btn`)         |
 | `button button-nav`              | Sidebar navigation links (`.customer-sidebar-link`) and tab buttons (`.nav-item`) |
-| `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`)                                |
-| `button button-dropdown-item`    | Dropdown menu item buttons (`.dropdown-item`)                                 |
-| `button button-pagination`       | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`)      |
+| `button button-dropdown-trigger` | Dropdown trigger buttons (`.dropdown-trigger`)                                    |
+| `button button-dropdown-item`    | Dropdown menu item buttons (`.dropdown-item`)                                     |
+| `button button-pagination`       | Pagination navigation buttons (`.pagination-btn`, `.pagination-nav-btn`)          |
 
 ### Other Semantic CSS Hooks
 
@@ -595,19 +374,3 @@ Vendors can target these hooks inside the Custom CSS field on the Branding setti
 ```
 
 These class names are considered stable and will not be removed or renamed in patch or minor releases.
-
-## Security Features
-
-- JWT-based authentication with role separation
-- Secure SHA generation for install links
-- API token encryption (stored but hidden from JSON)
-- Input validation and error handling
-- CORS protection and secure headers
-
-## Development Notes
-
-- The Nuon API integration uses mock data for development
-- Real API calls are commented out and need to be enabled
-- Database is auto-migrated on startup
-- Templates include comprehensive error handling
-- All forms include client-side validation

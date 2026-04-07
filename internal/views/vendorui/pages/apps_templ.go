@@ -175,25 +175,21 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 				return templ_7745c5c3_Err
 			}
 			if app.LogoLightBase64 != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<img src=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var6 string
-				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 109, Col: 35}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden\" alt=\"\"> ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
 				if app.LogoDarkBase64 != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<img src=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<img src=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var6 string
+					templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 110, Col: 36}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden\" alt=\"\"> <img src=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -206,62 +202,80 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block\" alt=\"\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 hidden dark:block\" alt=\"\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<img src=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var8 string
+					templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 113, Col: 36}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
 			} else if app.LogoDarkBase64 != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<img src=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<img src=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var8 string
-				templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
+				var templ_7745c5c3_Var9 string
+				templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 114, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 116, Col: 34}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<span class=\"text-cool-grey-400 dark:text-cool-grey-600\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "<span class=\"text-cool-grey-400 dark:text-cool-grey-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</td><td class=\"px-6 py-4 whitespace-nowrap\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var9 string
-			templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(app.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 120, Col: 82}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</div><div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"px-6 py-4 whitespace-nowrap\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var10 string
-			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
+			templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(app.Name)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 121, Col: 76}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 122, Col: 82}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div></td><td class=\"px-6 py-4 whitespace-nowrap\"><span class=\"text-xs text-cool-grey-400 dark:text-cool-grey-500\">—</span></td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</div><div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var11 string
+			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 123, Col: 76}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</div></td><td class=\"px-6 py-4 whitespace-nowrap\"><span class=\"text-xs text-cool-grey-400 dark:text-cool-grey-500\">—</span></td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -275,11 +289,11 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Var11 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+			templ_7745c5c3_Var12 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 				templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 				templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 				if !templ_7745c5c3_IsBuffer {
@@ -297,61 +311,57 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 				}
 				return nil
 			})
-			templ_7745c5c3_Err = components.Tooltip("This app was deleted from the Nuon API. Click Remove to clean up.", nil, components.TooltipLeft).Render(templ.WithChildren(ctx, templ_7745c5c3_Var11), templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.Tooltip("This app was deleted from the Nuon API. Click Remove to clean up.", nil, components.TooltipLeft).Render(templ.WithChildren(ctx, templ_7745c5c3_Var12), templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "<tr class=\"hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 sortable-app\" data-app-id=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<tr class=\"hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 sortable-app\" data-app-id=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var12 string
-			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
+			var templ_7745c5c3_Var13 string
+			templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 142, Col: 97}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 144, Col: 97}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "\"><td class=\"px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing\"><svg class=\"h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "\"><td class=\"px-2 py-4 app-drag-handle cursor-grab active:cursor-grabbing\"><svg class=\"h-3 w-3 text-cool-grey-400 dark:text-cool-grey-500 mx-auto\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><circle cx=\"9\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"6\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"12\" r=\"1.5\"></circle> <circle cx=\"9\" cy=\"18\" r=\"1.5\"></circle> <circle cx=\"15\" cy=\"18\" r=\"1.5\"></circle></svg></td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			if app.LogoLightBase64 != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<img src=\"")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				var templ_7745c5c3_Var13 string
-				templ_7745c5c3_Var13, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
-				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 155, Col: 35}
-				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var13))
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden\" alt=\"\"> ")
-				if templ_7745c5c3_Err != nil {
-					return templ_7745c5c3_Err
-				}
 				if app.LogoDarkBase64 != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<img src=\"")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<img src=\"")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 					var templ_7745c5c3_Var14 string
-					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
+					templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
 					if templ_7745c5c3_Err != nil {
-						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 157, Col: 35}
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 158, Col: 36}
 					}
 					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0 dark:hidden\" alt=\"\"> <img src=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var15 string
+					templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 159, Col: 35}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -359,71 +369,89 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
+				} else {
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<img src=\"")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					var templ_7745c5c3_Var16 string
+					templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoLightBase64)
+					if templ_7745c5c3_Err != nil {
+						return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 161, Col: 36}
+					}
+					_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
 				}
 			} else if app.LogoDarkBase64 != "" {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "<img src=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<img src=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var15 string
-				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
+				var templ_7745c5c3_Var17 string
+				templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(app.LogoDarkBase64)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 160, Col: 34}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 164, Col: 34}
 				}
-				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
+				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "\" class=\"w-8 h-8 rounded object-contain flex-shrink-0\" alt=\"\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			} else {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<span class=\"text-cool-grey-400 dark:text-cool-grey-600\">—</span>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span class=\"text-cool-grey-400 dark:text-cool-grey-600\">—</span>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</td><td class=\"px-6 py-4 whitespace-nowrap\"><a href=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td><td class=\"px-6 py-4 whitespace-nowrap\"><a href=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var16 templ.SafeURL
-			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/overview", basePath, orgID, app.ID)))
+			var templ_7745c5c3_Var18 templ.SafeURL
+			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinURLErrs(templ.SafeURL(fmt.Sprintf("%s/orgs/%s/apps/%s/overview", basePath, orgID, app.ID)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 167, Col: 94}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "\" class=\"group\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var17 string
-			templ_7745c5c3_Var17, templ_7745c5c3_Err = templ.JoinStringErrs(app.Name)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 170, Col: 146}
-			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var17))
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</div><div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400\">")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-			var templ_7745c5c3_Var18 string
-			templ_7745c5c3_Var18, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
-			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 171, Col: 77}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 171, Col: 94}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var18))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</div></a></td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "\" class=\"group\"><div class=\"text-sm font-medium text-cool-grey-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var19 string
+			templ_7745c5c3_Var19, templ_7745c5c3_Err = templ.JoinStringErrs(app.Name)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 174, Col: 146}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var19))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</div><div class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400\">")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			var templ_7745c5c3_Var20 string
+			templ_7745c5c3_Var20, templ_7745c5c3_Err = templ.JoinStringErrs(app.ID)
+			if templ_7745c5c3_Err != nil {
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 175, Col: 77}
+			}
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var20))
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</div></a></td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -431,7 +459,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -439,7 +467,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</td><td class=\"px-6 py-4 whitespace-nowrap\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -447,7 +475,7 @@ func appTableRow(app AppWithHealthCheckStatus, orgID, basePath string, status st
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</td></tr>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</td></tr>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -472,12 +500,12 @@ func appsScript(basePath, orgID string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var19 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var19 == nil {
-			templ_7745c5c3_Var19 = templ.NopComponent
+		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var21 == nil {
+			templ_7745c5c3_Var21 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255);\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247);\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3);\n\t\t}\n\t</style><script src=\"/static/js/sortable.min.js\"></script><script>\n\t\t(function() {\n\t\t\tvar initialSnapshot = '';\n\n\t\t\tfunction getAppOrder() {\n\t\t\t\tvar ids = [];\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tids.push(row.dataset.appId);\n\t\t\t\t});\n\t\t\t\treturn ids;\n\t\t\t}\n\n\t\t\tfunction getSnapshot() {\n\t\t\t\tvar statuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tstatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\t\t\t\treturn JSON.stringify({ order: getAppOrder(), statuses: statuses });\n\t\t\t}\n\n\t\t\tfunction updateSaveBtn() {\n\t\t\t\tdocument.getElementById('saveOrderBtn').disabled = (getSnapshot() === initialSnapshot);\n\t\t\t}\n\n\t\t\twindow.updateSaveBtnGlobal = updateSaveBtn;\n\n\t\t\tfunction initSortable() {\n\t\t\t\tvar container = document.getElementById('publishedAppsContainer');\n\t\t\t\tif (container && typeof Sortable !== 'undefined') {\n\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\tnew Sortable(container, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.app-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-app',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\t\tonEnd: function() {\n\t\t\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.saveAppOrder = function(basePath, orgID) {\n\t\t\t\tvar btn = document.getElementById('saveOrderBtn');\n\t\t\t\tvar text = document.getElementById('saveOrderText');\n\t\t\t\tvar spinner = document.getElementById('saveOrderSpinner');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\ttext.textContent = 'Saving...';\n\t\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t\tvar appIDs = getAppOrder();\n\t\t\t\tvar appStatuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tappStatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\n\t\t\t\tfetch(basePath + '/orgs/' + orgID + '/apps/order', {\n\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\theaders: {'Content-Type': 'application/json'},\n\t\t\t\t\tbody: JSON.stringify({app_ids: appIDs, app_statuses: appStatuses})\n\t\t\t\t}).then(function(r) {\n\t\t\t\t\ttext.textContent = 'Save';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tif (!r.ok) {\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\tshowToast('Failed to save configuration', 'error');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t}\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\ttext.textContent = 'Save';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tshowToast('Failed to save configuration', 'error');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\t// Run immediately — with hx-boost the DOM is already settled when\n\t\t\t// inline scripts execute, so DOMContentLoaded won't fire again.\n\t\t\tinitSortable();\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<style>\n\t\t.sortable-ghost {\n\t\t\topacity: 0.5;\n\t\t}\n\t\t.sortable-chosen {\n\t\t\tbackground-color: rgb(243 232 255);\n\t\t\tbox-shadow: 0 0 0 2px rgb(168 85 247);\n\t\t}\n\t\t.dark .sortable-chosen {\n\t\t\tbackground-color: rgb(88 28 135 / 0.3);\n\t\t}\n\t</style><script src=\"/static/js/sortable.min.js\"></script><script>\n\t\t(function() {\n\t\t\tvar initialSnapshot = '';\n\n\t\t\tfunction getAppOrder() {\n\t\t\t\tvar ids = [];\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tids.push(row.dataset.appId);\n\t\t\t\t});\n\t\t\t\treturn ids;\n\t\t\t}\n\n\t\t\tfunction getSnapshot() {\n\t\t\t\tvar statuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tstatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\t\t\t\treturn JSON.stringify({ order: getAppOrder(), statuses: statuses });\n\t\t\t}\n\n\t\t\tfunction updateSaveBtn() {\n\t\t\t\tdocument.getElementById('saveOrderBtn').disabled = (getSnapshot() === initialSnapshot);\n\t\t\t}\n\n\t\t\twindow.updateSaveBtnGlobal = updateSaveBtn;\n\n\t\t\tfunction initSortable() {\n\t\t\t\tvar container = document.getElementById('publishedAppsContainer');\n\t\t\t\tif (container && typeof Sortable !== 'undefined') {\n\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\tnew Sortable(container, {\n\t\t\t\t\t\tanimation: 150,\n\t\t\t\t\t\thandle: '.app-drag-handle',\n\t\t\t\t\t\tdraggable: '.sortable-app',\n\t\t\t\t\t\tghostClass: 'sortable-ghost',\n\t\t\t\t\t\tchosenClass: 'sortable-chosen',\n\t\t\t\t\t\tonEnd: function() {\n\t\t\t\t\t\t\tupdateSaveBtn();\n\t\t\t\t\t\t}\n\t\t\t\t\t});\n\t\t\t\t}\n\t\t\t}\n\n\t\t\twindow.saveAppOrder = function(basePath, orgID) {\n\t\t\t\tvar btn = document.getElementById('saveOrderBtn');\n\t\t\t\tvar text = document.getElementById('saveOrderText');\n\t\t\t\tvar spinner = document.getElementById('saveOrderSpinner');\n\t\t\t\tbtn.disabled = true;\n\t\t\t\ttext.textContent = 'Saving...';\n\t\t\t\tspinner.classList.remove('hidden');\n\n\t\t\t\tvar appIDs = getAppOrder();\n\t\t\t\tvar appStatuses = {};\n\t\t\t\tdocument.querySelectorAll('.sortable-app').forEach(function(row) {\n\t\t\t\t\tvar sel = row.querySelector('.app-status-select');\n\t\t\t\t\tappStatuses[row.dataset.appId] = sel ? sel.value : 'unpublished';\n\t\t\t\t});\n\n\t\t\t\tfetch(basePath + '/orgs/' + orgID + '/apps/order', {\n\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\theaders: {'Content-Type': 'application/json'},\n\t\t\t\t\tbody: JSON.stringify({app_ids: appIDs, app_statuses: appStatuses})\n\t\t\t\t}).then(function(r) {\n\t\t\t\t\ttext.textContent = 'Save';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tif (!r.ok) {\n\t\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\t\tshowToast('Failed to save configuration', 'error');\n\t\t\t\t\t} else {\n\t\t\t\t\t\tinitialSnapshot = getSnapshot();\n\t\t\t\t\t\tbtn.disabled = true;\n\t\t\t\t\t}\n\t\t\t\t}).catch(function() {\n\t\t\t\t\tbtn.disabled = false;\n\t\t\t\t\ttext.textContent = 'Save';\n\t\t\t\t\tspinner.classList.add('hidden');\n\t\t\t\t\tshowToast('Failed to save configuration', 'error');\n\t\t\t\t});\n\t\t\t};\n\n\t\t\t// Run immediately — with hx-boost the DOM is already settled when\n\t\t\t// inline scripts execute, so DOMContentLoaded won't fire again.\n\t\t\tinitSortable();\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -541,42 +569,42 @@ func statusSelect(status string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var20 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var20 == nil {
-			templ_7745c5c3_Var20 = templ.NopComponent
+		templ_7745c5c3_Var22 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var22 == nil {
+			templ_7745c5c3_Var22 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<select class=\"app-status-select text-sm rounded-md border border-cool-grey-300 dark:border-dark-grey-500 bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500\" onchange=\"updateSaveBtnGlobal()\"><option value=\"unpublished\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<select class=\"app-status-select text-sm rounded-md border border-cool-grey-300 dark:border-dark-grey-500 bg-white dark:bg-dark-grey-800 text-cool-grey-900 dark:text-white px-2 py-1 focus:outline-none focus:ring-2 focus:ring-primary-500\" onchange=\"updateSaveBtnGlobal()\"><option value=\"unpublished\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if status == "" || status == "unpublished" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, " selected")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
-			}
-		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, ">Unpublished</option> <option value=\"coming_soon\"")
-		if templ_7745c5c3_Err != nil {
-			return templ_7745c5c3_Err
-		}
-		if status == "coming_soon" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, ">Coming Soon</option> <option value=\"published\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, ">Unpublished</option> <option value=\"coming_soon\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		if status == "published" {
+		if status == "coming_soon" {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, " selected")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, ">Published</option></select>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 45, ">Coming Soon</option> <option value=\"published\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		if status == "published" {
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, " selected")
+			if templ_7745c5c3_Err != nil {
+				return templ_7745c5c3_Err
+			}
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, ">Published</option></select>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -600,42 +628,42 @@ func platformBadge(platform string) templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var21 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var21 == nil {
-			templ_7745c5c3_Var21 = templ.NopComponent
+		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var23 == nil {
+			templ_7745c5c3_Var23 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
 		switch platform {
 		case "aws":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 46, "<img src=\"/static/images/logos/aws.svg\" class=\"h-8 w-8\" alt=\"AWS\" title=\"AWS\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<img src=\"/static/images/logos/aws.svg\" class=\"h-8 w-8\" alt=\"AWS\" title=\"AWS\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "azure":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 47, "<img src=\"/static/images/logos/azure.svg\" class=\"h-8 w-8\" alt=\"Azure\" title=\"Azure\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<img src=\"/static/images/logos/azure.svg\" class=\"h-8 w-8\" alt=\"Azure\" title=\"Azure\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		case "gcp":
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 48, "<img src=\"/static/images/logos/google.svg\" class=\"h-8 w-8\" alt=\"GCP\" title=\"GCP\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "<img src=\"/static/images/logos/google.svg\" class=\"h-8 w-8\" alt=\"GCP\" title=\"GCP\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		default:
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 49, "<span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<span class=\"text-xs text-cool-grey-500 dark:text-cool-grey-400\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			var templ_7745c5c3_Var22 string
-			templ_7745c5c3_Var22, templ_7745c5c3_Err = templ.JoinStringErrs(platform)
+			var templ_7745c5c3_Var24 string
+			templ_7745c5c3_Var24, templ_7745c5c3_Err = templ.JoinStringErrs(platform)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 337, Col: 78}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/vendorui/pages/apps.templ`, Line: 341, Col: 78}
 			}
-			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var22))
+			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var24))
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 50, "</span>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "</span>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -660,12 +688,12 @@ func deletedStatusBadge() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var23 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var23 == nil {
-			templ_7745c5c3_Var23 = templ.NopComponent
+		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var25 == nil {
+			templ_7745c5c3_Var25 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 51, "<span class=\"inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit cursor-help\"><span class=\"w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-orange-500 shrink-0\"></span> Deleted</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<span class=\"inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit cursor-help\"><span class=\"w-1.5 h-1.5 rounded-full bg-orange-600 dark:bg-orange-500 shrink-0\"></span> Deleted</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -689,12 +717,12 @@ func activeStatusBadge() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var24 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var24 == nil {
-			templ_7745c5c3_Var24 = templ.NopComponent
+		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var26 == nil {
+			templ_7745c5c3_Var26 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<span class=\"inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit\"><span class=\"w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-500 shrink-0\"></span> Active</span>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "<span class=\"inline-flex items-center gap-1.5 text-xs font-medium text-cool-grey-950 dark:text-white border border-cool-grey-200 dark:border-dark-grey-500 rounded-full px-2 py-0.5 w-fit\"><span class=\"w-1.5 h-1.5 rounded-full bg-green-600 dark:bg-green-500 shrink-0\"></span> Active</span>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -718,12 +746,12 @@ func emptyAppsState() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var25 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var25 == nil {
-			templ_7745c5c3_Var25 = templ.NopComponent
+		templ_7745c5c3_Var27 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var27 == nil {
+			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 53, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<div class=\"bg-white dark:bg-dark-grey-900 rounded-lg shadow-md border border-cool-grey-300 dark:border-dark-grey-500 p-12 text-center\"><div class=\"mx-auto flex items-center justify-center h-16 w-16 mb-4 rounded-full bg-cool-grey-100 dark:bg-dark-grey-700\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -731,7 +759,7 @@ func emptyAppsState() templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 54, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Apps Found</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto\">No apps are configured in this Nuon organization. Use the Nuon CLI to sync your apps configuration.</p></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 56, "</div><h3 class=\"text-xl font-medium text-cool-grey-900 dark:text-white mb-2\">No Apps Found</h3><p class=\"text-cool-grey-500 dark:text-cool-grey-400 max-w-sm mx-auto\">No apps are configured in this Nuon organization. Use the Nuon CLI to sync your apps configuration.</p></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -755,12 +783,12 @@ func cubeIcon() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var26 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var26 == nil {
-			templ_7745c5c3_Var26 = templ.NopComponent
+		templ_7745c5c3_Var28 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var28 == nil {
+			templ_7745c5c3_Var28 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 55, "<svg class=\"h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9\"></path></svg>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 57, "<svg class=\"h-5 w-5 text-cool-grey-500 dark:text-cool-grey-400\" fill=\"none\" viewBox=\"0 0 24 24\" stroke=\"currentColor\" stroke-width=\"1.5\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" d=\"m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9\"></path></svg>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

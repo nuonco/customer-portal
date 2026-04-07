@@ -7,6 +7,7 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
 // ProvisionPhase represents a logical grouping of workflow steps
@@ -134,6 +135,14 @@ type ComponentInfo struct {
 	RepoPublic bool
 }
 
+// InputFieldRow holds display data for a single configured input field.
+type InputFieldRow struct {
+	Name        string
+	DisplayName string
+	Value       string
+	Sensitive   bool
+}
+
 // InstallDetailPanelProps for the panel content (no layout wrapper)
 type InstallDetailPanelProps struct {
 	Install                *models.Install
@@ -161,6 +170,8 @@ type InstallDetailPanelProps struct {
 	SandboxRepoPublic bool
 	Components     []ComponentInfo
 	NuonAPIError   string // Error message when API calls fail
+	RecentWorkflows []*nuonmodels.AppWorkflow
+	InputFields     []InputFieldRow
 }
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
@@ -206,23 +217,39 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				</div>
 			</div>
 		}
-		if !props.APIDeletedError && !props.HasActiveProvision {
-			<div
-				id="active-provision-banner"
-				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/workflow-status" }
-				hx-trigger="every 5s"
-				hx-swap="outerHTML"
-			></div>
-		}
 		if !props.APIDeletedError {
 			@overviewSummaryCards(props)
 		}
-		if !props.APIDeletedError && props.HasActiveProvision && len(props.ProvisionPhases) > 0 {
-			<hr class="mt-4 mb-6" style="border-color: var(--theme-border-subtle)" />
-			<div class="overview-workflow">
-				@ProvisionAccordion(props.ProvisionPhases, props.ProvisionWorkflow, props.StackSetup, props.Install.ID, props.BasePath, props.PrimaryColor)
-			</div>
-		}
+		<!-- Overview Tabs -->
+		<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600 mt-4 mb-4" id="overview-tabs">
+			<button
+				class="button button-nav nav-item active"
+				data-subtab="updates"
+				onclick="switchOverviewTab('updates')"
+			>Updates</button>
+			<button
+				class="button button-nav nav-item"
+				data-subtab="configuration"
+				onclick="switchOverviewTab('configuration')"
+			>Configuration</button>
+		</div>
+		<script>
+			function switchOverviewTab(tab) {
+				document.querySelectorAll('#overview-tabs [data-subtab]').forEach(function(btn) {
+					btn.classList.toggle('active', btn.getAttribute('data-subtab') === tab);
+				});
+				document.getElementById('overview-tab-updates').classList.toggle('hidden', tab !== 'updates');
+				document.getElementById('overview-tab-configuration').classList.toggle('hidden', tab !== 'configuration');
+			}
+		</script>
+		<!-- Updates tab -->
+		<div id="overview-tab-updates">
+			@allWorkflowsList(props.RecentWorkflows)
+		</div>
+		<!-- Configuration tab -->
+		<div id="overview-tab-configuration" class="hidden">
+			@overviewConfigurationTab(props.InputFields)
+		</div>
 	</div>
 	<!-- Config data for JavaScript -->
 	<div
@@ -235,6 +262,51 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 	></div>
 	<!-- JavaScript for actions -->
 	@installDetailPanelScripts()
+}
+
+// overviewConfigurationTab renders the Configuration tab content showing current input values.
+templ overviewConfigurationTab(fields []InputFieldRow) {
+	if len(fields) == 0 {
+		<div class="text-center py-12 text-cool-grey-500 dark:text-cool-grey-400">
+			<i class="ph-bold ph-sliders text-[32px] mb-2 block"></i>
+			<p class="text-sm">No configuration values have been set yet.</p>
+		</div>
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[40%]"/>
+				<col class="w-[60%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Field</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Value</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, f := range fields {
+					<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate">
+							if f.DisplayName != "" {
+								{ f.DisplayName }
+							} else {
+								{ f.Name }
+							}
+						</td>
+						<td class="py-2 text-cool-grey-600 dark:text-cool-grey-300 font-mono text-xs break-all">
+							if f.Sensitive {
+								<span class="tracking-widest">••••••••</span>
+							} else if f.Value == "" {
+								<span class="text-cool-grey-400 dark:text-cool-grey-500 italic not-italic font-sans text-sm">not set</span>
+							} else {
+								{ f.Value }
+							}
+						</td>
+					</tr>
+				}
+			</tbody>
+		</table>
+	}
 }
 
 // componentStatusDot returns a Tailwind color class for a status indicator dot.

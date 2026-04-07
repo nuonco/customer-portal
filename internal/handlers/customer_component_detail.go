@@ -42,7 +42,6 @@ func (h *Handler) ComponentDetailPanel(c *gin.Context) {
 	ctx := c.Request.Context()
 	installID := install.NuonInstallID
 
-	// Find the install component matching the component ID
 	components, err := apiClient.GetInstallComponents(ctx, installID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch components")
@@ -61,14 +60,26 @@ func (h *Handler) ComponentDetailPanel(c *gin.Context) {
 		return
 	}
 
-	// Build VCS info using existing helper
+	// Build VCS info and collect the component config connection in one app config fetch.
 	compInfos := h.buildComponentInfos(ctx, apiClient, install, []*nuonmodels.AppInstallComponent{comp})
 	var compInfo partials.ComponentInfo
 	if len(compInfos) > 0 {
 		compInfo = compInfos[0]
 	}
 
-	// Fetch latest build for commit/VCS details
+	// Fetch the component config connection for type-specific data (values, variables, manifest, etc.).
+	var cc *nuonmodels.AppComponentConfigConnection
+	if app, err := apiClient.GetApp(ctx, install.GetAppID()); err == nil && app != nil && len(app.AppConfigs) > 0 {
+		if cfg, err := apiClient.GetAppConfigFull(ctx, install.GetAppID(), app.AppConfigs[0].ID); err == nil && cfg != nil {
+			for _, conn := range cfg.ComponentConfigConnections {
+				if conn != nil && conn.ComponentID == componentID {
+					cc = conn
+					break
+				}
+			}
+		}
+	}
+
 	var build *nuonmodels.AppComponentBuild
 	if b, err := apiClient.GetAppComponentLatestBuild(ctx, install.GetAppID(), componentID); err == nil {
 		build = b
@@ -76,10 +87,104 @@ func (h *Handler) ComponentDetailPanel(c *gin.Context) {
 		zap.L().Warn("failed to fetch latest component build", zap.Error(err))
 	}
 
-	props := partials.ComponentDetailProps{
-		Component: comp,
-		Info:      compInfo,
-		Build:     build,
+	// Render the type-specific panel.
+	switch {
+	case cc != nil && cc.TerraformModule != nil:
+		props := partials.TerraformComponentDetailProps{
+			Component: comp,
+			Info:      compInfo,
+			Build:     build,
+			Variables: cc.TerraformModule.Variables,
+		}
+		if comp.TerraformWorkspace != nil && comp.TerraformWorkspace.ID != "" {
+			workspaceID := comp.TerraformWorkspace.ID
+			if states, err := apiClient.GetTerraformWorkspaceStates(ctx, workspaceID); err == nil && len(states) > 0 {
+				stateID := states[0].ID
+				if o, err := apiClient.GetTerraformWorkspaceStateOutputs(ctx, workspaceID, stateID); err == nil {
+					props.Outputs = o
+				} else {
+					zap.L().Warn("failed to fetch terraform state outputs", zap.Error(err))
+				}
+				if resources, err := apiClient.GetTerraformWorkspaceStateResources(ctx, workspaceID, stateID); err == nil {
+					props.Resources = resources
+				} else {
+					zap.L().Warn("failed to fetch terraform state resources", zap.Error(err))
+				}
+			} else if err != nil {
+				zap.L().Warn("failed to fetch terraform workspace states", zap.Error(err))
+			}
+		}
+		h.RenderTempl(c, http.StatusOK, partials.TerraformComponentDetailPanel(props))
+
+	default:
+		// For all non-terraform types, fetch deploy outputs from the dedicated endpoint.
+		var outputs map[string]string
+		if o, err := apiClient.GetInstallComponentOutputs(ctx, installID, componentID); err == nil {
+			outputs = o
+		} else {
+			zap.L().Warn("failed to fetch component outputs", zap.Error(err))
+		}
+
+		switch {
+		case cc != nil && cc.Helm != nil:
+			h.RenderTempl(c, http.StatusOK, partials.HelmComponentDetailPanel(partials.HelmComponentDetailProps{
+				Component:   comp,
+				Info:        compInfo,
+				Build:       build,
+				Outputs:     outputs,
+				Values:      cc.Helm.Values,
+				ValuesFiles: cc.Helm.ValuesFiles,
+				Namespace:   cc.Helm.Namespace,
+				ChartName:   cc.Helm.ChartName,
+			}))
+
+		case cc != nil && cc.DockerBuild != nil:
+			h.RenderTempl(c, http.StatusOK, partials.DockerComponentDetailPanel(partials.DockerComponentDetailProps{
+				Component: comp,
+				Info:      compInfo,
+				Build:     build,
+				Outputs:   outputs,
+				EnvVars:   cc.DockerBuild.EnvVars,
+			}))
+
+		case cc != nil && cc.ExternalImage != nil:
+			h.RenderTempl(c, http.StatusOK, partials.ExternalImageComponentDetailPanel(partials.ExternalImageComponentDetailProps{
+				Component: comp,
+				Info:      compInfo,
+				Build:     build,
+				Outputs:   outputs,
+				ImageURL:  cc.ExternalImage.ImageURL,
+				ImageTag:  cc.ExternalImage.Tag,
+			}))
+
+		case cc != nil && cc.Job != nil:
+			h.RenderTempl(c, http.StatusOK, partials.JobComponentDetailPanel(partials.JobComponentDetailProps{
+				Component: comp,
+				Info:      compInfo,
+				Build:     build,
+				Outputs:   outputs,
+				EnvVars:   cc.Job.EnvVars,
+				ImageURL:  cc.Job.ImageURL,
+				ImageTag:  cc.Job.Tag,
+			}))
+
+		case cc != nil && cc.KubernetesManifest != nil:
+			h.RenderTempl(c, http.StatusOK, partials.KubernetesComponentDetailPanel(partials.KubernetesComponentDetailProps{
+				Component: comp,
+				Info:      compInfo,
+				Build:     build,
+				Outputs:   outputs,
+				Manifest:  cc.KubernetesManifest.Manifest,
+			}))
+
+		default:
+			// Unknown component type — show outputs only.
+			h.RenderTempl(c, http.StatusOK, partials.TerraformComponentDetailPanel(partials.TerraformComponentDetailProps{
+				Component: comp,
+				Info:      compInfo,
+				Build:     build,
+				Outputs:   outputs,
+			}))
+		}
 	}
-	h.RenderTempl(c, http.StatusOK, partials.ComponentDetailPanel(props))
 }

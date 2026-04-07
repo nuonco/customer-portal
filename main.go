@@ -488,6 +488,8 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/panel/policies/detail/:policy_name", h.PolicyDetailPanel)     // Policy detail sliding panel
 			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)       // Policy report detail panel
 			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)       // Component detail sliding panel
+			installOwnership.GET("/panel/sandbox-run/:run_id", h.SandboxRunDetailPanel)          // Sandbox run detail sliding panel
+			installOwnership.GET("/panel/stack-run/:run_id", h.StackRunDetailPanel)              // Stack run detail sliding panel
 			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel
 			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
 			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion

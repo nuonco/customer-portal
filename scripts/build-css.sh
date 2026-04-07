@@ -5,6 +5,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(dirname "$SCRIPT_DIR")"
 cd "$ROOT_DIR"
 
+# Always copy source assets (fast, idempotent)
+./scripts/copy-assets.sh
+
 MARKER="static/css/vendor.css"
 
 # If marker doesn't exist, always rebuild

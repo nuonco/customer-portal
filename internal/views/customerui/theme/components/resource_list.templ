@@ -1,0 +1,91 @@
+package components
+
+import (
+	"encoding/json"
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+type ResourceListProps struct {
+	Resources []nuon.TerraformResource
+}
+
+templ ResourceList(props ResourceListProps) {
+	if len(props.Resources) == 0 {
+		<div class="text-center py-12">
+			<i class="ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No resources</h3>
+			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox resources are not available for this install.</p>
+		</div>
+	} else {
+		<div class="resource-list-root">
+			<div class="flex items-center gap-3 mb-3">
+				<div class="flex-1">
+					<input
+						type="search"
+						placeholder="Search resources..."
+						class="install-switcher-search"
+						oninput="var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);"
+						onsearch="var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);"
+					/>
+				</div>
+				<label class="flex items-center gap-2 shrink-0 cursor-pointer select-none text-sm text-cool-grey-600 dark:text-cool-grey-400">
+					<input
+						type="checkbox"
+						class="resource-list-data-toggle"
+						onchange="var root=this.closest('.resource-list-root'),q=root.querySelector('.install-switcher-search').value.toLowerCase(),inc=this.checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);"
+					/>
+					Include data sources
+				</label>
+				<button
+					type="button"
+					class="button button-outline btn-theme-outline shrink-0 text-sm !text-cool-grey-600 dark:!text-cool-grey-400 !py-1.5"
+					onclick="var root=this.closest('.resource-list-root'),details=Array.from(root.querySelectorAll('[data-resource-address]:not(.hidden) details')),anyCollapsed=details.some(function(d){return !d.open});details.forEach(function(d){d.open=anyCollapsed});this.textContent=anyCollapsed?'Collapse all':'Expand all';"
+				>
+					Expand all
+				</button>
+			</div>
+			for _, r := range props.Resources {
+				<div data-resource-address={ r.Address } data-resource-mode={ r.Mode } class={ templ.KV("hidden", r.Mode == "data") }>
+					<details class="group border-b border-cool-grey-100 dark:border-dark-grey-700">
+						<summary class="flex items-center w-full cursor-pointer select-none text-sm hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800">
+							<span class="flex-1 py-2 pr-4 font-mono text-cool-grey-900 dark:text-white truncate">
+								{ r.Address }
+							</span>
+							<span class="w-8 shrink-0 flex items-center justify-center text-cool-grey-400">
+								<i class="ph-bold ph-caret-down group-open:hidden"></i>
+								<i class="ph-bold ph-caret-up hidden group-open:inline"></i>
+							</span>
+						</summary>
+						@resourceListRowDetail(r)
+					</details>
+				</div>
+			}
+			<p class="hidden text-sm text-cool-grey-500 dark:text-cool-grey-400 py-6 text-center resource-list-empty-search">
+				No resources match your search.
+			</p>
+		</div>
+	}
+}
+
+templ resourceListRowDetail(r nuon.TerraformResource) {
+	<div class="px-4 py-3 text-xs text-cool-grey-500 dark:text-cool-grey-400 border-b border-cool-grey-100 dark:border-dark-grey-700">
+		<div class="flex gap-6 mb-3">
+			<span><span class="font-medium">Provider:</span> { r.ProviderName }</span>
+			<span><span class="font-medium">Schema version:</span> { fmt.Sprintf("%d", r.SchemaVersion) }</span>
+		</div>
+		if len(r.Values) > 0 {
+			<p class="font-medium mb-1">Values</p>
+			@CodeBlock(resourceListFormatJSON(r.Values), "json")
+		}
+	</div>
+}
+
+func resourceListFormatJSON(v interface{}) string {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("%v", v)
+	}
+	return string(b)
+}
