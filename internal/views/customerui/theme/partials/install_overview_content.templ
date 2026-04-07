@@ -1700,6 +1700,47 @@ templ installDetailPanelScripts() {
 			window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
 		});
 
+		// Open workflow detail in secondary panel (used by Updates tab on overview page)
+		window.openWorkflowPanel = function(workflowID, workflowName) {
+			var panel = document.getElementById('secondary-panel');
+			var title = document.getElementById('secondary-panel-title');
+			var content = document.getElementById('secondary-panel-content');
+			if (!panel || !title || !content) return;
+			title.textContent = workflowName || 'Workflow';
+			content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+			panel.classList.add('open');
+			var overlay = document.getElementById('secondary-panel-overlay');
+			if (overlay) overlay.classList.add('open');
+			var configEl = document.getElementById('install-detail-config');
+			var bp = configEl ? configEl.dataset.basePath : '';
+			var iid = configEl ? configEl.dataset.installId : '';
+			fetch(bp + '/installs/' + iid + '/panel/workflow/' + workflowID)
+				.then(function(resp) { return resp.text(); })
+				.then(function(html) {
+					content.innerHTML = html;
+					var scripts = content.querySelectorAll('script');
+					scripts.forEach(function(s) {
+						var ns = document.createElement('script');
+						ns.textContent = s.textContent;
+						s.parentNode.replaceChild(ns, s);
+					});
+					if (typeof htmx !== 'undefined') {
+						htmx.process(content);
+					}
+					var firstPhase = content.querySelector('details.provision-phase');
+					if (firstPhase) {
+						firstPhase.setAttribute('open', '');
+					}
+					var firstStep = content.querySelector('[data-step-url]');
+					if (firstStep && typeof loadStepDetail === 'function') {
+						loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
+					}
+				})
+				.catch(function() {
+					content.innerHTML = '<p class="text-sm text-red-500">Failed to load workflow details.</p>';
+				});
+		};
+
 		// Optional: Log HTMX errors for debugging
 		document.body.addEventListener('htmx:responseError', function(event) {
 			console.error('HTMX request failed:', {
