@@ -128,7 +128,8 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		AppName:  appID, // fallback to AppID if name can't be fetched
 		Platform: "unknown",
 	}
-	if nuonClientErr != nil {
+	if nuonClientErr != nil || nuonClient == nil {
+		display.APIError = true
 		return display
 	}
 
@@ -138,9 +139,11 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 	app, appErr := nuonClient.GetApp(ctx, appID)
 	if appErr != nil {
 		zap.L().Warn("failed to fetch app", zap.String("app_id", appID), zap.Error(appErr))
+		display.APIError = true
 		return display
 	}
 	if app == nil {
+		display.APIError = true
 		return display
 	}
 

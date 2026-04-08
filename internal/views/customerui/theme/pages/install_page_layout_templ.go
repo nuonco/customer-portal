@@ -63,9 +63,33 @@ func installPageShell(props InstallPageProps) templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div id=\"page-actions-container\"></div>")
-			if templ_7745c5c3_Err != nil {
-				return templ_7745c5c3_Err
+			if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
+				templ_7745c5c3_Var3 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+					templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+					templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+					if !templ_7745c5c3_IsBuffer {
+						defer func() {
+							templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+							if templ_7745c5c3_Err == nil {
+								templ_7745c5c3_Err = templ_7745c5c3_BufErr
+							}
+						}()
+					}
+					ctx = templ.InitializeContext(ctx)
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<button type=\"button\" onclick=\"openEditInputsModal()\" class=\"sw-dropdown-item\">Edit Inputs</button> <button type=\"button\" onclick=\"confirmReprovision()\" class=\"sw-dropdown-item\">Reprovision</button> <button type=\"button\" onclick=\"confirmDeprovision()\" class=\"sw-dropdown-item-danger button button-danger\">Deprovision</button>")
+					if templ_7745c5c3_Err != nil {
+						return templ_7745c5c3_Err
+					}
+					return nil
+				})
+				templ_7745c5c3_Err = components.SwitcherDropdown(components.DropdownProps{
+					ID:    "actionsDropdown",
+					Label: "Manage",
+					Icon:  "ph-bold ph-caret-up-down",
+				}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var3), templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err != nil {
+					return templ_7745c5c3_Err
+				}
 			}
 			return nil
 		})
@@ -122,12 +146,12 @@ func installPageShell(props InstallPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var3 string
-		templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 52, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 68, Col: 33}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -135,16 +159,16 @@ func installPageShell(props InstallPageProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 53, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 69, Col: 36}
 		}
-		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "\"></div><script>\n\t\t(function() {\n\t\t\tvar configEl = document.getElementById('install-detail-page-config');\n\t\t\tvar basePath = configEl.dataset.basePath;\n\t\t\tvar installID = configEl.dataset.installId;\n\n\t\t\twindow.confirmReprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Reprovision Installation?',\n\t\t\t\t\tmessage: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',\n\t\t\t\t\tvariant: 'warning',\n\t\t\t\t\tconfirmText: 'Reprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\t\t\t\tif (!confirmed) { return; }\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/reprovision', { method: 'POST' });\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tvar overview = document.getElementById('panel-content-overview');\n\t\t\t\t\t\tif (overview) {\n\t\t\t\t\t\t\thtmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});\n\t\t\t\t\t\t} else {\n\t\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 500);\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.error('Reprovision failed:', error);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.confirmDeprovision = async function() {\n\t\t\t\tvar confirmed = await showConfirmModal({\n\t\t\t\t\ttitle: 'Deprovision Installation?',\n\t\t\t\t\tmessage: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',\n\t\t\t\t\tvariant: 'danger',\n\t\t\t\t\tconfirmText: 'Deprovision',\n\t\t\t\t\tcancelText: 'Cancel'\n\t\t\t\t});\n\t\t\t\tif (!confirmed) { return; }\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/', { method: 'DELETE' });\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\tconsole.error('Deprovision failed:', error);\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.openEditInputsModal = async function() {\n\t\t\t\tvar modal = document.getElementById('editInputsModal');\n\t\t\t\tvar loading = document.getElementById('editInputsLoading');\n\t\t\t\tvar form = document.getElementById('editInputsForm');\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tloading.classList.remove('hidden');\n\t\t\t\tform.classList.add('hidden');\n\t\t\t\terrorDiv.classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs');\n\t\t\t\t\tif (!response.ok) {\n\t\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\t\tthrow new Error(data.error || 'Failed to fetch inputs');\n\t\t\t\t\t}\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\trenderEditInputFields(data.input_config, data.inputs);\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\tform.classList.remove('hidden');\n\t\t\t\t} catch (error) {\n\t\t\t\t\tloading.classList.add('hidden');\n\t\t\t\t\tif (error.message && error.message.includes('404')) {\n\t\t\t\t\t\terrorDiv.textContent = 'No inputs are configured for this install.';\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = error.message || 'Failed to load inputs';\n\t\t\t\t\t}\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.remove('hidden');\n\t\t\t\t}\n\t\t\t};\n\n\t\t\twindow.closeEditInputsModal = function() {\n\t\t\t\tdocument.getElementById('editInputsModal').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsForm').reset();\n\t\t\t\tdocument.getElementById('editInputsError').classList.add('hidden');\n\t\t\t\tdocument.getElementById('editInputsErrorActions').classList.add('hidden');\n\t\t\t};\n\n\t\t\tfunction renderEditInputFields(inputConfig, currentInputs) {\n\t\t\t\tvar container = document.getElementById('editInputsFields');\n\t\t\t\tcurrentInputs = currentInputs || {};\n\t\t\t\tif (!inputConfig || !inputConfig.input_groups) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t\treturn;\n\t\t\t\t}\n\t\t\t\tvar html = '';\n\t\t\t\tvar hasInputs = false;\n\t\t\t\tinputConfig.input_groups.forEach(function(group) {\n\t\t\t\t\tvar groupInputs = group.app_inputs || group.inputs || [];\n\t\t\t\t\tif (groupInputs && groupInputs.length > 0) {\n\t\t\t\t\t\thasInputs = true;\n\t\t\t\t\t\thtml += renderEditInputGroup(group, groupInputs, currentInputs);\n\t\t\t\t\t}\n\t\t\t\t});\n\t\t\t\tif (!hasInputs) {\n\t\t\t\t\tcontainer.innerHTML = '<p class=\"text-green-600 dark:text-green-400 text-sm\">No additional configuration required<\\/p>';\n\t\t\t\t} else {\n\t\t\t\t\tcontainer.innerHTML = html;\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tfunction renderEditInputGroup(group, inputs, currentInputs) {\n\t\t\t\tvar html = '<div class=\"mb-6\">';\n\t\t\t\thtml += '<h5 class=\"text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2\">' + (group.display_name || group.name || 'Configuration') + '<\\/h5>';\n\t\t\t\tif (group.description) {\n\t\t\t\t\thtml += '<p class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4\">' + group.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<div class=\"space-y-4\">';\n\t\t\t\tinputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });\n\t\t\t\tinputs.forEach(function(input) {\n\t\t\t\t\tvar currentValue = currentInputs[input.name];\n\t\t\t\t\thtml += renderEditSingleInput(input, currentValue);\n\t\t\t\t});\n\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tfunction renderEditSingleInput(input, currentValue) {\n\t\t\t\tvar inputName = input.name;\n\t\t\t\tvar isRequired = input.required ? ' *' : '';\n\t\t\t\tvar requiredAttr = input.required ? ' required' : '';\n\t\t\t\tvar value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');\n\n\t\t\t\tif (input.type === 'bool' || input.default === 'true' || input.default === 'false') {\n\t\t\t\t\tvar isChecked = value === 'true';\n\t\t\t\t\tvar html = '<div class=\"flex items-start space-x-3\">';\n\t\t\t\t\thtml += '<input type=\"hidden\" name=\"' + inputName + '\" value=\"false\" \\/>';\n\t\t\t\t\thtml += '<input type=\"checkbox\" id=\"' + input.name + '\" name=\"' + inputName + '\" value=\"true\"';\n\t\t\t\t\tif (isChecked) html += ' checked';\n\t\t\t\t\thtml += ' class=\"field-checkbox\" \\/>';\n\t\t\t\t\thtml += '<div class=\"flex-1\">';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div><\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tif (input.type === 'json') {\n\t\t\t\t\tvar html = '<div>';\n\t\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\t\thtml += '<textarea id=\"' + input.name + '\" name=\"' + inputName + '\" rows=\"4\" placeholder=\"' + (input.default || '') + '\"' + requiredAttr;\n\t\t\t\t\thtml += ' class=\"field-input\">';\n\t\t\t\t\thtml += value + '<\\/textarea>';\n\t\t\t\t\tif (input.description) {\n\t\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t\t}\n\t\t\t\t\thtml += '<\\/div>';\n\t\t\t\t\treturn html;\n\t\t\t\t}\n\n\t\t\t\tvar inputType = 'text';\n\t\t\t\tif (input.type === 'number') {\n\t\t\t\t\tinputType = 'number';\n\t\t\t\t} else if (input.sensitive) {\n\t\t\t\t\tinputType = 'password';\n\t\t\t\t}\n\n\t\t\t\tvar html = '<div>';\n\t\t\t\thtml += '<label for=\"' + input.name + '\" class=\"field-label\">' + (input.display_name || input.name) + isRequired + '<\\/label>';\n\t\t\t\thtml += '<input type=\"' + inputType + '\" id=\"' + input.name + '\" name=\"' + inputName + '\" placeholder=\"' + (input.default || '') + '\" value=\"' + value + '\"' + requiredAttr;\n\t\t\t\tif (inputType === 'password') html += ' autocomplete=\"off\"';\n\t\t\t\thtml += ' class=\"field-input\" \\/>';\n\t\t\t\tif (input.description) {\n\t\t\t\t\thtml += '<p class=\"field-hint\">' + input.description + '<\\/p>';\n\t\t\t\t}\n\t\t\t\thtml += '<\\/div>';\n\t\t\t\treturn html;\n\t\t\t}\n\n\t\t\tdocument.getElementById('editInputsForm').addEventListener('submit', async function(e) {\n\t\t\t\te.preventDefault();\n\t\t\t\tvar errorDiv = document.getElementById('editInputsError');\n\t\t\t\terrorDiv.classList.add('hidden');\n\n\t\t\t\tvar inputs = {};\n\t\t\t\tvar formInputs = document.querySelectorAll('#editInputsFields input');\n\t\t\t\tformInputs.forEach(function(input) {\n\t\t\t\t\tif (!input.name) return;\n\t\t\t\t\tif (input.type === 'checkbox') {\n\t\t\t\t\t\tif (input.checked) { inputs[input.name] = 'true'; }\n\t\t\t\t\t} else if (input.type === 'hidden') {\n\t\t\t\t\t\tif (inputs[input.name] === undefined) { inputs[input.name] = input.value; }\n\t\t\t\t\t} else {\n\t\t\t\t\t\tif (input.value) { inputs[input.name] = input.value; }\n\t\t\t\t\t}\n\t\t\t\t});\n\n\t\t\t\tvar textareas = document.querySelectorAll('#editInputsFields textarea');\n\t\t\t\ttextareas.forEach(function(textarea) {\n\t\t\t\t\tif (textarea.name && textarea.value) { inputs[textarea.name] = textarea.value; }\n\t\t\t\t});\n\n\t\t\t\ttry {\n\t\t\t\t\tvar response = await fetch(basePath + '/installs/' + installID + '/inputs', {\n\t\t\t\t\t\tmethod: 'PUT',\n\t\t\t\t\t\theaders: { 'Content-Type': 'application/json' },\n\t\t\t\t\t\tbody: JSON.stringify({ inputs: inputs })\n\t\t\t\t\t});\n\t\t\t\t\tvar data = await response.json();\n\t\t\t\t\tif (response.ok) {\n\t\t\t\t\t\tcloseEditInputsModal();\n\t\t\t\t\t\tsetTimeout(function() { window.location.reload(); }, 1500);\n\t\t\t\t\t} else {\n\t\t\t\t\t\terrorDiv.textContent = data.error || 'Failed to update inputs';\n\t\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t\t}\n\t\t\t\t} catch (error) {\n\t\t\t\t\terrorDiv.textContent = error.message || 'Network error. Please try again.';\n\t\t\t\t\terrorDiv.classList.remove('hidden');\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

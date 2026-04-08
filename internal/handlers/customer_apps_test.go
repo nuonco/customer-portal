@@ -35,7 +35,6 @@ func TestCustomerAppsPage_EmptyApps(t *testing.T) {
 		assert.Equal(t, http.StatusOK, w.Code, "should render page instead of redirecting")
 		body := w.Body.String()
 		assert.Contains(t, body, "No Apps Available", "should contain empty state title")
-		assert.Contains(t, body, "No applications are currently available", "should contain empty state message")
 	})
 }
 

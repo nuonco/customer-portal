@@ -548,6 +548,11 @@ a.text-theme-primary {
   flex-direction: column;
 }
 
+/* Reserve scrollbar space to prevent layout shift when content grows */
+#main-wrapper {
+  scrollbar-gutter: stable;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
  * INSTALLS TABLE
  * Table-based layout for installs list with hover states
@@ -1085,6 +1090,55 @@ body {
 
 .dropdown-item-danger:hover {
   background-color: var(--theme-surface-raised);
+}
+
+/* =============================================================================
+ * SWITCHER DROPDOWN
+ * Install-switcher-style dropdown for use in page headers and toolbars
+ * ═══════════════════════════════════════════════════════════════════════════════ */
+
+.sw-dropdown-trigger {
+  @apply flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium;
+  @apply transition-colors cursor-pointer;
+  @apply text-cool-grey-800 dark:text-cool-grey-300;
+}
+
+.sw-dropdown-trigger:hover {
+  @apply bg-black/5 dark:bg-white/10;
+}
+
+.sw-dropdown-panel {
+  @apply absolute rounded-md shadow-lg z-50 py-1;
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+}
+
+.dark .sw-dropdown-panel {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+.sw-dropdown-panel.dropdown-down { @apply top-full mt-1; }
+.sw-dropdown-panel.dropdown-up { @apply bottom-full mb-1; }
+.sw-dropdown-panel.dropdown-align-right { @apply right-0; min-width: 160px; }
+.sw-dropdown-panel.dropdown-align-full { @apply left-0 right-0; }
+
+.sw-dropdown-item {
+  @apply flex items-center gap-3 w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer;
+  @apply text-cool-grey-800 dark:text-cool-grey-300;
+}
+
+.sw-dropdown-item:hover {
+  @apply bg-black/5 dark:bg-white/10;
+}
+
+.sw-dropdown-item-danger {
+  @apply flex items-center gap-3 w-full text-left px-3 py-2 text-sm transition-colors cursor-pointer;
+  @apply text-red-600 dark:text-red-400;
+}
+
+.sw-dropdown-item-danger:hover {
+  @apply bg-red-50 dark:bg-red-900/20;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
@@ -12,7 +11,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
 	"go.uber.org/zap"
 )
 
@@ -48,23 +46,15 @@ func (h *Handler) AccessPanel(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	appID := install.GetAppID()
 
-	app, err := apiClient.GetApp(ctx, appID)
-	if err != nil || app == nil || len(app.AppConfigs) == 0 {
-		zap.L().Warn("failed to fetch app for access panel", zap.Error(err))
-		h.RenderTempl(c, http.StatusOK, partials.AccessPanel(partials.AccessPanelProps{}))
-		return
-	}
-
-	fullCfg, err := apiClient.GetAppConfigFull(ctx, appID, app.AppConfigs[0].ID)
+	permsCfg, err := apiClient.GetInstallAppPermissionsConfig(ctx, install.NuonInstallID)
 	if err != nil {
-		zap.L().Warn("failed to fetch app config for access panel", zap.Error(err))
+		zap.L().Warn("failed to fetch app permissions config for access panel", zap.Error(err))
 		h.RenderTempl(c, http.StatusOK, partials.AccessPanel(partials.AccessPanelProps{}))
 		return
 	}
 
-	roles := extractRoles(ctx, fullCfg)
+	roles := extractRoles(permsCfg)
 
 	h.RenderTempl(c, http.StatusOK, partials.AccessPanel(partials.AccessPanelProps{
 		Roles:     roles,
@@ -111,21 +101,14 @@ func (h *Handler) RoleDetailPanel(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	appID := install.GetAppID()
 
-	app, err := apiClient.GetApp(ctx, appID)
-	if err != nil || app == nil || len(app.AppConfigs) == 0 {
-		c.String(http.StatusNotFound, "App not found")
-		return
-	}
-
-	fullCfg, err := apiClient.GetAppConfigFull(ctx, appID, app.AppConfigs[0].ID)
+	permsCfg, err := apiClient.GetInstallAppPermissionsConfig(ctx, install.NuonInstallID)
 	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to fetch app config")
+		c.String(http.StatusInternalServerError, "Failed to fetch app permissions config")
 		return
 	}
 
-	roles := extractRoles(ctx, fullCfg)
+	roles := extractRoles(permsCfg)
 	if roleIndex < 0 || roleIndex >= len(roles) {
 		c.String(http.StatusNotFound, "Role not found")
 		return
@@ -134,16 +117,15 @@ func (h *Handler) RoleDetailPanel(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, partials.RoleDetailPanel(roles[roleIndex]))
 }
 
-func extractRoles(_ context.Context, cfg *nuonmodels.AppAppConfig) []partials.AccessRole {
-	if cfg == nil || cfg.Permissions == nil {
+func extractRoles(cfg *nuon.InstallAppPermissionsConfig) []partials.AccessRole {
+	if cfg == nil {
 		return nil
 	}
 
 	var roles []partials.AccessRole
-	permCfg := cfg.Permissions
 	seen := map[string]bool{}
 
-	addRole := func(role *nuonmodels.AppAppAWSIAMRoleConfig, active bool) {
+	addRole := func(role *nuon.InstallIAMRole, active bool) {
 		if role == nil || role.Name == "" {
 			return
 		}
@@ -175,9 +157,6 @@ func extractRoles(_ context.Context, cfg *nuonmodels.AppAppConfig) []partials.Ac
 		}
 
 		for _, p := range role.Policies {
-			if p == nil {
-				continue
-			}
 			policyType := "Vendor defined"
 			if p.ManagedPolicyName != "" {
 				policyType = "AWS managed"
@@ -207,15 +186,14 @@ func extractRoles(_ context.Context, cfg *nuonmodels.AppAppConfig) []partials.Ac
 		roles = append(roles, r)
 	}
 
-	if permCfg.ProvisionAwsIamRole.Name != "" {
-		prov := permCfg.ProvisionAwsIamRole.AppAppAWSIAMRoleConfig
-		addRole(&prov, true)
+	addRole(cfg.ProvisionRole, true)
+	addRole(cfg.DeprovisionRole, true)
+	addRole(cfg.MaintenanceRole, true)
+	for i := range cfg.BreakGlassRoles {
+		addRole(&cfg.BreakGlassRoles[i], false)
 	}
-	addRole(permCfg.DeprovisionAwsIamRole, true)
-	addRole(permCfg.MaintenanceAwsIamRole, true)
-	addRole(permCfg.BreakGlassAwsIamRole, false)
-	for _, r := range permCfg.AwsIamRoles {
-		addRole(r, true)
+	for i := range cfg.CustomRoles {
+		addRole(&cfg.CustomRoles[i], true)
 	}
 
 	return roles

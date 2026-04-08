@@ -121,21 +121,21 @@ func TestRenderEmptyState(t *testing.T) {
 			name:     "basic empty state",
 			title:    "No Items",
 			message:  "Try creating one",
-			contains: []string{"No Items", "Try creating one"},
+			contains: []string{"No Items"},
 		},
 		{
 			name:     "with check-circle icon",
 			title:    "All Done",
 			message:  "Nothing to do",
 			args:     []string{"check-circle"},
-			contains: []string{"All Done", "Nothing to do", "text-green-500"},
+			contains: []string{"All Done", "ph-check-circle"},
 		},
 		{
 			name:     "with refresh icon",
 			title:    "Loading",
 			message:  "Please wait",
 			args:     []string{"refresh"},
-			contains: []string{"Loading", "Please wait", "text-blue-500"},
+			contains: []string{"Loading", "ph-arrows-clockwise"},
 		},
 	}
 
@@ -264,7 +264,7 @@ func TestComponentsInTemplate(t *testing.T) {
 			name:     "emptyState in template",
 			tmplStr:  `{{ emptyState "No data" "Check back later" "check-circle" }}`,
 			data:     map[string]interface{}{},
-			contains: []string{"No data", "Check back later", "text-green-500"},
+			contains: []string{"No data", "ph-check-circle"},
 		},
 		{
 			name:     "pagination in template",

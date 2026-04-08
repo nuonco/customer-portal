@@ -1213,3 +1213,58 @@ func (c *Client) IsInstallNameAvailable(ctx context.Context, appID, name string)
 
 	return true, nil // Name is available
 }
+
+// InstallIAMPolicy represents a single IAM policy attached to a role.
+type InstallIAMPolicy struct {
+	ManagedPolicyName string `json:"managed_policy_name"`
+	Name              string `json:"name"`
+	Contents          string `json:"contents"` // base64-encoded JSON
+}
+
+// InstallIAMRole represents an IAM role from the app-permissions-config endpoint.
+type InstallIAMRole struct {
+	Name                string             `json:"name"`
+	DisplayName         string             `json:"display_name"`
+	Description         string             `json:"description"`
+	Enabled             bool               `json:"enabled"`
+	Type                string             `json:"type"`
+	Policies            []InstallIAMPolicy `json:"policies"`
+	PermissionsBoundary string             `json:"permissions_boundary"` // base64-encoded JSON
+	ARN                 string             `json:"arn"`
+}
+
+// InstallAppPermissionsConfig is the response from GET /v1/installs/:id/app-permissions-config.
+type InstallAppPermissionsConfig struct {
+	ProvisionRole   *InstallIAMRole  `json:"provision_role"`
+	DeprovisionRole *InstallIAMRole  `json:"deprovision_role"`
+	MaintenanceRole *InstallIAMRole  `json:"maintenance_role"`
+	BreakGlassRoles []InstallIAMRole `json:"break_glass_roles"`
+	CustomRoles     []InstallIAMRole `json:"custom_roles"`
+}
+
+// GetInstallAppPermissionsConfig fetches the IAM roles configured for an install.
+func (c *Client) GetInstallAppPermissionsConfig(ctx context.Context, installID string) (*InstallAppPermissionsConfig, error) {
+	url := fmt.Sprintf("%s/v1/installs/%s/app-permissions-config", c.apiURL, installID)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusNotFound {
+		return nil, nil
+	}
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	var result InstallAppPermissionsConfig
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return &result, nil
+}

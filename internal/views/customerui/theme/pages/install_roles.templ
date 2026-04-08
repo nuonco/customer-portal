@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+)
 
 templ InstallRolesPage(props InstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
@@ -10,12 +13,27 @@ templ InstallRolesPage(props InstallPageProps) {
 				class="panel-body"
 				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/access" }
 				hx-trigger="load"
-				hx-swap="innerHTML"
+				hx-swap="morph:innerHTML"
 			>
-				<div class="panel-loading">
-					<div class="panel-loading-spinner"></div>
-				</div>
+				@rolesShimmer()
 			</div>
 		}
 	}
+}
+
+templ rolesShimmer() {
+	<div class="w-full">
+		<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600 py-2 gap-4">
+			@components.ShimmerBar("h-4", "w-1/2")
+			@components.ShimmerBar("h-4", "w-24")
+		</div>
+		<div class="space-y-3 mt-3">
+			for i := 0; i < 4; i++ {
+				<div class="flex items-center gap-4 border-b border-cool-grey-100 dark:border-dark-grey-700 pb-3">
+					@components.ShimmerBar("h-4", "w-1/2")
+					@components.ShimmerBar("h-5", "w-24")
+				</div>
+			}
+		</div>
+	</div>
 }

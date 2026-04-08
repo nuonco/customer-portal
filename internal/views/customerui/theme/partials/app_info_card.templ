@@ -88,6 +88,7 @@ type PublishedAppDisplay struct {
 	SandboxRepoDir      string
 	SandboxRepoIsPublic bool
 	ReadmeHTML          string
+	APIError            bool // true when app data could not be fetched
 }
 
 func FormatPolicyType(t string) string {
@@ -134,6 +135,9 @@ func appInfoIAMPolicyDetail(pol IAMPolicyDisplay) templ.Component {
 }
 
 templ AppInfoCard(app PublishedAppDisplay, basePath string) {
+	if app.APIError {
+		@components.EmptyState(components.EmptyStateProps{Title: "No app data", Icon: "ph-app-window"})
+	} else {
 	@components.Card(components.CardProps{Size: components.CardLarge}) {
 		// ── Header ──────────────────────────────────────────────────────────
 		<div class="mb-8">
@@ -272,7 +276,7 @@ templ AppInfoCard(app PublishedAppDisplay, basePath string) {
 						if app.SandboxRepoIsPublic && app.SandboxRepoURL != "" {
 							<dt class="text-cool-grey-500 dark:text-cool-grey-400">Repository</dt>
 							<dd class="font-medium break-all">
-								<a href={ templ.URL(app.SandboxRepoURL) } target="_blank" rel="noopener noreferrer" class="text-blue-600 dark:text-blue-400 hover:underline">{ app.SandboxRepoURL }</a>
+								<a href={ templ.URL(app.SandboxRepoURL) } target="_blank" rel="noopener noreferrer" class="text-theme-primary hover:underline">{ app.SandboxRepoURL }</a>
 							</dd>
 						}
 						if app.SandboxRepoIsPublic && app.SandboxRepoBranch != "" {
@@ -291,7 +295,7 @@ templ AppInfoCard(app PublishedAppDisplay, basePath string) {
 			// Components pane
 			<div id={ "act-" + app.AppID + "-comp" } class="panel-tab-pane">
 				if len(app.Components) == 0 {
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No components found.</p>
+					@components.EmptyState(components.EmptyStateProps{Title: "No components", Icon: "ph-cards"})
 				} else {
 					<table class="w-full table-fixed text-sm text-left">
 						<thead>
@@ -319,7 +323,7 @@ templ AppInfoCard(app PublishedAppDisplay, basePath string) {
 			// Roles pane
 			<div id={ "act-" + app.AppID + "-perms" } class="panel-tab-pane">
 				if len(app.Permissions) == 0 {
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No roles configured.</p>
+					@components.EmptyState(components.EmptyStateProps{Title: "No roles", Icon: "ph-file-lock"})
 				} else {
 					<div>
 						<div class="flex w-full text-sm text-left border-b border-cool-grey-200 dark:border-dark-grey-600">
@@ -339,7 +343,7 @@ templ AppInfoCard(app PublishedAppDisplay, basePath string) {
 			// Policies pane
 			<div id={ "act-" + app.AppID + "-pols" } class="panel-tab-pane">
 				if len(app.Policies) == 0 {
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No policies configured.</p>
+					@components.EmptyState(components.EmptyStateProps{Title: "No policies", Icon: "ph-shield-check"})
 				} else {
 					<div>
 						<div class="flex w-full text-sm text-left border-b border-cool-grey-200 dark:border-dark-grey-600">
@@ -374,6 +378,7 @@ templ AppInfoCard(app PublishedAppDisplay, basePath string) {
 				};
 			}
 		</script>
+	}
 	}
 }
 

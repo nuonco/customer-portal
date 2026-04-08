@@ -272,12 +272,12 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(policies) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<p class=\"text-sm text-cool-grey-500 dark:text-cool-grey-400\">No policies configured for this app.</p>")
+			templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{Title: "No policies", Icon: "ph-shield-check"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<table class=\"w-full text-sm table-fixed\"><colgroup><col class=\"w-[40%]\"> <col class=\"w-[30%]\"> <col class=\"w-[30%]\"></colgroup> <thead><tr class=\"border-b border-cool-grey-200 dark:border-dark-grey-600\"><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Name</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Type</th><th class=\"text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Engine</th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "<table class=\"w-full text-sm table-fixed\"><colgroup><col class=\"w-[40%]\"> <col class=\"w-[30%]\"> <col class=\"w-[30%]\"></colgroup> <thead><tr class=\"border-b border-cool-grey-200 dark:border-dark-grey-600\"><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Name</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Type</th><th class=\"text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Engine</th></tr></thead> <tbody>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -286,7 +286,7 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\" onclick=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 15, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\" onclick=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -295,7 +295,7 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\"><td class=\"py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate\" title=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "\"><td class=\"py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate\" title=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -308,7 +308,7 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -321,7 +321,7 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td class=\"py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "</td><td class=\"py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 truncate\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -334,12 +334,12 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "</td><td class=\"py-2\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "</td><td class=\"py-2\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if pol.Engine != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<span class=\"inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "<span class=\"inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-cool-grey-100 dark:bg-dark-grey-600 text-cool-grey-700 dark:text-cool-grey-300\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -352,17 +352,17 @@ func policiesListContent(policies []PoliciesPolicy) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "</tbody></table>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "</tbody></table>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -400,12 +400,12 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(reports) == 0 {
-			templ_7745c5c3_Err = auditEmptyState("policy evaluations", "ph-shield-check").Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = components.EmptyState(components.EmptyStateProps{Title: "No policy evaluations", Icon: "ph-shield-check"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<table class=\"w-full text-sm table-fixed\"><colgroup><col class=\"w-[25%]\"> <col class=\"w-[15%]\"> <col class=\"w-[15%]\"> <col class=\"w-[15%]\"> <col class=\"w-[30%]\"></colgroup> <thead><tr class=\"border-b border-cool-grey-200 dark:border-dark-grey-600\"><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Policy</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Denied</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Warnings</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Passed</th><th class=\"text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Evaluated</th></tr></thead> <tbody>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<table class=\"w-full text-sm table-fixed\"><colgroup><col class=\"w-[25%]\"> <col class=\"w-[15%]\"> <col class=\"w-[15%]\"> <col class=\"w-[15%]\"> <col class=\"w-[30%]\"></colgroup> <thead><tr class=\"border-b border-cool-grey-200 dark:border-dark-grey-600\"><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Policy</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Denied</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Warnings</th><th class=\"text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Passed</th><th class=\"text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400\">Evaluated</th></tr></thead> <tbody>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -414,7 +414,7 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\" onclick=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 25, "<tr class=\"border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700\" onclick=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -423,7 +423,7 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\"><td class=\"py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate\" title=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 26, "\"><td class=\"py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate\" title=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -436,7 +436,7 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 27, "\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -449,12 +449,12 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "</td><td class=\"py-2 pr-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 28, "</td><td class=\"py-2 pr-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if report.DenyCount > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 29, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -467,22 +467,22 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 30, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 31, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "</td><td class=\"py-2 pr-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 32, "</td><td class=\"py-2 pr-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if report.WarnCount > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 33, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -495,22 +495,22 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 34, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 35, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "</td><td class=\"py-2 pr-3\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 36, "</td><td class=\"py-2 pr-3\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				if report.PassCount > 0 {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<span class=\"px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -523,17 +523,17 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 38, "</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				} else {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 39, "<span class=\"text-cool-grey-400 dark:text-cool-grey-500\">0</span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</td><td class=\"py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 40, "</td><td class=\"py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -546,12 +546,12 @@ func policiesEvalList(reports []nuon.PolicyReport) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</td></tr>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "</td></tr>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "</tbody></table>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "</tbody></table>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -581,7 +581,7 @@ func policiesPanelScripts() templ.Component {
 			templ_7745c5c3_Var27 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 44, "<script>\n\t\t(function() {\n\t\t\twindow.switchPoliciesSubTab = function(subTab) {\n\t\t\t\tvar container = document.querySelector('.policies-panel');\n\t\t\t\tif (!container) return;\n\t\t\t\tcontainer.querySelectorAll('.audit-sub-tabs .nav-item').forEach(function(b) {\n\t\t\t\t\tb.classList.remove('active');\n\t\t\t\t});\n\t\t\t\tcontainer.querySelectorAll('.audit-sub-pane').forEach(function(p) {\n\t\t\t\t\tp.classList.remove('active');\n\t\t\t\t});\n\t\t\t\tvar btn = container.querySelector('.audit-sub-tabs .nav-item[data-subtab=\"' + subTab + '\"]');\n\t\t\t\tif (btn) btn.classList.add('active');\n\t\t\t\tvar pane = container.querySelector('#policies-sub-' + subTab);\n\t\t\t\tif (pane) pane.classList.add('active');\n\t\t\t};\n\n\t\t\twindow.openPolicyPanel = function(name) {\n\t\t\t\tvar panel = document.getElementById('secondary-panel');\n\t\t\t\tvar title = document.getElementById('secondary-panel-title');\n\t\t\t\tvar content = document.getElementById('secondary-panel-content');\n\t\t\t\tif (!panel || !title || !content) return;\n\t\t\t\ttitle.textContent = name;\n\t\t\t\tcontent.innerHTML = '<div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div>';\n\t\t\t\tpanel.classList.add('open');\n\t\t\t\tvar overlay = document.getElementById('secondary-panel-overlay');\n\t\t\t\tif (overlay) overlay.classList.add('open');\n\t\t\t\tvar config = document.getElementById('policies-panel-config');\n\t\t\t\tvar basePath = config ? config.getAttribute('data-base-path') : '';\n\t\t\t\tvar installId = config ? config.getAttribute('data-install-id') : '';\n\t\t\t\tfetch(basePath + '/installs/' + installId + '/panel/policies/detail/' + encodeURIComponent(name))\n\t\t\t\t\t.then(function(resp) { return resp.text(); })\n\t\t\t\t\t.then(function(html) { content.innerHTML = html; })\n\t\t\t\t\t.catch(function() {\n\t\t\t\t\t\tcontent.innerHTML = '<p class=\"text-sm text-red-500 p-4\">Failed to load policy details.</p>';\n\t\t\t\t\t});\n\t\t\t};\n\n\t\t\twindow.openPolicyReportPanel = function(reportID, reportName) {\n\t\t\t\tvar panel = document.getElementById('secondary-panel');\n\t\t\t\tvar title = document.getElementById('secondary-panel-title');\n\t\t\t\tvar content = document.getElementById('secondary-panel-content');\n\t\t\t\tif (!panel || !title || !content) return;\n\t\t\t\ttitle.textContent = reportName || 'Policy Evaluation';\n\t\t\t\tcontent.innerHTML = '<div class=\"panel-loading\"><div class=\"panel-loading-spinner\"></div></div>';\n\t\t\t\tpanel.classList.add('open');\n\t\t\t\tvar overlay = document.getElementById('secondary-panel-overlay');\n\t\t\t\tif (overlay) overlay.classList.add('open');\n\n\t\t\t\tvar config = document.getElementById('policies-panel-config');\n\t\t\t\tvar basePath = config ? config.getAttribute('data-base-path') : '';\n\t\t\t\tvar installId = config ? config.getAttribute('data-install-id') : '';\n\t\t\t\tfetch(basePath + '/installs/' + installId + '/panel/policies/report/' + reportID)\n\t\t\t\t\t.then(function(resp) { return resp.text(); })\n\t\t\t\t\t.then(function(html) { content.innerHTML = html; })\n\t\t\t\t\t.catch(function() {\n\t\t\t\t\t\tcontent.innerHTML = '<p class=\"text-sm text-red-500 p-4\">Failed to load policy evaluation details.</p>';\n\t\t\t\t\t});\n\t\t\t};\n\n\t\t})();\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "<script>\n\t\t(function() {\n\t\t\twindow.switchPoliciesSubTab = function(subTab) {\n\t\t\t\tvar container = document.querySelector('.policies-panel');\n\t\t\t\tif (!container) return;\n\t\t\t\tcontainer.querySelectorAll('.audit-sub-tabs .nav-item').forEach(function(b) {\n\t\t\t\t\tb.classList.remove('active');\n\t\t\t\t});\n\t\t\t\tcontainer.querySelectorAll('.audit-sub-pane').forEach(function(p) {\n\t\t\t\t\tp.classList.remove('active');\n\t\t\t\t});\n\t\t\t\tvar btn = container.querySelector('.audit-sub-tabs .nav-item[data-subtab=\"' + subTab + '\"]');\n\t\t\t\tif (btn) btn.classList.add('active');\n\t\t\t\tvar pane = container.querySelector('#policies-sub-' + subTab);\n\t\t\t\tif (pane) pane.classList.add('active');\n\t\t\t};\n\n\t\t\twindow.openPolicyPanel = function(name) {\n\t\t\t\tvar panel = document.getElementById('secondary-panel');\n\t\t\t\tvar title = document.getElementById('secondary-panel-title');\n\t\t\t\tvar content = document.getElementById('secondary-panel-content');\n\t\t\t\tif (!panel || !title || !content) return;\n\t\t\t\ttitle.textContent = name;\n\t\t\t\tcontent.innerHTML = `\n\t\t\t\t\t<div class=\"p-4\">\n\t\t\t\t\t\t<div class=\"shimmer h-48 w-full rounded\"></div>\n\t\t\t\t\t</div>`;\n\t\t\t\tpanel.classList.add('open');\n\t\t\t\tvar overlay = document.getElementById('secondary-panel-overlay');\n\t\t\t\tif (overlay) overlay.classList.add('open');\n\t\t\t\tvar config = document.getElementById('policies-panel-config');\n\t\t\t\tvar basePath = config ? config.getAttribute('data-base-path') : '';\n\t\t\t\tvar installId = config ? config.getAttribute('data-install-id') : '';\n\t\t\t\tfetch(basePath + '/installs/' + installId + '/panel/policies/detail/' + encodeURIComponent(name))\n\t\t\t\t\t.then(function(resp) { return resp.text(); })\n\t\t\t\t\t.then(function(html) { content.innerHTML = html; })\n\t\t\t\t\t.catch(function() {\n\t\t\t\t\t\tcontent.innerHTML = '<p class=\"text-sm text-red-500 p-4\">Failed to load policy details.</p>';\n\t\t\t\t\t});\n\t\t\t};\n\n\t\t\twindow.openPolicyReportPanel = function(reportID, reportName) {\n\t\t\t\tvar panel = document.getElementById('secondary-panel');\n\t\t\t\tvar title = document.getElementById('secondary-panel-title');\n\t\t\t\tvar content = document.getElementById('secondary-panel-content');\n\t\t\t\tif (!panel || !title || !content) return;\n\t\t\t\ttitle.textContent = reportName || 'Policy Evaluation';\n\t\t\t\tcontent.innerHTML = `\n\t\t\t\t\t<div class=\"p-4 space-y-4\">\n\t\t\t\t\t\t<div class=\"space-y-3\">\n\t\t\t\t\t\t\t<div class=\"shimmer h-3 w-20\"></div>\n\t\t\t\t\t\t\t<div class=\"space-y-2\">\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-3/4\"></div>\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-1/2\"></div>\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-2/3\"></div>\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-1/2\"></div>\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-1/3\"></div>\n\t\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-1/3\"></div>\n\t\t\t\t\t\t\t</div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t\t<div class=\"space-y-2\">\n\t\t\t\t\t\t\t<div class=\"shimmer h-3 w-16\"></div>\n\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-full border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2\"></div>\n\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-3/4\"></div>\n\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-2/3\"></div>\n\t\t\t\t\t\t\t<div class=\"shimmer h-4 w-3/4\"></div>\n\t\t\t\t\t\t</div>\n\t\t\t\t\t</div>`;\n\t\t\t\tpanel.classList.add('open');\n\t\t\t\tvar overlay = document.getElementById('secondary-panel-overlay');\n\t\t\t\tif (overlay) overlay.classList.add('open');\n\n\t\t\t\tvar config = document.getElementById('policies-panel-config');\n\t\t\t\tvar basePath = config ? config.getAttribute('data-base-path') : '';\n\t\t\t\tvar installId = config ? config.getAttribute('data-install-id') : '';\n\t\t\t\tfetch(basePath + '/installs/' + installId + '/panel/policies/report/' + reportID)\n\t\t\t\t\t.then(function(resp) { return resp.text(); })\n\t\t\t\t\t.then(function(html) { content.innerHTML = html; })\n\t\t\t\t\t.catch(function() {\n\t\t\t\t\t\tcontent.innerHTML = '<p class=\"text-sm text-red-500 p-4\">Failed to load policy evaluation details.</p>';\n\t\t\t\t\t});\n\t\t\t};\n\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

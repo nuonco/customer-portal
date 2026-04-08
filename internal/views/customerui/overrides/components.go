@@ -54,18 +54,33 @@ func RenderAlert(alertType, message string) template.HTML {
 // RenderEmptyState renders an empty state component.
 // Usage in templates:
 //
-//	{{ emptyState "No items" "Try creating one" }}
-//	{{ emptyState "All done!" "No pending tasks" "check-circle" }}
-//	{{ emptyState "Loading..." "Please wait" "refresh" }}
+//	{{ emptyState "No items" }}
+//	{{ emptyState "All done!" "ph-check-circle" }}
+//
+// Legacy short names ("check-circle", "refresh", "inbox") are mapped to Phosphor classes automatically.
+// The second positional arg (message) is accepted for backward compatibility but ignored.
 func RenderEmptyState(title, message string, args ...string) template.HTML {
 	props := components.EmptyStateProps{
-		Title:   title,
-		Message: message,
+		Title: title,
 	}
 	if len(args) > 0 {
-		props.Icon = args[0] // "inbox" | "check-circle" | "refresh"
+		props.Icon = mapLegacyIcon(args[0])
 	}
 	return renderTemplComponent(components.EmptyState(props))
+}
+
+// mapLegacyIcon maps legacy short icon names to Phosphor class names.
+func mapLegacyIcon(icon string) string {
+	switch icon {
+	case "check-circle":
+		return "ph-check-circle"
+	case "refresh":
+		return "ph-arrows-clockwise"
+	case "inbox":
+		return "ph-tray"
+	default:
+		return icon
+	}
 }
 
 // PaginationData represents pagination information that can be passed to the pagination component.

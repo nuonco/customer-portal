@@ -1,27 +1,26 @@
 package components
 
+import "fmt"
+
 // EmptyStateProps for empty state display
 type EmptyStateProps struct {
-	Title   string
-	Message string
-	Icon    string // "inbox" | "check-circle" | "refresh"
+	Title string
+	Icon  string // Any Phosphor icon class, e.g. "ph-stack", "ph-clock". Defaults to "ph-empty".
 	Compact bool   // Use smaller padding
 	Class   string // Additional CSS classes
 }
 
+func emptyStateIcon(icon string) string {
+	if icon == "" {
+		return "ph-empty"
+	}
+	return icon
+}
+
 // EmptyState renders an empty state display
 templ EmptyState(props EmptyStateProps) {
-	<div class={ "text-center", templ.KV("py-12", !props.Compact), templ.KV("py-6", props.Compact), props.Class } style="border-radius: var(--theme-radius)">
-		<div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-cool-grey-100 dark:bg-dark-grey-800 mb-4">
-			if props.Icon == "check-circle" {
-				<i class="ph-bold ph-check-circle text-[32px] text-green-500"></i>
-			} else if props.Icon == "refresh" {
-				<i class="ph-bold ph-arrows-clockwise text-[32px] text-blue-500"></i>
-			} else {
-				<i class="ph-bold ph-tray text-[32px] text-cool-grey-400 dark:text-cool-grey-500"></i>
-			}
-		</div>
-		<h3 class="text-lg font-medium text-cool-grey-900 dark:text-white mb-2">{ props.Title }</h3>
-		<p class="text-cool-grey-500 dark:text-cool-grey-400">{ props.Message }</p>
+	<div class={ "text-center", templ.KV("py-12", !props.Compact), templ.KV("py-6", props.Compact), props.Class } style="border-radius: var(--theme-radius); opacity: 0.4;">
+		<i class={ fmt.Sprintf("ph-bold %s text-[32px] mb-4 block", emptyStateIcon(props.Icon)) }></i>
+		<h3 class="text-base font-normal">{ props.Title }</h3>
 	</div>
 }

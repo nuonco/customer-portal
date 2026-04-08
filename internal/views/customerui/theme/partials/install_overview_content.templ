@@ -156,10 +156,6 @@ type InstallDetailPanelProps struct {
 	AppConfigUpdatedAt     string
 	InstallConfigVersion   int64
 	InstallConfigUpdatedAt string
-	ProvisionWorkflow      *WorkflowDataPanel
-	StackSetup             StackSetupData
-	ProvisionPhases        []ProvisionPhase
-	HasActiveProvision     bool
 	// Overview summary card data
 	StackStatus    string
 	StackRegion    string
@@ -176,26 +172,6 @@ type InstallDetailPanelProps struct {
 
 // InstallDetailPanel renders just the install detail content for the sliding panel
 templ InstallDetailPanel(props InstallDetailPanelProps) {
-	<!-- Hidden Actions Dropdown (will be moved to panel header by JS) -->
-	if props.Install.Status != "deprovisioning" && !props.APIDeletedError {
-		<div id="panel-actions-source" class="hidden">
-			@components.Dropdown(components.DropdownProps{
-				ID:    "actionsDropdown",
-				Label: "Actions",
-				Icon:  "ph-bold ph-caret-down",
-			}) {
-				<button type="button" onclick="openEditInputsModal()" class="dropdown-item">
-					Edit Inputs
-				</button>
-				<button type="button" onclick="confirmReprovision()" class="dropdown-item">
-					Reprovision
-				</button>
-				<button type="button" onclick="confirmDeprovision()" class="dropdown-item">
-					Deprovision
-				</button>
-			}
-		</div>
-	}
 	<div>
 		<!-- API Deletion Warning Banner -->
 		if props.APIDeletedError {
@@ -226,12 +202,12 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 				class="button button-nav nav-item active"
 				data-subtab="updates"
 				onclick="switchOverviewTab('updates')"
-			>Updates</button>
+			>History</button>
 			<button
 				class="button button-nav nav-item"
 				data-subtab="configuration"
 				onclick="switchOverviewTab('configuration')"
-			>Configuration</button>
+			>Inputs</button>
 		</div>
 		<script>
 			function switchOverviewTab(tab) {
@@ -267,10 +243,10 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 // overviewConfigurationTab renders the Configuration tab content showing current input values.
 templ overviewConfigurationTab(fields []InputFieldRow) {
 	if len(fields) == 0 {
-		<div class="text-center py-12 text-cool-grey-500 dark:text-cool-grey-400">
-			<i class="ph-bold ph-sliders text-[32px] mb-2 block"></i>
-			<p class="text-sm">No configuration values have been set yet.</p>
-		</div>
+		@components.EmptyState(components.EmptyStateProps{
+			Title:   "No inputs",
+			Icon:    "ph-list-checks",
+		})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -383,7 +359,7 @@ func componentStatusDot(status string) string {
 }
 
 templ overviewCardDetailsLink(href string) {
-	<a href={ templ.SafeURL(href) } class="inline-flex items-center gap-0.5 text-xs font-medium text-blue-600 dark:text-blue-400 hover:underline ml-auto flex-shrink-0">
+	<a href={ templ.SafeURL(href) } class="inline-flex items-center gap-0.5 text-xs font-medium text-theme-primary hover:underline ml-auto flex-shrink-0">
 		Details
 		<i class="ph-bold ph-caret-right text-[10px]"></i>
 	</a>
@@ -449,7 +425,7 @@ templ overviewInfoRowLink(label, value, href string) {
 	<div>
 		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
 		<p class="font-medium">
-			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-theme-primary hover:underline">
 				{ value }
 				<i class="ph-bold ph-arrow-square-out text-xs"></i>
 			</a>
@@ -462,32 +438,48 @@ templ overviewSummaryCards(props InstallDetailPanelProps) {
 		<!-- Stack + Sandbox row -->
 		<div class="grid grid-cols-2 gap-4">
 			@components.Card(components.CardProps{Header: overviewStackCardHeader(props.StackStatus, props.BasePath+"/installs/"+props.Install.ID+"/stack"), AccentColor: statusAccentColor(props.StackStatus)}) {
-				<div class="space-y-3 text-sm">
-					if props.StackAccountID != "" {
-						@overviewInfoRowLink("Account ID", props.StackAccountID, "https://console.aws.amazon.com/console/home")
-					}
-					if props.StackRegion != "" {
-						@overviewInfoRowLink("Region", props.StackRegion, "https://console.aws.amazon.com/console/home?region="+props.StackRegion)
-					}
-				</div>
+				if props.StackAccountID != "" || props.StackRegion != "" {
+					<div class="space-y-3 text-sm">
+						if props.StackAccountID != "" {
+							@overviewInfoRowLink("Account ID", props.StackAccountID, "https://console.aws.amazon.com/console/home")
+						}
+						if props.StackRegion != "" {
+							@overviewInfoRowLink("Region", props.StackRegion, "https://console.aws.amazon.com/console/home?region="+props.StackRegion)
+						}
+					</div>
+				} else {
+					@components.EmptyState(components.EmptyStateProps{
+						Title:   "No stack data",
+						Icon:    "ph-stack",
+						Compact: true,
+					})
+				}
 			}
 			@components.Card(components.CardProps{Header: overviewSandboxCardHeader(props.SandboxStatus, props.BasePath+"/installs/"+props.Install.ID+"/sandbox"), AccentColor: statusAccentColor(props.SandboxStatus)}) {
-				<div class="space-y-3 text-sm">
-					if props.SandboxRepo != "" {
-						if props.SandboxRepoPublic {
-							@overviewInfoRowLink("Repo", props.SandboxRepo, overviewRepoURL(props.SandboxRepo))
-						} else {
-							@overviewInfoRow("Repo", props.SandboxRepo)
+				if props.SandboxRepo != "" || props.SandboxBranch != "" {
+					<div class="space-y-3 text-sm">
+						if props.SandboxRepo != "" {
+							if props.SandboxRepoPublic {
+								@overviewInfoRowLink("Repo", props.SandboxRepo, overviewRepoURL(props.SandboxRepo))
+							} else {
+								@overviewInfoRow("Repo", props.SandboxRepo)
+							}
 						}
-					}
-					if props.SandboxBranch != "" {
-						if props.SandboxRepoPublic {
-							@overviewInfoRowLink("Git Ref", props.SandboxBranch, overviewRepoURL(props.SandboxRepo)+"/tree/"+props.SandboxBranch)
-						} else {
-							@overviewInfoRow("Git Ref", props.SandboxBranch)
+						if props.SandboxBranch != "" {
+							if props.SandboxRepoPublic {
+								@overviewInfoRowLink("Git Ref", props.SandboxBranch, overviewRepoURL(props.SandboxRepo)+"/tree/"+props.SandboxBranch)
+							} else {
+								@overviewInfoRow("Git Ref", props.SandboxBranch)
+							}
 						}
-					}
-				</div>
+					</div>
+				} else {
+					@components.EmptyState(components.EmptyStateProps{
+						Title:   "No sandbox data",
+						Icon:    "ph-shipping-container",
+						Compact: true,
+					})
+				}
 			}
 		</div>
 		<!-- Components card -->
@@ -503,7 +495,11 @@ templ overviewSummaryCards(props InstallDetailPanelProps) {
 					}
 				</div>
 			} else {
-				<p class="text-xs text-cool-grey-400 dark:text-cool-grey-500">No components</p>
+				@components.EmptyState(components.EmptyStateProps{
+					Title:   "No components",
+					Icon:    "ph-cards",
+					Compact: true,
+				})
 			}
 		}
 	</div>
@@ -1302,70 +1298,6 @@ templ installDetailPanelScripts() {
 				installIdEl.textContent = nuonInstallID;
 			}
 
-			// Move actions dropdown into page/panel header
-			var actionsSource = document.getElementById('panel-actions-source');
-			var actionsContainer = document.getElementById('page-actions-container') || document.getElementById('panel-actions-container');
-			if (actionsSource && actionsContainer) {
-				actionsContainer.innerHTML = actionsSource.innerHTML;
-			}
-
-			// Reprovision install with custom modal confirmation
-			window.confirmReprovision = async function() {
-				var confirmed = await showConfirmModal({
-					title: 'Reprovision Installation?',
-					message: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',
-					variant: 'warning',
-					confirmText: 'Reprovision',
-					cancelText: 'Cancel'
-				});
-
-				if (!confirmed) {
-					return;
-				}
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/reprovision', {
-						method: 'POST'
-					});
-
-					if (response.ok) {
-						var overview = document.getElementById('panel-content-overview');
-						if (overview) {
-							htmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});
-						}
-					}
-				} catch (error) {
-					console.error('Reprovision failed:', error);
-				}
-			};
-
-			// Deprovision install with custom modal confirmation
-			window.confirmDeprovision = async function() {
-				var confirmed = await showConfirmModal({
-					title: 'Deprovision Installation?',
-					message: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',
-					variant: 'danger',
-					confirmText: 'Deprovision',
-					cancelText: 'Cancel'
-				});
-
-				if (!confirmed) {
-					return;
-				}
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/', {
-						method: 'DELETE'
-					});
-
-					if (response.ok) {
-						setTimeout(function() { window.location.reload(); }, 1500);
-					}
-				} catch (error) {
-					console.error('Deprovision failed:', error);
-				}
-			};
-
 			// Retry failed workflow step
 			window.retryFailedStep = async function(btn) {
 				var endpoint = btn.getAttribute('data-endpoint');
@@ -1431,15 +1363,6 @@ templ installDetailPanelScripts() {
 					var modal = document.getElementById('confirm-modal');
 					modal.classList.add('hidden');
 
-					// If the target was the provision banner (swap:none), trigger immediate re-poll
-					var targetSel = evt.detail.elt.getAttribute('hx-target');
-					if (targetSel === '#active-provision-banner') {
-						var banner = document.querySelector('#active-provision-banner');
-						if (banner) {
-							htmx.trigger(banner, 'every 5s');
-						}
-					}
-
 					// Clean up HTMX attributes
 					evt.detail.elt.removeAttribute('hx-post');
 					evt.detail.elt.removeAttribute('hx-target');
@@ -1449,12 +1372,6 @@ templ installDetailPanelScripts() {
 
 			// Attach event listeners to workflow action buttons using event delegation
 			document.body.addEventListener('click', function(e) {
-				// Determine HTMX target based on button location
-				// Buttons inside the provision banner use swap:none and trigger a re-poll
-				var inBanner = !!e.target.closest('#active-provision-banner');
-				var target = inBanner ? '#active-provision-banner' : '#workflow-status-display';
-				var swap = inBanner ? 'none' : 'innerHTML';
-
 				// Handle Approve button — no confirmation needed
 				if (e.target.classList.contains('workflow-approve-all-btn')) {
 					var btn = e.target;
@@ -1463,18 +1380,8 @@ templ installDetailPanelScripts() {
 					btn.style.pointerEvents = 'none';
 					btn.style.opacity = '0.5';
 					btn.textContent = 'Approving...';
-					// Pause banner polling so HTMX doesn't replace the disabled button
-					var banner = document.querySelector('#active-provision-banner');
-					if (banner) { banner.removeAttribute('hx-trigger'); htmx.process(banner); }
 					fetch(endpoint, { method: 'POST' }).catch(function(err) {
 						console.error('Approve failed:', err);
-					}).finally(function() {
-						// Resume polling — the next poll will render updated state
-						if (banner) {
-							banner.setAttribute('hx-trigger', 'every 5s');
-							htmx.process(banner);
-							htmx.trigger(banner, 'every 5s');
-						}
 					});
 				}
 				// Handle Cancel button
@@ -1483,8 +1390,8 @@ templ installDetailPanelScripts() {
 					var wfName = e.target.getAttribute('data-workflow-name') || 'Workflow';
 					showWorkflowActionModal({
 						endpoint: endpoint,
-						target: target,
-						swap: swap,
+						target: '#workflow-status-display',
+						swap: 'innerHTML',
 						title: 'Cancel ' + wfName + '?',
 						message: 'Are you sure you want to cancel this ' + wfName.toLowerCase() + '? This may leave your application in an incomplete state.',
 						confirmText: 'Cancel ' + wfName,
@@ -1493,204 +1400,6 @@ templ installDetailPanelScripts() {
 				}
 			});
 
-			// Edit Inputs Modal functionality
-			window.openEditInputsModal = async function() {
-				var modal = document.getElementById('editInputsModal');
-				var loading = document.getElementById('editInputsLoading');
-				var form = document.getElementById('editInputsForm');
-				var fieldsContainer = document.getElementById('editInputsFields');
-				var errorDiv = document.getElementById('editInputsError');
-
-				modal.classList.remove('hidden');
-				loading.classList.remove('hidden');
-				form.classList.add('hidden');
-				errorDiv.classList.add('hidden');
-				document.getElementById('editInputsErrorActions').classList.add('hidden');
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/inputs');
-					if (!response.ok) {
-						var data = await response.json();
-						throw new Error(data.error || 'Failed to fetch inputs');
-					}
-
-					var data = await response.json();
-					renderEditInputFields(data.input_config, data.inputs);
-
-					loading.classList.add('hidden');
-					form.classList.remove('hidden');
-				} catch (error) {
-					loading.classList.add('hidden');
-					// Check if it's a 404 - likely means no inputs configured
-					if (error.message && error.message.includes('404')) {
-						errorDiv.textContent = 'No inputs are configured for this install.';
-					} else {
-						errorDiv.textContent = error.message || 'Failed to load inputs';
-					}
-					errorDiv.classList.remove('hidden');
-					document.getElementById('editInputsErrorActions').classList.remove('hidden');
-				}
-			};
-
-			window.closeEditInputsModal = function() {
-				document.getElementById('editInputsModal').classList.add('hidden');
-				document.getElementById('editInputsForm').reset();
-				document.getElementById('editInputsError').classList.add('hidden');
-				document.getElementById('editInputsErrorActions').classList.add('hidden');
-			};
-
-			function renderEditInputFields(inputConfig, currentInputs) {
-				var container = document.getElementById('editInputsFields');
-				currentInputs = currentInputs || {};
-
-				if (!inputConfig || !inputConfig.input_groups) {
-					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
-					return;
-				}
-
-				var html = '';
-				var hasInputs = false;
-
-				inputConfig.input_groups.forEach(function(group) {
-					var groupInputs = group.app_inputs || group.inputs || [];
-					if (groupInputs && groupInputs.length > 0) {
-						hasInputs = true;
-						html += renderEditInputGroup(group, groupInputs, currentInputs);
-					}
-				});
-
-				if (!hasInputs) {
-					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
-				} else {
-					container.innerHTML = html;
-				}
-			}
-
-			function renderEditInputGroup(group, inputs, currentInputs) {
-				var html = '<div class="mb-6">';
-				html += '<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
-				if (group.description) {
-					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">' + group.description + '<\/p>';
-				}
-				html += '<div class="space-y-4">';
-
-				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
-				inputs.forEach(function(input) {
-					var currentValue = currentInputs[input.name];
-					html += renderEditSingleInput(input, currentValue);
-				});
-
-				html += '<\/div><\/div>';
-				return html;
-			}
-
-			function renderEditSingleInput(input, currentValue) {
-				var inputName = input.name;
-				var isRequired = input.required ? ' *' : '';
-				var requiredAttr = input.required ? ' required' : '';
-				var value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');
-
-				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
-					var isChecked = value === 'true';
-					var html = '<div class="flex items-start space-x-3">';
-					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
-					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
-					if (isChecked) html += ' checked';
-					html += ' class="field-checkbox" \/>';
-					html += '<div class="flex-1">';
-					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					if (input.description) {
-						html += '<p class="field-hint">' + input.description + '<\/p>';
-					}
-					html += '<\/div><\/div>';
-					return html;
-				}
-
-				if (input.type === 'json') {
-					var html = '<div>';
-					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
-					html += ' class="field-input">';
-					html += value + '<\/textarea>';
-					if (input.description) {
-						html += '<p class="field-hint">' + input.description + '<\/p>';
-					}
-					html += '<\/div>';
-					return html;
-				}
-
-				var inputType = 'text';
-				if (input.type === 'number') {
-					inputType = 'number';
-				} else if (input.sensitive) {
-					inputType = 'password';
-				}
-
-				var html = '<div>';
-				html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + value + '"' + requiredAttr;
-				if (inputType === 'password') html += ' autocomplete="off"';
-				html += ' class="field-input" \/>';
-				if (input.description) {
-					html += '<p class="field-hint">' + input.description + '<\/p>';
-				}
-				html += '<\/div>';
-				return html;
-			}
-
-			document.getElementById('editInputsForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
-
-				var errorDiv = document.getElementById('editInputsError');
-				errorDiv.classList.add('hidden');
-
-				var inputs = {};
-				var formInputs = document.querySelectorAll('#editInputsFields input');
-				formInputs.forEach(function(input) {
-					if (!input.name) return;
-					if (input.type === 'checkbox') {
-						if (input.checked) {
-							inputs[input.name] = 'true';
-						}
-					} else if (input.type === 'hidden') {
-						if (inputs[input.name] === undefined) {
-							inputs[input.name] = input.value;
-						}
-					} else {
-						if (input.value) {
-							inputs[input.name] = input.value;
-						}
-					}
-				});
-
-				var textareas = document.querySelectorAll('#editInputsFields textarea');
-				textareas.forEach(function(textarea) {
-					if (textarea.name && textarea.value) {
-						inputs[textarea.name] = textarea.value;
-					}
-				});
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/inputs', {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ inputs: inputs })
-					});
-
-					var data = await response.json();
-
-					if (response.ok) {
-						closeEditInputsModal();
-						setTimeout(function() { window.location.reload(); }, 1500);
-					} else {
-						errorDiv.textContent = data.error || 'Failed to update inputs';
-						errorDiv.classList.remove('hidden');
-					}
-				} catch (error) {
-					errorDiv.textContent = error.message || 'Network error. Please try again.';
-					errorDiv.classList.remove('hidden');
-				}
-			});
 		})();
 
 		// Handle HTMX authentication errors
@@ -1707,7 +1416,24 @@ templ installDetailPanelScripts() {
 			var content = document.getElementById('secondary-panel-content');
 			if (!panel || !title || !content) return;
 			title.textContent = workflowName || 'Workflow';
-			content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+			content.innerHTML = `
+				<div class="space-y-4">
+					<div class="card-base p-4 space-y-3">
+						<div class="shimmer h-4 w-1/3"></div>
+						<div class="shimmer h-4 w-2/3"></div>
+						<div class="shimmer h-4 w-1/2"></div>
+					</div>
+					<div class="space-y-2">
+						<div class="shimmer h-8 w-full"></div>
+						<div class="pl-4 space-y-2 py-1">
+							<div class="shimmer h-4 w-3/4"></div>
+							<div class="shimmer h-4 w-1/2"></div>
+							<div class="shimmer h-4 w-2/3"></div>
+						</div>
+						<div class="shimmer h-8 w-full"></div>
+						<div class="shimmer h-8 w-full"></div>
+					</div>
+				</div>`;
 			panel.classList.add('open');
 			var overlay = document.getElementById('secondary-panel-overlay');
 			if (overlay) overlay.classList.add('open');
@@ -1750,12 +1476,6 @@ templ installDetailPanelScripts() {
 			});
 		});
 
-		// Optional: Log successful HTMX swaps for debugging
-		document.body.addEventListener('htmx:afterSwap', function(event) {
-			if (event.detail.target.id === 'active-provision-banner') {
-				console.log('Workflow status banner updated via HTMX');
-			}
-		});
 	</script>
 }
 

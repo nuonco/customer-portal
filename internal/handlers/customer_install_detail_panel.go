@@ -149,64 +149,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		}
 	}
 
-	// Fetch most recent provision workflow (any status)
-	var provisionWorkflow *partials.WorkflowDataPanel
-	var stackSetup partials.StackSetupData
-	var provisionPhases []partials.ProvisionPhase
-	var hasActiveProvision bool
-	if nuonOrg != nil && nuonOrg.APIToken != "" {
-		provClient, provErr := nuon.NewClientWithURL(
-			nuonOrg.APIToken,
-			nuonOrg.NuonOrgID,
-			h.nuonAPIURLForOrg(nuonOrg),
-		)
-		if provErr == nil {
-			ctx := c.Request.Context()
-			bestWf, bestPanel := h.findMostRecentProvisionWorkflow(ctx, provClient, install.NuonInstallID)
-			if bestPanel != nil {
-				provisionWorkflow = bestPanel
-				if bestWf != nil {
-					if isActiveWorkflowStatus(provisionWorkflow.Status) {
-						stackSetup = h.getStackSetupData(ctx, provClient, install, bestWf)
-					}
-					if isActiveWorkflowStatus(provisionWorkflow.Status) || provisionWorkflow.Status == "error" {
-						provisionPhases = groupStepsIntoPhases(bestWf, provisionWorkflow.IsReprovision)
-						hasActiveProvision = len(provisionPhases) > 0
-					}
-				}
-			}
-		}
-	}
-
-	// If the most recent provision workflow reached a terminal state, transition install status
-	if provisionWorkflow != nil && (install.Status == models.StatusPending || install.Status == models.StatusProvisioning) {
-		switch provisionWorkflow.Status {
-		case "completed", "success":
-			h.db.Model(install).Update("status", models.StatusActive)
-			install.Status = models.StatusActive
-		case "cancelled":
-			h.db.Model(install).Update("status", models.StatusFailed)
-			install.Status = models.StatusFailed
-		}
-	}
-
-	// If install is pending and no active provision accordion, show placeholder
-	if install.Status == models.StatusPending && !hasActiveProvision {
-		provisionWorkflow = &partials.WorkflowDataPanel{
-			Name:            "Provision",
-			Status:          "pending",
-			StatusClass:     "badge-neutral",
-			CurrentStepName: "Preparing to provision",
-			CurrentStepType: "initializing",
-		}
-		provisionPhases = []partials.ProvisionPhase{
-			{Name: "Install stack", Status: "not_started"},
-			{Name: "Provision sandbox", Status: "not_started"},
-			{Name: "Deploy app", Status: "not_started"},
-		}
-		hasActiveProvision = true
-	}
-
 	// Fetch recent workflows for the Updates tab
 	var recentWorkflows []*nuonmodels.AppWorkflow
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
@@ -289,10 +231,6 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 		AppConfigUpdatedAt:     appConfigUpdatedAt,
 		InstallConfigVersion:   installConfigVersion,
 		InstallConfigUpdatedAt: installConfigUpdatedAt,
-		ProvisionWorkflow:      provisionWorkflow,
-		StackSetup:             stackSetup,
-		ProvisionPhases:        provisionPhases,
-		HasActiveProvision:     hasActiveProvision,
 		StackStatus:            stackStatus,
 		StackRegion:            stackRegion,
 		StackAccountID:         stackAccountID,
@@ -382,8 +320,3 @@ func (h *Handler) buildComponentInfos(ctx context.Context, apiClient *nuon.Clien
 	}
 	return infos
 }
-
-// InstallWorkflowStatus returns the active provision workflow banner for HTMX polling
-// This endpoint is called by HTMX polling every 5 seconds
-// It must return HTML (ProvisionAccordion or empty polling div) for HTMX to swap
-// Authentication is handled by JWT middleware which returns HX-Trigger: auth-error on failure

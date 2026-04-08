@@ -40,12 +40,12 @@ func ResourceList(props ResourceListProps) templ.Component {
 		}
 		ctx = templ.ClearChildren(ctx)
 		if len(props.Resources) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"text-center py-12\"><i class=\"ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block\"></i><h3 class=\"mt-4 text-lg font-medium text-cool-grey-900 dark:text-white\">No resources</h3><p class=\"mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400\">Sandbox resources are not available for this install.</p></div>")
+			templ_7745c5c3_Err = EmptyState(EmptyStateProps{Title: "No resources", Icon: "ph-cube"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 		} else {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"resource-list-root\"><div class=\"flex items-center gap-3 mb-3\"><div class=\"flex-1\"><input type=\"search\" placeholder=\"Search resources...\" class=\"install-switcher-search\" oninput=\"var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\" onsearch=\"var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\"></div><label class=\"flex items-center gap-2 shrink-0 cursor-pointer select-none text-sm text-cool-grey-600 dark:text-cool-grey-400\"><input type=\"checkbox\" class=\"resource-list-data-toggle\" onchange=\"var root=this.closest('.resource-list-root'),q=root.querySelector('.install-switcher-search').value.toLowerCase(),inc=this.checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\"> Include data sources</label> <button type=\"button\" class=\"button button-outline btn-theme-outline shrink-0 text-sm !text-cool-grey-600 dark:!text-cool-grey-400 !py-1.5\" onclick=\"var root=this.closest('.resource-list-root'),details=Array.from(root.querySelectorAll('[data-resource-address]:not(.hidden) details')),anyCollapsed=details.some(function(d){return !d.open});details.forEach(function(d){d.open=anyCollapsed});this.textContent=anyCollapsed?'Collapse all':'Expand all';\">Expand all</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"resource-list-root\"><div class=\"flex items-center gap-3 mb-3\"><div class=\"flex-1\"><input type=\"search\" placeholder=\"Search resources...\" class=\"install-switcher-search\" oninput=\"var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\" onsearch=\"var root=this.closest('.resource-list-root'),q=this.value.toLowerCase(),inc=root.querySelector('.resource-list-data-toggle').checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\"></div><label class=\"flex items-center gap-2 shrink-0 cursor-pointer select-none text-sm text-cool-grey-600 dark:text-cool-grey-400\"><input type=\"checkbox\" class=\"resource-list-data-toggle\" onchange=\"var root=this.closest('.resource-list-root'),q=root.querySelector('.install-switcher-search').value.toLowerCase(),inc=this.checked,visible=0;root.querySelectorAll('[data-resource-address]').forEach(function(el){var show=el.dataset.resourceAddress.toLowerCase().includes(q)&&(inc||el.dataset.resourceMode!=='data');el.classList.toggle('hidden',!show);visible+=(show?1:0);});root.querySelector('.resource-list-empty-search').classList.toggle('hidden',visible!==0);\"> Include data sources</label> <button type=\"button\" class=\"button button-outline btn-theme-outline shrink-0 text-sm !text-cool-grey-600 dark:!text-cool-grey-400 !py-1.5\" onclick=\"var root=this.closest('.resource-list-root'),details=Array.from(root.querySelectorAll('[data-resource-address]:not(.hidden) details')),anyCollapsed=details.some(function(d){return !d.open});details.forEach(function(d){d.open=anyCollapsed});this.textContent=anyCollapsed?'Collapse all':'Expand all';\">Expand all</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -55,33 +55,33 @@ func ResourceList(props ResourceListProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div data-resource-address=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div data-resource-address=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var3 string
 				templ_7745c5c3_Var3, templ_7745c5c3_Err = templ.JoinStringErrs(r.Address)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 50, Col: 42}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 46, Col: 42}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var3))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" data-resource-mode=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\" data-resource-mode=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var4 string
 				templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(r.Mode)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 50, Col: 72}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 46, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\" class=\"")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\" class=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -94,20 +94,20 @@ func ResourceList(props ResourceListProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\"><details class=\"group border-b border-cool-grey-100 dark:border-dark-grey-700\"><summary class=\"flex items-center w-full cursor-pointer select-none text-sm hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800\"><span class=\"flex-1 py-2 pr-4 font-mono text-cool-grey-900 dark:text-white truncate\">")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "\"><details class=\"group border-b border-cool-grey-100 dark:border-dark-grey-700\"><summary class=\"flex items-center w-full cursor-pointer select-none text-sm hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800\"><span class=\"flex-1 py-2 pr-4 font-mono text-cool-grey-900 dark:text-white truncate\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(r.Address)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 54, Col: 19}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 50, Col: 19}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</span> <span class=\"w-8 shrink-0 flex items-center justify-center text-cool-grey-400\"><i class=\"ph-bold ph-caret-down group-open:hidden\"></i> <i class=\"ph-bold ph-caret-up hidden group-open:inline\"></i></span></summary>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "</span> <span class=\"w-8 shrink-0 flex items-center justify-center text-cool-grey-400\"><i class=\"ph-bold ph-caret-down group-open:hidden\"></i> <i class=\"ph-bold ph-caret-up hidden group-open:inline\"></i></span></summary>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -115,12 +115,12 @@ func ResourceList(props ResourceListProps) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</details></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "</details></div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<p class=\"hidden text-sm text-cool-grey-500 dark:text-cool-grey-400 py-6 text-center resource-list-empty-search\">No resources match your search.</p></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "<p class=\"hidden text-sm text-cool-grey-500 dark:text-cool-grey-400 py-6 text-center resource-list-empty-search\">No resources match your search.</p></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -150,38 +150,38 @@ func resourceListRowDetail(r nuon.TerraformResource) templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<div class=\"px-4 py-3 text-xs text-cool-grey-500 dark:text-cool-grey-400 border-b border-cool-grey-100 dark:border-dark-grey-700\"><div class=\"flex gap-6 mb-3\"><span><span class=\"font-medium\">Provider:</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<div class=\"px-4 py-3 text-xs text-cool-grey-500 dark:text-cool-grey-400 border-b border-cool-grey-100 dark:border-dark-grey-700\"><div class=\"flex gap-6 mb-3\"><span><span class=\"font-medium\">Provider:</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var8 string
 		templ_7745c5c3_Var8, templ_7745c5c3_Err = templ.JoinStringErrs(r.ProviderName)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 75, Col: 68}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 71, Col: 68}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var8))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span> <span><span class=\"font-medium\">Schema version:</span> ")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "</span> <span><span class=\"font-medium\">Schema version:</span> ")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(fmt.Sprintf("%d", r.SchemaVersion))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 76, Col: 94}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/components/resource_list.templ`, Line: 72, Col: 94}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "</span></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</span></div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if len(r.Values) > 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<p class=\"font-medium mb-1\">Values</p>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<p class=\"font-medium mb-1\">Values</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -190,7 +190,7 @@ func resourceListRowDetail(r nuon.TerraformResource) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 14, "</div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "</div>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

@@ -59,6 +59,44 @@ templ Dropdown(props DropdownProps) {
 	</script>
 }
 
+// SwitcherDropdown renders a dropdown with the install-switcher visual style:
+// rounded trigger, shadowed panel, and hover-tinted items.
+templ SwitcherDropdown(props DropdownProps) {
+	<div class={ "relative", props.Class } id={ props.ID }>
+		<button
+			type="button"
+			class="button button-dropdown-trigger sw-dropdown-trigger"
+			data-dropdown-menu={ props.ID + "-menu" }
+			onclick="var m=document.getElementById(this.dataset.dropdownMenu);if(m)m.classList.toggle('hidden')"
+		>
+			{ props.Label }
+			if props.Icon != "" {
+				<i class={ props.Icon + " text-xs" }></i>
+			}
+		</button>
+		<div
+			id={ props.ID + "-menu" }
+			class={ "hidden sw-dropdown-panel", dropdownDirectionClass(props.Direction), dropdownAlignClass(props.Align) }
+		>
+			{ children... }
+		</div>
+	</div>
+	<script>
+		(function() {
+			var el = document.currentScript.previousElementSibling;
+			var id = el.id;
+			var menuId = id + '-menu';
+			document.addEventListener('click', function(event) {
+				var wrapper = document.getElementById(id);
+				var menu = document.getElementById(menuId);
+				if (wrapper && menu && !wrapper.contains(event.target)) {
+					menu.classList.add('hidden');
+				}
+			});
+		})();
+	</script>
+}
+
 func dropdownDirectionClass(d DropdownDirection) string {
 	if d == DropdownUp {
 		return "dropdown-up"

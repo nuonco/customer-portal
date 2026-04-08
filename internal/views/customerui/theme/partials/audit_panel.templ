@@ -204,7 +204,7 @@ templ sandboxPanel(props AuditPanelProps) {
 		@components.ResourceList(components.ResourceListProps{Resources: props.SandboxResources})
 	</div>
 	<div id="sandbox-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "policies") }>
-		@sandboxPolicyReportList(props.SandboxPolicyReports, "sandbox policy evaluations")
+		@sandboxPolicyReportList(props.SandboxPolicyReports, "policy evaluations")
 	</div>
 }
 
@@ -237,7 +237,7 @@ templ componentsPanel(props AuditPanelProps) {
 		@componentsInfoView(props.Components, props.ComponentInfos)
 	</div>
 	<div id="components-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "policies") }>
-		@componentsPolicyReportList(props.ComponentsPolicyReports, "deploy policy evaluations")
+		@componentsPolicyReportList(props.ComponentsPolicyReports, "policy evaluations")
 	</div>
 	<div id="components-sub-history" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "history") }>
 		@auditDeployList(props.Deploys)
@@ -264,9 +264,9 @@ func componentTypeLabel(t string) string {
 	}
 }
 
-templ componentsInfoView(components []*nuonmodels.AppInstallComponent, infos []ComponentInfo) {
-	if len(components) == 0 {
-		@auditEmptyState("components", "ph-puzzle-piece")
+templ componentsInfoView(comps []*nuonmodels.AppInstallComponent, infos []ComponentInfo) {
+	if len(comps) == 0 {
+		@components.EmptyState(components.EmptyStateProps{Title: "No components", Icon: "ph-cards"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -286,7 +286,7 @@ templ componentsInfoView(components []*nuonmodels.AppInstallComponent, infos []C
 				</tr>
 			</thead>
 			<tbody>
-				for i, comp := range components {
+				for i, comp := range comps {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-800 transition-colors"
 						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openComponentPanel('%s', '%s')", comp.ComponentID, componentName(comp))} }
@@ -363,11 +363,9 @@ func componentType(comp *nuonmodels.AppInstallComponent) string {
 
 templ sandboxDetailsCard(info *SandboxInfo, title string) {
 	if info == nil {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No sandbox data</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox information is not available for this install.</p>
-		</div>
+		@components.Card(components.CardProps{Header: stackCardHeader(title, "")}) {
+			@components.EmptyState(components.EmptyStateProps{Title: "No sandbox data", Icon: "ph-shipping-container", Compact: true})
+		}
 	} else {
 		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
 			<div class="space-y-3 text-sm">
@@ -397,11 +395,7 @@ templ sandboxDetailsCard(info *SandboxInfo, title string) {
 
 templ sandboxOutputsView(info *SandboxInfo) {
 	if info == nil || len(info.Outputs) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-terminal text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No outputs</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox outputs are not available for this install.</p>
-		</div>
+		@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block"})
 	} else {
 		<div class="space-y-3">
 			for key, value := range info.Outputs {
@@ -439,11 +433,9 @@ templ stackCardHeader(title string, status string) {
 
 templ stackDetailsCard(info *StackInfo, title string) {
 	if info == nil {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-stack text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No stack data</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Stack information is not available for this install.</p>
-		</div>
+		@components.Card(components.CardProps{Header: stackCardHeader(title, "")}) {
+			@components.EmptyState(components.EmptyStateProps{Title: "No stack data", Icon: "ph-stack", Compact: true})
+		}
 	} else {
 		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
 			<div class="space-y-3 text-sm">
@@ -457,11 +449,7 @@ templ stackDetailsCard(info *StackInfo, title string) {
 
 templ stackOutputsView(info *StackInfo) {
 	if info == nil || len(info.Outputs) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-terminal text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No outputs</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Stack outputs are not available for this install.</p>
-		</div>
+		@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block"})
 	} else {
 		<div class="space-y-3">
 			for key, value := range info.Outputs {
@@ -476,9 +464,8 @@ templ stackOutputsView(info *StackInfo) {
 
 templ activeStackRunCard(run *nuon.StackRun, basePath string, installID string) {
 	if run == nil {
-		@components.Card(components.CardProps{Class: "text-center py-8"}) {
-			<i class="ph-bold ph-check-circle text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No active stack run.</p>
+		@components.Card(components.CardProps{Header: activeRunCardHeader("Active stack run", "")}) {
+			@components.EmptyState(components.EmptyStateProps{Title: "No active stack run", Icon: "ph-stack", Compact: true})
 		}
 	} else {
 		@components.Card(components.CardProps{Header: activeRunCardHeader("Active stack run", "")}) {
@@ -505,9 +492,8 @@ templ activeRunCardHeader(title string, status string) {
 
 templ activeSandboxRunCard(run *nuonmodels.AppInstallSandboxRun, info *SandboxInfo) {
 	if run == nil {
-		@components.Card(components.CardProps{Class: "text-center py-8"}) {
-			<i class="ph-bold ph-check-circle text-[32px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No active sandbox run.</p>
+		@components.Card(components.CardProps{Header: activeRunCardHeader("Active sandbox run", "")}) {
+			@components.EmptyState(components.EmptyStateProps{Title: "No active sandbox run", Icon: "ph-shipping-container", Compact: true})
 		}
 	} else {
 		@components.Card(components.CardProps{Header: activeRunCardHeader("Active sandbox run", "")}) {
@@ -536,11 +522,7 @@ templ activeSandboxRunCard(run *nuonmodels.AppInstallSandboxRun, info *SandboxIn
 
 templ stackRolesView(info *StackInfo) {
 	if info == nil || len(info.Roles) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-shield-check text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No roles</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Role information is not available for this install.</p>
-		</div>
+		@components.EmptyState(components.EmptyStateProps{Title: "No roles", Icon: "ph-file-lock"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -597,7 +579,25 @@ templ rolesScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = name;
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="p-4 space-y-4 text-sm">
+						<div class="space-y-1">
+							<div class="shimmer h-3 w-16"></div>
+							<div class="shimmer h-4 w-1/2"></div>
+						</div>
+						<div class="space-y-1">
+							<div class="shimmer h-3 w-8"></div>
+							<div class="shimmer h-4 w-full"></div>
+						</div>
+						<div class="space-y-1">
+							<div class="shimmer h-3 w-16"></div>
+							<div class="shimmer h-5 w-24"></div>
+						</div>
+						<div class="pt-2 border-t border-cool-grey-200 dark:border-dark-grey-600 space-y-3">
+							<div class="shimmer h-4 w-20"></div>
+							<div class="shimmer h-24 w-full"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
@@ -679,7 +679,7 @@ templ infoRowLink(label, value, href string) {
 	<div>
 		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ label }</span>
 		<p class="font-medium">
-			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-blue-600 dark:text-blue-400 hover:underline">
+			<a href={ templ.SafeURL(href) } target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 text-theme-primary hover:underline">
 				{ value }
 				<i class="ph-bold ph-arrow-square-out text-xs"></i>
 			</a>
@@ -689,7 +689,7 @@ templ infoRowLink(label, value, href string) {
 
 templ auditStackList(runs []nuon.StackRun) {
 	if len(runs) == 0 {
-		@auditEmptyState("stack runs", "ph-stack")
+		@components.EmptyState(components.EmptyStateProps{Title: "No stack runs", Icon: "ph-stack"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -733,7 +733,7 @@ func stackRunType(run nuon.StackRun) string {
 
 templ auditSandboxList(runs []*nuonmodels.AppInstallSandboxRun) {
 	if len(runs) == 0 {
-		@auditEmptyState("sandbox runs", "ph-cube")
+		@components.EmptyState(components.EmptyStateProps{Title: "No sandbox runs", Icon: "ph-cube"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -808,7 +808,7 @@ templ policyReportCountCells(report nuon.PolicyReport) {
 
 templ sandboxPolicyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 	if len(reports) == 0 {
-		@auditEmptyState(emptyLabel, "ph-shield-check")
+		@components.EmptyState(components.EmptyStateProps{Title: fmt.Sprintf("No %s", emptyLabel), Icon: "ph-shield-check"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -844,7 +844,7 @@ templ sandboxPolicyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 
 templ componentsPolicyReportList(reports []nuon.PolicyReport, emptyLabel string) {
 	if len(reports) == 0 {
-		@auditEmptyState(emptyLabel, "ph-shield-check")
+		@components.EmptyState(components.EmptyStateProps{Title: fmt.Sprintf("No %s", emptyLabel), Icon: "ph-shield-check"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -883,7 +883,7 @@ templ componentsPolicyReportList(reports []nuon.PolicyReport, emptyLabel string)
 
 templ auditDeployList(deploys []*nuonmodels.AppInstallDeploy) {
 	if len(deploys) == 0 {
-		@auditEmptyState("deploys", "ph-rocket-launch")
+		@components.EmptyState(components.EmptyStateProps{Title: "No deploys", Icon: "ph-cloud-arrow-up"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -975,7 +975,7 @@ func allWorkflowsDuration(wf *nuonmodels.AppWorkflow) string {
 
 templ allWorkflowsList(workflows []*nuonmodels.AppWorkflow) {
 	if len(workflows) == 0 {
-		@auditEmptyState("workflows", "ph-clock")
+		@components.EmptyState(components.EmptyStateProps{Title: "No workflows", Icon: "ph-clock-clockwise"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -1031,7 +1031,7 @@ func workflowType(wf *nuonmodels.AppWorkflow) string {
 
 templ auditWorkflowList(workflows []*nuonmodels.AppWorkflow) {
 	if len(workflows) == 0 {
-		@auditEmptyState("workflows", "ph-clipboard-text")
+		@components.EmptyState(components.EmptyStateProps{Title: "No workflows", Icon: "ph-tree-structure"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -1069,13 +1069,6 @@ templ auditWorkflowList(workflows []*nuonmodels.AppWorkflow) {
 	}
 }
 
-templ auditEmptyState(itemType, icon string) {
-	<div class="text-center py-12">
-		<i class={ fmt.Sprintf("ph-bold %s text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block", icon) }></i>
-		<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">{ fmt.Sprintf("No %s yet", itemType) }</h3>
-		<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">{ fmt.Sprintf("Run history for %s will appear here.", itemType) }</p>
-	</div>
-}
 
 func auditStatusClass(status string) string {
 	switch status {
@@ -1349,7 +1342,27 @@ templ auditPanelScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = reportName || 'Policy Evaluation';
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="p-4 space-y-4">
+						<div class="space-y-3">
+							<div class="shimmer h-3 w-20"></div>
+							<div class="space-y-2">
+								<div class="shimmer h-4 w-3/4"></div>
+								<div class="shimmer h-4 w-1/2"></div>
+								<div class="shimmer h-4 w-2/3"></div>
+								<div class="shimmer h-4 w-1/2"></div>
+								<div class="shimmer h-4 w-1/3"></div>
+								<div class="shimmer h-4 w-1/3"></div>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<div class="shimmer h-3 w-16"></div>
+							<div class="shimmer h-4 w-full"></div>
+							<div class="shimmer h-4 w-3/4"></div>
+							<div class="shimmer h-4 w-2/3"></div>
+							<div class="shimmer h-4 w-3/4"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
@@ -1371,7 +1384,23 @@ templ auditPanelScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = jobTitle || 'Job Details';
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="p-4 space-y-4">
+						<div class="space-y-2">
+							<div class="shimmer h-3 w-16"></div>
+							<div class="space-y-2">
+								<div class="shimmer h-4 w-full"></div>
+								<div class="shimmer h-4 w-full"></div>
+								<div class="shimmer h-4 w-full"></div>
+								<div class="shimmer h-4 w-full"></div>
+								<div class="shimmer h-4 w-full"></div>
+							</div>
+						</div>
+						<div class="space-y-2">
+							<div class="shimmer h-3 w-20"></div>
+							<div class="shimmer h-24 w-full"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
@@ -1393,7 +1422,34 @@ templ auditPanelScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = 'Stack ' + runType;
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="p-4 space-y-4">
+						<div class="card-base p-4 space-y-3">
+							<div class="flex justify-between items-center">
+								<div class="shimmer h-4 w-1/3"></div>
+								<div class="shimmer h-5 w-20"></div>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-3">
+									<div class="shimmer h-4 w-3/4"></div>
+									<div class="shimmer h-4 w-2/3"></div>
+									<div class="shimmer h-4 w-3/4"></div>
+								</div>
+								<div class="space-y-3">
+									<div class="shimmer h-4 w-3/4"></div>
+									<div class="shimmer h-4 w-1/2"></div>
+								</div>
+							</div>
+						</div>
+						<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
+							<div class="shimmer h-5 w-20"></div>
+						</div>
+						<div class="space-y-3">
+							<div class="shimmer h-4 w-3/4"></div>
+							<div class="shimmer h-4 w-1/2"></div>
+							<div class="shimmer h-4 w-2/3"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
@@ -1415,7 +1471,35 @@ templ auditPanelScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = 'Sandbox ' + runType;
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="p-4 space-y-4">
+						<div class="card-base p-4 space-y-3">
+							<div class="flex justify-between items-center">
+								<div class="shimmer h-4 w-1/3"></div>
+								<div class="shimmer h-5 w-20"></div>
+							</div>
+							<div class="grid grid-cols-2 gap-3">
+								<div class="space-y-3">
+									<div class="shimmer h-4 w-3/4"></div>
+									<div class="shimmer h-4 w-2/3"></div>
+									<div class="shimmer h-4 w-3/4"></div>
+								</div>
+								<div class="space-y-3">
+									<div class="shimmer h-4 w-3/4"></div>
+									<div class="shimmer h-4 w-1/2"></div>
+								</div>
+							</div>
+						</div>
+						<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
+							<div class="shimmer h-5 w-20"></div>
+							<div class="shimmer h-5 w-24"></div>
+						</div>
+						<div class="space-y-3">
+							<div class="shimmer h-4 w-3/4"></div>
+							<div class="shimmer h-4 w-1/2"></div>
+							<div class="shimmer h-4 w-2/3"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');
@@ -1437,7 +1521,32 @@ templ auditPanelScripts() {
 					var content = document.getElementById('secondary-panel-content');
 					if (!panel || !title || !content) return;
 					title.textContent = componentName || 'Component Details';
-					content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+					content.innerHTML = `
+						<div class="p-4 space-y-4">
+							<div class="card-base p-4 space-y-3">
+								<div class="flex justify-between items-center">
+									<div class="shimmer h-4 w-1/3"></div>
+									<div class="shimmer h-5 w-20"></div>
+								</div>
+								<div class="grid grid-cols-2 gap-2">
+									<div class="shimmer h-4 w-full"></div>
+									<div class="shimmer h-4 w-full"></div>
+									<div class="shimmer h-4 w-full"></div>
+									<div class="shimmer h-4 w-full"></div>
+								</div>
+							</div>
+							<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
+								<div class="shimmer h-5 w-20"></div>
+								<div class="shimmer h-5 w-24"></div>
+								<div class="shimmer h-5 w-20"></div>
+							</div>
+							<div class="space-y-3">
+								<div class="shimmer h-4 w-3/4"></div>
+								<div class="shimmer h-4 w-1/2"></div>
+								<div class="shimmer h-4 w-2/3"></div>
+								<div class="shimmer h-4 w-3/4"></div>
+							</div>
+						</div>`;
 					panel.classList.add('open');
 					var overlay = document.getElementById('secondary-panel-overlay');
 					if (overlay) overlay.classList.add('open');
@@ -1459,7 +1568,24 @@ templ auditPanelScripts() {
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
 				title.textContent = workflowName || 'Workflow';
-				content.innerHTML = '<div class="panel-loading"><div class="panel-loading-spinner"></div></div>';
+				content.innerHTML = `
+					<div class="space-y-4">
+						<div class="card-base p-4 space-y-3">
+							<div class="shimmer h-4 w-1/3"></div>
+							<div class="shimmer h-4 w-2/3"></div>
+							<div class="shimmer h-4 w-1/2"></div>
+						</div>
+						<div class="space-y-2">
+							<div class="shimmer h-8 w-full"></div>
+							<div class="pl-4 space-y-2 py-1">
+								<div class="shimmer h-4 w-3/4"></div>
+								<div class="shimmer h-4 w-1/2"></div>
+								<div class="shimmer h-4 w-2/3"></div>
+							</div>
+							<div class="shimmer h-8 w-full"></div>
+							<div class="shimmer h-8 w-full"></div>
+						</div>
+					</div>`;
 				panel.classList.add('open');
 				var overlay = document.getElementById('secondary-panel-overlay');
 				if (overlay) overlay.classList.add('open');

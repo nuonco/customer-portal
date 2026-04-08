@@ -1,6 +1,9 @@
 package pages
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+)
 
 templ InstallSandboxPage(props InstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
@@ -10,12 +13,39 @@ templ InstallSandboxPage(props InstallPageProps) {
 				class="panel-body"
 				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/audit?tab=sandbox" }
 				hx-trigger="load"
-				hx-swap="innerHTML"
+				hx-swap="morph:innerHTML"
 			>
-				<div class="panel-loading">
-					<div class="panel-loading-spinner"></div>
-				</div>
+				@sandboxShimmer()
 			</div>
 		}
 	}
+}
+
+templ sandboxShimmer() {
+	<div class="space-y-4">
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+			@components.Card(components.CardProps{Header: sandboxShimmerCardHeader("ph-shipping-container", "Sandbox")}) {
+				<div class="space-y-3 text-sm">
+					@components.ShimmerLines(3)
+				</div>
+			}
+			@components.Card(components.CardProps{Header: sandboxShimmerCardHeader("ph-activity", "Active Run")}) {
+				<div class="space-y-3 text-sm">
+					@components.ShimmerLines(2)
+				</div>
+			}
+		</div>
+		<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
+			@components.ShimmerBar("h-5", "w-20")
+			@components.ShimmerBar("h-5", "w-20")
+		</div>
+		@components.ShimmerLines(4)
+	</div>
+}
+
+templ sandboxShimmerCardHeader(icon, title string) {
+	<div class="flex items-center gap-2">
+		<i class={ "ph-bold text-lg text-cool-grey-500 dark:text-cool-grey-400", icon }></i>
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
+	</div>
 }

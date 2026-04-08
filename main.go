@@ -493,7 +493,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel
 			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
 			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion
-			installOwnership.GET("/workflow-status", h.InstallWorkflowStatus)                    // HTMX polling endpoint for active provision workflow
 
 			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install

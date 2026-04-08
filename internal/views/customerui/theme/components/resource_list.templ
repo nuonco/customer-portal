@@ -13,11 +13,7 @@ type ResourceListProps struct {
 
 templ ResourceList(props ResourceListProps) {
 	if len(props.Resources) == 0 {
-		<div class="text-center py-12">
-			<i class="ph-bold ph-cube text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-			<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No resources</h3>
-			<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">Sandbox resources are not available for this install.</p>
-		</div>
+		@EmptyState(EmptyStateProps{Title: "No resources", Icon: "ph-cube"})
 	} else {
 		<div class="resource-list-root">
 			<div class="flex items-center gap-3 mb-3">

@@ -299,6 +299,24 @@ The `components.ShimmerBar` and `components.ShimmerLines` components (`internal/
 
 The `.shimmer` CSS class is defined in `src/customer.css` and uses theme CSS variables for colors, supporting both light and dark mode. Use shimmer placeholders inside card shells so the page layout is visible immediately while data loads via HTMX.
 
+### EmptyState
+
+The `components.EmptyState` component (`internal/views/customerui/theme/components/empty_state.templ`) renders a centered empty-state placeholder with an icon, title, and message. Use it whenever a card, tab, or list has no data to display.
+
+```go
+@components.EmptyState(components.EmptyStateProps{
+    Title:   "No workflows yet",
+    Message: "Run history for workflows will appear here.",
+    Icon:    "ph-clock",
+})
+```
+
+- **Icon**: Any [Phosphor Bold](https://phosphoricons.com/) class (e.g. `"ph-stack"`, `"ph-clock"`). Defaults to `"ph-empty"` when omitted.
+- **Compact**: Set `Compact: true` for smaller padding (`py-6` instead of `py-12`) — useful inside cards.
+- **Class**: Additional CSS classes appended to the wrapper div.
+
+Special icon colors: `ph-check-circle` renders green, `ph-arrows-clockwise` renders blue. All others use the default muted grey.
+
 ## Vendor UI Components
 
 ### Tooltip (ContextTooltip)

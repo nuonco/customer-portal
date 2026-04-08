@@ -547,6 +547,9 @@
   .h-32 {
     height: calc(var(--spacing) * 32);
   }
+  .h-48 {
+    height: calc(var(--spacing) * 48);
+  }
   .h-full {
     height: 100%;
   }
@@ -591,6 +594,9 @@
   }
   .w-2\.5 {
     width: calc(var(--spacing) * 2.5);
+  }
+  .w-2\/3 {
+    width: calc(2/3 * 100%);
   }
   .w-3 {
     width: calc(var(--spacing) * 3);
@@ -643,6 +649,12 @@
   .w-32 {
     width: calc(var(--spacing) * 32);
   }
+  .w-36 {
+    width: calc(var(--spacing) * 36);
+  }
+  .w-48 {
+    width: calc(var(--spacing) * 48);
+  }
   .w-56 {
     width: calc(var(--spacing) * 56);
   }
@@ -676,11 +688,11 @@
   .w-\[40\%\] {
     width: 40%;
   }
-  .w-\[50\%\] {
-    width: 50%;
-  }
   .w-\[60\%\] {
     width: 60%;
+  }
+  .w-\[75\%\] {
+    width: 75%;
   }
   .w-auto {
     width: auto;
@@ -1411,6 +1423,9 @@
   }
   .pl-3 {
     padding-left: calc(var(--spacing) * 3);
+  }
+  .pl-4 {
+    padding-left: calc(var(--spacing) * 4);
   }
   .pl-10 {
     padding-left: calc(var(--spacing) * 10);
@@ -4145,6 +4160,9 @@ a.text-theme-primary {
   display: flex;
   flex-direction: column;
 }
+#main-wrapper {
+  scrollbar-gutter: stable;
+}
 .installs-table {
   width: 100%;
   border-collapse: collapse;
@@ -4864,6 +4882,112 @@ body {
 }
 .dropdown-item-danger:hover {
   background-color: var(--theme-surface-raised);
+}
+.sw-dropdown-trigger {
+  display: flex;
+  align-items: center;
+  gap: calc(var(--spacing) * 2);
+  border-radius: var(--radius-md);
+  padding-inline: calc(var(--spacing) * 3);
+  padding-block: calc(var(--spacing) * 2);
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  --tw-font-weight: var(--font-weight-medium);
+  font-weight: var(--font-weight-medium);
+  cursor: pointer;
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  color: #3a424a;
+  &:where(.dark, .dark *) {
+    color: #dee3e7;
+  }
+}
+.sw-dropdown-trigger:hover {
+  background-color: color-mix(in oklab, #000000 5%, transparent);
+  &:where(.dark, .dark *) {
+    background-color: color-mix(in oklab, #ffffff 10%, transparent);
+  }
+}
+.sw-dropdown-panel {
+  position: absolute;
+  z-index: 50;
+  border-radius: var(--radius-md);
+  padding-block: calc(var(--spacing) * 1);
+  --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, rgb(0 0 0 / 0.1)), 0 4px 6px -4px var(--tw-shadow-color, rgb(0 0 0 / 0.1));
+  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);
+  background-color: var(--theme-white, #ffffff);
+  border: 1px solid var(--theme-border);
+}
+.dark .sw-dropdown-panel {
+  background-color: var(--theme-surface-raised);
+  border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+.sw-dropdown-panel.dropdown-down {
+  top: 100%;
+  margin-top: calc(var(--spacing) * 1);
+}
+.sw-dropdown-panel.dropdown-up {
+  bottom: 100%;
+  margin-bottom: calc(var(--spacing) * 1);
+}
+.sw-dropdown-panel.dropdown-align-right {
+  right: calc(var(--spacing) * 0);
+  min-width: 160px;
+}
+.sw-dropdown-panel.dropdown-align-full {
+  right: calc(var(--spacing) * 0);
+  left: calc(var(--spacing) * 0);
+}
+.sw-dropdown-item {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  gap: calc(var(--spacing) * 3);
+  padding-inline: calc(var(--spacing) * 3);
+  padding-block: calc(var(--spacing) * 2);
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  color: #3a424a;
+  &:where(.dark, .dark *) {
+    color: #dee3e7;
+  }
+}
+.sw-dropdown-item:hover {
+  background-color: color-mix(in oklab, #000000 5%, transparent);
+  &:where(.dark, .dark *) {
+    background-color: color-mix(in oklab, #ffffff 10%, transparent);
+  }
+}
+.sw-dropdown-item-danger {
+  display: flex;
+  width: 100%;
+  cursor: pointer;
+  align-items: center;
+  gap: calc(var(--spacing) * 3);
+  padding-inline: calc(var(--spacing) * 3);
+  padding-block: calc(var(--spacing) * 2);
+  text-align: left;
+  font-size: var(--text-sm);
+  line-height: var(--tw-leading, var(--text-sm--line-height));
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;
+  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
+  transition-duration: var(--tw-duration, var(--default-transition-duration));
+  color: #dc2626;
+  &:where(.dark, .dark *) {
+    color: #f87171;
+  }
+}
+.sw-dropdown-item-danger:hover {
+  background-color: #fef2f2;
+  &:where(.dark, .dark *) {
+    background-color: color-mix(in oklab, #7f1d1d 20%, transparent);
+  }
 }
 .pagination-btn {
   background-color: transparent;
