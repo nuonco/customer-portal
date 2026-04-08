@@ -75,14 +75,14 @@ templ PoliciesPanel(props PoliciesPanelProps) {
 				data-subtab="evaluations"
 				onclick="switchPoliciesSubTab('evaluations')"
 			>
-				Policy Evaluations
+				Policy Reports
 			</button>
 		</div>
 		<!-- Policies sub-pane -->
 		<div id="policies-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ActiveSubTab == "policies") }>
 			@policiesListContent(props.Policies)
 		</div>
-		<!-- Policy Evaluations sub-pane -->
+		<!-- Policy Reports sub-pane -->
 		<div id="policies-sub-evaluations" class={ "audit-sub-pane", templ.KV("active", props.ActiveSubTab == "evaluations") }>
 			@policiesEvalList(props.PolicyReports)
 		</div>
@@ -137,12 +137,12 @@ func policiesEvalReportName(report nuon.PolicyReport) string {
 	if report.PolicyName != "" {
 		return report.PolicyName
 	}
-	return "Policy evaluation"
+	return "Policy report"
 }
 
 templ policiesEvalList(reports []nuon.PolicyReport) {
 	if len(reports) == 0 {
-		@components.EmptyState(components.EmptyStateProps{Title: "No policy evaluations", Icon: "ph-shield-check"})
+		@components.EmptyState(components.EmptyStateProps{Title: "No policy reports", Icon: "ph-shield-check"})
 	} else {
 		<table class="w-full text-sm table-fixed">
 			<colgroup>
@@ -250,7 +250,7 @@ templ policiesPanelScripts() {
 				var title = document.getElementById('secondary-panel-title');
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
-				title.textContent = reportName || 'Policy Evaluation';
+				title.textContent = reportName || 'Policy Report';
 				content.innerHTML = `
 					<div class="p-4 space-y-4">
 						<div class="space-y-3">
@@ -283,7 +283,7 @@ templ policiesPanelScripts() {
 					.then(function(resp) { return resp.text(); })
 					.then(function(html) { content.innerHTML = html; })
 					.catch(function() {
-						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy evaluation details.</p>';
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy report details.</p>';
 					});
 			};
 

@@ -67,9 +67,6 @@ const (
 	DefaultLoginSubtitle = "Manage your installs."
 )
 
-// DefaultHeaderTitleSuffix is appended to the org name for the default header title
-const DefaultHeaderTitleSuffix = "BYOC"
-
 // ValidBorderRadiusValues are the allowed values for BorderRadius
 var ValidBorderRadiusValues = []string{"sharp", "subtle", "rounded", "very-rounded"}
 
@@ -113,16 +110,16 @@ func (t *AppTheme) GetRadiusClass() string {
 }
 
 // GetHeaderTitle returns the header title for the customer portal.
-// If a custom title is set, returns that. Otherwise returns "<orgName> BYOC".
-// If orgName is empty, returns just "BYOC".
+// If a custom title is set, returns that. Otherwise returns the org name.
+// If orgName is empty, returns "Customer Portal".
 func (t *AppTheme) GetHeaderTitle(orgName string) string {
 	if t.HeaderTitle != "" {
 		return t.HeaderTitle
 	}
 	if orgName != "" {
-		return orgName + " " + DefaultHeaderTitleSuffix
+		return orgName
 	}
-	return DefaultHeaderTitleSuffix
+	return DefaultLoginTitle
 }
 
 // GetLoginTitle returns the customer login page title, or the default if not set

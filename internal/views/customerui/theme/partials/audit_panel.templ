@@ -183,7 +183,7 @@ templ sandboxPanel(props AuditPanelProps) {
 			data-subtab="policies"
 			onclick="switchSandboxSubTab('policies')"
 		>
-			Policy Evaluations
+			Policy Reports
 		</button>
 		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.SandboxSubTab == "history") }
@@ -204,7 +204,7 @@ templ sandboxPanel(props AuditPanelProps) {
 		@components.ResourceList(components.ResourceListProps{Resources: props.SandboxResources})
 	</div>
 	<div id="sandbox-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.SandboxSubTab == "policies") }>
-		@sandboxPolicyReportList(props.SandboxPolicyReports, "policy evaluations")
+		@sandboxPolicyReportList(props.SandboxPolicyReports, "policy reports")
 	</div>
 }
 
@@ -223,7 +223,7 @@ templ componentsPanel(props AuditPanelProps) {
 			data-subtab="policies"
 			onclick="switchComponentsSubTab('policies')"
 		>
-			Policy Evaluations
+			Policy Reports
 		</button>
 		<button
 			class={ "button button-nav nav-item px-4 py-2 text-sm font-medium", templ.KV("active", props.ComponentsSubTab == "history") }
@@ -237,7 +237,7 @@ templ componentsPanel(props AuditPanelProps) {
 		@componentsInfoView(props.Components, props.ComponentInfos)
 	</div>
 	<div id="components-sub-policies" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "policies") }>
-		@componentsPolicyReportList(props.ComponentsPolicyReports, "policy evaluations")
+		@componentsPolicyReportList(props.ComponentsPolicyReports, "policy reports")
 	</div>
 	<div id="components-sub-history" class={ "audit-sub-pane", templ.KV("active", props.ComponentsSubTab == "history") }>
 		@auditDeployList(props.Deploys)
@@ -1341,7 +1341,7 @@ templ auditPanelScripts() {
 				var title = document.getElementById('secondary-panel-title');
 				var content = document.getElementById('secondary-panel-content');
 				if (!panel || !title || !content) return;
-				title.textContent = reportName || 'Policy Evaluation';
+				title.textContent = reportName || 'Policy Report';
 				content.innerHTML = `
 					<div class="p-4 space-y-4">
 						<div class="space-y-3">
@@ -1374,7 +1374,7 @@ templ auditPanelScripts() {
 					.then(function(resp) { return resp.text(); })
 					.then(function(html) { content.innerHTML = html; })
 					.catch(function() {
-						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy evaluation details.</p>';
+						content.innerHTML = '<p class="text-sm text-red-500 p-4">Failed to load policy report details.</p>';
 					});
 			};
 

@@ -543,7 +543,7 @@ func getLoginTitle(theme *models.AppTheme, orgName string) string {
 		return theme.LoginTitle
 	}
 	if orgName != "" {
-		return orgName + " BYOC"
+		return orgName
 	}
 	return models.DefaultLoginTitle
 }
@@ -554,7 +554,7 @@ func getLoginSubtitle(theme *models.AppTheme, orgName string) string {
 		return theme.LoginSubtitle
 	}
 	if orgName != "" {
-		return "Manage your " + orgName + " BYOC installs"
+		return "Manage your " + orgName + " installs"
 	}
 	return models.DefaultLoginSubtitle
 }

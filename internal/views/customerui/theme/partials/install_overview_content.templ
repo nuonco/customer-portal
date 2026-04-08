@@ -673,11 +673,11 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 						<p class="text-sm mt-1">Waiting to start.</p>
 					}
 				</div>
-				<!-- Policy Evaluation -->
+				<!-- Policy Reports -->
 				if workflow.HasPolicyData {
 					<div style="border-bottom: 1px solid var(--theme-border-subtle)">
 						<div class="flex items-center justify-between px-4 py-3">
-							<span class="text-sm font-medium" style="color: var(--theme-text)">Policy Evaluations</span>
+							<span class="text-sm font-medium" style="color: var(--theme-text)">Policy Reports</span>
 							<div class="flex items-center gap-2">
 								if len(workflow.DenyViolations) > 0 {
 									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">

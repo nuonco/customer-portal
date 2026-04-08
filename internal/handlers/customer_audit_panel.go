@@ -127,7 +127,7 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 					}
 				}
 
-				// Fetch policy reports for the policy evaluations sub-tab
+				// Fetch policy reports for the policy reports sub-tab
 				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_sandbox_runs"); err == nil {
 					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
 					props.SandboxPolicyReports = reports
@@ -177,7 +177,7 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 					zap.L().Warn("failed to fetch install components", zap.Error(err))
 				}
 
-				// Fetch policy reports for the policy evaluations sub-tab
+				// Fetch policy reports for the policy reports sub-tab
 				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_deploys"); err == nil {
 					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
 					props.ComponentsPolicyReports = reports

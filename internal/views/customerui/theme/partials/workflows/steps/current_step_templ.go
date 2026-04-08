@@ -145,12 +145,12 @@ func CurrentStep(workflow *workflows.WorkflowDataPanel, installID string, basePa
 				return templ_7745c5c3_Err
 			}
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Policy Evaluation -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 17, "</div><!-- Policy Reports -->")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		if workflow.HasPolicyData {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><!-- Policy header --><div class=\"flex items-center justify-between px-4 py-3\"><span class=\"text-sm font-medium\" style=\"color: var(--theme-text)\">Policy Evaluations</span><div class=\"flex items-center gap-2\">")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 18, "<div style=\"border-bottom: 1px solid var(--theme-border-subtle)\"><!-- Policy header --><div class=\"flex items-center justify-between px-4 py-3\"><span class=\"text-sm font-medium\" style=\"color: var(--theme-text)\">Policy Reports</span><div class=\"flex items-center gap-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
