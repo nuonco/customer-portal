@@ -5,8 +5,10 @@ package scripts
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import "github.com/a-h/templ"
-import templruntime "github.com/a-h/templ/runtime"
+import (
+	"github.com/a-h/templ"
+	templruntime "github.com/a-h/templ/runtime"
+)
 
 // DarkMode adds dark mode detection for auto mode only.
 // For "light" and "dark" modes, the class is baked into the <html> tag at render time,

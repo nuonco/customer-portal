@@ -476,7 +476,7 @@ templ appInfoRoleDetail(role IAMRoleDisplay) {
 
 templ appInfoPolicyDetailContent(pol PolicyDisplay) {
 	<div class="px-4 pb-4">
-		@components.CodeBlock(pol.Contents, "json")
+		@components.CodeBlock(pol.Contents, policyLang(pol.Engine))
 	</div>
 }
 

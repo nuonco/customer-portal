@@ -186,14 +186,14 @@ func extractRoles(cfg *nuon.InstallAppPermissionsConfig) []partials.AccessRole {
 		roles = append(roles, r)
 	}
 
-	addRole(cfg.ProvisionRole, true)
-	addRole(cfg.DeprovisionRole, true)
-	addRole(cfg.MaintenanceRole, true)
+	addRole(cfg.ProvisionRole, cfg.ProvisionRole != nil && cfg.ProvisionRole.ARN != "")
+	addRole(cfg.DeprovisionRole, cfg.DeprovisionRole != nil && cfg.DeprovisionRole.ARN != "")
+	addRole(cfg.MaintenanceRole, cfg.MaintenanceRole != nil && cfg.MaintenanceRole.ARN != "")
 	for i := range cfg.BreakGlassRoles {
-		addRole(&cfg.BreakGlassRoles[i], false)
+		addRole(&cfg.BreakGlassRoles[i], cfg.BreakGlassRoles[i].ARN != "")
 	}
 	for i := range cfg.CustomRoles {
-		addRole(&cfg.CustomRoles[i], true)
+		addRole(&cfg.CustomRoles[i], cfg.CustomRoles[i].ARN != "")
 	}
 
 	return roles

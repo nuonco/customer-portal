@@ -8,10 +8,14 @@ import (
 )
 
 func policyLang(engine string) string {
-	if engine == "opa" {
+	switch engine {
+	case "opa":
 		return "rego"
+	case "kyverno":
+		return "yaml"
+	default:
+		return ""
 	}
-	return ""
 }
 
 templ PolicyDetailContent(pol PoliciesPolicy) {
