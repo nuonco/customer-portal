@@ -26,14 +26,6 @@ func (h *Handler) getStackSetupData(ctx context.Context, client *nuon.Client, in
 		if step.Name != "await install stack" {
 			continue
 		}
-		stepStatus := ""
-		if step.Status != nil {
-			stepStatus = string(step.Status.Status)
-		}
-		if stepStatus != "" && stepStatus != "pending" && stepStatus != "in-progress" && stepStatus != "approval-awaiting" {
-			return partials.StackSetupData{}
-		}
-
 		// Determine platform from app runner type
 		platform := h.detectPlatform(ctx, client, install)
 		zap.L().Debug("getStackSetupData: detected platform", zap.String("platform", platform), zap.String("installID", install.NuonInstallID))

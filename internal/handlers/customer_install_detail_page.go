@@ -137,7 +137,11 @@ func (h *Handler) InstallDetailPage(c *gin.Context) {
 		return
 	}
 	install := installInterface.(*models.Install)
-	c.Redirect(http.StatusFound, h.basePath+"/installs/"+install.ID+"/overview")
+	dest := h.basePath + "/installs/" + install.ID + "/overview"
+	if qs := c.Request.URL.RawQuery; qs != "" {
+		dest += "?" + qs
+	}
+	c.Redirect(http.StatusFound, dest)
 }
 
 func (h *Handler) InstallOverviewPage(c *gin.Context) {
@@ -146,6 +150,7 @@ func (h *Handler) InstallOverviewPage(c *gin.Context) {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+	props.AutoOpenWorkflow = c.Query("open_workflow") == "true"
 	h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(*props))
 }
 

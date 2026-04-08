@@ -154,7 +154,7 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	if htmx {
 		basePath := h.basePath
 		c.SetCookie("jwt", token, 86400, "/", "", false, false)
-		c.Header("HX-Redirect", basePath+"/installs/"+install.ID)
+		c.Header("HX-Redirect", basePath+"/installs/"+install.ID+"?open_workflow=true")
 		c.Status(http.StatusOK)
 		return
 	}

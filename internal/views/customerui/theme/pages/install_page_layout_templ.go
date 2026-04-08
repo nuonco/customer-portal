@@ -5,9 +5,10 @@ package pages
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
@@ -17,11 +18,12 @@ import (
 // InstallPageProps shared props for all install detail tab pages
 type InstallPageProps struct {
 	customerui.LayoutProps
-	Install         *models.Install
-	AppName         string
-	APIDeletedError bool
-	PageTitle       string // Display title for the current tab ("Overview", "Stack", etc.)
-	PageIcon        string // Phosphor icon name for the current tab (e.g. "house-simple")
+	Install          *models.Install
+	AppName          string
+	APIDeletedError  bool
+	PageTitle        string // Display title for the current tab ("Overview", "Stack", etc.)
+	PageIcon         string // Phosphor icon name for the current tab (e.g. "house-simple")
+	AutoOpenWorkflow bool   // Auto-open the active workflow panel on load
 }
 
 // installPageShell renders the shared shell for install detail pages:
@@ -149,7 +151,7 @@ func installPageShell(props InstallPageProps) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(props.BasePath)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 68, Col: 33}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 69, Col: 33}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -162,7 +164,7 @@ func installPageShell(props InstallPageProps) templ.Component {
 		var templ_7745c5c3_Var5 string
 		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(props.Install.ID)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 69, Col: 36}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/pages/install_page_layout.templ`, Line: 70, Col: 36}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
 		if templ_7745c5c3_Err != nil {

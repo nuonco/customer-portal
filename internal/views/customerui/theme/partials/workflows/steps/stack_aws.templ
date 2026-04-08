@@ -16,15 +16,6 @@ templ StackAWS(stackSetup workflows.StackSetupData, workflow *workflows.Workflow
 		</div>
 		<!-- Footer -->
 		<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-			if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
-				<button
-					type="button"
-					class="button button-primary workflow-approve-all-btn btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5"
-					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-				>
-					Approve
-				</button>
-			}
 			if workflow != nil && workflow.CanCancel {
 				<button
 					type="button"

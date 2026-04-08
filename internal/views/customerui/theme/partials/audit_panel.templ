@@ -996,7 +996,7 @@ templ allWorkflowsList(workflows []*nuonmodels.AppWorkflow) {
 				for _, wf := range workflows {
 					<tr
 						class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
-						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s')", wf.ID)} }
+						onclick={ templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", wf.ID, allWorkflowsTypeLabel(wf.Type))} }
 					>
 						<td class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ allWorkflowsTypeLabel(wf.Type) }>
 							{ allWorkflowsTypeLabel(wf.Type) }

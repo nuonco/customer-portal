@@ -60,7 +60,7 @@ func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 	processed := processWorkflowForCustomer(workflow)
 	processed["current_step_role"] = resolveCurrentStepRole(ctx, nuonClient, install.NuonInstallID, processed)
 	panel := ginHToWorkflowDataPanel(processed)
-	panel.DisablePolling = true // Secondary panel views should not poll
+	// Panel polls via hx-get on the ProvisionAccordion for active workflows
 
 	var stackSetup partials.StackSetupData
 	if isActiveWorkflowStatus(panel.Status) {
@@ -190,6 +190,19 @@ func (h *Handler) StepDetailCard(c *gin.Context) {
 	orgID := h.getOrgIDForTheme(c)
 	theme, _ := localModels.GetOrCreateAppTheme(h.db, orgID)
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
+
+	// For "await install stack" steps, show the platform-specific card with CF link
+	if normalizeStepName(step.Name) == "await_install_stack" {
+		stackSetup := h.getStackSetupData(ctx, nuonClient, install, workflow)
+		if stackSetup.CloudFormationLink != "" {
+			wfStackSetup := workflows.StackSetupData{
+				Platform:           stackSetup.Platform,
+				CloudFormationLink: stackSetup.CloudFormationLink,
+			}
+			h.RenderTempl(c, http.StatusOK, steps.StackAWS(wfStackSetup, wfPanel, install.ID, h.basePath))
+			return
+		}
+	}
 
 	h.RenderTempl(c, http.StatusOK, steps.CurrentStep(wfPanel, install.ID, h.basePath, primaryColor))
 }

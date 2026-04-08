@@ -5,18 +5,18 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -3204,7 +3204,7 @@ func allWorkflowsList(workflows []*nuonmodels.AppWorkflow) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			for _, wf := range workflows {
-				templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s')", wf.ID)})
+				templ_7745c5c3_Err = templ.RenderScriptItems(ctx, templ_7745c5c3_Buffer, templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", wf.ID, allWorkflowsTypeLabel(wf.Type))})
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
@@ -3212,7 +3212,7 @@ func allWorkflowsList(workflows []*nuonmodels.AppWorkflow) templ.Component {
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				var templ_7745c5c3_Var151 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s')", wf.ID)}
+				var templ_7745c5c3_Var151 templ.ComponentScript = templ.ComponentScript{Call: fmt.Sprintf("openWorkflowPanel('%s', '%s')", wf.ID, allWorkflowsTypeLabel(wf.Type))}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var151.Call)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

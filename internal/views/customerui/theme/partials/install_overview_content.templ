@@ -544,21 +544,12 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 	<div
 		id="active-provision-banner"
 		class="@container"
-		if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
-			hx-get={ basePath + "/installs/" + installID + "/workflow-status" }
-			hx-trigger="every 5s"
-			hx-ext="morph"
-			hx-swap="morph:outerHTML"
-		}
 		if workflow != nil {
 			data-workflow-status={ workflow.Status }
 		}
 	>
-		if workflow != nil && workflow.Name != "" {
-			<h3 class="text-base font-semibold mb-3" style="color: var(--theme-text)">{ workflow.Name }</h3>
-		}
-		<div class="flex flex-col @3xl:flex-row gap-4">
-		<div class="@3xl:w-1/2">
+		<div class="flex flex-col @5xl:flex-row gap-4">
+		<div class="@5xl:w-1/2">
 		<div id="step-detail-card">
 		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
@@ -613,15 +604,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 				</div>
 				<!-- Footer -->
 				<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-					if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
-						<button
-							type="button"
-							class="button button-primary workflow-approve-all-btn btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5"
-							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-						>
-							Approve
-						</button>
-					}
 					if workflow != nil && workflow.CanCancel {
 						<button
 							type="button"
@@ -799,8 +781,19 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		}
 		</div>
 		</div>
-		<div class="@3xl:w-1/2">
-		<div class="space-y-2 provision-accordion">
+		<div class="@5xl:w-1/2">
+		<div
+			id="provision-phases"
+			class="space-y-2 provision-accordion"
+			if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
+				hx-get={ basePath + "/installs/" + installID + "/panel/workflow/" + workflow.ID }
+				hx-trigger="every 5s"
+				hx-select="#provision-phases"
+				hx-target="this"
+				hx-ext="morph"
+				hx-swap="morph:outerHTML"
+			}
+		>
 			for i, phase := range phases {
 				@provisionPhaseAccordion(phase, i+1) {
 					<div class="space-y-1">
@@ -1037,6 +1030,9 @@ templ provisionPhaseAccordion(phase ProvisionPhase, stepNumber int) {
 		class="provision-phase"
 		data-phase-index={ fmt.Sprintf("%d", stepNumber) }
 		data-phase-status={ phase.Status }
+		if stepNumber == 1 {
+			open
+		}
 	>
 		<summary class="provision-phase-summary list-none [&::-webkit-details-marker]:hidden">
 			<div class="flex items-center gap-3 flex-1 min-w-0">
@@ -1457,9 +1453,14 @@ templ installDetailPanelScripts() {
 					if (firstPhase) {
 						firstPhase.setAttribute('open', '');
 					}
-					var firstStep = content.querySelector('[data-step-url]');
-					if (firstStep && typeof loadStepDetail === 'function') {
-						loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
+					// Auto-load first step only if the inline step-detail-card is empty
+					// (e.g. CF link card or failed step card already rendered server-side)
+					var stepCard = content.querySelector('#step-detail-card');
+					if (!stepCard || !stepCard.children.length) {
+						var firstStep = content.querySelector('[data-step-url]');
+						if (firstStep && typeof loadStepDetail === 'function') {
+							loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
+						}
 					}
 				})
 				.catch(function() {
@@ -1475,6 +1476,15 @@ templ installDetailPanelScripts() {
 				statusText: event.detail.xhr.statusText
 			});
 		});
+
+		// Auto-open the first workflow panel when redirected from install creation
+		(function() {
+			var container = document.getElementById('panel-content-overview');
+			if (!container || container.getAttribute('data-auto-open-workflow') !== 'true') return;
+			container.removeAttribute('data-auto-open-workflow');
+			var firstRow = document.querySelector('#overview-tab-updates tbody tr');
+			if (firstRow) firstRow.click();
+		})();
 
 	</script>
 }

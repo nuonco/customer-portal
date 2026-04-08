@@ -14,9 +14,22 @@ templ InstallOverviewPage(props InstallPageProps) {
 				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel" }
 				hx-trigger="load"
 				hx-swap="morph:innerHTML"
+				if props.AutoOpenWorkflow {
+					data-auto-open-workflow="true"
+				}
 			>
 				@overviewShimmer()
 			</div>
+			<script>
+				// Strip open_workflow query param so refresh won't re-trigger
+				(function() {
+					var params = new URLSearchParams(window.location.search);
+					if (params.get('open_workflow') !== 'true') return;
+					params.delete('open_workflow');
+					var newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+					history.replaceState(null, '', newURL);
+				})();
+			</script>
 		}
 	}
 }

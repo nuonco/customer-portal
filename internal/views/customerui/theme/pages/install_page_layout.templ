@@ -14,7 +14,8 @@ type InstallPageProps struct {
 	AppName         string
 	APIDeletedError bool
 	PageTitle       string // Display title for the current tab ("Overview", "Stack", etc.)
-	PageIcon        string // Phosphor icon name for the current tab (e.g. "house-simple")
+	PageIcon         string // Phosphor icon name for the current tab (e.g. "house-simple")
+	AutoOpenWorkflow bool   // Auto-open the active workflow panel on load
 }
 
 // installPageShell renders the shared shell for install detail pages:

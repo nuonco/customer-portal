@@ -2475,6 +2475,16 @@
       flex-direction: row;
     }
   }
+  .\@5xl\:w-1\/2 {
+    @container (width >= 64rem) {
+      width: calc(1/2 * 100%);
+    }
+  }
+  .\@5xl\:flex-row {
+    @container (width >= 64rem) {
+      flex-direction: row;
+    }
+  }
   .dark\:block {
     &:where(.dark, .dark *) {
       display: block;
