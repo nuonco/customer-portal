@@ -1,0 +1,1084 @@
+package pages
+
+import (
+	"encoding/json"
+	"fmt"
+	"net/url"
+	"time"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	nuonmodels "github.com/nuonco/nuon-go/models"
+)
+
+// DebugWorkflowsPageProps contains all data for the debug workflows page.
+type DebugWorkflowsPageProps struct {
+	customerui.LayoutProps
+	Install          *models.Install
+	AppName          string
+	Workflows        []*nuonmodels.AppWorkflow
+	Pagination       components.PaginationProps
+	SelectedWorkflow    *nuonmodels.AppWorkflow     // nil when no workflow selected
+	WorkflowJSON        string                      // pretty-printed JSON of selected workflow
+	SelectedStep         *nuonmodels.AppWorkflowStep // step to display in detail card
+	SelectedStepIsActive bool                        // true when SelectedStep is the active step (not manually picked)
+	ActiveTab            string                      // "info" or "json" — workflow panel tab
+	ActiveStepTab        string                      // "info" or "json" — step detail tab
+	Expanded             bool                        // whether the panel is expanded to full width
+	SelectedStepTarget     interface{}                // typed target resource (e.g. *models.AppInstallDeploy)
+	SelectedStepTargetJSON string                    // pretty-printed JSON of the step's target resource
+	ActiveTargetTab        string                    // "info" or "json" — target card tab
+	SelectedStepStackSetup partials.StackSetupData    // platform-specific stack setup data
+	SelectedStepStackJSON  string                    // JSON of the full install stack
+	ActiveStackTab         string                    // "info" or "json" — stack setup card tab
+	AlertType            string                      // "error", "success", or "" — type of alert to display
+	AlertMsg             string                      // alert message text
+	CurrentQuery         string                      // raw query string from the current request URL (for preserving state in form actions)
+}
+
+templ DebugWorkflowsPage(props DebugWorkflowsPageProps) {
+	@customerui.Layout(props.LayoutProps) {
+		@components.PageHeader(components.PageHeaderProps{
+			Title: "Debug",
+			Icon:  "bug",
+		})
+		<div class="px-6 pb-6">
+			<!-- Tab bar -->
+			<div class="flex gap-4 border-b mb-4" style="border-color: var(--theme-border-subtle)">
+				<div class="px-1 pb-2 text-sm font-medium border-b-2" style="border-color: var(--theme-primary); color: var(--theme-primary)">
+					Workflows
+				</div>
+			</div>
+			if len(props.Workflows) == 0 {
+				@components.EmptyState(components.EmptyStateProps{
+					Title: "No workflows",
+					Icon:  "ph-clock",
+				})
+			} else {
+				<div class="overflow-x-auto">
+					<table class="w-full text-sm">
+						<thead>
+							<tr class="text-left text-cool-grey-500 dark:text-cool-grey-400 text-xs uppercase tracking-wider">
+								<th class="pb-2 pr-4 font-medium">ID</th>
+								<th class="pb-2 pr-4 font-medium">Type</th>
+								<th class="pb-2 pr-4 font-medium">Status</th>
+								<th class="pb-2 pr-4 font-medium">Created</th>
+								<th class="pb-2 font-medium">Duration</th>
+							</tr>
+						</thead>
+						<tbody>
+							for _, wf := range props.Workflows {
+								<tr>
+									<td class="py-2 pr-4" colspan="5">
+										@debugWorkflowRow(props, wf)
+									</td>
+								</tr>
+							}
+						</tbody>
+					</table>
+				</div>
+				@components.Pagination(props.Pagination)
+			}
+		</div>
+		@DebugWorkflowPanel(props)
+	}
+}
+
+templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuonmodels.AppWorkflow) {
+	<a
+		href={ templ.SafeURL(fmt.Sprintf("%s/installs/%s/debug/workflows/%s", props.BasePath, props.Install.ID, wf.ID)) }
+		hx-get={ fmt.Sprintf("%s/installs/%s/debug/workflows/%s?partial=panel", props.BasePath, props.Install.ID, wf.ID) }
+		hx-target={ panelWrapperTarget }
+		hx-swap="outerHTML"
+		hx-push-url={ fmt.Sprintf("%s/installs/%s/debug/workflows/%s", props.BasePath, props.Install.ID, wf.ID) }
+		hx-boost="false"
+		class={ "flex items-center gap-4 px-3 py-2 rounded-md hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 transition-colors cursor-pointer text-sm",
+			templ.KV("bg-cool-grey-100 dark:bg-dark-grey-800", props.SelectedWorkflow != nil && props.SelectedWorkflow.ID == wf.ID) }
+	>
+		<span class="font-mono text-xs text-cool-grey-500 dark:text-cool-grey-400 w-24 truncate" title={ wf.ID }>{ truncateID(wf.ID) }</span>
+		<span class="w-24">{ string(wf.Type) }</span>
+		<span class="w-28">
+			@debugStatusBadge(wf.Status)
+		</span>
+		<span class="w-36 text-cool-grey-500 dark:text-cool-grey-400">{ formatTimestamp(wf.CreatedAt) }</span>
+		<span class="text-cool-grey-500 dark:text-cool-grey-400">{ formatDuration(wf.ExecutionTime) }</span>
+	</a>
+}
+
+templ debugStatusBadge(status *nuonmodels.AppCompositeStatus) {
+	if status != nil {
+		<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(string(status.Status)) }>
+			{ string(status.Status) }
+		</span>
+	}
+}
+
+// DebugWorkflowPanel renders the full panel with overlay (for HTMX outerHTML swaps on expand/collapse).
+templ DebugWorkflowPanel(props DebugWorkflowsPageProps) {
+	if props.SelectedWorkflow != nil {
+		@components.Panel(components.PanelProps{
+			Title:         "Workflow Detail",
+			ID:            "debug-workflow-panel",
+			Open:          true,
+			Expanded:      props.Expanded,
+			CloseURL:      fmt.Sprintf("%s/installs/%s/debug/workflows", props.BasePath, props.Install.ID),
+			HxCloseGet:    fmt.Sprintf("%s/installs/%s/debug/workflows?partial=panel", props.BasePath, props.Install.ID),
+			ExpandURL:     buildDebugURL(expandParams(props, true)),
+			CollapseURL:   buildDebugURL(expandParams(props, false)),
+			HxExpandGet:   withPartial(expandParams(props, true), "panel"),
+			HxCollapseGet: withPartial(expandParams(props, false), "panel"),
+		}) {
+			@DebugWorkflowPanelContent(props)
+		}
+	} else {
+		@components.Panel(components.PanelProps{
+			Title: "Workflow Detail",
+			ID:    "debug-workflow-panel",
+			Open:  false,
+		})
+	}
+}
+
+// DebugWorkflowPanelContentWithOOB renders panel content + OOB swaps for panel/overlay classes.
+templ DebugWorkflowPanelContentWithOOB(props DebugWorkflowsPageProps) {
+	if props.SelectedWorkflow != nil {
+		@DebugWorkflowPanelContent(props)
+	}
+	<div
+		id="debug-workflow-panel"
+		class={ "secondary-panel", templ.KV("open", props.SelectedWorkflow != nil), templ.KV("panel-full", props.Expanded) }
+		hx-swap-oob="morph"
+	></div>
+	<div
+		id="debug-workflow-panel-overlay"
+		class={ "secondary-panel-overlay", templ.KV("open", props.SelectedWorkflow != nil) }
+		hx-swap-oob="morph"
+	></div>
+}
+
+// DebugWorkflowPanelContent renders just the panel inner content (for HTMX partial swaps).
+templ DebugWorkflowPanelContent(props DebugWorkflowsPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: debugPanelTabs(props),
+	})
+	if props.ActiveTab == "json" {
+		@components.CodeBlock(props.WorkflowJSON, "json")
+	} else if props.ActiveTab == "steps" {
+		@debugWorkflowStepsTab(props)
+	} else {
+		@debugWorkflowInfoTab(props)
+	}
+}
+
+templ debugWorkflowInfoTab(props DebugWorkflowsPageProps) {
+	<!-- Top-level info card -->
+	@components.Card(components.CardProps{Header: debugWorkflowCardHeader(props.SelectedWorkflow.Name, props.SelectedWorkflow.ID, workflowStatus(props.SelectedWorkflow))}) {
+		<div class="grid grid-cols-2 gap-6">
+			<div class="space-y-2">
+				@debugInfoRow("Type", string(props.SelectedWorkflow.Type))
+				@debugInfoRow("Plan Only", fmt.Sprintf("%v", props.SelectedWorkflow.PlanOnly))
+				@debugInfoRow("Approval", string(props.SelectedWorkflow.ApprovalOption))
+				@debugInfoRow("Owner", fmt.Sprintf("%s (%s)", props.SelectedWorkflow.OwnerType, props.SelectedWorkflow.OwnerID))
+			</div>
+			<div class="space-y-2">
+				@debugInfoRow("Created", formatTimestamp(props.SelectedWorkflow.CreatedAt))
+				@debugInfoRow("Started", formatTimestamp(props.SelectedWorkflow.StartedAt))
+				@debugInfoRow("Finished", formatTimestamp(props.SelectedWorkflow.FinishedAt))
+				@debugInfoRow("Duration", formatDuration(props.SelectedWorkflow.ExecutionTime))
+			</div>
+		</div>
+		<!-- Action buttons -->
+		@debugWorkflowActions(props)
+	}
+	if props.AlertType != "" && props.AlertMsg != "" {
+		<div class="mt-4 relative">
+			@components.Alert(components.AlertProps{Type: props.AlertType, Message: props.AlertMsg})
+			<a
+				href={ templ.SafeURL(debugDismissAlertURL(props)) }
+				hx-get={ withPartial(debugDismissAlertParams(props), "panel") }
+				hx-target={ panelWrapperTarget }
+				hx-swap="outerHTML"
+				hx-push-url={ debugDismissAlertURL(props) }
+				hx-boost="false"
+				class="absolute top-3 right-3 text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-200"
+			>
+				<i class="ph-bold ph-x text-sm"></i>
+			</a>
+		</div>
+	}
+}
+
+templ debugWorkflowStepsTab(props DebugWorkflowsPageProps) {
+	if len(props.SelectedWorkflow.Steps) > 0 {
+		<div class="@container">
+			<div class="flex flex-col @5xl:flex-row @5xl:items-start gap-4">
+				<div class="@5xl:w-1/4 @5xl:shrink-0 @5xl:min-w-0">
+					@components.Card(components.CardProps{Title: fmt.Sprintf("Steps (%d)", len(props.SelectedWorkflow.Steps))}) {
+						for i, group := range groupStepsByIdx(props.SelectedWorkflow.Steps) {
+							if i > 0 {
+								<div class="border-b" style="border-color: var(--theme-border-subtle)"></div>
+							}
+							<div class="py-2">
+								<div class="space-y-0.5">
+									for _, step := range group.Steps {
+										@debugStepRow(props, step)
+									}
+								</div>
+							</div>
+						}
+					}
+				</div>
+				if props.SelectedStep != nil {
+					<div class="@5xl:w-3/4 @5xl:min-w-0 space-y-4">
+						@debugSelectedStepCard(props)
+						@debugStepTargetCard(props)
+						if props.SelectedStepStackJSON != "" {
+							@debugStackSetupCard(props)
+						}
+					</div>
+				}
+			</div>
+		</div>
+	} else {
+		@components.EmptyState(components.EmptyStateProps{
+			Title: "No steps",
+			Icon:  "ph-list",
+		})
+	}
+}
+
+templ debugStepTargetCard(props DebugWorkflowsPageProps) {
+	if props.SelectedStep.StepTargetType == "" || props.SelectedStep.StepTargetID == "" {
+		@components.Card(components.CardProps{Title: "Target"}) {
+			@components.EmptyState(components.EmptyStateProps{
+				Title:   "No target",
+				Icon:    "ph-crosshair",
+				Compact: true,
+			})
+		}
+	} else {
+		@components.Card(components.CardProps{Header: debugTargetCardHeader(props.SelectedStep.StepTargetType, props.SelectedStep.StepTargetID)}) {
+			<div id="debug-target-card-content">
+				@DebugTargetCardContent(props)
+			</div>
+		}
+	}
+}
+
+// DebugTargetCardContent renders the target card's tab bar + content (for HTMX partial swaps).
+templ DebugTargetCardContent(props DebugWorkflowsPageProps) {
+	if props.SelectedStepTargetJSON != "" {
+		@components.TabBar(components.TabBarProps{
+			Tabs: debugTargetTabs(props),
+		})
+		if props.ActiveTargetTab == "json" {
+			@components.CodeBlock(props.SelectedStepTargetJSON, "json")
+		} else {
+			@debugTargetInfo(props)
+		}
+	} else {
+		<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">
+			Target type <span class="font-mono">{ props.SelectedStep.StepTargetType }</span> is not yet supported.
+		</p>
+	}
+}
+
+templ debugTargetCardHeader(targetType, targetID string) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Target</h4>
+		<div class="flex items-center gap-2 text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">
+			<span>{ targetType }</span>
+			<span>{ targetID }</span>
+		</div>
+	</div>
+}
+
+templ debugTargetInfo(props DebugWorkflowsPageProps) {
+	switch target := props.SelectedStepTarget.(type) {
+		case *nuonmodels.AppInstallDeploy:
+			@debugTargetInfoDeploy(target)
+		case *nuonmodels.AppInstallSandboxRun:
+			@debugTargetInfoSandboxRun(target)
+		case *nuonmodels.AppInstallActionWorkflowRun:
+			@debugTargetInfoActionRun(target)
+		case *nuonmodels.AppInstallStackVersion:
+			@debugTargetInfoStackVersion(target)
+		case map[string]interface{}:
+			@debugTargetInfoGeneric(target)
+		default:
+			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">No info view available for this target type.</p>
+	}
+}
+
+templ debugTargetInfoDeploy(d *nuonmodels.AppInstallDeploy) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", d.ID)
+			@debugInfoRow("Component", d.ComponentName)
+			@debugInfoRow("Component ID", d.ComponentID)
+			@debugInfoRow("Deploy Type", string(d.InstallDeployType))
+			@debugInfoRow("Status", d.Status)
+			@debugInfoRow("Plan Only", fmt.Sprintf("%v", d.PlanOnly))
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Created", formatTimestamp(d.CreatedAt))
+			@debugInfoRow("Status", d.StatusDescription)
+			if d.BuildID != "" {
+				@debugInfoRow("Build ID", d.BuildID)
+			}
+			if d.ReleaseID != "" {
+				@debugInfoRow("Release ID", d.ReleaseID)
+			}
+		</div>
+	</div>
+}
+
+templ debugTargetInfoSandboxRun(r *nuonmodels.AppInstallSandboxRun) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", r.ID)
+			@debugInfoRow("Status", r.Status)
+			@debugInfoRow("Run Type", string(r.RunType))
+			@debugInfoRow("Status Description", r.StatusDescription)
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Created", formatTimestamp(r.CreatedAt))
+			@debugInfoRow("Updated", formatTimestamp(r.UpdatedAt))
+			@debugInfoRow("Install ID", r.InstallID)
+		</div>
+	</div>
+}
+
+templ debugTargetInfoActionRun(r *nuonmodels.AppInstallActionWorkflowRun) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", r.ID)
+			@debugInfoRow("Status", r.Status)
+			@debugInfoRow("Trigger Type", string(r.TriggerType))
+			@debugInfoRow("Status Description", r.StatusDescription)
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Created", formatTimestamp(r.CreatedAt))
+			@debugInfoRow("Duration", formatDuration(r.ExecutionTime))
+			@debugInfoRow("Install ID", r.InstallID)
+		</div>
+	</div>
+}
+
+templ debugTargetInfoStackVersion(v *nuonmodels.AppInstallStackVersion) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", v.ID)
+			if v.CompositeStatus != nil {
+				@debugInfoRow("Status", string(v.CompositeStatus.Status))
+			}
+			@debugInfoRow("Install ID", v.InstallID)
+			if v.Checksum != "" {
+				@debugInfoRow("Checksum", v.Checksum)
+			}
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Created", formatTimestamp(v.CreatedAt))
+			if v.AppConfigID != "" {
+				@debugInfoRow("App Config ID", v.AppConfigID)
+			}
+		</div>
+	</div>
+}
+
+templ debugTargetInfoGeneric(data map[string]interface{}) {
+	<div class="space-y-2">
+		for k, v := range data {
+			if s, ok := v.(string); ok && s != "" {
+				@debugInfoRow(k, s)
+			}
+		}
+	</div>
+}
+
+templ debugStackSetupCard(props DebugWorkflowsPageProps) {
+	@components.Card(components.CardProps{Header: debugStackSetupCardHeader(props.SelectedStepStackSetup.Platform)}) {
+		<div id="debug-stack-card-content">
+			@DebugStackCardContent(props)
+		</div>
+	}
+}
+
+// DebugStackCardContent renders the stack setup card's tab bar + content (for HTMX partial swaps).
+templ DebugStackCardContent(props DebugWorkflowsPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: debugStackSetupTabs(props),
+	})
+	if props.ActiveStackTab == "json" {
+		@components.CodeBlock(props.SelectedStepStackJSON, "json")
+	} else {
+		@debugStackSetupInfo(props)
+	}
+}
+
+templ debugStackSetupCardHeader(platform string) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Stack Setup</h4>
+		if platform != "" {
+			<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono">{ platform }</span>
+		}
+	</div>
+}
+
+templ debugStackSetupInfo(props DebugWorkflowsPageProps) {
+	switch props.SelectedStepStackSetup.Platform {
+		case "aws":
+			@debugStackSetupAWS(props.SelectedStepStackSetup)
+		case "gcp":
+			@debugStackSetupGCP(props.SelectedStepStackSetup)
+		case "azure":
+			@debugStackSetupAzure(props.SelectedStepStackSetup)
+		default:
+			@debugInfoRow("Platform", props.SelectedStepStackSetup.Platform)
+	}
+}
+
+templ debugStackSetupAWS(setup partials.StackSetupData) {
+	<div class="space-y-3">
+		<p class="text-sm">Complete setup in AWS Console</p>
+		if setup.CloudFormationLink != "" {
+			<a
+				href={ templ.SafeURL(setup.CloudFormationLink) }
+				target="_blank"
+				rel="noopener noreferrer"
+				class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
+			>
+				Open in AWS
+				<i class="ph-bold ph-arrow-square-out text-base"></i>
+			</a>
+		} else {
+			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">No CloudFormation link available.</p>
+		}
+	</div>
+}
+
+templ debugStackSetupGCP(setup partials.StackSetupData) {
+	<div class="space-y-4">
+		<div>
+			<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
+			@components.CodeBlock("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp", "bash")
+		</div>
+		<div>
+			<p class="text-sm font-medium mb-1">2. Configure remote state (recommended)</p>
+			<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-2">Create a <code class="text-xs">backend.tf</code> file to store Terraform state in GCS</p>
+			@components.CodeBlock(workflows.GcpBackendSnippet(setup.NuonInstallID), "hcl")
+		</div>
+		if setup.TfvarsContent != "" {
+			<div>
+				<p class="text-sm font-medium mb-1">3. Save the install configuration</p>
+				<p class="text-xs text-cool-grey-500 dark:text-cool-grey-400 mb-2">Save this as <code class="text-xs">install.tfvars</code></p>
+				@components.CodeBlock(setup.TfvarsContent, "hcl")
+			</div>
+		}
+		<div>
+			<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
+			@components.CodeBlock(workflows.GcpApplyCmd(), "bash")
+		</div>
+	</div>
+}
+
+templ debugStackSetupAzure(setup partials.StackSetupData) {
+	<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Azure stack setup info view coming soon. Check the JSON tab for raw data.</p>
+}
+
+templ debugSelectedStepCard(props DebugWorkflowsPageProps) {
+	@components.Card(components.CardProps{Header: debugStepCardHeader(props.SelectedStep), Footer: debugStepActions(props)}) {
+		@debugStepTabs(props)
+	}
+}
+
+templ debugStepCardHeader(step *nuonmodels.AppWorkflowStep) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ step.Name }</h4>
+		if step.Status != nil {
+			<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(string(step.Status.Status)) }>
+				{ string(step.Status.Status) }
+			</span>
+		}
+	</div>
+}
+
+templ debugStepTabs(props DebugWorkflowsPageProps) {
+	<div id="debug-step-card-content">
+		@DebugStepCardContent(props)
+	</div>
+}
+
+// DebugStepCardContent renders the step card's tab bar + content (for HTMX partial swaps).
+templ DebugStepCardContent(props DebugWorkflowsPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: debugStepDetailTabs(props),
+	})
+	if props.ActiveStepTab == "json" {
+		@components.CodeBlock(mustMarshalJSON(props.SelectedStep), "json")
+	} else {
+		@debugStepInfoDefault(props.SelectedStep)
+	}
+}
+
+templ debugStepActions(props DebugWorkflowsPageProps) {
+	<div class="flex justify-end gap-2">
+		if props.SelectedStep.Approval != nil {
+			<!-- Approve -->
+			<form method="POST" action={ templ.SafeURL(debugActionURL(props, "approve")) }>
+				if stepCanApprove(props.SelectedStep) {
+					<input type="hidden" name="step_id" value={ props.SelectedStep.ID }/>
+					<input type="hidden" name="approval_id" value={ props.SelectedStep.Approval.ID }/>
+				}
+				<button
+					type="submit"
+					class="button button-primary btn-theme-primary text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+					disabled?={ !stepCanApprove(props.SelectedStep) }
+				>
+					Approve
+				</button>
+			</form>
+		}
+		if props.SelectedStep.Retryable {
+			<!-- Retry -->
+			<form method="POST" action={ templ.SafeURL(debugActionURL(props, "retry")) }>
+				if stepCanRetry(props.SelectedStep) {
+					<input type="hidden" name="step_id" value={ props.SelectedStep.ID }/>
+				}
+				<button
+					type="submit"
+					class="button button-neutral btn-neutral text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+					disabled?={ !stepCanRetry(props.SelectedStep) }
+				>
+					Retry
+				</button>
+			</form>
+		}
+		if props.SelectedStep.Skippable {
+			<!-- Skip (no backend support yet) -->
+			<button
+				type="button"
+				class="button button-neutral btn-neutral text-xs px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-transparent"
+				disabled
+				title="Skip is not yet supported by the API"
+			>
+				Skip
+			</button>
+		}
+	</div>
+}
+
+templ debugStepInfoDefault(step *nuonmodels.AppWorkflowStep) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("Execution Type", string(step.ExecutionType))
+			@debugInfoRow("Group", stepGroupLabel(step))
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Created", formatTimestamp(step.CreatedAt))
+			@debugInfoRow("Started", formatTimestamp(step.StartedAt))
+			@debugInfoRow("Finished", formatTimestamp(step.FinishedAt))
+			@debugInfoRow("Duration", formatDuration(step.ExecutionTime))
+		</div>
+	</div>
+	<!-- Flags -->
+	<div class="flex gap-2 mt-4">
+		@debugStepFlag("Retryable", step.Retryable)
+		@debugStepFlag("Retried", step.Retried)
+		@debugStepFlag("Skippable", step.Skippable)
+		@debugStepFlag("Finished", step.Finished)
+	</div>
+	<!-- Approval -->
+	if step.Approval != nil {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Approval</h5>
+			<div class="space-y-2">
+				@debugInfoRow("ID", step.Approval.ID)
+				@debugInfoRow("Created", formatTimestamp(step.Approval.CreatedAt))
+			</div>
+		</div>
+	}
+	<!-- Policy Validation -->
+	if step.PolicyValidation != nil {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Policy Validation</h5>
+			<div class="space-y-2">
+				@debugInfoRow("ID", step.PolicyValidation.ID)
+				if step.PolicyValidation.Response != "" {
+					@components.CodeBlock(step.PolicyValidation.Response, "json")
+				}
+			</div>
+		</div>
+	}
+	<!-- Metadata -->
+	if len(step.Metadata) > 0 {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Metadata</h5>
+			<div class="space-y-2">
+				for k, v := range step.Metadata {
+					@debugInfoRow(k, v)
+				}
+			</div>
+		</div>
+	}
+}
+
+templ debugStepFlag(label string, value bool) {
+	<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium",
+		templ.KV("bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200", value),
+		templ.KV("bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400", !value) }>
+		{ label }
+	</span>
+}
+
+templ debugWorkflowActions(props DebugWorkflowsPageProps) {
+	<div class="border-t pt-4 mt-4 flex justify-end gap-2" style="border-color: var(--theme-border-subtle)">
+		<!-- Approve -->
+		<form method="POST" action={ templ.SafeURL(debugActionURL(props, "approve")) }>
+			if workflowCanApprove(props.SelectedWorkflow) {
+				<input type="hidden" name="step_id" value={ workflowApprovalStep(props.SelectedWorkflow).ID }/>
+				<input type="hidden" name="approval_id" value={ workflowApprovalStep(props.SelectedWorkflow).Approval.ID }/>
+			}
+			<button
+				type="submit"
+				class="button button-primary btn-theme-primary text-xs px-3 py-1.5"
+				disabled?={ !workflowCanApprove(props.SelectedWorkflow) }
+			>
+				Approve
+			</button>
+		</form>
+		<!-- Approve All -->
+		<form method="POST" action={ templ.SafeURL(debugActionURL(props, "approve-all")) }>
+			<button
+				type="submit"
+				class="button button-primary btn-theme-primary text-xs px-3 py-1.5"
+				disabled?={ !workflowCanApproveAll(props.SelectedWorkflow) }
+			>
+				Approve All
+			</button>
+		</form>
+		<!-- Retry -->
+		<form method="POST" action={ templ.SafeURL(debugActionURL(props, "retry")) }>
+			if workflowCanRetry(props.SelectedWorkflow) {
+				<input type="hidden" name="step_id" value={ workflowRetryableStep(props.SelectedWorkflow).ID }/>
+			}
+			<button
+				type="submit"
+				class="button button-neutral btn-neutral text-xs px-3 py-1.5"
+				disabled?={ !workflowCanRetry(props.SelectedWorkflow) }
+			>
+				Retry
+			</button>
+		</form>
+		<!-- Cancel -->
+		<form method="POST" action={ templ.SafeURL(debugActionURL(props, "cancel")) }>
+			<button
+				type="submit"
+				class="button button-danger btn-theme-outline text-xs px-3 py-1.5"
+				disabled?={ !workflowCanCancel(props.SelectedWorkflow) }
+			>
+				Cancel
+			</button>
+		</form>
+	</div>
+}
+
+templ debugWorkflowCardHeader(name, id, status string) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">
+			{ name }
+			<span class="text-xs text-cool-grey-500 dark:text-cool-grey-400 font-mono ml-2">{ id }</span>
+		</h4>
+		if status != "" {
+			<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(status) }>
+				{ status }
+			</span>
+		}
+	</div>
+}
+
+templ debugInfoRow(label, value string) {
+	<div class="flex gap-2 text-sm">
+		<span class="text-cool-grey-500 dark:text-cool-grey-400 shrink-0 whitespace-nowrap">{ label }</span>
+		<span class="font-mono text-xs break-all">{ value }</span>
+	</div>
+}
+
+templ debugStepRow(props DebugWorkflowsPageProps, step *nuonmodels.AppWorkflowStep) {
+	<a
+		href={ templ.SafeURL(debugStepRowHref(props, step.ID)) }
+		hx-get={ debugStepRowHxGet(props, step.ID) }
+		hx-target={ panelWrapperTarget }
+		hx-swap="outerHTML"
+		hx-push-url={ debugStepRowHref(props, step.ID) }
+		hx-boost="false"
+		class={ "flex items-center gap-3 px-2 py-1.5 rounded text-xs hover:bg-cool-grey-50 dark:hover:bg-dark-grey-900 cursor-pointer",
+			templ.KV("bg-cool-grey-100 dark:bg-dark-grey-800", props.SelectedStep != nil && props.SelectedStep.ID == step.ID) }
+	>
+		<span class="w-6 text-right text-cool-grey-400 font-mono">{ fmt.Sprintf("%d", step.Idx) }</span>
+		<span class="w-5">
+			@debugStepStatusIcon(step)
+		</span>
+		<span class="flex-1 truncate font-medium">{ step.Name }</span>
+		<span class="text-cool-grey-400 w-16 text-right">{ formatDuration(step.ExecutionTime) }</span>
+	</a>
+}
+
+templ debugStepStatusIcon(step *nuonmodels.AppWorkflowStep) {
+	if step.Status != nil {
+		switch string(step.Status.Status) {
+			case "success", "approved":
+				<i class="ph-bold ph-check-circle text-green-500"></i>
+			case "error":
+				<i class="ph-bold ph-x-circle text-red-500"></i>
+			case "in-progress", "planning", "applying", "provisioning", "generating", "checking-plan", "retrying", "queued":
+				<i class="ph-bold ph-circle-notch text-blue-500"></i>
+			case "approval-awaiting", "awaiting-user-run":
+				<i class="ph-bold ph-clock text-yellow-500"></i>
+			case "pending":
+				<i class="ph-bold ph-circle-dashed text-cool-grey-400"></i>
+			case "cancelled", "discarded", "user-skipped", "auto-skipped":
+				<i class="ph-bold ph-minus-circle text-cool-grey-400"></i>
+			default:
+				<i class="ph-bold ph-circle text-cool-grey-300"></i>
+		}
+	} else {
+		<i class="ph-bold ph-circle text-cool-grey-300"></i>
+	}
+}
+
+const panelContentTarget = "#debug-workflow-panel-content"
+const panelWrapperTarget = "#debug-workflow-panel-wrapper"
+
+func withPartial(p debugURLParams, partial string) string {
+	p.Partial = partial
+	return buildDebugURL(p)
+}
+
+func baseParams(props DebugWorkflowsPageProps) debugURLParams {
+	return debugURLParams{
+		BasePath:   props.BasePath,
+		InstallID:  props.Install.ID,
+		WorkflowID: props.SelectedWorkflow.ID,
+		Tab:        props.ActiveTab,
+		StepID:     selectedStepID(props),
+		StepTab:    props.ActiveStepTab,
+		Expanded:   props.Expanded,
+		AlertType:  props.AlertType,
+		AlertMsg:   props.AlertMsg,
+		TargetTab:  props.ActiveTargetTab,
+		StackTab:   props.ActiveStackTab,
+	}
+}
+
+func debugPanelTabs(props DebugWorkflowsPageProps) []components.Tab {
+	infoParams := baseParams(props)
+	infoParams.Tab = "info"
+	stepsParams := baseParams(props)
+	stepsParams.Tab = "steps"
+	jsonParams := baseParams(props)
+	jsonParams.Tab = "json"
+	return []components.Tab{
+		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "info"},
+		{Label: "Steps", Href: buildDebugURL(stepsParams), HxGet: withPartial(stepsParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "steps"},
+		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "json"},
+	}
+}
+
+func debugStepDetailTabs(props DebugWorkflowsPageProps) []components.Tab {
+	infoParams := baseParams(props)
+	infoParams.StepID = props.SelectedStep.ID
+	infoParams.StepTab = "info"
+	jsonParams := baseParams(props)
+	jsonParams.StepID = props.SelectedStep.ID
+	jsonParams.StepTab = "json"
+	return []components.Tab{
+		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "step-card"), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "info"},
+		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "step-card"), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "json"},
+	}
+}
+
+func debugTargetTabs(props DebugWorkflowsPageProps) []components.Tab {
+	infoParams := baseParams(props)
+	infoParams.TargetTab = "info"
+	jsonParams := baseParams(props)
+	jsonParams.TargetTab = "json"
+	return []components.Tab{
+		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "target-card"), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab != "json"},
+		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "target-card"), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab == "json"},
+	}
+}
+
+func debugStackSetupTabs(props DebugWorkflowsPageProps) []components.Tab {
+	infoParams := baseParams(props)
+	infoParams.StackTab = "info"
+	jsonParams := baseParams(props)
+	jsonParams.StackTab = "json"
+	return []components.Tab{
+		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "stack-card"), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab != "json"},
+		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "stack-card"), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab == "json"},
+	}
+}
+
+func debugStepRowHxGet(props DebugWorkflowsPageProps, stepID string) string {
+	p := baseParams(props)
+	p.StepID = stepID
+	p.StepTab = "info"
+	return withPartial(p, "panel")
+}
+
+func debugStepRowHref(props DebugWorkflowsPageProps, stepID string) string {
+	p := baseParams(props)
+	p.StepID = stepID
+	p.StepTab = "info"
+	return buildDebugURL(p)
+}
+
+func stepCanApprove(step *nuonmodels.AppWorkflowStep) bool {
+	return step.Status != nil && string(step.Status.Status) == "approval-awaiting" && step.Approval != nil
+}
+
+func stepCanRetry(step *nuonmodels.AppWorkflowStep) bool {
+	if !step.Retryable || step.Finished || step.StartedAt == "" {
+		return false
+	}
+	if step.Status != nil && string(step.Status.Status) == "error" {
+		return true
+	}
+	return false
+}
+
+func stepGroupLabel(step *nuonmodels.AppWorkflowStep) string {
+	if step.GroupRetryIdx > 0 {
+		return fmt.Sprintf("%d (retry %d)", step.GroupIdx, step.GroupRetryIdx)
+	}
+	return fmt.Sprintf("%d", step.GroupIdx)
+}
+
+func workflowCanCancel(wf *nuonmodels.AppWorkflow) bool {
+	return !wf.Finished
+}
+
+func workflowCanApprove(wf *nuonmodels.AppWorkflow) bool {
+	return workflowApprovalStep(wf) != nil
+}
+
+func workflowCanApproveAll(wf *nuonmodels.AppWorkflow) bool {
+	for _, s := range wf.Steps {
+		if s.Status != nil && string(s.Status.Status) == "approval-awaiting" {
+			return true
+		}
+	}
+	return false
+}
+
+func workflowCanRetry(wf *nuonmodels.AppWorkflow) bool {
+	return workflowRetryableStep(wf) != nil
+}
+
+func workflowApprovalStep(wf *nuonmodels.AppWorkflow) *nuonmodels.AppWorkflowStep {
+	for _, s := range wf.Steps {
+		if s.Status != nil && string(s.Status.Status) == "approval-awaiting" && s.Approval != nil {
+			return s
+		}
+	}
+	return nil
+}
+
+func workflowRetryableStep(wf *nuonmodels.AppWorkflow) *nuonmodels.AppWorkflowStep {
+	for _, s := range wf.Steps {
+		if s.Status != nil && string(s.Status.Status) == "error" && s.Retryable {
+			return s
+		}
+	}
+	return nil
+}
+
+func expandParams(props DebugWorkflowsPageProps, expanded bool) debugURLParams {
+	p := baseParams(props)
+	p.Expanded = expanded
+	return p
+}
+
+func debugDismissAlertParams(props DebugWorkflowsPageProps) debugURLParams {
+	p := baseParams(props)
+	p.AlertType = ""
+	p.AlertMsg = ""
+	return p
+}
+
+func debugDismissAlertURL(props DebugWorkflowsPageProps) string {
+	return buildDebugURL(debugDismissAlertParams(props))
+}
+
+func debugActionURL(props DebugWorkflowsPageProps, action string) string {
+	base := fmt.Sprintf("%s/installs/%s/debug/workflows/%s/%s", props.BasePath, props.Install.ID, props.SelectedWorkflow.ID, action)
+	if props.CurrentQuery != "" {
+		base += "?" + props.CurrentQuery
+	}
+	return base
+}
+
+func workflowStatus(wf *nuonmodels.AppWorkflow) string {
+	if wf.Status != nil {
+		return string(wf.Status.Status)
+	}
+	return ""
+}
+
+func selectedStepID(props DebugWorkflowsPageProps) string {
+	if props.SelectedStep != nil && !props.SelectedStepIsActive {
+		return props.SelectedStep.ID
+	}
+	return ""
+}
+
+type debugURLParams struct {
+	BasePath   string
+	InstallID  string
+	WorkflowID string
+	Tab        string
+	StepID     string
+	StepTab    string
+	Expanded   bool
+	Partial    string // "panel-content" or "panel" for HTMX partial responses
+	AlertType  string // "error" or "success"
+	AlertMsg   string
+	TargetTab  string // "info" or "json" — target card tab
+	StackTab   string // "info" or "json" — stack setup card tab
+}
+
+func buildDebugURL(p debugURLParams) string {
+	path := fmt.Sprintf("%s/installs/%s/debug/workflows/%s", p.BasePath, p.InstallID, p.WorkflowID)
+	sep := "?"
+	if p.Tab != "" && p.Tab != "info" {
+		path += sep + "tab=" + p.Tab
+		sep = "&"
+	}
+	if p.StepID != "" {
+		path += sep + "step=" + p.StepID
+		sep = "&"
+	}
+	if p.StepTab != "" && p.StepTab != "info" {
+		path += sep + "step_tab=" + p.StepTab
+		sep = "&"
+	}
+	if p.Expanded {
+		path += sep + "expanded=true"
+		sep = "&"
+	}
+	if p.Partial != "" {
+		path += sep + "partial=" + p.Partial
+		sep = "&"
+	}
+	if p.TargetTab != "" && p.TargetTab != "info" {
+		path += sep + "target_tab=" + p.TargetTab
+		sep = "&"
+	}
+	if p.StackTab != "" && p.StackTab != "info" {
+		path += sep + "stack_tab=" + p.StackTab
+		sep = "&"
+	}
+	if p.AlertType != "" && p.AlertMsg != "" {
+		path += sep + "alert_type=" + p.AlertType + "&alert_msg=" + url.QueryEscape(p.AlertMsg)
+	}
+	return path
+}
+
+func truncateID(id string) string {
+	if len(id) > 12 {
+		return id[:12]
+	}
+	return id
+}
+
+func formatTimestamp(ts string) string {
+	if ts == "" {
+		return "—"
+	}
+	t, err := time.Parse(time.RFC3339Nano, ts)
+	if err != nil {
+		t, err = time.Parse(time.RFC3339, ts)
+		if err != nil {
+			return ts
+		}
+	}
+	return t.Format("Jan 2, 2006 3:04 PM")
+}
+
+func formatDuration(ns int64) string {
+	if ns == 0 {
+		return "—"
+	}
+	d := time.Duration(ns)
+	if d < time.Minute {
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	}
+	if d < time.Hour {
+		return fmt.Sprintf("%dm %ds", int(d.Minutes()), int(d.Seconds())%60)
+	}
+	return fmt.Sprintf("%dh %dm", int(d.Hours()), int(d.Minutes())%60)
+}
+
+func debugStatusClasses(status string) string {
+	switch status {
+	case "success", "approved":
+		return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	case "error":
+		return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	case "in-progress", "planning", "applying", "provisioning", "generating", "checking-plan", "retrying", "queued":
+		return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+	case "pending", "awaiting-user-run", "approval-awaiting":
+		return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200"
+	case "cancelled", "discarded", "user-skipped", "auto-skipped":
+		return "bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-700 dark:text-cool-grey-300"
+	default:
+		return "bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-700 dark:text-cool-grey-300"
+	}
+}
+
+type stepGroup struct {
+	Idx   int64
+	Steps []*nuonmodels.AppWorkflowStep
+}
+
+func groupStepsByIdx(steps []*nuonmodels.AppWorkflowStep) []stepGroup {
+	var groups []stepGroup
+	var current *stepGroup
+	for _, s := range steps {
+		if current == nil || s.GroupIdx != current.Idx {
+			groups = append(groups, stepGroup{Idx: s.GroupIdx})
+			current = &groups[len(groups)-1]
+		}
+		current.Steps = append(current.Steps, s)
+		// Update pointer since append may have reallocated
+		groups[len(groups)-1] = *current
+	}
+	return groups
+}
+
+func findActiveStep(steps []*nuonmodels.AppWorkflowStep) *nuonmodels.AppWorkflowStep {
+	for _, s := range steps {
+		if s.Status != nil && (string(s.Status.Status) == "in-progress" || string(s.Status.Status) == "active") {
+			return s
+		}
+	}
+	// Fallback: find last non-completed step
+	for i := len(steps) - 1; i >= 0; i-- {
+		if steps[i].Status != nil && string(steps[i].Status.Status) != "completed" {
+			return steps[i]
+		}
+	}
+	return nil
+}
+
+func mustMarshalJSON(v interface{}) string {
+	b, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return fmt.Sprintf("error: %v", err)
+	}
+	return string(b)
+}

@@ -1,13 +1,10 @@
 package workflows
 
-import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-)
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 
 // WorkflowCardProps defines properties for the WorkflowCard component
 type WorkflowCardProps struct {
-	Workflow     customerui.WorkflowData
+	Workflow     WorkflowData
 	InstallID    string
 	BasePath     string
 	PrimaryColor string

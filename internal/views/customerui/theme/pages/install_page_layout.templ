@@ -14,8 +14,7 @@ type InstallPageProps struct {
 	AppName         string
 	APIDeletedError bool
 	PageTitle       string // Display title for the current tab ("Overview", "Stack", etc.)
-	PageIcon         string // Phosphor icon name for the current tab (e.g. "house-simple")
-	AutoOpenWorkflow bool   // Auto-open the active workflow panel on load
+	PageIcon        string // Phosphor icon name for the current tab (e.g. "house-simple")
 }
 
 // installPageShell renders the shared shell for install detail pages:
@@ -29,13 +28,13 @@ templ installPageShell(props InstallPageProps) {
 				Label: "Manage",
 				Icon:  "ph-bold ph-caret-up-down",
 			}) {
-				<button type="button" onclick="openEditInputsModal()" class="sw-dropdown-item">
+				<button type="button" onclick="document.getElementById('editInputsModal').classList.remove('hidden')" class="sw-dropdown-item">
 					Edit Inputs
 				</button>
-				<button type="button" onclick="confirmReprovision()" class="sw-dropdown-item">
+				<button type="button" onclick="document.getElementById('reprovisionModal').classList.remove('hidden')" class="sw-dropdown-item">
 					Reprovision
 				</button>
-				<button type="button" onclick="confirmDeprovision()" class="sw-dropdown-item-danger button button-danger">
+				<button type="button" onclick="document.getElementById('deprovisionModal').classList.remove('hidden')" class="sw-dropdown-item-danger button button-danger">
 					Deprovision
 				</button>
 			}
@@ -56,244 +55,45 @@ templ installPageShell(props InstallPageProps) {
 
 	@components.SecondaryPanel()
 
+	<!-- Reprovision Confirmation Modal -->
+	@partials.ModalWrapper("reprovisionModal", "max-w-md") {
+		<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2">Reprovision Installation?</h3>
+		<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
+			This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.
+		</p>
+		<div class="flex justify-end space-x-3">
+			<button type="button" onclick="document.getElementById('reprovisionModal').classList.add('hidden')" class="button button-outline btn-theme-outline">
+				Cancel
+			</button>
+			<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/reprovision") }>
+				<button type="submit" class="button button-primary btn-theme-primary">
+					Reprovision
+				</button>
+			</form>
+		</div>
+	}
+
+	<!-- Deprovision Confirmation Modal -->
+	@partials.ModalWrapper("deprovisionModal", "max-w-md") {
+		<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2">Deprovision Installation?</h3>
+		<p class="text-cool-grey-600 dark:text-cool-grey-400 mb-6">
+			Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.
+		</p>
+		<div class="flex justify-end space-x-3">
+			<button type="button" onclick="document.getElementById('deprovisionModal').classList.add('hidden')" class="button button-outline btn-theme-outline">
+				Cancel
+			</button>
+			<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.Install.ID + "/deprovision") }>
+				<button type="submit" class="button button-danger btn-theme-primary" style="background-color: #ef4444; border-color: #dc2626">
+					Deprovision
+				</button>
+			</form>
+		</div>
+	}
+
 	<!-- Edit Inputs Modal -->
 	@partials.EditInputsModalPanel()
 
 	<!-- Access role info modal -->
 	@partials.AccessEnableRoleModal()
-
-	<!-- Config data for JavaScript -->
-	<div
-		id="install-detail-page-config"
-		class="hidden"
-		data-base-path={ props.BasePath }
-		data-install-id={ props.Install.ID }
-	></div>
-	<script>
-		(function() {
-			var configEl = document.getElementById('install-detail-page-config');
-			var basePath = configEl.dataset.basePath;
-			var installID = configEl.dataset.installId;
-
-			window.confirmReprovision = async function() {
-				var confirmed = await showConfirmModal({
-					title: 'Reprovision Installation?',
-					message: 'This will re-run the provisioning workflow for this installation. Existing resources will be updated in place.',
-					variant: 'warning',
-					confirmText: 'Reprovision',
-					cancelText: 'Cancel'
-				});
-				if (!confirmed) { return; }
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/reprovision', { method: 'POST' });
-					if (response.ok) {
-						var overview = document.getElementById('panel-content-overview');
-						if (overview) {
-							htmx.ajax('GET', basePath + '/installs/' + installID + '/panel', {target: overview, swap: 'innerHTML'});
-						} else {
-							setTimeout(function() { window.location.reload(); }, 500);
-						}
-					}
-				} catch (error) {
-					console.error('Reprovision failed:', error);
-				}
-			};
-
-			window.confirmDeprovision = async function() {
-				var confirmed = await showConfirmModal({
-					title: 'Deprovision Installation?',
-					message: 'Are you sure you want to deprovision this installation? This action cannot be undone and will destroy all data associated with this installation.',
-					variant: 'danger',
-					confirmText: 'Deprovision',
-					cancelText: 'Cancel'
-				});
-				if (!confirmed) { return; }
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/', { method: 'DELETE' });
-					if (response.ok) {
-						setTimeout(function() { window.location.reload(); }, 1500);
-					}
-				} catch (error) {
-					console.error('Deprovision failed:', error);
-				}
-			};
-
-			window.openEditInputsModal = async function() {
-				var modal = document.getElementById('editInputsModal');
-				var loading = document.getElementById('editInputsLoading');
-				var form = document.getElementById('editInputsForm');
-				var errorDiv = document.getElementById('editInputsError');
-
-				modal.classList.remove('hidden');
-				loading.classList.remove('hidden');
-				form.classList.add('hidden');
-				errorDiv.classList.add('hidden');
-				document.getElementById('editInputsErrorActions').classList.add('hidden');
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/inputs');
-					if (!response.ok) {
-						var data = await response.json();
-						throw new Error(data.error || 'Failed to fetch inputs');
-					}
-					var data = await response.json();
-					renderEditInputFields(data.input_config, data.inputs);
-					loading.classList.add('hidden');
-					form.classList.remove('hidden');
-				} catch (error) {
-					loading.classList.add('hidden');
-					if (error.message && error.message.includes('404')) {
-						errorDiv.textContent = 'No inputs are configured for this install.';
-					} else {
-						errorDiv.textContent = error.message || 'Failed to load inputs';
-					}
-					errorDiv.classList.remove('hidden');
-					document.getElementById('editInputsErrorActions').classList.remove('hidden');
-				}
-			};
-
-			window.closeEditInputsModal = function() {
-				document.getElementById('editInputsModal').classList.add('hidden');
-				document.getElementById('editInputsForm').reset();
-				document.getElementById('editInputsError').classList.add('hidden');
-				document.getElementById('editInputsErrorActions').classList.add('hidden');
-			};
-
-			function renderEditInputFields(inputConfig, currentInputs) {
-				var container = document.getElementById('editInputsFields');
-				currentInputs = currentInputs || {};
-				if (!inputConfig || !inputConfig.input_groups) {
-					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
-					return;
-				}
-				var html = '';
-				var hasInputs = false;
-				inputConfig.input_groups.forEach(function(group) {
-					var groupInputs = group.app_inputs || group.inputs || [];
-					if (groupInputs && groupInputs.length > 0) {
-						hasInputs = true;
-						html += renderEditInputGroup(group, groupInputs, currentInputs);
-					}
-				});
-				if (!hasInputs) {
-					container.innerHTML = '<p class="text-green-600 dark:text-green-400 text-sm">No additional configuration required<\/p>';
-				} else {
-					container.innerHTML = html;
-				}
-			}
-
-			function renderEditInputGroup(group, inputs, currentInputs) {
-				var html = '<div class="mb-6">';
-				html += '<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200 mb-2">' + (group.display_name || group.name || 'Configuration') + '<\/h5>';
-				if (group.description) {
-					html += '<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-4">' + group.description + '<\/p>';
-				}
-				html += '<div class="space-y-4">';
-				inputs.sort(function(a, b) { return (a.index || 0) - (b.index || 0); });
-				inputs.forEach(function(input) {
-					var currentValue = currentInputs[input.name];
-					html += renderEditSingleInput(input, currentValue);
-				});
-				html += '<\/div><\/div>';
-				return html;
-			}
-
-			function renderEditSingleInput(input, currentValue) {
-				var inputName = input.name;
-				var isRequired = input.required ? ' *' : '';
-				var requiredAttr = input.required ? ' required' : '';
-				var value = (currentValue !== undefined && currentValue !== null && currentValue !== '') ? currentValue : (input.default || '');
-
-				if (input.type === 'bool' || input.default === 'true' || input.default === 'false') {
-					var isChecked = value === 'true';
-					var html = '<div class="flex items-start space-x-3">';
-					html += '<input type="hidden" name="' + inputName + '" value="false" \/>';
-					html += '<input type="checkbox" id="' + input.name + '" name="' + inputName + '" value="true"';
-					if (isChecked) html += ' checked';
-					html += ' class="field-checkbox" \/>';
-					html += '<div class="flex-1">';
-					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					if (input.description) {
-						html += '<p class="field-hint">' + input.description + '<\/p>';
-					}
-					html += '<\/div><\/div>';
-					return html;
-				}
-
-				if (input.type === 'json') {
-					var html = '<div>';
-					html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-					html += '<textarea id="' + input.name + '" name="' + inputName + '" rows="4" placeholder="' + (input.default || '') + '"' + requiredAttr;
-					html += ' class="field-input">';
-					html += value + '<\/textarea>';
-					if (input.description) {
-						html += '<p class="field-hint">' + input.description + '<\/p>';
-					}
-					html += '<\/div>';
-					return html;
-				}
-
-				var inputType = 'text';
-				if (input.type === 'number') {
-					inputType = 'number';
-				} else if (input.sensitive) {
-					inputType = 'password';
-				}
-
-				var html = '<div>';
-				html += '<label for="' + input.name + '" class="field-label">' + (input.display_name || input.name) + isRequired + '<\/label>';
-				html += '<input type="' + inputType + '" id="' + input.name + '" name="' + inputName + '" placeholder="' + (input.default || '') + '" value="' + value + '"' + requiredAttr;
-				if (inputType === 'password') html += ' autocomplete="off"';
-				html += ' class="field-input" \/>';
-				if (input.description) {
-					html += '<p class="field-hint">' + input.description + '<\/p>';
-				}
-				html += '<\/div>';
-				return html;
-			}
-
-			document.getElementById('editInputsForm').addEventListener('submit', async function(e) {
-				e.preventDefault();
-				var errorDiv = document.getElementById('editInputsError');
-				errorDiv.classList.add('hidden');
-
-				var inputs = {};
-				var formInputs = document.querySelectorAll('#editInputsFields input');
-				formInputs.forEach(function(input) {
-					if (!input.name) return;
-					if (input.type === 'checkbox') {
-						if (input.checked) { inputs[input.name] = 'true'; }
-					} else if (input.type === 'hidden') {
-						if (inputs[input.name] === undefined) { inputs[input.name] = input.value; }
-					} else {
-						if (input.value) { inputs[input.name] = input.value; }
-					}
-				});
-
-				var textareas = document.querySelectorAll('#editInputsFields textarea');
-				textareas.forEach(function(textarea) {
-					if (textarea.name && textarea.value) { inputs[textarea.name] = textarea.value; }
-				});
-
-				try {
-					var response = await fetch(basePath + '/installs/' + installID + '/inputs', {
-						method: 'PUT',
-						headers: { 'Content-Type': 'application/json' },
-						body: JSON.stringify({ inputs: inputs })
-					});
-					var data = await response.json();
-					if (response.ok) {
-						closeEditInputsModal();
-						setTimeout(function() { window.location.reload(); }, 1500);
-					} else {
-						errorDiv.textContent = data.error || 'Failed to update inputs';
-						errorDiv.classList.remove('hidden');
-					}
-				} catch (error) {
-					errorDiv.textContent = error.message || 'Network error. Please try again.';
-					errorDiv.classList.remove('hidden');
-				}
-			});
-		})();
-	</script>
 }

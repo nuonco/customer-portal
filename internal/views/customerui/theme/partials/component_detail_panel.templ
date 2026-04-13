@@ -80,18 +80,18 @@ templ TerraformComponentDetailPanel(props TerraformComponentDetailProps) {
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Repository", props.Info.Repo)
-					@infoRow("Directory", props.Info.Directory)
-					@infoRow("Git Ref", props.Info.Branch)
+					<div class="space-y-3">
+						@infoRow("Repository", props.Info.Repo)
+						@infoRow("Directory", props.Info.Directory)
+						@infoRow("Git Ref", props.Info.Branch)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
@@ -99,13 +99,25 @@ templ TerraformComponentDetailPanel(props TerraformComponentDetailProps) {
 			{Label: "Variables", Target: "variables"},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="resources">
-			@components.ResourceList(components.ResourceListProps{Resources: props.Resources})
+			if len(props.Component.InstallDeploys) > 0 {
+				@components.ResourceList(components.ResourceListProps{Resources: props.Resources})
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No resources", Icon: "ph-cube", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="variables">
-			@componentKeyValuePane(props.Variables, "ph-code", "No variables", "No variables are defined for this component.")
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentKeyValuePane(props.Variables, "ph-code", "No variables", "No variables are defined for this component.")
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No variables", Icon: "ph-code", Compact: true})
+			}
 		</div>
 	</div>
 }
@@ -117,19 +129,19 @@ templ HelmComponentDetailPanel(props HelmComponentDetailProps) {
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Chart", props.ChartName)
-					@infoRow("Namespace", props.Namespace)
-					@infoRow("Repository", props.Info.Repo)
-					@infoRow("Git Ref", props.Info.Branch)
+					<div class="space-y-3">
+						@infoRow("Chart", props.ChartName)
+						@infoRow("Namespace", props.Namespace)
+						@infoRow("Repository", props.Info.Repo)
+						@infoRow("Git Ref", props.Info.Branch)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
@@ -137,24 +149,36 @@ templ HelmComponentDetailPanel(props HelmComponentDetailProps) {
 			{Label: "Values Files", Target: "valuesfiles"},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="values">
-			@componentKeyValuePane(props.Values, "ph-sliders", "No values", "No values are defined for this component.")
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentKeyValuePane(props.Values, "ph-sliders", "No values", "No values are defined for this component.")
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No values", Icon: "ph-sliders", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="valuesfiles">
-			if len(props.ValuesFiles) > 0 {
-				<div class="space-y-4">
-					for _, f := range props.ValuesFiles {
-						@components.CodeBlock(f, "yaml")
-					}
-				</div>
+			if len(props.Component.InstallDeploys) > 0 {
+				if len(props.ValuesFiles) > 0 {
+					<div class="space-y-4">
+						for _, f := range props.ValuesFiles {
+							@components.CodeBlock(f, "yaml")
+						}
+					</div>
+				} else {
+					<div class="text-center py-12">
+						<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+						<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No values files</h3>
+						<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No values files are defined for this component.</p>
+					</div>
+				}
 			} else {
-				<div class="text-center py-12">
-					<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-					<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No values files</h3>
-					<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No values files are defined for this component.</p>
-				</div>
+				@components.EmptyState(components.EmptyStateProps{Title: "No values files", Icon: "ph-file-code", Compact: true})
 			}
 		</div>
 	</div>
@@ -167,28 +191,36 @@ templ DockerComponentDetailPanel(props DockerComponentDetailProps) {
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Repository", props.Info.Repo)
-					@infoRow("Directory", props.Info.Directory)
-					@infoRow("Git Ref", props.Info.Branch)
+					<div class="space-y-3">
+						@infoRow("Repository", props.Info.Repo)
+						@infoRow("Directory", props.Info.Directory)
+						@infoRow("Git Ref", props.Info.Branch)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
 			{Label: "Env Vars", Target: "envvars"},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="envvars">
-			@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No env vars", Icon: "ph-terminal-window", Compact: true})
+			}
 		</div>
 	</div>
 }
@@ -200,23 +232,27 @@ templ ExternalImageComponentDetailPanel(props ExternalImageComponentDetailProps)
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Image", props.ImageURL)
-					@infoRow("Tag", props.ImageTag)
+					<div class="space-y-3">
+						@infoRow("Image", props.ImageURL)
+						@infoRow("Tag", props.ImageTag)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 	</div>
 }
@@ -228,27 +264,35 @@ templ JobComponentDetailPanel(props JobComponentDetailProps) {
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Image", props.ImageURL)
-					@infoRow("Tag", props.ImageTag)
+					<div class="space-y-3">
+						@infoRow("Image", props.ImageURL)
+						@infoRow("Tag", props.ImageTag)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
 			{Label: "Env Vars", Target: "envvars"},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="envvars">
-			@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentKeyValuePane(props.EnvVars, "ph-terminal-window", "No env vars", "No environment variables are defined for this component.")
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No env vars", Icon: "ph-terminal-window", Compact: true})
+			}
 		</div>
 	</div>
 }
@@ -260,35 +304,43 @@ templ KubernetesComponentDetailPanel(props KubernetesComponentDetailProps) {
 			Header:      stackCardHeader("Active deploy", componentStatus(props.Component)),
 			AccentColor: statusAccentColor(componentStatus(props.Component)),
 		}) {
-			<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-				if len(props.Component.InstallDeploys) > 0 {
+			if len(props.Component.InstallDeploys) > 0 {
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
 					@infoRow("Created", FormatAPITime(props.Component.InstallDeploys[0].CreatedAt))
-				} else {
-					@infoRow("Created", FormatAPITime(props.Component.CreatedAt))
-				}
-				<div class="space-y-3">
-					@infoRow("Repository", props.Info.Repo)
-					@infoRow("Directory", props.Info.Directory)
-					@infoRow("Git Ref", props.Info.Branch)
+					<div class="space-y-3">
+						@infoRow("Repository", props.Info.Repo)
+						@infoRow("Directory", props.Info.Directory)
+						@infoRow("Git Ref", props.Info.Branch)
+					</div>
 				</div>
-			</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No active deploy", Icon: "ph-rocket-launch", Compact: true})
+			}
 		}
 		@componentDetailTabBar([]componentDetailTab{
 			{Label: "Outputs", Target: "outputs", Active: true},
 			{Label: "Manifest", Target: "manifest"},
 		})
 		<div class="component-sub-pane" data-tab="outputs">
-			@componentOutputsPane(props.Outputs)
+			if len(props.Component.InstallDeploys) > 0 {
+				@componentOutputsPane(props.Outputs)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No outputs", Icon: "ph-code-block", Compact: true})
+			}
 		</div>
 		<div class="component-sub-pane hidden" data-tab="manifest">
-			if props.Manifest != "" {
-				@components.CodeBlock(props.Manifest, "yaml")
+			if len(props.Component.InstallDeploys) > 0 {
+				if props.Manifest != "" {
+					@components.CodeBlock(props.Manifest, "yaml")
+				} else {
+					<div class="text-center py-12">
+						<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
+						<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No manifest</h3>
+						<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No manifest is defined for this component.</p>
+					</div>
+				}
 			} else {
-				<div class="text-center py-12">
-					<i class="ph-bold ph-file-code text-[48px] text-cool-grey-400 dark:text-cool-grey-600 mx-auto block"></i>
-					<h3 class="mt-4 text-lg font-medium text-cool-grey-900 dark:text-white">No manifest</h3>
-					<p class="mt-2 text-sm text-cool-grey-600 dark:text-cool-grey-400">No manifest is defined for this component.</p>
-				</div>
+				@components.EmptyState(components.EmptyStateProps{Title: "No manifest", Icon: "ph-file-code", Compact: true})
 			}
 		</div>
 	</div>

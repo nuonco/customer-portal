@@ -7,88 +7,21 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows/steps"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
-// ProvisionPhase represents a logical grouping of workflow steps
-type ProvisionPhase struct {
-	Name           string
-	Status         string // "not_started", "in_progress", "completed", "failed"
-	Steps          []PhaseStep
-	ActiveStepName string // name of in-progress step within this phase
-	StepProgress   string // e.g. "Step 2 of 3"
-}
+// Type aliases so existing callers (e.g. handlers using partials.WorkflowDataPanel) keep compiling.
+type WorkflowDataPanel = workflows.WorkflowDataPanel
+type ProvisionPhase = workflows.ProvisionPhase
+type PhaseStep = workflows.PhaseStep
+type StackSetupData = workflows.StackSetupData
+type PolicyViolation = workflows.PolicyViolation
+type ApprovalStepDataPanel = workflows.ApprovalStepDataPanel
 
-// PhaseStep represents a single step within a provision phase
-type PhaseStep struct {
-	Name      string
-	Status    string
-	ID        string // step ID for retry endpoint
-	Retryable bool
-}
-
-// WorkflowDataPanel represents workflow data for the panel (avoids import cycle)
-type WorkflowDataPanel struct {
-	ID                       string
-	Name                     string
-	Status                   string
-	StatusClass              string
-	CreatedAt                time.Time
-	FinishedAt               time.Time
-	CanApprove               bool
-	CanApproveAll            bool
-	CanCancel                bool
-	HasApprovalSteps         bool
-	ApproveDisabledReason    string
-	ApproveAllDisabledReason string
-	CancelDisabledReason     string
-	ApprovalStep             *ApprovalStepDataPanel
-	CurrentStepName          string // Name of the currently executing step
-	CurrentStepStatus        string // Status of the current step (in-progress, approval-awaiting)
-	CurrentStepType          string // Type of current step: "pending", "in-progress", "approval-awaiting", or "initializing"
-	CurrentStepNumber        int    // 1-indexed position of current step (1, 2, 3...)
-	TotalSteps               int    // Total number of steps in workflow
-	FailedStepID             string // ID of the failed step (for retry)
-	FailedStepName           string // Name of the failed step (for display)
-	FailedStepRetryable      bool   // Whether the failed step can be retried
-	CurrentStepRole          string              // IAM role used by the current step target
-	IsReprovision            bool                // Whether this is a reprovision workflow
-	DenyViolations           []PolicyViolation   // Policy deny violations for current step
-	WarnViolations           []PolicyViolation   // Policy warn violations for current step
-	HasPolicyData            bool                // Whether the current step has any policy evaluation data
-	DisablePolling           bool                // When true, disables HTMX polling (e.g. secondary panel views)
-}
-
-// PolicyViolation represents a single policy evaluation violation.
-type PolicyViolation struct {
-	PolicyID string
-	Message  string
-	Severity string // "deny" or "warn"
-}
-
-// ApprovalStepDataPanel for workflow approval steps
-type ApprovalStepDataPanel struct {
-	StepID     string
-	ApprovalID string
-}
-
-func policyPluralize(count int, singular, plural string) string {
-	if count == 1 {
-		return singular
-	}
-	return plural
-}
-
-func policyViolationMsg(v PolicyViolation) string {
-	if v.Message != "" {
-		return v.Message
-	}
-	return "Policy check failed"
-}
-
-// platformFromRegion determines cloud platform from a region string
 func isTerminalWorkflowStatus(status string) bool {
-	return status == "completed" || status == "success" || status == "error" || status == "cancelled"
+	return workflows.IsTerminalWorkflowStatus(status)
 }
 
 func platformFromRegion(region string) string {
@@ -114,14 +47,6 @@ func platformLabel(platform string) string {
 	default:
 		return "Cloud"
 	}
-}
-
-// StackSetupData carries platform-specific data for the "await install stack" step.
-type StackSetupData struct {
-	Platform           string // "aws", "gcp", etc.
-	CloudFormationLink string // AWS only
-	TfvarsContent      string // GCP only
-	NuonInstallID      string // GCP only (for backend snippet)
 }
 
 // ComponentInfo holds display data for a component card on the overview.
@@ -194,7 +119,7 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 			</div>
 		}
 		if !props.APIDeletedError {
-			@overviewSummaryCards(props)
+			@OverviewSummaryCards(props)
 		}
 		<!-- Overview Tabs -->
 		<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600 mt-4 mb-4" id="overview-tabs">
@@ -224,24 +149,14 @@ templ InstallDetailPanel(props InstallDetailPanelProps) {
 		</div>
 		<!-- Configuration tab -->
 		<div id="overview-tab-configuration" class="hidden">
-			@overviewConfigurationTab(props.InputFields)
+			@OverviewConfigurationTab(props.InputFields)
 		</div>
 	</div>
-	<!-- Config data for JavaScript -->
-	<div
-		id="install-detail-config"
-		class="hidden"
-		data-base-path={ props.BasePath }
-		data-install-id={ props.Install.ID }
-		data-install-name={ props.Install.Name }
-		data-nuon-install-id={ props.Install.NuonInstallID }
-	></div>
-	<!-- JavaScript for actions -->
 	@installDetailPanelScripts()
 }
 
-// overviewConfigurationTab renders the Configuration tab content showing current input values.
-templ overviewConfigurationTab(fields []InputFieldRow) {
+// OverviewConfigurationTab renders the Configuration tab content showing current input values.
+templ OverviewConfigurationTab(fields []InputFieldRow) {
 	if len(fields) == 0 {
 		@components.EmptyState(components.EmptyStateProps{
 			Title:   "No inputs",
@@ -433,7 +348,8 @@ templ overviewInfoRowLink(label, value, href string) {
 	</div>
 }
 
-templ overviewSummaryCards(props InstallDetailPanelProps) {
+// OverviewSummaryCards renders the stack, sandbox, and components summary cards.
+templ OverviewSummaryCards(props InstallDetailPanelProps) {
 	<div class="space-y-4">
 		<!-- Stack + Sandbox row -->
 		<div class="grid grid-cols-2 gap-4">
@@ -547,221 +463,29 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		if workflow != nil {
 			data-workflow-status={ workflow.Status }
 		}
+		if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
+			hx-get={ basePath + "/installs/" + installID + "/panel/workflow/" + workflow.ID }
+			hx-trigger="every 5s"
+			hx-select="#active-provision-banner"
+			hx-target="this"
+			hx-ext="morph"
+			hx-swap="morph:outerHTML"
+		}
 	>
 		<div class="flex flex-col @5xl:flex-row gap-4">
 		<div class="@5xl:w-1/2">
 		<div id="step-detail-card">
-		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step) -->
+		<!-- Status card: exactly one renders (failed > CF > GCP > initializing > current step > terminal) -->
 		if workflow != nil && workflow.Status == "error" && workflow.FailedStepID != "" {
-			<div class="card-base !p-0 mb-3" style="border-top: 2px solid #ef4444">
-				<!-- Header -->
-				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					<h4 class="text-sm font-medium text-red-700 dark:text-red-400">Failed Step</h4>
-				</div>
-				<!-- Body -->
-				<div class="px-4 py-3">
-					<p class="text-xs text-[var(--theme-text-muted)]">Step name</p>
-					<p class="text-sm font-medium mt-1">{ workflow.FailedStepName }</p>
-				</div>
-				<!-- Footer -->
-				<div class="flex items-center justify-between px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-					if workflow.FailedStepRetryable {
-						<p class="text-xs text-[var(--theme-text-muted)]">You can retry this step.</p>
-						<button
-							type="button"
-							class="button button-danger inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5"
-							style="background-color: #ef4444; border: 1px solid #dc2626"
-							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/step/" + workflow.FailedStepID + "/retry" }
-							onclick="retryFailedStep(this)"
-						>
-							Retry Step
-							<i class="ph-bold ph-arrow-clockwise text-base"></i>
-						</button>
-					} else {
-						<p class="text-xs text-red-600 dark:text-red-300">This step cannot be retried. Please reprovision the install.</p>
-						<button
-							type="button"
-							class="button button-danger inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5"
-							style="background-color: #ef4444; border: 1px solid #dc2626"
-							onclick="confirmReprovision()"
-						>
-							Reprovision
-							<i class="ph-bold ph-arrow-clockwise text-base"></i>
-						</button>
-					}
-				</div>
-			</div>
+			@steps.FailedStep(workflow, installID, basePath)
 		} else if stackSetup.CloudFormationLink != "" {
-			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
-				<!-- Header -->
-				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					<h4 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h4>
-				</div>
-				<!-- Body -->
-				<div class="px-4 py-3">
-					<p class="text-xs text-[var(--theme-text-muted)]">Status</p>
-					<p class="text-sm font-medium mt-1">Complete setup in AWS Console</p>
-				</div>
-				<!-- Footer -->
-				<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-					if workflow != nil && workflow.CanCancel {
-						<button
-							type="button"
-							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
-							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
-							data-workflow-name={ workflow.Name }
-						>
-							Cancel
-						</button>
-					}
-					<a
-						href={ templ.SafeURL(stackSetup.CloudFormationLink) }
-						target="_blank"
-						rel="noopener noreferrer"
-						class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
-					>
-						Open in AWS
-						<i class="ph-bold ph-arrow-square-out text-base"></i>
-					</a>
-				</div>
-			</div>
+			@steps.StackAWS(stackSetup, workflow, installID, basePath)
 		} else if stackSetup.Platform == "gcp" {
-			@gcpStackSetup(stackSetup, workflow, installID, basePath)
+			@steps.StackGCP(stackSetup, workflow, installID, basePath)
 		} else if workflow != nil && workflow.CurrentStepType == "initializing" {
-			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
-				<div class="flex items-center gap-3 px-4 py-3">
-					<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
-					<div>
-						<h4 class="text-sm font-medium">{ workflow.CurrentStepName }</h4>
-						<p class="text-xs text-[var(--theme-text-muted)] mt-0.5">Your install is being set up. This may take a moment.</p>
-					</div>
-				</div>
-			</div>
+			@steps.Initializing(workflow, primaryColor)
 		} else if workflow != nil && (workflow.HasApprovalSteps || workflow.CanCancel) {
-			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
-				<!-- Header -->
-				<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					<div class="flex items-center gap-2">
-						<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ workflow.CurrentStepName }</h4>
-						if workflow.CurrentStepRole != "" {
-							<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400">
-								<i class="ph-bold ph-shield-check text-xs"></i>
-								{ workflow.CurrentStepRole }
-							</span>
-						}
-					</div>
-					if workflow.CurrentStepType == "approval-awaiting" {
-						<span class="badge-warning text-xs px-2 py-0.5 rounded-full">Awaiting Approval</span>
-					} else if workflow.CurrentStepType == "in-progress" {
-						<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-							<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
-							In Progress
-						</span>
-					} else if workflow.CurrentStepType == "error" {
-						<span class="badge-error text-xs px-2 py-0.5 rounded-full">Failed</span>
-					} else {
-						<span class="badge-neutral text-xs px-2 py-0.5 rounded-full">Pending</span>
-					}
-				</div>
-				<!-- Body -->
-				<div class="px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-					if workflow.CurrentStepType == "approval-awaiting" {
-						<p class="text-sm mt-1">This step requires your approval to continue.</p>
-					} else if workflow.CurrentStepType == "in-progress" {
-						<p class="text-sm mt-1">This step is currently running.</p>
-					} else {
-						<p class="text-sm mt-1">Waiting to start.</p>
-					}
-				</div>
-				<!-- Policy Reports -->
-				if workflow.HasPolicyData {
-					<div style="border-bottom: 1px solid var(--theme-border-subtle)">
-						<div class="flex items-center justify-between px-4 py-3">
-							<span class="text-sm font-medium" style="color: var(--theme-text)">Policy Reports</span>
-							<div class="flex items-center gap-2">
-								if len(workflow.DenyViolations) > 0 {
-									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
-										<i class="ph-bold ph-x-circle text-xs"></i>
-										{ fmt.Sprintf("%d", len(workflow.DenyViolations)) } { policyPluralize(len(workflow.DenyViolations), "Deny", "Denies") }
-									</span>
-								}
-								if len(workflow.WarnViolations) > 0 {
-									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400">
-										<i class="ph-bold ph-warning text-xs"></i>
-										{ fmt.Sprintf("%d", len(workflow.WarnViolations)) } { policyPluralize(len(workflow.WarnViolations), "Warning", "Warnings") }
-									</span>
-								}
-								if len(workflow.DenyViolations) == 0 && len(workflow.WarnViolations) == 0 {
-									<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-										<i class="ph-bold ph-check-circle text-xs"></i>
-										Passed
-									</span>
-								}
-							</div>
-						</div>
-						if len(workflow.DenyViolations) > 0 {
-							<details class="group policy-eval-details" data-policy-section="deny" style="border-top: 1px solid var(--theme-border-subtle)">
-								<summary class="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-									<i class="ph-bold ph-caret-right text-xs transition-transform group-open:rotate-90" style="color: var(--theme-text-muted)"></i>
-									<i class="ph-bold ph-x-circle text-sm text-red-600 dark:text-red-500"></i>
-									<span class="text-sm font-medium" style="color: var(--theme-text)">
-										{ fmt.Sprintf("%d", len(workflow.DenyViolations)) } Policy { policyPluralize(len(workflow.DenyViolations), "Violation", "Violations") }
-									</span>
-								</summary>
-								<ul class="px-4 pb-3 space-y-1.5">
-									for _, v := range workflow.DenyViolations {
-										<li class="flex items-start gap-2 text-red-700 dark:text-red-400">
-											<i class="ph-bold ph-caret-right text-xs mt-1 shrink-0"></i>
-											<span class="text-xs">{ policyViolationMsg(v) }</span>
-										</li>
-									}
-								</ul>
-							</details>
-						}
-						if len(workflow.WarnViolations) > 0 {
-							<details class="group policy-eval-details" data-policy-section="warn" style="border-top: 1px solid var(--theme-border-subtle)">
-								<summary class="flex items-center gap-2 px-4 py-2.5 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
-									<i class="ph-bold ph-caret-right text-xs transition-transform group-open:rotate-90" style="color: var(--theme-text-muted)"></i>
-									<i class="ph-bold ph-warning text-sm text-orange-600 dark:text-orange-500"></i>
-									<span class="text-sm font-medium" style="color: var(--theme-text)">
-										{ fmt.Sprintf("%d", len(workflow.WarnViolations)) } Policy { policyPluralize(len(workflow.WarnViolations), "Warning", "Warnings") }
-									</span>
-								</summary>
-								<ul class="px-4 pb-3 space-y-1.5">
-									for _, v := range workflow.WarnViolations {
-										<li class="flex items-start gap-2 text-orange-700 dark:text-orange-400">
-											<i class="ph-bold ph-caret-right text-xs mt-1 shrink-0"></i>
-											<span class="text-xs">{ policyViolationMsg(v) }</span>
-										</li>
-									}
-								</ul>
-							</details>
-						}
-					</div>
-				}
-				<!-- Footer -->
-				<div class="flex items-center justify-end gap-2 px-4 py-3">
-					if workflow.HasApprovalSteps && workflow.CanApproveAll {
-						<button
-							type="button"
-							class="button button-primary workflow-approve-all-btn btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5"
-							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-						>
-							Approve
-						</button>
-					}
-					if workflow.CanCancel {
-						<button
-							type="button"
-							class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
-							data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
-							data-workflow-name={ workflow.Name }
-						>
-							Cancel
-						</button>
-					}
-				</div>
-			</div>
+			@steps.CurrentStep(workflow, installID, basePath, primaryColor)
 		} else if workflow != nil && isTerminalWorkflowStatus(workflow.Status) {
 			<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
 				<div class="flex items-center justify-between px-4 py-3">
@@ -785,14 +509,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		<div
 			id="provision-phases"
 			class="space-y-2 provision-accordion"
-			if workflow != nil && !workflow.DisablePolling && !isTerminalWorkflowStatus(workflow.Status) {
-				hx-get={ basePath + "/installs/" + installID + "/panel/workflow/" + workflow.ID }
-				hx-trigger="every 5s"
-				hx-select="#provision-phases"
-				hx-target="this"
-				hx-ext="morph"
-				hx-swap="morph:outerHTML"
-			}
 		>
 			for i, phase := range phases {
 				@provisionPhaseAccordion(phase, i+1) {
@@ -945,83 +661,6 @@ templ ProvisionAccordion(phases []ProvisionPhase, workflow *WorkflowDataPanel, s
 		})();
 		</script>
 	</div>
-}
-
-// gcpStackSetup renders the 4-step GCP install stack setup guide.
-templ gcpStackSetup(stackSetup StackSetupData, workflow *WorkflowDataPanel, installID string, basePath string) {
-	<div class="card-base !p-0 mb-3" style="border-top: 2px solid var(--theme-primary)">
-		<!-- Header -->
-		<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
-			<h4 class="text-sm font-medium" style="color: var(--theme-primary)">GCP Stack Setup</h4>
-			if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
-				<button
-					type="button"
-					class="button button-primary workflow-approve-all-btn btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5"
-					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-				>
-					Approve
-				</button>
-			}
-		</div>
-		<!-- Body: 4-step guide -->
-		<div class="px-4 py-3 space-y-4">
-			<!-- Step 1: Clone -->
-			<div>
-				<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
-				@components.CodeBlock("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp", "bash")
-			</div>
-			<!-- Step 2: Configure remote state -->
-			<div>
-				<p class="text-sm font-medium mb-1">2. Configure remote state (recommended)</p>
-				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Create a <code class="text-xs">backend.tf</code> file to store Terraform state in GCS</p>
-				@components.CodeBlock(gcpBackendSnippet(stackSetup.NuonInstallID), "hcl")
-			</div>
-			<!-- Step 3: Save install configuration -->
-			if stackSetup.TfvarsContent != "" {
-				<div>
-					<p class="text-sm font-medium mb-1">3. Save the install configuration</p>
-					<p class="text-xs text-[var(--theme-text-muted)] mb-2">Save this as <code class="text-xs">install.tfvars</code></p>
-					@components.CodeBlock(stackSetup.TfvarsContent, "hcl")
-				</div>
-			}
-			<!-- Step 4: Apply with Terraform -->
-			<div>
-				<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
-				<p class="text-xs text-[var(--theme-text-muted)] mb-2">Initialize and apply the Terraform configuration.</p>
-				@components.CodeBlock(gcpApplyCmd(), "bash")
-			</div>
-		</div>
-		<!-- Footer -->
-		if workflow != nil && workflow.CanCancel {
-			<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-				<button
-					type="button"
-					class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
-					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
-					data-workflow-name={ workflow.Name }
-				>
-					Cancel
-				</button>
-			</div>
-		}
-	</div>
-}
-
-func gcpBackendSnippet(installID string) string {
-	return fmt.Sprintf(`terraform {
-  backend "gcs" {
-    bucket = "<your-state-bucket>"
-    prefix = "nuon/%s"
-  }
-}`, installID)
-}
-
-func gcpApplyCmd() string {
-	return `terraform init && terraform apply -var-file=install.tfvars`
-}
-
-script copyToClipboard(text string) {
-	navigator.clipboard.writeText(text);
 }
 
 // provisionPhaseAccordion renders a single phase as a details/summary accordion
@@ -1280,124 +919,6 @@ templ workflowCardPanel(workflow WorkflowDataPanel, installID, basePath, primary
 
 templ installDetailPanelScripts() {
 	<script>
-		(function() {
-			// Get config from data attributes
-			var configEl = document.getElementById('install-detail-config');
-			var basePath = configEl.dataset.basePath;
-			var installID = configEl.dataset.installId;
-			var installName = configEl.dataset.installName;
-			var nuonInstallID = configEl.dataset.nuonInstallId;
-
-			// Set the install ID in the panel header
-			var installIdEl = document.getElementById('panel-install-id');
-			if (installIdEl && nuonInstallID) {
-				installIdEl.textContent = nuonInstallID;
-			}
-
-			// Retry failed workflow step
-			window.retryFailedStep = async function(btn) {
-				var endpoint = btn.getAttribute('data-endpoint');
-				btn.disabled = true;
-				btn.textContent = 'Retrying...';
-				try {
-					var response = await fetch(endpoint, { method: 'POST' });
-					if (!response.ok) {
-						btn.disabled = false;
-						btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
-					}
-				} catch (error) {
-					console.error('Retry failed:', error);
-					btn.disabled = false;
-					btn.innerHTML = 'Retry Step <i class="ph-bold ph-arrow-clockwise text-base"></i>';
-				}
-			};
-
-			// Workflow action modal - dynamically sets HTMX attributes on modal's Confirm button
-			window.showWorkflowActionModal = function(options) {
-				var confirmBtn = document.getElementById('confirm-ok');
-				var cancelBtn = document.getElementById('confirm-cancel');
-				var modal = document.getElementById('confirm-modal');
-
-				// Set modal content
-				document.getElementById('confirm-title').textContent = options.title || 'Confirm Action';
-				document.getElementById('confirm-message').textContent = options.message || 'Are you sure?';
-				confirmBtn.textContent = options.confirmText || 'Confirm';
-				cancelBtn.textContent = options.cancelText || 'Cancel';
-
-				// Set HTMX attributes on the Confirm button
-				confirmBtn.setAttribute('hx-post', options.endpoint);
-				confirmBtn.setAttribute('hx-target', options.target || '#workflow-status-display');
-				confirmBtn.setAttribute('hx-swap', options.swap || 'innerHTML');
-
-				// Initialize HTMX on the button (processes the new attributes)
-				htmx.process(confirmBtn);
-
-				// Show modal
-				modal.classList.remove('hidden');
-
-				// Cancel button just closes modal
-				cancelBtn.onclick = function() {
-					modal.classList.add('hidden');
-					// Clean up HTMX attributes to prevent accidental reuse
-					confirmBtn.removeAttribute('hx-post');
-					confirmBtn.removeAttribute('hx-target');
-					confirmBtn.removeAttribute('hx-swap');
-				};
-
-				// Also handle modal close via backdrop or ESC key
-				modal.onclick = function(e) {
-					if (e.target === modal) {
-						cancelBtn.click();
-					}
-				};
-			};
-
-			// Handle HTMX response - close modal after successful request
-			document.body.addEventListener('htmx:afterRequest', function(evt) {
-				// Close modal if the request came from the confirm button
-				if (evt.detail.elt.id === 'confirm-ok') {
-					var modal = document.getElementById('confirm-modal');
-					modal.classList.add('hidden');
-
-					// Clean up HTMX attributes
-					evt.detail.elt.removeAttribute('hx-post');
-					evt.detail.elt.removeAttribute('hx-target');
-					evt.detail.elt.removeAttribute('hx-swap');
-				}
-			});
-
-			// Attach event listeners to workflow action buttons using event delegation
-			document.body.addEventListener('click', function(e) {
-				// Handle Approve button — no confirmation needed
-				if (e.target.classList.contains('workflow-approve-all-btn')) {
-					var btn = e.target;
-					var endpoint = btn.getAttribute('data-endpoint');
-					btn.setAttribute('aria-disabled', 'true');
-					btn.style.pointerEvents = 'none';
-					btn.style.opacity = '0.5';
-					btn.textContent = 'Approving...';
-					fetch(endpoint, { method: 'POST' }).catch(function(err) {
-						console.error('Approve failed:', err);
-					});
-				}
-				// Handle Cancel button
-				else if (e.target.classList.contains('workflow-cancel-btn')) {
-					var endpoint = e.target.getAttribute('data-endpoint');
-					var wfName = e.target.getAttribute('data-workflow-name') || 'Workflow';
-					showWorkflowActionModal({
-						endpoint: endpoint,
-						target: '#workflow-status-display',
-						swap: 'innerHTML',
-						title: 'Cancel ' + wfName + '?',
-						message: 'Are you sure you want to cancel this ' + wfName.toLowerCase() + '? This may leave your application in an incomplete state.',
-						confirmText: 'Cancel ' + wfName,
-						cancelText: 'Keep Running'
-					});
-				}
-			});
-
-		})();
-
 		// Handle HTMX authentication errors
 		document.body.addEventListener('auth-error', function(event) {
 			console.warn('Authentication expired during HTMX polling, redirecting to login...');
@@ -1405,70 +926,7 @@ templ installDetailPanelScripts() {
 			window.location.href = '/login?redirect=' + encodeURIComponent(currentPath);
 		});
 
-		// Open workflow detail in secondary panel (used by Updates tab on overview page)
-		window.openWorkflowPanel = function(workflowID, workflowName) {
-			var panel = document.getElementById('secondary-panel');
-			var title = document.getElementById('secondary-panel-title');
-			var content = document.getElementById('secondary-panel-content');
-			if (!panel || !title || !content) return;
-			title.textContent = workflowName || 'Workflow';
-			content.innerHTML = `
-				<div class="space-y-4">
-					<div class="card-base p-4 space-y-3">
-						<div class="shimmer h-4 w-1/3"></div>
-						<div class="shimmer h-4 w-2/3"></div>
-						<div class="shimmer h-4 w-1/2"></div>
-					</div>
-					<div class="space-y-2">
-						<div class="shimmer h-8 w-full"></div>
-						<div class="pl-4 space-y-2 py-1">
-							<div class="shimmer h-4 w-3/4"></div>
-							<div class="shimmer h-4 w-1/2"></div>
-							<div class="shimmer h-4 w-2/3"></div>
-						</div>
-						<div class="shimmer h-8 w-full"></div>
-						<div class="shimmer h-8 w-full"></div>
-					</div>
-				</div>`;
-			panel.classList.add('open');
-			var overlay = document.getElementById('secondary-panel-overlay');
-			if (overlay) overlay.classList.add('open');
-			var configEl = document.getElementById('install-detail-config');
-			var bp = configEl ? configEl.dataset.basePath : '';
-			var iid = configEl ? configEl.dataset.installId : '';
-			fetch(bp + '/installs/' + iid + '/panel/workflow/' + workflowID)
-				.then(function(resp) { return resp.text(); })
-				.then(function(html) {
-					content.innerHTML = html;
-					var scripts = content.querySelectorAll('script');
-					scripts.forEach(function(s) {
-						var ns = document.createElement('script');
-						ns.textContent = s.textContent;
-						s.parentNode.replaceChild(ns, s);
-					});
-					if (typeof htmx !== 'undefined') {
-						htmx.process(content);
-					}
-					var firstPhase = content.querySelector('details.provision-phase');
-					if (firstPhase) {
-						firstPhase.setAttribute('open', '');
-					}
-					// Auto-load first step only if the inline step-detail-card is empty
-					// (e.g. CF link card or failed step card already rendered server-side)
-					var stepCard = content.querySelector('#step-detail-card');
-					if (!stepCard || !stepCard.children.length) {
-						var firstStep = content.querySelector('[data-step-url]');
-						if (firstStep && typeof loadStepDetail === 'function') {
-							loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
-						}
-					}
-				})
-				.catch(function() {
-					content.innerHTML = '<p class="text-sm text-red-500">Failed to load workflow details.</p>';
-				});
-		};
-
-		// Optional: Log HTMX errors for debugging
+		// Log HTMX errors for debugging
 		document.body.addEventListener('htmx:responseError', function(event) {
 			console.error('HTMX request failed:', {
 				url: event.detail.pathInfo.requestPath,
@@ -1476,16 +934,6 @@ templ installDetailPanelScripts() {
 				statusText: event.detail.xhr.statusText
 			});
 		});
-
-		// Auto-open the first workflow panel when redirected from install creation
-		(function() {
-			var container = document.getElementById('panel-content-overview');
-			if (!container || container.getAttribute('data-auto-open-workflow') !== 'true') return;
-			container.removeAttribute('data-auto-open-workflow');
-			var firstRow = document.querySelector('#overview-tab-updates tbody tr');
-			if (firstRow) firstRow.click();
-		})();
-
 	</script>
 }
 

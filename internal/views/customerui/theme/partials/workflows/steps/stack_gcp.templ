@@ -12,13 +12,11 @@ templ StackGCP(stackSetup workflows.StackSetupData, workflow *workflows.Workflow
 		<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
 			<h4 class="text-sm font-medium" style="color: var(--theme-primary)">GCP Stack Setup</h4>
 			if workflow != nil && workflow.HasApprovalSteps && workflow.CanApproveAll {
-				<button
-					type="button"
-					class="button button-primary workflow-approve-all-btn btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5"
-					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all" }
-				>
-					Approve
-				</button>
+				<form method="POST" action={ templ.SafeURL(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/approve-all") } class="inline">
+					<button type="submit" class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5">
+						Approve
+					</button>
+				</form>
 			}
 		</div>
 		<!-- Body: 4-step guide -->
@@ -52,14 +50,11 @@ templ StackGCP(stackSetup workflows.StackSetupData, workflow *workflows.Workflow
 		<!-- Footer -->
 		if workflow != nil && workflow.CanCancel {
 			<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-				<button
-					type="button"
-					class="button button-neutral workflow-cancel-btn btn-theme-outline text-sm"
-					data-endpoint={ basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel" }
-					data-workflow-name={ workflow.Name }
-				>
-					Cancel
-				</button>
+				<form method="POST" action={ templ.SafeURL(basePath + "/installs/" + installID + "/workflows/" + workflow.ID + "/cancel") } class="inline">
+					<button type="submit" class="button button-neutral btn-theme-outline text-sm">
+						Cancel
+					</button>
+				</form>
 			</div>
 		}
 	</div>

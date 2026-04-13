@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -12,7 +14,7 @@ func (h *Handler) ReprovisionInstall(c *gin.Context) {
 	// Get install from middleware (RequireInstallOwnership sets this)
 	installInterface, exists := c.Get("install")
 	if !exists {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Install not found"})
+		h.redirectOverviewWithAlert(c, c.Param("install_id"), "error", "Install not found")
 		return
 	}
 
@@ -20,31 +22,74 @@ func (h *Handler) ReprovisionInstall(c *gin.Context) {
 
 	// Load install with org relationships
 	if err := h.db.Preload("InstallLink.NuonOrg").Preload("Org").Where("id = ?", install.ID).First(install).Error; err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to load install details"})
+		h.redirectOverviewWithAlert(c, install.ID, "error", "Failed to load install details")
 		return
 	}
 
 	nuonOrgDep := install.GetNuonOrg()
 	if nuonOrgDep == nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Organization information not found"})
+		h.redirectOverviewWithAlert(c, install.ID, "error", "Organization information not found")
 		return
 	}
 
 	// Initialize Nuon client to reprovision the install using global API URL
 	nuonClient, err := nuon.NewClientWithURL(nuonOrgDep.APIToken, nuonOrgDep.NuonOrgID, h.nuonAPIURLForOrg(nuonOrgDep))
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to initialize Nuon client"})
+		h.redirectOverviewWithAlert(c, install.ID, "error", "Failed to initialize Nuon client")
 		return
 	}
 
 	// Reprovision the install via Nuon API
 	if err := nuonClient.ReprovisionInstall(c.Request.Context(), install.NuonInstallID); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to reprovision install"})
+		h.redirectOverviewWithAlert(c, install.ID, "error", "Failed to reprovision install")
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Install reprovisioning initiated successfully",
-		"install": install,
-	})
+	h.redirectOverviewWithAlert(c, install.ID, "success", "Install reprovisioning initiated successfully")
+}
+
+// redirectOverviewWithAlert redirects to the install overview page with alert query params.
+func (h *Handler) redirectOverviewWithAlert(c *gin.Context, installID, alertType, alertMsg string) {
+	redirectURL := fmt.Sprintf("%s/installs/%s/overview?alert_type=%s&alert_msg=%s",
+		h.basePath, installID, alertType, url.QueryEscape(alertMsg))
+	h.redirectOrHXRedirect(c, redirectURL)
+}
+
+// redirectOverviewWorkflowWithAlert redirects to the install overview workflow page,
+// preserving existing query params (e.g. expanded=true) from the originating URL
+// and adding alert params.
+func (h *Handler) redirectOverviewWorkflowWithAlert(c *gin.Context, installID, workflowID, alertType, alertMsg string) {
+	basePath := fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, installID, workflowID)
+
+	// Preserve query params from the originating URL (HX-Current-URL for HTMX, Referer for plain)
+	params := url.Values{}
+	if currentURL := c.GetHeader("HX-Current-URL"); currentURL != "" {
+		if parsed, err := url.Parse(currentURL); err == nil {
+			params = parsed.Query()
+		}
+	} else if referer := c.GetHeader("Referer"); referer != "" {
+		if parsed, err := url.Parse(referer); err == nil {
+			params = parsed.Query()
+		}
+	}
+
+	// Remove stale alert params and partial param, then set fresh alert
+	params.Del("alert_type")
+	params.Del("alert_msg")
+	params.Del("partial")
+	params.Set("alert_type", alertType)
+	params.Set("alert_msg", alertMsg)
+
+	h.redirectOrHXRedirect(c, basePath+"?"+params.Encode())
+}
+
+// redirectOrHXRedirect sends an HX-Redirect header for HTMX requests (so hx-boost
+// triggers a full page navigation), or a standard 302 redirect for plain requests.
+func (h *Handler) redirectOrHXRedirect(c *gin.Context, url string) {
+	if isHTMXRequest(c) {
+		c.Header("HX-Redirect", url)
+		c.Status(http.StatusOK)
+		return
+	}
+	c.Redirect(http.StatusFound, url)
 }

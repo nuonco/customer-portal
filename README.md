@@ -36,8 +36,6 @@ The customer-dashboard service provides a white-label portal for Nuon vendors an
 
 Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. The service listens on port :8080 in all modes (local dev, container, stage, prod).
 
-Nuonctl's built-in file watcher detects changes and runs the build commands defined in `service.yml` (`templ generate`, CSS build, `go build`), then restarts the binary. The compiled binary runs via `exec` so it inherits the shell's process group for clean cleanup.
-
 **Hot reload**: In dev mode (`LIVE_RELOAD=true`), the app exposes a `GET /dev/version` endpoint that returns the server's start timestamp. A client-side script (`static/js/dev-reload.js`) polls this endpoint every 1.5 seconds. When the version changes (i.e. the Go app was rebuilt and restarted), the script fetches the current page and uses Idiomorph to morph the DOM in-place — preserving form state, scroll position, and open/closed UI elements. If the server is unreachable during a build, the script checks nuonctl's webview API (`localhost:7777`) for build status — showing a "Rebuilding..." spinner or a red "Build failed" overlay with the compiler error text.
 
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
@@ -79,7 +77,22 @@ Customer UI uses the [Phosphor Icons](https://phosphoricons.com/) font (Bold wei
 
 #### HTMX
 
-We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like udpating page content, updating the browser history, and polling for updates.
+We should avoid writing custom Javascript for client-side interactions and state management. HTMX provides most of what we need to handle things like updating page content, updating the browser history, and polling for updates.
+
+**Progressive enhancement pattern:**
+
+Every interaction should work in three layers, each building on the last:
+
+1. **Plain HTML**: Standard `<a>` links and `<form method="POST">` elements. All UI state lives in the URL (query params). POST handlers use POST-Redirect-GET. Pages render fully server-side.
+2. **hx-boost**: The `<body hx-boost="true">` turns all links and forms into AJAX requests transparently. Redirects are followed, URLs update, full pages swap in. No per-element attributes needed.
+3. **Targeted HTMX**: For interactions that should avoid full page reloads, elements get `hx-get`, `hx-target`, `hx-swap`, `hx-push-url`. Handlers check a `partial` query param and return HTML fragments instead of full pages.
+
+**Conventions:**
+
+- **URL-driven state**: All UI state (active tabs, selected items, panel expanded/collapsed, alerts) should be in query params so views are bookmarkable and survive reloads.
+- **`partial` query param**: GET handlers return different response types based on this param (e.g. `partial=panel` returns a panel fragment, no param returns the full page).
+- **POST-Redirect-GET**: POST action handlers always redirect. `hx-boost` follows the redirect. Alert messages travel as `alert_type` and `alert_msg` query params in the redirect URL.
+- **HTMX on the element, not the form**: For progressive enhancement of forms, place `hx-post` on the submit button (not the form), so the form works natively without JS.
 
 ### CSS Asset Hashing — Hands Off `static/`
 
@@ -155,24 +168,33 @@ There are some conventions that are specific to the admin UI.
 - **OrgInvitation** - Pending team member invitations
 - **OrgMember** - Organization membership and roles
 
-### Key Directories
+### Debug Page (Vendor-Only)
 
-```
-internal/
-├── assets/         # Asset manifest management (cache-busting)
-├── auth/           # Authentication providers (OIDC, SAML, local)
-├── background/     # Background tasks
-├── config/         # Configuration management
-├── github/         # GitHub integration
-├── handlers/       # HTTP handlers
-├── middleware/     # JWT, role-based access, subdomain detection
-├── models/         # GORM models
-├── shortid/        # ID generation utilities
-├── testutil/       # Testing utilities
-└── views/          # templ templates
-    ├── customerui/ # Customer-facing UI
-    └── vendorui/   # Vendor admin UI
-```
+The debug page provides vendors with a diagnostic view of workflow data for a given install. It is accessible only to users with the `vendor` role, via a "Debug" link in the admin bar. Routes are registered in `main.go` under the `installOwnership` group at `/debug/*`.
+
+The debug page serves as the reference implementation for the HTMX progressive enhancement conventions documented above. Key architectural patterns:
+
+- **URL-driven state**: Active tabs, selected step, panel expanded state, and alert messages are all query params. The `buildDebugURL` helper and `debugURLParams` struct construct URLs, and `baseParams()` extracts current state from props to propagate through all generated links.
+- **Panel**: The panel shell is always in the DOM (closed and empty when no workflow is selected). Workflow row clicks swap the panel wrapper via `hx-get` with `partial=panel` + `outerHTML`. Close swaps in an empty closed panel from the list endpoint.
+- **Tabs**: The `TabBar` component renders `<a>` links with optional `hx-get`/`hx-target` for partial swaps. The server conditionally renders only the active tab's content.
+- **Actions**: Workflow actions (approve, cancel, retry) use `<form method="POST">` with `hx-boost` handling the submission. Handlers always redirect with alert params. No custom JS.
+- **Container queries**: The steps list and step detail card use Tailwind `@container` queries (`@5xl:`) to go side-by-side when the panel is expanded.
+
+### Overview Page
+
+The overview page (`/installs/:install_id/overview`) follows the same HTMX progressive enhancement conventions as the debug page:
+
+- **URL-driven state**: The active tab (`?tab=history` or `?tab=inputs`) and alert messages (`?alert_type=...&alert_msg=...`) are query params. The `buildOverviewURL` helper and `overviewURLParams` struct construct URLs.
+- **Partial rendering**: The handler checks `?partial=content` to return just the content area (for tab switches via HTMX) or the full page (for initial load / no-JS fallback).
+- **Tabs**: The `TabBar` component renders History and Inputs tabs with `hx-get`/`hx-target`/`hx-push-url` for partial swaps.
+- **Actions**: Reprovision and deprovision use server-rendered confirmation modals containing `<form method="POST">`. Handlers redirect with alert query params (POST-Redirect-GET). No custom JS for form submission.
+- **Data inline**: All overview data (stack, sandbox, components, workflows, inputs) is fetched in the handler and rendered server-side. No lazy loading or shimmer.
+
+Key files:
+- `internal/views/customerui/theme/pages/install_overview.templ` — Page template, props, URL helpers
+- `internal/handlers/customer_install_detail_page.go` — Handler with partial switch
+- `internal/handlers/customer_reprovision_install.go` — POST-Redirect-GET reprovision
+- `internal/handlers/customer_delete_install.go` — POST-Redirect-GET deprovision
 
 ### Authentication Implementation Details
 

@@ -1,73 +1,418 @@
 package pages
 
 import (
+	"fmt"
+	"net/url"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
-templ InstallOverviewPage(props InstallPageProps) {
+// InstallOverviewPageProps contains all data for the overview page.
+type InstallOverviewPageProps struct {
+	customerui.LayoutProps
+	Install         *models.Install
+	AppName         string
+	APIDeletedError bool
+	// Overview summary data
+	StackStatus    string
+	StackRegion    string
+	StackAccountID string
+	SandboxStatus     string
+	SandboxRepo       string
+	SandboxBranch     string
+	SandboxRepoPublic bool
+	Components     []partials.ComponentInfo
+	// Tabs
+	ActiveTab string // "history" (default) or "inputs"
+	// History tab data
+	RecentWorkflows []*nuonmodels.AppWorkflow
+	// Inputs tab data
+	InputFields []partials.InputFieldRow
+	// Alerts (from redirects after actions)
+	AlertType string // "error" or "success"
+	AlertMsg  string
+	// App config version info
+	AppConfigVersion       int64
+	AppConfigUpdatedAt     string
+	InstallConfigVersion   int64
+	InstallConfigUpdatedAt string
+	// Branding
+	PrimaryColor       string
+	AppLogoLightBase64 string
+	AppLogoDarkBase64  string
+	// Workflow panel (populated when a workflow is selected via URL path)
+	SelectedWorkflow *partials.WorkflowDataPanel
+	WorkflowPhases   []partials.ProvisionPhase
+	WorkflowStack    partials.StackSetupData
+	Expanded         bool // panel expanded to full width
+}
+
+// --- URL helpers (mirrors debug page pattern) ---
+
+type overviewURLParams struct {
+	BasePath   string
+	InstallID  string
+	WorkflowID string // when set, path includes /workflows/:id
+	Tab        string
+	Expanded   bool
+	Partial    string
+	AlertType  string
+	AlertMsg   string
+}
+
+func buildOverviewURL(p overviewURLParams) string {
+	path := fmt.Sprintf("%s/installs/%s/overview", p.BasePath, p.InstallID)
+	if p.WorkflowID != "" {
+		path += "/workflows/" + p.WorkflowID
+	}
+	sep := "?"
+	if p.Tab != "" && p.Tab != "history" {
+		path += sep + "tab=" + p.Tab
+		sep = "&"
+	}
+	if p.Expanded {
+		path += sep + "expanded=true"
+		sep = "&"
+	}
+	if p.Partial != "" {
+		path += sep + "partial=" + p.Partial
+		sep = "&"
+	}
+	if p.AlertType != "" && p.AlertMsg != "" {
+		path += sep + "alert_type=" + p.AlertType + "&alert_msg=" + url.QueryEscape(p.AlertMsg)
+	}
+	return path
+}
+
+func overviewBaseParams(props InstallOverviewPageProps) overviewURLParams {
+	p := overviewURLParams{
+		BasePath:  props.BasePath,
+		InstallID: props.Install.ID,
+		Tab:       props.ActiveTab,
+		Expanded:  props.Expanded,
+	}
+	if props.SelectedWorkflow != nil {
+		p.WorkflowID = props.SelectedWorkflow.ID
+	}
+	return p
+}
+
+func overviewWithPartial(p overviewURLParams, partial string) string {
+	p.Partial = partial
+	return buildOverviewURL(p)
+}
+
+func overviewDismissAlertParams(props InstallOverviewPageProps) overviewURLParams {
+	p := overviewBaseParams(props)
+	p.AlertType = ""
+	p.AlertMsg = ""
+	return p
+}
+
+func overviewExpandParams(props InstallOverviewPageProps, expanded bool) overviewURLParams {
+	p := overviewBaseParams(props)
+	p.Expanded = expanded
+	return p
+}
+
+// overviewCloseParams returns params for closing the workflow panel (no workflow ID).
+func overviewCloseParams(props InstallOverviewPageProps) overviewURLParams {
+	return overviewURLParams{
+		BasePath:  props.BasePath,
+		InstallID: props.Install.ID,
+		Tab:       props.ActiveTab,
+	}
+}
+
+// overviewWorkflowRowParams returns params for a workflow row link.
+func overviewWorkflowRowParams(props InstallOverviewPageProps, workflowID string) overviewURLParams {
+	return overviewURLParams{
+		BasePath:   props.BasePath,
+		InstallID:  props.Install.ID,
+		WorkflowID: workflowID,
+	}
+}
+
+// --- HTMX targets ---
+
+const overviewContentTarget = "#overview-content"
+const overviewPanelWrapperTarget = "#overview-workflow-panel-wrapper"
+
+// --- Page template ---
+
+templ InstallOverviewPage(props InstallOverviewPageProps) {
 	@customerui.Layout(props.LayoutProps) {
-		@installPageShell(props) {
-			<div
-				id="panel-content-overview"
-				class="panel-body"
-				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel" }
-				hx-trigger="load"
-				hx-swap="morph:innerHTML"
-				if props.AutoOpenWorkflow {
-					data-auto-open-workflow="true"
-				}
-			>
-				@overviewShimmer()
-			</div>
-			<script>
-				// Strip open_workflow query param so refresh won't re-trigger
-				(function() {
-					var params = new URLSearchParams(window.location.search);
-					if (params.get('open_workflow') !== 'true') return;
-					params.delete('open_workflow');
-					var newURL = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
-					history.replaceState(null, '', newURL);
-				})();
-			</script>
+		@installPageShell(InstallPageProps{
+			LayoutProps:     props.LayoutProps,
+			Install:         props.Install,
+			AppName:         props.AppName,
+			APIDeletedError: props.APIDeletedError,
+			PageTitle:       "Overview",
+			PageIcon:        "house-simple",
+		}) {
+			@OverviewContent(props)
+			@OverviewWorkflowPanel(props)
 		}
 	}
 }
 
-templ overviewShimmer() {
-	<div class="space-y-4">
-		<div class="grid grid-cols-2 gap-4">
-			@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-stack", "Stack")}) {
-				<div class="space-y-3 text-sm">
-					@components.ShimmerLines(2)
-				</div>
-			}
-			@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-shipping-container", "Sandbox")}) {
-				<div class="space-y-3 text-sm">
-					@components.ShimmerLines(2)
-				</div>
-			}
-		</div>
-		@components.Card(components.CardProps{Header: overviewShimmerCardHeader("ph-cards", "Components")}) {
-			<div class="flex flex-wrap gap-2">
-				@components.ShimmerBar("h-7", "w-24")
-				@components.ShimmerBar("h-7", "w-20")
-				@components.ShimmerBar("h-7", "w-28")
+// OverviewContent renders the main content area (used for both full page and partial responses).
+templ OverviewContent(props InstallOverviewPageProps) {
+	<div id="overview-content" class="px-6 pb-6">
+		// Alert banner
+		if props.AlertType != "" && props.AlertMsg != "" {
+			<div class="mb-4">
+				@components.Alert(components.AlertProps{
+					Type:    props.AlertType,
+					Message: props.AlertMsg,
+				})
+				<a
+					href={ templ.SafeURL(buildOverviewURL(overviewDismissAlertParams(props))) }
+					hx-get={ overviewWithPartial(overviewDismissAlertParams(props), "content") }
+					hx-target={ overviewContentTarget }
+					hx-swap="outerHTML"
+					hx-push-url={ buildOverviewURL(overviewDismissAlertParams(props)) }
+					hx-boost="false"
+					class="text-xs text-cool-grey-500 hover:text-cool-grey-700 dark:hover:text-cool-grey-300 mt-1 inline-block"
+				>
+					Dismiss
+				</a>
 			</div>
 		}
-		<!-- Tab bar shimmer -->
-		<div class="flex gap-4 border-b border-cool-grey-200 dark:border-dark-grey-600 pb-2">
-			@components.ShimmerBar("h-5", "w-20")
-			@components.ShimmerBar("h-5", "w-28")
-		</div>
-		<!-- Tab content shimmer -->
-		@components.ShimmerLines(4)
+		// API Deletion Warning Banner
+		if props.APIDeletedError {
+			<div class="alert-warning mb-4">
+				<div class="flex items-start">
+					<div class="flex-shrink-0 mr-3 text-amber-500">
+						<i class="ph-bold ph-warning text-xl"></i>
+					</div>
+					<div class="flex-1">
+						<h3 class="text-sm font-medium text-amber-800 dark:text-amber-300 mb-1">Install Deleted from API</h3>
+						<p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
+							This install was deleted from the Nuon control plane but still exists in your local portal.
+							You are viewing cached data only. Live features (health checks, workflows, updates) are unavailable.
+						</p>
+						<p class="text-sm text-amber-700 dark:text-amber-400 mb-3">
+							<strong>Action required:</strong> Contact your vendor to remove this install from the portal.
+						</p>
+					</div>
+				</div>
+			</div>
+		}
+		if !props.APIDeletedError {
+			@partials.OverviewSummaryCards(partials.InstallDetailPanelProps{
+				Install:           props.Install,
+				BasePath:          props.BasePath,
+				StackStatus:       props.StackStatus,
+				StackRegion:       props.StackRegion,
+				StackAccountID:    props.StackAccountID,
+				SandboxStatus:     props.SandboxStatus,
+				SandboxRepo:       props.SandboxRepo,
+				SandboxBranch:     props.SandboxBranch,
+				SandboxRepoPublic: props.SandboxRepoPublic,
+				Components:        props.Components,
+			})
+		}
+		// Tab bar
+		@overviewTabBar(props)
+		// Active tab content
+		switch props.ActiveTab {
+		case "inputs":
+			@partials.OverviewConfigurationTab(props.InputFields)
+		default:
+			@overviewHistoryTab(props)
+		}
 	</div>
 }
 
-templ overviewShimmerCardHeader(icon, title string) {
-	<div class="flex items-center gap-2">
-		<i class={ "ph-bold text-lg text-cool-grey-500 dark:text-cool-grey-400", icon }></i>
-		<h4 class="text-base text-cool-grey-900 dark:text-white">{ title }</h4>
-	</div>
+// --- Workflow panel ---
+
+// OverviewWorkflowPanel renders the sliding panel (open when a workflow is selected, closed otherwise).
+templ OverviewWorkflowPanel(props InstallOverviewPageProps) {
+	if props.SelectedWorkflow != nil {
+		@components.Panel(components.PanelProps{
+			Title:         props.SelectedWorkflow.Name,
+			ID:            "overview-workflow-panel",
+			Open:          true,
+			Expanded:      props.Expanded,
+			CloseURL:      buildOverviewURL(overviewCloseParams(props)),
+			HxCloseGet:    overviewWithPartial(overviewCloseParams(props), "panel"),
+			ExpandURL:     buildOverviewURL(overviewExpandParams(props, true)),
+			CollapseURL:   buildOverviewURL(overviewExpandParams(props, false)),
+			HxExpandGet:   overviewWithPartial(overviewExpandParams(props, true), "panel"),
+			HxCollapseGet: overviewWithPartial(overviewExpandParams(props, false), "panel"),
+		}) {
+			@partials.ProvisionAccordion(
+				props.WorkflowPhases,
+				props.SelectedWorkflow,
+				props.WorkflowStack,
+				props.Install.ID,
+				props.BasePath,
+				props.PrimaryColor,
+			)
+		}
+	} else {
+		@components.Panel(components.PanelProps{
+			Title: "Workflow Detail",
+			ID:    "overview-workflow-panel",
+			Open:  false,
+		})
+	}
+}
+
+// --- History tab with proper links ---
+
+templ overviewHistoryTab(props InstallOverviewPageProps) {
+	if len(props.RecentWorkflows) == 0 {
+		@components.EmptyState(components.EmptyStateProps{Title: "No workflows", Icon: "ph-clock-clockwise"})
+	} else {
+		<table class="w-full text-sm table-fixed">
+			<colgroup>
+				<col class="w-[30%]"/>
+				<col class="w-[20%]"/>
+				<col class="w-[25%]"/>
+				<col class="w-[25%]"/>
+			</colgroup>
+			<thead>
+				<tr class="border-b border-cool-grey-200 dark:border-dark-grey-600">
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Type</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Status</th>
+					<th class="text-left py-2 pr-3 font-medium text-cool-grey-500 dark:text-cool-grey-400">Date</th>
+					<th class="text-left py-2 font-medium text-cool-grey-500 dark:text-cool-grey-400">Duration</th>
+				</tr>
+			</thead>
+			<tbody>
+				for _, wf := range props.RecentWorkflows {
+					@overviewWorkflowRow(props, wf)
+				}
+			</tbody>
+		</table>
+	}
+}
+
+templ overviewWorkflowRow(props InstallOverviewPageProps, wf *nuonmodels.AppWorkflow) {
+	<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
+		<td colspan="4" class="p-0">
+			<a
+				href={ templ.SafeURL(buildOverviewURL(overviewWorkflowRowParams(props, wf.ID))) }
+				hx-get={ overviewWithPartial(overviewWorkflowRowParams(props, wf.ID), "panel") }
+				hx-target={ overviewPanelWrapperTarget }
+				hx-swap="outerHTML"
+				hx-push-url={ buildOverviewURL(overviewWorkflowRowParams(props, wf.ID)) }
+				hx-boost="false"
+				class="grid grid-cols-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
+				style="grid-template-columns: 30% 20% 25% 25%"
+			>
+				<span class="py-2 pr-3 font-medium text-cool-grey-900 dark:text-white truncate" title={ overviewWorkflowTypeLabel(wf) }>
+					{ overviewWorkflowTypeLabel(wf) }
+				</span>
+				<span class="py-2 pr-3">
+					<span class={ "px-2 py-0.5 text-xs font-medium rounded-full", overviewWorkflowStatusClass(wf) }>
+						{ overviewWorkflowStatus(wf) }
+					</span>
+				</span>
+				<span class="py-2 pr-3 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ partials.FormatAPITime(wf.CreatedAt) }</span>
+				<span class="py-2 text-cool-grey-600 dark:text-cool-grey-400 whitespace-nowrap">{ overviewWorkflowDuration(wf) }</span>
+			</a>
+		</td>
+	</tr>
+}
+
+// --- Tab bar ---
+
+func overviewTabHref(props InstallOverviewPageProps, tab string) string {
+	p := overviewURLParams{
+		BasePath:  props.BasePath,
+		InstallID: props.Install.ID,
+		Tab:       tab,
+	}
+	return buildOverviewURL(p)
+}
+
+func overviewTabHxGet(props InstallOverviewPageProps, tab string) string {
+	p := overviewURLParams{
+		BasePath:  props.BasePath,
+		InstallID: props.Install.ID,
+		Tab:       tab,
+		Partial:   "content",
+	}
+	return buildOverviewURL(p)
+}
+
+templ overviewTabBar(props InstallOverviewPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: []components.Tab{
+			{
+				Label:    "History",
+				Href:     overviewTabHref(props, "history"),
+				HxGet:    overviewTabHxGet(props, "history"),
+				HxTarget: overviewContentTarget,
+				HxSwap:   "outerHTML",
+				Active:   props.ActiveTab == "" || props.ActiveTab == "history",
+			},
+			{
+				Label:    "Inputs",
+				Href:     overviewTabHref(props, "inputs"),
+				HxGet:    overviewTabHxGet(props, "inputs"),
+				HxTarget: overviewContentTarget,
+				HxSwap:   "outerHTML",
+				Active:   props.ActiveTab == "inputs",
+			},
+		},
+	})
+}
+
+// --- Workflow display helpers ---
+
+func overviewWorkflowTypeLabel(wf *nuonmodels.AppWorkflow) string {
+	if wf.Type != "" {
+		switch wf.Type {
+		case "provision":
+			return "Provision"
+		case "deprovision":
+			return "Deprovision"
+		case "reprovision":
+			return "Reprovision"
+		default:
+			return string(wf.Type)
+		}
+	}
+	return "Workflow"
+}
+
+func overviewWorkflowStatus(wf *nuonmodels.AppWorkflow) string {
+	if wf.Status != nil {
+		return string(wf.Status.Status)
+	}
+	return ""
+}
+
+func overviewWorkflowStatusClass(wf *nuonmodels.AppWorkflow) string {
+	s := overviewWorkflowStatus(wf)
+	switch s {
+	case "completed", "success":
+		return "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200"
+	case "error", "failed":
+		return "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200"
+	case "in-progress", "running":
+		return "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+	case "cancelled":
+		return "bg-cool-grey-100 text-cool-grey-800 dark:bg-cool-grey-800 dark:text-cool-grey-200"
+	default:
+		return "bg-cool-grey-100 text-cool-grey-800 dark:bg-cool-grey-800 dark:text-cool-grey-200"
+	}
+}
+
+func overviewWorkflowDuration(wf *nuonmodels.AppWorkflow) string {
+	if wf.ExecutionTime > 0 {
+		return formatDuration(wf.ExecutionTime)
+	}
+	if !wf.Finished {
+		return "running..."
+	}
+	return "—"
 }

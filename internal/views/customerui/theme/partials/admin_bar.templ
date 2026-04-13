@@ -8,6 +8,7 @@ type VendorAdminBarProps struct {
 	AdminURL     string
 	OrgName      string
 	PortalDomain string
+	InstallID    string // Current install ID (empty when not on install detail page)
 }
 
 templ nuonLogoMark() {
@@ -30,10 +31,6 @@ templ VendorAdminBar(props VendorAdminBarProps) {
 			<span class="vendor-admin-bar-org-name">You are viewing your customer portal</span>
 		</div>
 		<div class="vendor-admin-bar-user">
-			if props.User.Name != "" {
-				<span class="vendor-admin-bar-name">{ props.User.Name }</span>
-			}
-			<span class="vendor-admin-bar-email">{ props.User.Email }</span>
 		</div>
 	</div>
 }

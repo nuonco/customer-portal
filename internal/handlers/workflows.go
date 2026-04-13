@@ -16,7 +16,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows/steps"
@@ -279,9 +278,9 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow card partial
-	if isHTMXRequest(c) {
-		h.renderWorkflowCardPartial(c, install, workflowID, nuonClient)
+	// For form/HTMX requests, redirect back to the workflow page with alert
+	if isHTMXRequest(c) || c.ContentType() == "application/x-www-form-urlencoded" {
+		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow step approved successfully")
 		return
 	}
 
@@ -336,29 +335,9 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow status display
-	if isHTMXRequest(c) {
-		// Fetch updated workflow
-		workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
-		if err == nil {
-			processed := processWorkflowForCustomer(workflow)
-			wf := ginHToWorkflowDataPanel(processed)
-
-			// Return just the status display HTML
-			statusHTML := fmt.Sprintf(`
-<div class="flex items-center justify-between mb-2">
-	<h4 class="font-medium text-cool-grey-900 dark:text-white">%s</h4>
-	<span class="text-xs px-2 py-1 rounded %s">%s</span>
-</div>
-<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
-	%s
-</div>
-`, wf.Name, wf.StatusClass, wf.Status, wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
-
-			c.Data(http.StatusOK, "text/html", []byte(statusHTML))
-			return
-		}
-		c.String(http.StatusOK, "")
+	// For form/HTMX requests, redirect back to the workflow page with alert
+	if isHTMXRequest(c) || c.ContentType() == "application/x-www-form-urlencoded" {
+		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow cancelled successfully")
 		return
 	}
 
@@ -428,29 +407,9 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow status display
-	if isHTMXRequest(c) {
-		// Fetch updated workflow
-		workflows, _, err := nuonClient.GetInstallWorkflowsByType(c.Request.Context(), install.NuonInstallID, 0, 1, "provision")
-		if err == nil && len(workflows) > 0 {
-			processed := processWorkflowForCustomer(workflows[0])
-			wf := ginHToWorkflowDataPanel(processed)
-
-			// Return just the status display HTML
-			statusHTML := fmt.Sprintf(`
-<div class="flex items-center justify-between mb-2">
-	<h4 class="font-medium text-cool-grey-900 dark:text-white">%s</h4>
-	<span class="text-xs px-2 py-1 rounded %s">%s</span>
-</div>
-<div class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mb-3">
-	%s
-</div>
-`, wf.Name, wf.StatusClass, wf.Status, wf.CreatedAt.Format("Jan 2, 2006 3:04 PM"))
-
-			c.Data(http.StatusOK, "text/html", []byte(statusHTML))
-			return
-		}
-		c.String(http.StatusOK, "")
+	// For form/HTMX requests, redirect back to the workflow page with alert
+	if isHTMXRequest(c) || c.ContentType() == "application/x-www-form-urlencoded" {
+		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow approved successfully")
 		return
 	}
 
@@ -507,9 +466,9 @@ func (h *Handler) RetryWorkflowStep(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	// For HTMX requests, return the updated workflow card partial
-	if isHTMXRequest(c) {
-		h.renderWorkflowCardPartial(c, install, workflowID, nuonClient)
+	// For form/HTMX requests, redirect back to the workflow page with alert
+	if isHTMXRequest(c) || c.ContentType() == "application/x-www-form-urlencoded" {
+		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow step retry initiated")
 		return
 	}
 
@@ -926,9 +885,9 @@ type WorkflowGroup struct {
 	Workflows   []gin.H `json:"workflows"`
 }
 
-// ginHToWorkflowData converts gin.H workflow data to customerui.WorkflowData
-func ginHToWorkflowData(wf gin.H) customerui.WorkflowData {
-	data := customerui.WorkflowData{
+// ginHToWorkflowData converts gin.H workflow data to workflows.WorkflowData
+func ginHToWorkflowData(wf gin.H) workflows.WorkflowData {
+	data := workflows.WorkflowData{
 		ID:                       getString(wf, "id"),
 		Name:                     getString(wf, "name"),
 		Status:                   getString(wf, "status"),
@@ -951,7 +910,7 @@ func ginHToWorkflowData(wf gin.H) customerui.WorkflowData {
 
 	// Handle approval step
 	if step, ok := wf["approval_step"].(gin.H); ok && step != nil {
-		data.ApprovalStep = &customerui.ApprovalStepData{
+		data.ApprovalStep = &workflows.ApprovalStepData{
 			StepID:     getString(step, "step_id"),
 			ApprovalID: getString(step, "approval_id"),
 		}
@@ -1233,7 +1192,7 @@ func (h *Handler) renderWorkflowCardPartial(c *gin.Context, install *localModels
 		)
 		// Render error state workflow card
 		errorProps := workflows.WorkflowCardProps{
-			Workflow: customerui.WorkflowData{
+			Workflow: workflows.WorkflowData{
 				ID:                       workflowID,
 				Name:                     "Error",
 				Status:                   "error",

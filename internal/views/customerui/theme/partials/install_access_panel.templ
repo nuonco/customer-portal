@@ -116,11 +116,15 @@ templ RoleDetailPanel(role AccessRole) {
 			Header:      roleDetailCardHeader(role),
 			AccentColor: roleAccentColor(role.Active),
 		}) {
-			<div class="space-y-3 text-sm">
-				if role.Description != "" {
-					@infoRow("Description", role.Description)
-				}
-			</div>
+			if role.Active {
+				<div class="space-y-3 text-sm">
+					if role.Description != "" {
+						@infoRow("Description", role.Description)
+					}
+				</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "Not yet provisioned", Icon: "ph-shield-chevron", Compact: true})
+			}
 		}
 		<div class="flex border-b border-cool-grey-200 dark:border-dark-grey-600">
 			<button
@@ -133,13 +137,21 @@ templ RoleDetailPanel(role AccessRole) {
 			>Permissions Boundary</button>
 		</div>
 		<div class="role-sub-pane" data-tab="policies">
-			@rolePoliciesPane(role.Policies)
+			if role.Active {
+				@rolePoliciesPane(role.Policies)
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No policies", Icon: "ph-file-lock", Compact: true})
+			}
 		</div>
 		<div class="role-sub-pane hidden" data-tab="boundary">
-			if role.PermissionsBoundary != "" {
-				@components.CodeBlock(role.PermissionsBoundary, "json")
+			if role.Active {
+				if role.PermissionsBoundary != "" {
+					@components.CodeBlock(role.PermissionsBoundary, "json")
+				} else {
+					@components.EmptyState(components.EmptyStateProps{Title: "No permissions boundary", Icon: "ph-shield"})
+				}
 			} else {
-				@components.EmptyState(components.EmptyStateProps{Title: "No permissions boundary", Icon: "ph-shield"})
+				@components.EmptyState(components.EmptyStateProps{Title: "No permissions boundary", Icon: "ph-shield", Compact: true})
 			}
 		</div>
 	</div>

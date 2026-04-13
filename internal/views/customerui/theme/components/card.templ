@@ -13,6 +13,7 @@ type CardProps struct {
 	Size        CardSize
 	Title       string          // simple title text; ignored when Header is set
 	Header      templ.Component // custom header content; takes precedence over Title
+	Footer      templ.Component // optional footer content; rendered below content with border-t
 	AccentColor string          // top border accent color (e.g. "var(--theme-primary)")
 	Class       string
 	ID          string
@@ -43,6 +44,11 @@ templ Card(props CardProps) {
 			</div>
 		} else {
 			{ children... }
+		}
+		if props.Footer != nil {
+			<div class="px-4 py-3 border-t" style="border-color: var(--theme-border-subtle)">
+				@props.Footer
+			</div>
 		}
 	</div>
 }

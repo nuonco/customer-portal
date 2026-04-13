@@ -165,7 +165,8 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 	if htmx {
 		basePath := h.basePath
 		c.SetCookie("jwt", token, 86400, "/", "", false, false)
-		c.Header("HX-Redirect", basePath+"/installs/"+install.ID)
+		wfs, _, _ := nuonClient.GetInstallWorkflows(c.Request.Context(), nuonInstall.ID, 0, 1)
+		c.Header("HX-Redirect", basePath+"/installs/"+install.ID+"/overview/workflows/"+wfs[0].ID)
 		c.Status(http.StatusOK)
 		return
 	}

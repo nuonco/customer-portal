@@ -1,0 +1,102 @@
+package components
+
+// PanelProps configures a fixed-position sliding panel.
+type PanelProps struct {
+	Title       string // Panel header title
+	ID          string // Unique DOM ID prefix (required when multiple panels on a page)
+	Open        bool   // Whether the panel renders in the open state
+	Expanded    bool   // Whether the panel renders at full width
+	CloseURL    string // URL to navigate to when the panel is closed
+	ExpandURL   string // URL for expanding (used as hx-push-url)
+	CollapseURL string // URL for collapsing (used as hx-push-url)
+	// HTMX partial URLs for expand/collapse (swap panel without full reload)
+	HxExpandGet   string // hx-get URL for expanding (includes partial=panel)
+	HxCollapseGet string // hx-get URL for collapsing (includes partial=panel)
+	HxCloseGet    string // hx-get URL for closing (returns empty content + OOB to remove .open)
+}
+
+// Panel renders a fixed-position sliding panel with overlay, header (title, expand/collapse, close),
+// and a scrollable content area.
+templ Panel(props PanelProps) {
+	<div id={ props.ID + "-wrapper" }>
+		<div
+			id={ props.ID + "-overlay" }
+			class={ "secondary-panel-overlay", templ.KV("open", props.Open) }
+		>
+			if props.HxCloseGet != "" {
+				<a
+					href={ templ.SafeURL(props.CloseURL) }
+					hx-get={ props.HxCloseGet }
+					hx-target={ "#" + props.ID + "-wrapper" }
+					hx-swap="outerHTML"
+					hx-push-url={ props.CloseURL }
+					hx-boost="false"
+					class="absolute inset-0"
+				></a>
+			} else if props.CloseURL != "" {
+				<a href={ templ.SafeURL(props.CloseURL) } class="absolute inset-0"></a>
+			}
+		</div>
+		<div
+			id={ props.ID }
+			class={ "secondary-panel", templ.KV("open", props.Open), templ.KV("panel-full", props.Expanded) }
+		>
+			<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">{ props.Title }</h3>
+				<div class="flex items-center gap-1">
+					if props.Expanded {
+						<a
+							href={ templ.SafeURL(props.CollapseURL) }
+							if props.HxCollapseGet != "" {
+								hx-get={ props.HxCollapseGet }
+								hx-target={ "#" + props.ID + "-wrapper" }
+								hx-swap="outerHTML"
+								hx-push-url={ props.CollapseURL }
+								hx-boost="false"
+							}
+							class="button button-icon panel-close-btn"
+							title="Collapse panel"
+						>
+							<i class="ph-bold ph-corners-in text-lg"></i>
+						</a>
+					} else {
+						<a
+							href={ templ.SafeURL(props.ExpandURL) }
+							if props.HxExpandGet != "" {
+								hx-get={ props.HxExpandGet }
+								hx-target={ "#" + props.ID + "-wrapper" }
+								hx-swap="outerHTML"
+								hx-push-url={ props.ExpandURL }
+								hx-boost="false"
+							}
+							class="button button-icon panel-close-btn"
+							title="Expand to full width"
+						>
+							<i class="ph-bold ph-corners-out text-lg"></i>
+						</a>
+					}
+					if props.HxCloseGet != "" {
+						<a
+							href={ templ.SafeURL(props.CloseURL) }
+							hx-get={ props.HxCloseGet }
+							hx-target={ "#" + props.ID + "-wrapper" }
+							hx-swap="outerHTML"
+							hx-push-url={ props.CloseURL }
+							hx-boost="false"
+							class="button button-icon panel-close-btn"
+						>
+							<i class="ph-bold ph-x text-lg"></i>
+						</a>
+					} else if props.CloseURL != "" {
+						<a href={ templ.SafeURL(props.CloseURL) } class="button button-icon panel-close-btn">
+							<i class="ph-bold ph-x text-lg"></i>
+						</a>
+					}
+				</div>
+			</div>
+			<div class="panel-content px-6 py-4 overflow-y-auto" id={ props.ID + "-content" }>
+				{ children... }
+			</div>
+		</div>
+	</div>
+}

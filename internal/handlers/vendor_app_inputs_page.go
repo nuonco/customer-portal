@@ -98,6 +98,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 	// Fetch local customer input config
 	var localConfig models.AppInputConfig
 	h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+	hasConfig := localConfig.ID != ""
 	customerInputNames := localConfig.GetCustomerInputNames()
 
 	// Create a set for fast lookup
@@ -153,7 +154,7 @@ func (h *Handler) AppInputsPage(c *gin.Context) {
 											Sensitive:      getMapBool(inputMap, "sensitive"),
 											Default:        getStringFromAny(inputMap["default"]),
 											Source:         getMapString(inputMap, "source"),
-											CustomerFacing: customerInputSet[inputName],
+											CustomerFacing: !hasConfig || customerInputSet[inputName],
 										}
 
 										if inputInfo.DisplayName == "" {

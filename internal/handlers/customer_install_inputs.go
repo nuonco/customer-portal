@@ -182,7 +182,17 @@ func (h *Handler) UpdateInstallInputs(c *gin.Context) {
 	// Update inputs via Nuon API
 	workflowID, err := nuonClient.UpdateInstallInputs(c.Request.Context(), install.NuonInstallID, req.Inputs)
 	if err != nil {
+		if c.GetHeader("HX-Request") != "" || c.Request.Header.Get("Accept") == "text/html" {
+			h.redirectOverviewWithAlert(c, install.ID, "error", fmt.Sprintf("Failed to update inputs: %v", err))
+			return
+		}
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("Failed to update inputs: %v", err)})
+		return
+	}
+
+	// POST-Redirect-GET for HTML/HTMX requests
+	if c.GetHeader("HX-Request") != "" || c.Request.Header.Get("Accept") == "text/html" {
+		h.redirectOverviewWithAlert(c, install.ID, "success", "Inputs updated successfully. A new workflow has been triggered.")
 		return
 	}
 

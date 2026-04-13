@@ -713,6 +713,59 @@ func (c *Client) GetInstallDeploy(ctx context.Context, installID, deployID strin
 	return c.client.GetInstallDeploy(ctx, installID, deployID)
 }
 
+// GetInstallSandboxRun retrieves a single sandbox run by ID.
+func (c *Client) GetInstallSandboxRun(ctx context.Context, installID, runID string) (*models.AppInstallSandboxRun, error) {
+	reqURL := fmt.Sprintf("%s/v1/installs/sandbox-runs/%s", c.apiURL, runID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch sandbox run: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("sandbox run fetch returned status %d", resp.StatusCode)
+	}
+	var run models.AppInstallSandboxRun
+	if err := json.NewDecoder(resp.Body).Decode(&run); err != nil {
+		return nil, fmt.Errorf("failed to decode sandbox run: %w", err)
+	}
+	return &run, nil
+}
+
+// GetInstallActionWorkflowRun retrieves a single action workflow run by ID.
+func (c *Client) GetInstallActionWorkflowRun(ctx context.Context, installID, runID string) (*models.AppInstallActionWorkflowRun, error) {
+	return c.client.GetInstallActionWorkflowRun(ctx, installID, runID)
+}
+
+// GetGenericResource fetches any resource by path and returns it as a raw JSON map.
+func (c *Client) GetGenericResource(ctx context.Context, path string) (map[string]interface{}, error) {
+	reqURL := fmt.Sprintf("%s%s", c.apiURL, path)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("fetch returned status %d", resp.StatusCode)
+	}
+	var result map[string]interface{}
+	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+		return nil, fmt.Errorf("failed to decode response: %w", err)
+	}
+	return result, nil
+}
+
 // GetAppComponents retrieves all components for an app
 func (c *Client) GetAppComponents(ctx context.Context, appID string) ([]*models.AppComponent, error) {
 	components, _, err := c.client.GetAppComponents(ctx, appID, &models.GetPaginatedQuery{

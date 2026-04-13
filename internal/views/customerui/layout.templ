@@ -62,6 +62,7 @@ templ Layout(props LayoutProps) {
 					AdminURL:     props.AdminURL,
 					OrgName:      props.OrgName,
 					PortalDomain: props.PortalDomain,
+					InstallID:    props.CurrentInstallID,
 				})
 			}
 
@@ -94,30 +95,43 @@ templ Layout(props LayoutProps) {
 			@partials.PromptModal()
 		<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) -->
 			<script>
-				(function initMermaid() {
-					var codes = document.querySelectorAll('pre > code.language-mermaid');
-					if (codes.length === 0) return;
-					var divs = [];
-					codes.forEach(function(code) {
-						var pre = code.parentElement;
-						var div = document.createElement('div');
-						div.className = 'mermaid';
-						div.textContent = code.textContent;
-						pre.parentElement.replaceChild(div, pre);
-						divs.push(div);
+				(function() {
+					var mermaidLoading = false;
+
+					function processMermaidBlocks(root) {
+						var codes = (root || document).querySelectorAll('pre > code.language-mermaid');
+						if (codes.length === 0) return;
+						var divs = [];
+						codes.forEach(function(code) {
+							var pre = code.parentElement;
+							var div = document.createElement('div');
+							div.className = 'mermaid';
+							div.textContent = code.textContent;
+							pre.parentElement.replaceChild(div, pre);
+							divs.push(div);
+						});
+						function renderDiagrams() {
+							mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
+							mermaid.run({ nodes: divs });
+						}
+						if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
+							renderDiagrams();
+						} else if (!mermaidLoading) {
+							mermaidLoading = true;
+							var s = document.createElement('script');
+							s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
+							s.onload = renderDiagrams;
+							document.head.appendChild(s);
+						}
+					}
+
+					// Run on initial page load
+					processMermaidBlocks();
+
+					// Re-run after HTMX swaps in new content
+					document.body.addEventListener('htmx:afterSettle', function(evt) {
+						processMermaidBlocks(evt.detail.elt);
 					});
-					function renderDiagrams() {
-						mermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });
-						mermaid.run({ nodes: divs });
-					}
-					if (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {
-						renderDiagrams();
-					} else {
-						var s = document.createElement('script');
-						s.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';
-						s.onload = renderDiagrams;
-						document.head.appendChild(s);
-					}
 				})();
 			</script>
 		if isLiveReload() {

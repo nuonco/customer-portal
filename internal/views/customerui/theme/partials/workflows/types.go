@@ -51,6 +51,7 @@ type WorkflowDataPanel struct {
 	DenyViolations           []PolicyViolation // Policy deny violations for current step
 	WarnViolations           []PolicyViolation // Policy warn violations for current step
 	HasPolicyData            bool              // Whether the current step has any policy evaluation data
+	DisablePolling           bool              // When true, disables HTMX polling (e.g. secondary panel views)
 }
 
 // PolicyViolation represents a single policy evaluation violation.
@@ -74,6 +75,34 @@ type StackSetupData struct {
 	NuonInstallID      string // GCP + Azure (for backend snippet / resource naming)
 	AzureTemplateURL   string // Azure only — ARM template URL
 	AzureLocation      string // Azure only — deployment location (e.g. "eastus")
+}
+
+// WorkflowData holds processed workflow information for display in WorkflowCard.
+type WorkflowData struct {
+	ID                       string
+	Name                     string
+	Status                   string
+	StatusClass              string
+	CreatedAt                time.Time
+	FinishedAt               time.Time
+	CanApprove               bool
+	CanApproveAll            bool
+	CanCancel                bool
+	ApprovalStep             *ApprovalStepData
+	ApproveDisabledReason    string
+	ApproveAllDisabledReason string
+	CancelDisabledReason     string
+}
+
+// ApprovalStepData holds approval step info for workflow actions
+type ApprovalStepData struct {
+	StepID     string
+	ApprovalID string
+}
+
+// IsTerminalWorkflowStatus returns true for terminal workflow statuses.
+func IsTerminalWorkflowStatus(status string) bool {
+	return status == "completed" || status == "success" || status == "error" || status == "cancelled"
 }
 
 // FormatConfigDate formats a date string for display

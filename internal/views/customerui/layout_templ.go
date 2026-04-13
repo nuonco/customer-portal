@@ -214,6 +214,7 @@ func Layout(props LayoutProps) templ.Component {
 				AdminURL:     props.AdminURL,
 				OrgName:      props.OrgName,
 				PortalDomain: props.PortalDomain,
+				InstallID:    props.CurrentInstallID,
 			}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -277,7 +278,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) --><script>\n\t\t\t\t(function initMermaid() {\n\t\t\t\t\tvar codes = document.querySelectorAll('pre > code.language-mermaid');\n\t\t\t\t\tif (codes.length === 0) return;\n\t\t\t\t\tvar divs = [];\n\t\t\t\t\tcodes.forEach(function(code) {\n\t\t\t\t\t\tvar pre = code.parentElement;\n\t\t\t\t\t\tvar div = document.createElement('div');\n\t\t\t\t\t\tdiv.className = 'mermaid';\n\t\t\t\t\t\tdiv.textContent = code.textContent;\n\t\t\t\t\t\tpre.parentElement.replaceChild(div, pre);\n\t\t\t\t\t\tdivs.push(div);\n\t\t\t\t\t});\n\t\t\t\t\tfunction renderDiagrams() {\n\t\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t\t\tmermaid.run({ nodes: divs });\n\t\t\t\t\t}\n\t\t\t\t\tif (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {\n\t\t\t\t\t\trenderDiagrams();\n\t\t\t\t\t} else {\n\t\t\t\t\t\tvar s = document.createElement('script');\n\t\t\t\t\t\ts.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';\n\t\t\t\t\t\ts.onload = renderDiagrams;\n\t\t\t\t\t\tdocument.head.appendChild(s);\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 23, "<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) --><script>\n\t\t\t\t(function() {\n\t\t\t\t\tvar mermaidLoading = false;\n\n\t\t\t\t\tfunction processMermaidBlocks(root) {\n\t\t\t\t\t\tvar codes = (root || document).querySelectorAll('pre > code.language-mermaid');\n\t\t\t\t\t\tif (codes.length === 0) return;\n\t\t\t\t\t\tvar divs = [];\n\t\t\t\t\t\tcodes.forEach(function(code) {\n\t\t\t\t\t\t\tvar pre = code.parentElement;\n\t\t\t\t\t\t\tvar div = document.createElement('div');\n\t\t\t\t\t\t\tdiv.className = 'mermaid';\n\t\t\t\t\t\t\tdiv.textContent = code.textContent;\n\t\t\t\t\t\t\tpre.parentElement.replaceChild(div, pre);\n\t\t\t\t\t\t\tdivs.push(div);\n\t\t\t\t\t\t});\n\t\t\t\t\t\tfunction renderDiagrams() {\n\t\t\t\t\t\t\tmermaid.initialize({ startOnLoad: false, theme: document.documentElement.classList.contains('dark') ? 'dark' : 'default' });\n\t\t\t\t\t\t\tmermaid.run({ nodes: divs });\n\t\t\t\t\t\t}\n\t\t\t\t\t\tif (typeof mermaid !== 'undefined' && typeof mermaid.run === 'function') {\n\t\t\t\t\t\t\trenderDiagrams();\n\t\t\t\t\t\t} else if (!mermaidLoading) {\n\t\t\t\t\t\t\tmermaidLoading = true;\n\t\t\t\t\t\t\tvar s = document.createElement('script');\n\t\t\t\t\t\t\ts.src = 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js';\n\t\t\t\t\t\t\ts.onload = renderDiagrams;\n\t\t\t\t\t\t\tdocument.head.appendChild(s);\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\t// Run on initial page load\n\t\t\t\t\tprocessMermaidBlocks();\n\n\t\t\t\t\t// Re-run after HTMX swaps in new content\n\t\t\t\t\tdocument.body.addEventListener('htmx:afterSettle', function(evt) {\n\t\t\t\t\t\tprocessMermaidBlocks(evt.detail.elt);\n\t\t\t\t\t});\n\t\t\t\t})();\n\t\t\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -330,7 +331,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var14 templ.SafeURL
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@500;600;700&family=" + props.BodyFont + ":wght@400;500;600&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 142, Col: 161}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 156, Col: 161}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -348,7 +349,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var15 templ.SafeURL
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 144, Col: 118}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 158, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -366,7 +367,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var16 templ.SafeURL
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.BodyFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 146, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 160, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {

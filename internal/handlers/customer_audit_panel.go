@@ -338,15 +338,22 @@ func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, in
 		return nil
 	}
 
-	info := &partials.StackInfo{
-		ID:        stack.ID,
-		CreatedAt: partials.FormatAPITime(stack.CreatedAt),
-		UpdatedAt: partials.FormatAPITime(stack.UpdatedAt),
+	// Determine status from the latest stack version
+	var status string
+	if len(stack.Versions) > 0 && stack.Versions[0].CompositeStatus != nil {
+		status = string(stack.Versions[0].CompositeStatus.Status)
 	}
 
-	// Get status from the latest stack version
-	if len(stack.Versions) > 0 && stack.Versions[0].CompositeStatus != nil {
-		info.Status = string(stack.Versions[0].CompositeStatus.Status)
+	// Keep card in empty state until provisioning begins
+	if status == "" || status == "queued" {
+		return nil
+	}
+
+	info := &partials.StackInfo{
+		ID:        stack.ID,
+		Status:    status,
+		CreatedAt: partials.FormatAPITime(stack.CreatedAt),
+		UpdatedAt: partials.FormatAPITime(stack.UpdatedAt),
 	}
 
 	outputs := stack.InstallStackOutputs
@@ -484,7 +491,7 @@ func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, in
 // Returns the SandboxInfo and the terraform workspace ID (empty if unavailable).
 func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, install *models.Install) (*partials.SandboxInfo, string) {
 	nuonInstall, err := apiClient.GetInstall(ctx, install.NuonInstallID)
-	if err != nil || nuonInstall == nil || nuonInstall.Sandbox == nil {
+	if err != nil || nuonInstall == nil || nuonInstall.Sandbox == nil || nuonInstall.Sandbox.Status == "queued" {
 		return nil, ""
 	}
 

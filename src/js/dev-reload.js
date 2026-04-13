@@ -26,6 +26,52 @@
 
   // --- Indicator UI ---
 
+  var menu = null;
+  var menuOpen = false;
+
+  function getInstallID() {
+    var m = window.location.pathname.match(/\/installs\/([^/]+)/);
+    return m ? m[1] : null;
+  }
+
+  function toggleMenu() {
+    if (menuOpen) { closeMenu(); return; }
+    if (!menu) {
+      menu = document.createElement("div");
+      menu.id = "dev-reload-menu";
+      document.body.appendChild(menu);
+    }
+    var items = [
+      '<a class="dev-menu-item" href="http://localhost:7777/logs.html?service=customer-dashboard" target="_blank">' +
+        '<i class="ph-bold ph-terminal-window"></i> nuonctl logs</a>'
+    ];
+    var installID = getInstallID();
+    if (installID) {
+      items.push(
+        '<a class="dev-menu-item" href="/installs/' + installID + '/debug">' +
+          '<i class="ph-bold ph-bug"></i> Debug</a>'
+      );
+    }
+    menu.innerHTML = items.join("");
+    menu.classList.add("open");
+    menuOpen = true;
+    setTimeout(function () {
+      document.addEventListener("click", outsideClickHandler);
+    }, 0);
+  }
+
+  function closeMenu() {
+    if (menu) menu.classList.remove("open");
+    menuOpen = false;
+    document.removeEventListener("click", outsideClickHandler);
+  }
+
+  function outsideClickHandler(e) {
+    if (indicator && indicator.contains(e.target)) return;
+    if (menu && menu.contains(e.target)) return;
+    closeMenu();
+  }
+
   function createIndicator() {
     var style = document.createElement("style");
     style.textContent =
@@ -36,7 +82,7 @@
         "background:rgba(17,17,17,0.5);color:#e0e0e0;border-radius:999px;" +
         "font:13px/1.4 Inter,system-ui,sans-serif;" +
         "box-shadow:0 2px 8px rgba(0,0,0,.4);" +
-        "transition:all .3s ease;cursor:default;" +
+        "transition:all .3s ease;cursor:pointer;" +
         "padding:10px;" +
       "}" +
       "#dev-reload-indicator.state-error{" +
@@ -58,7 +104,21 @@
       "}" +
       "#dev-reload-indicator.state-error .dev-error-msg.has-content{display:block;}" +
       "#dev-reload-indicator:hover{background:rgba(17,17,17,0.9);}" +
-      "#dev-reload-indicator.state-error:hover{background:rgba(74,16,32,0.9);}";
+      "#dev-reload-indicator.state-error:hover{background:rgba(74,16,32,0.9);}" +
+      "#dev-reload-menu{" +
+        "position:fixed;bottom:60px;right:20px;z-index:99999;" +
+        "background:rgba(17,17,17,0.95);border-radius:8px;" +
+        "box-shadow:0 4px 16px rgba(0,0,0,.5);" +
+        "font:13px/1.4 Inter,system-ui,sans-serif;" +
+        "padding:4px 0;display:none;min-width:160px;" +
+      "}" +
+      "#dev-reload-menu.open{display:block;}" +
+      ".dev-menu-item{" +
+        "display:flex;align-items:center;gap:8px;" +
+        "padding:8px 14px;color:#e0e0e0;text-decoration:none;" +
+        "white-space:nowrap;" +
+      "}" +
+      ".dev-menu-item:hover{background:rgba(255,255,255,0.1);}";
     document.head.appendChild(style);
 
     indicator = document.createElement("div");
@@ -68,9 +128,9 @@
       '<span class="dev-icon"></span>' +
       '<span class="dev-detail"></span>' +
       '<pre class="dev-error-msg"></pre>';
-    indicator.style.cursor = "pointer";
-    indicator.addEventListener("click", function () {
-      window.open("http://localhost:7777/logs.html?service=customer-dashboard", "_blank");
+    indicator.addEventListener("click", function (e) {
+      e.stopPropagation();
+      toggleMenu();
     });
     document.body.appendChild(indicator);
     setIdle();
@@ -174,9 +234,12 @@
         return;
       }
       diffHead(newDoc);
-      // Re-append indicator — the morph replaced body innerHTML
+      // Re-append indicator and menu — the morph replaced body innerHTML
       if (indicator && !document.body.contains(indicator)) {
         document.body.appendChild(indicator);
+      }
+      if (menu && !document.body.contains(menu)) {
+        document.body.appendChild(menu);
       }
       // After morphing, HTMX needs to re-process new elements so that
       // hx-trigger="load" fires again for freshly inserted content.

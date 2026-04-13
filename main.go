@@ -469,17 +469,27 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			// Install detail pages (each tab is a separate route)
 			installOwnership.GET("/", h.InstallDetailPage) // Redirects to /overview
 			installOwnership.GET("/overview", h.InstallOverviewPage)
+			installOwnership.GET("/overview/workflows/:workflow_id", h.InstallOverviewWorkflowPage)
 			installOwnership.GET("/stack", h.InstallStackPage)
 			installOwnership.GET("/sandbox", h.InstallSandboxPage)
 			installOwnership.GET("/components", h.InstallComponentsPage)
 			installOwnership.GET("/roles", h.InstallRolesPage)
 			installOwnership.GET("/policies", h.InstallPoliciesPage)
-			installOwnership.GET("/app-info", h.InstallAppInfoPage)
+			installOwnership.GET("/readme", h.InstallAppInfoPage)
 			installOwnership.GET("/audit", h.InstallAuditPage)
+
+			// Debug pages (vendor-only, access checked in handler)
+			installOwnership.GET("/debug", h.DebugRedirect)
+			installOwnership.GET("/debug/workflows", h.DebugWorkflowsPage)
+			installOwnership.GET("/debug/workflows/:workflow_id", h.DebugWorkflowDetailPage)
+			installOwnership.POST("/debug/workflows/:workflow_id/approve", h.DebugApproveStep)
+			installOwnership.POST("/debug/workflows/:workflow_id/approve-all", h.DebugApproveAllSteps)
+			installOwnership.POST("/debug/workflows/:workflow_id/cancel", h.DebugCancelWorkflow)
+			installOwnership.POST("/debug/workflows/:workflow_id/retry", h.DebugRetryStep)
 
 			// Panel endpoints (HTMX fragments loaded by the tab pages)
 			installOwnership.GET("/panel", h.InstallDetailPanel) // Overview tab content
-			installOwnership.GET("/panel/app-info", h.AppInfoPanel)
+			installOwnership.GET("/panel/readme", h.AppInfoPanel)
 			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
 			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
 			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)                   // Role detail sliding panel
@@ -496,6 +506,7 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install
+			installOwnership.POST("/deprovision", h.DeleteInstall)      // Deprovision via HTML form POST (same handler as DELETE)
 			installOwnership.POST("/forget", h.ForgetInstall)           // Customer can forget (remove from DB) their install
 			installOwnership.POST("/reprovision", h.ReprovisionInstall) // Customer can reprovision their install
 

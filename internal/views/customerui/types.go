@@ -1,33 +1,8 @@
 package customerui
 
 import (
-	"time"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
-
-// WorkflowData holds processed workflow information for display
-type WorkflowData struct {
-	ID                       string
-	Name                     string
-	Status                   string
-	StatusClass              string
-	CreatedAt                time.Time
-	FinishedAt               time.Time
-	CanApprove               bool
-	CanApproveAll            bool
-	CanCancel                bool
-	ApprovalStep             *ApprovalStepData
-	ApproveDisabledReason    string
-	ApproveAllDisabledReason string
-	CancelDisabledReason     string
-}
-
-// ApprovalStepData holds approval step info for workflow actions
-type ApprovalStepData struct {
-	StepID     string
-	ApprovalID string
-}
 
 // Partial Component Props (for theme/partials/ components)
 

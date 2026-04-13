@@ -104,6 +104,11 @@ func filterInputConfigByLocalConfig(inputConfig interface{}, customerInputNames 
 		return nil
 	}
 
+	// When no customer input names are configured, customers see all inputs
+	if filterType == FilterTypeCustomer && len(customerInputNames) == 0 {
+		return inputConfig
+	}
+
 	// Create a set for fast lookup
 	customerInputSet := make(map[string]bool)
 	for _, name := range customerInputNames {
@@ -376,8 +381,18 @@ func extractBracketInputs(raw map[string]interface{}, existing map[string]string
 	for key, val := range raw {
 		if len(key) > 7 && key[:7] == "inputs[" && key[len(key)-1] == ']' {
 			name := key[7 : len(key)-1]
-			if s, ok := val.(string); ok {
-				existing[name] = s
+			switch v := val.(type) {
+			case string:
+				existing[name] = v
+			case []interface{}:
+				// json-enc produces an array for duplicate field names
+				// (e.g. hidden "false" + checkbox "true"). Use the last value,
+				// matching standard HTML form behavior.
+				if len(v) > 0 {
+					if s, ok := v[len(v)-1].(string); ok {
+						existing[name] = s
+					}
+				}
 			}
 		}
 	}

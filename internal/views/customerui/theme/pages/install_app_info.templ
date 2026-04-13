@@ -9,9 +9,9 @@ templ InstallAppInfoPage(props InstallPageProps) {
 	@customerui.Layout(props.LayoutProps) {
 		@installPageShell(props) {
 			<div
-				id="panel-content-app-info"
+				id="panel-content-readme"
 				class="panel-body"
-				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/app-info" }
+				hx-get={ props.BasePath + "/installs/" + props.Install.ID + "/panel/readme" }
 				hx-trigger="load"
 				hx-swap="morph:innerHTML"
 			>

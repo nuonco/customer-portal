@@ -1,0 +1,51 @@
+package components
+
+// Tab represents a single tab in a tab bar.
+type Tab struct {
+	Label    string // Display text
+	Href     string // Navigation URL (used for hx-push-url and fallback href)
+	Active   bool   // Whether this tab is currently active
+	HxGet    string // If set, use hx-get for partial swap instead of full navigation
+	HxTarget string // HTMX swap target selector (e.g. "#panel-wrapper")
+	HxSwap   string // HTMX swap strategy (default: "innerHTML")
+}
+
+// TabBarProps configures a tab bar.
+type TabBarProps struct {
+	Tabs []Tab
+}
+
+// TabBar renders a row of tab links using the standard nav-item styling.
+templ TabBar(props TabBarProps) {
+	<div class="tabs-divider flex mb-4">
+		for _, tab := range props.Tabs {
+			if tab.HxGet != "" {
+				<a
+					href={ templ.SafeURL(tab.Href) }
+					hx-get={ tab.HxGet }
+					hx-target={ tab.HxTarget }
+					hx-swap={ tabSwap(tab) }
+					hx-push-url={ tab.Href }
+					hx-boost="false"
+					class={ "button button-nav nav-item", templ.KV("active", tab.Active) }
+				>
+					{ tab.Label }
+				</a>
+			} else {
+				<a
+					href={ templ.SafeURL(tab.Href) }
+					class={ "button button-nav nav-item", templ.KV("active", tab.Active) }
+				>
+					{ tab.Label }
+				</a>
+			}
+		}
+	</div>
+}
+
+func tabSwap(tab Tab) string {
+	if tab.HxSwap != "" {
+		return tab.HxSwap
+	}
+	return "innerHTML"
+}

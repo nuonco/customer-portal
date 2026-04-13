@@ -438,11 +438,15 @@ templ stackDetailsCard(info *StackInfo, title string) {
 		}
 	} else {
 		@components.Card(components.CardProps{Header: stackCardHeader(title, info.Status), AccentColor: statusAccentColor(info.Status)}) {
-			<div class="space-y-3 text-sm">
-				@infoRowLink("Account ID", info.AccountID, "https://console.aws.amazon.com/console/home")
-				@infoRowLink("Region", info.Region, "https://console.aws.amazon.com/console/home?region="+info.Region)
-				@infoRowLink("VPC", info.VPC, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPC)
-			</div>
+			if info.AccountID != "" || info.Region != "" || info.VPC != "" {
+				<div class="space-y-3 text-sm">
+					@infoRowLink("Account ID", info.AccountID, "https://console.aws.amazon.com/console/home")
+					@infoRowLink("Region", info.Region, "https://console.aws.amazon.com/console/home?region="+info.Region)
+					@infoRowLink("VPC", info.VPC, "https://"+info.Region+".console.aws.amazon.com/vpcconsole/home?region="+info.Region+"#VpcDetails:VpcId="+info.VPC)
+				</div>
+			} else {
+				@components.EmptyState(components.EmptyStateProps{Title: "No stack data", Icon: "ph-stack", Compact: true})
+			}
 		}
 	}
 }
