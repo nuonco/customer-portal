@@ -39,14 +39,15 @@ func (aic *AppInputConfig) BeforeCreate(tx *gorm.DB) error {
 	return nil
 }
 
-// GetCustomerInputNames returns the customer input names as a slice
+// GetCustomerInputNames returns the customer input names as a slice.
+// Returns nil when the field is unset (no config), []string{} when explicitly empty.
 func (aic *AppInputConfig) GetCustomerInputNames() []string {
 	if aic.CustomerInputNames == "" {
-		return []string{}
+		return nil
 	}
 	var names []string
 	if err := json.Unmarshal([]byte(aic.CustomerInputNames), &names); err != nil {
-		return []string{}
+		return nil
 	}
 	return names
 }

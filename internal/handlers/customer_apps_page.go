@@ -226,7 +226,7 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 		// Input config
 		if inputCfg := fullCfg.Input; inputCfg != nil {
 			var localConfig models.AppInputConfig
-			h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+			configExists := h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig).Error == nil
 			customerInputNames := localConfig.GetCustomerInputNames()
 			customerInputSet := make(map[string]bool)
 			for _, name := range customerInputNames {
@@ -259,8 +259,10 @@ func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nu
 					if input == nil {
 						continue
 					}
-					// Only show customer-facing inputs in the catalog
-					if !customerInputSet[input.Name] {
+					// Only show customer-facing inputs in the catalog.
+					// When no AppInputConfig row exists, show all inputs.
+					// When configured with zero customer inputs, show none.
+					if configExists && !customerInputSet[input.Name] {
 						continue
 					}
 					gd.Inputs = append(gd.Inputs, customerpartials.InputDisplay{

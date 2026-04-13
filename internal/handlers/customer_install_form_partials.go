@@ -110,8 +110,12 @@ func (h *Handler) fetchAppFormData(c *gin.Context, apiToken, nuonOrgID, appID, o
 
 	// Apply customer filtering and ordering
 	var localConfig models.AppInputConfig
-	h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig)
+	configExists := h.db.Where("org_id = ? AND app_id = ?", orgID, appID).First(&localConfig).Error == nil
 	customerInputNames := localConfig.GetCustomerInputNames()
+	// When no config row exists, show all inputs to customers
+	if !configExists {
+		customerInputNames = nil
+	}
 	groupOrder := localConfig.GetGroupOrder()
 	inputOrder := localConfig.GetInputOrder()
 

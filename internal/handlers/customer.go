@@ -104,8 +104,9 @@ func filterInputConfigByLocalConfig(inputConfig interface{}, customerInputNames 
 		return nil
 	}
 
-	// When no customer input names are configured, customers see all inputs
-	if filterType == FilterTypeCustomer && len(customerInputNames) == 0 {
+	// When customerInputNames is nil, no config row exists — show all inputs.
+	// When it's an empty slice, vendor explicitly configured zero customer inputs — show none.
+	if filterType == FilterTypeCustomer && customerInputNames == nil {
 		return inputConfig
 	}
 
