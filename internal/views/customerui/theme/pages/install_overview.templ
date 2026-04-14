@@ -1,14 +1,12 @@
 package pages
 
 import (
-	"fmt"
-	"net/url"
-
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -54,98 +52,94 @@ type InstallOverviewPageProps struct {
 
 // --- URL helpers (mirrors debug page pattern) ---
 
-type overviewURLParams struct {
-	BasePath   string
-	InstallID  string
-	WorkflowID string // when set, path includes /workflows/:id
-	Tab        string
-	Expanded   bool
-	Group      int // selected step group index (-1 = omit)
-	Partial    string
-	AlertType  string
-	AlertMsg   string
-}
-
-func buildOverviewURL(p overviewURLParams) string {
-	path := fmt.Sprintf("%s/installs/%s/overview", p.BasePath, p.InstallID)
-	if p.WorkflowID != "" {
-		path += "/workflows/" + p.WorkflowID
-	}
-	sep := "?"
-	if p.Tab != "" && p.Tab != "history" {
-		path += sep + "tab=" + p.Tab
-		sep = "&"
-	}
-	if p.Expanded {
-		path += sep + "expanded=true"
-		sep = "&"
-	}
-	if p.Group >= 0 {
-		path += sep + fmt.Sprintf("group=%d", p.Group)
-		sep = "&"
-	}
-	if p.Partial != "" {
-		path += sep + "partial=" + p.Partial
-		sep = "&"
-	}
-	if p.AlertType != "" && p.AlertMsg != "" {
-		path += sep + "alert_type=" + p.AlertType + "&alert_msg=" + url.QueryEscape(p.AlertMsg)
-	}
-	return path
-}
-
-func overviewBaseParams(props InstallOverviewPageProps) overviewURLParams {
-	p := overviewURLParams{
-		BasePath:  props.BasePath,
-		InstallID: props.Install.ID,
-		Tab:       props.ActiveTab,
-		Expanded:  props.Expanded,
-		Group:     -1,
-	}
+// overviewURL returns a URLBuilder for the overview page pre-filled with current state.
+func overviewURL(props InstallOverviewPageProps) *utils.URLBuilder {
+	b := utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview")
 	if props.SelectedWorkflow != nil {
-		p.WorkflowID = props.SelectedWorkflow.ID
+		b = utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview", "workflows", props.SelectedWorkflow.ID)
 	}
+	if props.ActiveTab != "" && props.ActiveTab != "history" {
+		b.Set("tab", props.ActiveTab)
+	}
+	b.SetBool("expanded", props.Expanded)
 	if props.WorkflowOverview != nil && props.WorkflowOverview.SelectedGroup >= 0 {
-		p.Group = props.WorkflowOverview.SelectedGroup
+		b.SetInt("group", props.WorkflowOverview.SelectedGroup)
 	}
-	return p
+	return b
 }
 
-func overviewWithPartial(p overviewURLParams, partial string) string {
-	p.Partial = partial
-	return buildOverviewURL(p)
+// overviewPartialURL returns the overview page URL with a partial param appended.
+func overviewPartialURL(props InstallOverviewPageProps, partial string) string {
+	return overviewURL(props).Set("partial", partial).Build()
 }
 
-func overviewDismissAlertParams(props InstallOverviewPageProps) overviewURLParams {
-	p := overviewBaseParams(props)
+// overviewDismissAlertURL returns the overview URL without alert params.
+func overviewDismissAlertURL(props InstallOverviewPageProps) string {
+	p := props
 	p.AlertType = ""
 	p.AlertMsg = ""
-	return p
+	return overviewURL(p).Build()
 }
 
-func overviewExpandParams(props InstallOverviewPageProps, expanded bool) overviewURLParams {
-	p := overviewBaseParams(props)
+// overviewDismissAlertPartialURL returns the partial=content URL without alert params.
+func overviewDismissAlertPartialURL(props InstallOverviewPageProps) string {
+	p := props
+	p.AlertType = ""
+	p.AlertMsg = ""
+	return overviewURL(p).Set("partial", "content").Build()
+}
+
+// overviewExpandURL returns the overview URL with expanded set to the given value.
+func overviewExpandURL(props InstallOverviewPageProps, expanded bool) string {
+	p := props
 	p.Expanded = expanded
-	return p
+	return overviewURL(p).Build()
 }
 
-// overviewCloseParams returns params for closing the workflow panel (no workflow ID).
-func overviewCloseParams(props InstallOverviewPageProps) overviewURLParams {
-	return overviewURLParams{
-		BasePath:  props.BasePath,
-		InstallID: props.Install.ID,
-		Tab:       props.ActiveTab,
-		Group:     -1,
+// overviewExpandPartialURL returns the partial=panel URL with expanded set.
+func overviewExpandPartialURL(props InstallOverviewPageProps, expanded bool) string {
+	p := props
+	p.Expanded = expanded
+	return overviewURL(p).Set("partial", "panel").Build()
+}
+
+// overviewCloseURL returns the overview URL with no workflow selected.
+func overviewCloseURL(props InstallOverviewPageProps) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview").
+		Set("tab", overviewTabParam(props.ActiveTab)).
+		Build()
+}
+
+// overviewClosePartialURL returns the partial=panel URL for closing (no workflow).
+func overviewClosePartialURL(props InstallOverviewPageProps) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview").
+		Set("tab", overviewTabParam(props.ActiveTab)).
+		Set("partial", "panel").
+		Build()
+}
+
+// overviewWorkflowRowURL returns the full page URL for a workflow row.
+func overviewWorkflowRowURL(props InstallOverviewPageProps, workflowID string) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview", "workflows", workflowID).Build()
+}
+
+// overviewWorkflowRowPartialURL returns the partial=panel URL for a workflow row.
+func overviewWorkflowRowPartialURL(props InstallOverviewPageProps, workflowID string) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview", "workflows", workflowID).
+		Set("partial", "panel").Build()
+}
+
+// overviewTabParam returns the tab query param value, empty for the default "history" tab.
+func overviewTabParam(tab string) string {
+	if tab != "" && tab != "history" {
+		return tab
 	}
+	return ""
 }
 
-// overviewWorkflowRowParams returns params for a workflow row link.
-func overviewWorkflowRowParams(props InstallOverviewPageProps, workflowID string) overviewURLParams {
-	return overviewURLParams{
-		BasePath:   props.BasePath,
-		InstallID:  props.Install.ID,
-		WorkflowID: workflowID,
-		Group:      -1,
+func panelOpenAttrs() templ.Attributes {
+	return templ.Attributes{
+		"hx-on::before-request": "var t=document.getElementById('panel-shimmer-tpl');if(t){var w=document.getElementById('overview-workflow-panel-wrapper');w.innerHTML=t.innerHTML;requestAnimationFrame(function(){w.querySelector('.secondary-panel-overlay').classList.add('open');w.querySelector('.secondary-panel').classList.add('open');});}",
 	}
 }
 
@@ -172,7 +166,7 @@ templ InstallOverviewPage(props InstallOverviewPageProps) {
 				<div
 					id="overview-content"
 					class="px-6 pb-6"
-					hx-get={ overviewWithPartial(overviewBaseParams(props), "content") }
+					hx-get={ overviewPartialURL(props, "content") }
 					hx-trigger="load"
 					hx-swap="outerHTML"
 				>
@@ -180,8 +174,33 @@ templ InstallOverviewPage(props InstallOverviewPageProps) {
 				</div>
 			}
 			@OverviewWorkflowPanel(props)
+			@panelShimmerTemplate()
 		}
 	}
+}
+
+// panelShimmerTemplate renders an inert <template> containing an open shimmer panel.
+// Cloned into the panel wrapper by hx-on::before-request for instant open.
+templ panelShimmerTemplate() {
+	<template id="panel-shimmer-tpl">
+		<div
+			id="overview-workflow-panel-overlay"
+			class="secondary-panel-overlay"
+		></div>
+		<div
+			id="overview-workflow-panel"
+			class="secondary-panel"
+		>
+			<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
+				<div class="flex items-center gap-2">
+					@components.ShimmerBar("h-6", "w-32")
+				</div>
+			</div>
+			<div class="panel-content px-6 py-4 overflow-y-auto" id="overview-workflow-panel-content">
+				@workflowPanelShimmer()
+			</div>
+		</div>
+	</template>
 }
 
 // OverviewContent renders the main content area (used for both full page and partial responses).
@@ -195,11 +214,11 @@ templ OverviewContent(props InstallOverviewPageProps) {
 					Message: props.AlertMsg,
 				})
 				<a
-					href={ templ.SafeURL(buildOverviewURL(overviewDismissAlertParams(props))) }
-					hx-get={ overviewWithPartial(overviewDismissAlertParams(props), "content") }
+					href={ templ.SafeURL(overviewDismissAlertURL(props)) }
+					hx-get={ overviewDismissAlertPartialURL(props) }
 					hx-target={ overviewContentTarget }
 					hx-swap="outerHTML"
-					hx-push-url={ buildOverviewURL(overviewDismissAlertParams(props)) }
+					hx-push-url={ overviewDismissAlertURL(props) }
 					hx-boost="false"
 					class="text-xs text-cool-grey-500 hover:text-cool-grey-700 dark:hover:text-cool-grey-300 mt-1 inline-block"
 				>
@@ -241,15 +260,15 @@ templ OverviewContent(props InstallOverviewPageProps) {
 				Components:        props.Components,
 			})
 		}
-		// Tab bar
+		// Tab bar — both tabs rendered, toggle visibility client-side
 		@overviewTabBar(props)
-		// Active tab content
-		switch props.ActiveTab {
-		case "inputs":
-			@partials.OverviewConfigurationTab(props.InputFields)
-		default:
+		// Both tab contents always rendered; inactive one is hidden
+		<div id="overview-tab-history" class={ templ.KV("hidden", props.ActiveTab == "inputs") }>
 			@overviewHistoryTab(props)
-		}
+		</div>
+		<div id="overview-tab-inputs" class={ templ.KV("hidden", props.ActiveTab != "inputs") }>
+			@partials.OverviewConfigurationTab(props.InputFields)
+		</div>
 	</div>
 }
 
@@ -262,18 +281,18 @@ func overviewPanelProps(props InstallOverviewPageProps) components.PanelProps {
 		ID:            "overview-workflow-panel",
 		Open:          true,
 		Expanded:      props.Expanded,
-		CloseURL:      buildOverviewURL(overviewCloseParams(props)),
-		HxCloseGet:    overviewWithPartial(overviewCloseParams(props), "panel"),
-		ExpandURL:     buildOverviewURL(overviewExpandParams(props, true)),
-		CollapseURL:   buildOverviewURL(overviewExpandParams(props, false)),
-		HxExpandGet:   overviewWithPartial(overviewExpandParams(props, true), "panel"),
-		HxCollapseGet: overviewWithPartial(overviewExpandParams(props, false), "panel"),
-		HeaderActions: overviewPanelHeaderActions(props),
+		CloseURL:      overviewCloseURL(props),
+		HxCloseGet:    overviewClosePartialURL(props),
+		ExpandURL:     overviewExpandURL(props, true),
+		CollapseURL:   overviewExpandURL(props, false),
+		HxExpandGet:   overviewExpandPartialURL(props, true),
+		HxCollapseGet: overviewExpandPartialURL(props, false),
+		HeaderActions:   overviewPanelHeaderActions(props),
+		OptimisticClose: true,
 	}
 	// Poll when workflow is still running
 	if props.WorkflowOverview != nil && !props.WorkflowOverview.WorkflowFinished {
-		bp := overviewBaseParams(props)
-		p.HxPollGet = overviewWithPartial(bp, "panel")
+		p.HxPollGet = overviewPartialURL(props, "panel")
 		p.HxPollInterval = "every 5s"
 	}
 	return p
@@ -293,27 +312,6 @@ templ OverviewWorkflowPanel(props InstallOverviewPageProps) {
 			ID:    "overview-workflow-panel",
 			Open:  false,
 		})
-	}
-}
-
-// OverviewWorkflowPanelShimmer renders an open panel with shimmer placeholders
-// and hx-trigger="load" to fetch the real panel content.
-templ OverviewWorkflowPanelShimmer(props InstallOverviewPageProps, workflowID string) {
-	@components.Panel(components.PanelProps{
-		Title:      "Loading...",
-		ID:         "overview-workflow-panel",
-		Open:       true,
-		CloseURL:   buildOverviewURL(overviewCloseParams(props)),
-		HxCloseGet: overviewWithPartial(overviewCloseParams(props), "panel"),
-	}) {
-		<div
-			hx-get={ overviewWithPartial(overviewWorkflowRowParams(props, workflowID), "panel") }
-			hx-trigger="load"
-			hx-target={ overviewPanelWrapperTarget }
-			hx-swap="outerHTML"
-		>
-			@workflowPanelShimmer()
-		</div>
 	}
 }
 
@@ -407,12 +405,13 @@ templ overviewWorkflowRow(props InstallOverviewPageProps, wf *nuonmodels.AppWork
 	<tr class="border-b border-cool-grey-100 dark:border-dark-grey-700 last:border-b-0">
 		<td colspan="4" class="p-0">
 			<a
-				href={ templ.SafeURL(buildOverviewURL(overviewWorkflowRowParams(props, wf.ID))) }
-				hx-get={ overviewWithPartial(overviewWorkflowRowParams(props, wf.ID), "panel-shimmer") }
+				href={ templ.SafeURL(overviewWorkflowRowURL(props, wf.ID)) }
+				hx-get={ overviewWorkflowRowPartialURL(props, wf.ID) }
 				hx-target={ overviewPanelWrapperTarget }
 				hx-swap="outerHTML"
-				hx-push-url={ buildOverviewURL(overviewWorkflowRowParams(props, wf.ID)) }
+				hx-push-url={ overviewWorkflowRowURL(props, wf.ID) }
 				hx-boost="false"
+				{ panelOpenAttrs()... }
 				class="grid grid-cols-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700"
 				style="grid-template-columns: 30% 20% 25% 25%"
 			>
@@ -434,47 +433,40 @@ templ overviewWorkflowRow(props InstallOverviewPageProps, wf *nuonmodels.AppWork
 // --- Tab bar ---
 
 func overviewTabHref(props InstallOverviewPageProps, tab string) string {
-	p := overviewURLParams{
-		BasePath:  props.BasePath,
-		InstallID: props.Install.ID,
-		Tab:       tab,
-		Group:     -1,
-	}
-	return buildOverviewURL(p)
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "overview").
+		Set("tab", overviewTabParam(tab)).
+		Build()
 }
 
-func overviewTabHxGet(props InstallOverviewPageProps, tab string) string {
-	p := overviewURLParams{
-		BasePath:  props.BasePath,
-		InstallID: props.Install.ID,
-		Tab:       tab,
-		Partial:   "content",
-		Group:     -1,
-	}
-	return buildOverviewURL(p)
+func overviewTabSwitchAttrs(showID, hideID, href string) templ.Attributes {
+	js := "event.preventDefault();" +
+		"document.getElementById('" + showID + "').classList.remove('hidden');" +
+		"document.getElementById('" + hideID + "').classList.add('hidden');" +
+		"this.classList.add('active');" +
+		"var sibs=this.parentElement.querySelectorAll('.nav-item');for(var i=0;i<sibs.length;i++){if(sibs[i]!==this)sibs[i].classList.remove('active');};" +
+		"history.pushState(null,'','" + href + "');"
+	return templ.Attributes{"onclick": js}
 }
 
 templ overviewTabBar(props InstallOverviewPageProps) {
-	@components.TabBar(components.TabBarProps{
-		Tabs: []components.Tab{
-			{
-				Label:    "History",
-				Href:     overviewTabHref(props, "history"),
-				HxGet:    overviewTabHxGet(props, "history"),
-				HxTarget: overviewContentTarget,
-				HxSwap:   "outerHTML",
-				Active:   props.ActiveTab == "" || props.ActiveTab == "history",
-			},
-			{
-				Label:    "Inputs",
-				Href:     overviewTabHref(props, "inputs"),
-				HxGet:    overviewTabHxGet(props, "inputs"),
-				HxTarget: overviewContentTarget,
-				HxSwap:   "outerHTML",
-				Active:   props.ActiveTab == "inputs",
-			},
-		},
-	})
+	<div class="tabs-divider flex mb-4">
+		<a
+			href={ templ.SafeURL(overviewTabHref(props, "history")) }
+			hx-boost="false"
+			{ overviewTabSwitchAttrs("overview-tab-history", "overview-tab-inputs", overviewTabHref(props, "history"))... }
+			class={ "button button-nav nav-item", templ.KV("active", props.ActiveTab == "" || props.ActiveTab != "inputs") }
+		>
+			History
+		</a>
+		<a
+			href={ templ.SafeURL(overviewTabHref(props, "inputs")) }
+			hx-boost="false"
+			{ overviewTabSwitchAttrs("overview-tab-inputs", "overview-tab-history", overviewTabHref(props, "inputs"))... }
+			class={ "button button-nav nav-item", templ.KV("active", props.ActiveTab == "inputs") }
+		>
+			Inputs
+		</a>
+	</div>
 }
 
 // --- Workflow display helpers ---

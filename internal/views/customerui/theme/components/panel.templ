@@ -20,6 +20,13 @@ type PanelProps struct {
 	// Optional HTMX polling on the wrapper (refreshes entire panel including header).
 	HxPollGet      string // hx-get URL for polling (e.g. partial=panel endpoint)
 	HxPollInterval string // hx-trigger interval (e.g. "every 3s")
+	// Optimistic close: immediately hide the panel before the HTMX request completes.
+	OptimisticClose bool
+}
+
+func panelCloseAttrs(id string) templ.Attributes {
+	js := "var o=document.getElementById('" + id + "-overlay');var p=document.getElementById('" + id + "');if(o)o.classList.remove('open');if(p)p.classList.remove('open');"
+	return templ.Attributes{"hx-on::before-request": js}
 }
 
 // Panel renders a fixed-position sliding panel with overlay, header (title, expand/collapse, close),
@@ -46,6 +53,9 @@ templ Panel(props PanelProps) {
 					hx-swap="outerHTML"
 					hx-push-url={ props.CloseURL }
 					hx-boost="false"
+					if props.OptimisticClose {
+						{ panelCloseAttrs(props.ID)... }
+					}
 					class="absolute inset-0"
 				></a>
 			} else if props.CloseURL != "" {
@@ -107,6 +117,9 @@ templ Panel(props PanelProps) {
 							hx-swap="outerHTML"
 							hx-push-url={ props.CloseURL }
 							hx-boost="false"
+							if props.OptimisticClose {
+								{ panelCloseAttrs(props.ID)... }
+							}
 							class="button button-icon panel-close-btn"
 						>
 							<i class="ph-bold ph-x text-lg"></i>

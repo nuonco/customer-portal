@@ -416,8 +416,6 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 					ShowApproveAll:   string(workflow.ApprovalOption) == "prompt" && !workflow.Finished,
 					Platform:         platform,
 					StackSetup:       stackSetup,
-					PageBaseURL:      fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, install.ID, workflowID),
-					PanelPartialURL:  fmt.Sprintf("%s/installs/%s/overview/workflows/%s?partial=panel", h.basePath, install.ID, workflowID),
 					Expanded:         overviewProps.Expanded,
 				}
 			}
@@ -431,8 +429,6 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 	overviewProps.PrimaryColor = primaryColor
 
 	switch partial {
-	case "panel-shimmer":
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanelShimmer(overviewProps, workflowID))
 	case "panel":
 		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
 	case "content":

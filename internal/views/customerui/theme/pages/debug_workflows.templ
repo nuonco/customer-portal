@@ -3,7 +3,6 @@ package pages
 import (
 	"encoding/json"
 	"fmt"
-	"net/url"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -11,6 +10,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -89,11 +89,11 @@ templ DebugWorkflowsPage(props DebugWorkflowsPageProps) {
 
 templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuonmodels.AppWorkflow) {
 	<a
-		href={ templ.SafeURL(fmt.Sprintf("%s/installs/%s/debug/workflows/%s", props.BasePath, props.Install.ID, wf.ID)) }
-		hx-get={ fmt.Sprintf("%s/installs/%s/debug/workflows/%s?partial=panel", props.BasePath, props.Install.ID, wf.ID) }
+		href={ templ.SafeURL(debugWorkflowRowURL(props, wf.ID)) }
+		hx-get={ debugWorkflowRowPartialURL(props, wf.ID) }
 		hx-target={ panelWrapperTarget }
 		hx-swap="outerHTML"
-		hx-push-url={ fmt.Sprintf("%s/installs/%s/debug/workflows/%s", props.BasePath, props.Install.ID, wf.ID) }
+		hx-push-url={ debugWorkflowRowURL(props, wf.ID) }
 		hx-boost="false"
 		class={ "flex items-center gap-4 px-3 py-2 rounded-md hover:bg-cool-grey-100 dark:hover:bg-dark-grey-800 transition-colors cursor-pointer text-sm",
 			templ.KV("bg-cool-grey-100 dark:bg-dark-grey-800", props.SelectedWorkflow != nil && props.SelectedWorkflow.ID == wf.ID) }
@@ -124,12 +124,12 @@ templ DebugWorkflowPanel(props DebugWorkflowsPageProps) {
 			ID:            "debug-workflow-panel",
 			Open:          true,
 			Expanded:      props.Expanded,
-			CloseURL:      fmt.Sprintf("%s/installs/%s/debug/workflows", props.BasePath, props.Install.ID),
-			HxCloseGet:    fmt.Sprintf("%s/installs/%s/debug/workflows?partial=panel", props.BasePath, props.Install.ID),
-			ExpandURL:     buildDebugURL(expandParams(props, true)),
-			CollapseURL:   buildDebugURL(expandParams(props, false)),
-			HxExpandGet:   withPartial(expandParams(props, true), "panel"),
-			HxCollapseGet: withPartial(expandParams(props, false), "panel"),
+			CloseURL:      debugListURL(props),
+			HxCloseGet:    debugListPartialURL(props),
+			ExpandURL:     debugExpandURL(props, true),
+			CollapseURL:   debugExpandURL(props, false),
+			HxExpandGet:   debugExpandPartialURL(props, true),
+			HxCollapseGet: debugExpandPartialURL(props, false),
 		}) {
 			@DebugWorkflowPanelContent(props)
 		}
@@ -198,7 +198,7 @@ templ debugWorkflowInfoTab(props DebugWorkflowsPageProps) {
 			@components.Alert(components.AlertProps{Type: props.AlertType, Message: props.AlertMsg})
 			<a
 				href={ templ.SafeURL(debugDismissAlertURL(props)) }
-				hx-get={ withPartial(debugDismissAlertParams(props), "panel") }
+				hx-get={ debugDismissAlertPartialURL(props) }
 				hx-target={ panelWrapperTarget }
 				hx-swap="outerHTML"
 				hx-push-url={ debugDismissAlertURL(props) }
@@ -753,88 +753,112 @@ templ debugStepStatusIcon(step *nuonmodels.AppWorkflowStep) {
 const panelContentTarget = "#debug-workflow-panel-content"
 const panelWrapperTarget = "#debug-workflow-panel-wrapper"
 
-func withPartial(p debugURLParams, partial string) string {
-	p.Partial = partial
-	return buildDebugURL(p)
+// debugURL returns a URLBuilder pre-filled with all current debug page state.
+func debugURL(props DebugWorkflowsPageProps) *utils.URLBuilder {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "debug", "workflows", props.SelectedWorkflow.ID).
+		Set("tab", debugTabParam(props.ActiveTab)).
+		Set("step", selectedStepID(props)).
+		Set("step_tab", debugTabParam(props.ActiveStepTab)).
+		SetBool("expanded", props.Expanded).
+		Set("target_tab", debugTabParam(props.ActiveTargetTab)).
+		Set("stack_tab", debugTabParam(props.ActiveStackTab)).
+		Set("alert_type", props.AlertType).
+		SetEncoded("alert_msg", props.AlertMsg)
 }
 
-func baseParams(props DebugWorkflowsPageProps) debugURLParams {
-	return debugURLParams{
-		BasePath:   props.BasePath,
-		InstallID:  props.Install.ID,
-		WorkflowID: props.SelectedWorkflow.ID,
-		Tab:        props.ActiveTab,
-		StepID:     selectedStepID(props),
-		StepTab:    props.ActiveStepTab,
-		Expanded:   props.Expanded,
-		AlertType:  props.AlertType,
-		AlertMsg:   props.AlertMsg,
-		TargetTab:  props.ActiveTargetTab,
-		StackTab:   props.ActiveStackTab,
+// debugTabParam returns empty for default "info" tab, otherwise the tab value.
+func debugTabParam(tab string) string {
+	if tab != "" && tab != "info" {
+		return tab
 	}
+	return ""
+}
+
+// debugWorkflowRowURL returns the full page URL for a workflow row.
+func debugWorkflowRowURL(props DebugWorkflowsPageProps, workflowID string) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "debug", "workflows", workflowID).Build()
+}
+
+// debugWorkflowRowPartialURL returns the partial=panel URL for a workflow row.
+func debugWorkflowRowPartialURL(props DebugWorkflowsPageProps, workflowID string) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "debug", "workflows", workflowID).
+		Set("partial", "panel").Build()
+}
+
+// debugListURL returns the URL for the debug workflow list (no workflow selected).
+func debugListURL(props DebugWorkflowsPageProps) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "debug", "workflows").Build()
+}
+
+// debugListPartialURL returns the partial=panel URL for the debug workflow list.
+func debugListPartialURL(props DebugWorkflowsPageProps) string {
+	return utils.NewURL(props.BasePath, "installs", props.Install.ID, "debug", "workflows").
+		Set("partial", "panel").Build()
 }
 
 func debugPanelTabs(props DebugWorkflowsPageProps) []components.Tab {
-	infoParams := baseParams(props)
-	infoParams.Tab = "info"
-	stepsParams := baseParams(props)
-	stepsParams.Tab = "steps"
-	jsonParams := baseParams(props)
-	jsonParams.Tab = "json"
+	tabURL := func(tab string) *utils.URLBuilder {
+		p := props
+		p.ActiveTab = tab
+		return debugURL(p)
+	}
 	return []components.Tab{
-		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "info"},
-		{Label: "Steps", Href: buildDebugURL(stepsParams), HxGet: withPartial(stepsParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "steps"},
-		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "panel"), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "json"},
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "info"},
+		{Label: "Steps", Href: tabURL("steps").Build(), HxGet: tabURL("steps").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "steps"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "json"},
 	}
 }
 
 func debugStepDetailTabs(props DebugWorkflowsPageProps) []components.Tab {
-	infoParams := baseParams(props)
-	infoParams.StepID = props.SelectedStep.ID
-	infoParams.StepTab = "info"
-	jsonParams := baseParams(props)
-	jsonParams.StepID = props.SelectedStep.ID
-	jsonParams.StepTab = "json"
+	tabURL := func(stepTab string) *utils.URLBuilder {
+		p := props
+		p.ActiveStepTab = stepTab
+		return debugURL(p)
+	}
 	return []components.Tab{
-		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "step-card"), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "info"},
-		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "step-card"), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "json"},
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "step-card").Build(), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "info"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "step-card").Build(), HxTarget: "#debug-step-card-content", Active: props.ActiveStepTab == "json"},
 	}
 }
 
 func debugTargetTabs(props DebugWorkflowsPageProps) []components.Tab {
-	infoParams := baseParams(props)
-	infoParams.TargetTab = "info"
-	jsonParams := baseParams(props)
-	jsonParams.TargetTab = "json"
+	tabURL := func(targetTab string) *utils.URLBuilder {
+		p := props
+		p.ActiveTargetTab = targetTab
+		return debugURL(p)
+	}
 	return []components.Tab{
-		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "target-card"), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab != "json"},
-		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "target-card"), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab == "json"},
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "target-card").Build(), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "target-card").Build(), HxTarget: "#debug-target-card-content", Active: props.ActiveTargetTab == "json"},
 	}
 }
 
 func debugStackSetupTabs(props DebugWorkflowsPageProps) []components.Tab {
-	infoParams := baseParams(props)
-	infoParams.StackTab = "info"
-	jsonParams := baseParams(props)
-	jsonParams.StackTab = "json"
+	tabURL := func(stackTab string) *utils.URLBuilder {
+		p := props
+		p.ActiveStackTab = stackTab
+		return debugURL(p)
+	}
 	return []components.Tab{
-		{Label: "Info", Href: buildDebugURL(infoParams), HxGet: withPartial(infoParams, "stack-card"), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab != "json"},
-		{Label: "JSON", Href: buildDebugURL(jsonParams), HxGet: withPartial(jsonParams, "stack-card"), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab == "json"},
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "stack-card").Build(), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "stack-card").Build(), HxTarget: "#debug-stack-card-content", Active: props.ActiveStackTab == "json"},
 	}
 }
 
 func debugStepRowHxGet(props DebugWorkflowsPageProps, stepID string) string {
-	p := baseParams(props)
-	p.StepID = stepID
-	p.StepTab = "info"
-	return withPartial(p, "panel")
+	p := props
+	p.SelectedStep = &nuonmodels.AppWorkflowStep{ID: stepID}
+	p.SelectedStepIsActive = false
+	p.ActiveStepTab = "info"
+	return debugURL(p).Set("partial", "panel").Build()
 }
 
 func debugStepRowHref(props DebugWorkflowsPageProps, stepID string) string {
-	p := baseParams(props)
-	p.StepID = stepID
-	p.StepTab = "info"
-	return buildDebugURL(p)
+	p := props
+	p.SelectedStep = &nuonmodels.AppWorkflowStep{ID: stepID}
+	p.SelectedStepIsActive = false
+	p.ActiveStepTab = "info"
+	return debugURL(p).Build()
 }
 
 func stepCanApprove(step *nuonmodels.AppWorkflowStep) bool {
@@ -897,21 +921,30 @@ func workflowRetryableStep(wf *nuonmodels.AppWorkflow) *nuonmodels.AppWorkflowSt
 	return nil
 }
 
-func expandParams(props DebugWorkflowsPageProps, expanded bool) debugURLParams {
-	p := baseParams(props)
+func debugExpandURL(props DebugWorkflowsPageProps, expanded bool) string {
+	p := props
 	p.Expanded = expanded
-	return p
+	return debugURL(p).Build()
 }
 
-func debugDismissAlertParams(props DebugWorkflowsPageProps) debugURLParams {
-	p := baseParams(props)
-	p.AlertType = ""
-	p.AlertMsg = ""
-	return p
+func debugExpandPartialURL(props DebugWorkflowsPageProps, expanded bool) string {
+	p := props
+	p.Expanded = expanded
+	return debugURL(p).Set("partial", "panel").Build()
 }
 
 func debugDismissAlertURL(props DebugWorkflowsPageProps) string {
-	return buildDebugURL(debugDismissAlertParams(props))
+	p := props
+	p.AlertType = ""
+	p.AlertMsg = ""
+	return debugURL(p).Build()
+}
+
+func debugDismissAlertPartialURL(props DebugWorkflowsPageProps) string {
+	p := props
+	p.AlertType = ""
+	p.AlertMsg = ""
+	return debugURL(p).Set("partial", "panel").Build()
 }
 
 func debugActionURL(props DebugWorkflowsPageProps, action string) string {
@@ -936,57 +969,6 @@ func selectedStepID(props DebugWorkflowsPageProps) string {
 	return ""
 }
 
-type debugURLParams struct {
-	BasePath   string
-	InstallID  string
-	WorkflowID string
-	Tab        string
-	StepID     string
-	StepTab    string
-	Expanded   bool
-	Partial    string // "panel-content" or "panel" for HTMX partial responses
-	AlertType  string // "error" or "success"
-	AlertMsg   string
-	TargetTab  string // "info" or "json" — target card tab
-	StackTab   string // "info" or "json" — stack setup card tab
-}
-
-func buildDebugURL(p debugURLParams) string {
-	path := fmt.Sprintf("%s/installs/%s/debug/workflows/%s", p.BasePath, p.InstallID, p.WorkflowID)
-	sep := "?"
-	if p.Tab != "" && p.Tab != "info" {
-		path += sep + "tab=" + p.Tab
-		sep = "&"
-	}
-	if p.StepID != "" {
-		path += sep + "step=" + p.StepID
-		sep = "&"
-	}
-	if p.StepTab != "" && p.StepTab != "info" {
-		path += sep + "step_tab=" + p.StepTab
-		sep = "&"
-	}
-	if p.Expanded {
-		path += sep + "expanded=true"
-		sep = "&"
-	}
-	if p.Partial != "" {
-		path += sep + "partial=" + p.Partial
-		sep = "&"
-	}
-	if p.TargetTab != "" && p.TargetTab != "info" {
-		path += sep + "target_tab=" + p.TargetTab
-		sep = "&"
-	}
-	if p.StackTab != "" && p.StackTab != "info" {
-		path += sep + "stack_tab=" + p.StackTab
-		sep = "&"
-	}
-	if p.AlertType != "" && p.AlertMsg != "" {
-		path += sep + "alert_type=" + p.AlertType + "&alert_msg=" + url.QueryEscape(p.AlertMsg)
-	}
-	return path
-}
 
 func truncateID(id string) string {
 	if len(id) > 12 {

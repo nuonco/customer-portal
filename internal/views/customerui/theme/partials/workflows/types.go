@@ -5,6 +5,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -211,23 +212,23 @@ type WorkflowOverviewProps struct {
 	ShowApproveAll   bool
 	Platform         string // "aws", "gcp", "azure"
 	StackSetup       StackSetupData
-	PageBaseURL      string // Full page URL up to workflow ID (for hx-push-url)
-	PanelPartialURL  string // URL for partial=panel requests (swaps entire panel wrapper)
-	Expanded         bool   // Panel is expanded (propagated into step group links)
+	Expanded         bool // Panel is expanded
 }
 
-// GroupPageURL returns the full page URL for a step group selection, preserving expanded state.
+// url returns a URLBuilder pre-filled with the workflow page path and current expanded state.
+func (p WorkflowOverviewProps) url() *utils.URLBuilder {
+	return utils.NewURL(p.BasePath, "installs", p.InstallID, "overview", "workflows", p.WorkflowID).
+		SetBool("expanded", p.Expanded)
+}
+
+// GroupPageURL returns the full page URL for a step group selection (for href and hx-push-url).
 func (p WorkflowOverviewProps) GroupPageURL(groupIdx int) string {
-	url := fmt.Sprintf("%s?group=%d", p.PageBaseURL, groupIdx)
-	if p.Expanded {
-		url += "&expanded=true"
-	}
-	return url
+	return p.url().SetInt("group", groupIdx).Build()
 }
 
 // GroupPanelURL returns the partial=panel URL for a step group selection (swaps entire panel).
 func (p WorkflowOverviewProps) GroupPanelURL(groupIdx int) string {
-	return fmt.Sprintf("%s&group=%d", p.PanelPartialURL, groupIdx)
+	return p.url().SetInt("group", groupIdx).Set("partial", "panel").Build()
 }
 
 // BuildStepGroups groups workflow steps by GroupIdx and derives type, name, and status.

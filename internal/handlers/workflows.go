@@ -78,8 +78,6 @@ func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 		ShowApproveAll:   string(workflow.ApprovalOption) == "prompt" && !workflow.Finished,
 		Platform:         platform,
 		StackSetup:       stackSetup,
-		PageBaseURL:      fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, install.ID, workflowID),
-		PanelPartialURL:  fmt.Sprintf("%s/installs/%s/overview/workflows/%s?partial=panel", h.basePath, install.ID, workflowID),
 	}
 
 	h.RenderTempl(c, http.StatusOK, workflows.WorkflowOverview(props))
