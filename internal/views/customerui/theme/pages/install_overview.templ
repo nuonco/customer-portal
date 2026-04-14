@@ -274,7 +274,7 @@ func overviewPanelProps(props InstallOverviewPageProps) components.PanelProps {
 	if props.WorkflowOverview != nil && !props.WorkflowOverview.WorkflowFinished {
 		bp := overviewBaseParams(props)
 		p.HxPollGet = overviewWithPartial(bp, "panel")
-		p.HxPollInterval = "every 3s"
+		p.HxPollInterval = "every 5s"
 	}
 	return p
 }

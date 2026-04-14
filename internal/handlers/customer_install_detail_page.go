@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -149,6 +150,16 @@ func (h *Handler) InstallDetailPage(c *gin.Context) {
 }
 
 func (h *Handler) InstallOverviewPage(c *gin.Context) {
+	partial := c.Query("partial")
+	isHTMX := c.GetHeader("HX-Request") != ""
+
+	// Fast path: HTMX shimmer shell. Skip all API calls — build props from DB only.
+	if partial == "" && isHTMX {
+		h.renderOverviewShimmer(c)
+		return
+	}
+
+	// All other paths need full page props (includes API calls for install check + app name).
 	pageProps, err := h.buildInstallPageProps(c, "overview")
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
@@ -158,11 +169,8 @@ func (h *Handler) InstallOverviewPage(c *gin.Context) {
 	install := pageProps.Install
 	nuonOrg := install.GetNuonOrg()
 
-	partial := c.Query("partial")
-
 	switch partial {
 	case "content":
-		// Lazy-load path: fetch all API data and render content fragment
 		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
 		overviewProps.HasData = true
 		h.RenderTempl(c, http.StatusOK, customerpages.OverviewContent(overviewProps))
@@ -171,30 +179,51 @@ func (h *Handler) InstallOverviewPage(c *gin.Context) {
 		overviewProps.HasData = true
 		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
 	default:
-		// Full page load. HTMX-boosted navigations get shimmer + lazy load.
-		// Direct browser requests (no JS) get the full populated page.
-		isHTMX := c.GetHeader("HX-Request") != ""
-		if isHTMX {
-			// Serve shell + shimmer immediately; hx-trigger="load" will fetch content
-			shellProps := customerpages.InstallOverviewPageProps{
-				LayoutProps:     pageProps.LayoutProps,
-				Install:         install,
-				AppName:         pageProps.AppName,
-				APIDeletedError: pageProps.APIDeletedError,
-				AlertType:       c.Query("alert_type"),
-				AlertMsg:        c.Query("alert_msg"),
-			}
-			h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(shellProps))
-		} else {
-			// No-JS fallback: full data fetch
-			overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
-			overviewProps.HasData = true
-			h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
-		}
+		// No-JS fallback: full data fetch
+		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
+		overviewProps.HasData = true
+		h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
 	}
 }
 
-// buildOverviewData fetches all overview summary data and returns populated props.
+// renderOverviewShimmer serves the overview page shell with shimmer placeholders.
+// No API calls — only DB reads for install data and theme.
+func (h *Handler) renderOverviewShimmer(c *gin.Context) {
+	user := h.tryGetLoggedInUser(c)
+
+	installInterface, exists := c.Get("install")
+	if !exists {
+		c.String(http.StatusNotFound, "Install not found")
+		return
+	}
+	install := installInterface.(*models.Install)
+
+	if err := h.loadInstallWithOrg(install); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	orgID := h.getOrgIDForTheme(c)
+	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
+	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
+
+	layoutProps := h.buildCustomerLayoutProps(install.Name, user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
+	layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
+	layoutProps.ActiveNav = "installs"
+	layoutProps.CurrentInstallID = install.ID
+	layoutProps.ActiveTab = "overview"
+
+	shellProps := customerpages.InstallOverviewPageProps{
+		LayoutProps:     layoutProps,
+		Install:         install,
+		APIDeletedError: install.APIDeleted,
+		AlertType:       c.Query("alert_type"),
+		AlertMsg:        c.Query("alert_msg"),
+	}
+	h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(shellProps))
+}
+
+// buildOverviewData fetches all overview summary data in parallel and returns populated props.
 func (h *Handler) buildOverviewData(c *gin.Context, pageProps *customerpages.InstallPageProps, install *models.Install, nuonOrg *models.NuonOrg) customerpages.InstallOverviewPageProps {
 	overviewProps := customerpages.InstallOverviewPageProps{
 		LayoutProps:     pageProps.LayoutProps,
@@ -206,67 +235,107 @@ func (h *Handler) buildOverviewData(c *gin.Context, pageProps *customerpages.Ins
 		AlertMsg:        c.Query("alert_msg"),
 	}
 
-	if nuonOrg != nil && nuonOrg.APIToken != "" {
-		apiClient, apiErr := nuon.NewClientWithURL(
-			nuonOrg.APIToken,
-			nuonOrg.NuonOrgID,
-			h.nuonAPIURLForOrg(nuonOrg),
-		)
-		if apiErr == nil {
-			ctx := c.Request.Context()
-
-			// Stack summary — keep card in empty state until provisioning begins
-			if stack, err := apiClient.GetInstallStack(ctx, install.NuonInstallID); err == nil && stack != nil {
-				status := ""
-				if len(stack.Versions) > 0 && stack.Versions[0].CompositeStatus != nil {
-					status = string(stack.Versions[0].CompositeStatus.Status)
-				}
-				if status != "queued" {
-					overviewProps.StackStatus = status
-					if outputs := stack.InstallStackOutputs; outputs != nil && outputs.Aws != nil {
-						overviewProps.StackRegion = outputs.Aws.Region
-						overviewProps.StackAccountID = outputs.Aws.AccountID
-					}
-				}
-			}
-
-			// Sandbox summary — keep card in empty state until provisioning begins
-			sandboxStarted := false
-			if nuonInst, err := apiClient.GetInstall(ctx, install.NuonInstallID); err == nil && nuonInst != nil && nuonInst.Sandbox != nil {
-				if nuonInst.Sandbox.Status != "queued" {
-					overviewProps.SandboxStatus = nuonInst.Sandbox.Status
-					sandboxStarted = true
-				}
-			}
-			if sandboxStarted {
-				if cfg, err := apiClient.GetAppSandboxLatestConfig(ctx, install.GetAppID()); err == nil && cfg != nil {
-					if gh := cfg.ConnectedGithubVcsConfig; gh != nil {
-						overviewProps.SandboxRepo = gh.Repo
-						overviewProps.SandboxBranch = gh.Branch
-					} else if pg := cfg.PublicGitVcsConfig; pg != nil {
-						overviewProps.SandboxRepo = pg.Repo
-						overviewProps.SandboxBranch = pg.Branch
-						overviewProps.SandboxRepoPublic = true
-					}
-				}
-			}
-
-			// Components summary
-			if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
-				overviewProps.Components = h.buildComponentInfos(ctx, apiClient, install, comps)
-			}
-
-			// Recent workflows
-			if wfs, _, err := apiClient.GetInstallWorkflows(ctx, install.NuonInstallID, 0, 20); err == nil {
-				overviewProps.RecentWorkflows = wfs
-			}
-
-			// Current input values
-			currentInputs, _ := apiClient.GetInstallCurrentInputs(ctx, install.NuonInstallID)
-			rawConfig, _ := apiClient.GetAppInputConfigRaw(ctx, install.GetAppID())
-			overviewProps.InputFields = h.buildInputFields(currentInputs, rawConfig)
-		}
+	if nuonOrg == nil || nuonOrg.APIToken == "" {
+		return overviewProps
 	}
+
+	apiClient, apiErr := nuon.NewClientWithURL(
+		nuonOrg.APIToken,
+		nuonOrg.NuonOrgID,
+		h.nuonAPIURLForOrg(nuonOrg),
+	)
+	if apiErr != nil {
+		return overviewProps
+	}
+
+	ctx := c.Request.Context()
+	var wg sync.WaitGroup
+
+	// Stack summary
+	var stackStatus, stackRegion, stackAccountID string
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if stack, err := apiClient.GetInstallStack(ctx, install.NuonInstallID); err == nil && stack != nil {
+			status := ""
+			if len(stack.Versions) > 0 && stack.Versions[0].CompositeStatus != nil {
+				status = string(stack.Versions[0].CompositeStatus.Status)
+			}
+			if status != "queued" {
+				stackStatus = status
+				if outputs := stack.InstallStackOutputs; outputs != nil && outputs.Aws != nil {
+					stackRegion = outputs.Aws.Region
+					stackAccountID = outputs.Aws.AccountID
+				}
+			}
+		}
+	}()
+
+	// Sandbox summary (status + config fetched together since config depends on status)
+	var sandboxStatus, sandboxRepo, sandboxBranch string
+	var sandboxRepoPublic bool
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		nuonInst, err := apiClient.GetInstall(ctx, install.NuonInstallID)
+		if err != nil || nuonInst == nil || nuonInst.Sandbox == nil || nuonInst.Sandbox.Status == "queued" {
+			return
+		}
+		sandboxStatus = nuonInst.Sandbox.Status
+		if cfg, err := apiClient.GetAppSandboxLatestConfig(ctx, install.GetAppID()); err == nil && cfg != nil {
+			if gh := cfg.ConnectedGithubVcsConfig; gh != nil {
+				sandboxRepo = gh.Repo
+				sandboxBranch = gh.Branch
+			} else if pg := cfg.PublicGitVcsConfig; pg != nil {
+				sandboxRepo = pg.Repo
+				sandboxBranch = pg.Branch
+				sandboxRepoPublic = true
+			}
+		}
+	}()
+
+	// Components summary
+	var components []partials.ComponentInfo
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
+			components = h.buildComponentInfos(ctx, apiClient, install, comps)
+		}
+	}()
+
+	// Recent workflows
+	var recentWorkflows []*nuonmodels.AppWorkflow
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if wfs, _, err := apiClient.GetInstallWorkflows(ctx, install.NuonInstallID, 0, 20); err == nil {
+			recentWorkflows = wfs
+		}
+	}()
+
+	// Current input values
+	var inputFields []partials.InputFieldRow
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		currentInputs, _ := apiClient.GetInstallCurrentInputs(ctx, install.NuonInstallID)
+		rawConfig, _ := apiClient.GetAppInputConfigRaw(ctx, install.GetAppID())
+		inputFields = h.buildInputFields(currentInputs, rawConfig)
+	}()
+
+	wg.Wait()
+
+	overviewProps.StackStatus = stackStatus
+	overviewProps.StackRegion = stackRegion
+	overviewProps.StackAccountID = stackAccountID
+	overviewProps.SandboxStatus = sandboxStatus
+	overviewProps.SandboxRepo = sandboxRepo
+	overviewProps.SandboxBranch = sandboxBranch
+	overviewProps.SandboxRepoPublic = sandboxRepoPublic
+	overviewProps.Components = components
+	overviewProps.RecentWorkflows = recentWorkflows
+	overviewProps.InputFields = inputFields
 
 	return overviewProps
 }
