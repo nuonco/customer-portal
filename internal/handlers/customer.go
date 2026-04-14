@@ -667,34 +667,6 @@ func (h *Handler) tryGetLoggedInUser(c *gin.Context) *models.User {
 
 // InstallLinkPage renders the install link acceptance page
 
-func getString(m gin.H, key string) string {
-	if v, ok := m[key].(string); ok {
-		return v
-	}
-	return ""
-}
-
-// getBool safely gets a bool value from a gin.H map
-
-func getBool(m gin.H, key string) bool {
-	if v, ok := m[key].(bool); ok {
-		return v
-	}
-	return false
-}
-
-// getInt safely gets an int value from a gin.H map
-
-func getInt(m gin.H, key string) int {
-	if v, ok := m[key].(int); ok {
-		return v
-	}
-	if v, ok := m[key].(float64); ok {
-		return int(v)
-	}
-	return 0
-}
-
 // UpdateInstall handles customer install updates
 
 func (h *Handler) loadInstallWithOrg(install *models.Install) error {

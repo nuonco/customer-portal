@@ -1,0 +1,27 @@
+package workflows
+
+// SandboxGroupCard renders the detail card for a sandbox step group.
+templ SandboxGroupCard(props WorkflowOverviewProps) {
+	{{ group := props.StepGroups[props.SelectedGroup] }}
+	<div class="card-base !p-0" style="border-top: 2px solid var(--theme-primary)">
+		<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
+			<h4 class="text-sm font-medium" style="color: var(--theme-primary)">{ group.Name }</h4>
+			@groupStatusBadge(group.Status)
+		</div>
+		<div class="px-4 py-3">
+			switch group.Status {
+			case "error":
+				<p class="text-sm text-red-700 dark:text-red-400">Sandbox provisioning failed.</p>
+			case "completed", "success":
+				<p class="text-sm">Sandbox provisioned successfully.</p>
+			case "in-progress":
+				<p class="text-sm">Sandbox is being provisioned. This may take a few minutes.</p>
+			case "approval-awaiting":
+				<p class="text-sm">This step requires your approval to continue.</p>
+			default:
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 italic">Waiting to start</p>
+			}
+		</div>
+		@groupCardFooter(props, group)
+	</div>
+}

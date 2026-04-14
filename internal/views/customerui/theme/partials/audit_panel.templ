@@ -1610,15 +1610,6 @@ templ auditPanelScripts() {
 						if (typeof htmx !== 'undefined') {
 							htmx.process(content);
 						}
-						// Auto-open the first phase and select the first step
-						var firstPhase = content.querySelector('details.provision-phase');
-						if (firstPhase) {
-							firstPhase.setAttribute('open', '');
-						}
-						var firstStep = content.querySelector('[data-step-url]');
-						if (firstStep && typeof loadStepDetail === 'function') {
-							loadStepDetail(firstStep.getAttribute('data-step-url'), firstStep);
-						}
 					})
 					.catch(function() {
 						content.innerHTML = '<p class="text-sm text-red-500">Failed to load workflow details.</p>';

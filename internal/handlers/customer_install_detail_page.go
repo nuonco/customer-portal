@@ -3,12 +3,14 @@ package handlers
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	"github.com/nuonco/nuon-go/client/operations"
 	nuonmodels "github.com/nuonco/nuon-go/models"
@@ -155,15 +157,40 @@ func (h *Handler) InstallOverviewPage(c *gin.Context) {
 
 	install := pageProps.Install
 	nuonOrg := install.GetNuonOrg()
-	overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
 
-	switch c.Query("partial") {
-	case "panel":
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
+	partial := c.Query("partial")
+
+	switch partial {
 	case "content":
+		// Lazy-load path: fetch all API data and render content fragment
+		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
+		overviewProps.HasData = true
 		h.RenderTempl(c, http.StatusOK, customerpages.OverviewContent(overviewProps))
+	case "panel":
+		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
+		overviewProps.HasData = true
+		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
 	default:
-		h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
+		// Full page load. HTMX-boosted navigations get shimmer + lazy load.
+		// Direct browser requests (no JS) get the full populated page.
+		isHTMX := c.GetHeader("HX-Request") != ""
+		if isHTMX {
+			// Serve shell + shimmer immediately; hx-trigger="load" will fetch content
+			shellProps := customerpages.InstallOverviewPageProps{
+				LayoutProps:     pageProps.LayoutProps,
+				Install:         install,
+				AppName:         pageProps.AppName,
+				APIDeletedError: pageProps.APIDeletedError,
+				AlertType:       c.Query("alert_type"),
+				AlertMsg:        c.Query("alert_msg"),
+			}
+			h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(shellProps))
+		} else {
+			// No-JS fallback: full data fetch
+			overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
+			overviewProps.HasData = true
+			h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
+		}
 	}
 }
 
@@ -254,12 +281,33 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 	install := pageProps.Install
 	nuonOrg := install.GetNuonOrg()
 
-	overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
+	partial := c.Query("partial")
+
+	// For partial=panel requests (clicking a workflow row), we only need workflow data, not overview data.
+	// For partial=content, we need overview data but not workflow data.
+	// For full page loads, we need both (or shimmer for HTMX).
+
+	var overviewProps customerpages.InstallOverviewPageProps
+
+	needsOverviewData := partial == "content" || partial == "" && c.GetHeader("HX-Request") == ""
+	if needsOverviewData {
+		overviewProps = h.buildOverviewData(c, pageProps, install, nuonOrg)
+		overviewProps.HasData = true
+	} else {
+		overviewProps = customerpages.InstallOverviewPageProps{
+			LayoutProps:     pageProps.LayoutProps,
+			Install:         install,
+			AppName:         pageProps.AppName,
+			APIDeletedError: pageProps.APIDeletedError,
+			AlertType:       c.Query("alert_type"),
+			AlertMsg:        c.Query("alert_msg"),
+		}
+	}
 	overviewProps.Expanded = c.Query("expanded") == "true"
 
-	// Fetch workflow detail data
+	// Fetch workflow detail data (needed for panel and full page, but not shimmer or content)
 	workflowID := c.Param("workflow_id")
-	if nuonOrg != nil && nuonOrg.APIToken != "" && workflowID != "" {
+	if nuonOrg != nil && nuonOrg.APIToken != "" && workflowID != "" && partial != "content" && partial != "panel-shimmer" {
 		apiClient, apiErr := nuon.NewClientWithURL(
 			nuonOrg.APIToken,
 			nuonOrg.NuonOrgID,
@@ -269,17 +317,40 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 			ctx := c.Request.Context()
 			workflow, wfErr := apiClient.GetWorkflow(ctx, workflowID)
 			if wfErr == nil && workflow != nil {
-				processed := processWorkflowForCustomer(workflow)
-				processed["current_step_role"] = resolveCurrentStepRole(ctx, apiClient, install.NuonInstallID, processed)
-				panel := ginHToWorkflowDataPanel(processed)
+				panel := BuildWorkflowDataPanel(workflow)
+				panel.CurrentStepRole = resolveCurrentStepRole(ctx, apiClient, install.NuonInstallID, workflow)
 				overviewProps.SelectedWorkflow = &panel
 
-				var stackSetup partials.StackSetupData
-				if isActiveWorkflowStatus(panel.Status) {
+				// Build WorkflowOverview props
+				stepGroups := workflows.BuildStepGroups(workflow.Steps)
+				selectedGroup := -1
+				if groupParam := c.Query("group"); groupParam != "" {
+					fmt.Sscanf(groupParam, "%d", &selectedGroup)
+				}
+				if selectedGroup < 0 || selectedGroup >= len(stepGroups) {
+					selectedGroup = autoSelectGroup(stepGroups)
+				}
+				platform := h.detectPlatform(ctx, apiClient, install)
+
+				var stackSetup workflows.StackSetupData
+				if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == workflows.StepGroupStack {
 					stackSetup = h.getStackSetupData(ctx, apiClient, install, workflow)
 				}
-				overviewProps.WorkflowStack = stackSetup
-				overviewProps.WorkflowPhases = groupStepsIntoPhases(workflow, panel.IsReprovision)
+
+				overviewProps.WorkflowOverview = &workflows.WorkflowOverviewProps{
+					StepGroups:       stepGroups,
+					SelectedGroup:    selectedGroup,
+					InstallID:        install.ID,
+					BasePath:         h.basePath,
+					WorkflowID:       workflowID,
+					WorkflowFinished: workflow.Finished,
+					ShowApproveAll:   string(workflow.ApprovalOption) == "prompt" && !workflow.Finished,
+					Platform:         platform,
+					StackSetup:       stackSetup,
+					PageBaseURL:      fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, install.ID, workflowID),
+					PanelPartialURL:  fmt.Sprintf("%s/installs/%s/overview/workflows/%s?partial=panel", h.basePath, install.ID, workflowID),
+					Expanded:         overviewProps.Expanded,
+				}
 			}
 		}
 	}
@@ -290,7 +361,9 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
 	overviewProps.PrimaryColor = primaryColor
 
-	switch c.Query("partial") {
+	switch partial {
+	case "panel-shimmer":
+		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanelShimmer(overviewProps, workflowID))
 	case "panel":
 		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
 	case "content":

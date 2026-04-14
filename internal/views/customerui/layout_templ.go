@@ -183,7 +183,7 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<body hx-boost=\"true\" hx-ext=\"head-support\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 16, "<body hx-boost=\"true\" hx-ext=\"head-support,morph\" hx-swap=\"innerHTML show:top swap:0ms settle:0ms\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

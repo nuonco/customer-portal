@@ -490,19 +490,18 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			// Panel endpoints (HTMX fragments loaded by the tab pages)
 			installOwnership.GET("/panel", h.InstallDetailPanel) // Overview tab content
 			installOwnership.GET("/panel/readme", h.AppInfoPanel)
-			installOwnership.GET("/panel/audit", h.AuditPanel)                                   // Panel audit tab
-			installOwnership.GET("/panel/access", h.AccessPanel)                                 // Panel access tab (Roles)
-			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)                   // Role detail sliding panel
-			installOwnership.GET("/panel/audit/role/:role_index", h.AuditRoleDetailPanel)        // Audit role detail sliding panel
-			installOwnership.GET("/panel/policies", h.PoliciesPanel)                             // Panel policies tab
-			installOwnership.GET("/panel/policies/detail/:policy_name", h.PolicyDetailPanel)     // Policy detail sliding panel
-			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)       // Policy report detail panel
-			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)       // Component detail sliding panel
-			installOwnership.GET("/panel/sandbox-run/:run_id", h.SandboxRunDetailPanel)          // Sandbox run detail sliding panel
-			installOwnership.GET("/panel/stack-run/:run_id", h.StackRunDetailPanel)              // Stack run detail sliding panel
-			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)               // Job detail sliding panel
-			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)          // Secondary panel workflow detail
-			installOwnership.GET("/panel/workflow/:workflow_id/step/:step_id", h.StepDetailCard) // Step detail card within accordion
+			installOwnership.GET("/panel/audit", h.AuditPanel)                               // Panel audit tab
+			installOwnership.GET("/panel/access", h.AccessPanel)                             // Panel access tab (Roles)
+			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)               // Role detail sliding panel
+			installOwnership.GET("/panel/audit/role/:role_index", h.AuditRoleDetailPanel)    // Audit role detail sliding panel
+			installOwnership.GET("/panel/policies", h.PoliciesPanel)                         // Panel policies tab
+			installOwnership.GET("/panel/policies/detail/:policy_name", h.PolicyDetailPanel) // Policy detail sliding panel
+			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)   // Policy report detail panel
+			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)   // Component detail sliding panel
+			installOwnership.GET("/panel/sandbox-run/:run_id", h.SandboxRunDetailPanel)      // Sandbox run detail sliding panel
+			installOwnership.GET("/panel/stack-run/:run_id", h.StackRunDetailPanel)          // Stack run detail sliding panel
+			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)           // Job detail sliding panel
+			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)      // Workflow overview (step group selection)
 
 			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install

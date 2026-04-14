@@ -13,12 +13,27 @@ type PanelProps struct {
 	HxExpandGet   string // hx-get URL for expanding (includes partial=panel)
 	HxCollapseGet string // hx-get URL for collapsing (includes partial=panel)
 	HxCloseGet    string // hx-get URL for closing (returns empty content + OOB to remove .open)
+	// Optional badge rendered inline after the title text (e.g. status chip).
+	TitleBadge templ.Component
+	// Optional action buttons rendered in the header between the title and expand/close controls.
+	HeaderActions templ.Component
+	// Optional HTMX polling on the wrapper (refreshes entire panel including header).
+	HxPollGet      string // hx-get URL for polling (e.g. partial=panel endpoint)
+	HxPollInterval string // hx-trigger interval (e.g. "every 3s")
 }
 
 // Panel renders a fixed-position sliding panel with overlay, header (title, expand/collapse, close),
 // and a scrollable content area.
 templ Panel(props PanelProps) {
-	<div id={ props.ID + "-wrapper" }>
+	<div
+		id={ props.ID + "-wrapper" }
+		if props.HxPollGet != "" && props.HxPollInterval != "" {
+			hx-get={ props.HxPollGet }
+			hx-trigger={ props.HxPollInterval }
+			hx-target={ "#" + props.ID + "-wrapper" }
+			hx-swap="morph:outerHTML show:none swap:0ms settle:0ms"
+		}
+	>
 		<div
 			id={ props.ID + "-overlay" }
 			class={ "secondary-panel-overlay", templ.KV("open", props.Open) }
@@ -42,8 +57,17 @@ templ Panel(props PanelProps) {
 			class={ "secondary-panel", templ.KV("open", props.Open), templ.KV("panel-full", props.Expanded) }
 		>
 			<div class="flex items-center justify-between px-6 py-4 border-b border-cool-grey-200 dark:border-dark-grey-600">
-				<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">{ props.Title }</h3>
-				<div class="flex items-center gap-1">
+				<div class="flex items-center gap-2">
+					<h3 class="text-lg font-semibold text-cool-grey-900 dark:text-white">{ props.Title }</h3>
+					if props.TitleBadge != nil {
+						@props.TitleBadge
+					}
+				</div>
+				<div class="flex items-center gap-2">
+					if props.HeaderActions != nil {
+						@props.HeaderActions
+					}
+					<div class="flex items-center gap-1">
 					if props.Expanded {
 						<a
 							href={ templ.SafeURL(props.CollapseURL) }
@@ -92,6 +116,7 @@ templ Panel(props PanelProps) {
 							<i class="ph-bold ph-x text-lg"></i>
 						</a>
 					}
+				</div>
 				</div>
 			</div>
 			<div class="panel-content px-6 py-4 overflow-y-auto" id={ props.ID + "-content" }>

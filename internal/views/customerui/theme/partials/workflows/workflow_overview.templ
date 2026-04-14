@@ -1,0 +1,158 @@
+package workflows
+
+// WorkflowOverview renders the two-column workflow step group list and detail card.
+templ WorkflowOverview(props WorkflowOverviewProps) {
+	<div id="workflow-overview" class="@container">
+		if len(props.StepGroups) == 0 {
+			@workflowEmptyState(props)
+		} else {
+		<div class="flex flex-col @4xl:flex-row gap-4">
+			<!-- Detail card: first in DOM (top on mobile), ordered right on wide -->
+			<div class="@4xl:w-3/5 @4xl:order-last">
+				if props.SelectedGroup >= 0 && props.SelectedGroup < len(props.StepGroups) {
+					{{ group := props.StepGroups[props.SelectedGroup] }}
+					switch group.Type {
+					case StepGroupStack:
+						@StackGroupCard(props)
+					case StepGroupSandbox:
+						@SandboxGroupCard(props)
+					case StepGroupComponent:
+						@ComponentGroupCard(props)
+					case StepGroupAction:
+						@ActionGroupCard(props)
+					default:
+						@defaultGroupCard(group)
+					}
+				}
+			</div>
+			<!-- Step group list -->
+			<div class="@4xl:w-2/5">
+				<div class="card-base !p-0">
+					for i, group := range props.StepGroups {
+						<a
+							href={ templ.SafeURL(props.GroupPageURL(i)) }
+							hx-get={ props.GroupPanelURL(i) }
+							hx-target="#overview-workflow-panel-wrapper"
+							hx-swap="outerHTML"
+							hx-push-url={ props.GroupPageURL(i) }
+							hx-boost="false"
+							class={
+								"flex items-center gap-3 px-4 py-3 text-sm no-underline cursor-pointer transition-colors",
+								templ.KV("bg-cool-grey-50 dark:bg-dark-grey-700", i == props.SelectedGroup),
+								templ.KV("hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700", i != props.SelectedGroup),
+							}
+							if i > 0 {
+								style="border-top: 1px solid var(--theme-border-subtle)"
+							}
+						>
+							@stepGroupStatusIcon(group.Status)
+							<span class={
+								"text-cool-grey-700 dark:text-cool-grey-300",
+								templ.KV("font-medium", group.Status == "in-progress" || group.Status == "approval-awaiting"),
+							}>{ group.Name }</span>
+						</a>
+					}
+				</div>
+			</div>
+		</div>
+		}
+	</div>
+}
+
+templ workflowEmptyState(props WorkflowOverviewProps) {
+	<div class="card-base !p-0" style="border-top: 2px solid var(--theme-primary)">
+		<div class="flex items-center gap-3 px-4 py-3">
+			<i class="ph-bold ph-circle-notch animate-spin text-base" style="color: var(--theme-primary)"></i>
+			<div>
+				<h4 class="text-sm font-medium">Setting up workflow...</h4>
+				<p class="text-xs text-[var(--theme-text-muted)] mt-0.5">Waiting for workflow steps to be created.</p>
+			</div>
+		</div>
+	</div>
+}
+
+templ stepGroupStatusIcon(status string) {
+	switch status {
+	case "completed", "success", "approved":
+		<i class="ph-bold ph-check-circle text-green-500 dark:text-green-400 text-sm shrink-0"></i>
+	case "in-progress":
+		<i class="ph-bold ph-circle-notch animate-spin text-blue-500 dark:text-blue-400 text-sm shrink-0"></i>
+	case "approval-awaiting":
+		<i class="ph-bold ph-clock text-amber-500 dark:text-amber-400 text-sm shrink-0"></i>
+	case "error":
+		<i class="ph-bold ph-x-circle text-red-500 dark:text-red-400 text-sm shrink-0"></i>
+	default:
+		<i class="ph-bold ph-circle text-cool-grey-300 dark:text-cool-grey-600 text-sm shrink-0"></i>
+	}
+}
+
+templ defaultGroupCard(group StepGroup) {
+	<div class="card-base !p-0">
+		<div class="flex items-center gap-3 px-4 py-3">
+			@stepGroupStatusIcon(group.Status)
+			<span class="text-sm text-cool-grey-700 dark:text-cool-grey-300">{ group.Name }</span>
+		</div>
+	</div>
+}
+
+// groupStatusBadge renders a status badge for card headers.
+templ groupStatusBadge(status string) {
+	switch status {
+	case "completed", "success":
+		<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+			<i class="ph-bold ph-check-circle text-xs"></i>
+			Completed
+		</span>
+	case "in-progress":
+		<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+			<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
+			In Progress
+		</span>
+	case "approval-awaiting":
+		<span class="badge-warning text-xs px-2 py-0.5 rounded-full">Awaiting Approval</span>
+	case "error":
+		<span class="badge-error text-xs px-2 py-0.5 rounded-full">Failed</span>
+	}
+}
+
+// groupCardFooter renders the action button footer for a group card.
+templ groupCardFooter(props WorkflowOverviewProps, group StepGroup) {
+	if group.HasApprovalStep() || group.HasRetryableStep() {
+		<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
+			@groupActionButtons(props, group)
+		</div>
+	}
+}
+
+// groupActionButtons renders approve/retry buttons based on step attributes.
+// Buttons are always shown when the group has the capability, disabled when not actionable.
+// Cancel is a workflow-level action rendered in the panel header.
+templ groupActionButtons(props WorkflowOverviewProps, group StepGroup) {
+	if group.HasApprovalStep() {
+		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/approve") } class="inline">
+			if group.CanApprove() {
+				<input type="hidden" name="step_id" value={ group.ActiveStep().ID }/>
+				<input type="hidden" name="approval_id" value={ group.ActiveStep().Approval.ID }/>
+			}
+			<button
+				type="submit"
+				class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+				disabled?={ !group.CanApprove() }
+			>
+				Approve
+			</button>
+		</form>
+	}
+	if group.HasRetryableStep() {
+		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/step/" + group.RetryableStepID() + "/retry") } class="inline">
+			<button
+				type="submit"
+				class="button button-outline btn-theme-outline inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+				disabled?={ !group.CanRetry() }
+			>
+				Retry
+				<i class="ph-bold ph-arrow-clockwise text-base"></i>
+			</button>
+		</form>
+	}
+}

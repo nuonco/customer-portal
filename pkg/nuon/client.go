@@ -496,16 +496,29 @@ func (c *Client) GetInstallWorkflowsByType(ctx context.Context, installID string
 	return workflows, hasMore, nil
 }
 
-// ApproveWorkflowStep approves a workflow step that requires approval
+// ApproveWorkflowStep approves a workflow step that requires approval.
+// Note: uses direct HTTP call because nuon-go's CreateWorkflowStepApprovalResponse
+// omits the step_id path param (SDK bug).
 func (c *Client) ApproveWorkflowStep(ctx context.Context, workflowID, stepID, approvalID string) error {
-	request := &models.ServiceCreateWorkflowStepApprovalResponseRequest{
-		ResponseType: "approve",
-		Note:         "Approved via installer app",
-	}
+	body := `{"response_type":"approve","note":"Approved via installer app"}`
+	reqURL := fmt.Sprintf("%s/v1/workflows/%s/steps/%s/approvals/%s/response", c.apiURL, workflowID, stepID, approvalID)
 
-	_, err := c.client.CreateWorkflowStepApprovalResponse(ctx, workflowID, stepID, approvalID, request)
+	req, err := http.NewRequestWithContext(ctx, "POST", reqURL, strings.NewReader(body))
 	if err != nil {
 		return fmt.Errorf("failed to approve workflow step: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to approve workflow step: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 300 {
+		return fmt.Errorf("failed to approve workflow step: status %d", resp.StatusCode)
 	}
 
 	return nil

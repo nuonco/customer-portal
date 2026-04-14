@@ -51,7 +51,7 @@ templ Layout(props LayoutProps) {
 			<script src="https://unpkg.com/idiomorph@0.3.0/dist/idiomorph-ext.min.js"></script>
 			<script src="/static/js/install-detail.js"></script>
 		</head>
-		<body hx-boost="true" hx-ext="head-support" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white overflow-hidden", props.RadiusClass, templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
+		<body hx-boost="true" hx-ext="head-support,morph" hx-swap="innerHTML show:top swap:0ms settle:0ms" class={ "bg-cool-grey-50 dark:bg-dark-grey-950 dark:text-white overflow-hidden", props.RadiusClass, templ.KV("has-vendor-bar", props.User != nil && props.User.Role == models.RoleVendor) }>
 			<!-- Auth helpers -->
 			@scripts.Auth(props.BasePath)
 
