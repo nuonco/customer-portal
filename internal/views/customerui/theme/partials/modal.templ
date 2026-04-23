@@ -1,5 +1,7 @@
 package partials
 
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+
 // ConfirmModal renders a confirmation dialog modal.
 // Usage from JavaScript:
 //   showConfirmModal({
@@ -12,36 +14,64 @@ package partials
 //       // User clicked confirm
 //     }
 //   });
+templ confirmModalHeader() {
+	<div class="flex items-center justify-between">
+		<h3 id="confirm-title" class="text-base font-semibold text-cool-grey-900 dark:text-white"></h3>
+		<button type="button" class="text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-200" onclick="closeModal('confirm-modal')">
+			<i class="ph-bold ph-x text-lg"></i>
+		</button>
+	</div>
+}
+
+templ confirmModalFooter() {
+	<div class="flex justify-end space-x-3">
+		<button id="confirm-cancel" class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Variant: components.ButtonOutline}) }>
+			Cancel
+		</button>
+		<button id="confirm-ok" class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}) }>
+			Confirm
+		</button>
+	</div>
+}
+
 templ ConfirmModal() {
-	@ModalWrapper("confirm-modal", "max-w-md") {
-		<h3 id="confirm-title" class="text-lg font-semibold text-cool-grey-900 dark:text-white mb-2"></h3>
-		<p id="confirm-message" class="text-cool-grey-600 dark:text-cool-grey-400 mb-6"></p>
-		<div class="flex justify-end space-x-3">
-			<button id="confirm-cancel" class="button button-outline btn-theme-outline">
-				Cancel
-			</button>
-			<button id="confirm-ok" class="button button-primary btn-theme-primary">
-				Confirm
-			</button>
+	<div
+		id="confirm-modal"
+		class="fixed inset-0 backdrop-blur-xs bg-black/2 dark:bg-black/10 hidden overflow-y-auto"
+		style="z-index: 100"
+		{ modalWrapperCloseAttr("confirm-modal")... }
+	>
+		<div
+			class="flex items-center justify-center min-h-full p-4"
+			{ modalWrapperCloseAttr("confirm-modal")... }
+		>
+			<div id="confirm-modal-dialog" class="w-full my-8 max-w-md">
+				@components.Card(components.CardProps{
+					Size:   components.CardLarge,
+					Header: confirmModalHeader(),
+					Footer: confirmModalFooter(),
+				}) {
+					<p id="confirm-message" class="text-sm text-cool-grey-600 dark:text-cool-grey-400"></p>
+				}
+			</div>
 		</div>
-	}
+	</div>
 	<script>
 		window.showConfirmModal = function(options) {
 			return new Promise(function(resolve) {
-				var modal = document.getElementById('confirm-modal');
 				document.getElementById('confirm-title').textContent = options.title || 'Confirm';
 				document.getElementById('confirm-message').textContent = options.message || 'Are you sure?';
 				document.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';
 				document.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';
-				modal.classList.remove('hidden');
+				openModal('confirm-modal');
 
 				document.getElementById('confirm-ok').onclick = function() {
-					modal.classList.add('hidden');
+					closeModal('confirm-modal');
 					resolve(true);
 				};
 
 				document.getElementById('confirm-cancel').onclick = function() {
-					modal.classList.add('hidden');
+					closeModal('confirm-modal');
 					resolve(false);
 				};
 			});
@@ -97,7 +127,7 @@ templ PromptModal() {
 				document.getElementById('prompt-ok').textContent = options.confirmText || 'Confirm';
 				document.getElementById('prompt-cancel').textContent = options.cancelText || 'Cancel';
 
-				modal.classList.remove('hidden');
+				openModal('prompt-modal');
 				input.focus();
 
 				document.getElementById('prompt-ok').onclick = function() {
@@ -107,12 +137,12 @@ templ PromptModal() {
 						errorEl.classList.remove('hidden');
 						return;
 					}
-					modal.classList.add('hidden');
+					closeModal('prompt-modal');
 					resolve(value);
 				};
 
 				document.getElementById('prompt-cancel').onclick = function() {
-					modal.classList.add('hidden');
+					closeModal('prompt-modal');
 					resolve(null);
 				};
 

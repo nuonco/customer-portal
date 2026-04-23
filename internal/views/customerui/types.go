@@ -70,6 +70,9 @@ type LayoutProps struct {
 	ActiveAccount *models.CustomerAccount  // Currently active account (nil if no account)
 	OtherAccounts []models.CustomerAccount // Other accounts the user can switch to
 
+	// Sidebar
+	SidebarMinimized bool // When true, sidebar renders in collapsed icon-only mode
+
 	// API error state
 	NuonAPIError string // Error message shown in banner at top of content area (empty = no error)
 

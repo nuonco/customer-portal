@@ -26,31 +26,86 @@ templ StackGroupCard(props WorkflowOverviewProps) {
 }
 
 templ stackGroupAWS(props WorkflowOverviewProps, group StepGroup) {
+	{{ setup := props.StackSetup }}
 	<div class="flex items-center justify-between px-4 py-3" style="border-bottom: 1px solid var(--theme-border-subtle)">
 		<h4 class="text-sm font-medium" style="color: var(--theme-primary)">AWS CloudFormation</h4>
 		@groupStatusBadge(group.Status)
 	</div>
-	<div class="px-4 py-3">
-		if props.StackSetup.CloudFormationLink != "" {
-			<p class="text-sm">Complete setup in AWS Console</p>
-		} else {
+	<div class="px-4 py-3 space-y-4">
+		if setup.CloudFormationLink == "" && setup.TemplateURL == "" {
 			<p class="text-sm text-[var(--theme-text-muted)] italic">Preparing CloudFormation stack...</p>
+		} else {
+			<!-- Setup your install stack -->
+			if setup.CloudFormationLink != "" || setup.TemplateURL != "" {
+				<div>
+					<p class="text-sm font-medium mb-2">Setup your install stack</p>
+					if setup.CloudFormationLink != "" {
+						<div class="mb-2">
+							<div class="flex items-center justify-between mb-1">
+								<p class="text-xs text-[var(--theme-text-muted)]">Quick launch in AWS console</p>
+								<a
+									href={ templ.SafeURL(setup.CloudFormationLink) }
+									target="_blank"
+									rel="noopener noreferrer"
+									class="inline-flex items-center gap-1 text-xs font-medium no-underline"
+									style="color: var(--theme-primary)"
+								>
+									Open in AWS
+									<i class="ph-bold ph-arrow-square-out text-xs"></i>
+								</a>
+							</div>
+							@components.CodeBlock(setup.CloudFormationLink, "text")
+						</div>
+					}
+					if setup.TemplateURL != "" {
+						<div>
+							<p class="text-xs text-[var(--theme-text-muted)] mb-1">CloudFormation template</p>
+							@components.CodeBlock(setup.TemplateURL, "text")
+						</div>
+					}
+				</div>
+			}
+			<!-- Divider -->
+			if setup.CloudFormationLink != "" && setup.TemplateURL != "" {
+				<div class="flex items-center gap-3 text-xs text-[var(--theme-text-muted)]">
+					<div class="flex-1" style="border-top: 1px solid var(--theme-border-subtle)"></div>
+					<span>or</span>
+					<div class="flex-1" style="border-top: 1px solid var(--theme-border-subtle)"></div>
+				</div>
+			}
+			<!-- Deploy with AWS CLI -->
+			if setup.TemplateURL != "" {
+				<div>
+					<p class="text-sm font-medium mb-2">Deploy with AWS CLI</p>
+					<div class="space-y-2">
+						<div>
+							<p class="text-xs text-[var(--theme-text-muted)] mb-1">Create stack</p>
+							@components.CodeBlock(setup.CreateStackCmd(), "bash")
+						</div>
+						<div>
+							<p class="text-xs text-[var(--theme-text-muted)] mb-1">Update existing stack</p>
+							@components.CodeBlock(setup.UpdateStackCmd(), "bash")
+						</div>
+					</div>
+				</div>
+			}
+			<!-- Verify your stack -->
+			<div>
+				<p class="text-sm font-medium mb-2">Verify your stack</p>
+				<p class="text-xs text-[var(--theme-text-muted)] mb-2">After running the create or update command above, open the AWS CloudFormation console to monitor your stack progress.</p>
+				<a
+					href={ templ.SafeURL(setup.ConsoleURL()) }
+					target="_blank"
+					rel="noopener noreferrer"
+					class="button button-outline btn-theme-outline inline-flex items-center gap-2 text-xs"
+				>
+					Open in AWS console
+					<i class="ph-bold ph-arrow-square-out text-sm"></i>
+				</a>
+			</div>
 		}
 	</div>
-	<div class="flex items-center justify-end gap-2 px-4 py-3" style="border-top: 1px solid var(--theme-border-subtle)">
-		if props.StackSetup.CloudFormationLink != "" {
-			<a
-				href={ templ.SafeURL(props.StackSetup.CloudFormationLink) }
-				target="_blank"
-				rel="noopener noreferrer"
-				class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
-			>
-				Open in AWS
-				<i class="ph-bold ph-arrow-square-out text-base"></i>
-			</a>
-		}
-		@groupActionButtons(props, group)
-	</div>
+	@groupCardFooter(props, group)
 }
 
 templ stackGroupGCP(props WorkflowOverviewProps, group StepGroup) {

@@ -5,10 +5,10 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 
 // ConfirmModal renders a confirmation dialog modal.
 // Usage from JavaScript:
@@ -23,7 +23,7 @@ import (
 //	    // User clicked confirm
 //	  }
 //	});
-func ConfirmModal() templ.Component {
+func confirmModalHeader() templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -44,7 +44,129 @@ func ConfirmModal() templ.Component {
 			templ_7745c5c3_Var1 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var2 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"flex items-center justify-between\"><h3 id=\"confirm-title\" class=\"text-base font-semibold text-cool-grey-900 dark:text-white\"></h3><button type=\"button\" class=\"text-cool-grey-400 hover:text-cool-grey-600 dark:hover:text-cool-grey-200\" onclick=\"closeModal('confirm-modal')\"><i class=\"ph-bold ph-x text-lg\"></i></button></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func confirmModalFooter() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var2 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var2 == nil {
+			templ_7745c5c3_Var2 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<div class=\"flex justify-end space-x-3\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var3 = []any{components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Variant: components.ButtonOutline})}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var3...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<button id=\"confirm-cancel\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var4 string
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var3).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">Cancel</button> ")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 = []any{components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm})}
+		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var5...)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<button id=\"confirm-ok\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var6 string
+		templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var5).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\">Confirm</button></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+func ConfirmModal() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var7 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var7 == nil {
+			templ_7745c5c3_Var7 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "<div id=\"confirm-modal\" class=\"fixed inset-0 backdrop-blur-xs bg-black/2 dark:bg-black/10 hidden overflow-y-auto\" style=\"z-index: 100\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, modalWrapperCloseAttr("confirm-modal"))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "><div class=\"flex items-center justify-center min-h-full p-4\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, modalWrapperCloseAttr("confirm-modal"))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "><div id=\"confirm-modal-dialog\" class=\"w-full my-8 max-w-md\">")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Var8 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -56,17 +178,21 @@ func ConfirmModal() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<h3 id=\"confirm-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"confirm-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-6\"></p><div class=\"flex justify-end space-x-3\"><button id=\"confirm-cancel\" class=\"button button-outline btn-theme-outline\">Cancel</button> <button id=\"confirm-ok\" class=\"button button-primary btn-theme-primary\">Confirm</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 10, "<p id=\"confirm-message\" class=\"text-sm text-cool-grey-600 dark:text-cool-grey-400\"></p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ModalWrapper("confirm-modal", "max-w-md").Render(templ.WithChildren(ctx, templ_7745c5c3_Var2), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = components.Card(components.CardProps{
+			Size:   components.CardLarge,
+			Header: confirmModalHeader(),
+			Footer: confirmModalFooter(),
+		}).Render(templ.WithChildren(ctx, templ_7745c5c3_Var8), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "<script>\n\t\twindow.showConfirmModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('confirm-modal');\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tdocument.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';\n\t\t\t\tmodal.classList.remove('hidden');\n\n\t\t\t\tdocument.getElementById('confirm-ok').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(true);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('confirm-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(false);\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 11, "</div></div></div><script>\n\t\twindow.showConfirmModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tdocument.getElementById('confirm-title').textContent = options.title || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-message').textContent = options.message || 'Are you sure?';\n\t\t\t\tdocument.getElementById('confirm-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('confirm-cancel').textContent = options.cancelText || 'Cancel';\n\t\t\t\topenModal('confirm-modal');\n\n\t\t\t\tdocument.getElementById('confirm-ok').onclick = function() {\n\t\t\t\t\tcloseModal('confirm-modal');\n\t\t\t\t\tresolve(true);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('confirm-cancel').onclick = function() {\n\t\t\t\t\tcloseModal('confirm-modal');\n\t\t\t\t\tresolve(false);\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -104,12 +230,12 @@ func PromptModal() templ.Component {
 			}()
 		}
 		ctx = templ.InitializeContext(ctx)
-		templ_7745c5c3_Var3 := templ.GetChildren(ctx)
-		if templ_7745c5c3_Var3 == nil {
-			templ_7745c5c3_Var3 = templ.NopComponent
+		templ_7745c5c3_Var9 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var9 == nil {
+			templ_7745c5c3_Var9 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Var4 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_Var10 := templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 			templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 			templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
 			if !templ_7745c5c3_IsBuffer {
@@ -121,17 +247,17 @@ func PromptModal() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<h3 id=\"prompt-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"prompt-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-4\"></p><input type=\"text\" id=\"prompt-input\" class=\"field-input mb-2\" placeholder=\"\"><p id=\"prompt-error\" class=\"text-red-600 dark:text-red-400 text-sm mb-4 hidden\"></p><div class=\"flex justify-end space-x-3\"><button id=\"prompt-cancel\" class=\"button button-outline btn-theme-outline\">Cancel</button> <button id=\"prompt-ok\" class=\"button button-primary btn-theme-primary\">Confirm</button></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 12, "<h3 id=\"prompt-title\" class=\"text-lg font-semibold text-cool-grey-900 dark:text-white mb-2\"></h3><p id=\"prompt-message\" class=\"text-cool-grey-600 dark:text-cool-grey-400 mb-4\"></p><input type=\"text\" id=\"prompt-input\" class=\"field-input mb-2\" placeholder=\"\"><p id=\"prompt-error\" class=\"text-red-600 dark:text-red-400 text-sm mb-4 hidden\"></p><div class=\"flex justify-end space-x-3\"><button id=\"prompt-cancel\" class=\"button button-outline btn-theme-outline\">Cancel</button> <button id=\"prompt-ok\" class=\"button button-primary btn-theme-primary\">Confirm</button></div>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
 			return nil
 		})
-		templ_7745c5c3_Err = ModalWrapper("prompt-modal", "max-w-md").Render(templ.WithChildren(ctx, templ_7745c5c3_Var4), templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = ModalWrapper("prompt-modal", "max-w-md").Render(templ.WithChildren(ctx, templ_7745c5c3_Var10), templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "<script>\n\t\twindow.showPromptModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('prompt-modal');\n\t\t\t\tvar input = document.getElementById('prompt-input');\n\t\t\t\tvar errorEl = document.getElementById('prompt-error');\n\n\t\t\t\tdocument.getElementById('prompt-title').textContent = options.title || 'Enter Value';\n\t\t\t\tdocument.getElementById('prompt-message').textContent = options.message || '';\n\t\t\t\tinput.placeholder = options.placeholder || '';\n\t\t\t\tinput.value = '';\n\t\t\t\terrorEl.classList.add('hidden');\n\t\t\t\tdocument.getElementById('prompt-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('prompt-cancel').textContent = options.cancelText || 'Cancel';\n\n\t\t\t\tmodal.classList.remove('hidden');\n\t\t\t\tinput.focus();\n\n\t\t\t\tdocument.getElementById('prompt-ok').onclick = function() {\n\t\t\t\t\tvar value = input.value.trim();\n\t\t\t\t\tif (options.expectedValue && value !== options.expectedValue) {\n\t\t\t\t\t\terrorEl.textContent = options.validationMessage || 'Value does not match';\n\t\t\t\t\t\terrorEl.classList.remove('hidden');\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(value);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('prompt-cancel').onclick = function() {\n\t\t\t\t\tmodal.classList.add('hidden');\n\t\t\t\t\tresolve(null);\n\t\t\t\t};\n\n\t\t\t\t// Allow Enter key to submit\n\t\t\t\tinput.onkeydown = function(e) {\n\t\t\t\t\tif (e.key === 'Enter') {\n\t\t\t\t\t\tdocument.getElementById('prompt-ok').click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 13, "<script>\n\t\twindow.showPromptModal = function(options) {\n\t\t\treturn new Promise(function(resolve) {\n\t\t\t\tvar modal = document.getElementById('prompt-modal');\n\t\t\t\tvar input = document.getElementById('prompt-input');\n\t\t\t\tvar errorEl = document.getElementById('prompt-error');\n\n\t\t\t\tdocument.getElementById('prompt-title').textContent = options.title || 'Enter Value';\n\t\t\t\tdocument.getElementById('prompt-message').textContent = options.message || '';\n\t\t\t\tinput.placeholder = options.placeholder || '';\n\t\t\t\tinput.value = '';\n\t\t\t\terrorEl.classList.add('hidden');\n\t\t\t\tdocument.getElementById('prompt-ok').textContent = options.confirmText || 'Confirm';\n\t\t\t\tdocument.getElementById('prompt-cancel').textContent = options.cancelText || 'Cancel';\n\n\t\t\t\topenModal('prompt-modal');\n\t\t\t\tinput.focus();\n\n\t\t\t\tdocument.getElementById('prompt-ok').onclick = function() {\n\t\t\t\t\tvar value = input.value.trim();\n\t\t\t\t\tif (options.expectedValue && value !== options.expectedValue) {\n\t\t\t\t\t\terrorEl.textContent = options.validationMessage || 'Value does not match';\n\t\t\t\t\t\terrorEl.classList.remove('hidden');\n\t\t\t\t\t\treturn;\n\t\t\t\t\t}\n\t\t\t\t\tcloseModal('prompt-modal');\n\t\t\t\t\tresolve(value);\n\t\t\t\t};\n\n\t\t\t\tdocument.getElementById('prompt-cancel').onclick = function() {\n\t\t\t\t\tcloseModal('prompt-modal');\n\t\t\t\t\tresolve(null);\n\t\t\t\t};\n\n\t\t\t\t// Allow Enter key to submit\n\t\t\t\tinput.onkeydown = function(e) {\n\t\t\t\t\tif (e.key === 'Enter') {\n\t\t\t\t\t\tdocument.getElementById('prompt-ok').click();\n\t\t\t\t\t}\n\t\t\t\t};\n\t\t\t});\n\t\t};\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

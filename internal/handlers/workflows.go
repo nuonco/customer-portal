@@ -135,7 +135,7 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 
 	if err := nuonClient.ApproveWorkflowStep(c.Request.Context(), workflowID, stepID, approvalID); err != nil {
 		h.logger.Error("failed to approve workflow step", zap.Error(err))
-		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "error", "Failed to approve workflow step")
+		h.redirectBackWithAlert(c, install.ID, workflowID, "error", "Failed to approve workflow step")
 		return
 	}
 
@@ -146,7 +146,7 @@ func (h *Handler) ApproveWorkflowStep(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow step approved successfully")
+	h.redirectBackWithAlert(c, install.ID, workflowID, "success", "Workflow step approved successfully")
 }
 
 // CancelWorkflow handles workflow cancellation
@@ -181,7 +181,7 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 
 	if err := nuonClient.CancelWorkflow(c.Request.Context(), workflowID); err != nil {
 		h.logger.Error("failed to cancel workflow", zap.Error(err))
-		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "error", "Failed to cancel workflow")
+		h.redirectBackWithAlert(c, install.ID, workflowID, "error", "Failed to cancel workflow")
 		return
 	}
 
@@ -191,10 +191,11 @@ func (h *Handler) CancelWorkflow(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow cancelled successfully")
+	h.redirectBackWithAlert(c, install.ID, workflowID, "success", "Workflow cancelled successfully")
 }
 
-// ApproveAllWorkflowSteps handles setting approve-all on a workflow
+// ApproveAllWorkflowSteps approves any currently-pending approval steps and sets
+// the approve-all flag so future steps are auto-approved.
 func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
 
@@ -224,9 +225,31 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 		return
 	}
 
-	if err := nuonClient.ApproveAllWorkflowSteps(c.Request.Context(), workflowID); err != nil {
+	ctx := c.Request.Context()
+
+	// Approve any steps that are currently awaiting approval.
+	workflow, err := nuonClient.GetWorkflow(ctx, workflowID)
+	if err != nil {
+		h.logger.Error("failed to get workflow for approve-all", zap.Error(err))
+		h.redirectBackWithAlert(c, install.ID, workflowID, "error", "Failed to approve all workflow steps")
+		return
+	}
+
+	for _, step := range workflow.Steps {
+		if step.Status != nil && string(step.Status.Status) == "approval-awaiting" && step.Approval != nil {
+			if err := nuonClient.ApproveWorkflowStep(ctx, workflowID, step.ID, step.Approval.ID); err != nil {
+				h.logger.Error("failed to approve step during approve-all",
+					zap.String("step_id", step.ID),
+					zap.Error(err),
+				)
+			}
+		}
+	}
+
+	// Set the approve-all flag so future approval steps are auto-approved.
+	if err := nuonClient.ApproveAllWorkflowSteps(ctx, workflowID); err != nil {
 		h.logger.Error("failed to set workflow approve-all", zap.Error(err))
-		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "error", "Failed to approve all workflow steps")
+		h.redirectBackWithAlert(c, install.ID, workflowID, "error", "Failed to approve all workflow steps")
 		return
 	}
 
@@ -236,7 +259,7 @@ func (h *Handler) ApproveAllWorkflowSteps(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow approved successfully")
+	h.redirectBackWithAlert(c, install.ID, workflowID, "success", "Workflow approved successfully")
 }
 
 // RetryWorkflowStep handles retrying a failed workflow step
@@ -272,7 +295,7 @@ func (h *Handler) RetryWorkflowStep(c *gin.Context) {
 
 	if err := nuonClient.RetryWorkflowStep(c.Request.Context(), workflowID, stepID); err != nil {
 		h.logger.Error("failed to retry workflow step", zap.Error(err))
-		h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "error", "Failed to retry workflow step")
+		h.redirectBackWithAlert(c, install.ID, workflowID, "error", "Failed to retry workflow step")
 		return
 	}
 
@@ -283,7 +306,7 @@ func (h *Handler) RetryWorkflowStep(c *gin.Context) {
 		zap.String("workflow_id", workflowID),
 	)
 
-	h.redirectOverviewWorkflowWithAlert(c, install.ID, workflowID, "success", "Workflow step retry initiated")
+	h.redirectBackWithAlert(c, install.ID, workflowID, "success", "Workflow step retry initiated")
 }
 
 // formatStepName converts "await_install_stack" to "Await install stack"

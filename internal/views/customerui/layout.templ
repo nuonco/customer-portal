@@ -66,21 +66,12 @@ templ Layout(props LayoutProps) {
 				})
 			}
 
-			<div class={ "flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor) }>
+			<div id="sidebar-layout" class={ "flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("sidebar-minimized", props.SidebarMinimized) }>
 				<!-- Sidebar -->
-				@partials.Sidebar(partials.SidebarProps{
-					Theme:            convertPropsToTheme(props),
-					User:             props.User,
-					BasePath:         props.BasePath,
-					HasPublishedApps: props.HasPublishedApps,
-					ActiveNav:        props.ActiveNav,
-					HeaderTitle:      props.HeaderTitle,
-					ActiveAccount:    props.ActiveAccount,
-					OtherAccounts:    props.OtherAccounts,
-					Installs:         props.Installs,
-					CurrentInstallID: props.CurrentInstallID,
-					ActiveTab:        props.ActiveTab,
-				})
+				<div class="sidebar-wrapper">
+					@partials.SidebarMini(sidebarPropsFromLayout(props))
+					@partials.Sidebar(sidebarPropsFromLayout(props))
+				</div>
 
 				<!-- Main content area -->
 				<div id="main-wrapper" class="flex-1 flex flex-col overflow-auto">
@@ -89,8 +80,22 @@ templ Layout(props LayoutProps) {
 					</main>
 				</div>
 			</div>
+			<!-- Sidebar cookie override (runs before paint to prevent flash) -->
+			<script>
+				(function() {
+					var m = document.cookie.match(/(?:^|;\s*)sidebar_minimized=(\w+)/);
+					if (m) {
+						var el = document.getElementById('sidebar-layout');
+						if (el) {
+							if (m[1] === 'true') el.classList.add('sidebar-minimized');
+							else el.classList.remove('sidebar-minimized');
+						}
+					}
+				})();
+			</script>
 
 			<!-- Modals -->
+			@partials.ModalScript()
 			@partials.ConfirmModal()
 			@partials.PromptModal()
 		<!-- Mermaid diagram rendering (lazy-loaded only when mermaid code blocks exist) -->
@@ -224,6 +229,24 @@ func buildThemeCSS(props LayoutProps) string {
 	}
 	result += ".dark{" + darkCSS + "}</style>"
 	return result
+}
+
+// sidebarPropsFromLayout builds SidebarProps from LayoutProps.
+func sidebarPropsFromLayout(props LayoutProps) partials.SidebarProps {
+	return partials.SidebarProps{
+		Theme:            convertPropsToTheme(props),
+		User:             props.User,
+		BasePath:         props.BasePath,
+		HasPublishedApps: props.HasPublishedApps,
+		ActiveNav:        props.ActiveNav,
+		HeaderTitle:      props.HeaderTitle,
+		ActiveAccount:    props.ActiveAccount,
+		OtherAccounts:    props.OtherAccounts,
+		Installs:         props.Installs,
+		CurrentInstallID: props.CurrentInstallID,
+		ActiveTab:        props.ActiveTab,
+		SidebarMinimized: props.SidebarMinimized,
+	}
 }
 
 // convertPropsToTheme converts LayoutProps to a minimal AppTheme for components

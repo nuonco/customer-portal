@@ -55,20 +55,22 @@ func (h *Handler) redirectOverviewWithAlert(c *gin.Context, installID, alertType
 	h.redirectOrHXRedirect(c, redirectURL)
 }
 
-// redirectOverviewWorkflowWithAlert redirects to the install overview workflow page,
-// preserving existing query params (e.g. expanded=true) from the originating URL
-// and adding alert params.
-func (h *Handler) redirectOverviewWorkflowWithAlert(c *gin.Context, installID, workflowID, alertType, alertMsg string) {
-	basePath := fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, installID, workflowID)
+// redirectBackWithAlert redirects to the originating page with alert query params.
+// Falls back to the install overview workflow page if no originating URL is available.
+func (h *Handler) redirectBackWithAlert(c *gin.Context, installID, workflowID, alertType, alertMsg string) {
+	// Default to overview page
+	redirectPath := fmt.Sprintf("%s/installs/%s/overview/workflows/%s", h.basePath, installID, workflowID)
 
-	// Preserve query params from the originating URL (HX-Current-URL for HTMX, Referer for plain)
+	// Use the originating page path if available (so wizard stays on wizard, overview stays on overview)
 	params := url.Values{}
 	if currentURL := c.GetHeader("HX-Current-URL"); currentURL != "" {
 		if parsed, err := url.Parse(currentURL); err == nil {
+			redirectPath = parsed.Path
 			params = parsed.Query()
 		}
 	} else if referer := c.GetHeader("Referer"); referer != "" {
 		if parsed, err := url.Parse(referer); err == nil {
+			redirectPath = parsed.Path
 			params = parsed.Query()
 		}
 	}
@@ -80,7 +82,7 @@ func (h *Handler) redirectOverviewWorkflowWithAlert(c *gin.Context, installID, w
 	params.Set("alert_type", alertType)
 	params.Set("alert_msg", alertMsg)
 
-	h.redirectOrHXRedirect(c, basePath+"?"+params.Encode())
+	h.redirectOrHXRedirect(c, redirectPath+"?"+params.Encode())
 }
 
 // redirectOrHXRedirect sends an HX-Redirect header for HTMX requests (so hx-boost

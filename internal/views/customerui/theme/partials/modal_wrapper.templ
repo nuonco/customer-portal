@@ -2,17 +2,82 @@ package partials
 
 // ModalWrapper provides consistent modal styling across all customer UI modals.
 // It renders a fixed backdrop with centered card content using theme-aware classes.
+//
+// Open/close from JavaScript:
+//
+//	openModal('my-modal')
+//	closeModal('my-modal')
+//	closeModal('my-modal', function() { /* after close callback */ })
+func modalWrapperCloseAttr(id string) templ.Attributes {
+	return templ.Attributes{
+		"onclick": "if (event.target === this) closeModal('" + id + "')",
+	}
+}
+
 templ ModalWrapper(id string, maxWidth string) {
 	<div
 		id={id}
-		class="fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto"
+		class="fixed inset-0 backdrop-blur-xs bg-black/2 dark:bg-black/10 hidden overflow-y-auto"
 		style="z-index: 100"
-		onclick="if (event.target === this) { this.classList.add('hidden'); }"
+		{ modalWrapperCloseAttr(id)... }
 	>
-		<div class="flex items-center justify-center min-h-full p-4" onclick="if (event.target === this) this.parentElement.classList.add('hidden');">
-			<div class={"card-base card-lg w-full my-8 " + maxWidth}>
+		<div
+			class="flex items-center justify-center min-h-full p-4"
+			{ modalWrapperCloseAttr(id)... }
+		>
+			<div id={ id + "-dialog" } class={"card-base card-lg w-full my-8 " + maxWidth}>
 				{ children... }
 			</div>
 		</div>
 	</div>
+}
+
+// ModalScript provides the global openModal/closeModal functions and keyframe CSS.
+// Include once per layout that uses ModalWrapper components.
+templ ModalScript() {
+	<style>
+		@keyframes enter-overlay { 0% { opacity: 0; } 100% { opacity: 1; } }
+		@keyframes exit-overlay { 0% { opacity: 1; } 100% { opacity: 0; } }
+		@keyframes enter-below { 0% { opacity: 0; transform: translateY(1rem); } 100% { opacity: 1; transform: translateY(0); } }
+		@keyframes exit-below { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(1rem); } }
+	</style>
+	<script>
+		(function() {
+			var modalEasing = 'cubic-bezier(0.65, 0, 0.35, 1)';
+
+			window.openModal = function(id) {
+				var overlay = document.getElementById(id);
+				var dialog = document.getElementById(id + '-dialog');
+				if (!overlay || !dialog) return;
+				overlay.classList.remove('hidden');
+				overlay.style.animation = '0.15s ' + modalEasing + ' forwards enter-overlay';
+				dialog.style.animation = '0.15s ' + modalEasing + ' 0.15s forwards enter-below';
+				dialog.style.opacity = '0';
+			};
+
+			window.closeModal = function(id, callback) {
+				var overlay = document.getElementById(id);
+				var dialog = document.getElementById(id + '-dialog');
+				if (!overlay || !dialog) return;
+				overlay.style.animation = '0.15s ' + modalEasing + ' forwards exit-overlay';
+				dialog.style.animation = '0.15s ' + modalEasing + ' forwards exit-below';
+				dialog.addEventListener('animationend', function handler() {
+					dialog.removeEventListener('animationend', handler);
+					overlay.classList.add('hidden');
+					overlay.style.animation = '';
+					dialog.style.animation = '';
+					dialog.style.opacity = '';
+					if (callback) callback();
+				}, { once: true });
+			};
+
+			document.addEventListener('keydown', function(e) {
+				if (e.key !== 'Escape') return;
+				var modals = document.querySelectorAll('.backdrop-blur-xs:not(.hidden)');
+				if (modals.length > 0) {
+					closeModal(modals[modals.length - 1].id);
+				}
+			});
+		})();
+	</script>
 }

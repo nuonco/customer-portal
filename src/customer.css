@@ -186,6 +186,13 @@
   border-color: transparent;
 }
 
+/* Small button size — overrides default padding from btn-theme-* */
+.btn-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  padding: 6px 12px;
+}
+
 /* ═══════════════════════════════════════════════════════════════════════════════
  * STATUS BADGE STYLES
  * Minimal pill-style status indicators
@@ -388,7 +395,7 @@ details[open] > summary .input-group-chevron {
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
 .customer-sidebar {
-  @apply w-64 flex flex-col flex-shrink-0 h-full shadow-md;
+  @apply w-64 flex flex-col h-full shadow-md;
   background-color: var(--theme-white, #ffffff);
   border-right: 1px solid var(--theme-border);
 }
@@ -460,6 +467,69 @@ details[open] > summary .input-group-chevron {
 .dark .customer-sidebar-dropdown {
   background-color: var(--theme-surface-raised);
   border-color: var(--theme-border-subtle, rgba(255, 255, 255, 0.1));
+}
+
+/* Sidebar slide transition — wrapper shrinks, content slides */
+.sidebar-wrapper {
+  width: 16rem; /* w-64 */
+  flex-shrink: 0;
+  height: 100%;
+  overflow: hidden;
+  transition: width 200ms ease;
+  position: relative;
+}
+
+.sidebar-minimized .sidebar-wrapper {
+  width: 3.5rem;
+}
+
+.customer-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  transition: transform 200ms ease;
+}
+
+.sidebar-minimized .customer-sidebar {
+  transform: translateX(-100%);
+}
+
+/* Minimized sidebar strip */
+.customer-sidebar-mini {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+  height: 100%;
+  width: 3.5rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  gap: 0.25rem;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.sidebar-mini-icon {
+  @apply flex items-center justify-center w-9 h-9 rounded-md transition-colors cursor-pointer;
+  @apply text-cool-grey-500 dark:text-cool-grey-400;
+  @apply no-underline;
+}
+
+.sidebar-mini-icon:hover {
+  @apply bg-black/5 dark:bg-white/10;
+  @apply text-cool-grey-900 dark:text-white;
+}
+
+.sidebar-mini-icon.active {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 15%, transparent);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 45%, black);
+}
+
+.dark .sidebar-mini-icon.active {
+  background-color: color-mix(in srgb, var(--theme-primary, #3b82f6) 25%, transparent);
+  color: color-mix(in srgb, var(--theme-primary, #3b82f6) 35%, white);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════════
@@ -967,7 +1037,7 @@ body {
   border-radius: var(--theme-radius);
   padding: var(--spacing-card-padding);
   overflow-wrap: break-word;
-  word-break: break-all;
+  word-break: normal;
   min-width: 0;
 }
 
@@ -993,17 +1063,62 @@ body {
  * Distinct from .input-theme (large login-page input)
  * ═══════════════════════════════════════════════════════════════════════════════ */
 
+.wizard-step-link:hover .wizard-step-label {
+  border-bottom-color: currentColor;
+}
+
+/* Wizard step transitions — slide + fade for forward/backward navigation */
+@keyframes wizard-slide-in-forward {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes wizard-slide-in-backward {
+  from { opacity: 0; transform: translateX(-40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.wizard-transition-forward {
+  animation: wizard-slide-in-forward 220ms ease-out both;
+}
+.wizard-transition-backward {
+  animation: wizard-slide-in-backward 220ms ease-out both;
+}
+
+#installForm.htmx-request #submit-btn .btn-label { visibility: hidden; }
+#installForm.htmx-request #submit-btn .btn-spinner { display: inline; position: absolute; }
+#installForm.htmx-request #submit-btn { opacity: 0.7; pointer-events: none; position: relative; }
+
+.input-grid {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.75rem 1rem;
+}
+
+.input-grid .field-hint {
+  grid-column: 1 / -1;
+  margin-top: -0.5rem;
+}
+
 .field-input {
-  @apply block w-full px-3 py-2;
+  @apply block w-full px-3 py-2 text-sm;
   @apply dark:text-white;
-  @apply focus:outline-none focus:ring-2 focus:ring-primary-400 focus:border-primary-600;
-  border: 1px solid var(--theme-border);
-  border-radius: var(--theme-radius);
+  @apply focus:outline-none;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--theme-border);
+  border-radius: 0;
+  transition: border-color 150ms ease;
+}
+
+.field-input:focus {
+  border-bottom-color: var(--theme-primary);
 }
 
 .dark .field-input {
-  background-color: var(--theme-surface-raised);
-  border-color: var(--theme-border-subtle);
+  border-bottom-color: var(--theme-border-subtle);
+}
+
+.dark .field-input:focus {
+  border-bottom-color: var(--theme-primary);
 }
 
 .field-label {

@@ -37,7 +37,7 @@ func (h *Handler) buildDebugActionProps(c *gin.Context) (*customerpages.DebugWor
 	}
 
 	workflowID := c.Param("workflow_id")
-	workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
+	workflow, err := nuonClient.GetWorkflowV2(c.Request.Context(), workflowID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch workflow: %w", err)
 	}
@@ -59,13 +59,13 @@ func (h *Handler) buildDebugActionProps(c *gin.Context) (*customerpages.DebugWor
 		}
 	}
 	if props.SelectedStep == nil {
-		props.SelectedStep = findActiveStep(workflow.Steps)
+		props.SelectedStep = findActiveStepV2(workflow.Steps)
 		props.SelectedStepIsActive = true
 	}
 
 	// Fetch step target
 	if props.SelectedStep != nil && props.SelectedStep.StepTargetType != "" && props.SelectedStep.StepTargetID != "" {
-		props.SelectedStepTarget, props.SelectedStepTargetJSON = h.fetchStepTarget(c, install, props.SelectedStep)
+		props.SelectedStepTarget, props.SelectedStepTargetJSON = h.fetchStepTargetV2(c, install, props.SelectedStep)
 	}
 
 	props.ActiveTab = c.DefaultQuery("tab", "info")

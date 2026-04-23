@@ -5,13 +5,23 @@ package partials
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
-import (
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
-)
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
 
 // ModalWrapper provides consistent modal styling across all customer UI modals.
 // It renders a fixed backdrop with centered card content using theme-aware classes.
+//
+// Open/close from JavaScript:
+//
+//	openModal('my-modal')
+//	closeModal('my-modal')
+//	closeModal('my-modal', function() { /* after close callback */ })
+func modalWrapperCloseAttr(id string) templ.Attributes {
+	return templ.Attributes{
+		"onclick": "if (event.target === this) closeModal('" + id + "')",
+	}
+}
+
 func ModalWrapper(id string, maxWidth string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
@@ -40,13 +50,29 @@ func ModalWrapper(id string, maxWidth string) templ.Component {
 		var templ_7745c5c3_Var2 string
 		templ_7745c5c3_Var2, templ_7745c5c3_Err = templ.JoinStringErrs(id)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal_wrapper.templ`, Line: 7, Col: 8}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal_wrapper.templ`, Line: 19, Col: 8}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var2))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 bg-dark-grey-900/50 hidden overflow-y-auto\" style=\"z-index: 100\" onclick=\"if (event.target === this) { this.classList.add('hidden'); }\"><div class=\"flex items-center justify-center min-h-full p-4\" onclick=\"if (event.target === this) this.parentElement.classList.add('hidden');\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 2, "\" class=\"fixed inset-0 backdrop-blur-xs bg-black/2 dark:bg-black/10 hidden overflow-y-auto\" style=\"z-index: 100\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, modalWrapperCloseAttr(id))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "><div class=\"flex items-center justify-center min-h-full p-4\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templ.RenderAttributes(ctx, templ_7745c5c3_Buffer, modalWrapperCloseAttr(id))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, ">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -55,20 +81,33 @@ func ModalWrapper(id string, maxWidth string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "<div id=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var4 string
-		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var3).String())
+		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(id + "-dialog")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal_wrapper.templ`, Line: 1, Col: 0}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal_wrapper.templ`, Line: 28, Col: 27}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 4, "\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "\" class=\"")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		var templ_7745c5c3_Var5 string
+		templ_7745c5c3_Var5, templ_7745c5c3_Err = templ.JoinStringErrs(templ.CSSClasses(templ_7745c5c3_Var3).String())
+		if templ_7745c5c3_Err != nil {
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/theme/partials/modal_wrapper.templ`, Line: 1, Col: 0}
+		}
+		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var5))
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 7, "\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -76,7 +115,38 @@ func ModalWrapper(id string, maxWidth string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 5, "</div></div></div>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 8, "</div></div></div>")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		return nil
+	})
+}
+
+// ModalScript provides the global openModal/closeModal functions and keyframe CSS.
+// Include once per layout that uses ModalWrapper components.
+func ModalScript() templ.Component {
+	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
+		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
+		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
+			return templ_7745c5c3_CtxErr
+		}
+		templ_7745c5c3_Buffer, templ_7745c5c3_IsBuffer := templruntime.GetBuffer(templ_7745c5c3_W)
+		if !templ_7745c5c3_IsBuffer {
+			defer func() {
+				templ_7745c5c3_BufErr := templruntime.ReleaseBuffer(templ_7745c5c3_Buffer)
+				if templ_7745c5c3_Err == nil {
+					templ_7745c5c3_Err = templ_7745c5c3_BufErr
+				}
+			}()
+		}
+		ctx = templ.InitializeContext(ctx)
+		templ_7745c5c3_Var6 := templ.GetChildren(ctx)
+		if templ_7745c5c3_Var6 == nil {
+			templ_7745c5c3_Var6 = templ.NopComponent
+		}
+		ctx = templ.ClearChildren(ctx)
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 9, "<style>\n\t\t@keyframes enter-overlay { 0% { opacity: 0; } 100% { opacity: 1; } }\n\t\t@keyframes exit-overlay { 0% { opacity: 1; } 100% { opacity: 0; } }\n\t\t@keyframes enter-below { 0% { opacity: 0; transform: translateY(1rem); } 100% { opacity: 1; transform: translateY(0); } }\n\t\t@keyframes exit-below { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(1rem); } }\n\t</style><script>\n\t\t(function() {\n\t\t\tvar modalEasing = 'cubic-bezier(0.65, 0, 0.35, 1)';\n\n\t\t\twindow.openModal = function(id) {\n\t\t\t\tvar overlay = document.getElementById(id);\n\t\t\t\tvar dialog = document.getElementById(id + '-dialog');\n\t\t\t\tif (!overlay || !dialog) return;\n\t\t\t\toverlay.classList.remove('hidden');\n\t\t\t\toverlay.style.animation = '0.15s ' + modalEasing + ' forwards enter-overlay';\n\t\t\t\tdialog.style.animation = '0.15s ' + modalEasing + ' 0.15s forwards enter-below';\n\t\t\t\tdialog.style.opacity = '0';\n\t\t\t};\n\n\t\t\twindow.closeModal = function(id, callback) {\n\t\t\t\tvar overlay = document.getElementById(id);\n\t\t\t\tvar dialog = document.getElementById(id + '-dialog');\n\t\t\t\tif (!overlay || !dialog) return;\n\t\t\t\toverlay.style.animation = '0.15s ' + modalEasing + ' forwards exit-overlay';\n\t\t\t\tdialog.style.animation = '0.15s ' + modalEasing + ' forwards exit-below';\n\t\t\t\tdialog.addEventListener('animationend', function handler() {\n\t\t\t\t\tdialog.removeEventListener('animationend', handler);\n\t\t\t\t\toverlay.classList.add('hidden');\n\t\t\t\t\toverlay.style.animation = '';\n\t\t\t\t\tdialog.style.animation = '';\n\t\t\t\t\tdialog.style.opacity = '';\n\t\t\t\t\tif (callback) callback();\n\t\t\t\t}, { once: true });\n\t\t\t};\n\n\t\t\tdocument.addEventListener('keydown', function(e) {\n\t\t\t\tif (e.key !== 'Escape') return;\n\t\t\t\tvar modals = document.querySelectorAll('.backdrop-blur-xs:not(.hidden)');\n\t\t\t\tif (modals.length > 0) {\n\t\t\t\t\tcloseModal(modals[modals.length - 1].id);\n\t\t\t\t}\n\t\t\t});\n\t\t})();\n\t</script>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

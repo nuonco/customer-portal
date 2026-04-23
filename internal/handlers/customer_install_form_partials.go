@@ -36,7 +36,33 @@ func (h *Handler) GetInstallFormFields(c *gin.Context) {
 		return
 	}
 
-	h.RenderTempl(c, http.StatusOK, partials.InstallFormFields(config.toTemplConfig()))
+	templConfig := config.toTemplConfig()
+
+	// If install_id is provided, overlay current input values from the existing install
+	if installID := c.Query("install_id"); installID != "" {
+		var install models.Install
+		if err := h.db.Where("id = ?", installID).First(&install).Error; err == nil {
+			if err := h.loadInstallWithOrg(&install); err == nil {
+				nuonOrg := install.GetNuonOrg()
+				if nuonOrg != nil && nuonOrg.APIToken != "" {
+					if client, cErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg)); cErr == nil {
+						if currentInputs, iErr := client.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID); iErr == nil && currentInputs != nil {
+							for gi := range templConfig.InputGroups {
+								for ii := range templConfig.InputGroups[gi].AppInputs {
+									name := templConfig.InputGroups[gi].AppInputs[ii].Name
+									if val, ok := currentInputs.Values[name]; ok {
+										templConfig.InputGroups[gi].AppInputs[ii].Default = val
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+
+	h.RenderTempl(c, http.StatusOK, partials.InstallFormFields(templConfig))
 }
 
 // installFormData holds the raw config data fetched from the Nuon API

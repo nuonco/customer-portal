@@ -1,5 +1,7 @@
 package workflows
 
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+
 // WorkflowOverview renders the two-column workflow step group list and detail card.
 templ WorkflowOverview(props WorkflowOverviewProps) {
 	<div id="workflow-overview" class="@container">
@@ -124,10 +126,26 @@ templ groupCardFooter(props WorkflowOverviewProps, group StepGroup) {
 	}
 }
 
+// GroupActionButtonsExported is an exported wrapper around groupActionButtons for use outside this package.
+templ GroupActionButtonsExported(props WorkflowOverviewProps, group StepGroup) {
+	@groupActionButtons(props, group)
+}
+
 // groupActionButtons renders approve/retry buttons based on step attributes.
 // Buttons are always shown when the group has the capability, disabled when not actionable.
 // Cancel is a workflow-level action rendered in the panel header.
 templ groupActionButtons(props WorkflowOverviewProps, group StepGroup) {
+	if group.CanRetry() {
+		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/step/" + group.RetryableStepID() + "/retry") } class="inline">
+			<button
+				type="submit"
+				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Variant: components.ButtonOutline}) }
+			>
+				Retry
+				<i class="ph-bold ph-arrow-clockwise text-base"></i>
+			</button>
+		</form>
+	}
 	if group.HasApprovalStep() {
 		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/approve") } class="inline">
 			if group.CanApprove() {
@@ -136,22 +154,11 @@ templ groupActionButtons(props WorkflowOverviewProps, group StepGroup) {
 			}
 			<button
 				type="submit"
-				class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
+				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
 				disabled?={ !group.CanApprove() }
 			>
+				<i class="ph-bold ph-check text-base"></i>
 				Approve
-			</button>
-		</form>
-	}
-	if group.HasRetryableStep() {
-		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/step/" + group.RetryableStepID() + "/retry") } class="inline">
-			<button
-				type="submit"
-				class="button button-outline btn-theme-outline inline-flex items-center gap-2 text-sm font-medium rounded px-3 py-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
-				disabled?={ !group.CanRetry() }
-			>
-				Retry
-				<i class="ph-bold ph-arrow-clockwise text-base"></i>
 			</button>
 		</form>
 	}

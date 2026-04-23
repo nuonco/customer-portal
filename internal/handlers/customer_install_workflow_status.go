@@ -5,6 +5,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"strings"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -50,8 +51,37 @@ func (h *Handler) getStackSetupData(ctx context.Context, client *nuon.Client, in
 		default: // AWS and others use CloudFormation
 			setup := partials.StackSetupData{Platform: platform}
 			if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
-				if stack.Versions[0].QuickLinkURL != "" {
-					setup.CloudFormationLink = stack.Versions[0].QuickLinkURL
+				v := stack.Versions[0]
+				if v.QuickLinkURL != "" {
+					setup.CloudFormationLink = v.QuickLinkURL
+				}
+				if v.TemplateURL != "" {
+					setup.TemplateURL = v.TemplateURL
+				}
+				// Extract stack name from quick link URL, fallback to nuon-<installID>
+				setup.StackName = "nuon-" + install.NuonInstallID
+				if setup.CloudFormationLink != "" {
+					if parsed, err := url.Parse(setup.CloudFormationLink); err == nil {
+						// CF quick links use fragment params: ...#/stacks/create/review?stackName=...
+						if fragment := parsed.Fragment; fragment != "" {
+							if idx := strings.Index(fragment, "?"); idx >= 0 {
+								if fq, err := url.ParseQuery(fragment[idx+1:]); err == nil {
+									if sn := fq.Get("stackName"); sn != "" {
+										setup.StackName = sn
+									}
+									if r := fq.Get("region"); r != "" {
+										setup.Region = r
+									}
+								}
+							}
+						}
+					}
+				}
+				if setup.Region == "" {
+					setup.Region = install.Region
+				}
+				if setup.Region == "" {
+					setup.Region = "us-east-1"
 				}
 			}
 			// Append customer inputs to CF URL

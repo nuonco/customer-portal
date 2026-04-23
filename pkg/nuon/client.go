@@ -524,6 +524,11 @@ func (c *Client) ApproveWorkflowStep(ctx context.Context, workflowID, stepID, ap
 	return nil
 }
 
+// GetApprovalContents retrieves the plan contents for an approval step (e.g. terraform plan JSON).
+func (c *Client) GetApprovalContents(ctx context.Context, workflowID, stepID, approvalID string) (interface{}, error) {
+	return c.client.GetWorkflowStepApprovalContents(ctx, workflowID, stepID, approvalID)
+}
+
 // ApproveAllWorkflowSteps sets approve-all on a workflow to automatically approve all steps
 func (c *Client) ApproveAllWorkflowSteps(ctx context.Context, workflowID string) error {
 	approvalOption := models.AppInstallApprovalOptionApproveDashAll
@@ -584,6 +589,288 @@ func (c *Client) GetWorkflow(ctx context.Context, workflowID string) (*models.Ap
 	}
 
 	return workflow, nil
+}
+
+// ---------------------------------------------------------------------------
+// V2 workflow types — mirror ctl-api models, independent of nuon-go SDK.
+// ---------------------------------------------------------------------------
+
+type CompositeStatus struct {
+	CreatedByID            string            `json:"created_by_id,omitempty"`
+	CreatedAtTS            int64             `json:"created_at_ts,omitempty"`
+	Status                 string            `json:"status,omitempty"`
+	StatusHumanDescription string            `json:"status_human_description,omitempty"`
+	Metadata               map[string]any    `json:"metadata,omitempty"`
+	History                []CompositeStatus `json:"history,omitempty"`
+}
+
+type WorkflowStepApproval struct {
+	ID          string                        `json:"id,omitempty"`
+	CreatedByID string                        `json:"created_by_id,omitempty"`
+	CreatedAt   string                        `json:"created_at,omitempty"`
+	RunnerJobID *string                       `json:"runner_job_id,omitempty"`
+	OwnerID     string                        `json:"owner_id,omitempty"`
+	OwnerType   string                        `json:"owner_type,omitempty"`
+	Type        string                        `json:"type,omitempty"`
+	Response    *WorkflowStepApprovalResponse `json:"response,omitempty"`
+}
+
+type WorkflowStepApprovalResponse struct {
+	ID          string `json:"id,omitempty"`
+	CreatedByID string `json:"created_by_id,omitempty"`
+	CreatedAt   string `json:"created_at,omitempty"`
+	Type        string `json:"type,omitempty"`
+	Note        string `json:"note,omitempty"`
+}
+
+type WorkflowStepPolicyValidation struct {
+	ID          string          `json:"id,omitempty"`
+	CreatedByID string          `json:"created_by_id,omitempty"`
+	CreatedAt   string          `json:"created_at,omitempty"`
+	Status      CompositeStatus `json:"status,omitempty"`
+	Response    string          `json:"response,omitempty"`
+}
+
+type QueueSignal struct {
+	ID             string          `json:"id,omitempty"`
+	CreatedByID    string          `json:"created_by_id,omitempty"`
+	CreatedAt      string          `json:"created_at,omitempty"`
+	QueueID        string          `json:"queue_id,omitempty"`
+	OwnerID        string          `json:"owner_id,omitempty"`
+	OwnerType      string          `json:"owner_type,omitempty"`
+	Status         CompositeStatus `json:"status,omitempty"`
+	Type           string          `json:"type,omitempty"`
+	ExecutionCount int             `json:"execution_count,omitempty"`
+}
+
+type WorkflowStep struct {
+	ID                  string                        `json:"id,omitempty"`
+	CreatedByID         string                        `json:"created_by_id,omitempty"`
+	CreatedAt           string                        `json:"created_at,omitempty"`
+	UpdatedAt           string                        `json:"updated_at,omitempty"`
+	WorkflowID          string                        `json:"workflow_id,omitempty"`
+	OwnerID             string                        `json:"owner_id,omitempty"`
+	OwnerType           string                        `json:"owner_type,omitempty"`
+	InstallWorkflowID   string                        `json:"install_workflow_id,omitempty"`
+	Status              *CompositeStatus              `json:"status,omitempty"`
+	Name                string                        `json:"name,omitempty"`
+	Idx                 int                           `json:"idx,omitempty"`
+	WorkflowStepGroupID string                        `json:"workflow_step_group_id,omitempty"`
+	GroupIdx            int                           `json:"group_idx,omitempty"`
+	GroupRetryIdx       int                           `json:"group_retry_idx"`
+	GroupParallel       bool                          `json:"group_parallel,omitempty"`
+	ExecutionType       string                        `json:"execution_type,omitempty"`
+	StepTargetID        string                        `json:"step_target_id,omitempty"`
+	StepTargetType      string                        `json:"step_target_type,omitempty"`
+	Metadata            map[string]string             `json:"metadata,omitempty"`
+	StartedAt           string                        `json:"started_at,omitempty"`
+	FinishedAt          string                        `json:"finished_at,omitempty"`
+	Finished            bool                          `json:"finished,omitempty"`
+	Approval            *WorkflowStepApproval         `json:"approval,omitempty"`
+	PolicyValidation    *WorkflowStepPolicyValidation `json:"policy_validation,omitempty"`
+	ExecutionTime       int64                         `json:"execution_time,omitempty"`
+	Links               map[string]any                `json:"links,omitempty"`
+	Retryable           bool                          `json:"retryable,omitempty"`
+	Skippable           bool                          `json:"skippable,omitempty"`
+	Retried             bool                          `json:"retried,omitempty"`
+	RetryIndex          int                           `json:"retry_index"`
+	ResultDirective     string                        `json:"result_directive,omitempty"`
+	Labels              map[string]string             `json:"-"`
+}
+
+type WorkflowStepGroup struct {
+	ID          string            `json:"id,omitempty"`
+	CreatedByID string            `json:"created_by_id,omitempty"`
+	CreatedAt   string            `json:"created_at,omitempty"`
+	UpdatedAt   string            `json:"updated_at,omitempty"`
+	WorkflowID  string            `json:"workflow_id,omitempty"`
+	GroupIdx    int               `json:"group_idx"`
+	Parallel    bool              `json:"parallel,omitempty"`
+	Status      CompositeStatus   `json:"status,omitempty"`
+	Name        string            `json:"name,omitempty"`
+	QueueSignal *QueueSignal      `json:"queue_signal,omitempty"`
+	Steps       []*WorkflowStep   `json:"steps,omitempty"`
+	Labels      map[string]string `json:"-"`
+}
+
+type Workflow struct {
+	ID              string              `json:"id,omitempty"`
+	CreatedByID     string              `json:"created_by_id,omitempty"`
+	CreatedAt       string              `json:"created_at,omitempty"`
+	UpdatedAt       string              `json:"updated_at,omitempty"`
+	OwnerID         string              `json:"owner_id,omitempty"`
+	OwnerType       string              `json:"owner_type,omitempty"`
+	Type            string              `json:"type,omitempty"`
+	Metadata        map[string]string   `json:"metadata,omitempty"`
+	Status          *CompositeStatus    `json:"status,omitempty"`
+	Role            string              `json:"role,omitempty"`
+	ApprovalOption  string              `json:"approval_option,omitempty"`
+	PlanOnly        bool                `json:"plan_only,omitempty"`
+	ResultDirective string              `json:"result_directive,omitempty"`
+	StartedAt       string              `json:"started_at,omitempty"`
+	FinishedAt      string              `json:"finished_at,omitempty"`
+	Finished        bool                `json:"finished,omitempty"`
+	StepGroups      []WorkflowStepGroup `json:"step_groups,omitempty"`
+	Steps           []*WorkflowStep     `json:"steps,omitempty"`
+	Name            string              `json:"name,omitempty"`
+	ExecutionTime   int64               `json:"execution_time,omitempty"`
+	Links           map[string]any      `json:"links,omitempty"`
+	Labels          map[string]string   `json:"-"`
+}
+
+// GetWorkflowV2 retrieves a single workflow by ID via direct HTTP,
+// returning the full response including step_groups.
+func (c *Client) GetWorkflowV2(ctx context.Context, workflowID string) (*Workflow, error) {
+	reqURL := fmt.Sprintf("%s/v1/workflows/%s", c.apiURL, workflowID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("get workflow returned status %d", resp.StatusCode)
+	}
+	var workflow Workflow
+	if err := json.NewDecoder(resp.Body).Decode(&workflow); err != nil {
+		return nil, fmt.Errorf("failed to decode workflow: %w", err)
+	}
+	decorateWorkflow(&workflow)
+	return &workflow, nil
+}
+
+// decorateWorkflow populates Labels on the workflow, its step groups, and steps
+// with client-side derived metadata that the API does not provide.
+func decorateWorkflow(wf *Workflow) {
+	wf.Labels = map[string]string{}
+	decorateStepGroups(wf.StepGroups)
+	for _, s := range wf.Steps {
+		if s.Labels == nil {
+			s.Labels = map[string]string{}
+		}
+	}
+}
+
+func deriveGroupType(steps []*WorkflowStep) string {
+	hasAction := false
+	for _, s := range steps {
+		switch s.StepTargetType {
+		case "install_stack_versions":
+			return "stack"
+		case "install_sandbox_runs":
+			return "sandbox"
+		case "install_deploys":
+			return "component"
+		case "install_action_workflow_runs":
+			hasAction = true
+		}
+	}
+	if hasAction {
+		return "action"
+	}
+	// Fall back to step name patterns for groups whose steps haven't started yet.
+	// Use stricter matching than deriveComponentName — only "sync and plan" and
+	// "apply" indicate component deploys. Bare "sync " can match action steps
+	// like "sync secrets".
+	for _, s := range steps {
+		n := strings.ToLower(s.Name)
+		if strings.Contains(n, "sync and plan") || strings.HasPrefix(n, "apply ") ||
+			(strings.Contains(n, "deploy") && !strings.Contains(n, "action run")) {
+			return "component"
+		}
+	}
+	return "other"
+}
+
+// GetInstallWorkflowsV2 retrieves workflow history using the V2 Workflow type.
+func (c *Client) GetInstallWorkflowsV2(ctx context.Context, installID string, offset int, limit int) ([]*Workflow, bool, error) {
+	reqURL := fmt.Sprintf("%s/v1/installs/%s/workflows?offset=%d&limit=%d&planonly=false",
+		c.apiURL, installID, offset, limit)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, false, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, false, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, false, fmt.Errorf("get install workflows returned status %d", resp.StatusCode)
+	}
+	var workflows []*Workflow
+	if err := json.NewDecoder(resp.Body).Decode(&workflows); err != nil {
+		return nil, false, fmt.Errorf("failed to decode workflows: %w", err)
+	}
+	for _, wf := range workflows {
+		decorateWorkflow(wf)
+	}
+	hasMore := len(workflows) >= limit
+	return workflows, hasMore, nil
+}
+
+// GetWorkflowStepGroups retrieves step groups for a workflow.
+func (c *Client) GetWorkflowStepGroups(ctx context.Context, workflowID string) ([]WorkflowStepGroup, error) {
+	reqURL := fmt.Sprintf("%s/v1/workflows/%s/step-groups", c.apiURL, workflowID)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, reqURL, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+c.apiToken)
+	req.Header.Set("X-Nuon-Org-ID", c.orgID)
+	resp, err := c.httpClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("get step groups returned status %d", resp.StatusCode)
+	}
+	var groups []WorkflowStepGroup
+	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
+		return nil, fmt.Errorf("failed to decode step groups: %w", err)
+	}
+	decorateStepGroups(groups)
+	return groups, nil
+}
+
+// decorateStepGroups populates Labels on step groups and their steps.
+func decorateStepGroups(groups []WorkflowStepGroup) {
+	for i := range groups {
+		g := &groups[i]
+		groupType := deriveGroupType(g.Steps)
+		g.Labels = map[string]string{
+			"type": groupType,
+		}
+		if groupType == "component" {
+			if name := deriveComponentName(g.Steps); name != "" {
+				g.Labels["component_name"] = name
+			}
+		}
+		for _, s := range g.Steps {
+			s.Labels = map[string]string{}
+		}
+	}
+}
+
+// deriveComponentName extracts the component name from step names in a component group.
+func deriveComponentName(steps []*WorkflowStep) string {
+	prefixes := []string{"sync and plan ", "apply ", "sync "}
+	for _, s := range steps {
+		for _, p := range prefixes {
+			if strings.HasPrefix(s.Name, p) {
+				return strings.TrimPrefix(s.Name, p)
+			}
+		}
+	}
+	return ""
 }
 
 // GetInstallStack retrieves the stack information for an install

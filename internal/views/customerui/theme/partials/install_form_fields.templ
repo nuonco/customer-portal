@@ -3,6 +3,8 @@ package partials
 import (
 	"fmt"
 	"strings"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 )
 
 // isAzurePlatform returns true for any Azure runner type.
@@ -133,12 +135,11 @@ templ RegionSelector(platform string) {
 // The region section replaces #installFormFields innerHTML (inside the main card).
 // Input groups are appended after via the #installInputGroups OOB swap.
 templ InstallFormFields(config InstallFormConfig) {
-	<!-- Region selector (renders inside the existing card) — hidden for GCP -->
+	<!-- Region selector — hidden for GCP -->
 	if !isGCPPlatform(config.Platform) {
-		<div>
-			<h4 class="text-md font-semibold mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deployment Region</h4>
+		@components.Card(components.CardProps{Title: "Deployment Region"}) {
 			@RegionSelector(config.Platform)
-		</div>
+		}
 	}
 	<!-- Input groups swapped into separate container outside the card -->
 	<div id="installInputGroups" hx-swap-oob="innerHTML">
@@ -150,43 +151,41 @@ templ InstallFormFields(config InstallFormConfig) {
 	</div>
 }
 
-// inputGroup renders a collapsible group of input fields using <details>/<summary>
-templ inputGroup(group InstallFormInputGroup, collapsed bool) {
-	<details
-		class="input-group-card"
-		if !collapsed {
-			open
+func inputGroupTitle(group InstallFormInputGroup) string {
+	if group.DisplayName != "" {
+		return group.DisplayName
+	}
+	if group.Name != "" {
+		return group.Name
+	}
+	return "Configuration"
+}
+
+templ inputGroupHeader(group InstallFormInputGroup) {
+	<div class="flex items-baseline justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">{ inputGroupTitle(group) }</h4>
+		if group.Description != "" {
+			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">{ group.Description }</p>
 		}
-	>
-		<summary class="input-group-header flex items-center justify-between p-4 cursor-pointer hover:bg-cool-grey-50 dark:hover:bg-dark-grey-700 transition-colors list-none [&::-webkit-details-marker]:hidden">
-			<div>
-				<h5 class="text-md font-semibold text-cool-grey-800 dark:text-cool-grey-200">
-					if group.DisplayName != "" {
-						{ group.DisplayName }
-					} else if group.Name != "" {
-						{ group.Name }
-					} else {
-						Configuration
-					}
-				</h5>
-				if group.Description != "" {
-					<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mt-1">{ group.Description }</p>
-				}
-			</div>
-			<i class="input-group-chevron ph-bold ph-caret-down text-xl text-cool-grey-500 dark:text-cool-grey-400 flex-shrink-0 ml-4 transition-transform"></i>
-		</summary>
-		<div class="px-4 pb-4 space-y-4">
+	</div>
+}
+
+// inputGroup renders a group of input fields inside a Card.
+templ inputGroup(group InstallFormInputGroup, collapsed bool) {
+	@components.Card(components.CardProps{Header: inputGroupHeader(group)}) {
+		<div class="input-grid">
 			for _, input := range group.AppInputs {
 				@singleInput(input)
 			}
 		</div>
-	</details>
+	}
 }
 
 // singleInput renders a single form input field
 templ singleInput(input InstallFormInput) {
 	if input.Type == "bool" || input.Default == "true" || input.Default == "false" {
-		<div class="flex items-start space-x-3">
+		<label for={ input.Name } class="field-label !mb-0 self-center">{ inputLabel(input) }</label>
+		<div class="flex items-center gap-2">
 			<input type="hidden" name={ fmt.Sprintf("inputs[%s]", input.Name) } value="false"/>
 			<input
 				type="checkbox"
@@ -198,53 +197,44 @@ templ singleInput(input InstallFormInput) {
 				}
 				class="field-checkbox"
 			/>
-			<div class="flex-1">
-				<label for={ input.Name } class="field-label">
-					{ inputLabel(input) }
-				</label>
-				if input.Description != "" {
-					<p class="field-hint">{ input.Description }</p>
-				}
-			</div>
 		</div>
+		if input.Description != "" {
+			<p class="field-hint">{ input.Description }</p>
+		}
 	} else if input.Type == "json" {
-		<div>
-			<label for={ input.Name } class="field-label">{ inputLabel(input) }</label>
-			<textarea
-				id={ input.Name }
-				name={ fmt.Sprintf("inputs[%s]", input.Name) }
-				rows="4"
-				placeholder={ input.Default }
-				if input.Required {
-					required
-				}
-				class="field-input"
-			>{ input.Default }</textarea>
-			if input.Description != "" {
-				<p class="field-hint">{ input.Description }</p>
+		<label for={ input.Name } class="field-label !mb-0 self-start pt-2">{ inputLabel(input) }</label>
+		<textarea
+			id={ input.Name }
+			name={ fmt.Sprintf("inputs[%s]", input.Name) }
+			rows="4"
+			placeholder={ input.Default }
+			if input.Required {
+				required
 			}
-		</div>
+			class="field-input"
+		>{ input.Default }</textarea>
+		if input.Description != "" {
+			<p class="field-hint">{ input.Description }</p>
+		}
 	} else {
-		<div>
-			<label for={ input.Name } class="field-label">{ inputLabel(input) }</label>
-			<input
-				type={ inputType(input) }
-				id={ input.Name }
-				name={ fmt.Sprintf("inputs[%s]", input.Name) }
-				placeholder={ input.Default }
-				value={ input.Default }
-				if input.Required {
-					required
-				}
-				if input.Sensitive {
-					autocomplete="off"
-				}
-				class="field-input"
-			/>
-			if input.Description != "" {
-				<p class="field-hint">{ input.Description }</p>
+		<label for={ input.Name } class="field-label !mb-0 self-center">{ inputLabel(input) }</label>
+		<input
+			type={ inputType(input) }
+			id={ input.Name }
+			name={ fmt.Sprintf("inputs[%s]", input.Name) }
+			placeholder={ input.Default }
+			value={ input.Default }
+			if input.Required {
+				required
 			}
-		</div>
+			if input.Sensitive {
+				autocomplete="off"
+			}
+			class="field-input"
+		/>
+		if input.Description != "" {
+			<p class="field-hint">{ input.Description }</p>
+		}
 	}
 }
 

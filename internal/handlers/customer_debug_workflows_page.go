@@ -10,7 +10,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
 const debugWorkflowsPerPage = 20
@@ -51,12 +50,12 @@ func (h *Handler) buildDebugWorkflowsProps(c *gin.Context) (*customerpages.Debug
 	offset := (page - 1) * debugWorkflowsPerPage
 
 	// Fetch workflows
-	var workflows []*nuonmodels.AppWorkflow
+	var workflows []*nuon.Workflow
 	var hasMore bool
 	if nuonOrg != nil && nuonOrg.APIToken != "" {
 		nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
 		if err == nil {
-			workflows, hasMore, err = nuonClient.GetInstallWorkflows(c.Request.Context(), install.NuonInstallID, offset, debugWorkflowsPerPage)
+			workflows, hasMore, err = nuonClient.GetInstallWorkflowsV2(c.Request.Context(), install.NuonInstallID, offset, debugWorkflowsPerPage)
 			if err != nil {
 				return nil, fmt.Errorf("failed to fetch workflows: %w", err)
 			}

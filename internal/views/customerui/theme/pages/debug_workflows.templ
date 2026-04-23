@@ -3,6 +3,7 @@ package pages
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
@@ -11,6 +12,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
@@ -19,11 +21,11 @@ type DebugWorkflowsPageProps struct {
 	customerui.LayoutProps
 	Install          *models.Install
 	AppName          string
-	Workflows        []*nuonmodels.AppWorkflow
+	Workflows        []*nuon.Workflow
 	Pagination       components.PaginationProps
-	SelectedWorkflow    *nuonmodels.AppWorkflow     // nil when no workflow selected
+	SelectedWorkflow    *nuon.Workflow     // nil when no workflow selected
 	WorkflowJSON        string                      // pretty-printed JSON of selected workflow
-	SelectedStep         *nuonmodels.AppWorkflowStep // step to display in detail card
+	SelectedStep         *nuon.WorkflowStep // step to display in detail card
 	SelectedStepIsActive bool                        // true when SelectedStep is the active step (not manually picked)
 	ActiveTab            string                      // "info" or "json" — workflow panel tab
 	ActiveStepTab        string                      // "info" or "json" — step detail tab
@@ -34,6 +36,10 @@ type DebugWorkflowsPageProps struct {
 	SelectedStepStackSetup partials.StackSetupData    // platform-specific stack setup data
 	SelectedStepStackJSON  string                    // JSON of the full install stack
 	ActiveStackTab         string                    // "info" or "json" — stack setup card tab
+	ActiveGroupTab         string                    // "info" or "json" — step group card tab
+	ActiveSignalTab        string                    // "info" or "json" — queue signal card tab
+	ActiveApprovalTab      string                    // "info" or "json" — approval card tab
+	ActivePolicyTab        string                    // "info" or "json" — policy validation card tab
 	AlertType            string                      // "error", "success", or "" — type of alert to display
 	AlertMsg             string                      // alert message text
 	CurrentQuery         string                      // raw query string from the current request URL (for preserving state in form actions)
@@ -87,7 +93,7 @@ templ DebugWorkflowsPage(props DebugWorkflowsPageProps) {
 	}
 }
 
-templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuonmodels.AppWorkflow) {
+templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuon.Workflow) {
 	<a
 		href={ templ.SafeURL(debugWorkflowRowURL(props, wf.ID)) }
 		hx-get={ debugWorkflowRowPartialURL(props, wf.ID) }
@@ -99,7 +105,7 @@ templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuonmodels.AppWorkflow
 			templ.KV("bg-cool-grey-100 dark:bg-dark-grey-800", props.SelectedWorkflow != nil && props.SelectedWorkflow.ID == wf.ID) }
 	>
 		<span class="font-mono text-xs text-cool-grey-500 dark:text-cool-grey-400 w-24 truncate" title={ wf.ID }>{ truncateID(wf.ID) }</span>
-		<span class="w-24">{ string(wf.Type) }</span>
+		<span class="w-24">{ wf.Type }</span>
 		<span class="w-28">
 			@debugStatusBadge(wf.Status)
 		</span>
@@ -108,10 +114,10 @@ templ debugWorkflowRow(props DebugWorkflowsPageProps, wf *nuonmodels.AppWorkflow
 	</a>
 }
 
-templ debugStatusBadge(status *nuonmodels.AppCompositeStatus) {
+templ debugStatusBadge(status *nuon.CompositeStatus) {
 	if status != nil {
-		<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(string(status.Status)) }>
-			{ string(status.Status) }
+		<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(status.Status) }>
+			{ status.Status }
 		</span>
 	}
 }
@@ -165,8 +171,9 @@ templ DebugWorkflowPanelContent(props DebugWorkflowsPageProps) {
 		Tabs: debugPanelTabs(props),
 	})
 	if props.ActiveTab == "json" {
+		@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s", props.SelectedWorkflow.ID))
 		@components.CodeBlock(props.WorkflowJSON, "json")
-	} else if props.ActiveTab == "steps" {
+	} else if props.ActiveTab == "step-groups" {
 		@debugWorkflowStepsTab(props)
 	} else {
 		@debugWorkflowInfoTab(props)
@@ -178,9 +185,9 @@ templ debugWorkflowInfoTab(props DebugWorkflowsPageProps) {
 	@components.Card(components.CardProps{Header: debugWorkflowCardHeader(props.SelectedWorkflow.Name, props.SelectedWorkflow.ID, workflowStatus(props.SelectedWorkflow))}) {
 		<div class="grid grid-cols-2 gap-6">
 			<div class="space-y-2">
-				@debugInfoRow("Type", string(props.SelectedWorkflow.Type))
+				@debugInfoRow("Type", props.SelectedWorkflow.Type)
 				@debugInfoRow("Plan Only", fmt.Sprintf("%v", props.SelectedWorkflow.PlanOnly))
-				@debugInfoRow("Approval", string(props.SelectedWorkflow.ApprovalOption))
+				@debugInfoRow("Approval", props.SelectedWorkflow.ApprovalOption)
 				@debugInfoRow("Owner", fmt.Sprintf("%s (%s)", props.SelectedWorkflow.OwnerType, props.SelectedWorkflow.OwnerID))
 			</div>
 			<div class="space-y-2">
@@ -212,16 +219,32 @@ templ debugWorkflowInfoTab(props DebugWorkflowsPageProps) {
 }
 
 templ debugWorkflowStepsTab(props DebugWorkflowsPageProps) {
-	if len(props.SelectedWorkflow.Steps) > 0 {
+	if len(props.SelectedWorkflow.StepGroups) > 0 {
 		<div class="@container">
 			<div class="flex flex-col @5xl:flex-row @5xl:items-start gap-4">
-				<div class="@5xl:w-1/4 @5xl:shrink-0 @5xl:min-w-0">
-					@components.Card(components.CardProps{Title: fmt.Sprintf("Steps (%d)", len(props.SelectedWorkflow.Steps))}) {
-						for i, group := range groupStepsByIdx(props.SelectedWorkflow.Steps) {
+				<div class="@5xl:w-1/3 @5xl:shrink-0 @5xl:min-w-0">
+					@components.Card(components.CardProps{Header: debugStepGroupsCardHeader(props.SelectedWorkflow)}) {
+						for i, group := range props.SelectedWorkflow.StepGroups {
 							if i > 0 {
 								<div class="border-b" style="border-color: var(--theme-border-subtle)"></div>
 							}
 							<div class="py-2">
+								<div class="px-3 py-1.5 flex items-center gap-2">
+									<span class="text-xs font-medium" style="color: var(--theme-text-muted)">
+										if group.Name != "" {
+											{ group.Name }
+										} else {
+											{ fmt.Sprintf("Group %d", group.GroupIdx) }
+										}
+									</span>
+									@debugStatusBadge(groupStatusPtr(group))
+									if group.Parallel {
+										<span class="text-[10px] px-1 py-0.5 rounded" style="background: var(--theme-surface-secondary); color: var(--theme-text-muted)">parallel</span>
+									}
+									<span class="ml-auto text-[10px]" style="color: var(--theme-text-muted)">
+										{ fmt.Sprintf("%d steps", len(group.Steps)) }
+									</span>
+								</div>
 								<div class="space-y-0.5">
 									for _, step := range group.Steps {
 										@debugStepRow(props, step)
@@ -232,8 +255,15 @@ templ debugWorkflowStepsTab(props DebugWorkflowsPageProps) {
 					}
 				</div>
 				if props.SelectedStep != nil {
-					<div class="@5xl:w-3/4 @5xl:min-w-0 space-y-4">
+					<div class="@5xl:w-2/3 @5xl:min-w-0 space-y-4">
+						@debugGroupInfoCard(props)
 						@debugSelectedStepCard(props)
+						if props.SelectedStep.Approval != nil {
+							@debugApprovalCard(props)
+						}
+						if props.SelectedStep.PolicyValidation != nil {
+							@debugPolicyValidationCard(props)
+						}
 						@debugStepTargetCard(props)
 						if props.SelectedStepStackJSON != "" {
 							@debugStackSetupCard(props)
@@ -244,22 +274,14 @@ templ debugWorkflowStepsTab(props DebugWorkflowsPageProps) {
 		</div>
 	} else {
 		@components.EmptyState(components.EmptyStateProps{
-			Title: "No steps",
+			Title: "No step groups",
 			Icon:  "ph-list",
 		})
 	}
 }
 
 templ debugStepTargetCard(props DebugWorkflowsPageProps) {
-	if props.SelectedStep.StepTargetType == "" || props.SelectedStep.StepTargetID == "" {
-		@components.Card(components.CardProps{Title: "Target"}) {
-			@components.EmptyState(components.EmptyStateProps{
-				Title:   "No target",
-				Icon:    "ph-crosshair",
-				Compact: true,
-			})
-		}
-	} else {
+	if props.SelectedStep.StepTargetType != "" && props.SelectedStep.StepTargetID != "" {
 		@components.Card(components.CardProps{Header: debugTargetCardHeader(props.SelectedStep.StepTargetType, props.SelectedStep.StepTargetID)}) {
 			<div id="debug-target-card-content">
 				@DebugTargetCardContent(props)
@@ -275,6 +297,7 @@ templ DebugTargetCardContent(props DebugWorkflowsPageProps) {
 			Tabs: debugTargetTabs(props),
 		})
 		if props.ActiveTargetTab == "json" {
+			@debugAPIEndpoint(debugTargetEndpoint(props))
 			@components.CodeBlock(props.SelectedStepTargetJSON, "json")
 		} else {
 			@debugTargetInfo(props)
@@ -413,6 +436,7 @@ templ DebugStackCardContent(props DebugWorkflowsPageProps) {
 		Tabs: debugStackSetupTabs(props),
 	})
 	if props.ActiveStackTab == "json" {
+		@debugAPIEndpoint(fmt.Sprintf("GET /v1/installs/%s/stack", props.Install.NuonInstallID))
 		@components.CodeBlock(props.SelectedStepStackJSON, "json")
 	} else {
 		@debugStackSetupInfo(props)
@@ -495,12 +519,12 @@ templ debugSelectedStepCard(props DebugWorkflowsPageProps) {
 	}
 }
 
-templ debugStepCardHeader(step *nuonmodels.AppWorkflowStep) {
+templ debugStepCardHeader(step *nuon.WorkflowStep) {
 	<div class="flex items-center justify-between">
 		<h4 class="text-base text-cool-grey-900 dark:text-white">{ step.Name }</h4>
 		if step.Status != nil {
-			<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(string(step.Status.Status)) }>
-				{ string(step.Status.Status) }
+			<span class={ "inline-flex items-center px-2 py-0.5 rounded text-xs font-medium", debugStatusClasses(step.Status.Status) }>
+				{ step.Status.Status }
 			</span>
 		}
 	</div>
@@ -518,6 +542,7 @@ templ DebugStepCardContent(props DebugWorkflowsPageProps) {
 		Tabs: debugStepDetailTabs(props),
 	})
 	if props.ActiveStepTab == "json" {
+		@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s → steps[]", props.SelectedWorkflow.ID))
 		@components.CodeBlock(mustMarshalJSON(props.SelectedStep), "json")
 	} else {
 		@debugStepInfoDefault(props.SelectedStep)
@@ -571,10 +596,10 @@ templ debugStepActions(props DebugWorkflowsPageProps) {
 	</div>
 }
 
-templ debugStepInfoDefault(step *nuonmodels.AppWorkflowStep) {
+templ debugStepInfoDefault(step *nuon.WorkflowStep) {
 	<div class="grid grid-cols-2 gap-6">
 		<div class="space-y-2">
-			@debugInfoRow("Execution Type", string(step.ExecutionType))
+			@debugInfoRow("Execution Type", step.ExecutionType)
 			@debugInfoRow("Group", stepGroupLabel(step))
 		</div>
 		<div class="space-y-2">
@@ -591,28 +616,6 @@ templ debugStepInfoDefault(step *nuonmodels.AppWorkflowStep) {
 		@debugStepFlag("Skippable", step.Skippable)
 		@debugStepFlag("Finished", step.Finished)
 	</div>
-	<!-- Approval -->
-	if step.Approval != nil {
-		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
-			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Approval</h5>
-			<div class="space-y-2">
-				@debugInfoRow("ID", step.Approval.ID)
-				@debugInfoRow("Created", formatTimestamp(step.Approval.CreatedAt))
-			</div>
-		</div>
-	}
-	<!-- Policy Validation -->
-	if step.PolicyValidation != nil {
-		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
-			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Policy Validation</h5>
-			<div class="space-y-2">
-				@debugInfoRow("ID", step.PolicyValidation.ID)
-				if step.PolicyValidation.Response != "" {
-					@components.CodeBlock(step.PolicyValidation.Response, "json")
-				}
-			</div>
-		</div>
-	}
 	<!-- Metadata -->
 	if len(step.Metadata) > 0 {
 		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
@@ -632,6 +635,228 @@ templ debugStepFlag(label string, value bool) {
 		templ.KV("bg-cool-grey-100 text-cool-grey-500 dark:bg-dark-grey-700 dark:text-cool-grey-400", !value) }>
 		{ label }
 	</span>
+}
+
+templ debugApprovalCard(props DebugWorkflowsPageProps) {
+	@components.Card(components.CardProps{Title: "Approval"}) {
+		<div id="debug-approval-card-content">
+			@DebugApprovalCardContent(props)
+		</div>
+	}
+}
+
+templ DebugApprovalCardContent(props DebugWorkflowsPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: debugApprovalTabs(props),
+	})
+	if props.ActiveApprovalTab == "json" {
+		@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s → steps[].approval", props.SelectedWorkflow.ID))
+		@components.CodeBlock(mustMarshalJSON(props.SelectedStep.Approval), "json")
+	} else {
+		@debugApprovalInfo(props.SelectedStep.Approval)
+	}
+}
+
+templ debugApprovalInfo(approval *nuon.WorkflowStepApproval) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", approval.ID)
+			@debugInfoRow("Type", approval.Type)
+			@debugInfoRow("Created", formatTimestamp(approval.CreatedAt))
+		</div>
+		<div class="space-y-2">
+			@debugInfoRow("Owner", fmt.Sprintf("%s / %s", approval.OwnerType, approval.OwnerID))
+			if approval.RunnerJobID != nil {
+				@debugInfoRow("Runner Job", *approval.RunnerJobID)
+			}
+		</div>
+	</div>
+	if approval.Response != nil {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Response</h5>
+			<div class="space-y-2">
+				@debugInfoRow("ID", approval.Response.ID)
+				@debugInfoRow("Type", approval.Response.Type)
+				@debugInfoRow("Created", formatTimestamp(approval.Response.CreatedAt))
+				if approval.Response.Note != "" {
+					@debugInfoRow("Note", approval.Response.Note)
+				}
+			</div>
+		</div>
+	}
+}
+
+templ debugPolicyValidationCard(props DebugWorkflowsPageProps) {
+	@components.Card(components.CardProps{Title: "Policy Validation"}) {
+		<div id="debug-policy-card-content">
+			@DebugPolicyCardContent(props)
+		</div>
+	}
+}
+
+templ DebugPolicyCardContent(props DebugWorkflowsPageProps) {
+	@components.TabBar(components.TabBarProps{
+		Tabs: debugPolicyTabs(props),
+	})
+	if props.ActivePolicyTab == "json" {
+		@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s → steps[].policy_validation", props.SelectedWorkflow.ID))
+		@components.CodeBlock(mustMarshalJSON(props.SelectedStep.PolicyValidation), "json")
+	} else {
+		@debugPolicyInfo(props.SelectedStep.PolicyValidation)
+	}
+}
+
+templ debugPolicyInfo(pv *nuon.WorkflowStepPolicyValidation) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", pv.ID)
+			@debugInfoRow("Created", formatTimestamp(pv.CreatedAt))
+		</div>
+		<div class="space-y-2">
+			if pv.Status.Status != "" {
+				<div class="flex gap-2 text-sm">
+					<span class="text-cool-grey-500 dark:text-cool-grey-400 shrink-0 whitespace-nowrap">Status</span>
+					@debugStatusBadge(&pv.Status)
+				</div>
+			}
+		</div>
+	</div>
+	if pv.Response != "" {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Response</h5>
+			@components.CodeBlock(pv.Response, "json")
+		</div>
+	}
+}
+
+templ debugGroupInfoCard(props DebugWorkflowsPageProps) {
+	if group := selectedStepGroup(props); group != nil {
+		@components.Card(components.CardProps{Title: "Step Group"}) {
+			<div id="debug-group-card-content">
+				@DebugGroupCardContent(props)
+			</div>
+		}
+	}
+}
+
+templ DebugGroupCardContent(props DebugWorkflowsPageProps) {
+	if group := selectedStepGroup(props); group != nil {
+		@components.TabBar(components.TabBarProps{
+			Tabs: debugGroupTabs(props),
+		})
+		if props.ActiveGroupTab == "json" {
+			@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s → step_groups[]", props.SelectedWorkflow.ID))
+			@components.CodeBlock(mustMarshalJSON(group), "json")
+		} else {
+			@debugGroupInfo(group)
+		}
+	}
+}
+
+templ debugGroupInfo(group *nuon.WorkflowStepGroup) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", group.ID)
+			@debugInfoRow("Name", group.Name)
+			@debugInfoRow("Group Index", fmt.Sprintf("%d", group.GroupIdx))
+			@debugInfoRow("Created", formatTimestamp(group.CreatedAt))
+		</div>
+		<div class="space-y-2">
+			if group.Status.Status != "" {
+				<div class="flex gap-2 text-sm">
+					<span class="text-cool-grey-500 dark:text-cool-grey-400 shrink-0 whitespace-nowrap">Status</span>
+					@debugStatusBadge(&group.Status)
+				</div>
+			}
+			if group.Parallel {
+				@debugInfoRow("Parallel", "true")
+			}
+			@debugInfoRow("Steps", fmt.Sprintf("%d", len(group.Steps)))
+		</div>
+	</div>
+	if len(group.Labels) > 0 {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Labels</h5>
+			<div class="flex gap-2 flex-wrap">
+				for k, v := range group.Labels {
+					<span class="inline-flex items-center gap-1 text-xs px-2.5 py-1 rounded-full font-mono bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-700 dark:text-cool-grey-300">
+						<span class="font-medium">{ k }:</span>
+						<span>{ v }</span>
+					</span>
+				}
+			</div>
+		</div>
+	}
+	if group.QueueSignal != nil {
+		<div class="mt-4 border-t pt-4" style="border-color: var(--theme-border-subtle)">
+			<h5 class="text-sm font-medium text-cool-grey-900 dark:text-white mb-2">Queue Signal</h5>
+			<div class="grid grid-cols-2 gap-6">
+				<div class="space-y-2">
+					@debugInfoRow("ID", group.QueueSignal.ID)
+					@debugInfoRow("Type", group.QueueSignal.Type)
+					@debugInfoRow("Queue ID", group.QueueSignal.QueueID)
+					@debugInfoRow("Created", formatTimestamp(group.QueueSignal.CreatedAt))
+				</div>
+				<div class="space-y-2">
+					if group.QueueSignal.Status.Status != "" {
+						<div class="flex gap-2 text-sm">
+							<span class="text-cool-grey-500 dark:text-cool-grey-400 shrink-0 whitespace-nowrap">Status</span>
+							@debugStatusBadge(&group.QueueSignal.Status)
+						</div>
+					}
+					@debugInfoRow("Owner", fmt.Sprintf("%s / %s", group.QueueSignal.OwnerType, group.QueueSignal.OwnerID))
+					if group.QueueSignal.ExecutionCount > 0 {
+						@debugInfoRow("Executions", fmt.Sprintf("%d", group.QueueSignal.ExecutionCount))
+					}
+				</div>
+			</div>
+		</div>
+	}
+}
+
+templ debugQueueSignalCard(props DebugWorkflowsPageProps, qs *nuon.QueueSignal) {
+	@components.Card(components.CardProps{Title: "Queue Signal"}) {
+		<div id="debug-signal-card-content">
+			@DebugSignalCardContent(props)
+		</div>
+	}
+}
+
+templ DebugSignalCardContent(props DebugWorkflowsPageProps) {
+	if qs := selectedStepQueueSignal(props); qs != nil {
+		@components.TabBar(components.TabBarProps{
+			Tabs: debugSignalTabs(props),
+		})
+		if props.ActiveSignalTab == "json" {
+			@debugAPIEndpoint(fmt.Sprintf("GET /v1/workflows/%s → step_groups[].queue_signal", props.SelectedWorkflow.ID))
+			@components.CodeBlock(mustMarshalJSON(qs), "json")
+		} else {
+			@debugSignalInfo(qs)
+		}
+	}
+}
+
+templ debugSignalInfo(qs *nuon.QueueSignal) {
+	<div class="grid grid-cols-2 gap-6">
+		<div class="space-y-2">
+			@debugInfoRow("ID", qs.ID)
+			@debugInfoRow("Type", qs.Type)
+			@debugInfoRow("Queue ID", qs.QueueID)
+			@debugInfoRow("Created", formatTimestamp(qs.CreatedAt))
+		</div>
+		<div class="space-y-2">
+			if qs.Status.Status != "" {
+				<div class="flex gap-2 text-sm">
+					<span class="text-cool-grey-500 dark:text-cool-grey-400 shrink-0 whitespace-nowrap">Status</span>
+					@debugStatusBadge(&qs.Status)
+				</div>
+			}
+			@debugInfoRow("Owner", fmt.Sprintf("%s / %s", qs.OwnerType, qs.OwnerID))
+			if qs.ExecutionCount > 0 {
+				@debugInfoRow("Executions", fmt.Sprintf("%d", qs.ExecutionCount))
+			}
+		</div>
+	</div>
 }
 
 templ debugWorkflowActions(props DebugWorkflowsPageProps) {
@@ -707,7 +932,7 @@ templ debugInfoRow(label, value string) {
 	</div>
 }
 
-templ debugStepRow(props DebugWorkflowsPageProps, step *nuonmodels.AppWorkflowStep) {
+templ debugStepRow(props DebugWorkflowsPageProps, step *nuon.WorkflowStep) {
 	<a
 		href={ templ.SafeURL(debugStepRowHref(props, step.ID)) }
 		hx-get={ debugStepRowHxGet(props, step.ID) }
@@ -727,9 +952,9 @@ templ debugStepRow(props DebugWorkflowsPageProps, step *nuonmodels.AppWorkflowSt
 	</a>
 }
 
-templ debugStepStatusIcon(step *nuonmodels.AppWorkflowStep) {
+templ debugStepStatusIcon(step *nuon.WorkflowStep) {
 	if step.Status != nil {
-		switch string(step.Status.Status) {
+		switch step.Status.Status {
 			case "success", "approved":
 				<i class="ph-bold ph-check-circle text-green-500"></i>
 			case "error":
@@ -762,6 +987,10 @@ func debugURL(props DebugWorkflowsPageProps) *utils.URLBuilder {
 		SetBool("expanded", props.Expanded).
 		Set("target_tab", debugTabParam(props.ActiveTargetTab)).
 		Set("stack_tab", debugTabParam(props.ActiveStackTab)).
+		Set("group_tab", debugTabParam(props.ActiveGroupTab)).
+		Set("signal_tab", debugTabParam(props.ActiveSignalTab)).
+		Set("approval_tab", debugTabParam(props.ActiveApprovalTab)).
+		Set("policy_tab", debugTabParam(props.ActivePolicyTab)).
 		Set("alert_type", props.AlertType).
 		SetEncoded("alert_msg", props.AlertMsg)
 }
@@ -804,7 +1033,7 @@ func debugPanelTabs(props DebugWorkflowsPageProps) []components.Tab {
 	}
 	return []components.Tab{
 		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "info"},
-		{Label: "Steps", Href: tabURL("steps").Build(), HxGet: tabURL("steps").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "steps"},
+		{Label: "Step Groups", Href: tabURL("step-groups").Build(), HxGet: tabURL("step-groups").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "step-groups"},
 		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "panel").Build(), HxTarget: panelWrapperTarget, HxSwap: "outerHTML", Active: props.ActiveTab == "json"},
 	}
 }
@@ -845,9 +1074,57 @@ func debugStackSetupTabs(props DebugWorkflowsPageProps) []components.Tab {
 	}
 }
 
+func debugGroupTabs(props DebugWorkflowsPageProps) []components.Tab {
+	tabURL := func(tab string) *utils.URLBuilder {
+		p := props
+		p.ActiveGroupTab = tab
+		return debugURL(p)
+	}
+	return []components.Tab{
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "group-card").Build(), HxTarget: "#debug-group-card-content", Active: props.ActiveGroupTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "group-card").Build(), HxTarget: "#debug-group-card-content", Active: props.ActiveGroupTab == "json"},
+	}
+}
+
+func debugSignalTabs(props DebugWorkflowsPageProps) []components.Tab {
+	tabURL := func(tab string) *utils.URLBuilder {
+		p := props
+		p.ActiveSignalTab = tab
+		return debugURL(p)
+	}
+	return []components.Tab{
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "signal-card").Build(), HxTarget: "#debug-signal-card-content", Active: props.ActiveSignalTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "signal-card").Build(), HxTarget: "#debug-signal-card-content", Active: props.ActiveSignalTab == "json"},
+	}
+}
+
+func debugApprovalTabs(props DebugWorkflowsPageProps) []components.Tab {
+	tabURL := func(tab string) *utils.URLBuilder {
+		p := props
+		p.ActiveApprovalTab = tab
+		return debugURL(p)
+	}
+	return []components.Tab{
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "approval-card").Build(), HxTarget: "#debug-approval-card-content", Active: props.ActiveApprovalTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "approval-card").Build(), HxTarget: "#debug-approval-card-content", Active: props.ActiveApprovalTab == "json"},
+	}
+}
+
+func debugPolicyTabs(props DebugWorkflowsPageProps) []components.Tab {
+	tabURL := func(tab string) *utils.URLBuilder {
+		p := props
+		p.ActivePolicyTab = tab
+		return debugURL(p)
+	}
+	return []components.Tab{
+		{Label: "Info", Href: tabURL("info").Build(), HxGet: tabURL("info").Set("partial", "policy-card").Build(), HxTarget: "#debug-policy-card-content", Active: props.ActivePolicyTab != "json"},
+		{Label: "JSON", Href: tabURL("json").Build(), HxGet: tabURL("json").Set("partial", "policy-card").Build(), HxTarget: "#debug-policy-card-content", Active: props.ActivePolicyTab == "json"},
+	}
+}
+
 func debugStepRowHxGet(props DebugWorkflowsPageProps, stepID string) string {
 	p := props
-	p.SelectedStep = &nuonmodels.AppWorkflowStep{ID: stepID}
+	p.SelectedStep = &nuon.WorkflowStep{ID: stepID}
 	p.SelectedStepIsActive = false
 	p.ActiveStepTab = "info"
 	return debugURL(p).Set("partial", "panel").Build()
@@ -855,66 +1132,66 @@ func debugStepRowHxGet(props DebugWorkflowsPageProps, stepID string) string {
 
 func debugStepRowHref(props DebugWorkflowsPageProps, stepID string) string {
 	p := props
-	p.SelectedStep = &nuonmodels.AppWorkflowStep{ID: stepID}
+	p.SelectedStep = &nuon.WorkflowStep{ID: stepID}
 	p.SelectedStepIsActive = false
 	p.ActiveStepTab = "info"
 	return debugURL(p).Build()
 }
 
-func stepCanApprove(step *nuonmodels.AppWorkflowStep) bool {
-	return step.Status != nil && string(step.Status.Status) == "approval-awaiting" && step.Approval != nil
+func stepCanApprove(step *nuon.WorkflowStep) bool {
+	return step.Status != nil && step.Status.Status == "approval-awaiting" && step.Approval != nil
 }
 
-func stepCanRetry(step *nuonmodels.AppWorkflowStep) bool {
+func stepCanRetry(step *nuon.WorkflowStep) bool {
 	if !step.Retryable || step.Finished || step.StartedAt == "" {
 		return false
 	}
-	if step.Status != nil && string(step.Status.Status) == "error" {
+	if step.Status != nil && step.Status.Status == "error" {
 		return true
 	}
 	return false
 }
 
-func stepGroupLabel(step *nuonmodels.AppWorkflowStep) string {
+func stepGroupLabel(step *nuon.WorkflowStep) string {
 	if step.GroupRetryIdx > 0 {
 		return fmt.Sprintf("%d (retry %d)", step.GroupIdx, step.GroupRetryIdx)
 	}
 	return fmt.Sprintf("%d", step.GroupIdx)
 }
 
-func workflowCanCancel(wf *nuonmodels.AppWorkflow) bool {
+func workflowCanCancel(wf *nuon.Workflow) bool {
 	return !wf.Finished
 }
 
-func workflowCanApprove(wf *nuonmodels.AppWorkflow) bool {
+func workflowCanApprove(wf *nuon.Workflow) bool {
 	return workflowApprovalStep(wf) != nil
 }
 
-func workflowCanApproveAll(wf *nuonmodels.AppWorkflow) bool {
+func workflowCanApproveAll(wf *nuon.Workflow) bool {
 	for _, s := range wf.Steps {
-		if s.Status != nil && string(s.Status.Status) == "approval-awaiting" {
+		if s.Status != nil && s.Status.Status == "approval-awaiting" {
 			return true
 		}
 	}
 	return false
 }
 
-func workflowCanRetry(wf *nuonmodels.AppWorkflow) bool {
+func workflowCanRetry(wf *nuon.Workflow) bool {
 	return workflowRetryableStep(wf) != nil
 }
 
-func workflowApprovalStep(wf *nuonmodels.AppWorkflow) *nuonmodels.AppWorkflowStep {
+func workflowApprovalStep(wf *nuon.Workflow) *nuon.WorkflowStep {
 	for _, s := range wf.Steps {
-		if s.Status != nil && string(s.Status.Status) == "approval-awaiting" && s.Approval != nil {
+		if s.Status != nil && s.Status.Status == "approval-awaiting" && s.Approval != nil {
 			return s
 		}
 	}
 	return nil
 }
 
-func workflowRetryableStep(wf *nuonmodels.AppWorkflow) *nuonmodels.AppWorkflowStep {
+func workflowRetryableStep(wf *nuon.Workflow) *nuon.WorkflowStep {
 	for _, s := range wf.Steps {
-		if s.Status != nil && string(s.Status.Status) == "error" && s.Retryable {
+		if s.Status != nil && s.Status.Status == "error" && s.Retryable {
 			return s
 		}
 	}
@@ -955,9 +1232,9 @@ func debugActionURL(props DebugWorkflowsPageProps, action string) string {
 	return base
 }
 
-func workflowStatus(wf *nuonmodels.AppWorkflow) string {
+func workflowStatus(wf *nuon.Workflow) string {
 	if wf.Status != nil {
-		return string(wf.Status.Status)
+		return wf.Status.Status
 	}
 	return ""
 }
@@ -1022,35 +1299,86 @@ func debugStatusClasses(status string) string {
 	}
 }
 
-type stepGroup struct {
-	Idx   int64
-	Steps []*nuonmodels.AppWorkflowStep
-}
-
-func groupStepsByIdx(steps []*nuonmodels.AppWorkflowStep) []stepGroup {
-	var groups []stepGroup
-	var current *stepGroup
-	for _, s := range steps {
-		if current == nil || s.GroupIdx != current.Idx {
-			groups = append(groups, stepGroup{Idx: s.GroupIdx})
-			current = &groups[len(groups)-1]
-		}
-		current.Steps = append(current.Steps, s)
-		// Update pointer since append may have reallocated
-		groups[len(groups)-1] = *current
+func stepGroupStepCount(wf *nuon.Workflow) int {
+	n := 0
+	for _, g := range wf.StepGroups {
+		n += len(g.Steps)
 	}
-	return groups
+	return n
 }
 
-func findActiveStep(steps []*nuonmodels.AppWorkflowStep) *nuonmodels.AppWorkflowStep {
+templ debugStepGroupsCardHeader(wf *nuon.Workflow) {
+	<div class="flex items-center justify-between">
+		<h4 class="text-base text-cool-grey-900 dark:text-white">Step groups</h4>
+		<span class="text-xs" style="color: var(--theme-text-muted)">
+			{ fmt.Sprintf("%d groups, %d steps", len(wf.StepGroups), stepGroupStepCount(wf)) }
+		</span>
+	</div>
+}
+
+templ debugAPIEndpoint(endpoint string) {
+	<div class="mb-2 px-2 py-1 rounded text-xs font-mono" style="background: var(--theme-surface-secondary); color: var(--theme-text-muted)">
+		{ endpoint }
+	</div>
+}
+
+func debugTargetEndpoint(props DebugWorkflowsPageProps) string {
+	step := props.SelectedStep
+	if step == nil {
+		return ""
+	}
+	switch step.StepTargetType {
+	case "install_deploys":
+		return fmt.Sprintf("GET /v1/installs/%s/deploys/%s", props.Install.NuonInstallID, step.StepTargetID)
+	case "install_sandbox_runs":
+		return fmt.Sprintf("GET /v1/installs/%s/sandbox-runs/%s", props.Install.NuonInstallID, step.StepTargetID)
+	case "install_action_workflow_runs":
+		return fmt.Sprintf("GET /v1/installs/%s/action-workflow-runs/%s", props.Install.NuonInstallID, step.StepTargetID)
+	case "install_stack_versions":
+		return fmt.Sprintf("GET /v1/installs/%s/stack → versions[]", props.Install.NuonInstallID)
+	default:
+		return fmt.Sprintf("GET /v1/%s/%s", strings.ReplaceAll(step.StepTargetType, "_", "-"), step.StepTargetID)
+	}
+}
+
+func selectedStepGroup(props DebugWorkflowsPageProps) *nuon.WorkflowStepGroup {
+	if props.SelectedStep == nil || props.SelectedWorkflow == nil {
+		return nil
+	}
+	for i := range props.SelectedWorkflow.StepGroups {
+		if props.SelectedWorkflow.StepGroups[i].ID == props.SelectedStep.WorkflowStepGroupID {
+			return &props.SelectedWorkflow.StepGroups[i]
+		}
+	}
+	return nil
+}
+
+func selectedStepQueueSignal(props DebugWorkflowsPageProps) *nuon.QueueSignal {
+	if props.SelectedStep == nil || props.SelectedWorkflow == nil {
+		return nil
+	}
+	for _, g := range props.SelectedWorkflow.StepGroups {
+		if g.ID == props.SelectedStep.WorkflowStepGroupID {
+			return g.QueueSignal
+		}
+	}
+	return nil
+}
+
+func groupStatusPtr(g nuon.WorkflowStepGroup) *nuon.CompositeStatus {
+	return &g.Status
+}
+
+
+func findActiveStep(steps []*nuon.WorkflowStep) *nuon.WorkflowStep {
 	for _, s := range steps {
-		if s.Status != nil && (string(s.Status.Status) == "in-progress" || string(s.Status.Status) == "active") {
+		if s.Status != nil && (s.Status.Status == "in-progress" || s.Status.Status == "active") {
 			return s
 		}
 	}
 	// Fallback: find last non-completed step
 	for i := len(steps) - 1; i >= 0; i-- {
-		if steps[i].Status != nil && string(steps[i].Status.Status) != "completed" {
+		if steps[i].Status != nil && steps[i].Status.Status != "completed" {
 			return steps[i]
 		}
 	}

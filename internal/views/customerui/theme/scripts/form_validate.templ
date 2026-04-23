@@ -1,0 +1,35 @@
+package scripts
+
+// FormValidate disables the submit button until all required fields
+// in the form are filled. Re-checks on input, change, and after
+// HTMX-loaded fields settle into the DOM.
+templ FormValidate(formID, buttonID string) {
+	<script>
+		(function() {
+			function check() {
+				var form = document.getElementById({{ formID }});
+				var btn = document.getElementById({{ buttonID }});
+				if (!form || !btn) return;
+				var valid = form.checkValidity();
+				btn.disabled = !valid;
+				btn.classList.toggle("opacity-40", !valid);
+				btn.classList.toggle("pointer-events-none", !valid);
+			}
+
+			// Check on every input/change
+			document.addEventListener("input", check);
+			document.addEventListener("change", check);
+
+			// Re-check after HTMX loads dynamic fields (setTimeout so FormPersist restores values first)
+			document.addEventListener("htmx:afterSettle", function(evt) {
+				var id = evt.detail.target && evt.detail.target.id;
+				if (id === "installFormFields" || id === "installInputGroups") {
+					setTimeout(check, 0);
+				}
+			});
+
+			// Initial state
+			check();
+		})();
+	</script>
+}

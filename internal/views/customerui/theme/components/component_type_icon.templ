@@ -1,0 +1,43 @@
+package components
+
+// ComponentTypeIcon renders a Phosphor icon for a component type string.
+// Use this wherever you need to display an icon for a component type
+// (e.g. "terraform_module", "helm_chart", "docker_build", etc.).
+templ ComponentTypeIcon(componentType string) {
+	switch componentType {
+	case "terraform_module":
+		<i class="ph-bold ph-cube text-base shrink-0 text-cool-grey-400"></i>
+	case "helm_chart":
+		<i class="ph-bold ph-anchor text-base shrink-0 text-cool-grey-400"></i>
+	case "docker_build":
+		<i class="ph-bold ph-docker-logo text-base shrink-0 text-cool-grey-400"></i>
+	case "external_image":
+		<i class="ph-bold ph-package text-base shrink-0 text-cool-grey-400"></i>
+	case "kubernetes_manifest":
+		<i class="ph-bold ph-kubernetes-logo text-base shrink-0 text-cool-grey-400"></i>
+	case "pulumi_module":
+		<i class="ph-bold ph-stack text-base shrink-0 text-cool-grey-400"></i>
+	default:
+		<i class="ph-bold ph-puzzle-piece text-base shrink-0 text-cool-grey-400"></i>
+	}
+}
+
+// ComponentTypeLabel returns a human-readable label for a component type.
+func ComponentTypeLabel(componentType string) string {
+	switch componentType {
+	case "terraform_module":
+		return "Terraform"
+	case "helm_chart":
+		return "Helm"
+	case "docker_build":
+		return "Docker"
+	case "external_image":
+		return "Image"
+	case "kubernetes_manifest":
+		return "Kubernetes"
+	case "pulumi_module":
+		return "Pulumi"
+	default:
+		return ""
+	}
+}

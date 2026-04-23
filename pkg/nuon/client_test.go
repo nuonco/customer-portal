@@ -463,6 +463,151 @@ func TestClient_GetTerraformWorkspaceStateResources(t *testing.T) {
 	})
 }
 
+func TestClient_GetWorkflowV2(t *testing.T) {
+	mock := newMockNuonAPI()
+	defer mock.close()
+
+	workflowID := "wf_test123"
+
+	t.Run("returns workflow with step groups", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/workflows/"+workflowID, func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "Bearer test-token", r.Header.Get("Authorization"))
+			assert.Equal(t, "test-org", r.Header.Get("X-Nuon-Org-ID"))
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]interface{}{
+				"id":   workflowID,
+				"type": "provision",
+				"step_groups": []map[string]interface{}{
+					{
+						"id":        "sg_1",
+						"group_idx": 0,
+						"name":      "Deploy stack",
+						"steps": []map[string]interface{}{
+							{"id": "step_1", "name": "plan"},
+							{"id": "step_2", "name": "apply"},
+						},
+					},
+					{
+						"id":        "sg_2",
+						"group_idx": 1,
+						"parallel":  true,
+						"name":      "Deploy components",
+						"steps": []map[string]interface{}{
+							{"id": "step_3", "name": "deploy-web"},
+						},
+					},
+				},
+				"steps": []map[string]interface{}{
+					{"id": "step_1"},
+					{"id": "step_2"},
+					{"id": "step_3"},
+				},
+			})
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		wf, err := client.GetWorkflowV2(context.Background(), workflowID)
+		assert.NoError(t, err)
+		require.NotNil(t, wf)
+		assert.Equal(t, workflowID, wf.ID)
+		assert.Equal(t, "provision", wf.Type)
+
+		require.Len(t, wf.StepGroups, 2)
+		assert.Equal(t, "Deploy stack", wf.StepGroups[0].Name)
+		assert.False(t, wf.StepGroups[0].Parallel)
+		assert.Len(t, wf.StepGroups[0].Steps, 2)
+		assert.Equal(t, "Deploy components", wf.StepGroups[1].Name)
+		assert.True(t, wf.StepGroups[1].Parallel)
+		assert.Len(t, wf.StepGroups[1].Steps, 1)
+
+		assert.Len(t, wf.Steps, 3)
+	})
+
+	t.Run("returns error on non-200", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/workflows/"+workflowID, func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusInternalServerError)
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		wf, err := client.GetWorkflowV2(context.Background(), workflowID)
+		assert.Error(t, err)
+		assert.Nil(t, wf)
+	})
+}
+
+func TestClient_GetInstallWorkflowsV2(t *testing.T) {
+	mock := newMockNuonAPI()
+	defer mock.close()
+
+	installID := "inst_test123"
+
+	t.Run("returns workflows with pagination", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/installs/"+installID+"/workflows", func(w http.ResponseWriter, r *http.Request) {
+			assert.Equal(t, "0", r.URL.Query().Get("offset"))
+			assert.Equal(t, "10", r.URL.Query().Get("limit"))
+			assert.Equal(t, "false", r.URL.Query().Get("planonly"))
+
+			w.Header().Set("Content-Type", "application/json")
+			workflows := make([]map[string]interface{}, 10)
+			for i := 0; i < 10; i++ {
+				workflows[i] = map[string]interface{}{
+					"id": fmt.Sprintf("wf_%d", i),
+				}
+			}
+			json.NewEncoder(w).Encode(workflows)
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		wfs, hasMore, err := client.GetInstallWorkflowsV2(context.Background(), installID, 0, 10)
+		assert.NoError(t, err)
+		assert.Len(t, wfs, 10)
+		assert.True(t, hasMore)
+	})
+
+	t.Run("partial page means no more", func(t *testing.T) {
+		mock.handlers = make(map[string]http.HandlerFunc)
+		mock.on("GET", "/v1/installs/"+installID+"/workflows", func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode([]map[string]interface{}{
+				{"id": "wf_1"},
+			})
+		})
+
+		client := &Client{
+			apiURL:     mock.url(),
+			apiToken:   "test-token",
+			orgID:      "test-org",
+			httpClient: http.DefaultClient,
+		}
+
+		wfs, hasMore, err := client.GetInstallWorkflowsV2(context.Background(), installID, 0, 10)
+		assert.NoError(t, err)
+		assert.Len(t, wfs, 1)
+		assert.False(t, hasMore)
+	})
+}
+
 func TestParseAPIError(t *testing.T) {
 	tests := []struct {
 		name      string

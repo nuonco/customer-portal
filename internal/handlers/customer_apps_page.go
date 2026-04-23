@@ -110,6 +110,7 @@ func (h *Handler) CustomerAppsPage(c *gin.Context) {
 	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
 	layoutProps.HasPublishedApps = len(appDisplays) > 0
 	layoutProps.ActiveNav = "apps"
+	layoutProps.SidebarMinimized = true
 	if nuonClientErr != nil {
 		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
 	}

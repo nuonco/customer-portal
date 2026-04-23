@@ -17,6 +17,7 @@ type SidebarProps struct {
 	Installs         []models.SidebarInstall // Installs for the switcher
 	CurrentInstallID string                  // Currently viewed install (empty if not on detail page)
 	ActiveTab        string                  // Active install detail tab ("overview", "stack", etc.)
+	SidebarMinimized bool                    // Whether the sidebar should start minimized
 }
 
 // Sidebar renders the customer sidebar navigation with logo, install switcher, and user menu.
@@ -35,6 +36,14 @@ templ Sidebar(props SidebarProps) {
 			if props.HeaderTitle != "" {
 				<span class="header-title text-sm font-semibold text-[var(--theme-black)] dark:text-[var(--theme-white)] truncate">{ props.HeaderTitle }</span>
 			}
+			<button
+				type="button"
+				onclick="toggleSidebar()"
+				class="ml-auto flex items-center justify-center w-7 h-7 rounded hover:bg-black/5 dark:hover:bg-white/10 transition-colors cursor-pointer flex-shrink-0"
+				title="Minimize sidebar"
+			>
+				<i class="ph-bold ph-text-outdent text-sm text-cool-grey-400"></i>
+			</button>
 		</div>
 		<!-- Install Switcher -->
 		<div class="customer-sidebar-content">
@@ -296,8 +305,112 @@ templ installSwitcherIcon(inst models.SidebarInstall) {
 	}
 }
 
+// SidebarMini renders the collapsed icon strip shown when the sidebar is minimized.
+templ SidebarMini(props SidebarProps) {
+	<aside class="customer-sidebar-mini">
+		<!-- Logo (only rendered when configured) -->
+		if props.Theme != nil && (props.Theme.LogoLightBase64 != "" || props.Theme.LogoDarkBase64 != "") {
+			<div class="flex items-center justify-center h-12 flex-shrink-0">
+				if props.Theme.LogoDarkBase64 != "" {
+					<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-6 w-6 object-contain dark:hidden"/>
+					<img src={ props.Theme.LogoDarkBase64 } alt="Logo" class="h-6 w-6 object-contain hidden dark:block"/>
+				} else {
+					<img src={ props.Theme.LogoLightBase64 } alt="Logo" class="h-6 w-6 object-contain"/>
+				}
+			</div>
+		}
+		<!-- Maximize button -->
+		<button
+			type="button"
+			onclick="toggleSidebar()"
+			class="sidebar-mini-icon"
+			title="Expand sidebar"
+		>
+			<i class="ph-bold ph-text-indent text-base"></i>
+		</button>
+		<!-- Nav icons -->
+		<div class="flex flex-col items-center gap-1 mt-2 pt-2 border-t border-[var(--theme-border)] w-full px-2">
+			<!-- Install switcher icon -->
+			if props.CurrentInstallID != "" {
+				<a
+					href={ templ.SafeURL(props.BasePath + "/installs/" + props.CurrentInstallID + "/overview") }
+					class={ "sidebar-mini-icon", templ.KV("active", props.ActiveNav == "installs" && props.ActiveTab == "") }
+					title="Current install"
+				>
+					<i class="ph-bold ph-package text-base"></i>
+				</a>
+			} else if len(props.Installs) > 0 {
+				<a
+					href={ templ.SafeURL(props.BasePath + "/installs/" + props.Installs[0].ID + "/overview") }
+					class="sidebar-mini-icon"
+					title="Installs"
+				>
+					<i class="ph-bold ph-package text-base"></i>
+				</a>
+			}
+			<!-- Install detail tab icons -->
+			if props.CurrentInstallID != "" {
+				<div class="flex flex-col items-center gap-1 mt-1 pt-1 border-t border-[var(--theme-border)] w-full">
+					@miniTabIcon(props, "overview", "ph-house-simple", "Overview")
+					@miniTabIcon(props, "stack", "ph-stack", "Stack")
+					@miniTabIcon(props, "sandbox", "ph-shipping-container", "Sandbox")
+					@miniTabIcon(props, "components", "ph-cards", "Components")
+					@miniTabIcon(props, "roles", "ph-file-lock", "Roles")
+					@miniTabIcon(props, "policies", "ph-shield-check", "Policies")
+					@miniTabIcon(props, "audit", "ph-clock-clockwise", "Audit Log")
+					@miniTabIcon(props, "readme", "ph-book-open", "README")
+				</div>
+			}
+			<!-- App catalog -->
+			<div class="mt-1 pt-1 border-t border-[var(--theme-border)] w-full flex justify-center">
+				<a
+					href={ templ.SafeURL(props.BasePath + "/apps") }
+					class={ "sidebar-mini-icon", templ.KV("active", props.ActiveNav == "apps") }
+					title="App Catalog"
+				>
+					<i class="ph-bold ph-squares-four text-base"></i>
+				</a>
+			</div>
+		</div>
+		<!-- User avatar -->
+		<div class="mt-auto flex items-center justify-center pb-1">
+			if props.User != nil {
+				<a
+					href={ templ.SafeURL(props.BasePath + "/account") }
+					class="sidebar-mini-icon"
+					title={ props.User.Email }
+				>
+					<div class="w-7 h-7 rounded-full customer-avatar flex items-center justify-center text-xs font-semibold">
+						if props.User.Email != "" {
+							{ string([]rune(props.User.Email)[:1]) }
+						}
+					</div>
+				</a>
+			}
+		</div>
+	</aside>
+}
+
+// miniTabIcon renders a single icon link for the minimized sidebar.
+templ miniTabIcon(props SidebarProps, tab string, icon string, title string) {
+	<a
+		href={ templ.SafeURL(props.BasePath + "/installs/" + props.CurrentInstallID + "/" + tab) }
+		class={ "sidebar-mini-icon", templ.KV("active", props.ActiveTab == tab) }
+		title={ title }
+	>
+		<i class={ "ph-bold " + icon + " text-base" }></i>
+	</a>
+}
+
 templ sidebarScripts() {
 	<script>
+		function toggleSidebar() {
+			var el = document.getElementById('sidebar-layout');
+			if (!el) return;
+			var minimized = el.classList.toggle('sidebar-minimized');
+			document.cookie = 'sidebar_minimized=' + minimized + ';path=/;max-age=31536000;SameSite=Lax';
+		}
+
 		function toggleCustomerSidebarMenu() {
 			var dropdown = document.getElementById('customerSidebarDropdown');
 			if (dropdown) dropdown.classList.toggle('hidden');

@@ -29,10 +29,10 @@ templ Card(props CardProps) {
 		style={ cardStyle(props) }
 	>
 		if props.Header != nil {
-			<div class="px-4 py-3 border-b" style="border-color: var(--theme-border-subtle)">
+			<div class={ templ.KV("px-8 py-4", props.Size == CardLarge), templ.KV("px-4 py-3", props.Size != CardLarge), "border-b" } style="border-color: var(--theme-border-subtle)">
 				@props.Header
 			</div>
-			<div class="p-4">
+			<div class={ templ.KV("p-8", props.Size == CardLarge), templ.KV("p-4", props.Size != CardLarge) }>
 				{ children... }
 			</div>
 		} else if props.Title != "" {

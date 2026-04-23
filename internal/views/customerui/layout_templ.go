@@ -5,11 +5,12 @@ package customerui
 
 //lint:file-ignore SA4006 This context is only used if a nested component is present.
 
+import "github.com/a-h/templ"
+import templruntime "github.com/a-h/templ/runtime"
+
 import (
 	"os"
 
-	"github.com/a-h/templ"
-	templruntime "github.com/a-h/templ/runtime"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
@@ -220,12 +221,12 @@ func Layout(props LayoutProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 		}
-		var templ_7745c5c3_Var11 = []any{"flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor)}
+		var templ_7745c5c3_Var11 = []any{"flex h-screen overflow-hidden", templ.KV("pt-10", props.User != nil && props.User.Role == models.RoleVendor), templ.KV("sidebar-minimized", props.SidebarMinimized)}
 		templ_7745c5c3_Err = templ.RenderCSSItems(ctx, templ_7745c5c3_Buffer, templ_7745c5c3_Var11...)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div class=\"")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 19, "<div id=\"sidebar-layout\" class=\"")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -238,27 +239,19 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><!-- Sidebar -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 20, "\"><!-- Sidebar --><div class=\"sidebar-wrapper\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = partials.Sidebar(partials.SidebarProps{
-			Theme:            convertPropsToTheme(props),
-			User:             props.User,
-			BasePath:         props.BasePath,
-			HasPublishedApps: props.HasPublishedApps,
-			ActiveNav:        props.ActiveNav,
-			HeaderTitle:      props.HeaderTitle,
-			ActiveAccount:    props.ActiveAccount,
-			OtherAccounts:    props.OtherAccounts,
-			Installs:         props.Installs,
-			CurrentInstallID: props.CurrentInstallID,
-			ActiveTab:        props.ActiveTab,
-		}).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = partials.SidebarMini(sidebarPropsFromLayout(props)).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "<!-- Main content area --><div id=\"main-wrapper\" class=\"flex-1 flex flex-col overflow-auto\"><main class=\"flex-1 w-full\">")
+		templ_7745c5c3_Err = partials.Sidebar(sidebarPropsFromLayout(props)).Render(ctx, templ_7745c5c3_Buffer)
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 21, "</div><!-- Main content area --><div id=\"main-wrapper\" class=\"flex-1 flex flex-col overflow-auto\"><main class=\"flex-1 w-full\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -266,7 +259,11 @@ func Layout(props LayoutProps) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</main></div></div><!-- Modals -->")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "</main></div></div><!-- Sidebar cookie override (runs before paint to prevent flash) --><script>\n\t\t\t\t(function() {\n\t\t\t\t\tvar m = document.cookie.match(/(?:^|;\\s*)sidebar_minimized=(\\w+)/);\n\t\t\t\t\tif (m) {\n\t\t\t\t\t\tvar el = document.getElementById('sidebar-layout');\n\t\t\t\t\t\tif (el) {\n\t\t\t\t\t\t\tif (m[1] === 'true') el.classList.add('sidebar-minimized');\n\t\t\t\t\t\t\telse el.classList.remove('sidebar-minimized');\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\t\t\t\t})();\n\t\t\t</script><!-- Modals -->")
+		if templ_7745c5c3_Err != nil {
+			return templ_7745c5c3_Err
+		}
+		templ_7745c5c3_Err = partials.ModalScript().Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -331,7 +328,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var14 templ.SafeURL
 				templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@500;600;700&family=" + props.BodyFont + ":wght@400;500;600&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 156, Col: 161}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 161, Col: 161}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 				if templ_7745c5c3_Err != nil {
@@ -349,7 +346,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var15 templ.SafeURL
 				templ_7745c5c3_Var15, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.HeadingFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 158, Col: 118}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 163, Col: 118}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var15))
 				if templ_7745c5c3_Err != nil {
@@ -367,7 +364,7 @@ func fontLinks(props LayoutProps) templ.Component {
 				var templ_7745c5c3_Var16 templ.SafeURL
 				templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinURLErrs("https://fonts.googleapis.com/css2?family=" + props.BodyFont + ":wght@400;500;600;700&display=swap")
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 160, Col: 115}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/views/customerui/layout.templ`, Line: 165, Col: 115}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 				if templ_7745c5c3_Err != nil {
@@ -470,6 +467,24 @@ func buildThemeCSS(props LayoutProps) string {
 	}
 	result += ".dark{" + darkCSS + "}</style>"
 	return result
+}
+
+// sidebarPropsFromLayout builds SidebarProps from LayoutProps.
+func sidebarPropsFromLayout(props LayoutProps) partials.SidebarProps {
+	return partials.SidebarProps{
+		Theme:            convertPropsToTheme(props),
+		User:             props.User,
+		BasePath:         props.BasePath,
+		HasPublishedApps: props.HasPublishedApps,
+		ActiveNav:        props.ActiveNav,
+		HeaderTitle:      props.HeaderTitle,
+		ActiveAccount:    props.ActiveAccount,
+		OtherAccounts:    props.OtherAccounts,
+		Installs:         props.Installs,
+		CurrentInstallID: props.CurrentInstallID,
+		ActiveTab:        props.ActiveTab,
+		SidebarMinimized: props.SidebarMinimized,
+	}
 }
 
 // convertPropsToTheme converts LayoutProps to a minimal AppTheme for components

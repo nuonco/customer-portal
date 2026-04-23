@@ -1,16 +1,18 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
 	"go.uber.org/zap"
 )
 
@@ -49,7 +51,7 @@ func (h *Handler) DebugWorkflowDetailPage(c *gin.Context) {
 		return
 	}
 
-	workflow, err := nuonClient.GetWorkflow(c.Request.Context(), workflowID)
+	workflow, err := nuonClient.GetWorkflowV2(c.Request.Context(), workflowID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, fmt.Sprintf("Failed to fetch workflow: %v", err))
 		return
@@ -77,18 +79,18 @@ func (h *Handler) DebugWorkflowDetailPage(c *gin.Context) {
 		}
 	}
 	if props.SelectedStep == nil {
-		props.SelectedStep = findActiveStep(workflow.Steps)
+		props.SelectedStep = findActiveStepV2(workflow.Steps)
 		props.SelectedStepIsActive = true
 	}
 
 	// Fetch step target if present
 	if props.SelectedStep != nil && props.SelectedStep.StepTargetType != "" && props.SelectedStep.StepTargetID != "" {
-		props.SelectedStepTarget, props.SelectedStepTargetJSON = h.fetchStepTarget(c, install, props.SelectedStep)
+		props.SelectedStepTarget, props.SelectedStepTargetJSON = h.fetchStepTargetV2(c, install, props.SelectedStep)
 	}
 
 	// Fetch stack setup data for install_stack_versions targets
 	if props.SelectedStep != nil && props.SelectedStep.StepTargetType == "install_stack_versions" {
-		props.SelectedStepStackSetup = h.getStackSetupData(c.Request.Context(), nuonClient, install, workflow)
+		props.SelectedStepStackSetup = h.getStackSetupDataFromSteps(c.Request.Context(), nuonClient, install, workflow.Steps)
 		stack, stackErr := nuonClient.GetInstallStack(c.Request.Context(), install.NuonInstallID)
 		if stackErr == nil && stack != nil {
 			stackJSON, _ := json.MarshalIndent(stack, "", "  ")
@@ -102,6 +104,10 @@ func (h *Handler) DebugWorkflowDetailPage(c *gin.Context) {
 	props.Expanded = c.Query("expanded") == "true"
 	props.ActiveTargetTab = c.DefaultQuery("target_tab", "info")
 	props.ActiveStackTab = c.DefaultQuery("stack_tab", "info")
+	props.ActiveGroupTab = c.DefaultQuery("group_tab", "info")
+	props.ActiveSignalTab = c.DefaultQuery("signal_tab", "info")
+	props.ActiveApprovalTab = c.DefaultQuery("approval_tab", "info")
+	props.ActivePolicyTab = c.DefaultQuery("policy_tab", "info")
 	props.AlertType = c.Query("alert_type")
 	props.AlertMsg = c.Query("alert_msg")
 	props.CurrentQuery = c.Request.URL.RawQuery
@@ -119,13 +125,21 @@ func (h *Handler) DebugWorkflowDetailPage(c *gin.Context) {
 		h.RenderTempl(c, http.StatusOK, customerpages.DebugTargetCardContent(*props))
 	case "stack-card":
 		h.RenderTempl(c, http.StatusOK, customerpages.DebugStackCardContent(*props))
+	case "group-card":
+		h.RenderTempl(c, http.StatusOK, customerpages.DebugGroupCardContent(*props))
+	case "signal-card":
+		h.RenderTempl(c, http.StatusOK, customerpages.DebugSignalCardContent(*props))
+	case "approval-card":
+		h.RenderTempl(c, http.StatusOK, customerpages.DebugApprovalCardContent(*props))
+	case "policy-card":
+		h.RenderTempl(c, http.StatusOK, customerpages.DebugPolicyCardContent(*props))
 	default:
 		h.RenderTempl(c, http.StatusOK, customerpages.DebugWorkflowsPage(*props))
 	}
 }
 
-// fetchStepTarget fetches the step's target resource and returns the typed object and its pretty-printed JSON.
-func (h *Handler) fetchStepTarget(c *gin.Context, install *models.Install, step *nuonmodels.AppWorkflowStep) (interface{}, string) {
+// fetchStepTargetV2 fetches the step's target resource using the V2 WorkflowStep type.
+func (h *Handler) fetchStepTargetV2(c *gin.Context, install *models.Install, step *nuon.WorkflowStep) (interface{}, string) {
 	if err := h.loadInstallWithOrg(install); err != nil {
 		return nil, ""
 	}
@@ -185,4 +199,78 @@ func (h *Handler) fetchStepTarget(c *gin.Context, install *models.Install, step 
 		return target, ""
 	}
 	return target, string(jsonBytes)
+}
+
+// findActiveStepV2 returns the first non-completed step using V2 types.
+func findActiveStepV2(steps []*nuon.WorkflowStep) *nuon.WorkflowStep {
+	for _, s := range steps {
+		if s.Status != nil && (s.Status.Status == "in-progress" || s.Status.Status == "active") {
+			return s
+		}
+	}
+	for i := len(steps) - 1; i >= 0; i-- {
+		if steps[i].Status != nil && steps[i].Status.Status != "completed" {
+			return steps[i]
+		}
+	}
+	return nil
+}
+
+// getStackSetupDataFromSteps is the V2 version of getStackSetupData that takes V2 step types.
+func (h *Handler) getStackSetupDataFromSteps(ctx context.Context, client *nuon.Client, install *models.Install, steps []*nuon.WorkflowStep) partials.StackSetupData {
+	if steps == nil {
+		return partials.StackSetupData{}
+	}
+
+	for _, step := range steps {
+		if step.Name != "await install stack" {
+			continue
+		}
+		platform := h.detectPlatform(ctx, client, install)
+
+		stack, stackErr := client.GetInstallStack(ctx, install.NuonInstallID)
+		if stackErr != nil {
+			zap.L().Debug("getStackSetupDataFromSteps: failed to fetch install stack", zap.Error(stackErr))
+		}
+
+		switch platform {
+		case "gcp":
+			setup := partials.StackSetupData{
+				Platform:      "gcp",
+				NuonInstallID: install.NuonInstallID,
+			}
+			if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+				setup.TfvarsContent = parseTfvars(stack.Versions[0].Contents)
+			}
+			return setup
+
+		default:
+			setup := partials.StackSetupData{Platform: platform}
+			if stackErr == nil && stack != nil && stack.Versions != nil && len(stack.Versions) > 0 {
+				v := stack.Versions[0]
+				if v.QuickLinkURL != "" {
+					setup.CloudFormationLink = v.QuickLinkURL
+				}
+				if v.TemplateURL != "" {
+					setup.TemplateURL = v.TemplateURL
+				}
+				setup.StackName = "nuon-" + install.NuonInstallID
+				if setup.CloudFormationLink != "" {
+					if parsed, err := url.Parse(setup.CloudFormationLink); err == nil {
+						if fragment := parsed.Fragment; fragment != "" {
+							if idx := strings.Index(fragment, "?"); idx >= 0 {
+								if fq, err := url.ParseQuery(fragment[idx+1:]); err == nil {
+									if sn := fq.Get("stackName"); sn != "" {
+										setup.StackName = sn
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			return setup
+		}
+	}
+	return partials.StackSetupData{}
 }

@@ -48,6 +48,428 @@ type PolicyViolation struct {
 	Severity string // "deny" or "warn"
 }
 
+// PlanSummary holds a parsed summary of a terraform plan for display.
+type PlanSummary struct {
+	CreateCount  int
+	UpdateCount  int
+	DeleteCount  int
+	ReplaceCount int
+	ReadCount    int
+	NoOpCount    int
+	Resources    []PlanResourceChange
+}
+
+// TotalChanges returns the number of meaningful changes (excludes no-op and read).
+func (p PlanSummary) TotalChanges() int {
+	return p.CreateCount + p.UpdateCount + p.DeleteCount + p.ReplaceCount
+}
+
+// PlanResourceChange represents a single resource in a terraform plan.
+type PlanResourceChange struct {
+	Address string // e.g. "aws_iam_role.nuon_runner"
+	Action  string // "create", "update", "delete", "replace", "no-op", "read"
+}
+
+// ParseTerraformPlan extracts a summary from raw terraform plan JSON (as returned by the approval contents API).
+func ParseTerraformPlan(raw interface{}) *PlanSummary {
+	planMap, ok := raw.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	rawChanges, ok := planMap["resource_changes"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	summary := &PlanSummary{}
+	for _, rc := range rawChanges {
+		rcMap, ok := rc.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		address, _ := rcMap["address"].(string)
+		action := resolveAction(rcMap)
+
+		// Skip data sources with no-op
+		if action == "no-op" || action == "read" {
+			if action == "read" {
+				summary.ReadCount++
+			} else {
+				summary.NoOpCount++
+			}
+			continue
+		}
+
+		switch action {
+		case "create":
+			summary.CreateCount++
+		case "update":
+			summary.UpdateCount++
+		case "delete":
+			summary.DeleteCount++
+		case "replace":
+			summary.ReplaceCount++
+		}
+
+		summary.Resources = append(summary.Resources, PlanResourceChange{
+			Address: address,
+			Action:  action,
+		})
+	}
+
+	return summary
+}
+
+// resolveAction maps terraform change.actions array to a single action string.
+func resolveAction(rcMap map[string]interface{}) string {
+	changeMap, ok := rcMap["change"].(map[string]interface{})
+	if !ok {
+		return "no-op"
+	}
+	actions, ok := changeMap["actions"].([]interface{})
+	if !ok || len(actions) == 0 {
+		return "no-op"
+	}
+	if len(actions) == 1 {
+		a, _ := actions[0].(string)
+		return a
+	}
+	// Two-element actions like ["delete", "create"] or ["create", "delete"] = replace
+	return "replace"
+}
+
+// HelmPlanSummary holds a parsed summary of a helm diff for display.
+type HelmPlanSummary struct {
+	AddCount     int
+	ChangeCount  int
+	DestroyCount int
+	Changes      []HelmPlanChange
+}
+
+// TotalChanges returns the number of meaningful changes.
+func (h HelmPlanSummary) TotalChanges() int {
+	return h.AddCount + h.ChangeCount + h.DestroyCount
+}
+
+// HelmPlanChange represents a single resource change in a helm or kubernetes plan.
+type HelmPlanChange struct {
+	Kind         string // e.g. "Deployment", "Service"
+	Name         string
+	Namespace    string
+	ResourceType string // e.g. "apps/v1"
+	Action       string // "added", "changed", "destroyed"
+	Before       string // rendered before content (for diff display)
+	After        string // rendered after content (for diff display)
+}
+
+// ParseHelmPlan extracts a summary from raw helm approval contents JSON.
+// The format has a "plan" text field and "helm_content_diff" array.
+func ParseHelmPlan(raw interface{}) *HelmPlanSummary {
+	planMap, ok := raw.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	summary := &HelmPlanSummary{}
+
+	// Parse the plan text for summary counts
+	if planText, ok := planMap["plan"].(string); ok {
+		parsePlanSummaryLine(planText, summary)
+	}
+
+	// Parse helm_content_diff entries
+	diffs, ok := planMap["helm_content_diff"].([]interface{})
+	if !ok {
+		return summary
+	}
+
+	// Also parse plan text for per-resource changes
+	planText, _ := planMap["plan"].(string)
+	planChanges := parseHelmPlanLines(planText)
+
+	for _, d := range diffs {
+		dm, ok := d.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		kind, _ := dm["kind"].(string)
+		name, _ := dm["name"].(string)
+		namespace, _ := dm["namespace"].(string)
+		api, _ := dm["api"].(string)
+
+		// Find matching action from plan text
+		action := findHelmAction(planChanges, kind, name, namespace)
+
+		before, after := buildHelmBeforeAfter(dm)
+
+		summary.Changes = append(summary.Changes, HelmPlanChange{
+			Kind:         kind,
+			Name:         name,
+			Namespace:    namespace,
+			ResourceType: api,
+			Action:       action,
+			Before:       before,
+			After:        after,
+		})
+	}
+
+	return summary
+}
+
+// ParseKubernetesPlan extracts a summary from raw kubernetes approval contents JSON.
+// The format has a "k8s_content_diff" array with op/type fields.
+func ParseKubernetesPlan(raw interface{}) *HelmPlanSummary {
+	planMap, ok := raw.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+
+	diffs, ok := planMap["k8s_content_diff"].([]interface{})
+	if !ok {
+		return nil
+	}
+
+	summary := &HelmPlanSummary{}
+
+	for _, d := range diffs {
+		dm, ok := d.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		// Skip items with errors
+		if errStr, _ := dm["error"].(string); errStr != "" {
+			continue
+		}
+
+		kind, _ := dm["kind"].(string)
+		name, _ := dm["name"].(string)
+		namespace, _ := dm["namespace"].(string)
+		api, _ := dm["api"].(string)
+		op, _ := dm["op"].(string)
+		typeNum, _ := dm["type"].(float64) // JSON numbers are float64
+
+		action := resolveK8sAction(op, int(typeNum))
+		switch action {
+		case "added":
+			summary.AddCount++
+		case "changed":
+			summary.ChangeCount++
+		case "destroyed":
+			summary.DestroyCount++
+		}
+
+		before, after := buildK8sBeforeAfter(dm)
+
+		summary.Changes = append(summary.Changes, HelmPlanChange{
+			Kind:         kind,
+			Name:         name,
+			Namespace:    namespace,
+			ResourceType: api,
+			Action:       action,
+			Before:       before,
+			After:        after,
+		})
+	}
+
+	return summary
+}
+
+// resolveK8sAction determines the action from the op and type fields.
+func resolveK8sAction(op string, typeNum int) string {
+	if op == "delete" {
+		return "destroyed"
+	}
+	if op == "apply" {
+		switch typeNum {
+		case 1:
+			return "destroyed"
+		case 2:
+			return "added"
+		case 3:
+			return "changed"
+		}
+	}
+	return "changed"
+}
+
+// parsePlanSummaryLine extracts add/change/destroy counts from a helm plan text.
+func parsePlanSummaryLine(planText string, summary *HelmPlanSummary) {
+	for _, line := range strings.Split(planText, "\n") {
+		// Match "Plan: N to add, N to change, N to destroy"
+		if !strings.Contains(line, "Plan:") {
+			continue
+		}
+		parts := strings.Fields(line)
+		for i, p := range parts {
+			if i+2 < len(parts) && parts[i+1] == "to" {
+				n := 0
+				fmt.Sscanf(p, "%d", &n)
+				switch parts[i+2] {
+				case "add,", "add":
+					summary.AddCount = n
+				case "change,", "change":
+					summary.ChangeCount = n
+				case "destroy,", "destroy":
+					summary.DestroyCount = n
+				}
+			}
+		}
+	}
+}
+
+type helmPlanLineChange struct {
+	namespace string
+	name      string
+	kind      string
+	action    string
+}
+
+// parseHelmPlanLines parses the plan text for per-resource changes.
+// Format: "namespace, name, Kind (api) to be action"
+func parseHelmPlanLines(planText string) []helmPlanLineChange {
+	var changes []helmPlanLineChange
+	for _, line := range strings.Split(planText, "\n") {
+		if !strings.Contains(line, "to be") {
+			continue
+		}
+		// Strip ANSI escape codes
+		clean := stripANSI(line)
+		// Parse: "namespace, name, Kind (api) to be action"
+		parts := strings.SplitN(clean, ",", 3)
+		if len(parts) < 3 {
+			continue
+		}
+		ns := strings.TrimSpace(parts[0])
+		name := strings.TrimSpace(parts[1])
+		rest := strings.TrimSpace(parts[2])
+		// Extract kind before "(" and action after "to be"
+		parenIdx := strings.Index(rest, "(")
+		toBeIdx := strings.Index(rest, "to be")
+		if parenIdx < 0 || toBeIdx < 0 {
+			continue
+		}
+		kind := strings.TrimSpace(rest[:parenIdx])
+		action := strings.TrimSpace(rest[toBeIdx+5:])
+		action = normalizeHelmAction(action)
+		changes = append(changes, helmPlanLineChange{namespace: ns, name: name, kind: kind, action: action})
+	}
+	return changes
+}
+
+func stripANSI(s string) string {
+	result := strings.Builder{}
+	i := 0
+	for i < len(s) {
+		if s[i] == '\x1b' && i+1 < len(s) && s[i+1] == '[' {
+			// Skip until we find a letter
+			j := i + 2
+			for j < len(s) && !((s[j] >= 'A' && s[j] <= 'Z') || (s[j] >= 'a' && s[j] <= 'z')) {
+				j++
+			}
+			if j < len(s) {
+				j++ // skip the letter
+			}
+			i = j
+		} else {
+			result.WriteByte(s[i])
+			i++
+		}
+	}
+	return result.String()
+}
+
+func normalizeHelmAction(action string) string {
+	switch strings.ToLower(action) {
+	case "added", "created":
+		return "added"
+	case "changed", "modified":
+		return "changed"
+	case "destroyed", "removed", "deleted":
+		return "destroyed"
+	}
+	return action
+}
+
+func findHelmAction(changes []helmPlanLineChange, kind, name, namespace string) string {
+	for _, c := range changes {
+		if c.kind == kind && c.name == name && c.namespace == namespace {
+			return c.action
+		}
+	}
+	return "changed" // default
+}
+
+// buildHelmBeforeAfter extracts before/after content from a helm diff entry.
+func buildHelmBeforeAfter(dm map[string]interface{}) (string, string) {
+	// Check for direct before/after (old format)
+	if before, ok := dm["before"].(string); ok {
+		after, _ := dm["after"].(string)
+		return before, after
+	}
+
+	// Check for entries array (new format)
+	entries, ok := dm["entries"].([]interface{})
+	if !ok {
+		return "", ""
+	}
+
+	return buildBeforeAfterFromEntries(entries)
+}
+
+// buildK8sBeforeAfter extracts before/after content from a k8s diff entry.
+func buildK8sBeforeAfter(dm map[string]interface{}) (string, string) {
+	entries, ok := dm["entries"].([]interface{})
+	if !ok {
+		return "", ""
+	}
+	return buildBeforeAfterFromEntries(entries)
+}
+
+// buildBeforeAfterFromEntries builds before/after strings from diff entries.
+// Entry types: 0=unchanged, 1=removal (before), 2=addition (after).
+func buildBeforeAfterFromEntries(entries []interface{}) (string, string) {
+	var beforeLines, afterLines []string
+
+	for _, e := range entries {
+		em, ok := e.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		typeNum, _ := em["type"].(float64)
+		payload, _ := em["payload"].(string)
+		path, _ := em["path"].(string)
+
+		switch int(typeNum) {
+		case 0:
+			// Unchanged — include in both
+			if payload != "" {
+				beforeLines = append(beforeLines, payload)
+				afterLines = append(afterLines, payload)
+			}
+		case 1:
+			// Removal — before only
+			if path != "" {
+				beforeLines = append(beforeLines, path+": "+payload)
+			} else if payload != "" {
+				beforeLines = append(beforeLines, payload)
+			}
+		case 2:
+			// Addition — after only
+			if path != "" {
+				afterLines = append(afterLines, path+": "+payload)
+			} else if payload != "" {
+				afterLines = append(afterLines, payload)
+			}
+		}
+	}
+
+	return strings.Join(beforeLines, "\n"), strings.Join(afterLines, "\n")
+}
+
 // ApprovalStepDataPanel for workflow approval steps
 type ApprovalStepDataPanel struct {
 	StepID     string
@@ -57,11 +479,40 @@ type ApprovalStepDataPanel struct {
 // StackSetupData carries platform-specific data for the "await install stack" step.
 type StackSetupData struct {
 	Platform           string // "aws", "gcp", "azure", etc.
-	CloudFormationLink string // AWS only
+	CloudFormationLink string // AWS only — quick launch URL
+	TemplateURL        string // AWS only — CloudFormation template URL
+	StackName          string // AWS only — CloudFormation stack name
+	Region             string // AWS only — deployment region
 	TfvarsContent      string // GCP only
 	NuonInstallID      string // GCP + Azure (for backend snippet / resource naming)
 	AzureTemplateURL   string // Azure only — ARM template URL
 	AzureLocation      string // Azure only — deployment location (e.g. "eastus")
+}
+
+// IsS3Template returns true if the template URL is hosted on S3.
+func (s StackSetupData) IsS3Template() bool {
+	return strings.Contains(s.TemplateURL, "s3.amazonaws.com") || strings.Contains(s.TemplateURL, ".s3.")
+}
+
+// CreateStackCmd returns the AWS CLI command to create the CloudFormation stack.
+func (s StackSetupData) CreateStackCmd() string {
+	if s.IsS3Template() {
+		return "aws cloudformation create-stack \\\n  --stack-name " + s.StackName + " \\\n  --template-url " + s.TemplateURL + " \\\n  --capabilities CAPABILITY_NAMED_IAM \\\n  --region " + s.Region
+	}
+	return "curl -sLo template.json \"" + s.TemplateURL + "\" \\\n  && aws cloudformation create-stack \\\n  --stack-name " + s.StackName + " \\\n  --template-body file://template.json \\\n  --capabilities CAPABILITY_NAMED_IAM \\\n  --region " + s.Region
+}
+
+// UpdateStackCmd returns the AWS CLI command to update the CloudFormation stack.
+func (s StackSetupData) UpdateStackCmd() string {
+	if s.IsS3Template() {
+		return "aws cloudformation update-stack \\\n  --stack-name " + s.StackName + " \\\n  --template-url " + s.TemplateURL + " \\\n  --capabilities CAPABILITY_NAMED_IAM \\\n  --region " + s.Region
+	}
+	return "curl -sLo template.json \"" + s.TemplateURL + "\" \\\n  && aws cloudformation update-stack \\\n  --stack-name " + s.StackName + " \\\n  --template-body file://template.json \\\n  --capabilities CAPABILITY_NAMED_IAM \\\n  --region " + s.Region
+}
+
+// ConsoleURL returns the AWS CloudFormation console URL filtered by stack name.
+func (s StackSetupData) ConsoleURL() string {
+	return "https://console.aws.amazon.com/cloudformation/home?region=" + s.Region + "#/stacks/events?filteringText=" + s.StackName + "&filteringStatus=active&viewNested=true"
 }
 
 // WorkflowData holds processed workflow information for display in WorkflowCard.
@@ -137,9 +588,29 @@ type StepGroup struct {
 	Steps    []*nuonmodels.AppWorkflowStep
 }
 
-// ActiveStep returns the first non-completed step in the group, or nil.
-func (g StepGroup) ActiveStep() *nuonmodels.AppWorkflowStep {
+// LatestSteps returns the last step for each execution type in the group.
+// When steps are retried, the retry is appended after the original, so the
+// last step of each type is always the current one.
+func (g StepGroup) LatestSteps() []*nuonmodels.AppWorkflowStep {
+	last := make(map[string]*nuonmodels.AppWorkflowStep)
+	var order []string
 	for _, s := range g.Steps {
+		key := string(s.ExecutionType)
+		if _, seen := last[key]; !seen {
+			order = append(order, key)
+		}
+		last[key] = s
+	}
+	result := make([]*nuonmodels.AppWorkflowStep, 0, len(order))
+	for _, key := range order {
+		result = append(result, last[key])
+	}
+	return result
+}
+
+// ActiveStep returns the first non-completed step from the latest steps, or nil.
+func (g StepGroup) ActiveStep() *nuonmodels.AppWorkflowStep {
+	for _, s := range g.LatestSteps() {
 		if s.Status == nil {
 			return s
 		}
@@ -162,19 +633,19 @@ func (g StepGroup) CanRetry() bool {
 	return g.RetryableStep() != nil
 }
 
-// RetryableStep returns the retryable error step in the group, or nil.
+// RetryableStep returns a retryable failed step from the latest steps, or nil.
 func (g StepGroup) RetryableStep() *nuonmodels.AppWorkflowStep {
-	for _, s := range g.Steps {
-		if s.Retryable && !s.Finished && s.StartedAt != "" && s.Status != nil && string(s.Status.Status) == "error" {
+	for _, s := range g.LatestSteps() {
+		if s.Retryable && s.Finished && s.Status != nil && string(s.Status.Status) != "completed" && string(s.Status.Status) != "success" {
 			return s
 		}
 	}
 	return nil
 }
 
-// HasApprovalStep returns true if any step in the group has execution_type "approval".
+// HasApprovalStep returns true if any latest step has execution_type "approval".
 func (g StepGroup) HasApprovalStep() bool {
-	for _, s := range g.Steps {
+	for _, s := range g.LatestSteps() {
 		if s.ExecutionType == "approval" {
 			return true
 		}
@@ -182,9 +653,9 @@ func (g StepGroup) HasApprovalStep() bool {
 	return false
 }
 
-// HasRetryableStep returns true if any step in the group is marked retryable.
+// HasRetryableStep returns true if any latest step is marked retryable.
 func (g StepGroup) HasRetryableStep() bool {
-	for _, s := range g.Steps {
+	for _, s := range g.LatestSteps() {
 		if s.Retryable {
 			return true
 		}
@@ -262,6 +733,7 @@ func BuildStepGroups(steps []*nuonmodels.AppWorkflowStep) []StepGroup {
 }
 
 func deriveGroupType(steps []*nuonmodels.AppWorkflowStep) StepGroupType {
+	found := StepGroupOther
 	for _, s := range steps {
 		switch s.StepTargetType {
 		case "install_stack_versions":
@@ -271,28 +743,75 @@ func deriveGroupType(steps []*nuonmodels.AppWorkflowStep) StepGroupType {
 		case "install_deploys":
 			return StepGroupComponent
 		case "install_action_workflow_runs":
-			return StepGroupAction
+			if found == StepGroupOther {
+				found = StepGroupAction
+			}
 		}
 	}
-	if len(steps) > 0 {
-		name := strings.ToLower(steps[0].Name)
+	// When we only found action steps by target type, check if any other step
+	// in the group has a component-like name (its StepTargetType may be empty
+	// because it hasn't started yet).
+	if found == StepGroupAction {
+		for _, s := range steps {
+			if s.StepTargetType == "install_action_workflow_runs" {
+				continue
+			}
+			if isComponentStepName(s.Name) {
+				return StepGroupComponent
+			}
+		}
+		return StepGroupAction
+	}
+	if found != StepGroupOther {
+		return found
+	}
+	for _, s := range steps {
+		name := strings.ToLower(s.Name)
 		switch {
 		case strings.Contains(name, "stack") || strings.Contains(name, "runner"):
 			return StepGroupStack
 		case strings.Contains(name, "sandbox"):
 			return StepGroupSandbox
-		case strings.Contains(name, "deploy") || strings.Contains(name, "sync_and_plan") || strings.Contains(name, "apply"):
+		case isComponentStepName(s.Name):
 			return StepGroupComponent
 		}
 	}
 	return StepGroupOther
 }
 
+// isComponentStepName returns true if the step name indicates a component deploy step.
+func isComponentStepName(name string) bool {
+	n := strings.ToLower(name)
+	return strings.Contains(n, "sync and plan") ||
+		strings.Contains(n, "apply") ||
+		(strings.Contains(n, "deploy") && !strings.Contains(n, "action run"))
+}
+
 func deriveGroupName(steps []*nuonmodels.AppWorkflowStep) string {
 	if len(steps) == 0 {
 		return ""
 	}
-	name := strings.ToLower(strings.ReplaceAll(steps[0].Name, " ", "_"))
+
+	// Find the best step to derive the group name from. Prefer a component
+	// deploy step (by target type, then by name pattern) over the first step
+	// which may be a pre-deploy action.
+	nameStep := steps[0]
+	for _, s := range steps {
+		if s.StepTargetType == "install_deploys" {
+			nameStep = s
+			break
+		}
+	}
+	if nameStep == steps[0] && len(steps) > 1 {
+		for _, s := range steps {
+			if s.StepTargetType != "install_action_workflow_runs" && isComponentStepName(s.Name) {
+				nameStep = s
+				break
+			}
+		}
+	}
+
+	name := strings.ToLower(strings.ReplaceAll(nameStep.Name, " ", "_"))
 
 	// Stack steps
 	if strings.Contains(name, "install_stack") || strings.Contains(name, "generate_install") {
@@ -315,7 +834,7 @@ func deriveGroupName(steps []*nuonmodels.AppWorkflowStep) string {
 	}
 
 	// Fallback: title-case the raw name
-	display := strings.ReplaceAll(steps[0].Name, "_", " ")
+	display := strings.ReplaceAll(nameStep.Name, "_", " ")
 	if len(display) > 0 {
 		return strings.ToUpper(display[:1]) + display[1:]
 	}
@@ -323,8 +842,13 @@ func deriveGroupName(steps []*nuonmodels.AppWorkflowStep) string {
 }
 
 func deriveGroupStatus(steps []*nuonmodels.AppWorkflowStep) string {
-	allCompleted := true
+	// Use only the latest step per execution type (retries supersede originals)
+	latest := make(map[string]*nuonmodels.AppWorkflowStep)
 	for _, s := range steps {
+		latest[string(s.ExecutionType)] = s
+	}
+	allCompleted := true
+	for _, s := range latest {
 		status := ""
 		if s.Status != nil {
 			status = string(s.Status.Status)
