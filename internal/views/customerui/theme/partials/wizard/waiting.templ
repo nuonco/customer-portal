@@ -1,0 +1,16 @@
+package wizard
+
+import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+
+// WaitingState shows a shimmer placeholder while a wizard step is waiting
+// for its workflow data to load.
+templ WaitingState() {
+	@components.Card(components.CardProps{Size: components.CardLarge}) {
+		<div class="space-y-4 py-2">
+			@components.ShimmerBar("h-4", "w-1/3")
+			@components.ShimmerBar("h-3", "w-2/3")
+			@components.ShimmerBar("h-3", "w-1/2")
+			@components.ShimmerBar("h-10", "w-full")
+		</div>
+	}
+}

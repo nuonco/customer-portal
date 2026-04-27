@@ -1,0 +1,97 @@
+package wizard
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// GroupActionButtonsProps holds data needed to render approve/retry buttons for a step group.
+type GroupActionButtonsProps struct {
+	BasePath   string
+	InstallID  string
+	WorkflowID string
+	Group      nuon.WorkflowStepGroup
+}
+
+// GroupActionButtons renders approve and retry buttons for a step group.
+templ GroupActionButtons(props GroupActionButtonsProps) {
+	if GroupStatus(props.Group) == "error" && GroupCanRetry(props.Group) {
+		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/step/" + RetryableStepID(props.Group) + "/retry") } class="inline">
+			<button
+				type="submit"
+				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Variant: components.ButtonOutline}) }
+			>
+				Retry
+				<i class="ph-bold ph-arrow-clockwise text-base"></i>
+			</button>
+		</form>
+	}
+	if GroupHasApprovalStep(props.Group) {
+		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/approve") } class="inline">
+			if GroupCanApprove(props.Group) {
+				<input type="hidden" name="step_id" value={ ActiveStep(props.Group).ID }/>
+				<input type="hidden" name="approval_id" value={ ActiveStep(props.Group).Approval.ID }/>
+			}
+			<button
+				type="submit"
+				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
+				disabled?={ !GroupCanApprove(props.Group) }
+			>
+				<i class="ph-bold ph-check text-base"></i>
+				Approve
+			</button>
+		</form>
+	}
+}
+
+// RetriesExhaustedBanner renders the standard error Alert explaining that
+// a component has used all its retry attempts and the workflow must be rerun.
+templ RetriesExhaustedBanner(componentName string) {
+	@components.Alert(components.AlertProps{
+		Type:    "error",
+		Message: componentName + " has been retried too many times.",
+		Class:   "mb-4",
+	})
+}
+
+// ExhaustedComponentNames returns the component_name label of every group
+// whose steps have exhausted their retries.
+func ExhaustedComponentNames(groups []nuon.WorkflowStepGroup) []string {
+	var names []string
+	for _, g := range groups {
+		if GroupRetriesExhausted(g) {
+			names = append(names, g.Labels["component_name"])
+		}
+	}
+	return names
+}
+
+// StatusBadge renders a colored status badge for a given status string.
+templ StatusBadge(status string) {
+	switch status {
+	case "completed", "success":
+		<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+			<i class="ph-bold ph-check-circle text-xs"></i>
+			Completed
+		</span>
+	case "in-progress":
+		<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+			<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
+			In Progress
+		</span>
+	case "approval-awaiting":
+		<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+			<i class="ph-bold ph-warning text-xs"></i>
+			Awaiting Approval
+		</span>
+	case "error":
+		<span class="badge-error inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+			<i class="ph-bold ph-warning-circle text-xs"></i>
+			Failed
+		</span>
+	default:
+		<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-600 dark:text-cool-grey-400">
+			Waiting
+		</span>
+	}
+}

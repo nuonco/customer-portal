@@ -1,0 +1,281 @@
+package wizard
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// ComponentsStepProps holds everything the Components wizard step needs to render.
+type ComponentsStepProps struct {
+	BasePath            string
+	InstallID           string
+	WorkflowID          string
+	ActiveGroups        []nuon.WorkflowStepGroup
+	ComponentData       map[string]*ComponentWizardData
+	PolicyReports       []nuon.PolicyReport
+	AggregateStatus     string // fallback chip status when no per-component label applies
+	HasApprovalAwaiting bool
+	IsStepComplete      bool
+	IsStepError         bool
+	ApproveAllURL       string
+	OverviewURL         string
+	// TargetStatus maps step group ID to the latest entry from the step
+	// target's status_v2.history. Drives the per-component status chip and
+	// any error alerts above the cards list.
+	TargetStatus map[string]TargetStatus
+}
+
+// TargetStatus carries the latest status_v2 entry for a component's step target.
+type TargetStatus struct {
+	Status      string
+	Description string
+}
+
+// ComponentsStep renders the Components wizard step: one card per component group,
+// with first-with-approval action, approve-all, and view-install in the header.
+templ ComponentsStep(props ComponentsStepProps) {
+	if len(props.ActiveGroups) == 0 {
+		@WaitingState()
+	} else {
+		<div class="flex items-center gap-3 mb-6">
+			<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy components</h3>
+			@componentsStatusChip(props)
+			<div class="ml-auto flex items-center gap-3">
+				{{ retryable := FirstRetryableGroup(props.ActiveGroups) }}
+				if retryable != nil {
+					@GroupActionButtons(GroupActionButtonsProps{BasePath: props.BasePath, InstallID: props.InstallID, WorkflowID: props.WorkflowID, Group: *retryable})
+				}
+				{{ approvable := FirstGroupWithApproval(props.ActiveGroups) }}
+				if approvable != nil {
+					@GroupActionButtons(GroupActionButtonsProps{BasePath: props.BasePath, InstallID: props.InstallID, WorkflowID: props.WorkflowID, Group: *approvable})
+				}
+				<form id="approve-all-form" method="POST" action={ templ.SafeURL(props.ApproveAllURL) }>
+					<button
+						type="button"
+						onclick="showConfirmModal({ title: 'Approve all changes', message: 'Approve deploying the sandbox and all components, instead of reviewing and approving them one at a time.', confirmText: 'Approve all', cancelText: 'Cancel' }).then(function(ok) { if (ok) document.getElementById('approve-all-form').submit(); })"
+						class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
+						disabled?={ !props.HasApprovalAwaiting }
+					>
+						<i class="ph-bold ph-checks"></i>
+						Approve all
+					</button>
+				</form>
+				<a
+					href={ templ.SafeURL(props.OverviewURL) }
+					class={
+						components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
+						templ.KV("opacity-40 pointer-events-none", !props.IsStepComplete && !props.IsStepError),
+					}
+				>
+					View install
+					<i class="ph-bold ph-caret-right"></i>
+				</a>
+			</div>
+		</div>
+		@componentTabsScript()
+		for _, name := range ExhaustedComponentNames(props.ActiveGroups) {
+			@RetriesExhaustedBanner(name)
+		}
+		for _, g := range props.ActiveGroups {
+			if ts, ok := props.TargetStatus[g.ID]; ok && ts.Status == "error" {
+				@components.Alert(components.AlertProps{
+					Type:    "error",
+					Message: errorAlertMessage(g.Labels["component_name"], ts.Description),
+					Class:   "mb-4",
+				})
+			}
+		}
+		<div class="card-base !p-0 card-lg divide-y" style="--tw-divide-opacity:1; border-color: var(--theme-border-subtle)">
+			for _, group := range props.ActiveGroups {
+				@componentGroupCard(props, group)
+			}
+		</div>
+	}
+}
+
+// componentTabsScript emits the JS used by ComponentApprovalTabs to switch
+// client-side tabs without losing state across HTMX morph swaps.
+templ componentTabsScript() {
+	<script>
+		function wizardInitTabs(id, defaultTab) {
+			var tabs = document.querySelector('[data-wizard-tabs="' + id + '"]');
+			if (!tabs) return;
+			if (tabs.querySelector('.active')) return;
+			var btn = tabs.querySelector('[data-tab="' + defaultTab + '"]');
+			if (btn) wizardSwitchTab(btn);
+		}
+		function wizardSwitchTab(btn) {
+			var bar = btn.closest('[data-wizard-tabs]');
+			var id = bar.getAttribute('data-wizard-tabs');
+			var tab = btn.getAttribute('data-tab');
+			bar.querySelectorAll('button').forEach(function(b) {
+				b.classList.toggle('active', b === btn);
+			});
+			var panes = document.querySelector('[data-wizard-panes="' + id + '"]');
+			if (panes) {
+				panes.querySelectorAll(':scope > [data-tab-pane]').forEach(function(p) {
+					p.classList.toggle('hidden', p.getAttribute('data-tab-pane') !== tab);
+				});
+			}
+		}
+	</script>
+}
+
+// componentGroupCard renders a collapsible row for a single component group.
+// Collapsed by default; click the chevron in the header to expand.
+templ componentGroupCard(props ComponentsStepProps, group nuon.WorkflowStepGroup) {
+	{{ cd := componentGroupData(props, group) }}
+	<details class="group [&:not(:last-child)]:border-b" style="border-color: var(--theme-border-subtle)">
+		<summary class="px-6 py-3 cursor-pointer list-none flex items-center justify-between">
+			@componentGroupCardHeader(props, group)
+			<i class="ph-bold ph-caret-right text-cool-grey-400 transition-transform group-open:rotate-90 shrink-0 ml-auto"></i>
+		</summary>
+		<div class="px-6 pb-4">
+			if group.Status.Status == "in-progress" && !GroupCanApprove(group) && !componentGroupHasPlan(cd) && !(cd != nil && cd.ImageURL != "") {
+				<!-- Planning phase — no plan data yet -->
+				<div class="flex items-center gap-2 py-2 justify-center text-sm">
+					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
+					<span class="text-cool-grey-500 dark:text-cool-grey-400">{ componentPlanningLabel(cd) }</span>
+				</div>
+			}
+			if group.Status.Status == "in-progress" && !GroupCanApprove(group) && componentGroupHasPlan(cd) {
+				<!-- Applying phase — approved, applying changes -->
+				<div class="flex items-center gap-2 py-2 justify-center text-sm">
+					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
+					<span class="text-cool-grey-500 dark:text-cool-grey-400">Applying changes...</span>
+				</div>
+				@ComponentApprovalTabs(ComponentApprovalTabsProps{GroupID: group.ID, PolicyReports: props.PolicyReports, Data: cd})
+			}
+			if GroupCanApprove(group) {
+				<!-- Awaiting approval -->
+				if componentGroupHasPlan(cd) || len(props.PolicyReports) > 0 {
+					@ComponentApprovalTabs(ComponentApprovalTabsProps{GroupID: group.ID, PolicyReports: props.PolicyReports, Data: cd})
+				}
+			}
+			if group.Status.Status == "completed" || group.Status.Status == "success" {
+				<!-- Completed — show plan data if available, otherwise config info -->
+				if componentGroupHasPlan(cd) {
+					@ComponentApprovalTabs(ComponentApprovalTabsProps{GroupID: group.ID, PolicyReports: props.PolicyReports, Data: cd})
+				} else if cd != nil && cd.ImageURL != "" {
+					@ImageInfo(cd)
+				}
+			}
+			if group.Status.Status == "in-progress" && !GroupCanApprove(group) && !componentGroupHasPlan(cd) && cd != nil && cd.ImageURL != "" {
+				<!-- Image component deploying — show image info with spinner -->
+				<div class="flex items-center gap-2 py-2 justify-center text-sm">
+					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
+					<span class="text-cool-grey-500 dark:text-cool-grey-400">Deploying image...</span>
+				</div>
+				@ImageInfo(cd)
+			}
+		</div>
+	</details>
+}
+
+templ componentGroupCardHeader(props ComponentsStepProps, group nuon.WorkflowStepGroup) {
+	{{ ts, hasTS := props.TargetStatus[group.ID] }}
+	<div class="flex items-center gap-2">
+		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ group.Labels["component_name"] }</h4>
+		if hasTS && ts.Status != "" {
+			@StatusBadge(ts.Status)
+		} else {
+			@StatusBadge(GroupStatus(group))
+		}
+	</div>
+}
+
+// ImageInfo renders the image URL and tag for external_image components.
+templ ImageInfo(cd *ComponentWizardData) {
+	<div class="py-2 px-1">
+		<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
+			<dt class="font-medium text-cool-grey-500 dark:text-cool-grey-400">Image</dt>
+			<dd class="font-mono text-cool-grey-700 dark:text-cool-grey-300 truncate" title={ cd.ImageURL }>{ cd.ImageURL }</dd>
+			if cd.ImageTag != "" {
+				<dt class="font-medium text-cool-grey-500 dark:text-cool-grey-400">Tag</dt>
+				<dd class="font-mono text-cool-grey-700 dark:text-cool-grey-300">{ cd.ImageTag }</dd>
+			}
+		</dl>
+	</div>
+}
+
+// componentsStatusChip renders a status chip for the components step with per-component labels.
+templ componentsStatusChip(props ComponentsStepProps) {
+	{{ label, awaitingApproval := componentsActiveState(props.ActiveGroups) }}
+	if label != "" {
+		if awaitingApproval {
+			<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+				<i class="ph-bold ph-warning text-xs"></i>
+				{ label }
+			</span>
+		} else {
+			<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+				<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
+				{ label }
+			</span>
+		}
+	} else {
+		@StatusBadge(props.AggregateStatus)
+	}
+}
+
+// errorAlertMessage builds the alert text for a component-level error status.
+func errorAlertMessage(componentName, description string) string {
+	if description == "" {
+		return componentName + " failed."
+	}
+	return componentName + ": " + description
+}
+
+func componentGroupData(props ComponentsStepProps, group nuon.WorkflowStepGroup) *ComponentWizardData {
+	if props.ComponentData == nil {
+		return nil
+	}
+	return props.ComponentData[group.ID]
+}
+
+func componentGroupHasPlan(cd *ComponentWizardData) bool {
+	if cd == nil {
+		return false
+	}
+	return cd.TerraformPlan != nil || cd.HelmPlan != nil
+}
+
+// componentPlanningLabel returns a spinner label based on approval type.
+func componentPlanningLabel(cd *ComponentWizardData) string {
+	if cd == nil {
+		return "Planning component deploy..."
+	}
+	switch cd.ApprovalType {
+	case "helm_approval":
+		return "Planning helm deployment..."
+	case "kubernetes_manifest_approval":
+		return "Planning kubernetes deployment..."
+	case "terraform_plan":
+		return "Planning terraform changes..."
+	case "pulumi_plan":
+		return "Planning pulumi changes..."
+	default:
+		return "Planning component deploy..."
+	}
+}
+
+// componentsActiveState returns the label and whether it is an approval-awaiting state.
+// Plan states take priority over apply states.
+func componentsActiveState(groups []nuon.WorkflowStepGroup) (label string, awaitingApproval bool) {
+	for _, g := range groups {
+		name := g.Labels["component_name"]
+		switch StepStatus(PlanStep(g)) {
+		case "in-progress":
+			return "Planning " + name + " deploy", false
+		case "approval-awaiting":
+			return "Awaiting approval for " + name, true
+		}
+	}
+	for _, g := range groups {
+		name := g.Labels["component_name"]
+		if StepStatus(ApplyStep(g)) == "in-progress" {
+			return "Deploying " + name, false
+		}
+	}
+	return "", false
+}

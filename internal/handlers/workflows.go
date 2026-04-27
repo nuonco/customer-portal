@@ -46,13 +46,13 @@ func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 	}
 
 	ctx := c.Request.Context()
-	workflow, err := nuonClient.GetWorkflow(ctx, workflowID)
+	workflow, err := nuonClient.GetWorkflowV2(ctx, workflowID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, "Failed to fetch workflow")
 		return
 	}
 
-	stepGroups := workflows.BuildStepGroups(workflow.Steps)
+	stepGroups := workflows.StepGroupsFromAPI(workflow.StepGroups)
 
 	selectedGroup := -1
 	if groupParam := c.Query("group"); groupParam != "" {
@@ -64,8 +64,8 @@ func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 
 	platform := h.detectPlatform(ctx, nuonClient, install)
 	var stackSetup workflows.StackSetupData
-	if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == workflows.StepGroupStack {
-		stackSetup = h.getStackSetupData(ctx, nuonClient, install, workflow)
+	if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == "install-stack" {
+		stackSetup = h.getStackSetupDataFromSteps(ctx, nuonClient, install, workflow.Steps)
 	}
 
 	props := workflows.WorkflowOverviewProps{
@@ -75,7 +75,7 @@ func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
 		BasePath:         h.basePath,
 		WorkflowID:       workflowID,
 		WorkflowFinished: workflow.Finished,
-		ShowApproveAll:   string(workflow.ApprovalOption) == "prompt" && !workflow.Finished,
+		ShowApproveAll:   workflow.ApprovalOption == "prompt" && !workflow.Finished,
 		Platform:         platform,
 		StackSetup:       stackSetup,
 	}

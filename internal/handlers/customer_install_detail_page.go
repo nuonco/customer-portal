@@ -301,6 +301,7 @@ func (h *Handler) buildOverviewData(c *gin.Context, pageProps *customerpages.Ins
 		defer wg.Done()
 		if comps, err := apiClient.GetInstallComponents(ctx, install.NuonInstallID); err == nil {
 			components = h.buildComponentInfos(ctx, apiClient, install, comps)
+			h.mergeDeployStatuses(ctx, apiClient, install.NuonInstallID, comps, components)
 		}
 	}()
 
@@ -390,8 +391,12 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 				panel.CurrentStepRole = resolveCurrentStepRole(ctx, apiClient, install.NuonInstallID, workflow)
 				overviewProps.SelectedWorkflow = &panel
 
-				// Build WorkflowOverview props
-				stepGroups := workflows.BuildStepGroups(workflow.Steps)
+				// Fetch step groups from API with labels
+				apiStepGroups, sgErr := apiClient.GetWorkflowStepGroups(ctx, workflowID)
+				var stepGroups []workflows.StepGroup
+				if sgErr == nil {
+					stepGroups = workflows.StepGroupsFromAPI(apiStepGroups)
+				}
 				selectedGroup := -1
 				if groupParam := c.Query("group"); groupParam != "" {
 					fmt.Sscanf(groupParam, "%d", &selectedGroup)
@@ -402,7 +407,7 @@ func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
 				platform := h.detectPlatform(ctx, apiClient, install)
 
 				var stackSetup workflows.StackSetupData
-				if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == workflows.StepGroupStack {
+				if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == "install-stack" {
 					stackSetup = h.getStackSetupData(ctx, apiClient, install, workflow)
 				}
 

@@ -1,0 +1,100 @@
+package wizard
+
+import (
+	"sort"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+)
+
+// PreparingStepProps holds data for the wizard's Preparing step. The Preparing
+// step is rendered between Confirm and Stack but does not appear in the wizard
+// step indicator; UX-wise it is part of Configure.
+type PreparingStepProps struct {
+	AppID           string
+	AppName         string
+	LogoLightBase64 string
+	LogoDarkBase64  string
+	InstallName     string
+	Region          string
+	Location        string
+	Inputs          map[string]string
+	FormAction      string
+	ConfigureURL    string
+	SHA             string
+}
+
+func (p PreparingStepProps) sortedInputKeys() []string {
+	keys := make([]string, 0, len(p.Inputs))
+	for k := range p.Inputs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// PreparingStep renders the transitional spinner card while the install is
+// being created via the Nuon API. Auto-fires the actual create POST on load.
+templ PreparingStep(props PreparingStepProps) {
+	<div class="max-w-4xl mx-auto space-y-6 pb-6">
+		<!-- App Header -->
+		<div class="flex items-center gap-3 mb-2">
+			if props.LogoLightBase64 != "" {
+				if props.LogoDarkBase64 != "" {
+					<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain dark:hidden"/>
+					<img src={ props.LogoDarkBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain hidden dark:block"/>
+				} else {
+					<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain"/>
+				}
+			}
+			<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">{ props.AppName }</h3>
+		</div>
+		@components.Card(components.CardProps{}) {
+			<div class="flex flex-col items-center justify-center text-center py-12 gap-4">
+				<i class="ph-bold ph-circle-notch animate-spin text-3xl" style="color: var(--theme-primary)"></i>
+				<h4 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">
+					Preparing to install { props.AppName }
+				</h4>
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">
+					This usually takes a few seconds.
+				</p>
+			</div>
+		}
+		<!-- Auto-firing form: re-POSTs the install payload with prepared=true -->
+		<form
+			id="prepareInstallForm"
+			hx-post={ props.FormAction }
+			hx-ext="json-enc"
+			hx-target="#wizard-step-wrapper"
+			hx-swap="innerHTML"
+			hx-trigger="load delay:200ms"
+			hx-boost="false"
+			data-wizard-nav="true"
+			data-step-index="0"
+		>
+			if props.SHA != "" {
+				<input type="hidden" name="sha" value={ props.SHA }/>
+			}
+			if props.InstallName != "" {
+				<input type="hidden" name="name" value={ props.InstallName }/>
+			}
+			if props.Region != "" {
+				<input type="hidden" name="region" value={ props.Region }/>
+			}
+			if props.Location != "" {
+				<input type="hidden" name="location" value={ props.Location }/>
+			}
+			for _, k := range props.sortedInputKeys() {
+				<input type="hidden" name={ "inputs[" + k + "]" } value={ props.Inputs[k] }/>
+			}
+			<input type="hidden" name="confirmed" value="true"/>
+			<input type="hidden" name="prepared" value="true"/>
+		</form>
+	</div>
+	<script>
+	(function() {
+		// Tell the wizard transition script that the upcoming HX-Redirect navigation
+		// should animate forward (preparing index → stack index).
+		sessionStorage.setItem('wizard-transition', '0');
+	})();
+	</script>
+}

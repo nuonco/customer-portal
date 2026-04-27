@@ -1,0 +1,164 @@
+package wizard
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// SandboxStepProps holds everything the Sandbox wizard step needs to render.
+type SandboxStepProps struct {
+	BasePath           string
+	InstallID          string
+	WorkflowID         string
+	ActiveGroups       []nuon.WorkflowStepGroup
+	PolicyReports      []nuon.PolicyReport
+	ApplyResources     []nuon.TerraformResource
+	ApplyOutputs       map[string]string
+	PlanSummary        *workflows.PlanSummary
+	ActiveTab          string
+	TabURL             func(string) string
+	HasApprovalAwaiting bool
+	IsStepComplete     bool
+	ApproveAllURL      string
+	NextStepURL        string
+	NextStepPartialURL string
+	NextStepIndex      int
+	NextStepLabel      string
+}
+
+// SandboxStep renders the Sandbox wizard step: single-group plan/apply cards
+// with approval, retry, approve-all, and Next buttons in the header.
+templ SandboxStep(props SandboxStepProps) {
+	if len(props.ActiveGroups) == 0 {
+		@WaitingState()
+	} else {
+		<div class="flex items-center gap-3 mb-6">
+			<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy sandbox</h3>
+			@StatusBadge(SandboxActiveStatus(props.ActiveGroups))
+			<div class="ml-auto flex items-center gap-3">
+				for _, group := range props.ActiveGroups {
+					@GroupActionButtons(GroupActionButtonsProps{BasePath: props.BasePath, InstallID: props.InstallID, WorkflowID: props.WorkflowID, Group: group})
+				}
+				<form id="approve-all-form" method="POST" action={ templ.SafeURL(props.ApproveAllURL) }>
+					<button
+						type="button"
+						onclick="showConfirmModal({ title: 'Approve all changes', message: 'Approve deploying the sandbox and all components, instead of reviewing and approving them one at a time.', confirmText: 'Approve all', cancelText: 'Cancel' }).then(function(ok) { if (ok) document.getElementById('approve-all-form').submit(); })"
+						class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
+						disabled?={ !props.HasApprovalAwaiting }
+					>
+						<i class="ph-bold ph-checks"></i>
+						Approve all
+					</button>
+				</form>
+				<a
+					href={ templ.SafeURL(props.NextStepURL) }
+					hx-get={ props.NextStepPartialURL }
+					hx-target="#wizard-step-wrapper"
+					hx-swap="innerHTML show:none"
+					hx-push-url={ props.NextStepURL }
+					hx-boost="false"
+					data-step-index={ fmt.Sprintf("%d", props.NextStepIndex) }
+					data-wizard-nav="true"
+					class={
+						components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
+						templ.KV("opacity-40 pointer-events-none", !props.IsStepComplete),
+					}
+				>
+					{ props.NextStepLabel }
+					<i class="ph-bold ph-caret-right"></i>
+				</a>
+			</div>
+		</div>
+		<div class="space-y-4">
+			for _, group := range props.ActiveGroups {
+				if len(group.Steps) > 1 {
+					@sandboxPlanCard(props, group)
+				} else {
+					@sandboxDeployCard(props, group)
+				}
+			}
+		</div>
+	}
+}
+
+// sandboxPlanCard wraps the approval tabs in a card for sandbox groups with multiple steps.
+templ sandboxPlanCard(props SandboxStepProps, group nuon.WorkflowStepGroup) {
+	@components.Card(components.CardProps{Size: components.CardLarge}) {
+		@ApprovalTabs(ApprovalTabsProps{
+			PolicyReports:  props.PolicyReports,
+			ApplyResources: props.ApplyResources,
+			ApplyOutputs:   props.ApplyOutputs,
+			PlanSummary:    props.PlanSummary,
+			ActiveTab:      props.ActiveTab,
+			TabURL:         props.TabURL,
+		})
+	}
+}
+
+// sandboxDeployCard renders the status card with expandable step details for a single group.
+templ sandboxDeployCard(props SandboxStepProps, group nuon.WorkflowStepGroup) {
+	@components.Card(sandboxDeployCardProps(props, group)) {
+		if group.Status.Status == "in-progress" && !GroupCanApprove(group) {
+			<div class="flex items-center gap-3 py-4 justify-center">
+				<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">
+					Planning sandbox provision...
+				</p>
+			</div>
+		}
+		if GroupCanApprove(group) {
+			if len(props.PolicyReports) > 0 && props.PlanSummary != nil {
+				@ApprovalTabs(ApprovalTabsProps{
+					PolicyReports:  props.PolicyReports,
+					ApplyResources: props.ApplyResources,
+					ApplyOutputs:   props.ApplyOutputs,
+					PlanSummary:    props.PlanSummary,
+					ActiveTab:      props.ActiveTab,
+					TabURL:         props.TabURL,
+				})
+			} else if len(props.PolicyReports) > 0 {
+				@PolicyReports(props.PolicyReports)
+			} else if props.PlanSummary != nil {
+				@PlanSummary(props.PlanSummary)
+			}
+		}
+	}
+}
+
+templ sandboxDeployCardHeader(props SandboxStepProps, group nuon.WorkflowStepGroup) {
+	<div class="flex items-center gap-2">
+		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ group.Name }</h4>
+		if GroupCanApprove(group) || GroupCanRetry(group) {
+			<div class="ml-auto flex items-center gap-2">
+				@GroupActionButtons(GroupActionButtonsProps{BasePath: props.BasePath, InstallID: props.InstallID, WorkflowID: props.WorkflowID, Group: group})
+			</div>
+		}
+	</div>
+}
+
+func sandboxDeployCardProps(props SandboxStepProps, group nuon.WorkflowStepGroup) components.CardProps {
+	cp := components.CardProps{Size: components.CardLarge}
+	if len(props.ActiveGroups) > 1 {
+		cp.Header = sandboxDeployCardHeader(props, group)
+	}
+	return cp
+}
+
+// SandboxActiveStatus returns the status to display in the sandbox header.
+// Shows the plan step status while the plan is active, then the apply step status once plan is done.
+func SandboxActiveStatus(activeGroups []nuon.WorkflowStepGroup) string {
+	if len(activeGroups) == 0 {
+		return ""
+	}
+	g := activeGroups[0]
+	planStatus := StepStatus(PlanStep(g))
+	switch planStatus {
+	case "completed", "success", "approved":
+		return StepStatus(ApplyStep(g))
+	default:
+		return planStatus
+	}
+}

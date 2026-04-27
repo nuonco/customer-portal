@@ -1,0 +1,239 @@
+package wizard
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// StackContentProps holds data needed to render the stack wizard step.
+type StackContentProps struct {
+	Platform     string // "aws", "gcp", "azure"
+	StackSetup   workflows.StackSetupData
+	ActiveGroups []nuon.WorkflowStepGroup
+	Status       string // aggregate status for the stack step
+}
+
+// StackStepProps holds everything the Stack wizard step needs to render.
+type StackStepProps struct {
+	Platform           string
+	StackSetup         workflows.StackSetupData
+	ActiveGroups       []nuon.WorkflowStepGroup
+	Status             string // aggregate status for the chip
+	IsStepComplete     bool
+	NextStepURL        string
+	NextStepPartialURL string
+	NextStepIndex      int
+	NextStepLabel      string
+}
+
+// StackStep renders the Stack wizard step: header (title + status chip + Next),
+// then either a shimmer placeholder or the platform-specific setup card.
+templ StackStep(props StackStepProps) {
+	<div class="flex items-center gap-3 mb-6">
+		<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy stack</h3>
+		@StackStatusChip(StackContentProps{Platform: props.Platform, StackSetup: props.StackSetup, ActiveGroups: props.ActiveGroups, Status: props.Status})
+		<div class="ml-auto">
+			<a
+				href={ templ.SafeURL(props.NextStepURL) }
+				hx-get={ props.NextStepPartialURL }
+				hx-target="#wizard-step-wrapper"
+				hx-swap="innerHTML show:none"
+				hx-push-url={ props.NextStepURL }
+				hx-boost="false"
+				data-step-index={ fmt.Sprintf("%d", props.NextStepIndex) }
+				data-wizard-nav="true"
+				class={
+					components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
+					templ.KV("opacity-40 pointer-events-none", !props.IsStepComplete),
+				}
+			>
+				{ props.NextStepLabel }
+				<i class="ph-bold ph-caret-right"></i>
+			</a>
+		</div>
+	</div>
+	if props.StackSetup.CloudFormationLink == "" && props.StackSetup.TemplateURL == "" && props.StackSetup.TfvarsContent == "" && props.StackSetup.AzureTemplateURL == "" {
+		@components.Card(components.CardProps{Size: components.CardLarge}) {
+			<div class="space-y-4 py-2">
+				@components.ShimmerBar("h-3", "w-1/3")
+				@components.ShimmerLines(2)
+				@components.ShimmerBar("h-8", "w-1/4")
+				@components.ShimmerBar("h-3", "w-1/4")
+				@components.ShimmerLines(3)
+			</div>
+		}
+	} else {
+		@components.Card(components.CardProps{Size: components.CardLarge}) {
+			switch props.Platform {
+			case "gcp":
+				@StackSetupGCP(props.StackSetup)
+			case "azure":
+				@StackSetupAzure(props.StackSetup)
+			default:
+				@StackSetupAWS(props.StackSetup)
+			}
+		}
+	}
+}
+
+// StackStatusChip renders a status chip for the stack step, with step-aware labels when in-progress.
+templ StackStatusChip(props StackContentProps) {
+	if props.Status == "in-progress" {
+		{{ label := stackInProgressLabel(props.ActiveGroups) }}
+		if label == "Awaiting stack" {
+			<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+				<i class="ph-bold ph-warning text-xs"></i>
+				{ label }
+			</span>
+		} else {
+			<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
+				<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
+				{ label }
+			</span>
+		}
+	} else {
+		@StatusBadge(props.Status)
+	}
+}
+
+func stackInProgressLabel(groups []nuon.WorkflowStepGroup) string {
+	for _, g := range groups {
+		for _, s := range g.Steps {
+			if s.Status != nil {
+				status := s.Status.Status
+				if status == "completed" || status == "success" || status == "approved" || status == "error" {
+					continue
+				}
+			}
+			switch s.Name {
+			case "generate install stack":
+				return "Generating stack"
+			case "await install stack":
+				return "Awaiting stack"
+			case "update install stack outputs":
+				return "Updating stack outputs"
+			}
+		}
+	}
+	return "In Progress"
+}
+
+// StackSetupAWS renders the AWS-specific stack setup instructions.
+templ StackSetupAWS(setup workflows.StackSetupData) {
+	<div class="mb-4 space-y-4">
+		<!-- Section 1: Setup your install stack -->
+		if setup.CloudFormationLink != "" || setup.TemplateURL != "" {
+			<div>
+				<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Setup your install stack</p>
+				if setup.CloudFormationLink != "" {
+					<div class="mb-3">
+						<a
+							href={ templ.SafeURL(setup.CloudFormationLink) }
+							target="_blank"
+							rel="noopener noreferrer"
+							class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}) }
+						>
+							Launch CloudFormation
+							<i class="ph-bold ph-arrow-square-out text-base"></i>
+						</a>
+					</div>
+				}
+				if setup.TemplateURL != "" {
+					<div>
+						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">CloudFormation template</p>
+						@components.CodeBlock(setup.TemplateURL, "text")
+					</div>
+				}
+			</div>
+		}
+		<!-- Divider -->
+		if setup.CloudFormationLink != "" && setup.TemplateURL != "" {
+			<div class="flex items-center gap-3 text-xs text-cool-grey-400 dark:text-cool-grey-500">
+				<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
+				<span>or</span>
+				<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
+			</div>
+		}
+		<!-- Section 2: Deploy with AWS CLI -->
+		if setup.TemplateURL != "" {
+			<div>
+				<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deploy with AWS CLI</p>
+				<div class="space-y-3">
+					<div>
+						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">Create stack</p>
+						@components.CodeBlock(setup.CreateStackCmd(), "bash")
+					</div>
+					<div>
+						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">Update existing stack</p>
+						@components.CodeBlock(setup.UpdateStackCmd(), "bash")
+					</div>
+				</div>
+			</div>
+		}
+		<!-- Section 3: Verify your stack -->
+		<div>
+			<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Verify your stack</p>
+			<div class="">
+				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-3">After running the create or update command above, open the AWS CloudFormation console to monitor your stack progress.</p>
+				<a
+					href={ templ.SafeURL(setup.ConsoleURL()) }
+					target="_blank"
+					rel="noopener noreferrer"
+					class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}) }
+				>
+					Open in AWS console
+					<i class="ph-bold ph-arrow-square-out text-base"></i>
+				</a>
+			</div>
+		</div>
+	</div>
+}
+
+// StackSetupGCP renders the GCP-specific stack setup instructions.
+templ StackSetupGCP(setup workflows.StackSetupData) {
+	<div class="mb-4  space-y-3">
+		<div>
+			<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
+			@components.CodeBlock("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp", "bash")
+		</div>
+		<div>
+			<p class="text-sm font-medium mb-1">2. Configure remote state</p>
+			@components.CodeBlock(workflows.GcpBackendSnippet(setup.NuonInstallID), "hcl")
+		</div>
+		if setup.TfvarsContent != "" {
+			<div>
+				<p class="text-sm font-medium mb-1">3. Save install configuration as install.tfvars</p>
+				@components.CodeBlock(setup.TfvarsContent, "hcl")
+			</div>
+		}
+		<div>
+			<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
+			@components.CodeBlock(workflows.GcpApplyCmd(), "bash")
+		</div>
+	</div>
+}
+
+// StackSetupAzure renders the Azure-specific stack setup instructions.
+templ StackSetupAzure(setup workflows.StackSetupData) {
+	<div class="mb-4  space-y-3">
+		<div>
+			<p class="text-sm font-medium mb-1">1. Login to Azure</p>
+			@components.CodeBlock("az login", "bash")
+		</div>
+		if setup.NuonInstallID != "" && setup.AzureLocation != "" {
+			<div>
+				<p class="text-sm font-medium mb-1">2. Create resource group</p>
+				@components.CodeBlock("az group create --name " + setup.NuonInstallID + "-rg --location " + setup.AzureLocation, "bash")
+			</div>
+		}
+		if setup.AzureTemplateURL != "" {
+			<div>
+				<p class="text-sm font-medium mb-1">3. Deploy stack</p>
+				@components.CodeBlock("az stack group create --name " + setup.NuonInstallID + "-stack --resource-group " + setup.NuonInstallID + "-rg --template-uri " + setup.AzureTemplateURL + " --deny-settings-mode \"denyDelete\" --aou deleteAll", "bash")
+			</div>
+		}
+	</div>
+}

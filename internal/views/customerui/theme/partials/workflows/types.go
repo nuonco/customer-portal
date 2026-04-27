@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
 // WorkflowDataPanel represents workflow data for the panel (avoids import cycle)
@@ -568,40 +568,54 @@ func GcpApplyCmd() string {
 	return `terraform init && terraform apply -var-file=install.tfvars`
 }
 
-// StepGroupType identifies the kind of step group for rendering purposes.
-type StepGroupType string
-
-const (
-	StepGroupStack     StepGroupType = "stack"
-	StepGroupSandbox   StepGroupType = "sandbox"
-	StepGroupComponent StepGroupType = "component"
-	StepGroupAction    StepGroupType = "action"
-	StepGroupOther     StepGroupType = "other"
-)
-
 // StepGroup represents a logical group of workflow steps sharing the same GroupIdx.
 type StepGroup struct {
 	GroupIdx int64
-	Type     StepGroupType
+	Type     string // domain label: "install-stack", "sandbox", "component", "action", "system"
 	Name     string
 	Status   string // not_started, in-progress, completed, error, approval-awaiting
-	Steps    []*nuonmodels.AppWorkflowStep
+	Steps    []*nuon.WorkflowStep
+}
+
+// StepGroupsFromAPI converts API step groups into local StepGroup values,
+// using API-provided labels for name, type, and status.
+func StepGroupsFromAPI(apiGroups []nuon.WorkflowStepGroup) []StepGroup {
+	var groups []StepGroup
+	for _, ag := range apiGroups {
+		// Filter hidden groups
+		if ag.Labels["type"] == "hidden" {
+			continue
+		}
+		status := ""
+		if ag.Status.Status != "" {
+			status = string(ag.Status.Status)
+		}
+		sg := StepGroup{
+			GroupIdx: int64(ag.GroupIdx),
+			Name:     ag.Labels["display_name"],
+			Type:     ag.Labels["domain"],
+			Status:   status,
+			Steps:    ag.Steps,
+		}
+		groups = append(groups, sg)
+	}
+	return groups
 }
 
 // LatestSteps returns the last step for each execution type in the group.
 // When steps are retried, the retry is appended after the original, so the
 // last step of each type is always the current one.
-func (g StepGroup) LatestSteps() []*nuonmodels.AppWorkflowStep {
-	last := make(map[string]*nuonmodels.AppWorkflowStep)
+func (g StepGroup) LatestSteps() []*nuon.WorkflowStep {
+	last := make(map[string]*nuon.WorkflowStep)
 	var order []string
 	for _, s := range g.Steps {
-		key := string(s.ExecutionType)
+		key := s.ExecutionType
 		if _, seen := last[key]; !seen {
 			order = append(order, key)
 		}
 		last[key] = s
 	}
-	result := make([]*nuonmodels.AppWorkflowStep, 0, len(order))
+	result := make([]*nuon.WorkflowStep, 0, len(order))
 	for _, key := range order {
 		result = append(result, last[key])
 	}
@@ -609,7 +623,7 @@ func (g StepGroup) LatestSteps() []*nuonmodels.AppWorkflowStep {
 }
 
 // ActiveStep returns the first non-completed step from the latest steps, or nil.
-func (g StepGroup) ActiveStep() *nuonmodels.AppWorkflowStep {
+func (g StepGroup) ActiveStep() *nuon.WorkflowStep {
 	for _, s := range g.LatestSteps() {
 		if s.Status == nil {
 			return s
@@ -634,7 +648,7 @@ func (g StepGroup) CanRetry() bool {
 }
 
 // RetryableStep returns a retryable failed step from the latest steps, or nil.
-func (g StepGroup) RetryableStep() *nuonmodels.AppWorkflowStep {
+func (g StepGroup) RetryableStep() *nuon.WorkflowStep {
 	for _, s := range g.LatestSteps() {
 		if s.Retryable && s.Finished && s.Status != nil && string(s.Status.Status) != "completed" && string(s.Status.Status) != "success" {
 			return s
@@ -700,183 +714,4 @@ func (p WorkflowOverviewProps) GroupPageURL(groupIdx int) string {
 // GroupPanelURL returns the partial=panel URL for a step group selection (swaps entire panel).
 func (p WorkflowOverviewProps) GroupPanelURL(groupIdx int) string {
 	return p.url().SetInt("group", groupIdx).Set("partial", "panel").Build()
-}
-
-// BuildStepGroups groups workflow steps by GroupIdx and derives type, name, and status.
-func BuildStepGroups(steps []*nuonmodels.AppWorkflowStep) []StepGroup {
-	if len(steps) == 0 {
-		return nil
-	}
-
-	var groups []StepGroup
-	var current *StepGroup
-	for _, s := range steps {
-		if current == nil || s.GroupIdx != current.GroupIdx {
-			groups = append(groups, StepGroup{GroupIdx: s.GroupIdx})
-			current = &groups[len(groups)-1]
-		}
-		current.Steps = append(current.Steps, s)
-		groups[len(groups)-1] = *current
-	}
-
-	var visible []StepGroup
-	for i := range groups {
-		groups[i].Type = deriveGroupType(groups[i].Steps)
-		groups[i].Name = deriveGroupName(groups[i].Steps)
-		groups[i].Status = deriveGroupStatus(groups[i].Steps)
-		if !isHiddenGroup(groups[i]) {
-			visible = append(visible, groups[i])
-		}
-	}
-
-	return visible
-}
-
-func deriveGroupType(steps []*nuonmodels.AppWorkflowStep) StepGroupType {
-	found := StepGroupOther
-	for _, s := range steps {
-		switch s.StepTargetType {
-		case "install_stack_versions":
-			return StepGroupStack
-		case "install_sandbox_runs":
-			return StepGroupSandbox
-		case "install_deploys":
-			return StepGroupComponent
-		case "install_action_workflow_runs":
-			if found == StepGroupOther {
-				found = StepGroupAction
-			}
-		}
-	}
-	// When we only found action steps by target type, check if any other step
-	// in the group has a component-like name (its StepTargetType may be empty
-	// because it hasn't started yet).
-	if found == StepGroupAction {
-		for _, s := range steps {
-			if s.StepTargetType == "install_action_workflow_runs" {
-				continue
-			}
-			if isComponentStepName(s.Name) {
-				return StepGroupComponent
-			}
-		}
-		return StepGroupAction
-	}
-	if found != StepGroupOther {
-		return found
-	}
-	for _, s := range steps {
-		name := strings.ToLower(s.Name)
-		switch {
-		case strings.Contains(name, "stack") || strings.Contains(name, "runner"):
-			return StepGroupStack
-		case strings.Contains(name, "sandbox"):
-			return StepGroupSandbox
-		case isComponentStepName(s.Name):
-			return StepGroupComponent
-		}
-	}
-	return StepGroupOther
-}
-
-// isComponentStepName returns true if the step name indicates a component deploy step.
-func isComponentStepName(name string) bool {
-	n := strings.ToLower(name)
-	return strings.Contains(n, "sync and plan") ||
-		strings.Contains(n, "apply") ||
-		(strings.Contains(n, "deploy") && !strings.Contains(n, "action run"))
-}
-
-func deriveGroupName(steps []*nuonmodels.AppWorkflowStep) string {
-	if len(steps) == 0 {
-		return ""
-	}
-
-	// Find the best step to derive the group name from. Prefer a component
-	// deploy step (by target type, then by name pattern) over the first step
-	// which may be a pre-deploy action.
-	nameStep := steps[0]
-	for _, s := range steps {
-		if s.StepTargetType == "install_deploys" {
-			nameStep = s
-			break
-		}
-	}
-	if nameStep == steps[0] && len(steps) > 1 {
-		for _, s := range steps {
-			if s.StepTargetType != "install_action_workflow_runs" && isComponentStepName(s.Name) {
-				nameStep = s
-				break
-			}
-		}
-	}
-
-	name := strings.ToLower(strings.ReplaceAll(nameStep.Name, " ", "_"))
-
-	// Stack steps
-	if strings.Contains(name, "install_stack") || strings.Contains(name, "generate_install") {
-		return "Deploy stack"
-	}
-
-	// Sandbox steps
-	if strings.Contains(name, "sandbox_plan") || strings.Contains(name, "sandbox_apply") {
-		return "Deploy sandbox"
-	}
-
-	// Component steps: "sync_and_plan_<name>" → "Deploy <name>"
-	if strings.HasPrefix(name, "sync_and_plan_") {
-		comp := strings.TrimPrefix(name, "sync_and_plan_")
-		comp = strings.ReplaceAll(comp, "_", " ")
-		if len(comp) > 0 {
-			comp = strings.ToUpper(comp[:1]) + comp[1:]
-		}
-		return "Deploy " + comp
-	}
-
-	// Fallback: title-case the raw name
-	display := strings.ReplaceAll(nameStep.Name, "_", " ")
-	if len(display) > 0 {
-		return strings.ToUpper(display[:1]) + display[1:]
-	}
-	return display
-}
-
-func deriveGroupStatus(steps []*nuonmodels.AppWorkflowStep) string {
-	// Use only the latest step per execution type (retries supersede originals)
-	latest := make(map[string]*nuonmodels.AppWorkflowStep)
-	for _, s := range steps {
-		latest[string(s.ExecutionType)] = s
-	}
-	allCompleted := true
-	for _, s := range latest {
-		status := ""
-		if s.Status != nil {
-			status = string(s.Status.Status)
-		}
-		switch status {
-		case "error":
-			return "error"
-		case "approval-awaiting":
-			return "approval-awaiting"
-		case "in-progress", "active":
-			return "in-progress"
-		case "completed", "success", "approved":
-			continue
-		default:
-			allCompleted = false
-		}
-	}
-	if allCompleted {
-		return "completed"
-	}
-	return "not_started"
-}
-
-func isHiddenGroup(group StepGroup) bool {
-	for _, s := range group.Steps {
-		if s.ExecutionType == "user" || s.ExecutionType == "approval" {
-			return false
-		}
-	}
-	return true
 }

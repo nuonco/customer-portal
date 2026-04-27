@@ -1,0 +1,208 @@
+package wizard
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// ApprovalTabsProps holds data needed to render the sandbox approval tabs.
+type ApprovalTabsProps struct {
+	PolicyReports  []nuon.PolicyReport
+	ApplyResources []nuon.TerraformResource
+	ApplyOutputs   map[string]string
+	PlanSummary    *workflows.PlanSummary
+	ActiveTab      string // "policies", "resources", "apply_resources", "apply_outputs"
+	TabURL         func(string) string
+}
+
+// ApprovalTabs renders tabbed content for plan review with policies, resources, and outputs.
+templ ApprovalTabs(props ApprovalTabsProps) {
+	{{ pass, warn, deny := PolicyTotals(props.PolicyReports) }}
+	{{ applyItems := applyResourcesToItems(props.ApplyResources) }}
+	{{ activeTab := props.ActiveTab }}
+	if activeTab == "" {
+		{{ activeTab = "resources" }}
+	}
+	<div class="mb-4">
+		<div class="tabs-divider flex mb-4">
+			if len(props.PolicyReports) > 0 {
+				<a
+					href={ templ.SafeURL(props.TabURL("policies")) }
+					hx-get={ props.TabURL("policies") }
+					hx-target="#wizard-content"
+					hx-swap="innerHTML"
+					hx-push-url="false"
+					hx-boost="false"
+					class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "policies") }
+				>
+					Policy reports
+					if pass > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+							<i class="ph-bold ph-check"></i> { fmt.Sprintf("%d", pass) }
+						</span>
+					}
+					if warn > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+							<i class="ph-bold ph-exclamation-mark"></i> { fmt.Sprintf("%d", warn) }
+						</span>
+					}
+					if deny > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+							<i class="ph-bold ph-x"></i> { fmt.Sprintf("%d", deny) }
+						</span>
+					}
+				</a>
+			}
+			<a
+				href={ templ.SafeURL(props.TabURL("resources")) }
+				hx-get={ props.TabURL("resources") }
+				hx-target="#wizard-step-wrapper"
+				hx-swap="innerHTML"
+				hx-push-url="false"
+				hx-boost="false"
+				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "resources") }
+			>
+				Planned changes
+				if props.PlanSummary != nil {
+					@TerraformPlanBadges(props.PlanSummary)
+				}
+			</a>
+			<a
+				href={ templ.SafeURL(props.TabURL("apply_resources")) }
+				hx-get={ props.TabURL("apply_resources") }
+				hx-target="#wizard-step-wrapper"
+				hx-swap="innerHTML"
+				hx-push-url="false"
+				hx-boost="false"
+				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_resources") }
+			>
+				Applied changes
+				if len(applyItems) > 0 {
+					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+						<i class="ph-bold ph-cube"></i> { fmt.Sprintf("%d", len(applyItems)) }
+					</span>
+				}
+			</a>
+			<a
+				href={ templ.SafeURL(props.TabURL("apply_outputs")) }
+				hx-get={ props.TabURL("apply_outputs") }
+				hx-target="#wizard-step-wrapper"
+				hx-swap="innerHTML"
+				hx-push-url="false"
+				hx-boost="false"
+				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_outputs") }
+			>
+				Outputs
+				if len(props.ApplyOutputs) > 0 {
+					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
+						{ fmt.Sprintf("%d", len(props.ApplyOutputs)) }
+					</span>
+				}
+			</a>
+		</div>
+		switch activeTab {
+		case "policies":
+			@PolicyReports(props.PolicyReports)
+		case "apply_resources":
+			@components.WizardResourceList(applyItems)
+		case "apply_outputs":
+			@ApplyOutputs(props.ApplyOutputs)
+		default:
+			@PlanSummary(props.PlanSummary)
+		}
+	</div>
+}
+
+// ComponentApprovalTabsProps holds data needed to render component approval tabs.
+type ComponentApprovalTabsProps struct {
+	GroupID       string
+	PolicyReports []nuon.PolicyReport
+	Data          *ComponentWizardData
+}
+
+// ComponentApprovalTabs renders approval tabs for a component group.
+// Tabs are client-side only — server renders all panes without active/hidden state
+// so that morph:innerHTML preserves user selections across polls.
+templ ComponentApprovalTabs(props ComponentApprovalTabsProps) {
+	{{ tabID := "comp-tabs-" + props.GroupID }}
+	<div class="mb-4">
+		<div class="tabs-divider flex mb-4" data-wizard-tabs={ tabID }>
+			if len(props.PolicyReports) > 0 {
+				{{ pass, warn, deny := PolicyTotals(props.PolicyReports) }}
+				<button
+					type="button"
+					onclick="wizardSwitchTab(this)"
+					class="button button-nav nav-item inline-flex items-center gap-2"
+					data-tab="policies"
+				>
+					Policy reports
+					if pass > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+							<i class="ph-bold ph-check"></i> { fmt.Sprintf("%d", pass) }
+						</span>
+					}
+					if warn > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
+							<i class="ph-bold ph-exclamation-mark"></i> { fmt.Sprintf("%d", warn) }
+						</span>
+					}
+					if deny > 0 {
+						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
+							<i class="ph-bold ph-x"></i> { fmt.Sprintf("%d", deny) }
+						</span>
+					}
+				</button>
+			}
+			<button
+				type="button"
+				onclick="wizardSwitchTab(this)"
+				class="button button-nav nav-item inline-flex items-center gap-2"
+				data-tab="resources"
+			>
+				Planned changes
+				if props.Data != nil && props.Data.TerraformPlan != nil {
+					@TerraformPlanBadges(props.Data.TerraformPlan)
+				}
+				if props.Data != nil && props.Data.HelmPlan != nil {
+					@HelmPlanBadges(props.Data.HelmPlan)
+				}
+			</button>
+			<button
+				type="button"
+				onclick="wizardSwitchTab(this)"
+				class="button button-nav nav-item inline-flex items-center gap-2"
+				data-tab="apply_outputs"
+			>
+				Outputs
+				if props.Data != nil && len(props.Data.ApplyOutputs) > 0 {
+					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
+						{ fmt.Sprintf("%d", len(props.Data.ApplyOutputs)) }
+					</span>
+				}
+			</button>
+		</div>
+		<div data-wizard-panes={ tabID }>
+			<div data-tab-pane="policies">
+				@PolicyReports(props.PolicyReports)
+			</div>
+			<div data-tab-pane="resources">
+				if props.Data != nil && props.Data.TerraformPlan != nil {
+					@PlanSummary(props.Data.TerraformPlan)
+				} else if props.Data != nil && props.Data.HelmPlan != nil {
+					@HelmDiffList(props.Data.HelmPlan)
+				}
+			</div>
+			<div data-tab-pane="apply_outputs">
+				if props.Data != nil {
+					@ApplyOutputs(props.Data.ApplyOutputs)
+				}
+			</div>
+		</div>
+	</div>
+	<script data-tab-id={ tabID }>
+		wizardInitTabs(document.currentScript.getAttribute('data-tab-id'), 'resources');
+	</script>
+}

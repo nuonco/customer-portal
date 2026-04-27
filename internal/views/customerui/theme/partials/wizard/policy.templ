@@ -1,0 +1,88 @@
+package wizard
+
+import (
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// PolicyReports renders a list of policy evaluation results.
+templ PolicyReports(reports []nuon.PolicyReport) {
+	<div>
+		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
+			for _, report := range reports {
+				for _, policy := range report.Policies {
+					{{ pName := policyName(report, policy) }}
+					<div class="py-2 flex items-start gap-2 text-xs">
+						<span class={ "mt-0.5 shrink-0 inline-flex items-center justify-center w-5 h-5 text-xs rounded-full", policyStatusClass(policy.Status) }>
+							switch policy.Status {
+							case "pass":
+								<i class="ph-bold ph-check"></i>
+							case "warn":
+								<i class="ph-bold ph-exclamation-mark"></i>
+							case "deny":
+								<i class="ph-bold ph-x"></i>
+							default:
+								<i class="ph-bold ph-question"></i>
+							}
+						</span>
+						<div class="min-w-0">
+							<p class="font-medium text-cool-grey-900 dark:text-white truncate" title={ pName }>{ pName }</p>
+							for _, v := range violationsForPolicy(report, policy.PolicyID) {
+								<p class="text-cool-grey-500 dark:text-cool-grey-400 mt-0.5">{ v.Message }</p>
+							}
+						</div>
+					</div>
+				}
+			}
+		</div>
+	</div>
+}
+
+// PolicyTotals returns counts of pass, warn, and deny policy results.
+func PolicyTotals(reports []nuon.PolicyReport) (pass, warn, deny int) {
+	for _, r := range reports {
+		for _, p := range r.Policies {
+			switch p.Status {
+			case "pass":
+				pass++
+			case "warn":
+				warn++
+			case "deny":
+				deny++
+			}
+		}
+	}
+	return
+}
+
+func policyStatusClass(status string) string {
+	switch status {
+	case "deny":
+		return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
+	case "warn":
+		return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
+	case "pass":
+		return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
+	default:
+		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400"
+	}
+}
+
+func policyName(report nuon.PolicyReport, policy nuon.PolicyResult) string {
+	if policy.PolicyName != "" {
+		return policy.PolicyName
+	}
+	if report.PolicyName != "" {
+		return report.PolicyName
+	}
+	return "Policy evaluation"
+}
+
+func violationsForPolicy(report nuon.PolicyReport, policyID string) []nuon.PolicyViolation {
+	var result []nuon.PolicyViolation
+	for _, v := range report.Violations {
+		if v.PolicyID == policyID {
+			result = append(result, v)
+		}
+	}
+	return result
+}

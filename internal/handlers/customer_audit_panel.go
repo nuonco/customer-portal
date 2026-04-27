@@ -137,42 +137,21 @@ func (h *Handler) AuditPanel(c *gin.Context) {
 			case "components":
 				props.ComponentsSubTab = c.DefaultQuery("components_sub", componentsSubTabDefault)
 
-				// Fetch deploys first — used for history sub-tab and component status
+				// Fetch deploys for the history sub-tab pagination.
 				offset := queryInt(c, "components_offset", 0)
-				deployStatus := make(map[string]string)
 				if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
 					props.DeploysPagination = auditPagination(len(deploys), offset)
 					props.Deploys = paginateDeploys(deploys, offset)
-
-					// Build component_id → latest deploy status (deploys are newest-first)
-					for _, d := range deploys {
-						if _, exists := deployStatus[d.ComponentID]; !exists && d.ComponentID != "" {
-							if d.StatusV2 != nil && d.StatusV2.Status != "" {
-								deployStatus[d.ComponentID] = string(d.StatusV2.Status)
-							} else if d.Status != "" {
-								deployStatus[d.ComponentID] = d.Status
-							}
-						}
-					}
 				} else {
 					zap.L().Warn("failed to fetch deploys", zap.Error(err))
 				}
 
-				// Fetch install components for the info sub-tab
+				// Fetch install components for the info sub-tab and merge in
+				// per-component deploy status (shared with the overview page).
 				if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
 					props.Components = components
 					props.ComponentInfos = h.buildComponentInfos(ctx, apiClient, install, components)
-
-					// Merge deploy status into ComponentInfos
-					for i := range props.ComponentInfos {
-						if props.ComponentInfos[i].Status == "" && i < len(components) {
-							if s, ok := deployStatus[components[i].ComponentID]; ok {
-								props.ComponentInfos[i].Status = s
-							} else {
-								props.ComponentInfos[i].Status = "not deployed"
-							}
-						}
-					}
+					h.mergeDeployStatuses(ctx, apiClient, installID, components, props.ComponentInfos)
 				} else {
 					zap.L().Warn("failed to fetch install components", zap.Error(err))
 				}

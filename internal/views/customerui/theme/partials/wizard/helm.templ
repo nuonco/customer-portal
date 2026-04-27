@@ -1,0 +1,195 @@
+package wizard
+
+import (
+	"fmt"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+)
+
+// TerraformPlanBadges renders colored count badges for terraform plan changes.
+templ TerraformPlanBadges(plan *workflows.PlanSummary) {
+	if plan.CreateCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+			<i class="ph-bold ph-plus"></i> { fmt.Sprintf("%d", plan.CreateCount) }
+		</span>
+	}
+	if plan.UpdateCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
+			<i class="ph-bold ph-pencil-simple"></i> { fmt.Sprintf("%d", plan.UpdateCount) }
+		</span>
+	}
+	if plan.DeleteCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+			<i class="ph-bold ph-minus"></i> { fmt.Sprintf("%d", plan.DeleteCount) }
+		</span>
+	}
+	if plan.ReplaceCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
+			<i class="ph-bold ph-arrows-clockwise"></i> { fmt.Sprintf("%d", plan.ReplaceCount) }
+		</span>
+	}
+}
+
+// HelmPlanBadges renders colored count badges for helm plan changes.
+templ HelmPlanBadges(plan *workflows.HelmPlanSummary) {
+	if plan.AddCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+			<i class="ph-bold ph-plus"></i> { fmt.Sprintf("%d", plan.AddCount) }
+		</span>
+	}
+	if plan.ChangeCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
+			<i class="ph-bold ph-pencil-simple"></i> { fmt.Sprintf("%d", plan.ChangeCount) }
+		</span>
+	}
+	if plan.DestroyCount > 0 {
+		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
+			<i class="ph-bold ph-minus"></i> { fmt.Sprintf("%d", plan.DestroyCount) }
+		</span>
+	}
+}
+
+// HelmDiffList renders helm/k8s plan changes as expandable YAML diff sections.
+templ HelmDiffList(plan *workflows.HelmPlanSummary) {
+	if plan != nil && len(plan.Changes) > 0 {
+		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
+			for i, change := range plan.Changes {
+				<details class="group">
+					<summary class="flex items-center gap-2 py-2 text-xs cursor-pointer list-none">
+						<span class={ "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs shrink-0", helmActionColor(change.Action) }>
+							@helmActionIcon(change.Action)
+						</span>
+						<div class="flex items-center gap-1.5 min-w-0 flex-1">
+							<span class="font-medium text-cool-grey-800 dark:text-cool-grey-200 truncate">
+								{ change.Kind }
+								if change.Name != "" {
+									: { change.Name }
+								}
+							</span>
+							if change.Namespace != "" {
+								<span class="text-cool-grey-400 shrink-0">({ change.Namespace })</span>
+							}
+						</div>
+						<span class={ "shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium", helmActionColor(change.Action) }>
+							{ change.Action }
+						</span>
+						<i class="ph-bold ph-caret-right text-cool-grey-400 transition-transform group-open:rotate-90 shrink-0"></i>
+					</summary>
+					if change.Before != "" || change.After != "" {
+						<div class="pb-3 pl-7">
+							if change.Before != "" && change.After != "" {
+								<div class="grid grid-cols-2 gap-2">
+									<div>
+										<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Before</p>
+										<pre class="text-xs font-mono bg-red-50 dark:bg-red-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-red-200 dark:border-red-900/30">{ change.Before }</pre>
+									</div>
+									<div>
+										<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">After</p>
+										<pre class="text-xs font-mono bg-green-50 dark:bg-green-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-green-200 dark:border-green-900/30">{ change.After }</pre>
+									</div>
+								</div>
+							} else if change.After != "" {
+								<div>
+									<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Content</p>
+									<pre class="text-xs font-mono bg-green-50 dark:bg-green-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-green-200 dark:border-green-900/30">{ change.After }</pre>
+								</div>
+							} else {
+								<div>
+									<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Content</p>
+									<pre class="text-xs font-mono bg-red-50 dark:bg-red-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-red-200 dark:border-red-900/30">{ change.Before }</pre>
+								</div>
+							}
+						</div>
+					}
+				</details>
+				if i < len(plan.Changes)-1 {
+				}
+			}
+		</div>
+	} else {
+		@components.EmptyState(components.EmptyStateProps{
+			Title:   "No planned changes to display",
+			Icon:    "ph-check-circle",
+			Compact: true,
+		})
+	}
+}
+
+templ helmActionIcon(action string) {
+	switch action {
+	case "added":
+		<i class="ph-bold ph-plus"></i>
+	case "changed":
+		<i class="ph-bold ph-pencil-simple"></i>
+	case "destroyed":
+		<i class="ph-bold ph-minus"></i>
+	default:
+		<i class="ph-bold ph-cube"></i>
+	}
+}
+
+func helmActionColor(action string) string {
+	switch action {
+	case "added":
+		return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+	case "changed":
+		return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
+	case "destroyed":
+		return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+	default:
+		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400"
+	}
+}
+
+// PlanSummary renders a terraform plan as a resource list.
+templ PlanSummary(plan *workflows.PlanSummary) {
+	<div>
+		@components.WizardResourceList(PlanResourcesToItems(plan))
+	</div>
+}
+
+// PlanResourcesToItems converts a terraform plan to WizardResourceItems for display.
+func PlanResourcesToItems(plan *workflows.PlanSummary) []components.WizardResourceItem {
+	if plan == nil {
+		return nil
+	}
+	items := make([]components.WizardResourceItem, len(plan.Resources))
+	for i, r := range plan.Resources {
+		items[i] = components.WizardResourceItem{Address: r.Address, Action: r.Action}
+	}
+	return items
+}
+
+// HelmPlanToItems converts a helm plan to WizardResourceItems for display.
+func HelmPlanToItems(plan *workflows.HelmPlanSummary) []components.WizardResourceItem {
+	if plan == nil {
+		return nil
+	}
+	items := make([]components.WizardResourceItem, len(plan.Changes))
+	for i, c := range plan.Changes {
+		address := c.Kind
+		if c.Name != "" {
+			address += ": " + c.Name
+		}
+		if c.Namespace != "" {
+			address = c.Namespace + "/" + address
+		}
+		action := helmActionToResourceAction(c.Action)
+		items[i] = components.WizardResourceItem{Address: address, Action: action}
+	}
+	return items
+}
+
+func helmActionToResourceAction(action string) string {
+	switch action {
+	case "added":
+		return "create"
+	case "changed":
+		return "update"
+	case "destroyed":
+		return "delete"
+	default:
+		return action
+	}
+}

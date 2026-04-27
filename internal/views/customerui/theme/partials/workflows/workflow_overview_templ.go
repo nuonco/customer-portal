@@ -49,22 +49,22 @@ func WorkflowOverview(props WorkflowOverviewProps) templ.Component {
 			if props.SelectedGroup >= 0 && props.SelectedGroup < len(props.StepGroups) {
 				group := props.StepGroups[props.SelectedGroup]
 				switch group.Type {
-				case StepGroupStack:
+				case "install-stack":
 					templ_7745c5c3_Err = StackGroupCard(props).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-				case StepGroupSandbox:
+				case "sandbox":
 					templ_7745c5c3_Err = SandboxGroupCard(props).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-				case StepGroupComponent:
+				case "component":
 					templ_7745c5c3_Err = ComponentGroupCard(props).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-				case StepGroupAction:
+				case "action":
 					templ_7745c5c3_Err = ActionGroupCard(props).Render(ctx, templ_7745c5c3_Buffer)
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err

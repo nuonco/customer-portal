@@ -8,6 +8,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 )
 
 func (h *Handler) InstallLinkPage(c *gin.Context) {
@@ -85,7 +86,7 @@ func (h *Handler) InstallLinkPage(c *gin.Context) {
 	}
 
 	// Fall back to default Templ template
-	props := customerpages.CreateInstallPageProps{
+	props := wizard.ConfigureStepProps{
 		LayoutProps:  h.buildCustomerLayoutProps("Install "+link.AppName, nil, theme, h.getOrgForLayout(c), nil, nil),
 		AppID:        link.AppID,
 		AppName:      link.AppName,

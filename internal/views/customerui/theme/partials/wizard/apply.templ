@@ -1,0 +1,137 @@
+package wizard
+
+import (
+	"fmt"
+	"sort"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+)
+
+// ApplyCardProps holds data needed to render the apply step card.
+type ApplyCardProps struct {
+	Group          nuon.WorkflowStepGroup
+	ApplyResources []nuon.TerraformResource
+	ApplyOutputs   map[string]string
+	ActiveTab      string // "apply_resources" or "apply_outputs"
+	TabURL         func(string) string // returns URL for switching tabs
+}
+
+// ApplyCard renders the apply step card showing apply status with resource/output tabs.
+templ ApplyCard(props ApplyCardProps) {
+	{{ applyStep := ApplyStep(props.Group) }}
+	{{ status := StepStatus(applyStep) }}
+	{{ applyItems := applyResourcesToItems(props.ApplyResources) }}
+	{{ activeTab := resolveApplyTab(props.ActiveTab) }}
+	@components.Card(components.CardProps{
+		Size:   components.CardLarge,
+		Header: applyCardHeader(status, len(applyItems), len(props.ApplyOutputs)),
+	}) {
+		switch status {
+		case "in-progress":
+			<div class="flex items-center gap-2 py-2 justify-center text-sm">
+				<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
+				<span class="text-cool-grey-500 dark:text-cool-grey-400">Applying changes...</span>
+			</div>
+		case "error":
+			<div class="flex items-center gap-2 py-2 justify-center text-sm">
+				<i class="ph-bold ph-x-circle text-red-600 dark:text-red-400"></i>
+				<span class="text-red-600 dark:text-red-400">Apply failed</span>
+			</div>
+		case "completed", "success":
+		default:
+			<div class="flex items-center gap-2 py-2 justify-center text-sm">
+				<i class="ph-bold ph-clock text-cool-grey-400"></i>
+				<span class="text-cool-grey-500 dark:text-cool-grey-400">Waiting for plan approval</span>
+			</div>
+		}
+		if len(applyItems) > 0 || len(props.ApplyOutputs) > 0 {
+			<div class="mb-4">
+				<div class="tabs-divider flex mb-4">
+					<a
+						href={ templ.SafeURL(props.TabURL("apply_resources")) }
+						hx-get={ props.TabURL("apply_resources") }
+						hx-target="#wizard-content"
+						hx-swap="innerHTML"
+						hx-push-url="false"
+						hx-boost="false"
+						class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_resources") }
+					>
+						Resource changes
+						if len(applyItems) > 0 {
+							<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
+								<i class="ph-bold ph-cube"></i> { fmt.Sprintf("%d", len(applyItems)) }
+							</span>
+						}
+					</a>
+					<a
+						href={ templ.SafeURL(props.TabURL("apply_outputs")) }
+						hx-get={ props.TabURL("apply_outputs") }
+						hx-target="#wizard-content"
+						hx-swap="innerHTML"
+						hx-push-url="false"
+						hx-boost="false"
+						class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_outputs") }
+					>
+						Outputs
+						if len(props.ApplyOutputs) > 0 {
+							<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
+								{ fmt.Sprintf("%d", len(props.ApplyOutputs)) }
+							</span>
+						}
+					</a>
+				</div>
+				if activeTab == "apply_outputs" {
+					@ApplyOutputs(props.ApplyOutputs)
+				} else {
+					@components.WizardResourceList(applyItems)
+				}
+			</div>
+		}
+	}
+}
+
+// ApplyOutputs renders a sorted key-value list of terraform outputs.
+templ ApplyOutputs(outputs map[string]string) {
+	if len(outputs) > 0 {
+		{{ keys := make([]string, 0, len(outputs)); for k := range outputs { keys = append(keys, k) }; sort.Strings(keys) }}
+		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
+			for _, key := range keys {
+				<div class="py-2 text-xs">
+					<span class="font-medium text-cool-grey-900 dark:text-white">{ key }</span>
+					<p class="font-mono text-cool-grey-500 dark:text-cool-grey-400 mt-0.5 break-all">{ outputs[key] }</p>
+				</div>
+			}
+		</div>
+	} else {
+		@components.EmptyState(components.EmptyStateProps{
+			Title:   "No outputs yet",
+			Icon:    "ph-terminal-window",
+			Compact: true,
+		})
+	}
+}
+
+templ applyCardHeader(status string, resourceCount int, outputCount int) {
+	<div class="flex items-center gap-2">
+		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">Apply</h4>
+	</div>
+}
+
+func applyResourcesToItems(resources []nuon.TerraformResource) []components.WizardResourceItem {
+	items := make([]components.WizardResourceItem, 0, len(resources))
+	for _, r := range resources {
+		if r.Mode == "data" {
+			continue
+		}
+		items = append(items, components.WizardResourceItem{Address: r.Address, Action: "create"})
+	}
+	return items
+}
+
+func resolveApplyTab(tab string) string {
+	if tab == "apply_resources" || tab == "apply_outputs" {
+		return tab
+	}
+	return "apply_resources"
+}

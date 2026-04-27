@@ -246,6 +246,39 @@ func (h *Handler) InstallDetailPanel(c *gin.Context) {
 	h.RenderTempl(c, http.StatusOK, partials.InstallDetailPanel(props))
 }
 
+// mergeDeployStatuses fills in any missing ComponentInfo.Status values by
+// looking up the latest deploy for each component, falling back to
+// "not deployed" when no deploy exists. Mirrors the audit panel logic so
+// the overview and components pages agree on per-component status.
+func (h *Handler) mergeDeployStatuses(ctx context.Context, apiClient *nuon.Client, installID string, comps []*nuonmodels.AppInstallComponent, infos []partials.ComponentInfo) {
+	deployStatus := make(map[string]string)
+	if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
+		for _, d := range deploys {
+			if d.ComponentID == "" {
+				continue
+			}
+			if _, exists := deployStatus[d.ComponentID]; exists {
+				continue
+			}
+			if d.StatusV2 != nil && d.StatusV2.Status != "" {
+				deployStatus[d.ComponentID] = string(d.StatusV2.Status)
+			} else if d.Status != "" {
+				deployStatus[d.ComponentID] = d.Status
+			}
+		}
+	}
+	for i := range infos {
+		if infos[i].Status != "" || i >= len(comps) {
+			continue
+		}
+		if s, ok := deployStatus[comps[i].ComponentID]; ok {
+			infos[i].Status = s
+		} else {
+			infos[i].Status = "not deployed"
+		}
+	}
+}
+
 // buildComponentInfos builds display info for each install component, including repo data from the app config.
 func (h *Handler) buildComponentInfos(ctx context.Context, apiClient *nuon.Client, install *models.Install, comps []*nuonmodels.AppInstallComponent) []partials.ComponentInfo {
 	// Build a map of component_id → config connection from the app config

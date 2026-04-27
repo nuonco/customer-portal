@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -8,27 +9,66 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon-go/models"
 )
 
+// fetchComponentTargetStatus fetches the most recent step target for a component
+// step group and returns the latest entry from its status_v2.history.
+func (h *Handler) fetchComponentTargetStatus(ctx context.Context, apiClient *nuon.Client, install *models.Install, g nuon.WorkflowStepGroup) (wizard.TargetStatus, bool) {
+	var targetStep *nuon.WorkflowStep
+	for _, s := range g.Steps {
+		if s == nil || s.StepTargetID == "" {
+			continue
+		}
+		switch s.StepTargetType {
+		case "install_deploys", "install_sandbox_runs", "install_action_workflow_runs":
+			targetStep = s
+		}
+	}
+	if targetStep == nil {
+		return wizard.TargetStatus{}, false
+	}
+
+	var statusV2 *nuonmodels.AppCompositeStatus
+	switch targetStep.StepTargetType {
+	case "install_deploys":
+		if d, err := apiClient.GetInstallDeploy(ctx, install.NuonInstallID, targetStep.StepTargetID); err == nil && d != nil {
+			statusV2 = d.StatusV2
+		}
+	case "install_sandbox_runs":
+		if r, err := apiClient.GetInstallSandboxRun(ctx, install.NuonInstallID, targetStep.StepTargetID); err == nil && r != nil {
+			statusV2 = r.StatusV2
+		}
+	case "install_action_workflow_runs":
+		if r, err := apiClient.GetInstallActionWorkflowRun(ctx, install.NuonInstallID, targetStep.StepTargetID); err == nil && r != nil {
+			statusV2 = r.StatusV2
+		}
+	}
+	if statusV2 == nil || len(statusV2.History) == 0 {
+		return wizard.TargetStatus{}, false
+	}
+	last := statusV2.History[len(statusV2.History)-1]
+	if last == nil {
+		return wizard.TargetStatus{}, false
+	}
+	// Only surface the v2 status when the target has actually failed —
+	// the history array contains every transition, so for in-flight
+	// components the tail can be a stale "in-progress" entry that does
+	// not reflect the component's true current state.
+	if string(last.Status) != "error" {
+		return wizard.TargetStatus{}, false
+	}
+	return wizard.TargetStatus{
+		Status:      string(last.Status),
+		Description: last.StatusHumanDescription,
+	}, true
+}
+
 // wizardSteps defines the ordered wizard steps.
 var wizardSteps = []string{"inputs", "stack", "sandbox", "components"}
-
-// wizardStepToGroupType maps wizard step names to group type labels (matching Labels["type"]).
-func wizardStepToGroupType(step string) string {
-	switch step {
-	case "stack":
-		return "stack"
-	case "sandbox":
-		return "sandbox"
-	case "components":
-		return "component"
-	default:
-		return "other"
-	}
-}
 
 // nextWizardStep returns the step after the given one, or "" if it's the last.
 func nextWizardStep(current string) string {
@@ -75,6 +115,13 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 		return
 	}
 
+	// --- Confirm / Preparing step: GET-only renders fall back to Configure (form
+	// data lives in localStorage and the POST-driven flow renders the step inline).
+	if step == "confirm" || step == "preparing" {
+		c.Redirect(http.StatusFound, h.basePath+"/apps/"+appID+"/install")
+		return
+	}
+
 	// --- Deployment steps (stack, sandbox, components): require an install ---
 	if loggedInUser == nil {
 		c.Redirect(http.StatusFound, h.basePath+"/login")
@@ -104,17 +151,29 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 		return
 	}
 
+	// Fetch app components up front so we can backfill step group labels
+	// (the API doesn't populate them in prod yet) and reuse the lookup
+	// below for the components step.
+	compNameToID := make(map[string]string)
+	componentNames := []string{}
+	if appComps, err := apiClient.GetAppComponents(ctx, appID); err == nil {
+		for _, comp := range appComps {
+			compNameToID[comp.Name] = comp.ID
+			componentNames = append(componentNames, comp.Name)
+		}
+	}
+
 	// Fetch step groups from the API
 	var stepGroups []nuon.WorkflowStepGroup
 	var activeGroups []nuon.WorkflowStepGroup
 
 	allGroups, sgErr := apiClient.GetWorkflowStepGroups(ctx, workflowID)
 	if sgErr == nil {
+		wizard.BackfillStepGroupLabels(allGroups, componentNames)
 		stepGroups = allGroups
 
-		targetType := wizardStepToGroupType(step)
 		for i := range stepGroups {
-			if stepGroups[i].Labels["type"] == targetType {
+			if wizard.MatchesWizardStep(step, stepGroups[i]) {
 				activeGroups = append(activeGroups, stepGroups[i])
 			}
 		}
@@ -155,16 +214,11 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 	// Fetch plan summary and policy reports for sandbox/components approval steps
 	var planSummary *workflows.PlanSummary
 	var policyReports []nuon.PolicyReport
-	componentData := make(map[string]*customerpages.ComponentWizardData)
+	componentData := make(map[string]*wizard.ComponentWizardData)
+	targetStatus := make(map[string]wizard.TargetStatus)
 	if (step == "sandbox" || step == "components") && len(activeGroups) > 0 {
 		if step == "components" {
-			compNameToID := make(map[string]string)
 			configByCompID := make(map[string]*nuonmodels.AppComponentConfigConnection)
-			if appComps, err := apiClient.GetAppComponents(ctx, appID); err == nil {
-				for _, comp := range appComps {
-					compNameToID[comp.Name] = comp.ID
-				}
-			}
 			if len(compNameToID) > 0 {
 				if appObj, err := apiClient.GetApp(ctx, appID); err == nil && appObj != nil && len(appObj.AppConfigs) > 0 {
 					if cfg, err := apiClient.GetAppConfigFull(ctx, appID, appObj.AppConfigs[0].ID); err == nil && cfg != nil {
@@ -178,7 +232,7 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 			}
 
 			for _, g := range activeGroups {
-				cd := &customerpages.ComponentWizardData{}
+				cd := &wizard.ComponentWizardData{}
 
 				compName := g.Labels["component_name"]
 				if compID, ok := compNameToID[compName]; ok {
@@ -209,6 +263,10 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 					}
 				}
 				componentData[g.ID] = cd
+
+				if ts, ok := h.fetchComponentTargetStatus(ctx, apiClient, &install, g); ok {
+					targetStatus[g.ID] = ts
+				}
 			}
 		} else {
 			for _, g := range activeGroups {
@@ -268,6 +326,7 @@ func (h *Handler) InstallWizardPage(c *gin.Context) {
 		ApplyResources: applyResources,
 		ApplyOutputs:   applyOutputs,
 		ComponentData:  componentData,
+		TargetStatus:   targetStatus,
 	}
 
 	if props.WizardTab == "" {
@@ -344,7 +403,7 @@ func (h *Handler) installWizardInputsStep(c *gin.Context, appID, installID, work
 	}
 
 	// Build form props
-	formProps := &customerpages.CreateInstallPageProps{
+	formProps := &wizard.ConfigureStepProps{
 		LayoutProps:     layoutProps,
 		AppID:           appID,
 		AppName:         appName,
@@ -408,4 +467,24 @@ func (h *Handler) renderWizardError(c *gin.Context, appID string, user *models.U
 // buildWizardURL constructs a wizard step URL.
 func buildWizardURL(basePath, appID, step, installID, workflowID string) string {
 	return basePath + "/apps/" + appID + "/install?step=" + step + "&install_id=" + installID + "&workflow_id=" + workflowID
+}
+
+// buildAppConfirmURL constructs the URL for the install Confirm step (app-install flow).
+func buildAppConfirmURL(basePath, appID string) string {
+	return basePath + "/apps/" + appID + "/install?step=confirm"
+}
+
+// buildLinkConfirmURL constructs the URL for the install Confirm step (install-link flow).
+func buildLinkConfirmURL(basePath, sha string) string {
+	return basePath + "/install-link/?sha=" + sha + "&step=confirm"
+}
+
+// buildAppPreparingURL constructs the URL for the install Preparing step (app-install flow).
+func buildAppPreparingURL(basePath, appID string) string {
+	return basePath + "/apps/" + appID + "/install?step=preparing"
+}
+
+// buildLinkPreparingURL constructs the URL for the install Preparing step (install-link flow).
+func buildLinkPreparingURL(basePath, sha string) string {
+	return basePath + "/install-link/?sha=" + sha + "&step=preparing"
 }

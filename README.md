@@ -200,7 +200,8 @@ Key files:
 
 The install creation flow uses a multi-step wizard that guides customers through provisioning: **Configure** → **Stack** → **Sandbox** → **Components**.
 
-- **Step 1 (Configure)**: The install creation form, rendered inside the wizard via `CreateInstallFormContent`. All visits to `/apps/:app_id/install` route through the wizard handler (defaulting to `step=inputs`). On first visit (no install yet), the step indicator shows all subsequent steps as "upcoming". After form submission, the POST handler creates the install via the Nuon API and redirects to step 2.
+- **Step 1 (Configure)**: The install creation form, rendered inside the wizard via `CreateInstallFormContent`. All visits to `/apps/:app_id/install` route through the wizard handler (defaulting to `step=inputs`). On first visit (no install yet), the step indicator shows all subsequent steps as "upcoming". The submit button is labeled **Get started**.
+- **Confirm step (hidden from indicator)**: After **Get started**, the POST handler renders a Confirm step that summarizes the entered install name, region/location, and inputs. Cancel returns to Configure (form values are restored from `FormPersist` localStorage). Confirm re-POSTs with `confirmed=true`, at which point the install is actually created via the Nuon API and the wizard advances to step 2. The Confirm step pushes `?step=confirm` to the URL but is **not** added to `wizard.StepDefs`, so it does not appear in the step indicator — UX-wise it is part of Configure. POST handlers use HTMX `HX-Retarget`/`HX-Reswap`/`HX-Push-Url` to swap the confirm content into `#wizard-step-wrapper` from the original Configure form submission.
 - **Steps 2-4 (Stack, Sandbox, Components)**: Each step shows deployment progress for that phase with a status card, expandable step details, and approve/retry actions. HTMX polls every 3 seconds for status updates. A "Next" button (disabled until the phase completes) advances to the next step.
 - **Sandbox Apply card**: During the apply phase, the Apply card polls the terraform workspace state and displays resources as they are created in real time. Uses the shared `WizardResourceList` component (also used by the Plan card's resource changes tab).
 - **Component cards**: Each component gets its own card with a type badge (Terraform, Helm, Kubernetes, Pulumi) derived from the `WorkflowStepApproval.Type` field. Plan data is parsed with type-specific parsers (`ParseTerraformPlan`, `ParseHelmPlan`, `ParseKubernetesPlan`) and displayed in approval tabs with appropriate badges and resource/diff lists. Helm and Kubernetes plans show kind/name entries with add/change/destroy action badges.
@@ -213,7 +214,7 @@ The wizard applies to both published-app and install-link flows. Both POST handl
 - **URL-driven state**: The `step`, `install_id`, and `workflow_id` query params drive all wizard state.
 - **Partial rendering**: The handler checks `?partial=content` to return just the step content (for HTMX polling) or the full page.
 - **Step transitions**: Step indicator links and "Next" buttons use targeted HTMX (`hx-get` with `partial=content`, `hx-target="#wizard-content"`) instead of `hx-boost` full-page swaps. A small inline script detects navigation direction via `data-step-index` attributes and applies CSS slide-fade animations (`wizard-transition-forward` / `wizard-transition-backward`). Polling swaps (every 3s) are excluded from transitions via a `data-wizard-nav` flag.
-- **Step groups**: Uses `workflows.BuildStepGroups()` to categorize workflow steps and match them to wizard steps by type (`StepGroupStack`, `StepGroupSandbox`, `StepGroupComponent`).
+- **Step groups**: The handler fetches workflow step groups from the API and filters them per wizard step via `wizard.MatchesWizardStep`. Stack matches the group with `Labels["name"] == "provision-install-stack"`, sandbox matches `Labels["name"] == "provision-sandbox"`, and components matches all groups with `Labels["domain"] == "component"` (one per component).
 
 Key files:
 - `internal/views/customerui/theme/pages/install_wizard.templ` — Wizard page template, step indicator, deploy cards, type-specific component tabs
@@ -221,6 +222,7 @@ Key files:
 - `internal/views/customerui/theme/partials/workflows/types.go` — Plan parsers (terraform, helm, kubernetes) and types
 - `internal/handlers/customer_install_wizard.go` — Wizard handler, step routing, URL builder, per-component plan data
 - `internal/views/customerui/theme/pages/create_install.templ` — Configure step form (`CreateInstallFormContent` used by wizard, `CreateInstallPageContent` used by install-link standalone page)
+- `internal/views/customerui/theme/partials/wizard/confirm.templ` — Hidden Confirm step (summary card + Cancel/Confirm)
 - `internal/handlers/customer_app_install_page.go` — Thin delegate to wizard handler (defaults `step` to `inputs`)
 - `internal/handlers/customer_create_install_from_app.go` — POST redirect to wizard
 - `internal/handlers/customer_accept_install_link.go` — POST redirect to wizard (install-link flow)

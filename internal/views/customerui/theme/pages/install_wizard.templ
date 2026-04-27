@@ -2,26 +2,12 @@ package pages
 
 import (
 	"fmt"
-	"sort"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
-
-// ComponentWizardData holds type-specific plan/apply data for a single component group.
-type ComponentWizardData struct {
-	ApprovalType  string                    // "terraform_plan", "helm_approval", "kubernetes_manifest_approval", "pulumi_plan"
-	TerraformPlan *workflows.PlanSummary    // set for terraform_plan and pulumi_plan
-	HelmPlan      *workflows.HelmPlanSummary // set for helm_approval and kubernetes_manifest_approval
-	PolicyReports []nuon.PolicyReport
-	ApplyResources []nuon.TerraformResource  // terraform only — live workspace resources
-	ApplyOutputs   map[string]string
-	// Component config — type-specific fields from AppComponentConfigConnection
-	ImageURL  string // external_image
-	ImageTag  string // external_image
-}
 
 // InstallWizardProps holds all data for the install wizard page.
 type InstallWizardProps struct {
@@ -36,36 +22,14 @@ type InstallWizardProps struct {
 	Platform         string
 	StackSetup       workflows.StackSetupData
 	PrimaryColor     string
-	FormProps        *CreateInstallPageProps // for inputs step
+	FormProps        *wizard.ConfigureStepProps // for inputs step
 	PlanSummary      *workflows.PlanSummary  // terraform plan summary (sandbox step)
 	PolicyReports    []nuon.PolicyReport     // policy reports for the current step (sandbox step)
 	WizardTab        string                  // active tab: "policies" or "resources"
 	ApplyResources   []nuon.TerraformResource // live workspace resources during apply (sandbox step)
 	ApplyOutputs     map[string]string         // terraform outputs from sandbox workspace
-	ComponentData    map[string]*ComponentWizardData // keyed by group ID — per-component plan/apply data
-}
-
-// wizardStepDef describes a wizard step for the indicator bar.
-type wizardStepDef struct {
-	Key  string
-	Name string
-	Icon string
-}
-
-var wizardStepDefs = []wizardStepDef{
-	{Key: "inputs", Name: "Configure", Icon: "ph-sliders-horizontal"},
-	{Key: "stack", Name: "Stack", Icon: "ph-stack"},
-	{Key: "sandbox", Name: "Sandbox", Icon: "ph-shipping-container"},
-	{Key: "components", Name: "Components", Icon: "ph-cards"},
-}
-
-func wizardStepIdx(step string) int {
-	for i, s := range wizardStepDefs {
-		if s.Key == step {
-			return i
-		}
-	}
-	return 0
+	ComponentData    map[string]*wizard.ComponentWizardData // keyed by group ID — per-component plan/apply data
+	TargetStatus     map[string]wizard.TargetStatus // keyed by group ID — latest status_v2 entry from each component's step target
 }
 
 func (p InstallWizardProps) stepURL(step string) string {
@@ -107,7 +71,7 @@ func (p InstallWizardProps) stepPartialURL(step string) string {
 }
 
 func (p InstallWizardProps) currentStepIdx() int {
-	return wizardStepIdx(p.CurrentStep)
+	return wizard.StepIdx(p.CurrentStep)
 }
 
 func (p InstallWizardProps) overviewURL() string {
@@ -115,6 +79,9 @@ func (p InstallWizardProps) overviewURL() string {
 }
 
 // aggregateStatus returns the overall status across all active groups.
+// A group counts as "done" only if its status is explicitly completed/success;
+// any other non-terminal status (in-progress, pending, not_started, empty)
+// keeps the aggregate in the in-progress bucket.
 func (p InstallWizardProps) aggregateStatus() string {
 	if len(p.ActiveGroups) == 0 {
 		return ""
@@ -126,7 +93,9 @@ func (p InstallWizardProps) aggregateStatus() string {
 			return "error"
 		case "approval-awaiting":
 			return "approval-awaiting"
-		case "in-progress", "not_started":
+		case "completed", "success":
+			// terminal — does not count as active
+		default:
 			hasActive = true
 		}
 	}
@@ -186,23 +155,14 @@ func (p InstallWizardProps) isLastStep() bool {
 	return p.CurrentStep == "components"
 }
 
-func wizardStepToGroupType(step string) string {
-	switch step {
-	case "stack":
-		return "stack"
-	case "sandbox":
-		return "sandbox"
-	case "components":
-		return "component"
-	default:
-		return "other"
-	}
-}
-
 // stepStatus returns the actual status for a wizard step based on workflow data.
 func (p InstallWizardProps) stepStatus(stepKey string) string {
 	if stepKey == "inputs" {
-		// Inputs step is completed once we're past it, or if we're on it with an existing install
+		// Inputs step is completed once we're past it, or if we're on it with an existing install.
+		// While on the (hidden) Confirm/Preparing steps, Configure is still active.
+		if p.CurrentStep == "confirm" || p.CurrentStep == "preparing" {
+			return "in-progress"
+		}
 		if p.CurrentStep != "inputs" || p.InstallID != "" {
 			return "completed"
 		}
@@ -210,11 +170,10 @@ func (p InstallWizardProps) stepStatus(stepKey string) string {
 	}
 
 	// Look up real status from workflow step groups
-	targetType := wizardStepToGroupType(stepKey)
 	hasGroup := false
 	allCompleted := true
 	for _, g := range p.StepGroups {
-		if g.Labels["type"] == targetType {
+		if wizard.MatchesWizardStep(stepKey, g) {
 			hasGroup = true
 			switch g.Status.Status {
 			case "error":
@@ -264,56 +223,87 @@ templ InstallWizardPage(props InstallWizardProps) {
 	}
 }
 
-// wizardStepIndicator renders the horizontal step bar.
-templ wizardStepIndicator(props InstallWizardProps) {
-	<nav class="flex items-center justify-between">
-		for _, step := range wizardStepDefs {
-			{{ status := props.stepStatus(step.Key) }}
-			<a
-				href={ templ.SafeURL(props.stepURL(step.Key)) }
-				hx-get={ props.stepPartialURL(step.Key) }
-				hx-target="#wizard-step-wrapper"
-				hx-swap="innerHTML show:none"
-				hx-push-url={ props.stepURL(step.Key) }
-				hx-boost="false"
-				data-step-index={ fmt.Sprintf("%d", wizardStepIdx(step.Key)) }
-				data-wizard-nav="true"
-				class={
-					"wizard-step-link flex items-center py-2 text-sm no-underline",
-					templ.KV("font-medium", status == "in-progress" || status == "approval-awaiting" || status == "not_started"),
-					templ.KV("text-green-600 dark:text-green-400", status == "completed" || status == "success"),
-					templ.KV("text-blue-600 dark:text-blue-400", status == "in-progress"),
-					templ.KV("text-amber-500 dark:text-amber-400", status == "approval-awaiting"),
-					templ.KV("text-red-600 dark:text-red-400", status == "error"),
-					templ.KV("text-cool-grey-400 dark:text-cool-grey-600 pointer-events-none", !props.isStepAccessible(step.Key)),
-				}
-			>
-				<span class="wizard-step-label inline-flex items-center gap-2 border-b border-transparent">
-					switch status {
-					case "completed", "success":
-						<i class="ph-bold ph-check-circle text-base"></i>
-					case "in-progress", "not_started":
-						<i class={ "ph-bold text-base", step.Icon }></i>
-					case "approval-awaiting":
-						<i class="ph-bold ph-clock text-base"></i>
-					case "error":
-						<i class="ph-bold ph-x-circle text-base"></i>
-					default:
-						<i class={ "ph-bold text-base", step.Icon }></i>
-					}
-					<span class="hidden sm:inline">{ step.Name }</span>
-				</span>
-			</a>
+// buildStepIndicatorProps adapts page-level InstallWizardProps to the focused
+// wizard.StepIndicatorProps the indicator expects.
+func buildStepIndicatorProps(p InstallWizardProps) wizard.StepIndicatorProps {
+	states := make(map[string]wizard.StepState, len(wizard.StepDefs))
+	for _, sd := range wizard.StepDefs {
+		states[sd.Key] = wizard.StepState{
+			Status:     p.stepStatus(sd.Key),
+			Accessible: p.isStepAccessible(sd.Key),
+			URL:        p.stepURL(sd.Key),
+			PartialURL: p.stepPartialURL(sd.Key),
 		}
-	</nav>
+	}
+	return wizard.StepIndicatorProps{States: states}
 }
 
 // WizardStepContentWithIndicator renders the step indicator + content (for full page render).
 templ WizardStepContentWithIndicator(props InstallWizardProps) {
-	@wizardStepIndicator(props)
+	@wizard.StepIndicator(buildStepIndicatorProps(props))
 	<div id="wizard-step-wrapper" class="mt-6">
 		@WizardStepContent(props)
 	</div>
+}
+
+// buildStackStepProps adapts page-level InstallWizardProps to the focused
+// wizard.StackStepProps that wizard.StackStep expects.
+func buildStackStepProps(p InstallWizardProps) wizard.StackStepProps {
+	return wizard.StackStepProps{
+		Platform:           p.Platform,
+		StackSetup:         p.StackSetup,
+		ActiveGroups:       p.ActiveGroups,
+		Status:             p.aggregateStatus(),
+		IsStepComplete:     p.isStepComplete(),
+		NextStepURL:        p.nextStepURL(),
+		NextStepPartialURL: p.stepPartialURL("sandbox"),
+		NextStepIndex:      p.currentStepIdx() + 1,
+		NextStepLabel:      p.nextStepLabel(),
+	}
+}
+
+// buildSandboxStepProps adapts page-level InstallWizardProps to the focused
+// wizard.SandboxStepProps that wizard.SandboxStep expects.
+func buildSandboxStepProps(p InstallWizardProps) wizard.SandboxStepProps {
+	return wizard.SandboxStepProps{
+		BasePath:            p.BasePath,
+		InstallID:           p.InstallID,
+		WorkflowID:          p.WorkflowID,
+		ActiveGroups:        p.ActiveGroups,
+		PolicyReports:       p.PolicyReports,
+		ApplyResources:      p.ApplyResources,
+		ApplyOutputs:        p.ApplyOutputs,
+		PlanSummary:         p.PlanSummary,
+		ActiveTab:           p.WizardTab,
+		TabURL:              p.wizardTabURL,
+		HasApprovalAwaiting: p.hasApprovalAwaiting(),
+		IsStepComplete:      p.isStepComplete(),
+		ApproveAllURL:       p.approveAllURL(),
+		NextStepURL:         p.nextStepURL(),
+		NextStepPartialURL:  p.stepPartialURL("components"),
+		NextStepIndex:       p.currentStepIdx() + 1,
+		NextStepLabel:       p.nextStepLabel(),
+	}
+}
+
+// buildComponentsStepProps adapts page-level InstallWizardProps to the focused
+// wizard.ComponentsStepProps that wizard.ComponentsStep expects.
+func buildComponentsStepProps(p InstallWizardProps) wizard.ComponentsStepProps {
+	return wizard.ComponentsStepProps{
+		BasePath:            p.BasePath,
+		InstallID:           p.InstallID,
+		WorkflowID:          p.WorkflowID,
+		ActiveGroups:        p.ActiveGroups,
+		ComponentData:       p.ComponentData,
+		TargetStatus:        p.TargetStatus,
+		PolicyReports:       p.PolicyReports,
+		AggregateStatus:     p.aggregateStatus(),
+		HasApprovalAwaiting: p.hasApprovalAwaiting(),
+		IsStepComplete:      p.isStepComplete(),
+		IsStepError:         p.isStepError(),
+		ApproveAllURL:       p.approveAllURL(),
+		OverviewURL:         p.overviewURL(),
+	}
 }
 
 // WizardStepContent renders just the step content area (for HTMX polling and step navigation).
@@ -327,1359 +317,17 @@ templ WizardStepContent(props InstallWizardProps) {
 			hx-swap="morph:outerHTML"
 		}
 	>
-		if props.CurrentStep == "inputs" && props.FormProps != nil {
-			@CreateInstallFormContent(*props.FormProps)
-		} else if props.CurrentStep == "stack" {
-			<!-- Stack step: 2 states — waiting for data, or displaying data -->
-			<div class="flex items-center gap-3 mb-6">
-				<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy stack</h3>
-				@stackStatusChip(props)
-				<div class="ml-auto">
-					<a
-						href={ templ.SafeURL(props.nextStepURL()) }
-						hx-get={ props.stepPartialURL("sandbox") }
-						hx-target="#wizard-step-wrapper"
-						hx-swap="innerHTML show:none"
-						hx-push-url={ props.nextStepURL() }
-						hx-boost="false"
-						data-step-index={ fmt.Sprintf("%d", props.currentStepIdx()+1) }
-						data-wizard-nav="true"
-						class={
-							components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
-							templ.KV("opacity-40 pointer-events-none", !props.isStepComplete()),
-						}
-					>
-						{ props.nextStepLabel() }
-						<i class="ph-bold ph-caret-right"></i>
-					</a>
-				</div>
-			</div>
-			if props.StackSetup.CloudFormationLink == "" && props.StackSetup.TemplateURL == "" && props.StackSetup.TfvarsContent == "" && props.StackSetup.AzureTemplateURL == "" {
-				@components.Card(components.CardProps{Size: components.CardLarge}) {
-					<div class="space-y-4 py-2">
-						@components.ShimmerBar("h-3", "w-1/3")
-						@components.ShimmerLines(2)
-						@components.ShimmerBar("h-8", "w-1/4")
-						@components.ShimmerBar("h-3", "w-1/4")
-						@components.ShimmerLines(3)
-					</div>
-				}
-			} else {
-				{{ stackGroup := func() nuon.WorkflowStepGroup { if len(props.ActiveGroups) > 0 { return props.ActiveGroups[0] }; return nuon.WorkflowStepGroup{} }() }}
-				@components.Card(components.CardProps{Size: components.CardLarge}) {
-					switch props.Platform {
-					case "gcp":
-						@wizardStackSetupGCP(props, stackGroup)
-					case "azure":
-						@wizardStackSetupAzure(props, stackGroup)
-					default:
-						@wizardStackSetupAWS(props, stackGroup)
-					}
-				}
-			}
-		} else if len(props.StepGroups) == 0 || len(props.ActiveGroups) == 0 {
-			@wizardWaitingState(props)
-		} else if props.CurrentStep == "sandbox" {
-			@wizardSandboxContent(props)
-		} else if props.CurrentStep == "components" {
-			@wizardComponentsContent(props)
+		switch props.CurrentStep {
+		case "inputs":
+			@wizard.ConfigureStep(*props.FormProps)
+		case "stack":
+			@wizard.StackStep(buildStackStepProps(props))
+		case "sandbox":
+			@wizard.SandboxStep(buildSandboxStepProps(props))
+		case "components":
+			@wizard.ComponentsStep(buildComponentsStepProps(props))
 		}
 	</div>
-}
-
-// wizardSandboxContent renders the sandbox step: single-group plan/apply cards.
-templ wizardSandboxContent(props InstallWizardProps) {
-	<div class="flex items-center gap-3 mb-6">
-		<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy sandbox</h3>
-		@wizardStatusBadge(sandboxActiveStatus(props))
-		<div class="ml-auto flex items-center gap-3">
-			for _, group := range props.ActiveGroups {
-				@wizardGroupActionButtons(props, group)
-			}
-			<form id="approve-all-form" method="POST" action={ templ.SafeURL(props.approveAllURL()) }>
-				<button
-					type="button"
-					onclick="showConfirmModal({ title: 'Approve all changes', message: 'Approve deploying the sandbox and all components, instead of reviewing and approving them one at a time.', confirmText: 'Approve all', cancelText: 'Cancel' }).then(function(ok) { if (ok) document.getElementById('approve-all-form').submit(); })"
-					class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
-					disabled?={ !props.hasApprovalAwaiting() }
-				>
-					<i class="ph-bold ph-checks"></i>
-					Approve all
-				</button>
-			</form>
-			<a
-				href={ templ.SafeURL(props.nextStepURL()) }
-				hx-get={ props.stepPartialURL("components") }
-				hx-target="#wizard-step-wrapper"
-				hx-swap="innerHTML show:none"
-				hx-push-url={ props.nextStepURL() }
-				hx-boost="false"
-				data-step-index={ fmt.Sprintf("%d", props.currentStepIdx()+1) }
-				data-wizard-nav="true"
-				class={
-					components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
-					templ.KV("opacity-40 pointer-events-none", !props.isStepComplete()),
-				}
-			>
-				{ props.nextStepLabel() }
-				<i class="ph-bold ph-caret-right"></i>
-			</a>
-		</div>
-	</div>
-	<div class="space-y-4">
-		for _, group := range props.ActiveGroups {
-			if len(group.Steps) > 1 {
-				@wizardPlanCard(props, group)
-			} else {
-				@wizardDeployCard(props, group)
-			}
-		}
-	</div>
-}
-
-// wizardComponentsContent renders the components step: one card per component group.
-templ wizardComponentsContent(props InstallWizardProps) {
-	<div class="flex items-center gap-3 mb-6">
-		<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">Deploy components</h3>
-		@componentsStatusChip(props)
-		<div class="ml-auto flex items-center gap-3">
-			{{ approvable := firstGroupWithApproval(props.ActiveGroups) }}
-			if approvable != nil {
-				@wizardGroupActionButtons(props, *approvable)
-			}
-			<form id="approve-all-form" method="POST" action={ templ.SafeURL(props.approveAllURL()) }>
-				<button
-					type="button"
-					onclick="showConfirmModal({ title: 'Approve all changes', message: 'Approve deploying the sandbox and all components, instead of reviewing and approving them one at a time.', confirmText: 'Approve all', cancelText: 'Cancel' }).then(function(ok) { if (ok) document.getElementById('approve-all-form').submit(); })"
-					class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
-					disabled?={ !props.hasApprovalAwaiting() }
-				>
-					<i class="ph-bold ph-checks"></i>
-					Approve all
-				</button>
-			</form>
-			<a
-				href={ templ.SafeURL(props.overviewURL()) }
-				class={
-					components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}),
-					templ.KV("opacity-40 pointer-events-none", !props.isStepComplete()),
-				}
-			>
-				View install
-				<i class="ph-bold ph-caret-right"></i>
-			</a>
-		</div>
-	</div>
-	<script>
-		function wizardInitTabs(id, defaultTab) {
-			var tabs = document.querySelector('[data-wizard-tabs="' + id + '"]');
-			if (!tabs) return;
-			if (tabs.querySelector('.active')) return;
-			var btn = tabs.querySelector('[data-tab="' + defaultTab + '"]');
-			if (btn) wizardSwitchTab(btn);
-		}
-		function wizardSwitchTab(btn) {
-			var bar = btn.closest('[data-wizard-tabs]');
-			var id = bar.getAttribute('data-wizard-tabs');
-			var tab = btn.getAttribute('data-tab');
-			bar.querySelectorAll('button').forEach(function(b) {
-				b.classList.toggle('active', b === btn);
-			});
-			var panes = document.querySelector('[data-wizard-panes="' + id + '"]');
-			if (panes) {
-				panes.querySelectorAll(':scope > [data-tab-pane]').forEach(function(p) {
-					p.classList.toggle('hidden', p.getAttribute('data-tab-pane') !== tab);
-				});
-			}
-		}
-	</script>
-	<div class="card-base !p-0 card-lg divide-y" style="--tw-divide-opacity:1; border-color: var(--theme-border-subtle)">
-		for _, group := range props.ActiveGroups {
-			@wizardComponentGroupCard(props, group)
-		}
-	</div>
-}
-
-// componentGroupData returns the ComponentWizardData for a group, or nil.
-func componentGroupData(props InstallWizardProps, group nuon.WorkflowStepGroup) *ComponentWizardData {
-	if props.ComponentData == nil {
-		return nil
-	}
-	return props.ComponentData[group.ID]
-}
-
-// componentGroupHasPlan returns true if the group has any plan data.
-func componentGroupHasPlan(cd *ComponentWizardData) bool {
-	if cd == nil {
-		return false
-	}
-	return cd.TerraformPlan != nil || cd.HelmPlan != nil
-}
-
-// wizardComponentGroupCard renders a collapsible row for a single component group.
-// Collapsed by default; click the chevron in the header to expand.
-templ wizardComponentGroupCard(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	{{ cd := componentGroupData(props, group) }}
-	<details class="group [&:not(:last-child)]:border-b" style="border-color: var(--theme-border-subtle)">
-		<summary class="px-6 py-3 cursor-pointer list-none flex items-center justify-between">
-			@wizardComponentGroupCardHeader(group)
-			<i class="ph-bold ph-caret-right text-cool-grey-400 transition-transform group-open:rotate-90 shrink-0 ml-auto"></i>
-		</summary>
-		<div class="px-6 pb-4">
-			if group.Status.Status == "in-progress" && !wizardGroupCanApprove(group) && !componentGroupHasPlan(cd) && !(cd != nil && cd.ImageURL != "") {
-				// Planning phase — no plan data yet
-				<div class="flex items-center gap-2 py-2 justify-center text-sm">
-					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
-					<span class="text-cool-grey-500 dark:text-cool-grey-400">{ componentPlanningLabel(cd) }</span>
-				</div>
-			}
-			if group.Status.Status == "in-progress" && !wizardGroupCanApprove(group) && componentGroupHasPlan(cd) {
-				// Applying phase — approved, applying changes
-				<div class="flex items-center gap-2 py-2 justify-center text-sm">
-					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
-					<span class="text-cool-grey-500 dark:text-cool-grey-400">Applying changes...</span>
-				</div>
-				@wizardComponentApprovalTabs(props, group, cd)
-			}
-			if wizardGroupCanApprove(group) {
-				// Awaiting approval
-				if componentGroupHasPlan(cd) || len(props.PolicyReports) > 0 {
-					@wizardComponentApprovalTabs(props, group, cd)
-				}
-			}
-			if group.Status.Status == "completed" || group.Status.Status == "success" {
-				// Completed — show plan data if available, otherwise config info
-				if componentGroupHasPlan(cd) {
-					@wizardComponentApprovalTabs(props, group, cd)
-				} else if cd != nil && cd.ImageURL != "" {
-					@wizardImageInfo(cd)
-				}
-			}
-			if group.Status.Status == "in-progress" && !wizardGroupCanApprove(group) && !componentGroupHasPlan(cd) && cd != nil && cd.ImageURL != "" {
-				// Image component deploying — show image info with spinner
-				<div class="flex items-center gap-2 py-2 justify-center text-sm">
-					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
-					<span class="text-cool-grey-500 dark:text-cool-grey-400">Deploying image...</span>
-				</div>
-				@wizardImageInfo(cd)
-			}
-		</div>
-	</details>
-}
-
-// componentPlanningLabel returns a spinner label based on approval type.
-func componentPlanningLabel(cd *ComponentWizardData) string {
-	if cd == nil {
-		return "Planning component deploy..."
-	}
-	switch cd.ApprovalType {
-	case "helm_approval":
-		return "Planning helm deployment..."
-	case "kubernetes_manifest_approval":
-		return "Planning kubernetes deployment..."
-	case "terraform_plan":
-		return "Planning terraform changes..."
-	case "pulumi_plan":
-		return "Planning pulumi changes..."
-	default:
-		return "Planning component deploy..."
-	}
-}
-
-templ wizardComponentGroupCardHeader(group nuon.WorkflowStepGroup) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ group.Labels["component_name"] }</h4>
-		@wizardStatusBadge(componentGroupStatus(group))
-	</div>
-}
-
-// componentGroupStatus returns the status for a component group card,
-// checking step-level status since the group aggregate may not reflect approval state.
-func componentGroupStatus(g nuon.WorkflowStepGroup) string {
-	s := wizardActiveStep(g)
-	if s != nil && s.Status != nil {
-		return s.Status.Status
-	}
-	return g.Status.Status
-}
-
-// wizardWaitingState shows a loading state while waiting for workflow steps.
-templ wizardWaitingState(props InstallWizardProps) {
-	@components.Card(components.CardProps{Size: components.CardLarge}) {
-		<div class="space-y-4 py-2">
-			@components.ShimmerBar("h-4", "w-1/3")
-			@components.ShimmerBar("h-3", "w-2/3")
-			@components.ShimmerBar("h-3", "w-1/2")
-			@components.ShimmerBar("h-10", "w-full")
-		</div>
-	}
-}
-
-func firstGroupWithApproval(groups []nuon.WorkflowStepGroup) *nuon.WorkflowStepGroup {
-	// Prefer a group that is actively awaiting approval (enabled button).
-	for i := range groups {
-		if wizardGroupCanApprove(groups[i]) {
-			return &groups[i]
-		}
-	}
-	// Fall back to any group that has an approval step (disabled button while applying).
-	for i := range groups {
-		if wizardGroupHasApprovalStep(groups[i]) {
-			return &groups[i]
-		}
-	}
-	return nil
-}
-
-func wizardCardProps(props InstallWizardProps, group nuon.WorkflowStepGroup) components.CardProps {
-	cp := components.CardProps{Size: components.CardLarge}
-	if len(props.ActiveGroups) > 1 {
-		cp.Header = wizardCardHeader(group)
-	}
-	return cp
-}
-
-templ wizardCardHeader(group nuon.WorkflowStepGroup) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ group.Name }</h4>
-	</div>
-}
-
-func wizardStepStatus(step *nuon.WorkflowStep) string {
-	if step == nil || step.Status == nil {
-		return "not_started"
-	}
-	return step.Status.Status
-}
-
-func wizardPlanStep(group nuon.WorkflowStepGroup) *nuon.WorkflowStep {
-	// Last approval step in the group (latest retry wins)
-	var last *nuon.WorkflowStep
-	for _, s := range group.Steps {
-		if s.ExecutionType == "approval" {
-			last = s
-		}
-	}
-	return last
-}
-
-func wizardApplyStep(group nuon.WorkflowStepGroup) *nuon.WorkflowStep {
-	// Last non-approval step in the group (latest retry wins)
-	var last *nuon.WorkflowStep
-	for _, s := range group.Steps {
-		if s.ExecutionType != "approval" {
-			last = s
-		}
-	}
-	return last
-}
-
-templ wizardStepCardHeader(name string, status string) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ name }</h4>
-	</div>
-}
-
-templ wizardPlanCardHeader(props InstallWizardProps, group nuon.WorkflowStepGroup, status string) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">Provision plan</h4>
-	</div>
-}
-
-// wizardPlanCard renders the plan step card with plan summary, policies, and approve button.
-templ wizardPlanCard(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	@components.Card(components.CardProps{Size: components.CardLarge}) {
-		@wizardApprovalTabs(props, group)
-	}
-}
-
-func applyResourcesToItems(resources []nuon.TerraformResource) []components.WizardResourceItem {
-	items := make([]components.WizardResourceItem, 0, len(resources))
-	for _, r := range resources {
-		if r.Mode == "data" {
-			continue
-		}
-		items = append(items, components.WizardResourceItem{Address: r.Address, Action: "create"})
-	}
-	return items
-}
-
-func wizardApplyTab(props InstallWizardProps) string {
-	if props.WizardTab == "apply_resources" || props.WizardTab == "apply_outputs" {
-		return props.WizardTab
-	}
-	return "apply_resources"
-}
-
-// wizardApplyCard renders the apply step card showing apply status with resource/output tabs.
-templ wizardApplyCard(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	{{ applyStep := wizardApplyStep(group) }}
-	{{ status := wizardStepStatus(applyStep) }}
-	{{ applyItems := applyResourcesToItems(props.ApplyResources) }}
-	{{ activeTab := wizardApplyTab(props) }}
-	@components.Card(components.CardProps{
-		Size:   components.CardLarge,
-		Header: wizardApplyCardHeader(status, len(applyItems), len(props.ApplyOutputs)),
-	}) {
-		switch status {
-		case "in-progress":
-			<div class="flex items-center gap-2 py-2 justify-center text-sm">
-				<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
-				<span class="text-cool-grey-500 dark:text-cool-grey-400">Applying changes...</span>
-			</div>
-		case "error":
-			<div class="flex items-center gap-2 py-2 justify-center text-sm">
-				<i class="ph-bold ph-x-circle text-red-600 dark:text-red-400"></i>
-				<span class="text-red-600 dark:text-red-400">Apply failed</span>
-			</div>
-		case "completed", "success":
-		default:
-			<div class="flex items-center gap-2 py-2 justify-center text-sm">
-				<i class="ph-bold ph-clock text-cool-grey-400"></i>
-				<span class="text-cool-grey-500 dark:text-cool-grey-400">Waiting for plan approval</span>
-			</div>
-		}
-		if len(applyItems) > 0 || len(props.ApplyOutputs) > 0 {
-			<div class="mb-4">
-				<div class="tabs-divider flex mb-4">
-					<a
-						href={ templ.SafeURL(props.wizardTabURL("apply_resources")) }
-						hx-get={ props.wizardTabURL("apply_resources") }
-						hx-target="#wizard-content"
-						hx-swap="innerHTML"
-						hx-push-url="false"
-						hx-boost="false"
-						class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_resources") }
-					>
-						Resource changes
-						if len(applyItems) > 0 {
-							<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-								<i class="ph-bold ph-cube"></i> { fmt.Sprintf("%d", len(applyItems)) }
-							</span>
-						}
-					</a>
-					<a
-						href={ templ.SafeURL(props.wizardTabURL("apply_outputs")) }
-						hx-get={ props.wizardTabURL("apply_outputs") }
-						hx-target="#wizard-content"
-						hx-swap="innerHTML"
-						hx-push-url="false"
-						hx-boost="false"
-						class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_outputs") }
-					>
-						Outputs
-						if len(props.ApplyOutputs) > 0 {
-							<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
-								{ fmt.Sprintf("%d", len(props.ApplyOutputs)) }
-							</span>
-						}
-					</a>
-				</div>
-				if activeTab == "apply_outputs" {
-					@wizardApplyOutputs(props.ApplyOutputs)
-				} else {
-					@components.WizardResourceList(applyItems)
-				}
-			</div>
-		}
-	}
-}
-
-templ wizardApplyOutputs(outputs map[string]string) {
-	if len(outputs) > 0 {
-		{{ keys := make([]string, 0, len(outputs)); for k := range outputs { keys = append(keys, k) }; sort.Strings(keys) }}
-		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
-			for _, key := range keys {
-				<div class="py-2 text-xs">
-					<span class="font-medium text-cool-grey-900 dark:text-white">{ key }</span>
-					<p class="font-mono text-cool-grey-500 dark:text-cool-grey-400 mt-0.5 break-all">{ outputs[key] }</p>
-				</div>
-			}
-		</div>
-	} else {
-		@components.EmptyState(components.EmptyStateProps{
-			Title:   "No outputs yet",
-			Icon:    "ph-terminal-window",
-			Compact: true,
-		})
-	}
-}
-
-templ wizardApplyCardHeader(status string, resourceCount int, outputCount int) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">Apply</h4>
-	</div>
-}
-
-templ wizardDeployCardHeader(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	<div class="flex items-center gap-2">
-		<h4 class="text-sm font-medium text-cool-grey-800 dark:text-cool-grey-200">{ group.Name }</h4>
-		if wizardGroupCanApprove(group) || wizardGroupCanRetry(group) {
-			<div class="ml-auto flex items-center gap-2">
-					@wizardGroupActionButtons(props, group)
-			</div>
-		}
-	</div>
-}
-
-func wizardDeployCardProps(props InstallWizardProps, group nuon.WorkflowStepGroup) components.CardProps {
-	cp := components.CardProps{Size: components.CardLarge}
-	if len(props.ActiveGroups) > 1 {
-		cp.Header = wizardDeployCardHeader(props, group)
-	}
-	return cp
-}
-
-// wizardDeployCard renders the status card with expandable step details for a single group.
-templ wizardDeployCard(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	@components.Card(wizardDeployCardProps(props, group)) {
-		<!-- Sandbox / Components plan content -->
-		if props.CurrentStep == "sandbox" || props.CurrentStep == "components" {
-			if group.Status.Status == "in-progress" && !wizardGroupCanApprove(group) {
-				<div class="flex items-center gap-3 py-4 justify-center">
-					<i class="ph-bold ph-circle-notch animate-spin text-base text-cool-grey-400"></i>
-					<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">
-						if props.CurrentStep == "sandbox" {
-							Planning sandbox provision...
-						} else {
-							Planning component deploy...
-						}
-					</p>
-				</div>
-			}
-			if wizardGroupCanApprove(group) {
-				if len(props.PolicyReports) > 0 && props.PlanSummary != nil {
-					@wizardApprovalTabs(props, group)
-				} else if len(props.PolicyReports) > 0 {
-					@wizardPolicyReports(props.PolicyReports)
-				} else if props.PlanSummary != nil {
-					@wizardPlanSummary(props.PlanSummary)
-				}
-			}
-		}
-	}
-}
-
-templ wizardApprovalTabs(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	{{ pass, warn, deny := wizardPolicyTotals(props.PolicyReports) }}
-	{{ applyItems := applyResourcesToItems(props.ApplyResources) }}
-	{{ activeTab := props.WizardTab }}
-	if activeTab == "" {
-		{{ activeTab = "resources" }}
-	}
-	<div class="mb-4">
-		<div class="tabs-divider flex mb-4">
-			if len(props.PolicyReports) > 0 {
-				<a
-					href={ templ.SafeURL(props.wizardTabURL("policies")) }
-					hx-get={ props.wizardTabURL("policies") }
-					hx-target="#wizard-content"
-					hx-swap="innerHTML"
-					hx-push-url="false"
-					hx-boost="false"
-					class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "policies") }
-				>
-					Policy reports
-					if pass > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-							<i class="ph-bold ph-check"></i> { fmt.Sprintf("%d", pass) }
-						</span>
-					}
-					if warn > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
-							<i class="ph-bold ph-exclamation-mark"></i> { fmt.Sprintf("%d", warn) }
-						</span>
-					}
-					if deny > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-							<i class="ph-bold ph-x"></i> { fmt.Sprintf("%d", deny) }
-						</span>
-					}
-				</a>
-			}
-			<a
-				href={ templ.SafeURL(props.wizardTabURL("resources")) }
-				hx-get={ props.wizardTabURL("resources") }
-				hx-target="#wizard-step-wrapper"
-				hx-swap="innerHTML"
-				hx-push-url="false"
-				hx-boost="false"
-				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "resources") }
-			>
-				Planned changes
-				if props.PlanSummary != nil {
-					if props.PlanSummary.CreateCount > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-							<i class="ph-bold ph-plus"></i> { fmt.Sprintf("%d", props.PlanSummary.CreateCount) }
-						</span>
-					}
-					if props.PlanSummary.UpdateCount > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
-							<i class="ph-bold ph-pencil-simple"></i> { fmt.Sprintf("%d", props.PlanSummary.UpdateCount) }
-						</span>
-					}
-					if props.PlanSummary.DeleteCount > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-							<i class="ph-bold ph-minus"></i> { fmt.Sprintf("%d", props.PlanSummary.DeleteCount) }
-						</span>
-					}
-					if props.PlanSummary.ReplaceCount > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-							<i class="ph-bold ph-arrows-clockwise"></i> { fmt.Sprintf("%d", props.PlanSummary.ReplaceCount) }
-						</span>
-					}
-				}
-			</a>
-			<a
-				href={ templ.SafeURL(props.wizardTabURL("apply_resources")) }
-				hx-get={ props.wizardTabURL("apply_resources") }
-				hx-target="#wizard-step-wrapper"
-				hx-swap="innerHTML"
-				hx-push-url="false"
-				hx-boost="false"
-				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_resources") }
-			>
-				Applied changes
-				if len(applyItems) > 0 {
-					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-						<i class="ph-bold ph-cube"></i> { fmt.Sprintf("%d", len(applyItems)) }
-					</span>
-				}
-			</a>
-			<a
-				href={ templ.SafeURL(props.wizardTabURL("apply_outputs")) }
-				hx-get={ props.wizardTabURL("apply_outputs") }
-				hx-target="#wizard-step-wrapper"
-				hx-swap="innerHTML"
-				hx-push-url="false"
-				hx-boost="false"
-				class={ "button button-nav nav-item inline-flex items-center gap-2", templ.KV("active", activeTab == "apply_outputs") }
-			>
-				Outputs
-				if len(props.ApplyOutputs) > 0 {
-					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
-						{ fmt.Sprintf("%d", len(props.ApplyOutputs)) }
-					</span>
-				}
-			</a>
-		</div>
-		switch activeTab {
-		case "policies":
-			@wizardPolicyReports(props.PolicyReports)
-		case "apply_resources":
-			@components.WizardResourceList(applyItems)
-		case "apply_outputs":
-			@wizardApplyOutputs(props.ApplyOutputs)
-		default:
-			@wizardPlanSummary(props.PlanSummary)
-		}
-	</div>
-}
-
-func planResourcesToItems(plan *workflows.PlanSummary) []components.WizardResourceItem {
-	if plan == nil {
-		return nil
-	}
-	items := make([]components.WizardResourceItem, len(plan.Resources))
-	for i, r := range plan.Resources {
-		items[i] = components.WizardResourceItem{Address: r.Address, Action: r.Action}
-	}
-	return items
-}
-
-templ wizardPlanSummary(plan *workflows.PlanSummary) {
-	<div>
-		@components.WizardResourceList(planResourcesToItems(plan))
-	</div>
-}
-
-// wizardImageInfo renders image URL and tag for external_image components.
-templ wizardImageInfo(cd *ComponentWizardData) {
-	<div class="py-2 px-1">
-		<dl class="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5 text-xs">
-			<dt class="font-medium text-cool-grey-500 dark:text-cool-grey-400">Image</dt>
-			<dd class="font-mono text-cool-grey-700 dark:text-cool-grey-300 truncate" title={ cd.ImageURL }>{ cd.ImageURL }</dd>
-			if cd.ImageTag != "" {
-				<dt class="font-medium text-cool-grey-500 dark:text-cool-grey-400">Tag</dt>
-				<dd class="font-mono text-cool-grey-700 dark:text-cool-grey-300">{ cd.ImageTag }</dd>
-			}
-		</dl>
-	</div>
-}
-
-// helmPlanToItems converts a helm plan to WizardResourceItems for display.
-func helmPlanToItems(plan *workflows.HelmPlanSummary) []components.WizardResourceItem {
-	if plan == nil {
-		return nil
-	}
-	items := make([]components.WizardResourceItem, len(plan.Changes))
-	for i, c := range plan.Changes {
-		address := c.Kind
-		if c.Name != "" {
-			address += ": " + c.Name
-		}
-		if c.Namespace != "" {
-			address = c.Namespace + "/" + address
-		}
-		// Normalize action to match WizardResourceItem expectations
-		action := helmActionToResourceAction(c.Action)
-		items[i] = components.WizardResourceItem{Address: address, Action: action}
-	}
-	return items
-}
-
-func helmActionToResourceAction(action string) string {
-	switch action {
-	case "added":
-		return "create"
-	case "changed":
-		return "update"
-	case "destroyed":
-		return "delete"
-	default:
-		return action
-	}
-}
-
-// wizardComponentApprovalTabs renders approval tabs for a component group.
-// Tabs are client-side only — server renders all panes without active/hidden state
-// so that morph:innerHTML preserves user selections across polls.
-templ wizardComponentApprovalTabs(props InstallWizardProps, group nuon.WorkflowStepGroup, cd *ComponentWizardData) {
-	{{ tabID := "comp-tabs-" + group.ID }}
-	<div class="mb-4">
-		<div class="tabs-divider flex mb-4" data-wizard-tabs={ tabID }>
-			if len(props.PolicyReports) > 0 {
-				{{ pass, warn, deny := wizardPolicyTotals(props.PolicyReports) }}
-				<button
-					type="button"
-					onclick="wizardSwitchTab(this)"
-					class="button button-nav nav-item inline-flex items-center gap-2"
-					data-tab="policies"
-				>
-					Policy reports
-					if pass > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
-							<i class="ph-bold ph-check"></i> { fmt.Sprintf("%d", pass) }
-						</span>
-					}
-					if warn > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300">
-							<i class="ph-bold ph-exclamation-mark"></i> { fmt.Sprintf("%d", warn) }
-						</span>
-					}
-					if deny > 0 {
-						<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300">
-							<i class="ph-bold ph-x"></i> { fmt.Sprintf("%d", deny) }
-						</span>
-					}
-				</button>
-			}
-			<button
-				type="button"
-				onclick="wizardSwitchTab(this)"
-				class="button button-nav nav-item inline-flex items-center gap-2"
-				data-tab="resources"
-			>
-				Planned changes
-				if cd != nil && cd.TerraformPlan != nil {
-					@wizardTerraformPlanBadges(cd.TerraformPlan)
-				}
-				if cd != nil && cd.HelmPlan != nil {
-					@wizardHelmPlanBadges(cd.HelmPlan)
-				}
-			</button>
-			<button
-				type="button"
-				onclick="wizardSwitchTab(this)"
-				class="button button-nav nav-item inline-flex items-center gap-2"
-				data-tab="apply_outputs"
-			>
-				Outputs
-				if cd != nil && len(cd.ApplyOutputs) > 0 {
-					<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400">
-						{ fmt.Sprintf("%d", len(cd.ApplyOutputs)) }
-					</span>
-				}
-			</button>
-		</div>
-		<div data-wizard-panes={ tabID }>
-			<div data-tab-pane="policies">
-				@wizardPolicyReports(props.PolicyReports)
-			</div>
-			<div data-tab-pane="resources">
-				if cd != nil && cd.TerraformPlan != nil {
-					@wizardPlanSummary(cd.TerraformPlan)
-				} else if cd != nil && cd.HelmPlan != nil {
-					@wizardHelmDiffList(cd.HelmPlan)
-				}
-			</div>
-			<div data-tab-pane="apply_outputs">
-				if cd != nil {
-					@wizardApplyOutputs(cd.ApplyOutputs)
-				}
-			</div>
-		</div>
-	</div>
-	<script data-tab-id={ tabID }>
-		wizardInitTabs(document.currentScript.getAttribute('data-tab-id'), 'resources');
-	</script>
-}
-
-templ wizardTerraformPlanBadges(plan *workflows.PlanSummary) {
-	if plan.CreateCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-			<i class="ph-bold ph-plus"></i> { fmt.Sprintf("%d", plan.CreateCount) }
-		</span>
-	}
-	if plan.UpdateCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
-			<i class="ph-bold ph-pencil-simple"></i> { fmt.Sprintf("%d", plan.UpdateCount) }
-		</span>
-	}
-	if plan.DeleteCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-			<i class="ph-bold ph-minus"></i> { fmt.Sprintf("%d", plan.DeleteCount) }
-		</span>
-	}
-	if plan.ReplaceCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300">
-			<i class="ph-bold ph-arrows-clockwise"></i> { fmt.Sprintf("%d", plan.ReplaceCount) }
-		</span>
-	}
-}
-
-templ wizardHelmPlanBadges(plan *workflows.HelmPlanSummary) {
-	if plan.AddCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
-			<i class="ph-bold ph-plus"></i> { fmt.Sprintf("%d", plan.AddCount) }
-		</span>
-	}
-	if plan.ChangeCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300">
-			<i class="ph-bold ph-pencil-simple"></i> { fmt.Sprintf("%d", plan.ChangeCount) }
-		</span>
-	}
-	if plan.DestroyCount > 0 {
-		<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-xs font-medium rounded-full bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300">
-			<i class="ph-bold ph-minus"></i> { fmt.Sprintf("%d", plan.DestroyCount) }
-		</span>
-	}
-}
-
-// wizardHelmDiffList renders helm/k8s plan changes as expandable YAML diff sections.
-templ wizardHelmDiffList(plan *workflows.HelmPlanSummary) {
-	if plan != nil && len(plan.Changes) > 0 {
-		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
-			for i, change := range plan.Changes {
-				<details class="group">
-					<summary class="flex items-center gap-2 py-2 text-xs cursor-pointer list-none">
-						<span class={ "inline-flex items-center justify-center w-5 h-5 rounded-full text-xs shrink-0", helmActionColor(change.Action) }>
-							@helmActionIcon(change.Action)
-						</span>
-						<div class="flex items-center gap-1.5 min-w-0 flex-1">
-							<span class="font-medium text-cool-grey-800 dark:text-cool-grey-200 truncate">
-								{ change.Kind }
-								if change.Name != "" {
-									: { change.Name }
-								}
-							</span>
-							if change.Namespace != "" {
-								<span class="text-cool-grey-400 shrink-0">({ change.Namespace })</span>
-							}
-						</div>
-						<span class={ "shrink-0 px-1.5 py-0.5 rounded-full text-xs font-medium", helmActionColor(change.Action) }>
-							{ change.Action }
-						</span>
-						<i class="ph-bold ph-caret-right text-cool-grey-400 transition-transform group-open:rotate-90 shrink-0"></i>
-					</summary>
-					if change.Before != "" || change.After != "" {
-						<div class="pb-3 pl-7">
-							if change.Before != "" && change.After != "" {
-								<div class="grid grid-cols-2 gap-2">
-									<div>
-										<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Before</p>
-										<pre class="text-xs font-mono bg-red-50 dark:bg-red-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-red-200 dark:border-red-900/30">{ change.Before }</pre>
-									</div>
-									<div>
-										<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">After</p>
-										<pre class="text-xs font-mono bg-green-50 dark:bg-green-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-green-200 dark:border-green-900/30">{ change.After }</pre>
-									</div>
-								</div>
-							} else if change.After != "" {
-								<div>
-									<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Content</p>
-									<pre class="text-xs font-mono bg-green-50 dark:bg-green-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-green-200 dark:border-green-900/30">{ change.After }</pre>
-								</div>
-							} else {
-								<div>
-									<p class="text-[10px] font-medium text-cool-grey-400 uppercase mb-1">Content</p>
-									<pre class="text-xs font-mono bg-red-50 dark:bg-red-900/10 text-cool-grey-700 dark:text-cool-grey-300 p-2 rounded overflow-x-auto border border-red-200 dark:border-red-900/30">{ change.Before }</pre>
-								</div>
-							}
-						</div>
-					}
-				</details>
-				if i < len(plan.Changes)-1 {
-				}
-			}
-		</div>
-	} else {
-		@components.EmptyState(components.EmptyStateProps{
-			Title:   "No planned changes to display",
-			Icon:    "ph-check-circle",
-			Compact: true,
-		})
-	}
-}
-
-func helmActionColor(action string) string {
-	switch action {
-	case "added":
-		return "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
-	case "changed":
-		return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300"
-	case "destroyed":
-		return "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
-	default:
-		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400"
-	}
-}
-
-templ helmActionIcon(action string) {
-	switch action {
-	case "added":
-		<i class="ph-bold ph-plus"></i>
-	case "changed":
-		<i class="ph-bold ph-pencil-simple"></i>
-	case "destroyed":
-		<i class="ph-bold ph-minus"></i>
-	default:
-		<i class="ph-bold ph-cube"></i>
-	}
-}
-
-templ wizardPolicyReports(reports []nuon.PolicyReport) {
-	<div>
-		<div class="divide-y divide-cool-grey-100 dark:divide-dark-grey-700">
-			for _, report := range reports {
-				for _, policy := range report.Policies {
-					{{ pName := wizardPolicyName(report, policy) }}
-					<div class="py-2 flex items-start gap-2 text-xs">
-						<span class={ "mt-0.5 shrink-0 inline-flex items-center justify-center w-5 h-5 text-xs rounded-full", wizardPolicyStatusClass(policy.Status) }>
-							switch policy.Status {
-							case "pass":
-								<i class="ph-bold ph-check"></i>
-							case "warn":
-								<i class="ph-bold ph-exclamation-mark"></i>
-							case "deny":
-								<i class="ph-bold ph-x"></i>
-							default:
-								<i class="ph-bold ph-question"></i>
-							}
-						</span>
-						<div class="min-w-0">
-							<p class="font-medium text-cool-grey-900 dark:text-white truncate" title={ pName }>{ pName }</p>
-							for _, v := range wizardViolationsForPolicy(report, policy.PolicyID) {
-								<p class="text-cool-grey-500 dark:text-cool-grey-400 mt-0.5">{ v.Message }</p>
-							}
-						</div>
-					</div>
-				}
-			}
-		</div>
-	</div>
-}
-
-func wizardPolicyTotals(reports []nuon.PolicyReport) (pass, warn, deny int) {
-	for _, r := range reports {
-		for _, p := range r.Policies {
-			switch p.Status {
-			case "pass":
-				pass++
-			case "warn":
-				warn++
-			case "deny":
-				deny++
-			}
-		}
-	}
-	return
-}
-
-func wizardPolicyStatusClass(status string) string {
-	switch status {
-	case "deny":
-		return "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-300"
-	case "warn":
-		return "bg-yellow-100 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-300"
-	case "pass":
-		return "bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300"
-	default:
-		return "bg-cool-grey-100 dark:bg-cool-grey-800 text-cool-grey-600 dark:text-cool-grey-400"
-	}
-}
-
-func wizardPolicyName(report nuon.PolicyReport, policy nuon.PolicyResult) string {
-	if policy.PolicyName != "" {
-		return policy.PolicyName
-	}
-	if report.PolicyName != "" {
-		return report.PolicyName
-	}
-	return "Policy evaluation"
-}
-
-func wizardViolationsForPolicy(report nuon.PolicyReport, policyID string) []nuon.PolicyViolation {
-	var result []nuon.PolicyViolation
-	for _, v := range report.Violations {
-		if v.PolicyID == policyID {
-			result = append(result, v)
-		}
-	}
-	return result
-}
-
-templ wizardStatusBadge(status string) {
-	switch status {
-	case "completed", "success":
-		<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-			<i class="ph-bold ph-check-circle text-xs"></i>
-			Completed
-		</span>
-	case "in-progress":
-		<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-			<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
-			In Progress
-		</span>
-	case "approval-awaiting":
-		<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-			<i class="ph-bold ph-warning text-xs"></i>
-			Awaiting Approval
-		</span>
-	case "error":
-		<span class="badge-error text-xs px-2 py-0.5 rounded-full">Failed</span>
-	default:
-		<span class="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-cool-grey-100 text-cool-grey-600 dark:bg-dark-grey-600 dark:text-cool-grey-400">
-			Waiting
-		</span>
-	}
-}
-
-// sandboxActiveStatus returns the status to display in the sandbox/components header.
-// Shows the plan step status while the plan is active, then the apply step status once plan is done.
-func sandboxActiveStatus(props InstallWizardProps) string {
-	if len(props.ActiveGroups) == 0 {
-		return ""
-	}
-	g := props.ActiveGroups[0]
-	planStatus := wizardStepStatus(wizardPlanStep(g))
-	switch planStatus {
-	case "completed", "success", "approved":
-		return wizardStepStatus(wizardApplyStep(g))
-	default:
-		return planStatus
-	}
-}
-
-// componentsActiveState returns the label and whether it is an approval-awaiting state.
-// Plan states take priority over apply states.
-func componentsActiveState(groups []nuon.WorkflowStepGroup) (label string, awaitingApproval bool) {
-	for _, g := range groups {
-		name := g.Labels["component_name"]
-		switch wizardStepStatus(wizardPlanStep(g)) {
-		case "in-progress":
-			return "Planning " + name + " deploy", false
-		case "approval-awaiting":
-			return "Awaiting approval for " + name, true
-		}
-	}
-	for _, g := range groups {
-		name := g.Labels["component_name"]
-		if wizardStepStatus(wizardApplyStep(g)) == "in-progress" {
-			return "Deploying " + name, false
-		}
-	}
-	return "", false
-}
-
-// componentsStatusChip renders a status chip for the components step with per-component labels.
-templ componentsStatusChip(props InstallWizardProps) {
-	{{ label, awaitingApproval := componentsActiveState(props.ActiveGroups) }}
-	if label != "" {
-		if awaitingApproval {
-			<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-				<i class="ph-bold ph-warning text-xs"></i>
-				{ label }
-			</span>
-		} else {
-			<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-				<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
-				{ label }
-			</span>
-		}
-	} else {
-		@wizardStatusBadge(props.aggregateStatus())
-	}
-}
-
-// stackInProgressLabel returns a human-readable label based on the first non-completed stack step.
-func stackInProgressLabel(props InstallWizardProps) string {
-	for _, g := range props.ActiveGroups {
-		for _, s := range g.Steps {
-			if s.Status != nil {
-				status := s.Status.Status
-				if status == "completed" || status == "success" || status == "approved" || status == "error" {
-					continue
-				}
-			}
-			switch s.Name {
-			case "generate install stack":
-				return "Generating stack"
-			case "await install stack":
-				return "Awaiting stack"
-			case "update install stack outputs":
-				return "Updating stack outputs"
-			}
-		}
-	}
-	return "In Progress"
-}
-
-// stackStatusChip renders a status chip for the stack step, with step-aware labels when in-progress.
-templ stackStatusChip(props InstallWizardProps) {
-	{{ status := props.aggregateStatus() }}
-	if status == "in-progress" {
-		{{ label := stackInProgressLabel(props) }}
-		if label == "Awaiting stack" {
-			<span class="badge-warning inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-				<i class="ph-bold ph-warning text-xs"></i>
-				{ label }
-			</span>
-		} else {
-			<span class="badge-info inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full">
-				<i class="ph-bold ph-circle-notch animate-spin text-xs"></i>
-				{ label }
-			</span>
-		}
-	} else {
-		@wizardStatusBadge(status)
-	}
-}
-
-// Stack setup helpers for platform-specific content in wizard context
-templ wizardStackSetupAWS(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	{{ setup := props.StackSetup }}
-	<div class="mb-4 space-y-4">
-		<!-- Section 1: Setup your install stack -->
-		if setup.CloudFormationLink != "" || setup.TemplateURL != "" {
-			<div>
-				<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Setup your install stack</p>
-				if setup.CloudFormationLink != "" {
-					<div class="mb-3">
-						<a
-							href={ templ.SafeURL(setup.CloudFormationLink) }
-							target="_blank"
-							rel="noopener noreferrer"
-							class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}) }
-						>
-							Quick launch in AWS console
-							<i class="ph-bold ph-arrow-square-out text-base"></i>
-						</a>
-					</div>
-				}
-				if setup.TemplateURL != "" {
-					<div>
-						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">CloudFormation template</p>
-						@components.CodeBlock(setup.TemplateURL, "text")
-					</div>
-				}
-			</div>
-		}
-		<!-- Divider -->
-		if setup.CloudFormationLink != "" && setup.TemplateURL != "" {
-			<div class="flex items-center gap-3 text-xs text-cool-grey-400 dark:text-cool-grey-500">
-				<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
-				<span>or</span>
-				<div class="flex-1 border-t border-cool-grey-200 dark:border-dark-grey-600"></div>
-			</div>
-		}
-		<!-- Section 2: Deploy with AWS CLI -->
-		if setup.TemplateURL != "" {
-			<div>
-				<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Deploy with AWS CLI</p>
-				<div class="space-y-3">
-					<div>
-						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">Create stack</p>
-						@components.CodeBlock(setup.CreateStackCmd(), "bash")
-					</div>
-					<div>
-						<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-1">Update existing stack</p>
-						@components.CodeBlock(setup.UpdateStackCmd(), "bash")
-					</div>
-				</div>
-			</div>
-		}
-		<!-- Section 3: Verify your stack -->
-		<div>
-			<p class="text-sm font-medium mb-3 text-cool-grey-800 dark:text-cool-grey-200">Verify your stack</p>
-			<div class="">
-				<p class="text-sm text-cool-grey-600 dark:text-cool-grey-400 mb-3">After running the create or update command above, open the AWS CloudFormation console to monitor your stack progress.</p>
-				<a
-					href={ templ.SafeURL(setup.ConsoleURL()) }
-					target="_blank"
-					rel="noopener noreferrer"
-					class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm}) }
-				>
-					Open in AWS console
-					<i class="ph-bold ph-arrow-square-out text-base"></i>
-				</a>
-			</div>
-		</div>
-	</div>
-}
-
-templ wizardStackSetupGCP(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	<div class="mb-4  space-y-3">
-		<div>
-			<p class="text-sm font-medium mb-1">1. Clone the install stack module</p>
-			@components.CodeBlock("git clone https://github.com/nuonco/install-stacks.git\ncd install-stacks/gcp", "bash")
-		</div>
-		<div>
-			<p class="text-sm font-medium mb-1">2. Configure remote state</p>
-			@components.CodeBlock(workflows.GcpBackendSnippet(props.StackSetup.NuonInstallID), "hcl")
-		</div>
-		if props.StackSetup.TfvarsContent != "" {
-			<div>
-				<p class="text-sm font-medium mb-1">3. Save install configuration as install.tfvars</p>
-				@components.CodeBlock(props.StackSetup.TfvarsContent, "hcl")
-			</div>
-		}
-		<div>
-			<p class="text-sm font-medium mb-1">4. Apply with Terraform</p>
-			@components.CodeBlock(workflows.GcpApplyCmd(), "bash")
-		</div>
-	</div>
-}
-
-templ wizardStackSetupAzure(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	<div class="mb-4  space-y-3">
-		<div>
-			<p class="text-sm font-medium mb-1">1. Login to Azure</p>
-			@components.CodeBlock("az login", "bash")
-		</div>
-		if props.StackSetup.NuonInstallID != "" && props.StackSetup.AzureLocation != "" {
-			<div>
-				<p class="text-sm font-medium mb-1">2. Create resource group</p>
-				@components.CodeBlock("az group create --name " + props.StackSetup.NuonInstallID + "-rg --location " + props.StackSetup.AzureLocation, "bash")
-			</div>
-		}
-		if props.StackSetup.AzureTemplateURL != "" {
-			<div>
-				<p class="text-sm font-medium mb-1">3. Deploy stack</p>
-				@components.CodeBlock("az stack group create --name " + props.StackSetup.NuonInstallID + "-stack --resource-group " + props.StackSetup.NuonInstallID + "-rg --template-uri " + props.StackSetup.AzureTemplateURL + " --deny-settings-mode \"denyDelete\" --aou deleteAll", "bash")
-			</div>
-		}
-	</div>
-}
-
-// ---------------------------------------------------------------------------
-// StepGroup helper functions — standalone equivalents of workflows.StepGroup methods,
-// operating on nuon.WorkflowStepGroup.
-// ---------------------------------------------------------------------------
-
-func wizardLatestSteps(g nuon.WorkflowStepGroup) []*nuon.WorkflowStep {
-	last := make(map[string]*nuon.WorkflowStep)
-	var order []string
-	for _, s := range g.Steps {
-		if _, seen := last[s.ExecutionType]; !seen {
-			order = append(order, s.ExecutionType)
-		}
-		last[s.ExecutionType] = s
-	}
-	result := make([]*nuon.WorkflowStep, 0, len(order))
-	for _, key := range order {
-		result = append(result, last[key])
-	}
-	return result
-}
-
-func wizardActiveStep(g nuon.WorkflowStepGroup) *nuon.WorkflowStep {
-	for _, s := range wizardLatestSteps(g) {
-		if s.Status == nil {
-			return s
-		}
-		switch s.Status.Status {
-		case "completed", "success", "approved":
-			continue
-		}
-		return s
-	}
-	return nil
-}
-
-func wizardGroupCanApprove(g nuon.WorkflowStepGroup) bool {
-	s := wizardActiveStep(g)
-	return s != nil && s.Status != nil && s.Status.Status == "approval-awaiting" && s.Approval != nil
-}
-
-func wizardGroupCanRetry(g nuon.WorkflowStepGroup) bool {
-	return wizardRetryableStep(g) != nil
-}
-
-func wizardRetryableStep(g nuon.WorkflowStepGroup) *nuon.WorkflowStep {
-	for _, s := range wizardLatestSteps(g) {
-		if s.Retryable && s.Finished && s.Status != nil && s.Status.Status != "completed" && s.Status.Status != "success" {
-			return s
-		}
-	}
-	return nil
-}
-
-func wizardGroupHasApprovalStep(g nuon.WorkflowStepGroup) bool {
-	for _, s := range wizardLatestSteps(g) {
-		if s.ExecutionType == "approval" {
-			return true
-		}
-	}
-	return false
-}
-
-func wizardRetryableStepID(g nuon.WorkflowStepGroup) string {
-	s := wizardRetryableStep(g)
-	if s != nil {
-		return s.ID
-	}
-	return ""
-}
-
-templ wizardGroupActionButtons(props InstallWizardProps, group nuon.WorkflowStepGroup) {
-	if wizardGroupCanRetry(group) {
-		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/step/" + wizardRetryableStepID(group) + "/retry") } class="inline">
-			<button
-				type="submit"
-				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Variant: components.ButtonOutline}) }
-			>
-				Retry
-				<i class="ph-bold ph-arrow-clockwise text-base"></i>
-			</button>
-		</form>
-	}
-	if wizardGroupHasApprovalStep(group) {
-		<form method="POST" action={ templ.SafeURL(props.BasePath + "/installs/" + props.InstallID + "/workflows/" + props.WorkflowID + "/approve") } class="inline">
-			if wizardGroupCanApprove(group) {
-				<input type="hidden" name="step_id" value={ wizardActiveStep(group).ID }/>
-				<input type="hidden" name="approval_id" value={ wizardActiveStep(group).Approval.ID }/>
-			}
-			<button
-				type="submit"
-				class={ components.ButtonClasses(components.ButtonProps{Size: components.ButtonSizeSm, Disabled: true}) }
-				disabled?={ !wizardGroupCanApprove(group) }
-			>
-				<i class="ph-bold ph-check text-base"></i>
-				Approve
-			</button>
-		</form>
-	}
 }
 
 // wizardTransitionScript emits the JS that detects navigation direction and

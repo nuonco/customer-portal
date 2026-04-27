@@ -14,13 +14,13 @@ templ WorkflowOverview(props WorkflowOverviewProps) {
 				if props.SelectedGroup >= 0 && props.SelectedGroup < len(props.StepGroups) {
 					{{ group := props.StepGroups[props.SelectedGroup] }}
 					switch group.Type {
-					case StepGroupStack:
+					case "install-stack":
 						@StackGroupCard(props)
-					case StepGroupSandbox:
+					case "sandbox":
 						@SandboxGroupCard(props)
-					case StepGroupComponent:
+					case "component":
 						@ComponentGroupCard(props)
-					case StepGroupAction:
+					case "action":
 						@ActionGroupCard(props)
 					default:
 						@defaultGroupCard(group)

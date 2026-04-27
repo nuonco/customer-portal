@@ -1,0 +1,87 @@
+package wizard
+
+import "fmt"
+
+// StepDef describes one step in the install wizard's fixed step list.
+type StepDef struct {
+	Key  string
+	Name string
+	Icon string
+}
+
+// StepDefs is the canonical, ordered list of wizard steps. The step indicator
+// always renders these in this order.
+var StepDefs = []StepDef{
+	{Key: "inputs", Name: "Configure", Icon: "ph-sliders-horizontal"},
+	{Key: "stack", Name: "Stack", Icon: "ph-stack"},
+	{Key: "sandbox", Name: "Sandbox", Icon: "ph-shipping-container"},
+	{Key: "components", Name: "Components", Icon: "ph-cards"},
+}
+
+// StepIdx returns the zero-based index of the given step key, or 0 if unknown.
+func StepIdx(key string) int {
+	for i, s := range StepDefs {
+		if s.Key == key {
+			return i
+		}
+	}
+	return 0
+}
+
+// StepState is the per-step display state the caller resolves for the indicator.
+type StepState struct {
+	Status     string // "completed" | "success" | "in-progress" | "not_started" | "approval-awaiting" | "error" | "upcoming"
+	Accessible bool
+	URL        string
+	PartialURL string
+}
+
+// StepIndicatorProps holds per-step state keyed by step key. Steps not present
+// in States render with a zero-value StepState (effectively "upcoming", inaccessible).
+type StepIndicatorProps struct {
+	States map[string]StepState
+}
+
+// StepIndicator renders the horizontal wizard step bar.
+templ StepIndicator(props StepIndicatorProps) {
+	<nav class="flex items-center justify-between">
+		for i, step := range StepDefs {
+			{{ st := props.States[step.Key] }}
+			<a
+				href={ templ.SafeURL(st.URL) }
+				hx-get={ st.PartialURL }
+				hx-target="#wizard-step-wrapper"
+				hx-swap="innerHTML show:none"
+				hx-push-url={ st.URL }
+				hx-boost="false"
+				data-step-index={ fmt.Sprintf("%d", i) }
+				data-wizard-nav="true"
+				class={
+					"wizard-step-link flex items-center py-2 text-sm no-underline",
+					templ.KV("font-medium", st.Status == "in-progress" || st.Status == "approval-awaiting" || st.Status == "not_started"),
+					templ.KV("text-green-600 dark:text-green-400", st.Status == "completed" || st.Status == "success"),
+					templ.KV("text-blue-600 dark:text-blue-400", st.Status == "in-progress"),
+					templ.KV("text-amber-500 dark:text-amber-400", st.Status == "approval-awaiting"),
+					templ.KV("text-red-600 dark:text-red-400", st.Status == "error"),
+					templ.KV("text-cool-grey-400 dark:text-cool-grey-600 pointer-events-none", !st.Accessible),
+				}
+			>
+				<span class="wizard-step-label inline-flex items-center gap-2 border-b border-transparent">
+					switch st.Status {
+					case "completed", "success":
+						<i class="ph-bold ph-check-circle text-base"></i>
+					case "in-progress", "not_started":
+						<i class={ "ph-bold text-base", step.Icon }></i>
+					case "approval-awaiting":
+						<i class="ph-bold ph-clock text-base"></i>
+					case "error":
+						<i class="ph-bold ph-x-circle text-base"></i>
+					default:
+						<i class={ "ph-bold text-base", step.Icon }></i>
+					}
+					<span class="hidden sm:inline">{ step.Name }</span>
+				</span>
+			</a>
+		}
+	</nav>
+}

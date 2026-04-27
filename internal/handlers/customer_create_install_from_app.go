@@ -1,15 +1,19 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -44,6 +48,10 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		Region   string            `json:"region"`
 		Location string            `json:"location"`
 		Inputs   map[string]string `json:"inputs"`
+		// Confirmed/Prepared arrive as strings ("true") from htmx json-enc;
+		// they're parsed out of the raw map below to avoid bool-unmarshal errors.
+		Confirmed bool `json:"-"`
+		Prepared  bool `json:"-"`
 	}
 
 	if err := json.Unmarshal(bodyBytes, &req); err != nil || req.Name == "" {
@@ -51,10 +59,27 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		return
 	}
 
-	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them
+	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them.
+	// Also pick up the confirmed flag in string form ("true").
 	var raw map[string]interface{}
 	if err := json.Unmarshal(bodyBytes, &raw); err == nil {
 		req.Inputs = extractBracketInputs(raw, req.Inputs)
+		if v, ok := raw["confirmed"]; ok {
+			if s, ok := v.(string); ok && s == "true" {
+				req.Confirmed = true
+			}
+			if b, ok := v.(bool); ok {
+				req.Confirmed = b
+			}
+		}
+		if v, ok := raw["prepared"]; ok {
+			if s, ok := v.(string); ok && s == "true" {
+				req.Prepared = true
+			}
+			if b, ok := v.(bool); ok {
+				req.Prepared = b
+			}
+		}
 	}
 
 	org, err := h.getOrgForCustomerPage(c)
@@ -101,16 +126,113 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		region = "us-east-1"
 	}
 
+	// Shared builder for the Confirm step props — used both for the initial
+	// confirm render and to re-render Confirm with an error banner if the
+	// create call fails after the user has confirmed.
+	buildConfirmProps := func(errMsg string) wizard.ConfirmStepProps {
+		appNameForConfirm := appName
+		if app != nil {
+			if dn := appDisplayName(app); dn != "" {
+				appNameForConfirm = dn
+			}
+		}
+		var inputGroups []partials.InstallFormInputGroup
+		if cfg, cfgErr := h.getPublishedAppFormData(c, appID); cfgErr == nil {
+			inputGroups = cfg.toTemplConfig().InputGroups
+		}
+		return wizard.ConfirmStepProps{
+			LayoutProps:     customerui.LayoutProps{NuonAPIError: errMsg},
+			AppID:           appID,
+			AppName:         appNameForConfirm,
+			LogoLightBase64: publishedApp.LogoLightBase64,
+			LogoDarkBase64:  publishedApp.LogoDarkBase64,
+			InstallName:     req.Name,
+			Region:          region,
+			Location:        location,
+			Inputs:          req.Inputs,
+			InputGroups:     inputGroups,
+			FormAction:      h.basePath + "/apps/" + appID + "/install",
+			ConfigureURL:    h.basePath + "/apps/" + appID + "/install",
+		}
+	}
+
+	// renderConfirmInWizard re-renders the Confirm step inside the wizard
+	// shell, preserving step indicator and layout. Used after the user has
+	// confirmed but the create call failed.
+	renderConfirmInWizard := func(errMsg string) {
+		confirmURL := buildAppConfirmURL(h.basePath, appID)
+		if htmx {
+			c.Header("HX-Retarget", "#wizard-step-wrapper")
+			c.Header("HX-Reswap", "innerHTML")
+			c.Header("HX-Push-Url", confirmURL)
+		}
+		h.RenderTempl(c, http.StatusOK, wizard.ConfirmStep(buildConfirmProps(errMsg)))
+	}
+
+	// First POST from the Configure step renders the Confirm step rather than
+	// creating the install. The Confirm step's form re-POSTs with confirmed=true.
+	if !req.Confirmed {
+		confirmURL := buildAppConfirmURL(h.basePath, appID)
+		if htmx {
+			c.Header("HX-Retarget", "#wizard-step-wrapper")
+			c.Header("HX-Reswap", "innerHTML")
+			c.Header("HX-Push-Url", confirmURL)
+		}
+		h.RenderTempl(c, http.StatusOK, wizard.ConfirmStep(buildConfirmProps("")))
+		return
+	}
+
+	// Confirm POST without prepared=true renders the Preparing step. The Preparing
+	// step's auto-firing form re-POSTs with both confirmed=true and prepared=true,
+	// which falls through to the actual install-creation logic below.
+	if !req.Prepared {
+		appNameForPreparing := appName
+		if app != nil {
+			if dn := appDisplayName(app); dn != "" {
+				appNameForPreparing = dn
+			}
+		}
+		preparingURL := buildAppPreparingURL(h.basePath, appID)
+		configureURL := h.basePath + "/apps/" + appID + "/install"
+		if htmx {
+			c.Header("HX-Retarget", "#wizard-step-wrapper")
+			c.Header("HX-Reswap", "innerHTML")
+			c.Header("HX-Push-Url", preparingURL)
+		}
+		h.RenderTempl(c, http.StatusOK, wizard.PreparingStep(wizard.PreparingStepProps{
+			AppID:           appID,
+			AppName:         appNameForPreparing,
+			LogoLightBase64: publishedApp.LogoLightBase64,
+			LogoDarkBase64:  publishedApp.LogoDarkBase64,
+			InstallName:     req.Name,
+			Region:          region,
+			Location:        location,
+			Inputs:          req.Inputs,
+			FormAction:      h.basePath + "/apps/" + appID + "/install",
+			ConfigureURL:    configureURL,
+		}))
+		return
+	}
+
 	// Merge in defaults for non-customer-facing inputs
 	mergedInputs := h.mergeDefaultInputs(c.Request.Context(), nuonClient, appID, org.ID, req.Inputs)
 
 	nuonInstall, err := nuonClient.CreateInstallWithCustomName(c.Request.Context(), appID, appName, req.Name, region, location, platform, mergedInputs)
 	if err != nil {
 		if nuon.IsConflict(err) {
+			if htmx {
+				renderConfirmInWizard("An install with that name already exists. Please choose a different name.")
+				return
+			}
 			respondError(http.StatusConflict, "An install with that name already exists. Please choose a different name.")
 			return
 		}
-		respondError(http.StatusInternalServerError, fmt.Sprintf("Failed to create install via Nuon API: %v", err))
+		msg := fmt.Sprintf("Failed to create install via Nuon API: %v", err)
+		if htmx {
+			renderConfirmInWizard(msg)
+			return
+		}
+		respondError(http.StatusInternalServerError, msg)
 		return
 	}
 
@@ -141,12 +263,20 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	}
 
 	if err := h.db.Create(install).Error; err != nil {
+		if htmx {
+			renderConfirmInWizard("Failed to store install locally")
+			return
+		}
 		respondError(http.StatusInternalServerError, "Failed to store install locally")
 		return
 	}
 
 	token, _, err := h.auth.TokenGenerator(customer)
 	if err != nil {
+		if htmx {
+			renderConfirmInWizard("Failed to generate authentication token")
+			return
+		}
 		respondError(http.StatusInternalServerError, "Failed to generate authentication token")
 		return
 	}
@@ -154,8 +284,12 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 	if htmx {
 		basePath := h.basePath
 		c.SetCookie("jwt", token, 86400, "/", "", false, false)
-		wfs, _, _ := nuonClient.GetInstallWorkflowsV2(c.Request.Context(), nuonInstall.ID, 0, 1)
-		c.Header("HX-Redirect", buildWizardURL(basePath, appID, "inputs", install.ID, wfs[0].ID))
+		wfID, _ := waitForWorkflowSteps(c.Request.Context(), nuonClient, nuonInstall.ID, 30*time.Second)
+		if wfID == "" {
+			renderConfirmInWizard("Install was created, but its provision workflow could not be reached. Please retry from the install page.")
+			return
+		}
+		c.Header("HX-Redirect", buildWizardURL(basePath, appID, "stack", install.ID, wfID))
 		c.Status(http.StatusOK)
 		return
 	}
@@ -165,4 +299,45 @@ func (h *Handler) CreateInstallFromApp(c *gin.Context) {
 		"token":   token,
 		"install": install,
 	})
+}
+
+// waitForWorkflowSteps polls until the install's first provision workflow has
+// at least one step group with generated steps. Returns the workflow ID and
+// whether step groups were observed before the timeout. If the workflow row
+// itself never appears, returns an empty workflow ID.
+func waitForWorkflowSteps(ctx context.Context, client *nuon.Client, installID string, timeout time.Duration) (string, bool) {
+	deadline := time.Now().Add(timeout)
+	tick := 500 * time.Millisecond
+
+	var wfID string
+	for time.Now().Before(deadline) {
+		if ctx.Err() != nil {
+			return wfID, false
+		}
+		wfs, _, err := client.GetInstallWorkflowsV2(ctx, installID, 0, 1)
+		if err == nil && len(wfs) > 0 && wfs[0] != nil && wfs[0].ID != "" {
+			wfID = wfs[0].ID
+			break
+		}
+		time.Sleep(tick)
+	}
+	if wfID == "" {
+		return "", false
+	}
+
+	for time.Now().Before(deadline) {
+		if ctx.Err() != nil {
+			return wfID, false
+		}
+		groups, err := client.GetWorkflowStepGroups(ctx, wfID)
+		if err == nil {
+			for _, g := range groups {
+				if len(g.Steps) > 0 {
+					return wfID, true
+				}
+			}
+		}
+		time.Sleep(tick)
+	}
+	return wfID, false
 }

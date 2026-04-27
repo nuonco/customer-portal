@@ -1,0 +1,313 @@
+package wizard
+
+import (
+	"sort"
+	"strings"
+
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+)
+
+// ConfirmStepProps holds data for the wizard's Confirm step. The Confirm step
+// is rendered between Configure and Stack but does not appear in the wizard
+// step indicator; UX-wise it is part of Configure.
+type ConfirmStepProps struct {
+	customerui.LayoutProps
+	AppID           string
+	AppName         string
+	LogoLightBase64 string
+	LogoDarkBase64  string
+	InstallName     string
+	Region          string
+	Location        string
+	Inputs          map[string]string
+	InputGroups     []partials.InstallFormInputGroup
+	FormAction      string
+	ConfigureURL    string
+	SHA             string
+}
+
+func (p ConfirmStepProps) sortedInputKeys() []string {
+	keys := make([]string, 0, len(p.Inputs))
+	for k := range p.Inputs {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// confirmInputLabel returns the human-readable label for an input, falling
+// back to the raw name. Strips the required-asterisk used on the form.
+func confirmInputLabel(in partials.InstallFormInput) string {
+	if in.DisplayName != "" {
+		return in.DisplayName
+	}
+	return in.Name
+}
+
+// labelForKey looks up a display label across all input groups for the given
+// raw input name, falling back to the raw name if not found.
+func (p ConfirmStepProps) labelForKey(name string) string {
+	for _, g := range p.InputGroups {
+		for _, in := range g.AppInputs {
+			if in.Name == name {
+				return confirmInputLabel(in)
+			}
+		}
+	}
+	return name
+}
+
+// otherKeys returns the input names submitted by the user that aren't covered
+// by any known input group — usually empty, but rendered under "Other" if not.
+func (p ConfirmStepProps) otherKeys() []string {
+	known := make(map[string]bool)
+	for _, g := range p.InputGroups {
+		for _, in := range g.AppInputs {
+			known[in.Name] = true
+		}
+	}
+	var others []string
+	for k := range p.Inputs {
+		if !known[k] {
+			others = append(others, k)
+		}
+	}
+	sort.Strings(others)
+	return others
+}
+
+// hasGroupValues returns true if any input in the group was submitted.
+func (p ConfirmStepProps) hasGroupValues(g partials.InstallFormInputGroup) bool {
+	for _, in := range g.AppInputs {
+		if _, ok := p.Inputs[in.Name]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+// visibleGroups filters out groups that have no submitted values.
+func (p ConfirmStepProps) visibleGroups() []partials.InstallFormInputGroup {
+	var out []partials.InstallFormInputGroup
+	for _, g := range p.InputGroups {
+		if p.hasGroupValues(g) {
+			out = append(out, g)
+		}
+	}
+	return out
+}
+
+// formatInputValue applies value-type-specific formatting for display.
+func formatInputValue(in partials.InstallFormInput, raw string) string {
+	if in.Type == "bool" {
+		switch strings.ToLower(strings.TrimSpace(raw)) {
+		case "true", "1", "yes", "on":
+			return "Yes"
+		case "false", "0", "no", "off", "":
+			return "No"
+		}
+	}
+	return raw
+}
+
+// ConfirmStep renders the install confirmation summary.
+templ ConfirmStep(props ConfirmStepProps) {
+	if props.NuonAPIError != "" {
+		<div class="max-w-4xl mx-auto mb-4">
+			@components.Alert(components.AlertProps{
+				Type:    "error",
+				Message: props.NuonAPIError,
+			})
+		</div>
+	}
+	<div class="max-w-4xl mx-auto space-y-6 pb-6">
+		<!-- App Header -->
+		<div class="flex items-center gap-3 mb-2">
+			if props.LogoLightBase64 != "" {
+				if props.LogoDarkBase64 != "" {
+					<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain dark:hidden"/>
+					<img src={ props.LogoDarkBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain hidden dark:block"/>
+				} else {
+					<img src={ props.LogoLightBase64 } alt={ props.AppName } class="w-8 h-8 rounded object-contain"/>
+				}
+			}
+			<h3 class="text-base font-semibold text-cool-grey-800 dark:text-cool-grey-200">{ props.AppName }</h3>
+			<div class="ml-auto flex items-center gap-3">
+				<a
+					href={ templ.SafeURL(props.ConfigureURL) }
+					onclick="sessionStorage.setItem('wizard-transition', '1');"
+					class="button button-outline btn-theme-outline inline-flex items-center gap-2 text-sm"
+				>
+					<i class="ph-bold ph-caret-left"></i>
+					Go back
+				</a>
+				<button
+					type="submit"
+					form="confirmInstallForm"
+					class="button button-primary btn-theme-primary inline-flex items-center gap-2 text-sm"
+				>
+					<span class="btn-label">Confirm</span>
+					<i class="btn-spinner ph-bold ph-circle-notch animate-spin hidden"></i>
+					<i class="ph-bold ph-caret-right"></i>
+				</button>
+			</div>
+		</div>
+		<p class="text-cool-grey-600 dark:text-cool-grey-400 text-sm">
+			Review your configuration. Confirm to start provisioning your install.
+		</p>
+		@components.Card(components.CardProps{Title: "Your install configuration"}) {
+			{{ sections := buildConfirmSections(props) }}
+			for i, s := range sections {
+				@confirmSection(s, i < len(sections)-1)
+			}
+			if len(sections) == 0 {
+				<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400">No configuration values set.</p>
+			}
+		}
+		<!-- Hidden form carries values to the create endpoint -->
+		<form
+			id="confirmInstallForm"
+			hx-post={ props.FormAction }
+			hx-ext="json-enc"
+			hx-target="#confirm-error"
+			hx-swap="innerHTML"
+			hx-boost="false"
+			data-wizard-nav="true"
+			data-step-index="1"
+		>
+			if props.SHA != "" {
+				<input type="hidden" name="sha" value={ props.SHA }/>
+			}
+			if props.InstallName != "" {
+				<input type="hidden" name="name" value={ props.InstallName }/>
+			}
+			if props.Region != "" {
+				<input type="hidden" name="region" value={ props.Region }/>
+			}
+			if props.Location != "" {
+				<input type="hidden" name="location" value={ props.Location }/>
+			}
+			for _, k := range props.sortedInputKeys() {
+				<input type="hidden" name={ "inputs[" + k + "]" } value={ props.Inputs[k] }/>
+			}
+			<input type="hidden" name="confirmed" value="true"/>
+		</form>
+		<div id="confirm-error"></div>
+	</div>
+	<script>
+	(function() {
+		var form = document.getElementById('confirmInstallForm');
+		if (!form) return;
+		form.addEventListener('htmx:beforeRequest', function() {
+			sessionStorage.setItem('wizard-transition', '0');
+		});
+	})();
+	</script>
+}
+
+// confirmSectionData is one rendered section in the Configuration card.
+type confirmSectionData struct {
+	Title       string
+	Description string
+	Blocks      []confirmBlockData
+}
+
+type confirmBlockData struct {
+	Label     string
+	Value     string
+	Sensitive bool
+	JSON      bool
+}
+
+func buildConfirmSections(p ConfirmStepProps) []confirmSectionData {
+	var out []confirmSectionData
+
+	// Install details
+	var details []confirmBlockData
+	if p.InstallName != "" {
+		details = append(details, confirmBlockData{Label: "Install name", Value: p.InstallName})
+	}
+	if p.Region != "" {
+		details = append(details, confirmBlockData{Label: "Region", Value: p.Region})
+	}
+	if p.Location != "" {
+		details = append(details, confirmBlockData{Label: "Location", Value: p.Location})
+	}
+	if len(details) > 0 {
+		out = append(out, confirmSectionData{Title: "Install details", Blocks: details})
+	}
+
+	// Known groups
+	for _, g := range p.InputGroups {
+		var blocks []confirmBlockData
+		for _, in := range g.AppInputs {
+			v, ok := p.Inputs[in.Name]
+			if !ok {
+				continue
+			}
+			blocks = append(blocks, confirmBlockData{
+				Label:     confirmInputLabel(in),
+				Value:     formatInputValue(in, v),
+				Sensitive: in.Sensitive,
+				JSON:      in.Type == "json",
+			})
+		}
+		if len(blocks) == 0 {
+			continue
+		}
+		title := g.DisplayName
+		if title == "" {
+			title = g.Name
+		}
+		out = append(out, confirmSectionData{
+			Title:       title,
+			Description: g.Description,
+			Blocks:      blocks,
+		})
+	}
+
+	// Other (inputs not covered by any group)
+	if others := p.otherKeys(); len(others) > 0 {
+		var blocks []confirmBlockData
+		for _, k := range others {
+			blocks = append(blocks, confirmBlockData{Label: p.labelForKey(k), Value: p.Inputs[k]})
+		}
+		out = append(out, confirmSectionData{Title: "Other", Blocks: blocks})
+	}
+
+	return out
+}
+
+templ confirmSection(s confirmSectionData, withDivider bool) {
+	<section class={ templ.KV("card-section-divider", withDivider) }>
+		<h4 class="text-xs font-semibold tracking-wide uppercase text-cool-grey-500 dark:text-cool-grey-400">{ s.Title }</h4>
+		if s.Description != "" {
+			<p class="text-sm text-cool-grey-500 dark:text-cool-grey-400 mt-1 mb-3">{ s.Description }</p>
+		} else {
+			<div class="mb-3"></div>
+		}
+		<div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+			for _, b := range s.Blocks {
+				@confirmBlock(b)
+			}
+		</div>
+	</section>
+}
+
+templ confirmBlock(b confirmBlockData) {
+	<div>
+		<div class="field-label !mb-1">{ b.Label }</div>
+		if b.Sensitive {
+			<p class="text-sm text-cool-grey-900 dark:text-cool-grey-100">••••••••</p>
+		} else if strings.TrimSpace(b.Value) == "" {
+			<p class="text-sm italic text-cool-grey-400 dark:text-cool-grey-500">Not set</p>
+		} else if b.JSON {
+			<pre class="font-mono text-xs whitespace-pre-wrap break-words text-cool-grey-900 dark:text-cool-grey-100">{ b.Value }</pre>
+		} else {
+			<p class="text-sm text-cool-grey-900 dark:text-cool-grey-100 break-words">{ b.Value }</p>
+		}
+	</div>
+}
+

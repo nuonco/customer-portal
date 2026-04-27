@@ -675,7 +675,7 @@ type WorkflowStep struct {
 	Retried             bool                          `json:"retried,omitempty"`
 	RetryIndex          int                           `json:"retry_index"`
 	ResultDirective     string                        `json:"result_directive,omitempty"`
-	Labels              map[string]string             `json:"-"`
+	Labels              map[string]string             `json:"labels,omitempty"`
 }
 
 type WorkflowStepGroup struct {
@@ -690,7 +690,7 @@ type WorkflowStepGroup struct {
 	Name        string            `json:"name,omitempty"`
 	QueueSignal *QueueSignal      `json:"queue_signal,omitempty"`
 	Steps       []*WorkflowStep   `json:"steps,omitempty"`
-	Labels      map[string]string `json:"-"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 type Workflow struct {
@@ -740,51 +740,7 @@ func (c *Client) GetWorkflowV2(ctx context.Context, workflowID string) (*Workflo
 	if err := json.NewDecoder(resp.Body).Decode(&workflow); err != nil {
 		return nil, fmt.Errorf("failed to decode workflow: %w", err)
 	}
-	decorateWorkflow(&workflow)
 	return &workflow, nil
-}
-
-// decorateWorkflow populates Labels on the workflow, its step groups, and steps
-// with client-side derived metadata that the API does not provide.
-func decorateWorkflow(wf *Workflow) {
-	wf.Labels = map[string]string{}
-	decorateStepGroups(wf.StepGroups)
-	for _, s := range wf.Steps {
-		if s.Labels == nil {
-			s.Labels = map[string]string{}
-		}
-	}
-}
-
-func deriveGroupType(steps []*WorkflowStep) string {
-	hasAction := false
-	for _, s := range steps {
-		switch s.StepTargetType {
-		case "install_stack_versions":
-			return "stack"
-		case "install_sandbox_runs":
-			return "sandbox"
-		case "install_deploys":
-			return "component"
-		case "install_action_workflow_runs":
-			hasAction = true
-		}
-	}
-	if hasAction {
-		return "action"
-	}
-	// Fall back to step name patterns for groups whose steps haven't started yet.
-	// Use stricter matching than deriveComponentName — only "sync and plan" and
-	// "apply" indicate component deploys. Bare "sync " can match action steps
-	// like "sync secrets".
-	for _, s := range steps {
-		n := strings.ToLower(s.Name)
-		if strings.Contains(n, "sync and plan") || strings.HasPrefix(n, "apply ") ||
-			(strings.Contains(n, "deploy") && !strings.Contains(n, "action run")) {
-			return "component"
-		}
-	}
-	return "other"
 }
 
 // GetInstallWorkflowsV2 retrieves workflow history using the V2 Workflow type.
@@ -808,9 +764,6 @@ func (c *Client) GetInstallWorkflowsV2(ctx context.Context, installID string, of
 	var workflows []*Workflow
 	if err := json.NewDecoder(resp.Body).Decode(&workflows); err != nil {
 		return nil, false, fmt.Errorf("failed to decode workflows: %w", err)
-	}
-	for _, wf := range workflows {
-		decorateWorkflow(wf)
 	}
 	hasMore := len(workflows) >= limit
 	return workflows, hasMore, nil
@@ -837,40 +790,7 @@ func (c *Client) GetWorkflowStepGroups(ctx context.Context, workflowID string) (
 	if err := json.NewDecoder(resp.Body).Decode(&groups); err != nil {
 		return nil, fmt.Errorf("failed to decode step groups: %w", err)
 	}
-	decorateStepGroups(groups)
 	return groups, nil
-}
-
-// decorateStepGroups populates Labels on step groups and their steps.
-func decorateStepGroups(groups []WorkflowStepGroup) {
-	for i := range groups {
-		g := &groups[i]
-		groupType := deriveGroupType(g.Steps)
-		g.Labels = map[string]string{
-			"type": groupType,
-		}
-		if groupType == "component" {
-			if name := deriveComponentName(g.Steps); name != "" {
-				g.Labels["component_name"] = name
-			}
-		}
-		for _, s := range g.Steps {
-			s.Labels = map[string]string{}
-		}
-	}
-}
-
-// deriveComponentName extracts the component name from step names in a component group.
-func deriveComponentName(steps []*WorkflowStep) string {
-	prefixes := []string{"sync and plan ", "apply ", "sync "}
-	for _, s := range steps {
-		for _, p := range prefixes {
-			if strings.HasPrefix(s.Name, p) {
-				return strings.TrimPrefix(s.Name, p)
-			}
-		}
-	}
-	return ""
 }
 
 // GetInstallStack retrieves the stack information for an install

@@ -10,6 +10,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -43,6 +44,10 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		Region   string            `json:"region"`
 		Location string            `json:"location"`
 		Inputs   map[string]string `json:"inputs"`
+		// Confirmed/Prepared arrive as strings ("true") from htmx json-enc;
+		// they're parsed out of the raw map below to avoid bool-unmarshal errors.
+		Confirmed bool `json:"-"`
+		Prepared  bool `json:"-"`
 	}
 
 	if err := json.Unmarshal(bodyBytes, &req); err != nil || req.SHA == "" {
@@ -50,10 +55,27 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		return
 	}
 
-	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them
+	// HTMX json-enc sends inputs as flat "inputs[name]" keys; extract them.
+	// Also pick up the confirmed flag in string form ("true").
 	var raw map[string]interface{}
 	if err := json.Unmarshal(bodyBytes, &raw); err == nil {
 		req.Inputs = extractBracketInputs(raw, req.Inputs)
+		if v, ok := raw["confirmed"]; ok {
+			if s, ok := v.(string); ok && s == "true" {
+				req.Confirmed = true
+			}
+			if b, ok := v.(bool); ok {
+				req.Confirmed = b
+			}
+		}
+		if v, ok := raw["prepared"]; ok {
+			if s, ok := v.(string); ok && s == "true" {
+				req.Prepared = true
+			}
+			if b, ok := v.(bool); ok {
+				req.Prepared = b
+			}
+		}
 	}
 
 	// Find the install link
@@ -103,6 +125,77 @@ func (h *Handler) AcceptInstallLink(c *gin.Context) {
 		if platform != "gcp" && platform != "azure-aks" && platform != "azure-acs" && platform != "azure" {
 			region = "us-east-1"
 		}
+	}
+
+	// First POST from the Configure step renders the Confirm step rather than
+	// creating the install. The Confirm step's form re-POSTs with confirmed=true.
+	if !req.Confirmed {
+		appNameForConfirm := link.AppName
+		var logoLight, logoDark string
+		var publishedApp models.PublishedApp
+		if err := h.db.Where("org_id = ? AND app_id = ?", link.OrgID, link.AppID).First(&publishedApp).Error; err == nil {
+			logoLight = publishedApp.LogoLightBase64
+			logoDark = publishedApp.LogoDarkBase64
+		}
+		var inputGroups []partials.InstallFormInputGroup
+		if cfg, cfgErr := h.getInstallLinkFormData(c, req.SHA); cfgErr == nil {
+			inputGroups = cfg.toTemplConfig().InputGroups
+		}
+		confirmURL := buildLinkConfirmURL(h.basePath, req.SHA)
+		configureURL := h.basePath + "/install-link/?sha=" + req.SHA
+		if htmx {
+			c.Header("HX-Retarget", "#wizard-step-wrapper")
+			c.Header("HX-Reswap", "innerHTML")
+			c.Header("HX-Push-Url", confirmURL)
+		}
+		h.RenderTempl(c, http.StatusOK, wizard.ConfirmStep(wizard.ConfirmStepProps{
+			AppID:           link.AppID,
+			AppName:         appNameForConfirm,
+			LogoLightBase64: logoLight,
+			LogoDarkBase64:  logoDark,
+			InstallName:     link.Name,
+			Region:          region,
+			Location:        location,
+			Inputs:          req.Inputs,
+			InputGroups:     inputGroups,
+			FormAction:      h.basePath + "/install-link",
+			ConfigureURL:    configureURL,
+			SHA:             req.SHA,
+		}))
+		return
+	}
+
+	// Confirm POST without prepared=true renders the Preparing step. The Preparing
+	// step's auto-firing form re-POSTs with both confirmed=true and prepared=true.
+	if !req.Prepared {
+		appNameForPreparing := link.AppName
+		var logoLight, logoDark string
+		var publishedApp models.PublishedApp
+		if err := h.db.Where("org_id = ? AND app_id = ?", link.OrgID, link.AppID).First(&publishedApp).Error; err == nil {
+			logoLight = publishedApp.LogoLightBase64
+			logoDark = publishedApp.LogoDarkBase64
+		}
+		preparingURL := buildLinkPreparingURL(h.basePath, req.SHA)
+		configureURL := h.basePath + "/install-link/?sha=" + req.SHA
+		if htmx {
+			c.Header("HX-Retarget", "#wizard-step-wrapper")
+			c.Header("HX-Reswap", "innerHTML")
+			c.Header("HX-Push-Url", preparingURL)
+		}
+		h.RenderTempl(c, http.StatusOK, wizard.PreparingStep(wizard.PreparingStepProps{
+			AppID:           link.AppID,
+			AppName:         appNameForPreparing,
+			LogoLightBase64: logoLight,
+			LogoDarkBase64:  logoDark,
+			InstallName:     link.Name,
+			Region:          region,
+			Location:        location,
+			Inputs:          req.Inputs,
+			FormAction:      h.basePath + "/install-link",
+			ConfigureURL:    configureURL,
+			SHA:             req.SHA,
+		}))
+		return
 	}
 
 	// Merge in defaults for non-customer-facing inputs
