@@ -16,19 +16,17 @@ COPY main.go ./
 COPY static ./static/
 COPY scripts ./scripts/
 RUN ./scripts/hash-assets.sh
-RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
-    --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
+RUN --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     go generate ./...
 
 FROM code AS build
 
-RUN --mount=type=cache,target=/go/pkg/mod,id=gomod-customer-dashboard \
-    --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
+RUN --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     CGO_ENABLED=0 GOOS=linux go build -o /bin/service
 
 FROM code AS test
 RUN --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
-    go test -v ./...
+    go test ./...
 
 FROM code AS lint
 
