@@ -56,10 +56,12 @@ spec:
               containerPort: {{ .Values.app.port }}
               protocol: TCP
           readinessProbe:
+            failureThreshold: 10
             httpGet:
               path: {{ .Values.app.readiness_probe}}
               port: http
           livenessProbe:
+            failureThreshold: 10
             httpGet:
               path: {{ .Values.app.liveness_probe}}
               port: http
