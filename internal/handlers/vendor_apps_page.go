@@ -5,6 +5,7 @@ import (
 	"math"
 	"net/http"
 	"sort"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
@@ -55,8 +56,17 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		return
 	}
 
+	// Pagination — apps per page is fixed at 10 to stay under the ctl-api
+	// pagination limit (the SDK overfetches by one).
+	const appsPerPage = 10
+	page, _ := strconv.Atoi(c.Query("page"))
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * appsPerPage
+
 	// Fetch apps from Nuon API
-	apps, err := nuonClient.ListApps(c.Request.Context())
+	apps, hasMore, err := nuonClient.ListAppsPaginated(c.Request.Context(), offset, appsPerPage)
 	if err != nil {
 		allOrgs := h.GetUserOrgs(user.ID)
 		props := vendorpages.AppsPageProps{
@@ -138,20 +148,24 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		}
 	}
 
-	// Find orphaned published apps (deleted from Nuon API but still published)
-	apiAppIDs := make(map[string]bool, len(apps))
-	for _, app := range apps {
-		apiAppIDs[app.ID] = true
-	}
-	for _, pa := range publishedApps {
-		if !apiAppIDs[pa.AppID] {
-			appsWithStatus = append(appsWithStatus, AppInfo{
-				ID:              pa.AppID,
-				Name:            "-",
-				LogoLightBase64: pa.LogoLightBase64,
-				LogoDarkBase64:  pa.LogoDarkBase64,
-				Deleted:         true,
-			})
+	// Orphaned published apps (deleted from Nuon API but still published) — only
+	// show them on page 1 when there are no more API pages, since orphan detection
+	// requires global knowledge of API app IDs and we no longer fetch all apps.
+	if page == 1 && !hasMore {
+		apiAppIDs := make(map[string]bool, len(apps))
+		for _, app := range apps {
+			apiAppIDs[app.ID] = true
+		}
+		for _, pa := range publishedApps {
+			if !apiAppIDs[pa.AppID] {
+				appsWithStatus = append(appsWithStatus, AppInfo{
+					ID:              pa.AppID,
+					Name:            "-",
+					LogoLightBase64: pa.LogoLightBase64,
+					LogoDarkBase64:  pa.LogoDarkBase64,
+					Deleted:         true,
+				})
+			}
 		}
 	}
 
@@ -211,6 +225,14 @@ func (h *Handler) AppsPage(c *gin.Context) {
 		Org:         *org,
 		Apps:        templApps,
 		AppStatuses: appStatuses,
+		Pagination: vendorpages.AppsPagination{
+			CurrentPage:  page,
+			HasPrevious:  page > 1,
+			HasNext:      hasMore,
+			PreviousPage: page - 1,
+			NextPage:     page + 1,
+			BaseURL:      fmt.Sprintf("%s/orgs/%s/apps?page=", h.basePath, org.ID),
+		},
 	}
 
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)

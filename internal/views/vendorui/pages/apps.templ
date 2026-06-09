@@ -18,12 +18,25 @@ type AppWithHealthCheckStatus struct {
 	Deleted         bool   // true if app was deleted from Nuon API but still published
 }
 
+// AppsPagination holds prev/next navigation state for the apps list. We don't
+// know the total count from the Nuon API, so this is a simpler shape than
+// components.PaginationProps.
+type AppsPagination struct {
+	CurrentPage  int
+	HasPrevious  bool
+	HasNext      bool
+	PreviousPage int
+	NextPage     int
+	BaseURL      string // e.g. "/admin/orgs/<id>/apps?page="
+}
+
 // AppsPageProps for the apps list page
 type AppsPageProps struct {
 	vendorui.LayoutProps
 	Org         models.NuonOrg
 	Apps        []AppWithHealthCheckStatus
 	AppStatuses map[string]string // app ID → "published", "coming_soon", or "" (unpublished)
+	Pagination  AppsPagination
 }
 
 // AppsPage renders the apps list page
@@ -83,6 +96,17 @@ templ AppsPage(props AppsPageProps) {
 						</button>
 					</div>
 					@appsScript(props.BasePath, props.Org.ID)
+					if props.Pagination.HasPrevious || props.Pagination.HasNext {
+						@components.Pagination(components.PaginationProps{
+							CurrentPage:  props.Pagination.CurrentPage,
+							HasPrevious:  props.Pagination.HasPrevious,
+							HasNext:      props.Pagination.HasNext,
+							PreviousPage: props.Pagination.PreviousPage,
+							NextPage:     props.Pagination.NextPage,
+							BaseURL:      props.Pagination.BaseURL,
+							ShowInfo:     false,
+						})
+					}
 				} else {
 					@emptyAppsState()
 				}

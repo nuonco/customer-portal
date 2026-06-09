@@ -186,17 +186,23 @@ func (c *Client) GetOrg(ctx context.Context) (*models.AppOrg, error) {
 	return org, nil
 }
 
-// ListApps lists all apps in the organization using same pattern as apps/list.go
+// ListApps lists apps in the organization. Limited to 10 to avoid the ctl-api
+// pagination limit (the SDK overfetches by one, so anything ≥100 trips the cap).
 func (c *Client) ListApps(ctx context.Context) ([]*models.AppApp, error) {
-	apps, _, err := c.client.GetApps(ctx, &models.GetPaginatedQuery{
-		Offset: 0,
-		Limit:  100, // Get up to 100 apps
+	apps, _, err := c.ListAppsPaginated(ctx, 0, 10)
+	return apps, err
+}
+
+// ListAppsPaginated returns one page of apps and whether more pages exist.
+func (c *Client) ListAppsPaginated(ctx context.Context, offset, limit int) ([]*models.AppApp, bool, error) {
+	apps, hasMore, err := c.client.GetApps(ctx, &models.GetPaginatedQuery{
+		Offset: offset,
+		Limit:  limit,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to list apps: %w", err)
+		return nil, false, fmt.Errorf("failed to list apps: %w", err)
 	}
-
-	return apps, nil
+	return apps, hasMore, nil
 }
 
 // GetApp retrieves app details including platform configuration
