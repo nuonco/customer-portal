@@ -1,7 +1,7 @@
 # Customer Dashboard Makefile
 # Provides convenient commands for development and testing
 
-.PHONY: help test test-unit test-integration test-coverage test-db-up test-db-down clean lint fmt
+.PHONY: help test test-unit test-integration test-coverage test-db-up test-db-down clean lint fmt client-dev
 
 # Default target
 help:
@@ -21,6 +21,7 @@ help:
 	@echo "Development:"
 	@echo "  make fmt               - Format Go code"
 	@echo "  make lint              - Run linters"
+	@echo "  make client-dev        - Run Bun React client on :5173"
 	@echo "  make clean             - Clean build artifacts"
 	@echo ""
 
@@ -98,6 +99,11 @@ lint:
 		echo "golangci-lint not installed. Running go vet instead..."; \
 		go vet ./...; \
 	fi
+
+# Run React client dev server (Bun + Vite)
+client-dev:
+	@echo "Starting React client dev server on http://127.0.0.1:5173 ..."
+	./scripts/run-client-dev.sh
 
 # Clean build artifacts
 clean:

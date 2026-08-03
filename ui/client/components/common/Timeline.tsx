@@ -1,0 +1,79 @@
+import React, { useEffect } from 'react'
+import { PaginationProvider } from '@/providers/pagination-provider'
+import { usePagination } from '@/hooks/use-pagination'
+import { cn } from '@/utils/classnames'
+import {
+  type IHasCreatedAt,
+  formatToRelativeDay,
+  parseActivityTimeline,
+} from '@/utils/timeline-utils'
+import { Pagination, type IPagination } from './Pagination'
+import { Text } from './Text'
+import { TimelineSkeleton } from './TimelineSkeleton'
+
+export interface ITimeline<T extends IHasCreatedAt>
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> {
+  events: Array<T>
+  eventCount?: number
+  groupByDate?: boolean
+  pagination: Omit<IPagination, 'position'>
+  renderEvent?: (event: T, idx: number) => React.ReactNode
+}
+
+const TimelineBase = <T extends IHasCreatedAt>({
+  className,
+  events,
+  eventCount = 10,
+  groupByDate = true,
+  pagination,
+  renderEvent,
+  ...props
+}: ITimeline<T>) => {
+  const { isPaginating, setIsPaginating } = usePagination()
+  const groupedEvents = groupByDate ? parseActivityTimeline(events) : null
+  const dates = groupedEvents
+    ? Object.keys(groupedEvents).sort((a, b) => b.localeCompare(a))
+    : null
+
+  useEffect(() => {
+    setIsPaginating(false)
+  }, [events])
+
+  return (
+    <div className={cn('flex flex-col', className)} {...props}>
+      {isPaginating ? (
+        <TimelineSkeleton eventCount={eventCount} />
+      ) : dates && groupedEvents ? (
+        dates.map((date) => (
+          <div key={date} className="timeline-group">
+            <Text className="timeline-date">{formatToRelativeDay(date)}</Text>
+            <div className="timeline-events">
+              {groupedEvents[date].map((event, idx) => (
+                <React.Fragment key={event.created_at}>
+                  {renderEvent ? renderEvent?.(event, idx) : null}
+                </React.Fragment>
+              ))}
+            </div>
+          </div>
+        ))
+      ) : (
+        <div className="timeline-events">
+          {events.map((event, idx) => (
+            <React.Fragment key={event.created_at}>
+              {renderEvent ? renderEvent?.(event, idx) : null}
+            </React.Fragment>
+          ))}
+        </div>
+      )}
+      {pagination?.hasNext || pagination?.offset !== 0 ? (
+        <Pagination {...pagination} />
+      ) : null}
+    </div>
+  )
+}
+
+export const Timeline = <T extends IHasCreatedAt>(props: ITimeline<T>) => (
+  <PaginationProvider>
+    <TimelineBase<T> {...props} />
+  </PaginationProvider>
+)

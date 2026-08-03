@@ -1,0 +1,176 @@
+import { useSearchParams } from 'react-router'
+import React, { useEffect, useRef } from 'react'
+import { Button, type IButtonAsButton } from '@/components/common/Button'
+import { HeadingGroup } from '@/components/common/HeadingGroup'
+import { Icon } from '@/components/common/Icon'
+import { Text } from '@/components/common/Text'
+import { TransitionDiv } from '@/components/common/TransitionDiv'
+import { useAutoFocusOnVisible } from '@/hooks/use-auto-focus-on-visible'
+import { useEscapeKey } from '@/hooks/use-escape-key'
+import { useSurfaces } from '@/hooks/use-surfaces'
+import { cn } from '@/utils/classnames'
+import './Modal.css'
+
+export interface IModal
+  extends Omit<React.HTMLAttributes<HTMLDivElement>, 'tabIndex'> {
+  actions?: React.ReactNode
+  childrenClassName?: string
+  footerActions?: React.ReactNode
+  heading?: React.ReactNode
+  isVisible?: boolean
+  modalId?: string
+  modalKey?: string
+  onClose?: () => void
+  primaryActionTrigger?: IButtonAsButton
+  secondaryActionTrigger?: IButtonAsButton
+  showFooter?: boolean
+  showHeader?: boolean
+  size?: 'sm' | 'default' | 'lg' | 'xl' | 'full'
+  triggerButton?: Omit<IButtonAsButton, 'onClick'>
+}
+
+export const ModalBase = ({
+  actions,
+  children,
+  childrenClassName,
+  className,
+  footerActions,
+  heading,
+  isVisible = false,
+  modalId,
+  modalKey,
+  onClose,
+  primaryActionTrigger,
+  secondaryActionTrigger,
+  showFooter = true,
+  showHeader = true,
+  size = 'default',
+  ...props
+}: Omit<IModal, 'triggerButton'>) => {
+  const { removeModal } = useSurfaces()
+  const handleClose = () => {
+    if (onClose) onClose?.()
+    removeModal(modalId, modalKey)
+  }
+  const modalRef = useRef<HTMLDivElement>(null)
+  // auto focus modal when in view
+  useAutoFocusOnVisible(modalRef, isVisible)
+  // handle close on esc key
+  useEscapeKey(handleClose)
+
+  return (
+    <>
+      <TransitionDiv
+        className={cn(
+          'modal-wrapper fixed top-0 left-0 w-screen h-screen flex z-50',
+          {}
+        )}
+        isVisible={isVisible}
+      >
+        <div
+          className="modal-overlay backdrop-blur-xs bg-black/2 dark:bg-black/10 absolute top-0 left-0 w-screen h-screen flex"
+          onClick={handleClose}
+        />
+        <div
+          className={cn(
+            'modal bg-white dark:bg-dark-grey-900 border flex flex-col m-auto rounded-lg shadow-lg w-full max-h-[80vh]',
+            {
+              'max-w-[400px]': size === 'sm',
+              'max-w-[600px]': size === 'default',
+              'max-w-[800px]': size === 'lg',
+              'max-w-[968px]': size === 'xl',
+              'max-w-[calc(100vw-2rem)]': size === 'full',
+            },
+            className
+          )}
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          ref={modalRef}
+          {...props}
+        >
+          {showHeader && (
+          <div className="py-6 px-4 border-b flex items-center justify-between">
+            {heading ? (
+              typeof heading === 'string' ? (
+                <HeadingGroup>
+                  <Text variant="h3" weight="strong">
+                    {heading}
+                  </Text>
+                </HeadingGroup>
+              ) : (
+                <HeadingGroup>{heading}</HeadingGroup>
+              )
+            ) : null}
+            <div className="flex items-center gap-4">
+              {actions}
+              <Button
+                className="!p-2"
+                onClick={handleClose}
+                title="Close modal"
+                aria-label="Close modal"
+                variant="ghost"
+              >
+                <Icon variant="XIcon" />
+              </Button>
+            </div>
+          </div>
+          )}
+          <div
+            className={cn(
+              'p-6 flex flex-col gap-4 md:gap-6 overflow-y-auto',
+              childrenClassName
+            )}
+          >
+            {children}
+          </div>
+          {showFooter && (
+          <div className="py-6 px-4 border-t flex items-center gap-4 justify-between">
+            <div className="flex items-center gap-4">
+              {footerActions}
+            </div>
+            <div className="flex items-center gap-4">
+              {secondaryActionTrigger ? (
+                <Button {...secondaryActionTrigger} />
+              ) : (
+                <Button type="button" onClick={handleClose}>
+                  {primaryActionTrigger ? 'Cancel' : 'Close'}
+                </Button>
+              )}
+              {primaryActionTrigger ? <Button {...primaryActionTrigger} /> : null}
+            </div>
+          </div>
+          )}
+        </div>
+      </TransitionDiv>
+    </>
+  )
+}
+
+export const Modal = ({ triggerButton, ...props }: IModal) => {
+  const { addModal } = useSurfaces()
+  const [searchParams] = useSearchParams()
+  const modal = <ModalBase {...props} />
+
+  const handleAddModal = () => {
+    addModal(modal, props.modalKey)
+  }
+
+  useEffect(() => {
+    if (
+      props.modalKey &&
+      props.modalKey === searchParams?.get('modal') &&
+      !props.isVisible
+    ) {
+      handleAddModal()
+    }
+  }, [])
+
+  return triggerButton ? (
+    <Button onClick={handleAddModal} {...triggerButton}>
+      {triggerButton.children}
+    </Button>
+  ) : (
+    modal
+  )
+}

@@ -15,7 +15,8 @@ COPY pkg ./pkg/
 COPY main.go ./
 COPY static ./static/
 COPY scripts ./scripts/
-RUN ./scripts/hash-assets.sh
+# Cache-busting hashes are derived from the on-disk CSS at request time
+# (see internal/assets/assets.go); no hashed copies or manifest are generated.
 RUN --mount=type=cache,target=/go/pkg/build-cache,id=gobuild-customer-dashboard \
     go generate ./...
 
@@ -50,7 +51,7 @@ ENV VERSION=$VERSION
 ENV DD_VERSION=$VERSION
 ENV GIT_REF=$GIT_REF
 
-# Copy static assets (from build stage so hashed CSS files are included)
+# Copy static assets (compiled CSS is hashed at request time by the server)
 COPY --from=build /src/services/customer-dashboard/static /app/static
 COPY --from=build /bin/service /bin/service
 

@@ -1,0 +1,3 @@
+[test]
+preload = ["./bun-test-setup.ts"]
+root = "./client"

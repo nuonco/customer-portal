@@ -1,0 +1,43 @@
+.install-wizard-step-transition {
+  animation-duration: var(--duration-fast, 220ms);
+  animation-timing-function: var(--ease-cubic, cubic-bezier(0.22, 1, 0.36, 1));
+  animation-fill-mode: both;
+  will-change: transform, opacity;
+}
+
+.install-wizard-step-transition--forward {
+  animation-name: install-wizard-enter-from-left;
+}
+
+.install-wizard-step-transition--backward {
+  animation-name: install-wizard-enter-from-right;
+}
+
+@keyframes install-wizard-enter-from-left {
+  0% {
+    opacity: 0;
+    transform: translateX(-1.25rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes install-wizard-enter-from-right {
+  0% {
+    opacity: 0;
+    transform: translateX(1.25rem);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-wizard-step-transition {
+    animation: none;
+    transform: none;
+  }
+}

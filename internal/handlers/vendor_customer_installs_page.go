@@ -177,6 +177,16 @@ func (h *Handler) CustomerInstallsPage(c *gin.Context) {
 		})
 	}
 
+	// Return JSON for React SPA requests
+	if c.GetHeader("Accept") == "application/json" {
+		c.JSON(http.StatusOK, gin.H{
+			"installs":    adminInstalls,
+			"org_id":      org.ID,
+			"nuon_org_id": org.NuonOrgID,
+		})
+		return
+	}
+
 	// Return partial for HTMX filter requests (but not hx-boost navigations)
 	if isHTMXPartialRequest(c) {
 		h.RenderTempl(c, http.StatusOK, vendorpages.InstallsTableBody(adminInstalls, org.ID, h.basePath, org.NuonOrgID))

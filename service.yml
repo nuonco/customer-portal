@@ -26,7 +26,12 @@ tests:
 color: green
 
 health_checks:
-  - http://localhost:8080/livez
+  # All three run inside the single dev.sh command (local_cmds[0]), so they are
+  # grouped under one nested list (same shape as dashboard-ui): Go server,
+  # Vite client, and Ladle.
+  - - http://localhost:8080/livez
+    - http://localhost:51273
+    - http://localhost:61001
 
 env:
   PORT: 8080
@@ -60,6 +65,9 @@ watch_ignore:
   - /tmp/*
   - /static/*
   - _templ.go
+  # The React client under ui/ has its own Vite HMR; keep it out of the Go
+  # watcher so editing .tsx does not trigger a Go rebuild + Vite restart.
+  - /ui/
 
 local_startup_cmds:
 
@@ -69,7 +77,11 @@ local_build_cmds:
   - go build -o ./tmp/main .
 
 local_cmds:
-  - ./tmp/main
+  # Single entry (like dashboard-ui's dev.sh): runs the Go server (./tmp/main)
+  # and the React/Vite client (bun run dev:all) together under one process
+  # group, so you never start bun by hand. Go rebuilds are handled by
+  # local_build_cmds via nuonctl's file watcher.
+  - ./scripts/dev.sh
 
 docker_cmds:
   - cmd: ""

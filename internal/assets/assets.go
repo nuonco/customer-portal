@@ -1,10 +1,12 @@
+// Package assets provides cache-busted URLs for static assets.
+//
+// The cache-busting token is the content hash of the file *on disk*, computed
+// lazily and re-derived whenever the file's mtime changes.
 package assets
 
 import (
 	"crypto/md5"
 	"encoding/hex"
-	"encoding/json"
-	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -12,42 +14,34 @@ import (
 	"sync"
 )
 
-// Manifest maps original asset names to their hashed versions
-type Manifest struct {
-	mu     sync.RWMutex
-	assets map[string]string // e.g., "css/vendor.css" -> "css/vendor.a1b2c3d4.css"
-}
-
 var (
-	globalManifest *Manifest
-	once           sync.Once
+	mu        sync.RWMutex
+	staticDir = "./static"
+	cache     = map[string]cacheEntry{} // asset name -> hash keyed by mtime
 )
 
-// Init initializes the global asset manifest
-// Call this at application startup
-func Init(staticDir string) error {
-	var initErr error
-	once.Do(func() {
-		globalManifest = &Manifest{
-			assets: make(map[string]string),
-		}
-		initErr = globalManifest.load(staticDir)
-	})
-	return initErr
+type cacheEntry struct {
+	modTime int64
+	hash    string
 }
 
-// Path returns the cache-busted path for an asset
-// e.g., Path("css/vendor.css") -> "/static/css/vendor.a1b2c3d4.css"
-func Path(name string) string {
-	if globalManifest == nil {
-		// Fallback if not initialized
-		return "/static/" + name
-	}
-	globalManifest.mu.RLock()
-	defer globalManifest.mu.RUnlock()
+// Init records the directory static assets are served from.
+func Init(dir string) error {
+	mu.Lock()
+	staticDir = dir
+	cache = map[string]cacheEntry{}
+	mu.Unlock()
+	return nil
+}
 
-	if hashed, ok := globalManifest.assets[name]; ok {
-		return "/static/" + hashed
+// Path returns a cache-busted URL for an asset, e.g.
+// Path("css/customer.css") -> "/static/css/customer.6491ba3f.css".
+// When the file cannot be read the plain path is returned as a fallback.
+func Path(name string) string {
+	if hash := version(name); hash != "" {
+		ext := filepath.Ext(name)
+		base := strings.TrimSuffix(name, ext)
+		return "/static/" + base + "." + hash + ext
 	}
 	return "/static/" + name
 }
@@ -62,44 +56,35 @@ func CustomerCSSPath() string {
 	return Path("css/customer.css")
 }
 
-// load reads the manifest.json file
-func (m *Manifest) load(staticDir string) error {
-	manifestPath := filepath.Join(staticDir, "manifest.json")
+// version returns the 8-char content hash for an on-disk asset, recomputing it
+// only when the file's mtime changes so repeated calls are cheap in production
+// while still picking up rebuilds in dev.
+func version(name string) string {
+	mu.RLock()
+	dir := staticDir
+	entry, ok := cache[name]
+	mu.RUnlock()
 
-	data, err := os.ReadFile(manifestPath)
+	fullPath := filepath.Join(dir, name)
+	fi, err := os.Stat(fullPath)
 	if err != nil {
-		if os.IsNotExist(err) {
-			// No manifest file - development mode, compute hashes on the fly
-			return m.computeHashes(staticDir)
-		}
-		return fmt.Errorf("failed to read manifest: %w", err)
+		return ""
+	}
+	mt := fi.ModTime().UnixNano()
+	if ok && entry.modTime == mt {
+		return entry.hash
 	}
 
-	return json.Unmarshal(data, &m.assets)
-}
-
-// computeHashes computes hashes for all CSS files (fallback for dev mode)
-func (m *Manifest) computeHashes(staticDir string) error {
-	cssFiles := []string{"css/vendor.css", "css/customer.css"}
-
-	for _, cssFile := range cssFiles {
-		fullPath := filepath.Join(staticDir, cssFile)
-		if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-			continue
-		}
-
-		hash, err := computeFileHash(fullPath)
-		if err != nil {
-			continue
-		}
-
-		// Store mapping: "css/vendor.css" -> "css/vendor.a1b2c3d4.css"
-		ext := filepath.Ext(cssFile)
-		base := strings.TrimSuffix(cssFile, ext)
-		m.assets[cssFile] = fmt.Sprintf("%s.%s%s", base, hash[:8], ext)
+	hash, err := computeFileHash(fullPath)
+	if err != nil {
+		return ""
 	}
+	short := hash[:8]
 
-	return nil
+	mu.Lock()
+	cache[name] = cacheEntry{modTime: mt, hash: short}
+	mu.Unlock()
+	return short
 }
 
 func computeFileHash(path string) (string, error) {

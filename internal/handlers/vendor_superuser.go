@@ -48,7 +48,6 @@ func (h *Handler) SuperuserOrgDetail(c *gin.Context) {
 		return
 	}
 
-	// Check if user is already a member
 	var count int64
 	h.db.Model(&models.OrgMember{}).
 		Where("user_id = ? AND org_id = ? AND status = ?", user.ID, orgID, models.MemberStatusActive).
@@ -67,14 +66,12 @@ func (h *Handler) SuperuserJoinOrg(c *gin.Context) {
 	orgID := c.Param("org_id")
 	user := middleware.GetCurrentUser(c)
 
-	// Check org exists
 	var org models.NuonOrg
 	if err := h.db.First(&org, "id = ?", orgID).Error; err != nil {
 		c.String(http.StatusNotFound, "Org not found")
 		return
 	}
 
-	// Upsert membership
 	member := models.OrgMember{
 		UserID: user.ID,
 		OrgID:  orgID,
@@ -87,7 +84,6 @@ func (h *Handler) SuperuserJoinOrg(c *gin.Context) {
 		return
 	}
 
-	// Re-render the org detail with updated membership
 	props := partials.SuperuserOrgDetailProps{
 		Org:      &org,
 		IsMember: true,

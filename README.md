@@ -36,6 +36,98 @@ The customer-dashboard service provides a white-label portal for Nuon vendors an
 
 Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. The service listens on port :8080 in all modes (local dev, container, stage, prod).
 
+### React Client (Parallel Dev)
+
+A minimal Bun + React + Ladle frontend scaffold now lives in [ui](ui).
+
+`nuonctl` runs the React client for you — no separate `bun` step. `scripts/dev.sh`
+(the service's single `local_cmds` entry, mirroring dashboard-ui's `dev.sh`)
+launches the Go server (`./tmp/main`) and the client (`bun run dev:all`: Vite on
+:51273, CSS watch, and Ladle on :61001) together under one process group:
+
+```bash
+./run-nuonctl.sh services dev --dev customer-dashboard
+```
+
+- Existing Templ + HTMX app (Go): http://localhost:8080
+- New React client (Vite): http://localhost:51273
+- Ladle component explorer: http://localhost:61001
+
+To run just the client standalone (e.g. against a server on another host):
+
+```bash
+./scripts/run-client-dev.sh   # or: cd ui && bun run dev:all
+```
+
+React UI linting (Oxlint):
+
+```bash
+cd ui
+bun run lint
+```
+
+Regenerate OpenAPI types used by the React client:
+
+```bash
+cd ui
+bun run generate-api-types
+```
+
+React UI theming convention:
+
+- Prefer semantic Tailwind theme tokens over hardcoded palette classes in React views/components.
+- Use classes like `bg-app-bg`, `bg-surface`, `bg-surface-elevated`, `text-text-primary`, `text-text-muted`, and `border-border-subtle`.
+- These semantic tokens are mapped in `ui/client/styles.css` and automatically adapt to light/dark mode.
+
+URLs during dev:
+
+- Existing frontend (Templ + HTMX): http://127.0.0.1:8080
+- New React client (Vite): http://localhost:51273
+
+Current React routing/auth scaffold:
+
+- React vendor login now lives at `/admin/login/`
+- React vendor login bootstraps from the existing backend HTML at `/bff/admin/login/` and reuses the backend auth flow unchanged
+- Vendor login should be tested from `localhost:51273`, not `127.0.0.1:51273`, so the host-scoped auth cookies are shared with `localhost:8080`
+- Successful vendor login now returns the React app to the requested `redirect` path (when provided), otherwise `/admin/orgs`
+- `/admin/orgs` is now React-owned and handles both behaviors from the legacy page:
+  - auto-redirects to the selected org's `/accounts` route when orgs exist
+  - shows an empty-state connect-org flow when no orgs are linked
+- `/admin/orgs/:orgId/install-links` is React-owned and supports tab/pagination plus create-link flow
+- `/admin/orgs/:orgId/install-links/:linkId` is React-owned and shows install link detail + copy/delete actions
+- React install link data now loads from dedicated JSON endpoints under `/admin/orgs/:orgId/install-links-api`
+- React installs data now loads from dedicated JSON endpoints under `/admin/orgs/:orgId/installs-api`
+- `/admin/orgs/:orgId/installs` is React-owned and supports filtering, import, and forget actions
+- `/admin/orgs/:orgId/apps` is React-owned and supports publish-state edits, ordering, pagination, and deleted-app cleanup
+- React app catalog data now loads from `GET /admin/orgs/:orgId/apps-api/catalog`
+- React installs and install-links list UIs share a presentational table shell in `ui/client/components/common/SimpleTable.tsx`
+- Authenticated vendor routes now render in a shared React app shell with sidebar navigation + topbar breadcrumbs (starting with `/admin/orgs`)
+- The shared React vendor layout now validates the selected org API token on mount and shows a `Token Is Expired` warning banner when Nuon reports an expired token
+- The topbar user dropdown is now a standalone React component at `ui/client/components/layout/vendor/UserMenu.tsx`, and it owns the migrated legacy menu links (Profile, Keyboard shortcuts, Superuser, Log out)
+- Vendor profile display-name updates use `PUT /admin/profile` and now return validation errors (`400`) for empty names or names over 255 characters, instead of surfacing generic server errors
+- Customer routing in React now mirrors backend paths at root level (`/apps`, `/installs`, `/login`) with base-domain redirects to `/admin/login` for customer-only paths (`/`, `/login`, `/installs*`)
+- Authenticated customer routes now render in a shared React portal shell that mirrors the legacy customer sidebar layout for `/apps`, `/installs`, `/installs/:installId/:tab`, and `/account`
+- The React customer sidebar restores the legacy install switcher toggle (current install summary, searchable install dropdown, explicit no-install option, and create-install shortcut) in place of the static Installs nav link
+- Customer user actions are now surfaced in a topbar dropdown menu (vendor-style) instead of the sidebar panel, with settings and logout actions
+- The React customer sidebar keeps its desktop collapse toggle accessible even in the minimized state and persists the preference in the `sidebar_minimized` cookie
+- The React customer sidebar now uses a simple mobile drawer flow: topbar button opens it, an overlay or close button dismisses it, and it auto-closes after route changes
+- React customer portal state now loads from `GET /portal-api/state`, while account create/switch/update continues to use the existing backend endpoints unchanged
+- React single-install tab details (`overview`, `stack`, `sandbox`, `components`, `roles`, `policies`, `audit`, `readme`) now load from `GET /portal-api/installs/:install_id/detail`; the `audit` payload includes workflow and action-workflow history, and the React audit tab mirrors the legacy sub-tabs for workflows, stack, sandbox, components, and actions
+- Customer install tab routing now uses one React view file per URL under `ui/client/views/customer/install/` (for example, `/installs/:installId/sandbox` maps to `Sandbox.tsx`, `/installs/:installId/stack` maps to `Stack.tsx`), with shared install-detail loading/context in `SelectedInstallProvider.tsx`
+- The install detail `components` tab now falls back to latest workflow step groups when install/app component APIs are empty, so component rows still render from workflow component groups
+- React customer install creation now uses a dedicated wizard route at `/apps/:appId/install`, backed by JSON endpoints under `/portal-api/apps/:app_id/install-wizard` for app/install/workflow data + install creation; wizard step state is owned in React context
+- The install wizard step indicator now uses a single animated active background pill that slides between steps as the current step changes
+- Install wizard step content now animates on step changes, sliding in from the direction of navigation (forward/backward), with reduced-motion fallback support
+- The React install wizard configure step is now powered by TanStack Form with explicit React submit handlers (`Deploy stack` opens confirmation, `Confirm` executes install creation), replacing DOM `requestSubmit()` lookups
+- Reloading the wizard on `Configure install` after an install has already started now preserves `Deploy stack` as accessible/in-progress, so users can navigate back to active workflow steps
+- The install wizard backend treats `components` as completed when stack/sandbox workflow groups are already terminal and no component groups exist for that workflow, preventing a false `upcoming` state on the final step
+- React includes a backend-parity subdomain utility (`ui/client/utils/subdomain-utils.ts`) for normalization/validation/candidate generation, used by the org connect modal for subdomain previews
+- Remaining vendor routes not yet migrated to React still redirect to `/admin/orgs` and require a valid admin session for vendor views
+
+The client dev server proxies requests from `/bff/*` to the Go app on :8080.
+
+The React Vite app uses an isolated optimize-deps cache directory (`ui/node_modules/.vite-customer-dashboard`) so running other local Vite tools (like Ladle) does not invalidate its dependency metadata and cause `Outdated Optimize Dep` 504 errors.
+
 **Hot reload**: In dev mode (`LIVE_RELOAD=true`), the app exposes a `GET /dev/version` endpoint that returns the server's start timestamp. A client-side script (`static/js/dev-reload.js`) polls this endpoint every 1.5 seconds. When the version changes (i.e. the Go app was rebuilt and restarted), the script fetches the current page and uses Idiomorph to morph the DOM in-place — preserving form state, scroll position, and open/closed UI elements. If the server is unreachable during a build, the script checks nuonctl's webview API (`localhost:7777`) for build status — showing a "Rebuilding..." spinner or a red "Build failed" overlay with the compiler error text.
 
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
@@ -53,6 +145,16 @@ The customer and vendor sections of the app each have their own collection of gi
 The handlers read and write data from the database, and render it into UI templates. Often, the handlers also read and write data from the Nuon API using the SDK. We should avoid copying Nuon API data into the DB, so we don't have to worry about keeping the data in sync over time.
 
 Each section has it's own login page. By default, they both use the same auth provider, but the customer login can be configured to use a separate one.
+
+#### JSON API handlers
+
+All new vendor API endpoints consumed by the React client live under `internal/handlers/json/`, with **one endpoint per file**. Each file is self-contained: it owns its own request/response types and all logic needed to handle the request. Files follow the naming pattern `vendor_<resource>.go` (e.g. `vendor_install_link_detail.go`).
+
+The shared `VendorHandler` struct in `vendor_handler.go` holds the dependencies — `db`, `nuonAPIURL`, `customerBaseURL`, and `subdomainBaseDomain` — and is constructed once in `main.go` via `jsonhandlers.NewVendorHandler(...)`.
+
+Routes for JSON endpoints use an `-api` suffix to distinguish them from the legacy Templ page routes that serve the same resource (e.g. `/install-links-api` alongside `/install-links`). Legacy Templ page handlers are **not modified** when adding new JSON endpoints.
+
+This is the required pattern for all new or migrated vendor API endpoints going forward.
 
 ### Frontend
 
@@ -94,14 +196,14 @@ Every interaction should work in three layers, each building on the last:
 - **POST-Redirect-GET**: POST action handlers always redirect. `hx-boost` follows the redirect. Alert messages travel as `alert_type` and `alert_msg` query params in the redirect URL.
 - **HTMX on the element, not the form**: For progressive enhancement of forms, place `hx-post` on the submit button (not the form), so the form works natively without JS.
 
-### CSS Asset Hashing — Hands Off `static/`
+### CSS Asset Cache-Busting — Hands Off `static/`
 
-The dev server and build pipeline automatically compile source CSS, generate hashed filenames, and update the manifest. **No manual steps are needed.**
+The build pipeline (`scripts/build-css.sh`) compiles source CSS into `static/css/`. Cache-busting is handled **entirely at runtime** — there are no hashed copies and no `manifest.json` to maintain. **No manual steps are needed.**
 
 - **Only edit source files**: `src/customer.css` and `src/vendor.css`
-- **Never** read, edit, create, copy, rename, delete, or `git add` anything under `static/css/` or `static/manifest.json`
-- These files are build artifacts — treating them as source files will break styles and cause merge conflicts
-- `internal/assets/assets.go` computes hashes on the fly in dev mode; the build pipeline handles production
+- **Never** read, edit, create, copy, rename, delete, or `git add` anything under `static/css/` — these are build artifacts
+- `internal/assets/assets.go` derives the cache-busting hash from the on-disk CSS at request time (cached by mtime), producing URLs like `/static/css/customer.<hash>.css`. The static handler in `main.go` strips the hash and serves the canonical base file. Because the hash always comes from the file actually served, the URL can never drift out of sync.
+- Do **not** reintroduce a manifest/hashed-copy scheme (the old `scripts/hash-assets.sh`): keeping the base CSS, hashed copies, and manifest in sync was the root cause of intermittent CSS 404s.
 
 ## User Experience Design
 
@@ -211,10 +313,12 @@ The install creation flow uses a multi-step wizard that guides customers through
 The wizard applies to both published-app and install-link flows. Both POST handlers (`CreateInstallFromApp`, `AcceptInstallLink`) redirect to the wizard after install creation.
 
 **Key architectural patterns:**
-- **URL-driven state**: The `step`, `install_id`, and `workflow_id` query params drive all wizard state.
+- **URL + context-driven state**: The `step`, `install_id`, and `workflow_id` query params identify wizard position and workflow targets; step accessibility/status and polling decisions are derived in React context from user actions and backend workflow data.
 - **Partial rendering**: The handler checks `?partial=content` to return just the step content (for HTMX polling) or the full page.
 - **Step transitions**: Step indicator links and "Next" buttons use targeted HTMX (`hx-get` with `partial=content`, `hx-target="#wizard-content"`) instead of `hx-boost` full-page swaps. A small inline script detects navigation direction via `data-step-index` attributes and applies CSS slide-fade animations (`wizard-transition-forward` / `wizard-transition-backward`). Polling swaps (every 3s) are excluded from transitions via a `data-wizard-nav` flag.
+- **Local user reconciliation on create**: `POST /portal-api/apps/:app_id/install-wizard` now ensures the authenticated JWT user exists in the local `users` table (and restores soft-deleted rows) before creating the install row, preventing `installs.user_id` foreign-key failures during first-run customer installs.
 - **Step groups**: The handler fetches workflow step groups from the API and filters them per wizard step via `wizard.MatchesWizardStep`. Stack matches the group with `Labels["name"] == "provision-install-stack"`, sandbox matches `Labels["name"] == "provision-sandbox"`, and components matches all groups with `Labels["domain"] == "component"` (one per component).
+- **Step completion source of truth**: Wizard group status is derived from each group's latest step statuses (instead of trusting the group aggregate status directly), so stale group-level `in-progress` states do not block completion when steps are terminal. `cancelled` and `skipped` are treated as terminal for completion.
 
 Key files:
 - `internal/views/customerui/theme/pages/install_wizard.templ` — Wizard page template, step indicator, deploy cards, type-specific component tabs
@@ -252,6 +356,13 @@ Key files:
 | `GET /auth/callback`  | `BaseDomainCallback`     | OIDC callback on base domain                        |
 | `GET /auth/complete`  | `CompleteSubdomainAuth`  | Sets JWT cookie on subdomain after base domain auth |
 | `GET /auth/error`     | `AuthErrorPage`          | Auth error display page                             |
+| `GET /auth-api/login-url` | `CustomerAuthHandler.LoginURL` | Returns JSON login URL for React customer app |
+| `GET /auth-api/session` | `CustomerAuthHandler.Session` | Returns JSON session status for authenticated customer |
+| `POST /auth-api/logout` | `CustomerAuthHandler.Logout` | Clears customer auth cookies and returns JSON |
+| `GET /portal-api/state` | `CustomerPortalHandler.State` | Returns React customer portal layout data (theme, accounts, installs, apps) |
+| `GET /portal-api/apps/:app_id/install-wizard` | `CustomerInstallWizardHandler.State` | Returns React customer install wizard app/form/workflow data (wizard step state is frontend-owned) |
+| `POST /portal-api/apps/:app_id/install-wizard` | `CustomerInstallWizardHandler.Create` | Creates a customer install and returns the workflow handoff for the React wizard |
+| `POST /portal-api/installs/:install_id/workflows/:workflow_id/approve-all` | `CustomerInstallWizardHandler.ApproveAllWorkflowSteps` | Approves current pending workflow approvals and enables approve-all mode for the React wizard |
 | `POST /refresh_token` | JWT RefreshHandler       | Refresh JWT token                                   |
 
 #### Customer Auth Flow (3-step subdomain-aware)

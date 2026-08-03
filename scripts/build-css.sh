@@ -30,6 +30,3 @@ echo "Building CSS..."
 
 go tool gotailwind -i ./src/vendor.css -o ./static/css/vendor.css --content './internal/views/vendorui/**/*.templ' --content './src/base.css'
 go tool gotailwind -i ./src/customer.css -o ./static/css/customer.css --content './internal/views/customerui/**/*.templ' --content './src/base.css'
-
-# Hash assets after CSS is built
-./scripts/hash-assets.sh

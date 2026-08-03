@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"net/http"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
@@ -92,6 +93,28 @@ func (h *Handler) OrgDetailPage(c *gin.Context) {
 	showingTo := offset + len(links)
 	if totalCount == 0 {
 		showingFrom = 0
+	}
+
+	if strings.Contains(c.GetHeader("Accept"), "application/json") {
+		c.JSON(http.StatusOK, gin.H{
+			"links": links,
+			"pagination": gin.H{
+				"current_page":    page,
+				"total_pages":     totalPages,
+				"has_previous":    page > 1,
+				"has_next":        page < totalPages,
+				"previous_page":   page - 1,
+				"next_page":       page + 1,
+				"total_count":     totalCount,
+				"per_page":        linksPerPage,
+				"showing_from":    showingFrom,
+				"showing_to":      showingTo,
+				"current_tab":     currentTab,
+				"available_count": availableCount,
+				"used_count":      usedCount,
+			},
+		})
+		return
 	}
 
 	// Get user's orgs for sidebar dropdown

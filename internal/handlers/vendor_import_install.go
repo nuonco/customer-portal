@@ -112,6 +112,10 @@ func (h *Handler) ImportInstall(c *gin.Context) {
 
 	// Redirect to installs page
 	redirectURL := fmt.Sprintf("%s/orgs/%s/installs", h.basePath, org.ID)
+	if c.GetHeader("Accept") == "application/json" {
+		c.JSON(http.StatusOK, gin.H{"message": "Install imported successfully"})
+		return
+	}
 	if isHTMXRequest(c) {
 		c.Header("HX-Redirect", redirectURL)
 		c.Status(http.StatusOK)

@@ -1,6 +1,8 @@
 package wizard
 
 import (
+	"strings"
+
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
 
@@ -15,7 +17,32 @@ func MatchesWizardStep(step string, g nuon.WorkflowStepGroup) bool {
 	case "sandbox":
 		return g.Labels["name"] == "provision-sandbox"
 	case "components":
-		return g.Labels["domain"] == "component"
+		if g.Labels["domain"] == "component" || g.Labels["component_name"] != "" {
+			return true
+		}
+
+		if g.Labels["name"] == "provision-install-stack" || g.Labels["name"] == "provision-sandbox" {
+			return false
+		}
+
+		if g.Name == "provision-install-stack" || g.Name == "provision-sandbox" {
+			return false
+		}
+
+		for _, s := range g.Steps {
+			if s == nil {
+				continue
+			}
+			stepName := strings.ToLower(strings.TrimSpace(s.Name))
+			if _, ok := stackStepNames[stepName]; ok {
+				return false
+			}
+			if _, ok := sandboxStepNames[stepName]; ok {
+				return false
+			}
+		}
+
+		return len(g.Steps) > 0
 	default:
 		return false
 	}
@@ -150,14 +177,77 @@ func StepStatus(step *nuon.WorkflowStep) string {
 	return step.Status.Status
 }
 
+func normalizeStepStatus(status string) string {
+	status = strings.TrimSpace(strings.ToLower(status))
+	if status == "" {
+		return "not_started"
+	}
+	return status
+}
+
+func isStepSuccessTerminalStatus(status string) bool {
+	switch normalizeStepStatus(status) {
+	case "completed", "success", "approved", "cancelled", "skipped":
+		return true
+	default:
+		return false
+	}
+}
+
+func isStepErrorStatus(status string) bool {
+	return normalizeStepStatus(status) == "error"
+}
+
+func isStepApprovalAwaitingStatus(status string) bool {
+	return normalizeStepStatus(status) == "approval-awaiting"
+}
+
+func isStepActiveStatus(status string) bool {
+	switch normalizeStepStatus(status) {
+	case "in-progress", "active", "pending", "queued", "running", "not_started":
+		return true
+	default:
+		return false
+	}
+}
+
 // GroupStatus returns the status for a group, checking step-level status
 // since the group aggregate may not reflect approval state.
 func GroupStatus(g nuon.WorkflowStepGroup) string {
-	s := ActiveStep(g)
-	if s != nil && s.Status != nil {
-		return s.Status.Status
+	latest := LatestSteps(g)
+	if len(latest) > 0 {
+		hasActive := false
+		allSuccessTerminal := true
+
+		for _, s := range latest {
+			status := StepStatus(s)
+			if isStepErrorStatus(status) {
+				return "error"
+			}
+			if isStepApprovalAwaitingStatus(status) {
+				return "approval-awaiting"
+			}
+			if isStepActiveStatus(status) {
+				hasActive = true
+			}
+			if !isStepSuccessTerminalStatus(status) {
+				allSuccessTerminal = false
+			}
+		}
+
+		if hasActive {
+			return "in-progress"
+		}
+		if allSuccessTerminal {
+			return "completed"
+		}
 	}
-	return string(g.Status.Status)
+
+	status := normalizeStepStatus(string(g.Status.Status))
+	if status == "not_started" {
+		return "in-progress"
+	}
+	return status
 }
 
 // FirstRetryableGroup returns the first group that is in an error state

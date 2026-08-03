@@ -82,6 +82,12 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 		}
 	}
 
+	// Return JSON for React SPA requests
+	if c.GetHeader("Accept") == "application/json" {
+		c.JSON(http.StatusOK, gin.H{"results": results})
+		return
+	}
+
 	// Build HTML fragment
 	if len(results) == 0 {
 		c.Data(http.StatusOK, "text/html", []byte(`<div class="px-4 py-3 text-sm text-cool-grey-500 dark:text-cool-grey-400">No installs found.</div>`))

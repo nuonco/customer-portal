@@ -16,6 +16,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
+	jsonhandlers "github.com/nuonco/mono/services/customer-dashboard/internal/handlers/json"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 )
@@ -137,8 +138,16 @@ func main() {
 	// Add cache-control middleware for proper browser caching
 	router.Use(cacheControlMiddleware())
 
-	// Serve static files (shared across both interfaces)
-	router.Static("/static", "./static")
+	// Serve static files (shared across both interfaces).
+	// Cache-busting hashes (e.g. css/customer.6491ba3f.css) are stripped from
+	// the request path so we serve the canonical base file directly from disk.
+	staticFS := http.StripPrefix("/static/", http.FileServer(http.Dir("./static")))
+	serveStatic := func(c *gin.Context) {
+		c.Request.URL.Path = hashedAssetPattern.ReplaceAllString(c.Request.URL.Path, ".$1")
+		staticFS.ServeHTTP(c.Writer, c.Request)
+	}
+	router.GET("/static/*filepath", serveStatic)
+	router.HEAD("/static/*filepath", serveStatic)
 
 	// Dev hot-reload version endpoint (only in local development)
 	if os.Getenv("LIVE_RELOAD") == "true" {
@@ -189,6 +198,7 @@ func main() {
 func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMiddleware, authProvider auth.AuthProvider, customerBaseURL, nuonAPIURL, dashboardURL, subdomainBaseDomain, superuserEmailDomain string, logger *zap.Logger) {
 	// Initialize handlers with customer base URL for install links, Nuon API URL, and base path
 	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, "/admin", subdomainBaseDomain, superuserEmailDomain, logger)
+	vendorJSON := jsonhandlers.NewVendorHandler(db, nuonAPIURL, customerBaseURL, subdomainBaseDomain)
 
 	// Root redirect to login
 	rg.GET("/", func(c *gin.Context) {
@@ -197,6 +207,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 
 	// Public routes - vendor login
 	rg.GET("/login/", h.VendorLoginPageTempl)
+	rg.GET("/login/config", h.VendorLoginConfigJSON)
 	rg.GET("/logout", h.VendorLogout) // Logout handler
 
 	// Auth routes depend on provider type
@@ -219,7 +230,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	orgMgmtRoutes.Use(jwtAuth.MiddlewareFunc())
 	orgMgmtRoutes.Use(middleware.RequireRole(models.RoleVendor))
 	{
-		orgMgmtRoutes.POST("/org/create", h.CreateOrg) // Create new org
+		orgMgmtRoutes.POST("/org/create", vendorJSON.CreateOrg) // Create new org
 	}
 
 	// Profile settings (user can edit their own profile)
@@ -227,8 +238,11 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	profile.Use(jwtAuth.MiddlewareFunc())
 	profile.Use(middleware.RequireRole(models.RoleVendor))
 	{
+		profile.GET("/me", vendorJSON.Me)
+		profile.GET("/orgs", vendorJSON.MeOrgs)
 		profile.GET("/panel", h.ProfilePanelContent)
-		profile.PUT("/", h.UpdateProfile)
+		profile.PUT("", vendorJSON.UpdateProfile)
+		profile.PUT("/", vendorJSON.UpdateProfile)
 	}
 
 	// Protected vendor routes
@@ -291,19 +305,29 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.PUT("/apps/order", h.UpdateAppOrder)            // Update published app catalog order
 
 			// Apps - API endpoints (JSON, used by create link modal)
-			orgRoutes.GET("/apps-api", h.GetOrgApps)
-			orgRoutes.GET("/apps-api/:app_id/input-config", h.GetAppInputConfig)
+			orgRoutes.GET("/apps-api", vendorJSON.GetOrgApps)
+			orgRoutes.GET("/apps-api/catalog", vendorJSON.AppCatalog)
+			orgRoutes.GET("/apps-api/:app_id/input-config", vendorJSON.GetAppInputConfig)
 
 			// Local customer-facing input configuration
 			orgRoutes.GET("/apps-api/:app_id/customer-input-config", h.GetAppCustomerInputConfig)
 			orgRoutes.PUT("/apps-api/:app_id/customer-input-config", h.UpdateAppCustomerInputConfig)
 
+			orgRoutes.POST("/install-links-api", vendorJSON.CreateInstallLink)
+			orgRoutes.GET("/install-links-api", vendorJSON.InstallLinks)
+			orgRoutes.GET("/install-links-api/:link_id", vendorJSON.InstallLinkDetail)
+			orgRoutes.DELETE("/install-links-api/:link_id", vendorJSON.DeleteInstallLink)
+			orgRoutes.GET("/token-status", vendorJSON.OrgTokenStatus)
 			orgRoutes.POST("/install-links", h.CreateInstallLink)
 			orgRoutes.GET("/install-links/:link_id", h.InstallLinkDetail)
 			orgRoutes.GET("/install-links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
 			orgRoutes.DELETE("/install-links/:link_id", h.DeleteInstallLink)
 
 			// Customer Installs - admin view of all portal installs
+			orgRoutes.GET("/installs-api", vendorJSON.CustomerInstalls)
+			orgRoutes.GET("/installs-api/search-nuon", vendorJSON.SearchNuonInstalls)
+			orgRoutes.POST("/installs-api/import", vendorJSON.ImportInstall)
+			orgRoutes.POST("/installs-api/:install_id/forget", vendorJSON.AdminForgetInstall)
 			orgRoutes.GET("/installs", h.CustomerInstallsPage)
 			orgRoutes.GET("/installs/search-nuon", h.SearchNuonInstalls)
 			orgRoutes.POST("/installs/import", h.ImportInstall)
@@ -313,6 +337,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/customers", h.CustomersPage)
 
 			// Customer Accounts - view customer company accounts
+			orgRoutes.GET("/accounts-api", vendorJSON.Accounts)
 			orgRoutes.GET("/accounts", h.AccountsPage)
 			orgRoutes.GET("/accounts/:account_id", h.AccountDetailRedirect)
 			orgRoutes.GET("/accounts/:account_id/members", h.AccountMembersPage)
@@ -355,6 +380,18 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			superuser.GET("/orgs/:org_id", h.SuperuserOrgDetail)
 			superuser.POST("/orgs/:org_id/join", h.SuperuserJoinOrg)
 			superuser.DELETE("/orgs/:org_id/leave", h.SuperuserLeaveOrg)
+
+			// JSON API endpoints for the React superuser panel
+			superuserAPI := rg.Group("/superuser-api")
+			superuserAPI.Use(jwtAuth.MiddlewareFunc())
+			superuserAPI.Use(middleware.RequireRole(models.RoleVendor))
+			superuserAPI.Use(middleware.RequireSuperuser(superuserEmailDomain))
+			{
+				superuserAPI.GET("/orgs/search", vendorJSON.SuperuserSearchOrgs)
+				superuserAPI.GET("/orgs/:org_id", vendorJSON.SuperuserOrgDetail)
+				superuserAPI.POST("/orgs/:org_id/join", vendorJSON.SuperuserJoinOrg)
+				superuserAPI.DELETE("/orgs/:org_id/leave", vendorJSON.SuperuserLeaveOrg)
+			}
 		}
 	}
 
@@ -378,6 +415,10 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// Initialize handlers with customer auth factory (OIDC only, no local auth)
 	h := handlers.NewHandlerWithCustomerAuth(db, jwtAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, "", subdomainBaseDomain, logger)
+	customerJSON := jsonhandlers.NewCustomerAuthHandler(customerBaseURL)
+	portalJSON := jsonhandlers.NewCustomerPortalHandler(db, customerBaseURL, subdomainBaseDomain, nuonAPIURL)
+	wizardJSON := jsonhandlers.NewCustomerInstallWizardHandler(db, customerBaseURL, subdomainBaseDomain, nuonAPIURL)
+	installDetailJSON := jsonhandlers.NewCustomerInstallDetailHandler(db, nuonAPIURL)
 
 	// Root redirect to customer login (with subdomain) or admin login (without subdomain)
 	// The RedirectBaseDomainCustomerRoutes middleware handles the base domain case
@@ -392,6 +433,39 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		baseAuth.GET("/login", h.BaseDomainLogin)       // Initiate OIDC from base domain
 		baseAuth.GET("/callback", h.BaseDomainCallback) // OIDC callback handler
 		baseAuth.GET("/error", h.AuthErrorPage)         // Auth error page
+	}
+
+	// JSON auth endpoints for React customer app
+	// These allow login/session/logout flows without relying on HTML page redirects.
+	authAPI := rg.Group("/auth-api")
+	{
+		authAPI.GET("/login-url", customerJSON.LoginURL)
+		authAPI.GET("/post-login", customerJSON.PostLoginRedirect)
+		authAPI.POST("/logout", customerJSON.Logout)
+
+		authSession := authAPI.Group("")
+		authSession.Use(jwtAuth.MiddlewareFunc())
+		authSession.Use(middleware.RequireRole(models.RoleCustomer))
+		{
+			authSession.GET("/session", customerJSON.Session)
+		}
+	}
+
+	customerAPI := rg.Group("/portal-api")
+	customerAPI.Use(jwtAuth.MiddlewareFunc())
+	customerAPI.Use(middleware.RequireRole(models.RoleCustomer))
+	{
+		customerAPI.GET("/state", portalJSON.State)
+		customerAPI.GET("/installs/:install_id/detail", installDetailJSON.Detail)
+		customerAPI.GET("/apps/:app_id/install-wizard", wizardJSON.State)
+		customerAPI.POST("/apps/:app_id/install-wizard", wizardJSON.Create)
+
+		customerWorkflowActions := customerAPI.Group("/installs/:install_id/workflows/:workflow_id")
+		customerWorkflowActions.Use(middleware.RequireCustomerAccount(db))
+		{
+			customerWorkflowActions.POST("/approve", wizardJSON.ApproveWorkflowStep)
+			customerWorkflowActions.POST("/approve-all", wizardJSON.ApproveAllWorkflowSteps)
+		}
 	}
 
 	// Subdomain completion endpoint (sets JWT cookie on subdomain after base domain auth)
