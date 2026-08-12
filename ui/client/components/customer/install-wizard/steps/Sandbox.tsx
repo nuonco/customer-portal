@@ -9,8 +9,8 @@ import { planSummaryLabel } from "../wizard-utils";
 import {
   type TWorkflowActionHandlers,
   WaitingForWorkflowDetailsCard,
-  WorkflowGroupsPanel,
-} from "./WorkflowGroupsPanel";
+  WorkflowStepsList,
+} from "./WorkflowStepsList";
 
 export function WorkflowSandboxStep({
   title,
@@ -69,7 +69,9 @@ export function WorkflowSandboxStep({
                 <Badge theme="error">{workflow.policy_totals.deny} deny</Badge>
               ) : null}
               {workflow.policy_totals.pass > 0 ? (
-                <Badge theme="success">{workflow.policy_totals.pass} pass</Badge>
+                <Badge theme="success">
+                  {workflow.policy_totals.pass} pass
+                </Badge>
               ) : null}
             </div>
           </div>
@@ -78,7 +80,9 @@ export function WorkflowSandboxStep({
             {showApproveAll ? (
               <Button
                 variant="secondary"
-                disabled={actionPending || isReadOnly || !workflow.has_approval_awaiting}
+                disabled={
+                  actionPending || isReadOnly || !workflow.has_approval_awaiting
+                }
                 onClick={() => void onApproveAll()}
               >
                 Approve all
@@ -118,13 +122,12 @@ export function WorkflowSandboxStep({
       {showWaitingForWorkflowDetails ? (
         <WaitingForWorkflowDetailsCard />
       ) : (
-        <WorkflowGroupsPanel
+        <WorkflowStepsList
           workflow={workflow}
+          onRetry={onRetry}
+          onApprove={onApprove}
           actionPending={actionPending}
           isReadOnly={isReadOnly}
-          onApprove={onApprove}
-          onRetry={onRetry}
-          showActivityIndicators
         />
       )}
     </div>
