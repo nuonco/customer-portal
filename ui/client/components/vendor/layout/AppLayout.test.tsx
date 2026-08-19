@@ -43,14 +43,14 @@ beforeEach(() => {
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    if (url.includes('/bff/admin/profile/orgs')) {
+    if (url.includes('/admin/profile/orgs')) {
       return new Response(JSON.stringify({ orgs: [{ id: 'org-1', name: 'Acme' }] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    if (url.includes('/bff/admin/orgs/org-1/token-status')) {
+    if (url.includes('/admin/orgs/org-1/token-status')) {
       return new Response(JSON.stringify({ is_valid: true }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
@@ -175,7 +175,7 @@ test('opens user menu and triggers logout', async () => {
   fireEvent.click(screen.getByRole('button', { name: /open user menu/i }))
   fireEvent.click(screen.getByRole('button', { name: /log out/i }))
 
-  expect(assign).toHaveBeenCalledWith('/bff/admin/logout')
+  expect(assign).toHaveBeenCalledWith('/admin/logout')
 
   Object.defineProperty(window, 'location', {
     configurable: true,
@@ -187,14 +187,14 @@ test('shows install-links breadcrumb and install name on install link detail pag
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    if (url.includes('/bff/admin/profile/orgs')) {
+    if (url.includes('/admin/profile/orgs')) {
       return new Response(JSON.stringify({ orgs: [{ id: 'org-1', name: 'Acme' }] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },
       })
     }
 
-    if (url.includes('/bff/admin/orgs/org-1/install-links-api/link-1')) {
+    if (url.includes('/admin/orgs/org-1/install-links-api/link-1')) {
       return new Response(
         JSON.stringify({
           link: {
@@ -261,7 +261,7 @@ test('shows token expired warning when org token check reports expiration', asyn
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    if (url.includes('/bff/admin/profile/orgs')) {
+    if (url.includes('/admin/profile/orgs')) {
       return new Response(JSON.stringify({ orgs: [{ id: 'org-1', name: 'Acme' }] }), {
         status: 200,
         headers: { 'Content-Type': 'application/json' },

@@ -13,7 +13,7 @@ test('getAccounts requests JSON from the accounts-api route', async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    expect(url).toBe('/bff/admin/orgs/org-1/accounts-api')
+    expect(url).toBe('/admin/orgs/org-1/accounts-api')
     expect(init?.credentials).toBe('include')
     expect((init?.headers as Record<string, string>).Accept).toBe('application/json')
 
@@ -36,7 +36,7 @@ test('getAccounts requests JSON from the accounts-api route', async () => {
 test('getAccounts appends search query when provided', async () => {
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString()
-    expect(url).toBe('/bff/admin/orgs/org-1/accounts-api?q=acme')
+    expect(url).toBe('/admin/orgs/org-1/accounts-api?q=acme')
 
     return new Response(
       JSON.stringify({

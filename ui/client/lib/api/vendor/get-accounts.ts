@@ -19,7 +19,7 @@ export async function getAccounts(
   if (filters?.q) params.set('q', filters.q)
 
   const qs = params.toString()
-  const url = `/bff/admin/orgs/${orgId}/accounts-api${qs ? `?${qs}` : ''}`
+  const url = `/admin/orgs/${orgId}/accounts-api${qs ? `?${qs}` : ''}`
 
   const response = await fetch(url, {
     credentials: 'include',

@@ -31,7 +31,7 @@ function getResponsePath(responseUrl: string): string {
 }
 
 export async function getMe(): Promise<TVendorMe> {
-  const response = await fetch('/bff/admin/profile/me', {
+  const response = await fetch('/admin/profile/me', {
     credentials: 'include',
   })
 

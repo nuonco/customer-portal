@@ -22,15 +22,22 @@ sources:
 tests:
   - name: lint
     docker_target: lint
+  # Type checking and linting for the React client under ui/.
+  - name: client-lint
+    docker_target: client-lint
+  # NOTE: the `client-test` Dockerfile target exists and is runnable, but is
+  # deliberately not wired up as a gate yet — `bun test` currently has 66
+  # pre-existing failures in ui/, so enabling it would make CI red on arrival.
+  # Add it here once those are fixed.
 
 color: green
 
 health_checks:
-  # All three run inside the single dev.sh command (local_cmds[0]), so they are
-  # grouped under one nested list (same shape as dashboard-ui): Go server,
-  # Vite client, and Ladle.
+  # Both run inside the single dev.sh command (local_cmds[0]), so they are
+  # grouped under one nested list (same shape as dashboard-ui). There is no
+  # separate client port: `bun run dev` builds into ui/dist and the Go server
+  # serves it on :8080, matching production.
   - - http://localhost:8080/livez
-    - http://localhost:51273
     - http://localhost:61001
 
 env:

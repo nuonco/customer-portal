@@ -1,0 +1,9 @@
+# The build workdir is a full copy of the service directory, so local artifacts
+# would otherwise be sent to the builder and could shadow what the image builds.
+ui/node_modules
+ui/dist
+ui/.ladle-cache
+node_modules
+tmp
+coverage
+installer.db

@@ -6,55 +6,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
-
-// DNSSettingsPage renders the DNS settings page
-func (h *Handler) DNSSettingsPage(c *gin.Context) {
-	user := h.GetFreshUser(c)
-	currentOrg := middleware.GetCurrentOrg(c)
-	if currentOrg == nil {
-		h.RenderErrorPage(c, http.StatusBadRequest, "Organization context not found")
-		return
-	}
-
-	// Fetch user's orgs for switcher
-	userOrgs := h.GetUserOrgs(user.ID)
-
-	// Build breadcrumb path with org ID
-	portalBasePath := h.basePath + "/orgs/" + currentOrg.ID + "/portal"
-
-	props := vendorpages.DNSSettingsPageProps{
-		LayoutProps: vendorui.LayoutProps{
-			Title:      "DNS Settings",
-			ActivePage: "portal-dns",
-			User:       user,
-			CurrentOrg: currentOrg,
-			Orgs:       userOrgs,
-			Breadcrumbs: []partials.Breadcrumb{
-				{Text: "Customer Portal", Path: portalBasePath + "/branding"},
-				{Text: "DNS", Path: portalBasePath + "/dns", Active: true},
-			},
-			BasePath:         h.basePath,
-			PortalScheme:     h.schemeFromBaseURL(),
-			DashboardURL:     h.dashboardURL,
-			PortalBaseDomain: h.subdomainBaseDomain,
-			CSSPath:          assets.VendorCSSPath(),
-			IsSuperuser:      h.isSuperuser(user),
-		},
-		Org:        currentOrg,
-		BaseDomain: h.subdomainBaseDomain,
-		Scheme:     h.schemeFromBaseURL(),
-	}
-
-	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.DNSSettingsPage(props))
-}
 
 // UpdateDNSSettingsRequest represents the request body for updating DNS settings
 type UpdateDNSSettingsRequest struct {

@@ -10,16 +10,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
 
-// SuperuserPanelContent renders the superuser sliding panel
-func (h *Handler) SuperuserPanelContent(c *gin.Context) {
-	user := h.GetFreshUser(c)
-	props := partials.SuperuserPanelProps{
-		User:     user,
-		BasePath: h.basePath,
-	}
-	h.RenderTempl(c, http.StatusOK, partials.SuperuserPanel(props))
-}
-
 // SuperuserSearchOrgs searches orgs by name, subdomain, or nuon org ID
 func (h *Handler) SuperuserSearchOrgs(c *gin.Context) {
 	q := strings.TrimSpace(c.Query("q"))

@@ -21,7 +21,7 @@ async function parseError(response: Response, fallback: string): Promise<never> 
 
 export async function searchSuperuserOrgs(query: string): Promise<TSuperuserOrg[]> {
   const response = await fetch(
-    `/bff/admin/superuser-api/orgs/search?q=${encodeURIComponent(query)}`,
+    `/admin/superuser-api/orgs/search?q=${encodeURIComponent(query)}`,
     { credentials: 'include' }
   )
 
@@ -34,7 +34,7 @@ export async function searchSuperuserOrgs(query: string): Promise<TSuperuserOrg[
 }
 
 export async function getSuperuserOrg(orgId: string): Promise<TSuperuserOrg> {
-  const response = await fetch(`/bff/admin/superuser-api/orgs/${orgId}`, {
+  const response = await fetch(`/admin/superuser-api/orgs/${orgId}`, {
     credentials: 'include',
   })
 
@@ -47,7 +47,7 @@ export async function getSuperuserOrg(orgId: string): Promise<TSuperuserOrg> {
 }
 
 export async function joinSuperuserOrg(orgId: string): Promise<TSuperuserOrg> {
-  const response = await fetch(`/bff/admin/superuser-api/orgs/${orgId}/join`, {
+  const response = await fetch(`/admin/superuser-api/orgs/${orgId}/join`, {
     method: 'POST',
     credentials: 'include',
   })
@@ -61,7 +61,7 @@ export async function joinSuperuserOrg(orgId: string): Promise<TSuperuserOrg> {
 }
 
 export async function leaveSuperuserOrg(orgId: string): Promise<TSuperuserOrg> {
-  const response = await fetch(`/bff/admin/superuser-api/orgs/${orgId}/leave`, {
+  const response = await fetch(`/admin/superuser-api/orgs/${orgId}/leave`, {
     method: 'DELETE',
     credentials: 'include',
   })

@@ -3,7 +3,11 @@ import type {
   TWorkflowStepApprovalType,
 } from '@/types'
 
-const APPROVAL_TYPE: Record<TWorkflowStepApprovalType, string> = {
+// Partial: the API keeps adding approval types (app_branch_plan and
+// install_creation arrived without the portal needing to handle them), and a
+// total Record would break the build on each addition. getApprovalType falls
+// back to a humanised form of the raw value rather than rendering undefined.
+const APPROVAL_TYPE: Partial<Record<TWorkflowStepApprovalType, string>> = {
   'approve-all': 'all changes approved',
   terraform_plan: 'terraform',
   kubernetes_manifest_approval: 'kubernetes',
@@ -15,7 +19,12 @@ const APPROVAL_TYPE: Record<TWorkflowStepApprovalType, string> = {
 export function getApprovalType(
   approvalType: TWorkflowStepApprovalType
 ): string {
-  return APPROVAL_TYPE[approvalType]
+  return APPROVAL_TYPE[approvalType] ?? humaniseApprovalType(approvalType)
+}
+
+/** Turns e.g. "app_branch_plan" into "app branch plan". */
+function humaniseApprovalType(approvalType: string): string {
+  return approvalType.replaceAll('_', ' ').replaceAll('-', ' ')
 }
 
 const RESPONSE_TYPE: Record<TWorkflowStepApprovalResponse['type'], string> = {
@@ -32,10 +41,10 @@ export function getApprovalResponseType(
   return RESPONSE_TYPE[responseType]
 }
 
-export const APPROVAL_MODAL_COPY: Record<
+export const APPROVAL_MODAL_COPY: Partial<Record<
   Exclude<TWorkflowStepApprovalType, 'approve-all' | 'noop'>,
   { title: string; heading: string; message: string }
-> = {
+>> = {
   terraform_plan: {
     title: 'Approve Terraform plan?',
     heading: 'Are you sure you want to approve these infrastructure changes?',
@@ -62,10 +71,10 @@ export const APPROVAL_MODAL_COPY: Record<
   },
 }
 
-export const DENY_MODAL_COPY: Record<
+export const DENY_MODAL_COPY: Partial<Record<
   Exclude<TWorkflowStepApprovalType, 'approve-all' | 'noop'>,
   { title: string; heading: string; message: string }
-> = {
+>> = {
   terraform_plan: {
     title: 'Deny Terraform plan?',
     heading: 'Are you sure you want to deny these infrastructure changes?',
@@ -92,10 +101,10 @@ export const DENY_MODAL_COPY: Record<
   },
 }
 
-export const RETRY_MODAL_COPY: Record<
+export const RETRY_MODAL_COPY: Partial<Record<
   Exclude<TWorkflowStepApprovalType, 'approve-all' | 'noop'>,
   { title: string; heading: string; message: string }
-> = {
+>> = {
   terraform_plan: {
     title: 'Retry Terraform plan?',
     heading: 'Are you sure you want to retry this Terraform plan?',

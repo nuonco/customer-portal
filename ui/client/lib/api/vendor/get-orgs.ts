@@ -9,7 +9,7 @@ type TVendorOrgsResponse = {
 }
 
 export async function getVendorOrgs(): Promise<TVendorOrg[]> {
-  const response = await fetch('/bff/admin/profile/orgs', {
+  const response = await fetch('/admin/profile/orgs', {
     credentials: 'include',
   })
 

@@ -1,50 +1,4 @@
-import { extractSubdomain } from "@/utils/subdomain-utils";
-
-function inferCustomerSubdomain(): string {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  const configuredBaseDomain =
-    (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-  const fallbackSubdomain =
-    (import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined) ?? "";
-
-  const inferredBaseDomain = (() => {
-    if (configuredBaseDomain) {
-      return configuredBaseDomain;
-    }
-
-    const [hostname, port] = window.location.host.split(":");
-    if (!hostname) {
-      return window.location.host;
-    }
-
-    const labels = hostname.split(".");
-    if (labels.length <= 1) {
-      return window.location.host;
-    }
-
-    const host = labels.slice(1).join(".");
-    return port ? `${host}:${port}` : host;
-  })();
-
-  return (
-    extractSubdomain(window.location.host, inferredBaseDomain) ||
-    fallbackSubdomain
-  );
-}
-
-function withSubdomain(pathname: string): string {
-  const query = new URLSearchParams();
-  const subdomain = inferCustomerSubdomain();
-  if (subdomain) {
-    query.set("subdomain", subdomain);
-  }
-
-  return `${pathname}${query.toString() ? `?${query.toString()}` : ""}`;
-}
-
+import { withSubdomain } from "@/lib/runtime-config";
 async function readError(
   response: Response,
   fallback: string,
@@ -58,7 +12,7 @@ async function readError(
 }
 
 export async function createCustomerAccount(name: string): Promise<void> {
-  const response = await fetch(withSubdomain("/bff/portal-api/accounts"), {
+  const response = await fetch(withSubdomain("/portal-api/accounts"), {
     method: "POST",
     credentials: "include",
     headers: {
@@ -77,7 +31,7 @@ export async function createCustomerAccount(name: string): Promise<void> {
 
 export async function switchCustomerAccount(accountId: string): Promise<void> {
   const response = await fetch(
-    withSubdomain("/bff/portal-api/accounts/switch"),
+    withSubdomain("/portal-api/accounts/switch"),
     {
       method: "POST",
       credentials: "include",

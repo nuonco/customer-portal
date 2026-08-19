@@ -1,3 +1,4 @@
+import { inferCustomerSubdomain } from "@/lib/runtime-config";
 import {
   createBrowserRouter,
   Navigate,
@@ -47,7 +48,6 @@ import { OrgConnectionView } from "@/views/vendor/connection/OrgConnection";
 import { DebugView } from "@/views/vendor/debug/Debug";
 import { SuperuserView } from "@/views/vendor/superuser/Superuser";
 import { CustomerAuthProvider } from "@/providers/customer-auth-provider";
-import { extractSubdomain } from "@/utils/subdomain-utils";
 
 const VendorAuthTree = () => (
   <VendorAuthProvider>
@@ -77,31 +77,8 @@ const CanonicalPathGuard = () => {
   return <Outlet />;
 };
 
-const configuredBaseDomain =
-  (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-
-function inferBaseDomainFromHost(host: string): string {
-  if (configuredBaseDomain) {
-    return configuredBaseDomain;
-  }
-
-  const [hostname, port] = host.split(":");
-  if (!hostname) {
-    return host;
-  }
-
-  const labels = hostname.split(".");
-  if (labels.length <= 1) {
-    return host;
-  }
-
-  const inferredHost = labels.slice(1).join(".");
-  return port ? `${inferredHost}:${port}` : inferredHost;
-}
-
 const CustomerSubdomainGuard = () => {
-  const baseDomain = inferBaseDomainFromHost(window.location.host);
-  const subdomain = extractSubdomain(window.location.host, baseDomain);
+  const subdomain = inferCustomerSubdomain();
 
   if (!subdomain) {
     return <Navigate to="/admin/orgs" replace />;

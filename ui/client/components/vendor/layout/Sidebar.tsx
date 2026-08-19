@@ -1,3 +1,4 @@
+import { getRuntimeConfig } from "@/lib/runtime-config";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation } from "react-router";
 import { Icon } from "@/components/common/Icon";
@@ -20,9 +21,10 @@ export const VendorAppSidebar = () => {
   const pathOrgId = location.pathname.match(/^\/admin\/orgs\/([^/]+)/)?.[1] ?? null;
   const selectedOrgId = pathOrgId ?? (isOrgLandingRoute ? null : getOrgSession() ?? null);
   const selectedOrgBasePath = selectedOrgId ? `/admin/orgs/${selectedOrgId}` : null;
+  const runtimeConfig = getRuntimeConfig();
   const portalBaseDomain =
-    (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? window.location.host;
-  const fallbackCustomerSubdomain = import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined;
+    runtimeConfig.subdomainBaseDomain || window.location.host;
+  const fallbackCustomerSubdomain = runtimeConfig.customerSubdomain || undefined;
 
   useEffect(() => {
     let isMounted = true;

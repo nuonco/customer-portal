@@ -2,7 +2,7 @@ package handlers
 
 import (
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 
 // appDisplayName returns the human-readable name for an app,

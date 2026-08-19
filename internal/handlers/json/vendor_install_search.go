@@ -69,8 +69,9 @@ func (h *VendorHandler) SearchNuonInstalls(c *gin.Context) {
 				InstallName: install.Name,
 				AppID:       app.ID,
 				AppName:     app.Name,
-				Status:      install.Status,
-				Region:      region,
+				// `status` was removed from app.Install; use the component rollup.
+				Status: install.CompositeComponentStatus,
+				Region: region,
 			})
 		}
 	}

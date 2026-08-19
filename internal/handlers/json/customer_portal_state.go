@@ -293,7 +293,7 @@ func (h *CustomerPortalHandler) getVisibleInstalls(userID string, activeAccount 
 			CreatedAt:      install.CreatedAt,
 			AppLogoLight:   logo.Light,
 			AppLogoDark:    logo.Dark,
-			LegacyBasePath: "/bff/installs/" + install.ID,
+			LegacyBasePath: "/installs/" + install.ID,
 		})
 	}
 
@@ -343,7 +343,7 @@ func (h *CustomerPortalHandler) getPublishedApps(c *gin.Context, org *models.Nuo
 			Platform:       platform,
 			LogoLight:      app.LogoLightBase64,
 			LogoDark:       app.LogoDarkBase64,
-			LegacyBasePath: "/bff/apps/" + app.AppID,
+			LegacyBasePath: "/apps/" + app.AppID,
 		})
 	}
 

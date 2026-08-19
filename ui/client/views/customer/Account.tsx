@@ -23,7 +23,7 @@ export const CustomerAccountView = () => {
 
     setIsSaving(true);
     try {
-      const response = await fetch("/bff/account", {
+      const response = await fetch("/account", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json", Accept: "application/json" },

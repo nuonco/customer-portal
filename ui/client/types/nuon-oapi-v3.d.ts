@@ -40,6 +40,27 @@ export interface paths {
      */
     get: operations["GetCurrentAccount"];
   };
+  "/v1/account/static-token": {
+    /**
+     * create a static API token for your org
+     * @description Creates a long-lived static API token. By default (token_identity "service_account") each token gets its own dedicated service account and only grants access to the current org; the role param controls the token's permissions (any role assignable to API tokens; see GET /v1/roles?context=api_token) and defaults to org_read_only. With token_identity "personal" the token is issued against your own account instead: it uses your account's existing roles, is not limited to the current org, and the role param must be empty.
+     */
+    post: operations["CreateStaticToken"];
+  };
+  "/v1/account/static-tokens": {
+    /**
+     * list your org's static API tokens
+     * @description Lists the static API tokens for your current org. Token secrets are never returned.
+     */
+    get: operations["ListStaticTokens"];
+  };
+  "/v1/account/static-tokens/{token_id}": {
+    /**
+     * delete a static API token
+     * @description Deletes a static API token belonging to your current org. For service account tokens, the dedicated service account is deleted as well; for personal tokens, only the token is deleted and your account is untouched. Once deleted, the token can no longer be used to access the API.
+     */
+    delete: operations["DeleteStaticToken"];
+  };
   "/v1/account/user-journeys": {
     /**
      * Get user journeys
@@ -266,6 +287,11 @@ export interface paths {
      */
     get: operations["GetAppBranch"];
     /**
+     * delete an app branch
+     * @description Deletes an app branch and all associated configs, runs, and install group runs.
+     */
+    delete: operations["DeleteAppBranch"];
+    /**
      * update app branch metadata
      * @description Updates app branch metadata (name only). To update configuration, create a new AppBranchConfig via POST /branches/:id/configs
      */
@@ -301,6 +327,41 @@ export interface paths {
      * @description Creates and triggers a workflow run for an app branch. If config_id is not provided, uses the latest config.
      */
     post: operations["TriggerAppBranchRun"];
+  };
+  "/v1/apps/{app_id}/branches/{app_branch_id}/runs/{run_id}/builds": {
+    /**
+     * get builds for an app branch run
+     * @description Returns component builds triggered by a specific app branch run
+     */
+    get: operations["GetAppBranchRunBuilds"];
+  };
+  "/v1/apps/{app_id}/branches/{app_branch_id}/runs/{run_id}/install-group-runs": {
+    /**
+     * list install group runs for an app branch run
+     * @description Returns all install group runs for a specific app branch run
+     */
+    get: operations["GetInstallGroupRuns"];
+  };
+  "/v1/apps/{app_id}/branches/{app_branch_id}/runs/{run_id}/install-group-runs/{install_group_run_id}": {
+    /**
+     * get a specific install group run
+     * @description Returns a single install group run with full details
+     */
+    get: operations["GetInstallGroupRun"];
+  };
+  "/v1/apps/{app_id}/branches/{app_branch_id}/runs/{run_id}/install-groups": {
+    /**
+     * get install group deployments for an app branch run
+     * @description Returns install config updates triggered by a specific app branch run, grouped by install group
+     */
+    get: operations["GetAppBranchRunInstallGroups"];
+  };
+  "/v1/apps/{app_id}/branches/{app_branch_id}/sync-install-configs": {
+    /**
+     * trigger install config sync from git
+     * @description Triggers a sync of install configs from the installs.toml VCS repo configured in the app config. Optionally specify install_name to sync a single install.
+     */
+    post: operations["TriggerInstallConfigSync"];
   };
   "/v1/apps/{app_id}/break-glass-configs": {
     /** @description Create a break glass config for an app. */
@@ -384,6 +445,13 @@ export interface paths {
      */
     get: operations["GetAppComponentBuild"];
   };
+  "/v1/apps/{app_id}/components/{component_id}/builds/{build_id}/cancel": {
+    /**
+     * cancel component build
+     * @description Cancel a component build by cancelling its queue signal. If the build has an in-flight runner job, it will also be cancelled.
+     */
+    post: operations["CancelAppComponentBuild"];
+  };
   "/v1/apps/{app_id}/components/{component_id}/configs": {
     /**
      * get all configs for a component
@@ -394,7 +462,8 @@ export interface paths {
   "/v1/apps/{app_id}/components/{component_id}/configs/docker-build": {
     /**
      * create a docker build component config
-     * @description Create a Docker build component config.
+     * @deprecated
+     * @description Deprecated: docker_build components are no longer supported. This endpoint always returns an error. Use a container_image component to reference a pre-built image instead.
      */
     post: operations["CreateAppDockerBuildComponentConfig"];
   };
@@ -547,6 +616,13 @@ export interface paths {
      */
     post: operations["BuildAppConfig"];
   };
+  "/v1/apps/{app_id}/configs/{config_id}/diff": {
+    /**
+     * diff two app configs
+     * @description Compares a new app config against an old one and returns a hierarchical diff.
+     */
+    get: operations["GetAppConfigDiff"];
+  };
   "/v1/apps/{app_id}/configs/{config_id}/graph": {
     /**
      * get an app config graph
@@ -556,6 +632,23 @@ export interface paths {
      * viewer](https://dreampuf.github.io/GraphvizOnline).
      */
     get: operations["GetAppConfigGraphV2"];
+  };
+  "/v1/apps/{app_id}/configs/{config_id}/sync": {
+    /**
+     * @description Sync an app config that was created with an intermediate config.
+     *
+     * The config is applied asynchronously: this returns `202` immediately and the
+     * config moves through `syncing` to `active` or `error`. Poll
+     * `GET /v1/apps/{app_id}/configs/{config_id}` for the outcome — `status`,
+     * `status_description`, and the resolved `component_ids` / `action_ids` /
+     * `runbook_ids`. Scheduled component builds and resources orphaned by this sync are
+     * reported under `state.result`.
+     *
+     * Component builds are scheduled as part of the sync. A component whose config is
+     * unchanged since the previous sync, and whose last build did not fail, keeps its
+     * existing config connection and is not rebuilt.
+     */
+    post: operations["SyncAppConfig"];
   };
   "/v1/apps/{app_id}/configs/{config_id}/update-installs": {
     /** @description Update app configuration across multiple installs. */
@@ -589,6 +682,32 @@ export interface paths {
      */
     get: operations["GetAppInputLatestConfig"];
   };
+  "/v1/apps/{app_id}/install-syncs": {
+    /**
+     * list app install config syncs
+     * @description Returns a list of app install config sync records for the given app.
+     */
+    get: operations["GetAppInstallSyncs"];
+    /**
+     * trigger app-level install config sync
+     * @description Triggers a sync of all install configs for the app from the configured git source.
+     */
+    post: operations["TriggerAppInstallSync"];
+  };
+  "/v1/apps/{app_id}/install-syncs/{sync_id}": {
+    /**
+     * get a single app install config sync
+     * @description Returns a single app install config sync record with child install config syncs.
+     */
+    get: operations["GetAppInstallSync"];
+  };
+  "/v1/apps/{app_id}/install-syncs/{sync_id}/approvals/{approval_id}/response": {
+    /**
+     * respond to an install creation approval
+     * @description Approves or denies an install creation approval. On approve, creates the missing installs and re-triggers the sync. On deny, marks the approval as denied.
+     */
+    post: operations["RespondInstallCreationApproval"];
+  };
   "/v1/apps/{app_id}/installs": {
     /**
      * get all installs for an app
@@ -601,6 +720,39 @@ export interface paths {
      * @description Create a new install for an app.
      */
     post: operations["CreateInstall"];
+  };
+  "/v1/apps/{app_id}/installs-configs": {
+    /**
+     * get latest installs config for an app
+     * @description Returns the latest installs config (git source for install config files).
+     */
+    get: operations["GetAppInstallsConfig"];
+    /**
+     * create a new installs config for an app
+     * @description Creates a new installs config record (source=ui). The latest record is always used.
+     */
+    post: operations["CreateAppInstallsConfig"];
+  };
+  "/v1/apps/{app_id}/installs-configs/{config_id}": {
+    /**
+     * soft-delete an installs config
+     * @description Soft-deletes an installs config record. The next latest record becomes active.
+     */
+    delete: operations["DeleteAppInstallsConfig"];
+  };
+  "/v1/apps/{app_id}/kubernetes-contexts-configs": {
+    /**
+     * create a kubernetes contexts config
+     * @description Create the named kubernetes_context bindings for an app config version. Each context names a peer terraform_module or pulumi component that emits cluster connection details as outputs.
+     */
+    post: operations["CreateAppKubernetesContextsConfig"];
+  };
+  "/v1/apps/{app_id}/labels": {
+    /**
+     * get all labels used across an app
+     * @description Returns all distinct label keys with values, usage counts, and assigned colors across components, actions, runbooks, and installs for an app.
+     */
+    get: operations["GetAppLabels"];
   };
   "/v1/apps/{app_id}/latest-break-glass-config": {
     /**
@@ -877,6 +1029,10 @@ export interface paths {
      */
     get: operations["GetComponentBuilds"];
   };
+  "/v1/component-builds": {
+    /** list component build history for the current organization */
+    get: operations["ListOrgComponentBuilds"];
+  };
   "/v1/components": {
     /**
      * get all components for an org
@@ -948,7 +1104,7 @@ export interface paths {
     /**
      * create a docker build component config
      * @deprecated
-     * @description Create a Docker build component config.
+     * @description Deprecated: docker_build components are no longer supported. This endpoint always returns an error. Use a container_image component to reference a pre-built image instead.
      */
     post: operations["CreateDockerBuildComponentConfig"];
   };
@@ -1046,12 +1202,12 @@ export interface paths {
   };
   "/v1/general/config-schema": {
     /**
-     * Get jsonschema for config file
+     * Get jsonschema for config file (deprecated query form)
      * @description Return jsonschemas for Nuon configs. These can be used in frontmatter in most editors that have a TOML LSP (such as
      * [Taplo](https://taplo.tamasfe.dev/) configured.
      *
      * ```toml
-     * #:schema https://api.nuon.co/v1/general/config-schema?source=inputs
+     * #:schema https://api.nuon.co/v1/general/config-schema/inputs
      *
      * description = "description"
      * ```
@@ -1067,9 +1223,38 @@ export interface paths {
      * - container_image
      * - helm
      * - terraform
+     * - runbook
      * - job
      */
     get: operations["GetConfigSchema"];
+  };
+  "/v1/general/config-schema/{type}": {
+    /**
+     * Get jsonschema for a config file type
+     * @description Return jsonschemas for Nuon configs. These can be used in frontmatter in most editors that have a TOML LSP (such as
+     * [Taplo](https://taplo.tamasfe.dev/) configured.
+     *
+     * ```toml
+     * #:schema https://api.nuon.co/v1/general/config-schema/inputs
+     *
+     * description = "description"
+     * ```
+     *
+     * You can pass in a valid source argument to render within a specific config file:
+     *
+     * - input
+     * - input-group
+     * - installer
+     * - sandbox
+     * - runner
+     * - docker_build
+     * - container_image
+     * - helm
+     * - terraform
+     * - runbook
+     * - job
+     */
+    get: operations["GetConfigSchemaByType"];
   };
   "/v1/general/current-user": {
     /**
@@ -1142,6 +1327,13 @@ export interface paths {
      * @description Create a new install for an app.
      */
     post: operations["CreateInstallV2"];
+  };
+  "/v1/installs/health": {
+    /**
+     * fleet health summary
+     * @description Returns the health rollup for every install the caller can see, optionally narrowed by app and by an install label selector. This is the primitive a canary or bake-period rollout polls to decide whether to continue: all_healthy is only true when every counted install is healthy, and installs whose health has never been evaluated are counted separately in unset rather than treated as a pass. Requires the component-health feature.
+     */
+    get: operations["GetInstallsHealth"];
   };
   "/v1/installs/label-keys": {
     /**
@@ -1367,6 +1559,27 @@ export interface paths {
      */
     get: operations["GetInstallActionRecentRuns"];
   };
+  "/v1/installs/{install_id}/app-config-updates": {
+    /**
+     * trigger an app config update for an install
+     * @description Creates a workflow to diff and deploy a new app config to an install.
+     */
+    post: operations["CreateInstallAppConfigUpdate"];
+  };
+  "/v1/installs/{install_id}/app-config-versions": {
+    /**
+     * get app config versions for an install
+     * @description Returns the app config version history for an install, ordered by most recent first.
+     */
+    get: operations["GetInstallAppConfigVersions"];
+  };
+  "/v1/installs/{install_id}/app-config-versions/{version_id}/diff": {
+    /**
+     * get the diff for an install app config version
+     * @description Returns the component diff for a specific app config version transition.
+     */
+    get: operations["GetInstallAppConfigVersionDiff"];
+  };
   "/v1/installs/{install_id}/app-permissions-config": {
     /** get app permissions config for an install with provisioning status */
     get: operations["GetInstallAppPermissionsConfig"];
@@ -1514,6 +1727,34 @@ export interface paths {
      */
     post: operations["ForgetInstallComponent"];
   };
+  "/v1/installs/{install_id}/components/{component_id}/health/checks": {
+    /**
+     * list custom component health checks
+     * @description Returns the latest reported state of every custom health check for the component (provider "custom"), keyed by check name. Requires the component-health feature.
+     */
+    get: operations["GetInstallComponentHealthChecks"];
+  };
+  "/v1/installs/{install_id}/components/{component_id}/health/checks/{check_name}": {
+    /**
+     * report a custom component health check
+     * @description Lets an external system (a vendor's CI, a Datadog monitor webhook, a custom action) report a named health signal for a component. The report is written as a resource observation with provider "custom", so it flows through the same live explorer, evaluator, alerting, and timeline as runner-reported resources. Requires the component-health feature.
+     */
+    put: operations["PutInstallComponentHealthCheck"];
+  };
+  "/v1/installs/{install_id}/components/{component_id}/health/incident": {
+    /**
+     * component health incident bundle
+     * @description Returns the most recent degraded/unhealthy transition for the component (whether or not it has since recovered) along with its diagnosis, correlated deploy, and the component's currently non-healthy resources. Returns a null body when there's no incident in the retained history. Requires the component-health feature.
+     */
+    get: operations["GetInstallComponentHealthIncident"];
+  };
+  "/v1/installs/{install_id}/components/{component_id}/health/timeline": {
+    /**
+     * component health timeline
+     * @description Returns a component's health history over a window: recorded verdict transitions (newest first), daily worst-verdict buckets covering every day in the window, and an uptime percentage that excludes unknown time from both the numerator and denominator. Requires the component-health feature.
+     */
+    get: operations["GetInstallComponentHealthTimeline"];
+  };
   "/v1/installs/{install_id}/components/{component_id}/outputs": {
     /**
      * get an install component outputs
@@ -1523,12 +1764,68 @@ export interface paths {
      */
     get: operations["GetInstallComponentOutputs"];
   };
+  "/v1/installs/{install_id}/components/{component_id}/recover-helm-release": {
+    /**
+     * recover a stuck helm release for an install component
+     * @description Recover a Helm release that was left part-way through an operation.
+     *
+     * Helm records a `pending-install`, `pending-upgrade` or `pending-rollback` status before it
+     * starts changing the cluster and clears it once the operation finishes. A release left in one
+     * of those statuses is a rollout whose runner went away — a crash, a cancelled workflow, or a
+     * job that timed out. Helm then refuses every further operation on that release, and retrying
+     * the deploy cannot clear it.
+     *
+     * This endpoint starts a workflow that returns the release to a usable state:
+     *
+     * - when an earlier revision finished a rollout, the release is rolled back to it
+     * - when no revision ever rolled out, the stuck release is removed
+     *
+     * It deploys nothing and changes no desired state. Deploy the component afterwards to roll out
+     * the version you want.
+     *
+     * The recovery refuses to act on a release that is not pending, so it is safe to run when you
+     * are unsure and it is a no-op on a second run.
+     *
+     * Returns `409` when a job is already running for the component (recovering while Helm is
+     * genuinely mid-operation can corrupt the release) or when the component has never been
+     * deployed on this install. Returns `400` when the component is not a Helm chart.
+     */
+    post: operations["RecoverInstallComponentHelmRelease"];
+  };
   "/v1/installs/{install_id}/components/{component_id}/teardown": {
     /**
      * teardown an install component
      * @description Teardown and remove an install component's resources.
      */
     post: operations["TeardownInstallComponent"];
+  };
+  "/v1/installs/{install_id}/components/{component_id}/toggle": {
+    /**
+     * toggle an install component on or off
+     * @description Enable or disable a toggleable component on an install. Enabling triggers a deploy workflow, disabling triggers a teardown workflow.
+     */
+    post: operations["ToggleInstallComponent"];
+  };
+  "/v1/installs/{install_id}/config-syncs": {
+    /**
+     * get config sync history for an install
+     * @description Returns the install config sync history, ordered by most recent first.
+     */
+    get: operations["GetInstallConfigSyncs"];
+  };
+  "/v1/installs/{install_id}/config-versions": {
+    /**
+     * get config versions for an install
+     * @description Returns the install config version history, ordered by most recent first.
+     */
+    get: operations["GetInstallConfigVersions"];
+  };
+  "/v1/installs/{install_id}/config-versions/{version_id}/diff": {
+    /**
+     * get the diff for an install config version
+     * @description Returns the config diff for a specific install config version.
+     */
+    get: operations["GetInstallConfigVersionDiff"];
   };
   "/v1/installs/{install_id}/configs": {
     /**
@@ -1587,6 +1884,13 @@ export interface paths {
      */
     post: operations["DeprovisionInstallSandbox"];
   };
+  "/v1/installs/{install_id}/dns/check": {
+    /**
+     * Check whether an install's public DNS delegation is live.
+     * @description Resolves the install's public domain nameservers from the public internet and compares them to the nameservers Nuon provisioned, confirming whether the customer's registrar delegation has taken effect.
+     */
+    get: operations["CheckInstallDNSDelegation"];
+  };
   "/v1/installs/{install_id}/drifted-objects": {
     /**
      * get drifted objects for an install
@@ -1633,6 +1937,27 @@ export interface paths {
      */
     get: operations["GenerateTerraformInstallerConfig"];
   };
+  "/v1/installs/{install_id}/health/baseline": {
+    /**
+     * reset the install's health window
+     * @description Sets the install's health baseline to now: uptime and the health timeline start counting from this moment. Past observations stay recorded but no longer count toward uptime. Requires the component-health feature.
+     */
+    post: operations["ResetInstallHealthBaseline"];
+  };
+  "/v1/installs/{install_id}/health/cluster-access": {
+    /**
+     * refresh the cluster access component health reads through
+     * @description Derives the install's cluster access from its current stack outputs and the chosen role, then stores it for the runner's health engine. Use when health reports unknown because the install has not been deployed since component health was enabled, or after the cluster's endpoint or role changed. The runner picks the refreshed access up within a minute. Requires the component-health feature.
+     */
+    post: operations["RefreshInstallHealthClusterAccess"];
+  };
+  "/v1/installs/{install_id}/health/timeline": {
+    /**
+     * install health timeline
+     * @description Returns the install's health history aggregated across its components: uptime_percent and observed_seconds are the worst component's, daily[].health is the worst verdict across components for that day, and components lists each component's own current health and uptime. Requires the component-health feature.
+     */
+    get: operations["GetInstallHealthTimeline"];
+  };
   "/v1/installs/{install_id}/inputs": {
     /**
      * get an installs inputs
@@ -1647,6 +1972,10 @@ export interface paths {
     /**
      * Updates install input config for app
      * @description Update input values for an install.
+     *
+     * This endpoint accepts a partial subset of inputs and merges them with the install's existing
+     * inputs, so callers only need to send the inputs they want to change. Inputs sourced from the
+     * `install_stack` (customer source) are managed by the install stack and are rejected if supplied.
      */
     patch: operations["UpdateInstallInputs"];
   };
@@ -1660,14 +1989,58 @@ export interface paths {
   "/v1/installs/{install_id}/labels": {
     /**
      * add labels to an install
-     * @description Merge the provided labels into the install's existing labels. Existing keys are overwritten.
+     * @description Merge the provided labels into the install's existing labels. Existing keys are overwritten. A value using the .nuon interpolation syntax becomes a dynamic label: the template is stored and its rendered value is re-materialized whenever install state changes. Keys managed by the app config's default_labels cannot be changed here.
      */
     post: operations["AddInstallLabels"];
     /**
      * remove labels from an install
-     * @description Remove the specified label keys from the install.
+     * @description Remove the specified label keys from the install. Removing a dynamic label's key also removes its template. Keys managed by the app config's default_labels cannot be removed here.
      */
     delete: operations["RemoveInstallLabels"];
+  };
+  "/v1/installs/{install_id}/notebooks": {
+    /** list notebooks for an install */
+    get: operations["GetNotebooks"];
+    /** create a notebook for an install */
+    post: operations["CreateNotebook"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}": {
+    /** get a notebook with its ordered cells and each cell's latest run */
+    get: operations["GetNotebook"];
+    /** delete a notebook */
+    delete: operations["DeleteNotebook"];
+    /** update a notebook */
+    patch: operations["UpdateNotebook"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}/cells": {
+    /** add a cell to a notebook */
+    post: operations["CreateNotebookCell"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}/cells/reorder": {
+    /**
+     * reorder a notebook's cells
+     * @description accepts the full ordered list of cell IDs and assigns positions
+     */
+    put: operations["ReorderNotebookCells"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}/cells/{cell_id}": {
+    /** delete a cell */
+    delete: operations["DeleteNotebookCell"];
+    /** edit a cell (bumps its revision) */
+    patch: operations["UpdateNotebookCell"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}/cells/{cell_id}/runs": {
+    /** list a cell's run history (newest first) */
+    get: operations["GetNotebookCellRuns"];
+    /**
+     * run a notebook cell on the install's runner
+     * @description dispatches the cell to the notebook's warm Temporal workflow and records a NotebookCellRun linking to the underlying execution + log stream. Returns once the run is queued, not when it finishes.
+     */
+    post: operations["RunNotebookCell"];
+  };
+  "/v1/installs/{install_id}/notebooks/{notebook_id}/runs/{run_id}": {
+    /** get a single cell run (includes log_stream_id for tailing) */
+    get: operations["GetNotebookCellRun"];
   };
   "/v1/installs/{install_id}/phone-home/{phone_home_id}": {
     /**
@@ -1697,6 +2070,20 @@ export interface paths {
      * @description Reprovision an install sandbox and redeploy all components on top.
      */
     post: operations["ReprovisionInstallSandbox"];
+  };
+  "/v1/installs/{install_id}/reprovision-stack": {
+    /**
+     * reprovision an install stack
+     * @description Reprovision an install stack, recreating the runner and its infrastructure. Set `skip_components` to avoid redeploying components on top of the new stack.
+     */
+    post: operations["ReprovisionInstallStack"];
+  };
+  "/v1/installs/{install_id}/resources": {
+    /**
+     * live resource explorer for an install
+     * @description Returns the latest observed state of every resource the install's components manage, filterable by component, kind, namespace, health, and provider. Requires the component-health feature.
+     */
+    get: operations["GetInstallResources"];
   };
   "/v1/installs/{install_id}/retry-workflow": {
     /**
@@ -1807,6 +2194,13 @@ export interface paths {
      */
     get: operations["GetInstallStateHistory"];
   };
+  "/v1/installs/{install_id}/sync-config": {
+    /**
+     * trigger install config sync for a single install
+     * @description Triggers a sync of this install's config from git.
+     */
+    post: operations["SyncInstallConfig"];
+  };
   "/v1/installs/{install_id}/sync-secrets": {
     /**
      * sync secrets install
@@ -1835,6 +2229,13 @@ export interface paths {
      */
     get: operations["LogStreamReadLogs"];
   };
+  "/v1/log-streams/{log_stream_id}/logs/tail": {
+    /**
+     * long-poll tail a log stream
+     * @description Returns rows after the supplied composite cursor, long-polling up to ~30s for new rows on an idle stream. Behind the `log-tail-long-poll` org feature flag.
+     */
+    get: operations["LogStreamTailLogs"];
+  };
   "/v1/log-streams/{log_stream_id}/spans": {
     /**
      * read a log stream's trace spans
@@ -1845,6 +2246,42 @@ export interface paths {
      * ASC. The frontend assembles the tree from `parent_span_id`.
      */
     get: operations["LogStreamReadSpans"];
+  };
+  "/v1/oidc/token": {
+    /**
+     * exchange an OIDC token for a Nuon API token
+     * @description Exchanges an OIDC ID token (e.g. from GitHub Actions) for a short-lived Nuon API token. The token must match an enabled OIDC trust policy in the target org: its signature is verified against the policy issuer's JWKS, and its issuer, audience, and claims must satisfy the policy. No Nuon credentials are required to call this endpoint.
+     */
+    post: operations["ExchangeOIDCToken"];
+  };
+  "/v1/oidc/trust-policies": {
+    /**
+     * list your org's OIDC trust policies
+     * @description Lists the OIDC workload identity trust policies for your current org.
+     */
+    get: operations["ListOIDCTrustPolicies"];
+    /**
+     * create an OIDC trust policy
+     * @description Creates an OIDC workload identity trust policy for your current org. OIDC tokens matching the policy's issuer, audience, and claim conditions can be exchanged for short-lived Nuon API tokens. Each policy gets a dedicated service account with the configured role.
+     */
+    post: operations["CreateOIDCTrustPolicy"];
+  };
+  "/v1/oidc/trust-policies/{policy_id}": {
+    /**
+     * get an OIDC trust policy
+     * @description Returns an OIDC workload identity trust policy belonging to your current org.
+     */
+    get: operations["GetOIDCTrustPolicy"];
+    /**
+     * delete an OIDC trust policy
+     * @description Deletes an OIDC workload identity trust policy belonging to your current org, along with its dedicated service account. Tokens already issued under the policy stop working immediately.
+     */
+    delete: operations["DeleteOIDCTrustPolicy"];
+    /**
+     * update an OIDC trust policy
+     * @description Updates an OIDC workload identity trust policy belonging to your current org. Changing the role also updates the policy's service account role, which affects tokens already issued under the policy.
+     */
+    patch: operations["UpdateOIDCTrustPolicy"];
   };
   "/v1/onboarding": {
     /**
@@ -1942,6 +2379,13 @@ export interface paths {
      * @description Return an organization by id.
      */
     get: operations["GetOrgAcounts"];
+  };
+  "/v1/orgs/current/accounts/{account_id}/role": {
+    /**
+     * Change an org member's role
+     * @description Changes the role of an existing member of the current org. Requires org admin. You cannot change your own role, and you cannot demote the last remaining admin.
+     */
+    patch: operations["UpdateOrgAccountRole"];
   };
   "/v1/orgs/current/features": {
     /**
@@ -2125,11 +2569,6 @@ export interface paths {
      * @description Returns the verified SlackOrgLink rows belonging to the calling org. Each row carries the link_id used by the channel-subscription create endpoint.
      */
     get: operations["ListSlackOrgLinks"];
-    /**
-     * Bind a Slack workspace to the current org
-     * @description Creates a verified SlackOrgLink between the supplied TeamID and the calling org. Used by the Phase 4 confirmation flow when a user finishes the Slack OAuth round-trip and selects the Nuon org to attach the workspace to.
-     */
-    post: operations["CreateSlackOrgLink"];
   };
   "/v1/orgs/{org_id}/slack/org-links/{link_id}": {
     /**
@@ -2207,6 +2646,25 @@ export interface paths {
      * @description Get real-time status of a queue including depth and in-flight signals
      */
     get: operations["GetQueueStatus"];
+  };
+  "/v1/roles": {
+    /**
+     * List your org's roles
+     * @description List your org's roles. Each role carries its display metadata (`title`,
+     * `description`) and the assignment surfaces it may be offered on via the
+     * `applies_to` field (`team`, `service_account`, `api_token`,
+     * `oidc_trust_policy`). A role with no `applies_to` entries exists and may be
+     * displayed, but cannot be newly assigned. Pass `?context=<surface>` to filter
+     * to the roles assignable on a single surface.
+     */
+    get: operations["ListRoles"];
+  };
+  "/v1/runner-jobs": {
+    /**
+     * list org runner jobs
+     * @description list runner jobs for the current org that ran on the control plane. Used by orgs that build on the control plane and therefore have no org runner.
+     */
+    get: operations["ListRunnerJobs"];
   };
   "/v1/runner-jobs/{runner_job_id}": {
     /**
@@ -2308,6 +2766,7 @@ export interface paths {
   "/v1/runners/{runner_id}/force-shutdown": {
     /**
      * force shut down a runner
+     * @deprecated
      * @description Force shutdown a runner.
      *
      * This will result in jobs being lost/cancelled if they are in-flight.
@@ -2350,11 +2809,17 @@ export interface paths {
     post: operations["RestartRunnerInstall"];
   };
   "/v1/runners/{runner_id}/mng/shutdown": {
-    /** shut down an install runner's mng process. does not shut down the install runner process. */
+    /**
+     * shut down an install runner's mng process. does not shut down the install runner process.
+     * @deprecated
+     */
     post: operations["ShutDownRunnerMng"];
   };
   "/v1/runners/{runner_id}/mng/shutdown-vm": {
-    /** shut down an install runner VM */
+    /**
+     * shut down an install runner VM
+     * @deprecated
+     */
     post: operations["MngVMShutDown"];
   };
   "/v1/runners/{runner_id}/mng/update": {
@@ -2414,6 +2879,61 @@ export interface paths {
      * @description Update runner settings and configuration.
      */
     patch: operations["UpdateRunnerSettings"];
+  };
+  "/v1/service-accounts": {
+    /**
+     * List service accounts for the current org
+     * @description List the service accounts that belong to the current organization, along with
+     * their roles. Supports offset-based pagination.
+     */
+    get: operations["ListServiceAccounts"];
+    /**
+     * Create a service account for the current org
+     * @description Create a service account for the current org. Service accounts can be used to
+     * generate API tokens for automation and CI/CD workflows.
+     *
+     * Defaults to the `org_admin` role if `role` is not specified. Allowed roles
+     * are `org_admin`, `installer`, and `runner`.
+     */
+    post: operations["CreateServiceAccount"];
+  };
+  "/v1/service-accounts/{account_id}": {
+    /**
+     * Delete a service account for the current org
+     * @description Delete a service account from the current org.
+     *
+     * This removes the service account's roles in this org and invalidates all of
+     * its existing API tokens.
+     */
+    delete: operations["DeleteServiceAccount"];
+    /**
+     * Update a service account for the current org
+     * @description Update a service account's human-friendly name. The account's email and ID are
+     * immutable; only the display name changes.
+     */
+    patch: operations["UpdateServiceAccount"];
+  };
+  "/v1/service-accounts/{account_id}/role": {
+    /**
+     * Update the role of a service account for the current org
+     * @description Update the role assigned to a service account in the current org.
+     *
+     * The service account's existing roles in this org are removed and replaced
+     * with the requested role. Allowed roles are `org_admin`, `installer`, and
+     * `runner`.
+     */
+    patch: operations["UpdateServiceAccountRole"];
+  };
+  "/v1/service-accounts/{account_id}/tokens": {
+    /**
+     * Create a token for a service account in the current org
+     * @description Create an API token for a service account in the current org.
+     *
+     * Defaults to a duration of one year (`8760h`) if `duration` is not
+     * specified. If `invalidate` is set, all existing tokens for the service
+     * account are invalidated before the new token is created.
+     */
+    post: operations["CreateServiceAccountToken"];
   };
   "/v1/terraform-backend": {
     /**
@@ -2638,10 +3158,29 @@ export interface paths {
       };
     };
   };
+  "/v1/vcs/connections/{connection_id}/webhook-subscription": {
+    /**
+     * returns the webhook subscription for a vcs connection
+     * @description Returns the webhook subscription associated with a VCS connection.
+     */
+    get: operations["GetVCSConnectionWebhookSubscription"];
+    /**
+     * creates a webhook subscription for a vcs connection
+     * @description Creates a webhook subscription for a VCS connection. This enqueues a signal that will register a GitHub webhook for receiving push and pull request events.
+     */
+    post: operations["CreateVCSConnectionWebhookSubscription"];
+  };
+  "/v1/vcs/webhooks/{subscription_id}/events": {
+    /**
+     * Write a VCS webhook event (shared per subscription)
+     * @description Receives webhook events for a webhook subscription and creates a GithubEvent for processing
+     */
+    post: operations["WriteWebhookEvent"];
+  };
   "/v1/vcs/{vcs_connection_id}/events": {
     /**
      * Write a VCS webhook event
-     * @description Writes incoming webhook events for a VCS connection
+     * @description Writes incoming webhook events for a VCS connection (legacy endpoint)
      */
     post: operations["WriteVCSEvent"];
   };
@@ -2764,6 +3303,7 @@ export type webhooks = Record<string, never>;
 export interface components {
   schemas: {
     "app.AWSAccount": {
+      connection_id?: string;
       created_at?: string;
       created_by_id?: string;
       iam_role_arn?: string;
@@ -2811,6 +3351,7 @@ export interface components {
       created_at?: string;
       email?: string;
       id?: string;
+      name?: string;
       /** @description ReadOnly Fields */
       org_ids?: string[];
       permissions?: components["schemas"]["permissions.Set"];
@@ -2847,6 +3388,15 @@ export interface components {
       created_by_id?: string;
       enable_kube_config?: components["schemas"]["sql.NullBool"];
       id?: string;
+      /** @description Image is an optional container image the action's steps run inside. */
+      image?: string;
+      /**
+       * @description KubernetesContextName is the name of an AppKubernetesContextConfig on
+       * the same AppConfig. Empty means fall back to the implicit sandbox
+       * default. Stored as a name (not an FK) so it remains stable across
+       * AppConfig versions.
+       */
+      kubernetes_context_name?: string;
       references?: string[];
       refs?: components["schemas"]["refs.Ref"][];
       role?: string;
@@ -2895,7 +3445,7 @@ export interface components {
       updated_at?: string;
     };
     /** @enum {string} */
-    "app.ActionWorkflowTriggerType": "manual" | "cron" | "adhoc" | "pre-deploy-component" | "post-deploy-component" | "pre-teardown-component" | "post-teardown-component" | "pre-secrets-sync" | "post-secrets-sync" | "pre-provision" | "post-provision" | "pre-reprovision" | "post-reprovision" | "pre-deprovision" | "post-deprovision" | "pre-deploy-all-components" | "post-deploy-all-components" | "pre-teardown-all-components" | "post-teardown-all-components" | "pre-deprovision-sandbox" | "post-deprovision-sandbox" | "pre-reprovision-sandbox" | "post-reprovision-sandbox" | "pre-update-inputs" | "post-update-inputs";
+    "app.ActionWorkflowTriggerType": "manual" | "cron" | "adhoc" | "pre-deploy-component" | "post-deploy-component" | "pre-teardown-component" | "post-teardown-component" | "pre-secrets-sync" | "post-secrets-sync" | "pre-provision" | "post-provision" | "post-provision-sandbox" | "pre-reprovision" | "post-reprovision" | "pre-deprovision" | "post-deprovision" | "pre-deploy-all-components" | "post-deploy-all-components" | "pre-teardown-all-components" | "post-teardown-all-components" | "pre-deprovision-sandbox" | "post-deprovision-sandbox" | "pre-reprovision-sandbox" | "post-reprovision-sandbox" | "pre-update-inputs" | "post-update-inputs" | "role-enabled" | "role-disabled" | "pre-enable-component" | "post-enable-component" | "pre-disable-component" | "post-disable-component";
     "app.AdHocStepConfig": {
       action_workflow_config_id?: string;
       /** @description this belongs to an app config id */
@@ -2928,11 +3478,19 @@ export interface components {
       config_repo?: string;
       created_at?: string;
       created_by_id?: string;
+      /**
+       * @description DefaultLabels are applied to every install of the app and can only be
+       * changed via app config sync — install label endpoints reject these keys.
+       */
+      default_labels?: {
+        [key: string]: string;
+      };
       description?: string;
       display_name?: string;
       id?: string;
       /** @description fields set via after query */
       input_config?: components["schemas"]["app.AppInputConfig"];
+      label_colors?: Record<string, never>;
       links?: {
         [key: string]: unknown;
       };
@@ -2952,6 +3510,8 @@ export interface components {
     "app.AppAWSIAMPolicyConfig": {
       app_aws_iam_role_config_id?: string;
       app_config_id?: string;
+      azure_actions?: string[];
+      azure_built_in_roles?: string[];
       cloudformation_stack_name?: string;
       contents?: string;
       created_at?: string;
@@ -2990,10 +3550,13 @@ export interface components {
       created_at?: string;
       created_by_id?: string;
       id?: string;
+      latest_run?: components["schemas"]["app.AppBranchRun"];
+      managed_by?: string;
       name?: string;
       org_id?: string;
       queue?: components["schemas"]["app.Queue"];
       updated_at?: string;
+      workflow_count?: number;
       workflows?: components["schemas"]["app.Workflow"][];
     };
     "app.AppBranchConfig": {
@@ -3008,7 +3571,14 @@ export interface components {
       id?: string;
       install_groups?: components["schemas"]["app.AppBranchInstallGroup"][];
       org_id?: string;
+      /**
+       * @description PostDeployRunbookIDs are runbooks run on each install, in order, after its
+       * deploy succeeds. Distinct from RunbookIDs, which tracks the runbooks the
+       * branch's synced app config produced.
+       */
+      post_deploy_runbook_ids?: string[];
       public_git_vcs_config?: components["schemas"]["app.PublicGitVCSConfig"];
+      runbook_ids?: string[];
       updated_at?: string;
       workflows?: components["schemas"]["app.Workflow"][];
     };
@@ -3018,19 +3588,22 @@ export interface components {
       created_by_id?: string;
       id?: string;
       install_ids?: string[];
+      label_selector?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Selector"];
       max_parallel?: number;
       name?: string;
       order?: number;
       org_id?: string;
-      requires_approval?: boolean;
-      rollback_on_failure?: boolean;
       updated_at?: string;
+      /** @description UseForPreviews marks this group for plan-only preview runs (e.g., PR previews). */
+      use_for_previews?: boolean;
     };
     "app.AppBranchRun": {
       app_branch?: components["schemas"]["app.AppBranch"];
       app_branch_config?: components["schemas"]["app.AppBranchConfig"];
       /** @description AppConfigID is the app config that was created/synced during this run */
       app_config_id?: string;
+      awaiting_approval?: boolean;
+      base_branch?: string;
       /**
        * @description CommitSHA is the VCS commit that triggered or is associated with this run
        * DEPRECATED: Use VCSConnectionCommit relationship instead
@@ -3043,14 +3616,29 @@ export interface components {
       created_by_id?: string;
       /** @description ErrorMessage stores any error that occurred during execution */
       error_message?: string;
-      /** @description Force indicates if this run was forced (bypassing change detection) */
+      /** @description EventType indicates what triggered this run. Kept for backward compat; new code uses RunType. */
+      event_type?: string;
       force?: boolean;
+      github_comment_id?: number;
+      head_sha?: string;
       id?: string;
+      labels?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Labels"];
       log_stream?: components["schemas"]["app.LogStream"];
       /** @description LogStreamID is the log stream created during this run for event tracking */
       log_stream_id?: string;
+      no_config_changes?: boolean;
+      /** @description PlanOnly indicates this is a preview run. Kept for backward compat; new code uses RunType. */
+      plan_only?: boolean;
+      pr_number?: number;
+      previous_run?: components["schemas"]["app.AppBranchRun"];
+      /**
+       * @description PreviousRunID links to the previous successful run on the same branch,
+       * used for build diffing to determine which components need rebuilding.
+       */
+      previous_run_id?: string;
       /** @description QueueSignal is the signal that was enqueued to trigger this run */
       queue_signal?: components["schemas"]["app.QueueSignal"];
+      run_type?: components["schemas"]["app.AppBranchRunType"];
       /** @description StartedAt tracks when execution actually began */
       started_at?: string;
       /**
@@ -3058,11 +3646,14 @@ export interface components {
        * Values: pending, running, success, failed, cancelled
        */
       status?: string;
+      trigger_event_dispatch_id?: string;
       updated_at?: string;
       vcs_connection_commit?: components["schemas"]["app.VCSConnectionCommit"];
       workflow?: components["schemas"]["app.Workflow"];
       workflow_id?: string;
     };
+    /** @enum {string} */
+    "app.AppBranchRunType": "manual-run" | "git-run" | "git-preview-run";
     "app.AppBreakGlassConfig": {
       app_config_id?: string;
       app_id?: string;
@@ -3089,11 +3680,14 @@ export interface components {
       id?: string;
       input?: components["schemas"]["app.AppInputConfig"];
       intermediate_config?: components["schemas"]["blobstore.Blob"];
+      kubernetes_contexts?: components["schemas"]["app.AppKubernetesContextsConfig"];
+      labels?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Labels"];
       operation_role_config?: components["schemas"]["app.AppOperationRoleConfig"];
       org_id?: string;
       permissions?: components["schemas"]["app.AppPermissionsConfig"];
       policies?: components["schemas"]["app.AppPoliciesConfig"];
       readme?: string;
+      runbook_ids?: string[];
       runner?: components["schemas"]["app.AppRunnerConfig"];
       sandbox?: components["schemas"]["app.AppSandboxConfig"];
       secrets?: components["schemas"]["app.AppSecretsConfig"];
@@ -3102,6 +3696,7 @@ export interface components {
       status?: components["schemas"]["app.AppConfigStatus"];
       status_description?: string;
       status_v2?: components["schemas"]["app.CompositeStatus"];
+      trigger_rules?: components["schemas"]["app.TriggerRule"][];
       updated_at?: string;
       vcs_connection_commit?: components["schemas"]["app.VCSConnectionCommit"];
       /** @description fields that are filled in via after query or views */
@@ -3162,6 +3757,62 @@ export interface components {
     };
     /** @enum {string} */
     "app.AppInputSource": "vendor" | "customer";
+    "app.AppInstallConfigSync": {
+      app_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      install_config_syncs?: components["schemas"]["app.InstallConfigSync"][];
+      install_creation_approval?: components["schemas"]["app.InstallCreationApproval"];
+      org_id?: string;
+      queue_id?: string;
+      queue_signal_id?: string;
+      status?: components["schemas"]["app.CompositeStatus"];
+      triggered_by?: string;
+      updated_at?: string;
+      vcs_connection_commit?: components["schemas"]["app.VCSConnectionCommit"];
+      workflow?: components["schemas"]["app.Workflow"];
+      workflow_id?: string;
+    };
+    "app.AppInstallsConfig": {
+      app_id?: string;
+      branch?: string;
+      connected_github_vcs_config?: components["schemas"]["app.ConnectedGithubVCSConfig"];
+      created_at?: string;
+      created_by_id?: string;
+      directory?: string;
+      id?: string;
+      org_id?: string;
+      public_git_vcs_config?: components["schemas"]["app.PublicGitVCSConfig"];
+      repo?: string;
+      source?: string;
+      updated_at?: string;
+      vcs_connection_id?: string;
+      vcs_type?: string;
+    };
+    "app.AppKubernetesContextConfig": {
+      app_config_id?: string;
+      app_id?: string;
+      app_kubernetes_contexts_config_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      name?: string;
+      org_id?: string;
+      source_component_id?: string;
+      source_component_name?: string;
+      updated_at?: string;
+    };
+    "app.AppKubernetesContextsConfig": {
+      app_config_id?: string;
+      app_id?: string;
+      contexts?: components["schemas"]["app.AppKubernetesContextConfig"][];
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      org_id?: string;
+      updated_at?: string;
+    };
     "app.AppOperationRoleConfig": {
       app_config_id?: string;
       app_id?: string;
@@ -3241,7 +3892,20 @@ export interface components {
       id?: string;
       /** @description takes a URL to a bash script ⤵  which will be `curl | bash`-ed on the VM. usually via user-data or equivalent. */
       init_script?: string;
+      /** @description InstanceType is the cloud machine/instance type for the install runner host, mapped per cloud platform. */
+      instance_type?: string;
       org_id?: string;
+      /**
+       * @description PhoneHomeScriptURL overrides the phone-home Lambda source fetched at stack
+       * render time. Per app so a single app can be moved onto a new script version
+       * without touching anyone else: the default is shared by every org, so changing
+       * it ships to the whole fleet on their next stack regeneration.
+       */
+      phone_home_script_url?: string;
+      /** @description PublicAPIURL overrides the Nuon public API endpoint used for phone-home callbacks. */
+      public_api_url?: string;
+      /** @description RunnerAPIURL overrides the Nuon runner API endpoint for installs using this config. */
+      runner_api_url?: string;
       updated_at?: string;
     };
     /** @enum {string} */
@@ -3252,6 +3916,7 @@ export interface components {
       app_config_id?: string;
       app_id?: string;
       app_sandbox_config_id?: string;
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       created_at?: string;
       created_by?: components["schemas"]["app.Account"];
       created_by_id?: string;
@@ -3288,10 +3953,16 @@ export interface components {
       };
       org_id?: string;
       public_git_vcs_config?: components["schemas"]["app.PublicGitVCSConfig"];
+      pulumi_config?: {
+        [key: string]: string;
+      };
+      pulumi_version?: string;
       references?: string[];
       refs?: components["schemas"]["refs.Ref"][];
+      runtime?: string;
       skip_noops?: boolean;
       terraform_version?: string;
+      type?: string;
       updated_at?: string;
       variables?: {
         [key: string]: string;
@@ -3327,9 +3998,25 @@ export interface components {
       kubernetes_secret_namespace?: string;
       /** @description for syncing into kubernetes */
       kubernetes_sync?: boolean;
+      /**
+       * @description kubernetes sync v2: when present, the secret syncs to each of these targets (namespaces x name x key). The
+       * single-valued Kubernetes* fields above remain for backwards compatibility.
+       */
+      kubernetes_sync_targets?: components["schemas"]["app.AppSecretKubernetesSyncTarget"][];
       name?: string;
       org_id?: string;
       required?: boolean;
+      updated_at?: string;
+    };
+    "app.AppSecretKubernetesSyncTarget": {
+      app_secret_config_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      key?: string;
+      name?: string;
+      namespaces?: string[];
+      org_id?: string;
       updated_at?: string;
     };
     "app.AppSecretsConfig": {
@@ -3382,17 +4069,35 @@ export interface components {
       updated_at?: string;
     };
     "app.AzureStackOutputs": {
+      break_glass_identity_client_ids?: {
+        [key: string]: string;
+      };
+      custom_identity_client_ids?: {
+        [key: string]: string;
+      };
+      deprovision_identity_client_id?: string;
+      install_inputs?: {
+        [key: string]: string;
+      };
       key_vault_id?: string;
       key_vault_name?: string;
+      maintenance_identity_client_id?: string;
       network_id?: string;
       network_name?: string;
       private_subnet_ids?: string[];
       private_subnet_names?: string[];
+      provision_identity_client_id?: string;
       public_subnet_ids?: string[];
       public_subnet_names?: string[];
       resource_group_id?: string;
       resource_group_location?: string;
       resource_group_name?: string;
+      /**
+       * @description Principal ID of the runner VMSS's system-assigned identity. Secret sync and
+       * image sync run as this identity, not a per-operation one, so sandboxes need
+       * it to grant cluster access.
+       */
+      runner_identity_principal_id?: string;
       subscription_id?: string;
       subscription_tenant_id?: string;
     };
@@ -3426,6 +4131,9 @@ export interface components {
       var_name?: string;
     };
     "app.ComponentBuild": {
+      app_branch_id?: string;
+      app_branch_run_id?: string;
+      build_runner_job_id?: string;
       /** @description checksum of our intermediate component config */
       checksum?: string;
       component_config_connection?: components["schemas"]["app.ComponentConfigConnection"];
@@ -3435,6 +4143,7 @@ export interface components {
       /** @description Read-only fields set on the object to de-nest data */
       component_id?: string;
       component_name?: string;
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       created_at?: string;
       created_by?: components["schemas"]["app.Account"];
       created_by_id?: string;
@@ -3442,12 +4151,61 @@ export interface components {
       id?: string;
       install_deploys?: components["schemas"]["app.InstallDeploy"][];
       log_stream?: components["schemas"]["app.LogStream"];
+      /**
+       * @description NoOp is true when the runner detected SourceDigest matches the previous
+       * build's SourceDigest and skipped the artifact push.
+       *
+       * Downstream contract:
+       *   - The build is still marked Active because the bytes it represents
+       *     are deployable (they live in the install registry under the prior
+       *     build that pushed them).
+       *   - No new install deploys are auto-queued for a NoOp build; the
+       *     dep-aware deploy path handles fan-out for installs that depend
+       *     on the underlying image.
+       *   - pollForDeployableBuild treats NoOp builds as Active without any
+       *     special-casing because the deployable artifact at the same
+       *     SourceDigest is already present in the install registry from the
+       *     prior build.
+       */
+      no_op?: boolean;
       policy_reports?: components["schemas"]["app.PolicyReport"][];
       /** @description QueueSignal is the signal enqueued when this build was created via the queue path */
       queue_signal?: components["schemas"]["app.QueueSignal"];
       releases?: components["schemas"]["app.ComponentRelease"][];
+      /** @description ResolvedAt is when the runner resolved SourceRef to SourceDigest. */
+      resolved_at?: string;
+      /**
+       * @description ResolvedTag is the tag the runner actually pulled from. For digest-pinned
+       * refs this is empty. For mutable/semver refs this is the concrete tag the
+       * runner selected (e.g. "1.25.5" even if SourceRef pinned "1.25.3" with a
+       * "~1.25.0" update_policy constraint).
+       */
+      resolved_tag?: string;
       /** @description runner details */
       runner_job?: components["schemas"]["app.RunnerJob"];
+      /** @description checksum of the component's source directory at build time */
+      source_checksum?: string;
+      /**
+       * @description SourceDigest is the manifest list digest of the resolved source ref,
+       * e.g. "sha256:abc...". This is the canonical content address of what was
+       * pulled and is used for build dedup.
+       */
+      source_digest?: string;
+      /** @description SourceImage is the repository portion of SourceRef without tag/digest, e.g. "nginx". */
+      source_image?: string;
+      /**
+       * @description SourceMediaType records the media type of the resolved manifest (image,
+       * image index, OCI artifact, etc.) for downstream rendering decisions.
+       */
+      source_media_type?: string;
+      /**
+       * @description Source identity for image-type builds.
+       *
+       * SourceRef is what the user wrote in the spec, e.g. "nginx:1.25.3" or
+       * "myimage@sha256:...". Always populated for image-type builds so we have a
+       * permanent record of what was requested at build time.
+       */
+      source_ref?: string;
       status?: string;
       status_description?: string;
       status_v2?: components["schemas"]["app.CompositeStatus"];
@@ -3466,15 +4224,30 @@ export interface components {
       component_name?: string;
       created_at?: string;
       created_by_id?: string;
+      default_enabled?: boolean;
       /** @description Duration string for deploy operations (e.g., "30m", "1h"). Max 1h. */
       deploy_timeout?: string;
       docker_build?: components["schemas"]["app.DockerBuildComponentConfig"];
       drift_schedule?: string;
       external_image?: components["schemas"]["app.ExternalImageComponentConfig"];
+      health_block_deploy?: boolean | null;
+      health_enabled?: boolean | null;
+      health_probes?: components["schemas"]["app.ComponentHealthProbe"][];
+      health_required_checks?: string[];
+      /** @description Duration string for how long health must hold after a deploy applies (e.g., "3m"). Max 1h. */
+      health_stabilization_window?: string;
       helm?: components["schemas"]["app.HelmComponentConfig"];
       id?: string;
       job?: components["schemas"]["app.JobComponentConfig"];
+      /**
+       * @description KubernetesContextName is the name of an AppKubernetesContextConfig on
+       * the same AppConfig. Empty means fall back to the implicit sandbox
+       * default. Stored as a name (not an FK) so it remains stable across
+       * AppConfig versions, mirroring how component dependencies are tracked.
+       */
+      kubernetes_context_name?: string;
       kubernetes_manifest?: components["schemas"]["app.KubernetesManifestComponentConfig"];
+      latest_build_id?: string;
       max_auto_retries?: number;
       /** @description Operation roles map: operation type -> role name */
       operation_roles?: {
@@ -3485,9 +4258,23 @@ export interface components {
       refs?: components["schemas"]["refs.Ref"][];
       skip_noops?: boolean;
       terraform_module?: components["schemas"]["app.TerraformModuleComponentConfig"];
+      toggleable?: boolean;
       type?: components["schemas"]["app.ComponentType"];
       updated_at?: string;
       version?: number;
+    };
+    "app.ComponentDiffEntry": {
+      component_id?: string;
+      component_name?: string;
+      component_type?: string;
+      new_checksum?: string;
+      old_checksum?: string;
+    };
+    "app.ComponentHealthProbe": {
+      command?: string[];
+      name?: string;
+      type?: string;
+      url?: string;
     };
     "app.ComponentRelease": {
       build_id?: string;
@@ -3588,6 +4375,17 @@ export interface components {
       id?: string;
       image_url?: string;
       tag?: string;
+      /**
+       * @description UpdatePolicy is an optional Masterminds-compatible semver constraint
+       * (e.g. "~1.25.0", "^2", ">=1.0.0,<2.0.0") that, when set, causes the
+       * runner to list tags from the source registry, filter to those that
+       * parse as semver and satisfy the constraint, and pick the highest
+       * matching tag at build time. Tag is then ignored as the source ref;
+       * the resolved tag is recorded on ComponentBuild.ResolvedTag.
+       *
+       * When empty, the runner uses Tag literally.
+       */
+      update_policy?: string;
       updated_at?: string;
     };
     "app.GCPAccount": {
@@ -3632,6 +4430,16 @@ export interface components {
       runner_service_account_email?: string;
       runner_subnet_name?: string;
     };
+    "app.GithubEvent": {
+      created_at?: string;
+      created_by_id?: string;
+      event_type?: string;
+      github_install_id?: string;
+      id?: string;
+      payload?: components["schemas"]["blobstore.Blob"];
+      status?: components["schemas"]["app.CompositeStatus"];
+      updated_at?: string;
+    };
     "app.HelmChart": {
       created_at?: string;
       created_by_id?: string;
@@ -3654,6 +4462,7 @@ export interface components {
       id?: string;
       namespace?: string;
       public_git_vcs_config?: components["schemas"]["app.PublicGitVCSConfig"];
+      skip_crds?: boolean;
       storage_driver?: string;
       /** @description Newer config fields that we don't need a column for */
       take_ownership?: boolean;
@@ -3667,6 +4476,7 @@ export interface components {
       chart_name?: string;
       helm_repo_config?: components["schemas"]["app.HelmRepoConfig"];
       namespace?: string;
+      skip_crds?: boolean;
       storage_driver?: string;
       /** @description Newer fields that we don't need to store as columns in the database */
       take_ownership?: boolean;
@@ -3676,8 +4486,6 @@ export interface components {
       values_files?: string[];
     };
     "app.HelmRelease": {
-      /** @description The rspb.Release body, as a base64-encoded string */
-      body?: string;
       created_at?: string;
       created_by_id?: string;
       helmChart?: components["schemas"]["app.HelmChart"];
@@ -3705,22 +4513,62 @@ export interface components {
       version?: string;
     };
     "app.Install": {
+      app_branch?: components["schemas"]["app.AppBranch"];
+      app_branch_connections?: components["schemas"]["app.InstallAppBranchConnection"][];
+      app_branch_id?: string;
       app_config_id?: string;
+      /**
+       * @description AppDefaultLabels is the snapshot of the app's default labels applied to
+       * this install. It is the lock set for label mutation endpoints, and lets
+       * reconciliation tell a removed default apart from a user-set label.
+       */
+      app_default_labels?: {
+        [key: string]: string;
+      };
       app_id?: string;
       app_runner_config?: components["schemas"]["app.AppRunnerConfig"];
       app_sandbox_config?: components["schemas"]["app.AppSandboxConfig"];
       aws_account?: components["schemas"]["app.AWSAccount"];
       azure_account?: components["schemas"]["app.AzureAccount"];
       cloud_platform?: string;
+      /**
+       * @description CloudPlatformMetadata records the cloud account this install is expected to
+       * run in, and what it was observed running in. See the type for the trust model.
+       */
+      cloud_platform_metadata?: Record<string, never>;
+      component_health_statuses?: {
+        [key: string]: string;
+      };
       component_statuses?: {
         [key: string]: string;
       };
       composite_component_status?: string;
       composite_component_status_description?: string;
+      /**
+       * @description CompositeHealthStatus is the live-health rollup of the install's
+       * components — a parallel axis to CompositeComponentStatus (deploy
+       * lifecycle), never merged with it. Empty until the component-health
+       * evaluator has produced verdicts.
+       */
+      composite_health_status?: string;
+      composite_health_status_description?: string;
       created_at?: string;
       created_by_id?: string;
       drifted_objects?: components["schemas"]["app.DriftedObject"][];
+      /**
+       * @description Expected* coalesce the target identifier with the observed one, so callers get
+       * the strongest identifier available without caring which is set.
+       */
+      expected_account_id?: string;
+      expected_project_id?: string;
+      expected_subscription_id?: string;
       gcp_account?: components["schemas"]["app.GCPAccount"];
+      /**
+       * @description HealthClusterError is why component health cannot currently inspect the
+       * install's cluster, empty when it can. Install-level because it is one
+       * fact about the install rather than a property of any component.
+       */
+      health_cluster_error?: string;
       id?: string;
       install_action_workflows?: components["schemas"]["app.InstallActionWorkflow"][];
       install_components?: components["schemas"]["app.InstallComponent"][];
@@ -3733,7 +4581,25 @@ export interface components {
       install_sandbox_runs?: components["schemas"]["app.InstallSandboxRun"][];
       install_stack?: components["schemas"]["app.InstallStack"];
       install_states?: components["schemas"]["app.InstallState"][];
+      /**
+       * @description LabelTemplates holds label values written with the .nuon interpolation
+       * syntax. Rendered values are materialized into Labels whenever install
+       * state changes, so downstream consumers (SQL label matching, subscription
+       * dispatch, pickers) only ever read literal values. NOTE: this comment ends
+       * up in the swagger spec, which swag executes as a Go text/template —
+       * literal moustaches here break spec generation.
+       */
+      label_templates?: {
+        [key: string]: string;
+      };
       labels?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Labels"];
+      /**
+       * @description LastHealthReportAt is when a runner last reported component health. It is
+       * how the staleness sweep finds installs that went quiet without polling
+       * every install individually.
+       */
+      last_health_report_at?: string;
+      lifecycle_phase?: Record<string, never>;
       links?: {
         [key: string]: unknown;
       };
@@ -3741,18 +4607,29 @@ export interface components {
         [key: string]: string;
       };
       name?: string;
+      /**
+       * @description PhoneHomeAuthStatus can take the phone_home_auth JSON name precisely because the
+       * column itself never serializes.
+       */
+      phone_home_auth?: components["schemas"]["app.PhoneHomeAuthStatus"];
       queues?: components["schemas"]["app.Queue"][];
       runner_id?: string;
       runner_status?: string;
       runner_status_description?: string;
       runner_type?: string;
       sandbox?: components["schemas"]["app.InstallSandbox"];
+      sandbox_health_message?: string;
+      /**
+       * @description SandboxHealthStatus / SandboxHealthMessage are a denormalized rollup of the
+       * worst health across the sandbox-owned resources reported by the
+       * component-health engine, written on each ingest so every install read can
+       * surface a degraded sandbox without querying ClickHouse. Empty until the
+       * engine reports.
+       */
+      sandbox_health_status?: string;
       sandbox_mode?: components["schemas"]["sql.NullBool"];
       sandbox_status?: string;
       sandbox_status_description?: string;
-      /** @description TODO(jm): deprecate these fields once the terraform provider has been updated */
-      status?: string;
-      status_description?: string;
       updated_at?: string;
       /** @description WorkflowID is populated by handlers that create a workflow. Not persisted. */
       workflow_id?: string;
@@ -3768,10 +4645,12 @@ export interface components {
       runs?: components["schemas"]["app.InstallActionWorkflowRun"][];
       /** @description after query fields filled in after querying */
       status?: string;
+      status_v2?: components["schemas"]["app.CompositeStatus"];
       updated_at?: string;
     };
     "app.InstallActionWorkflowRun": {
       action_workflow_config_id?: string;
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       config?: components["schemas"]["app.ActionWorkflowConfig"];
       created_at?: string;
       created_by?: components["schemas"]["app.Account"];
@@ -3784,6 +4663,12 @@ export interface components {
       install_action_workflow_id?: string;
       install_id?: string;
       install_workflow_id?: string;
+      /**
+       * @description KubernetesContextName is snapshotted from the action's
+       * ActionWorkflowConfig at run-creation time so plan resolution can target
+       * the correct cluster. Empty means fall back to the sandbox default.
+       */
+      kubernetes_context_name?: string;
       log_stream?: components["schemas"]["app.LogStream"];
       outputs?: {
         [key: string]: unknown;
@@ -3822,6 +4707,38 @@ export interface components {
     };
     /** @enum {string} */
     "app.InstallActionWorkflowRunStepStatus": "finished" | "pending" | "in-progress" | "timed-out" | "error";
+    "app.InstallAppBranchConnection": {
+      activated_at?: string;
+      active?: boolean;
+      app_branch?: components["schemas"]["app.AppBranch"];
+      app_branch_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      deactivated_at?: string;
+      id?: string;
+      install_id?: string;
+      updated_at?: string;
+    };
+    "app.InstallAppConfigVersion": {
+      app_branch_run?: components["schemas"]["app.AppBranchRun"];
+      app_branch_run_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      diff?: components["schemas"]["blobstore.Blob"];
+      id?: string;
+      install_group_id?: string;
+      install_id?: string;
+      metadata?: {
+        [key: string]: string;
+      };
+      new_app_config_id?: string;
+      old_app_config_id?: string;
+      org_id?: string;
+      status?: components["schemas"]["app.CompositeStatus"];
+      updated_at?: string;
+      workflow?: components["schemas"]["app.Workflow"];
+      workflow_id?: string;
+    };
     /** @enum {string} */
     "app.InstallApprovalOption": "approve-all" | "prompt";
     "app.InstallAuditLog": {
@@ -3836,6 +4753,14 @@ export interface components {
       created_at?: string;
       created_by_id?: string;
       drifted_object?: components["schemas"]["app.DriftedObject"];
+      /**
+       * @description Enabled is the resolved enabled/disabled state for a toggleable component
+       * (from the synthetic enabled input, falling back to default_enabled); nil otherwise.
+       */
+      enabled?: boolean | null;
+      health_status?: string;
+      health_status_description?: string;
+      health_status_v2?: components["schemas"]["app.CompositeStatus"];
       helm_chart?: components["schemas"]["app.HelmChart"];
       id?: string;
       install_deploys?: components["schemas"]["app.InstallDeploy"][];
@@ -3849,8 +4774,44 @@ export interface components {
       terraform_workspace?: components["schemas"]["app.TerraformWorkspace"];
       updated_at?: string;
     };
+    "app.InstallComponentResourceState": {
+      api_group?: string;
+      component_id?: string;
+      details?: string;
+      health?: string;
+      install_component_id?: string;
+      install_id?: string;
+      kind?: string;
+      message?: string;
+      name?: string;
+      namespace?: string;
+      native_status?: string;
+      observed_at?: string;
+      org_id?: string;
+      owner_name?: string;
+      provider?: string;
+      /**
+       * @description RemovedFromConfig is set at read time when a probe's name is no longer in
+       * the component's config — still shown, but labelled so it can't pass as live.
+       */
+      removed_from_config?: boolean;
+      runner_id?: string;
+      /**
+       * @description Source classifies the resource owner: "component" (keyed by
+       * install_component_id) or "sandbox" (keyed by owner_name = helm release name).
+       */
+      source?: string;
+      /**
+       * @description StaleAfterSeconds is how long this observation stays trustworthy (0 =
+       * default); a pushed check sets its own, since it knows its cadence best.
+       */
+      stale_after_seconds?: number;
+    };
     "app.InstallConfig": {
       approval_option?: components["schemas"]["app.InstallApprovalOption"];
+      component_toggles?: {
+        [key: string]: boolean;
+      };
       created_at?: string;
       created_by_id?: string;
       custom_nested_stacks?: components["schemas"]["config.CustomNestedStack"][];
@@ -3863,6 +4824,70 @@ export interface components {
       /** @description Per-install stack template overrides (nil = use app config default) */
       vpc_nested_template_url?: string;
     };
+    "app.InstallConfigDiff": {
+      added?: components["schemas"]["app.ComponentDiffEntry"][];
+      changed?: components["schemas"]["app.ComponentDiffEntry"][];
+      removed?: components["schemas"]["app.ComponentDiffEntry"][];
+      sandbox_changed?: boolean;
+      sandbox_new_id?: string;
+      sandbox_old_id?: string;
+      stack_changed?: boolean;
+      stack_new_id?: string;
+      stack_old_id?: string;
+      unchanged?: components["schemas"]["app.ComponentDiffEntry"][];
+    };
+    "app.InstallConfigSync": {
+      app_branch_config_id?: string;
+      app_branch_id?: string;
+      app_branch_run_id?: string;
+      app_install_config_sync_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      install_id?: string;
+      metadata?: {
+        [key: string]: string;
+      };
+      org_id?: string;
+      status?: components["schemas"]["app.CompositeStatus"];
+      triggered_by?: string;
+      updated_at?: string;
+      vcs_connection_commit?: components["schemas"]["app.VCSConnectionCommit"];
+      versions?: components["schemas"]["app.InstallConfigVersion"][];
+    };
+    "app.InstallConfigVersion": {
+      created?: boolean;
+      created_at?: string;
+      created_by_id?: string;
+      diff?: components["schemas"]["blobstore.Blob"];
+      file_path?: string;
+      id?: string;
+      install_config_sync?: components["schemas"]["app.InstallConfigSync"];
+      install_config_sync_id?: string;
+      install_id?: string;
+      install_name?: string;
+      metadata?: {
+        [key: string]: string;
+      };
+      org_id?: string;
+      status?: components["schemas"]["app.CompositeStatus"];
+      updated_at?: string;
+    };
+    "app.InstallCreationApproval": {
+      app_id?: string;
+      app_install_config_sync_id?: string;
+      approved_at?: string;
+      approved_by_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      id?: string;
+      org_id?: string;
+      proposed_installs?: components["schemas"]["app.ProposedInstall"][];
+      status?: components["schemas"]["app.InstallCreationApprovalStatus"];
+      updated_at?: string;
+    };
+    /** @enum {string} */
+    "app.InstallCreationApprovalStatus": "pending" | "approved" | "denied";
     "app.InstallDeploy": {
       action_workflow_runs?: components["schemas"]["app.InstallActionWorkflowRun"][];
       /** @description AppliedAt is set when the apply runner job completes successfully. */
@@ -3872,6 +4897,12 @@ export interface components {
       component_config_version?: number;
       component_id?: string;
       component_name?: string;
+      /**
+       * @description CompositeError holds a typed, structured error (e.g. a missing AWS IAM
+       * permission) frozen at write time when a deploy plan/apply fails. It is
+       * nil for successful or non-enriched failures.
+       */
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       created_at?: string;
       created_by?: components["schemas"]["app.Account"];
       created_by_id?: string;
@@ -3905,7 +4936,7 @@ export interface components {
       workflow_id?: string;
     };
     /** @enum {string} */
-    "app.InstallDeployType": "sync-image" | "apply" | "teardown";
+    "app.InstallDeployType": "sync-image" | "apply" | "teardown" | "recover";
     "app.InstallEvent": {
       created_at?: string;
       created_by_id?: string;
@@ -3919,6 +4950,44 @@ export interface components {
         [key: string]: string;
       };
       updated_at?: string;
+    };
+    "app.InstallGroupRun": {
+      app_branch_run_id?: string;
+      completed_at?: string;
+      completed_installs?: number;
+      created_at?: string;
+      created_by_id?: string;
+      failed_installs?: number;
+      id?: string;
+      install_group?: components["schemas"]["app.AppBranchInstallGroup"];
+      install_group_id?: string;
+      install_group_name?: string;
+      installs?: components["schemas"]["app.InstallGroupRunInstall"][];
+      org_id?: string;
+      started_at?: string;
+      status?: components["schemas"]["app.CompositeStatus"];
+      total_installs?: number;
+      updated_at?: string;
+    };
+    "app.InstallGroupRunInstall": {
+      install_id?: string;
+      /** @description Phase is which stage of the group the install is in: "deploy" or "runbook". */
+      phase?: string;
+      runbooks?: components["schemas"]["app.InstallGroupRunRunbook"][];
+      status?: string;
+      workflow_id?: string;
+    };
+    "app.InstallGroupRunRunbook": {
+      /**
+       * @description Attempt increments when a retry of the step re-runs a runbook that failed,
+       * so the retry gets a fresh idempotency key instead of adopting the failed run.
+       */
+      attempt?: number;
+      run_id?: string;
+      runbook_id?: string;
+      runbook_name?: string;
+      status?: string;
+      workflow_id?: string;
     };
     "app.InstallInputs": {
       app_input_config_id?: string;
@@ -3984,6 +5053,7 @@ export interface components {
       runs?: components["schemas"]["app.InstallRunbookRun"][];
       /** @description after query fields */
       status?: string;
+      status_v2?: components["schemas"]["app.CompositeStatus"];
       updated_at?: string;
     };
     "app.InstallRunbookRun": {
@@ -3993,6 +5063,11 @@ export interface components {
       /** @description after query */
       execution_time?: number;
       id?: string;
+      /**
+       * @description IdempotencyKey lets a retryable caller (e.g. a Temporal activity) repeat a
+       * trigger without starting the runbook twice. Unique where set.
+       */
+      idempotency_key?: string;
       install_id?: string;
       install_runbook?: components["schemas"]["app.InstallRunbook"];
       install_runbook_id?: string;
@@ -4000,9 +5075,21 @@ export interface components {
       install_workflow_id?: string;
       runbook_config?: components["schemas"]["app.RunbookConfig"];
       runbook_config_id?: string;
+      runbook_inputs?: {
+        [key: string]: string;
+      };
+      runbook_inputs_redacted?: {
+        [key: string]: string;
+      };
       status?: string;
       status_description?: string;
       status_v2?: components["schemas"]["app.CompositeStatus"];
+      /**
+       * @description StepSelections records which runbook steps are enabled/disabled for this run.
+       * Steps explicitly disabled here are not generated by the runbook workflow.
+       */
+      step_selections?: components["schemas"]["app.RunbookStepSelection"][];
+      trigger_event_dispatch_id?: string;
       triggered_by_id?: string;
       updated_at?: string;
     };
@@ -4023,6 +5110,12 @@ export interface components {
       app_sandbox_config?: components["schemas"]["app.AppSandboxConfig"];
       /** @description AppliedAt is set when the apply runner job completes successfully. */
       applied_at?: string;
+      /**
+       * @description CompositeError holds a typed, structured error (e.g. a missing AWS IAM
+       * permission) frozen at write time when a sandbox plan/apply fails. It is
+       * nil for successful or non-enriched failures.
+       */
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       created_at?: string;
       created_by?: components["schemas"]["app.Account"];
       created_by_id?: string;
@@ -4084,6 +5177,7 @@ export interface components {
       aws_bucket_key?: string;
       /** @description aws configuration parameters */
       aws_bucket_name?: string;
+      callback_ref?: components["schemas"]["callback.Ref"];
       checksum?: string;
       composite_status?: components["schemas"]["app.CompositeStatus"];
       contents?: string;
@@ -4097,6 +5191,7 @@ export interface components {
       phone_home_url?: string;
       quick_link_url?: string;
       runs?: components["schemas"]["app.InstallStackVersionRun"][];
+      stack_name?: string;
       template_url?: string;
       terraform_checksum?: string;
       /**
@@ -4118,6 +5213,9 @@ export interface components {
         [key: string]: unknown;
       };
       id?: string;
+      input_diff?: components["schemas"]["app.StackVersionRunInputDiff"];
+      role_diff?: components["schemas"]["app.StackVersionRunRoleDiff"];
+      run_type?: components["schemas"]["app.StackVersionRunType"];
       updated_at?: string;
     };
     "app.InstallState": {
@@ -4129,6 +5227,8 @@ export interface components {
       id?: string;
       install_id?: string;
       stale_at?: components["schemas"]["generics.NullTime"];
+      /** @description StalePartials lists which state partials are stale and need regeneration on next read. */
+      stale_partials?: components["schemas"]["state.PartialName"][];
       triggered_by_id?: string;
       triggered_by_type?: string;
       updated_at?: string;
@@ -4205,6 +5305,86 @@ export interface components {
       updated_at?: string;
       write_token?: string;
     };
+    "app.Notebook": {
+      cell_count?: number;
+      cells?: components["schemas"]["app.NotebookCell"][];
+      created_at?: string;
+      created_by?: components["schemas"]["app.Account"];
+      created_by_id?: string;
+      description?: string;
+      id?: string;
+      install_id?: string;
+      latest_run_at?: string;
+      name?: string;
+      /**
+       * @description Queue owns the lifecycle of the notebook's warm Temporal workflow: a
+       * notebook-start signal enqueued at create time starts NotebookWorkflow,
+       * and the queue can re-dispatch it for recovery. Cell runs still dispatch
+       * to the workflow directly via update-with-start.
+       */
+      queue?: components["schemas"]["app.Queue"];
+      status?: string;
+      updated_at?: string;
+    };
+    "app.NotebookCell": {
+      command?: string;
+      created_at?: string;
+      created_by_id?: string;
+      enable_kube_config?: components["schemas"]["sql.NullBool"];
+      env_vars?: {
+        [key: string]: string;
+      };
+      id?: string;
+      inline_contents?: string;
+      /**
+       * @description LatestRun is populated on read so the UI can show the most recent run's
+       * status and log stream directly below the cell. Not persisted.
+       */
+      latest_run?: components["schemas"]["app.NotebookCellRun"];
+      name?: string;
+      notebook_id?: string;
+      /** @description Position is the 0-based ordering of this cell within the notebook. */
+      position?: number;
+      /** @description Revision increments on every edit; runs snapshot the revision they ran. */
+      revision?: number;
+      role?: string;
+      timeout?: number;
+      updated_at?: string;
+    };
+    "app.NotebookCellRun": {
+      cell_id?: string;
+      /** @description CellRevision records which revision of the cell this run executed. */
+      cell_revision?: number;
+      command?: string;
+      created_at?: string;
+      created_by?: components["schemas"]["app.Account"];
+      created_by_id?: string;
+      env_vars?: {
+        [key: string]: string;
+      };
+      id?: string;
+      /**
+       * @description IdempotencyKey deduplicates run requests (HTTP retries / update retries).
+       * A server-side key is always generated, so the composite unique index on
+       * (notebook_id, idempotency_key) in Indexes() never sees an empty key.
+       */
+      idempotency_key?: string;
+      inline_contents?: string;
+      /** @description Link to the existing execution/audit artifacts. */
+      install_action_workflow_run_id?: string;
+      install_id?: string;
+      log_stream_id?: string;
+      /** @description Cell config snapshot at run time. */
+      name?: string;
+      notebook_id?: string;
+      runner_job_id?: string;
+      status?: string;
+      status_description?: string;
+      status_v2?: components["schemas"]["app.CompositeStatus"];
+      triggered_by_id?: string;
+      triggered_by_type?: string;
+      updated_at?: string;
+    };
     "app.NotificationsConfig": {
       created_at?: string;
       created_by_id?: string;
@@ -4239,6 +5419,34 @@ export interface components {
       updated_at?: string;
       urls?: string[];
       variant?: string;
+    };
+    "app.OIDCTrustPolicy": {
+      audience?: string;
+      /**
+       * @description ClaimConditions maps claim names to patterns. All conditions must match
+       * for the policy to apply. Patterns are exact strings, or globs where `*`
+       * does not cross `:` segments.
+       */
+      claim_conditions?: {
+        [key: string]: string;
+      };
+      created_at?: string;
+      created_by_id?: string;
+      enabled?: boolean;
+      id?: string;
+      /**
+       * @description IssuerURL is the exact `iss` claim value and the base URL used for OIDC
+       * discovery + JWKS fetching. It is always the stored, admin-configured
+       * value — never taken from the presented token.
+       */
+      issuer_url?: string;
+      last_used_at?: string;
+      name?: string;
+      org_id?: string;
+      role?: string;
+      service_account_id?: string;
+      token_duration_seconds?: number;
+      updated_at?: string;
     };
     "app.Onboarding": {
       account_id?: string;
@@ -4351,6 +5559,16 @@ export interface components {
       trace_id?: string;
       updated_at?: string;
     };
+    "app.PhoneHomeAuthStatus": {
+      last_rejected_at?: string;
+      last_verified_at?: string;
+      /**
+       * @description ProvisionedAt is omitzero because recordPhoneHomeAuthResult can create the column
+       * from an empty struct, so a row can carry verification timestamps but no
+       * provisioning one. Serializing that as year 1 would render as a bogus timestamp.
+       */
+      provisioned_at?: string;
+    };
     "app.Policy": {
       created_at?: string;
       created_by_id?: string;
@@ -4369,7 +5587,7 @@ export interface components {
       type?: string;
     };
     /** @enum {string} */
-    "app.PolicyName": "org_admin" | "org_support" | "installer" | "runner" | "hosted_installer";
+    "app.PolicyName": "org_admin" | "org_support" | "org_read_only" | "org_builder" | "installer" | "runner" | "hosted_installer";
     "app.PolicyReport": {
       /** @description Denormalized context for filtering */
       app_id?: string;
@@ -4423,6 +5641,11 @@ export interface components {
       policy_name?: string;
       /** @description "deny" or "warn" */
       severity?: string;
+    };
+    "app.ProposedInstall": {
+      config?: number[];
+      file_path?: string;
+      name?: string;
     };
     /** @enum {string} */
     "app.ProviderType": "oidc" | "google" | "github";
@@ -4530,6 +5753,7 @@ export interface components {
       callbacks?: components["schemas"]["callback.Ref"][];
       created_at?: string;
       created_by_id?: string;
+      dedupe_key?: string;
       /** @description Optional: if this signal was emitted by an emitter */
       emitter_id?: string;
       enqueued?: boolean;
@@ -4549,16 +5773,25 @@ export interface components {
       workflow?: components["schemas"]["signaldb.WorkflowRef"];
     };
     "app.Role": {
+      applies_to?: string[];
       createdBy?: components["schemas"]["app.Account"];
       created_at?: string;
       created_by_id?: string;
+      description?: string;
       id?: string;
+      managed?: boolean;
       policies?: components["schemas"]["app.Policy"][];
       role_type?: components["schemas"]["app.RoleType"];
+      /**
+       * @description display + assignability metadata; the single source of truth read by
+       * GET /v1/roles and every role picker. Managed roles are kept in sync
+       * with standardOrgRoles by the authz reconciler.
+       */
+      title?: string;
       updated_at?: string;
     };
     /** @enum {string} */
-    "app.RoleType": "org_admin" | "org_support" | "installer" | "runner" | "hosted-installer";
+    "app.RoleType": "org_admin" | "org_support" | "org_read_only" | "org_builder" | "installer" | "runner" | "hosted-installer";
     "app.Runbook": {
       app_id?: string;
       config_count?: number;
@@ -4580,9 +5813,25 @@ export interface components {
       created_at?: string;
       created_by_id?: string;
       id?: string;
+      inputs?: components["schemas"]["app.RunbookInput"][];
       readme?: string;
       runbook_id?: string;
       steps?: components["schemas"]["app.RunbookStepConfig"][];
+      updated_at?: string;
+    };
+    "app.RunbookInput": {
+      created_at?: string;
+      created_by_id?: string;
+      default?: string;
+      description?: string;
+      display_name?: string;
+      id?: string;
+      idx?: number;
+      name?: string;
+      required?: boolean;
+      runbook_config_id?: string;
+      sensitive?: boolean;
+      type?: string;
       updated_at?: string;
     };
     "app.RunbookStepConfig": {
@@ -4590,23 +5839,36 @@ export interface components {
       action_workflow_id?: string;
       /** @description inline action fields */
       command?: string;
-      /** @description deploy fields */
+      /** @description deploy / tear-down fields */
       component_name?: string;
       created_at?: string;
       created_by_id?: string;
-      deploy_dependencies?: boolean;
+      deploy_dependents?: boolean;
       env_vars?: {
         [key: string]: string;
       };
+      event_types?: string[];
+      filters?: components["schemas"]["app.TriggerFilter"][];
       id?: string;
       idx?: number;
       inline_contents?: string;
       name?: string;
+      plan_only?: boolean;
       role?: string;
       runbook_config_id?: string;
+      /** @description sandbox lifecycle fields */
+      skip_component_deploys?: boolean;
+      tear_down_dependents?: boolean;
       timeout?: number;
+      trigger_id?: string;
+      trigger_name?: string;
       type?: string;
       updated_at?: string;
+    };
+    "app.RunbookStepSelection": {
+      enabled?: boolean;
+      name?: string;
+      step_id?: string;
     };
     "app.Runner": {
       created_at?: string;
@@ -4679,6 +5941,13 @@ export interface components {
       };
       local_aws_iam_role_arn?: string;
       logging_level?: string;
+      /**
+       * @description LongPollJobs mirrors the org's `runner-job-long-poll` feature flag
+       * so the runner can choose between the legacy idle-poll loop and the
+       * new long-poll endpoint at boot. Not persisted; populated by the
+       * runner-settings handler.
+       */
+      long_poll_jobs?: boolean;
       /** @description Metadata is used as both log and metric tags/attributes in the runner when emitting data */
       metadata?: {
         [key: string]: string;
@@ -4734,6 +6003,7 @@ export interface components {
     "app.RunnerJob": {
       /** @description available timeout is how long a job can be marked as "available" before being requeued */
       available_timeout?: number;
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       created_at?: string;
       created_by_id?: string;
       execution_count?: number;
@@ -4741,6 +6011,7 @@ export interface components {
       /** @description execution timeout is how long a job can be marked as "exeucuting" before being requeued */
       execution_timeout?: number;
       executions?: components["schemas"]["app.RunnerJobExecution"][];
+      executor?: string;
       final_runner_job_execution_id?: string;
       finished_at?: string;
       group?: components["schemas"]["app.RunnerJobGroup"];
@@ -4802,6 +6073,14 @@ export interface components {
       updated_at?: string;
     };
     "app.RunnerJobExecutionResult": {
+      /**
+       * @description CompositeError is the typed, structured error parsed from this execution's
+       * failure output at write time. It is the canonical, execution-scoped store
+       * for runner-driven composite errors: strictly 1:1 with the attempt and
+       * never reused, so it cannot go stale across retries. Aggregate rows derive
+       * their displayed error from the latest relevant result; they do not own it.
+       */
+      composite_error?: components["schemas"]["compositeerrors.CompositeErrorData"];
       contents?: string;
       contents_display?: string;
       contents_display_gzip?: string;
@@ -4822,10 +6101,14 @@ export interface components {
     /** @enum {string} */
     "app.RunnerJobExecutionStatus": "pending" | "initializing" | "in-progress" | "cleaning-up" | "finished" | "failed" | "timed-out" | "not-attempted" | "cancelled" | "unknown";
     /** @enum {string} */
-    "app.RunnerJobGroup": "health-checks" | "sync" | "build" | "deploy" | "sandbox" | "runner" | "operations" | "management" | "actions" | "" | "any";
+    "app.RunnerJobGroup": "health-checks" | "sync" | "build" | "deploy" | "sandbox" | "runner" | "operations" | "management" | "actions" | "image-actions" | "" | "any";
     /** @enum {string} */
     "app.RunnerJobOperationType": "exec" | "build" | "create-apply-plan" | "create-teardown-plan" | "apply-plan" | "unknown";
     "app.RunnerJobPlan": {
+      /**
+       * @description Deprecated: composite plans are read from CompositePlanBlob (S3). This
+       * jsonb column is retained only as a fallback for rows not yet backfilled.
+       */
       composite_plan?: components["schemas"]["plantypes.CompositePlan"];
       created_at?: string;
       created_by_id?: string;
@@ -4960,6 +6243,17 @@ export interface components {
     "app.SlackOrgLinkStatus": "verified" | "revoked";
     /** @enum {string} */
     "app.StackType": "aws-cloudformation" | "azure-bicep" | "gcp-terraform";
+    "app.StackVersionRunInputDiff": {
+      added?: string[];
+      changed?: string[];
+      removed?: string[];
+    };
+    "app.StackVersionRunRoleDiff": {
+      disabled?: string[];
+      enabled?: string[];
+    };
+    /** @enum {string} */
+    "app.StackVersionRunType": "workflow-run" | "out-of-band-update";
     /** @enum {string} */
     "app.Status": "error" | "pending" | "in-progress" | "checking-plan" | "success" | "not-attempted" | "cancelled" | "retrying" | "discarded" | "user-skipped" | "auto-skipped" | "planning" | "applying" | "queued" | "warning" | "failed-pending-retry" | "generating" | "awaiting-user-run" | "provisioning" | "active" | "outdated" | "expired" | "approved" | "drifted" | "no-drift" | "approval-expired" | "approval-denied" | "approval-retry" | "building" | "deleting" | "noop" | "approval-awaiting";
     "app.TerraformLock": {
@@ -5050,6 +6344,61 @@ export interface components {
       /** @description Foreign key to TerraformWorkspace with unique constraint to prevent conflicting states for a workspace */
       workspace_id?: string;
     };
+    "app.Token": {
+      account_id?: string;
+      created_at?: string;
+      created_by_id?: string;
+      /** @description claim data */
+      expires_at?: string;
+      id?: string;
+      issued_at?: string;
+      issuer?: string;
+      name?: string;
+      org_id?: string;
+      role?: string;
+      token_type?: components["schemas"]["app.TokenType"];
+      updated_at?: string;
+    };
+    /** @enum {string} */
+    "app.TokenType": "auth" | "auth0" | "admin" | "static" | "integration" | "canary" | "nuon" | "federated";
+    "app.TriggerFilter": {
+      from?: string;
+      op?: components["schemas"]["app.TriggerFilterType"];
+      path?: string;
+      value?: unknown;
+    };
+    /** @enum {string} */
+    "app.TriggerFilterType": "eq" | "neq" | "in" | "prefix" | "suffix" | "contains" | "gt" | "gte" | "lt" | "lte" | "regex" | "exists" | "not_exists";
+    "app.TriggerRule": {
+      app_branch_id?: string;
+      app_config_id?: string;
+      app_id?: string;
+      config_hash?: string;
+      created_at?: string;
+      created_by_id?: string;
+      enabled?: boolean;
+      event_types?: string[];
+      filters?: components["schemas"]["app.TriggerFilter"][];
+      force?: boolean;
+      id?: string;
+      input_mappings?: {
+        [key: string]: string;
+      };
+      install_name?: string;
+      name?: string;
+      org_id?: string;
+      plan_only?: boolean;
+      runbook_id?: string;
+      suspended_at?: string;
+      suspended_by_id?: string;
+      target_type?: components["schemas"]["app.TriggerTargetType"];
+      trigger_id?: string;
+      updated_at?: string;
+      valid_from?: string;
+      valid_to?: string;
+    };
+    /** @enum {string} */
+    "app.TriggerTargetType": "app_branch_run" | "runbook";
     "app.UserJourney": {
       name?: string;
       steps?: components["schemas"]["app.UserJourneyStep"][];
@@ -5081,6 +6430,7 @@ export interface components {
       vcs_connection_commit?: components["schemas"]["app.VCSConnectionCommit"][];
     };
     "app.VCSConnectionCommit": {
+      author_avatar_url?: string;
       author_email?: string;
       author_name?: string;
       created_at?: string;
@@ -5094,18 +6444,16 @@ export interface components {
       updated_at?: string;
       vcs_connection_id?: string;
     };
-    "app.VCSEvent": {
+    "app.VCSWebhookSubscription": {
       created_at?: string;
       created_by_id?: string;
-      event_type?: string;
+      github_hook_id?: number;
+      github_install_id?: string;
       id?: string;
-      payload?: components["schemas"]["app.VCSEventPayload"];
       status?: components["schemas"]["app.CompositeStatus"];
       updated_at?: string;
       vcs_connection_id?: string;
-    };
-    "app.VCSEventPayload": {
-      [key: string]: unknown;
+      webhook_url?: string;
     };
     "app.Waitlist": {
       created_at?: string;
@@ -5237,6 +6585,11 @@ export interface components {
       retried?: boolean;
       retry_index?: number;
       retryable?: boolean;
+      /**
+       * @description SkipOnFailure lets the workflow continue past this step after its retry
+       * budget is exhausted. Skippable only gates user-initiated skips.
+       */
+      skip_on_failure?: boolean;
       skippable?: boolean;
       started_at?: string;
       status?: components["schemas"]["app.CompositeStatus"];
@@ -5298,7 +6651,7 @@ export interface components {
       workflow_step_id?: string;
     };
     /** @enum {string} */
-    "app.WorkflowStepApprovalType": "noop" | "approve-all" | "terraform_plan" | "kubernetes_manifest_approval" | "helm_approval" | "pulumi_plan";
+    "app.WorkflowStepApprovalType": "noop" | "approve-all" | "terraform_plan" | "kubernetes_manifest_approval" | "helm_approval" | "pulumi_plan" | "app_branch_plan" | "install_creation";
     /** @enum {string} */
     "app.WorkflowStepExecutionType": "system" | "user" | "approval" | "skipped" | "hidden";
     "app.WorkflowStepGroup": {
@@ -5345,7 +6698,7 @@ export interface components {
     /** @enum {string} */
     "app.WorkflowStepResponseType": "deny" | "approve" | "deny-skip-current" | "deny-skip-current-and-dependents" | "retry" | "auto-approve";
     /** @enum {string} */
-    "app.WorkflowType": "provision" | "deprovision" | "deprovision_sandbox" | "manual_deploy" | "input_update" | "deploy_components" | "teardown_component" | "teardown_components" | "reprovision_sandbox" | "drift_run_reprovision_sandbox" | "action_workflow_run" | "sync_secrets" | "drift_run" | "app_branches_manual_update" | "app_branches_config_repo_update" | "app_branches_component_repo_update" | "reprovision" | "app_config_build" | "runbook_run";
+    "app.WorkflowType": "provision" | "deprovision" | "deprovision_sandbox" | "manual_deploy" | "input_update" | "deploy_components" | "teardown_component" | "teardown_components" | "reprovision_sandbox" | "drift_run_reprovision_sandbox" | "action_workflow_run" | "sync_secrets" | "drift_run" | "app_branches_manual_update" | "app_branches_config_repo_update" | "app_branches_component_repo_update" | "app_branch_config_update" | "app_install_sync" | "reprovision" | "reprovision_stack" | "app_config_build" | "runbook_run" | "component_enabled" | "component_disabled" | "recover_helm_release";
     "blobstore.Blob": Record<string, never>;
     "callback.Ref": {
       namespace?: string;
@@ -5366,6 +6719,44 @@ export interface components {
       is_private?: boolean;
       name?: string;
     };
+    "compositeerrors.CompositeErrorData": {
+      /**
+       * @description Data is the typed, per-error-type payload: WHAT the error is. Closed
+       * schema per Type. Read to render sections and by any future view.
+       */
+      data?: Record<string, never>;
+      /**
+       * @description Hints is the open annotation/directive bag: HOW to handle or present the
+       * error. Canonical keys (Hint*) are honored by specific consumers.
+       */
+      hints?: components["schemas"]["compositeerrors.Hints"];
+      message?: string;
+      sections?: components["schemas"]["compositeerrors.Section"][];
+      severity?: components["schemas"]["compositeerrors.Severity"];
+      /**
+       * @description SourceID / SourceType identify the row this error originated on
+       * (polymorphic, same shape as OwnerID/OwnerType). Set at the record site,
+       * e.g. ("runner_job_execution_results", "<result id>"). Enables a future
+       * JOINable view without a separate error table.
+       */
+      source_id?: string;
+      source_type?: string;
+      type?: string;
+      /** @description Version is the payload schema version (SchemaVersion at write time). */
+      version?: number;
+    };
+    "compositeerrors.Hints": {
+      [key: string]: string;
+    };
+    "compositeerrors.Section": {
+      body?: string;
+      heading?: string;
+      kind?: components["schemas"]["compositeerrors.SectionKind"];
+    };
+    /** @enum {string} */
+    "compositeerrors.SectionKind": "markdown" | "text" | "code";
+    /** @enum {string} */
+    "compositeerrors.Severity": "fatal" | "error" | "warning" | "info";
     /** @enum {string} */
     "config.AppPolicyEngine": "kyverno" | "opa";
     /** @enum {string} */
@@ -5378,8 +6769,11 @@ export interface components {
       parameters?: {
         [key: string]: string;
       };
+      status?: components["schemas"]["config.CustomNestedStackStatus"];
       template_url?: string;
     };
+    /** @enum {string} */
+    "config.CustomNestedStackStatus": "pending" | "ready" | "error";
     "config.HelmRepoConfig": {
       chart?: string;
       repoURL?: string;
@@ -5405,6 +6799,7 @@ export interface components {
     /** @enum {string} */
     "configs.OCIRegistryType": "ecr" | "acr" | "gar" | "private_oci" | "public_oci";
     "credentials.AssumeRoleConfig": {
+      external_id?: string;
       role_arn: string;
       session_duration_seconds?: number;
       session_name: string;
@@ -5422,6 +6817,26 @@ export interface components {
       secret_access_key: string;
       session_token: string;
     };
+    "diff.Diff": {
+      children?: components["schemas"]["diff.Diff"][];
+      diff?: components["schemas"]["diff.DiffKey"];
+      key?: string;
+    };
+    "diff.DiffKey": {
+      after?: string;
+      before?: string;
+      diff?: string;
+      op?: components["schemas"]["diff.Op"];
+    };
+    "diff.DiffSummary": {
+      added?: number;
+      changed?: number;
+      has_changed?: boolean;
+      removed?: number;
+      unchanged?: number;
+    };
+    /** @enum {string} */
+    "diff.Op": "add" | "remove" | "change" | "noop" | "";
     "generics.NullTime": {
       time?: string;
       /** @description Valid is true if Time is not NULL */
@@ -5517,6 +6932,11 @@ export interface components {
       use_default?: boolean;
     };
     "github_com_nuonco_nuon_pkg_azure_credentials.Config": {
+      /**
+       * @description ManagedIdentityClientID runs the operation as a specific user-assigned
+       * managed identity instead of the VM's system identity.
+       */
+      managed_identity_client_id?: string;
       service_principal?: components["schemas"]["credentials.ServicePrincipalCredentials"];
       use_default?: boolean;
     };
@@ -5527,6 +6947,10 @@ export interface components {
     };
     "github_com_nuonco_nuon_pkg_labels.Labels": {
       [key: string]: string;
+    };
+    "github_com_nuonco_nuon_pkg_labels.Selector": {
+      match_labels?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Labels"];
+      not_match_labels?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Labels"];
     };
     "github_com_nuonco_nuon_pkg_types_state.State": {
       actions?: components["schemas"]["state.ActionsState"];
@@ -5552,12 +6976,34 @@ export interface components {
       /** @description loaded from the database but not part of the state itself */
       stale_at?: string;
     };
+    "github_com_nuonco_nuon_services_ctl-api_internal_app_accounts_service.StaticTokenResponse": {
+      api_token?: string;
+      id?: string;
+    };
     "helpers.ConnectedGithubVCSConfigRequest": {
       branch?: string;
       directory: string;
       gitRef?: string;
       pathFilter?: string;
       repo: string;
+    };
+    "helpers.CreateInstallAWSAccountParams": {
+      /**
+       * @description AccountID is the AWS account this install targets. Required when the org has
+       * the phone-home-auth feature enabled, optional otherwise. Immutable after
+       * creation — there is deliberately no equivalent field on UpdateInstallRequest.
+       */
+      account_id?: string;
+      connection_id?: string;
+      region?: string;
+    };
+    "helpers.CreateInstallAzureAccountParams": {
+      location?: string;
+      /**
+       * @description SubscriptionID is the Azure subscription this install targets. Required when
+       * the org has the phone-home-auth feature enabled. Immutable after creation.
+       */
+      subscription_id?: string;
     };
     "helpers.CreateInstallConfigParams": {
       approval_option?: components["schemas"]["app.InstallApprovalOption"];
@@ -5567,6 +7013,14 @@ export interface components {
       };
       runner_nested_template_url?: string;
       vpc_nested_template_url?: string;
+    };
+    "helpers.CreateInstallGCPAccountParams": {
+      /**
+       * @description ProjectID is the GCP project this install targets. Required when the org has
+       * the phone-home-auth feature enabled. Immutable after creation.
+       */
+      project_id?: string;
+      region?: string;
     };
     "helpers.InstallMetadata": {
       managed_by?: string;
@@ -5589,10 +7043,6 @@ export interface components {
       src_static_credentials?: components["schemas"]["iam.StaticCredentials"];
     };
     "kube.ClusterInfo": {
-      /**
-       * @description If either an AWS auth or Azure auth is passed in, we will automatically use it to resolve credentials and set
-       * them in the environment.
-       */
       aws_auth?: components["schemas"]["github_com_nuonco_nuon_pkg_aws_credentials.Config"];
       azure_auth?: components["schemas"]["github_com_nuonco_nuon_pkg_azure_credentials.Config"];
       /** @description CAData is the base64 encoded public certificate */
@@ -5644,15 +7094,29 @@ export interface components {
       builtin_env_vars?: {
         [key: string]: string;
       };
-      /** @description optional fields based on the configuration */
       cluster_info?: components["schemas"]["kube.ClusterInfo"];
       gcp_auth?: components["schemas"]["github_com_nuonco_nuon_pkg_gcp_credentials.Config"];
       id?: string;
+      /**
+       * @description ImageDigestRef is the digest-pinned pull reference resolved by the mirror
+       * job (<login_server>/<repository>@sha256:...). When set, the runner pulls
+       * this exact manifest instead of the mutable tag, binding execution to the
+       * content that was mirrored.
+       */
+      image_digest_ref?: string;
+      image_registry?: components["schemas"]["configs.OCIRegistryRepository"];
+      image_tag?: string;
       install_id?: string;
       override_env_vars?: {
         [key: string]: string;
       };
       sandbox_mode?: components["schemas"]["plantypes.SandboxMode"];
+      /**
+       * @description Image-backed actions: SourceImage is the rendered app-authored ref
+       * (e.g. ghcr.io/acme/tools:v1); ImageRegistry/ImageTag point at the
+       * install-registry mirror the runner pulls from.
+       */
+      source_image?: string;
       steps?: components["schemas"]["plantypes.ActionWorkflowRunStepPlan"][];
       timeout?: number;
     };
@@ -5693,8 +7157,28 @@ export interface components {
     };
     "plantypes.ContainerImagePullPlan": {
       image?: string;
+      /**
+       * @description PreviousSourceDigest is the SourceDigest of the most recent prior Active
+       * ComponentBuild for the same component, used by the runner as a dedup
+       * hint. When the resolver returns a manifest descriptor whose digest matches
+       * this value, the runner skips the Copy step and reports NoOp=true.
+       *
+       * Empty when there is no prior active build, or when the prior build has
+       * no SourceDigest recorded (legacy builds).
+       */
+      previous_source_digest?: string;
       repo_config?: components["schemas"]["configs.OCIRegistryRepository"];
       tag?: string;
+      /**
+       * @description UpdatePolicy is an optional Masterminds-compatible semver constraint
+       * (e.g. "~1.25.0") propagated from the user's component config. When
+       * non-empty, the runner lists tags from the source registry, filters to
+       * those satisfying the constraint, and selects the highest matching
+       * tag at build time. Tag is then ignored as the source ref.
+       *
+       * Empty for components that don't use update_policy.
+       */
+      update_policy?: string;
     };
     "plantypes.DeployPlan": {
       app_config_id?: string;
@@ -5711,6 +7195,15 @@ export interface components {
       noop?: components["schemas"]["plantypes.NoopDeployPlan"];
       pulumi?: components["schemas"]["plantypes.PulumiDeployPlan"];
       sandbox_mode?: components["schemas"]["plantypes.SandboxMode"];
+      /**
+       * @description SrcDigest is the manifest digest of the source artifact in the install
+       * registry, e.g. "sha256:abc...". Populated for image-type component
+       * builds with source identity recorded; empty for
+       * non-image builds and legacy image builds. When non-empty, runners
+       * should prefer this over SrcTag for content-addressed pulls and for
+       * rendering digest-pinned image references in pod specs.
+       */
+      src_digest?: string;
       src_registry: components["schemas"]["configs.OCIRegistryRepository"];
       src_tag: string;
       terraform?: components["schemas"]["plantypes.TerraformDeployPlan"];
@@ -5762,10 +7255,22 @@ export interface components {
        */
       name?: string;
       namespace?: string;
+      /**
+       * @description Must stay a bool: go-swagger renders a documented $ref field as an inline
+       * struct value, which decodes non-nil on every deploy.
+       */
+      recover_release?: boolean;
+      skip_crds?: boolean;
       storage_driver?: string;
       take_ownership?: boolean;
       values?: components["schemas"]["plantypes.HelmValue"][];
       values_files?: string[];
+      /**
+       * @description ValuesOverride is the install-level Helm values override (raw YAML). It is
+       * merged as the highest-precedence layer at deploy time, winning over both
+       * ValuesFiles and Values. Empty means no override (exact no-op).
+       */
+      values_override?: string;
     };
     "plantypes.HelmSandboxMode": {
       plan_contents?: string;
@@ -5833,10 +7338,21 @@ export interface components {
       gcp_secret_name?: string;
       key_name?: string;
       name?: string;
+      /** @description v1 destination (single). Used when Targets is empty. */
       namespace?: string;
       secret_arn?: string;
       /** @description the name of the secret from the config */
       secret_name?: string;
+      /**
+       * @description v2 destinations: when len(Targets) > 0 the runner uses the v2 path and fans the shared source out across each
+       * target's namespaces. The v1 fields above are ignored in that case.
+       */
+      targets?: components["schemas"]["plantypes.KubernetesSecretSyncTarget"][];
+    };
+    "plantypes.KubernetesSecretSyncTarget": {
+      key?: string;
+      name?: string;
+      namespaces?: string[];
     };
     "plantypes.KustomizeBuildConfig": {
       /** @description EnableHelm enables Helm chart inflation during kustomize build */
@@ -5854,6 +7370,20 @@ export interface components {
       tag?: string;
       /** @description URL is the full artifact URL (e.g., registry.nuon.co/org_id/app_id) */
       url?: string;
+    };
+    "plantypes.OCISource": {
+      registry?: components["schemas"]["configs.OCIRegistryRepository"];
+      tag?: string;
+    };
+    "plantypes.PulumiBackend": {
+      config?: {
+        [key: string]: string;
+      };
+      pulumi_version?: string;
+      runtime: string;
+      stack_name: string;
+      update_plans?: boolean;
+      workspace_id: string;
     };
     "plantypes.PulumiBuildPlan": {
       labels?: {
@@ -5878,12 +7408,14 @@ export interface components {
       runtime?: string;
       stack_name?: string;
       state?: components["schemas"]["github_com_nuonco_nuon_pkg_types_state.State"];
+      update_plans?: boolean;
       /** @description Reuse workspace concept for state storage */
       workspace_id?: string;
     };
     "plantypes.PulumiSandboxMode": {
       plan_contents?: string;
       plan_display_contents?: string;
+      workspace_id?: string;
     };
     "plantypes.SandboxMode": {
       enabled?: boolean;
@@ -5913,9 +7445,11 @@ export interface components {
       install_id?: string;
       kyverno_policies_dir?: string;
       local_archive?: components["schemas"]["plantypes.TerraformLocalArchive"];
+      oci_source?: components["schemas"]["plantypes.OCISource"];
       policies?: {
         [key: string]: string;
       };
+      pulumi_backend?: components["schemas"]["plantypes.PulumiBackend"];
       sandbox_mode?: components["schemas"]["plantypes.SandboxMode"];
       state?: components["schemas"]["github_com_nuonco_nuon_pkg_types_state.State"];
       terraform_backend?: components["schemas"]["plantypes.TerraformBackend"];
@@ -6035,6 +7569,8 @@ export interface components {
       };
     };
     "service.AppAWSIAMPolicyConfig": {
+      azure_actions?: string[];
+      azure_built_in_roles?: string[];
       contents?: string;
       gcp_permissions?: string[];
       gcp_predefined_role?: string;
@@ -6050,6 +7586,13 @@ export interface components {
       name: string;
       permissions_boundary?: string;
       policies?: components["schemas"]["service.AppAWSIAMPolicyConfig"][];
+    };
+    "service.AppConfigDiffResponse": {
+      changed?: string;
+      config_id?: string;
+      diff?: components["schemas"]["diff.Diff"];
+      old_config_id?: string;
+      summary?: components["schemas"]["diff.DiffSummary"];
     };
     "service.AppConfigTemplate": {
       content?: string;
@@ -6076,6 +7619,30 @@ export interface components {
       /** @description New, optional fields */
       type?: string;
     };
+    "service.AppKubernetesContext": {
+      /**
+       * @description Component is the name of the peer terraform_module or pulumi component
+       * that emits cluster connection details as outputs.
+       */
+      component: string;
+      name: string;
+    };
+    "service.AppLabelKeySummary": {
+      color?: string;
+      default_color?: string;
+      entity_types?: string[];
+      is_override?: boolean;
+      key?: string;
+      usage_count?: number;
+      values?: string[];
+    };
+    "service.AppLabelsResponse": {
+      default_colors?: string[];
+      label_colors?: {
+        [key: string]: string;
+      };
+      labels?: components["schemas"]["service.AppLabelKeySummary"][];
+    };
     "service.AppPolicyConfig": {
       components?: string[];
       contents: string;
@@ -6093,6 +7660,7 @@ export interface components {
       kubernetes_secret_name?: string;
       kubernetes_secret_namespace?: string;
       kubernetes_sync?: boolean;
+      kubernetes_sync_targets?: components["schemas"]["service.KubernetesSyncTarget"][];
       name: string;
       required?: boolean;
     };
@@ -6107,6 +7675,7 @@ export interface components {
       email?: string;
       id?: string;
       identities?: components["schemas"]["service.AuthMeIdentity"][];
+      name?: string;
       /** @description ReadOnly Fields */
       org_ids?: string[];
       permissions?: components["schemas"]["permissions.Set"];
@@ -6141,6 +7710,7 @@ export interface components {
       auth_domain?: string;
       dashboard_url?: string;
       nuon_auth_enabled?: boolean;
+      oidc_federation_enabled?: boolean;
       root_domain?: string;
     };
     "service.CancelRunnerJobRequest": Record<string, never>;
@@ -6157,6 +7727,16 @@ export interface components {
     "service.CancelWorkflowsResponse": {
       cancelled?: string[];
       errors?: components["schemas"]["service.CancelWorkflowError"][];
+    };
+    "service.CheckInstallDNSDelegationResponse": {
+      delegated?: boolean;
+      domain?: string;
+      enabled?: boolean;
+      expected_nameservers?: string[];
+      extra_nameservers?: string[];
+      message?: string;
+      missing_nameservers?: string[];
+      observed_nameservers?: string[];
     };
     "service.CompleteInstallStepRequest": {
       aws_account?: {
@@ -6189,6 +7769,13 @@ export interface components {
     "service.ComponentChildren": {
       children?: components["schemas"]["app.Component"][];
     };
+    "service.ComponentHealthIncidentBundle": {
+      current_health?: string;
+      install_component_id?: string;
+      resolved?: boolean;
+      resources?: components["schemas"]["app.InstallComponentResourceState"][];
+      transition?: components["schemas"]["service.HealthTransitionResponse"];
+    };
     "service.ConnectedGithubVCSActionWorkflowConfigRequest": {
       branch?: string;
       directory: string;
@@ -6206,6 +7793,8 @@ export interface components {
       break_glass_role_arn?: string;
       dependencies?: string[];
       enable_kube_config?: boolean | null;
+      image?: string;
+      kubernetes_context?: string;
       references?: string[];
       role?: string;
       steps: components["schemas"]["service.CreateActionWorkflowConfigStepRequest"][];
@@ -6261,9 +7850,15 @@ export interface components {
     "service.CreateAppBranchConfigRequest": {
       connected_github_vcs_config?: components["schemas"]["helpers.ConnectedGithubVCSConfigRequest"];
       install_groups?: components["schemas"]["service.InstallGroupRequest"][];
+      /**
+       * @description PostDeployRunbookIDs run on each install, in order, after its deploy succeeds.
+       * Omit to carry the current setting forward; send an empty array to clear it.
+       */
+      post_deploy_runbook_ids?: string[];
       public_git_vcs_config?: components["schemas"]["helpers.PublicGitVCSConfigRequest"];
     };
     "service.CreateAppBranchRequest": {
+      managed_by?: string;
       name: string;
     };
     "service.CreateAppBreakGlassConfigRequest": {
@@ -6271,9 +7866,25 @@ export interface components {
       roles: components["schemas"]["service.AppAWSIAMRoleConfig"][];
     };
     "service.CreateAppConfigRequest": {
+      /**
+       * @description AppBranchID optionally links this config to an app branch.
+       * When set, triggers an app branch run after sync.
+       */
+      app_branch_id?: string;
       cli_version?: string;
-      /** @description not required Readme */
+      /**
+       * @description IntermediateConfigJSON is the serialized intermediate config (parsed nuon.toml).
+       * When provided, stored on the AppConfig for diffing in PR previews.
+       */
+      intermediate_config_json?: string;
+      /** @description PlanOnly creates a preview run (plan without apply). Only used with AppBranchID. */
+      plan_only?: boolean;
       readme?: string;
+      /**
+       * @description SkipNotification suppresses the app-config-synced signal emission.
+       * Used when creating a config as part of app deletion cleanup.
+       */
+      skip_notification?: boolean;
     };
     "service.CreateAppInputConfigRequest": {
       app_config_id?: string;
@@ -6283,6 +7894,18 @@ export interface components {
       inputs: {
         [key: string]: components["schemas"]["service.AppInputRequest"];
       };
+    };
+    "service.CreateAppInstallsConfigRequest": {
+      branch: string;
+      directory?: string;
+      repo: string;
+      vcs_connection_id?: string;
+      /** @enum {string} */
+      vcs_type: "connected" | "public";
+    };
+    "service.CreateAppKubernetesContextsConfigRequest": {
+      app_config_id: string;
+      contexts?: components["schemas"]["service.AppKubernetesContext"][];
     };
     "service.CreateAppOperationRoleConfigRequest": {
       app_config_id: string;
@@ -6313,6 +7936,11 @@ export interface components {
       };
       helm_driver?: components["schemas"]["app.AppRunnerConfigHelmDriverType"];
       init_script_url?: string;
+      instance_type?: string;
+      /** @description PhoneHomeScriptURL overrides the phone-home Lambda source for this app. */
+      phone_home_script_url?: string;
+      public_api_url?: string;
+      runner_api_url?: string;
       type: components["schemas"]["app.AppRunnerType"];
     };
     "service.CreateAppSandboxConfigRequest": {
@@ -6328,9 +7956,15 @@ export interface components {
         [key: string]: string;
       };
       public_git_vcs_config?: components["schemas"]["helpers.PublicGitVCSConfigRequest"];
+      pulumi_config?: {
+        [key: string]: string;
+      };
+      pulumi_version?: string;
       references?: string[];
+      runtime?: string;
       skip_noops?: boolean;
-      terraform_version: string;
+      terraform_version?: string;
+      type?: string;
       variables: {
         [key: string]: string;
       };
@@ -6352,6 +7986,17 @@ export interface components {
       runner_nested_template_url?: string;
       type: components["schemas"]["app.StackType"];
       vpc_nested_template_url?: string;
+    };
+    "service.CreateCellRequest": {
+      command?: string;
+      enable_kube_config?: boolean | null;
+      env_vars?: {
+        [key: string]: string;
+      };
+      inline_contents?: string;
+      name?: string;
+      role?: string;
+      timeout?: number;
     };
     "service.CreateChannelSubscriptionRequest": {
       channel_id: string;
@@ -6393,6 +8038,7 @@ export interface components {
       build_timeout?: string;
       checksum?: string;
       connected_github_vcs_config?: components["schemas"]["service.ConnectedGithubVCSConfigRequest"];
+      default_enabled?: boolean;
       dependencies?: string[];
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
@@ -6408,6 +8054,7 @@ export interface components {
       references?: string[];
       skip_noops?: boolean;
       target?: string;
+      toggleable?: boolean;
     };
     "service.CreateExternalImageComponentConfigRequest": {
       app_config_id?: string;
@@ -6417,6 +8064,7 @@ export interface components {
       /** @description Duration string for build operations (e.g., "30m", "1h") */
       build_timeout?: string;
       checksum?: string;
+      default_enabled?: boolean;
       dependencies?: string[];
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
@@ -6428,7 +8076,15 @@ export interface components {
       };
       references?: string[];
       skip_noops?: boolean;
-      tag: string;
+      tag?: string;
+      toggleable?: boolean;
+      /**
+       * @description UpdatePolicy is an optional Masterminds-compatible semver constraint
+       * (e.g. "~1.25.0", "^2"). When set, the runner lists tags from the
+       * source registry, filters to those satisfying the constraint, and
+       * uses the highest matching tag. Tag becomes optional in this case.
+       */
+      update_policy?: string;
     };
     "service.CreateHelmComponentConfigRequest": {
       app_config_id?: string;
@@ -6438,11 +8094,19 @@ export interface components {
       chart_name: string;
       checksum?: string;
       connected_github_vcs_config?: components["schemas"]["service.ConnectedGithubVCSConfigRequest"];
+      default_enabled?: boolean;
       dependencies?: string[];
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
       drift_schedule?: string;
+      health_block_deploy?: boolean | null;
+      health_enabled?: boolean | null;
+      health_probes?: components["schemas"]["service.HealthProbeRequest"][];
+      health_required_checks?: string[];
+      /** @description Duration string for the health stabilization window (e.g., "3m") */
+      health_stabilization_window?: string;
       helm_repo_config?: components["schemas"]["service.HelmRepoConfigRequest"];
+      kubernetes_context?: string;
       max_auto_retries?: number;
       namespace?: string;
       operation_roles?: {
@@ -6450,9 +8114,11 @@ export interface components {
       };
       public_git_vcs_config?: components["schemas"]["service.PublicGitVCSConfigRequest"];
       references?: string[];
+      skip_crds?: boolean;
       skip_noops?: boolean;
       storage_driver?: string;
       take_ownership?: boolean;
+      toggleable?: boolean;
       values: {
         [key: string]: string;
       };
@@ -6465,8 +8131,13 @@ export interface components {
         [key: string]: string;
       };
     };
+    "service.CreateInstallAppConfigUpdateRequest": {
+      app_config_id: string;
+      plan_only?: boolean;
+    };
     "service.CreateInstallComponentDeployRequest": {
       build_id?: string;
+      deploy_dependencies?: boolean;
       deploy_dependents?: boolean;
       plan_only?: boolean;
       role?: string;
@@ -6482,6 +8153,7 @@ export interface components {
     };
     "service.CreateInstallDeployRequest": {
       build_id?: string;
+      deploy_dependencies?: boolean;
       deploy_dependents?: boolean;
       plan_only?: boolean;
       role?: string;
@@ -6492,16 +8164,9 @@ export interface components {
       };
     };
     "service.CreateInstallRequest": {
-      aws_account?: {
-        region?: string;
-      };
-      azure_account?: {
-        location?: string;
-      };
-      gcp_account?: {
-        project_id?: string;
-        region?: string;
-      };
+      aws_account?: components["schemas"]["helpers.CreateInstallAWSAccountParams"];
+      azure_account?: components["schemas"]["helpers.CreateInstallAzureAccountParams"];
+      gcp_account?: components["schemas"]["helpers.CreateInstallGCPAccountParams"];
       inputs?: {
         [key: string]: string;
       };
@@ -6515,19 +8180,17 @@ export interface components {
       };
       metadata?: components["schemas"]["helpers.InstallMetadata"];
       name: string;
+      /**
+       * @description StackOnly provisions the install stack and runner, then stops. The sandbox
+       * and components stay unprovisioned until the install is provisioned again.
+       */
+      stack_only?: boolean;
     };
     "service.CreateInstallV2Request": {
       app_id: string;
-      aws_account?: {
-        region?: string;
-      };
-      azure_account?: {
-        location?: string;
-      };
-      gcp_account?: {
-        project_id?: string;
-        region?: string;
-      };
+      aws_account?: components["schemas"]["helpers.CreateInstallAWSAccountParams"];
+      azure_account?: components["schemas"]["helpers.CreateInstallAzureAccountParams"];
+      gcp_account?: components["schemas"]["helpers.CreateInstallGCPAccountParams"];
       inputs?: {
         [key: string]: string;
       };
@@ -6541,6 +8204,11 @@ export interface components {
       };
       metadata?: components["schemas"]["helpers.InstallMetadata"];
       name: string;
+      /**
+       * @description StackOnly provisions the install stack and runner, then stops. The sandbox
+       * and components stay unprovisioned until the install is provisioned again.
+       */
+      stack_only?: boolean;
     };
     "service.CreateJobComponentConfigRequest": {
       app_config_id?: string;
@@ -6550,6 +8218,7 @@ export interface components {
       build_timeout?: string;
       checksum?: string;
       cmd?: string[];
+      default_enabled?: boolean;
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
       env_vars?: {
@@ -6563,6 +8232,7 @@ export interface components {
       references?: string[];
       skip_noops?: boolean;
       tag: string;
+      toggleable?: boolean;
     };
     "service.CreateKubernetesManifestComponentConfigRequest": {
       app_config_id?: string;
@@ -6571,10 +8241,18 @@ export interface components {
       build_timeout?: string;
       checksum?: string;
       connected_github_vcs_config?: components["schemas"]["service.ConnectedGithubVCSConfigRequest"];
+      default_enabled?: boolean;
       dependencies?: string[];
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
       drift_schedule?: string;
+      health_block_deploy?: boolean | null;
+      health_enabled?: boolean | null;
+      health_probes?: components["schemas"]["service.HealthProbeRequest"][];
+      health_required_checks?: string[];
+      /** @description Duration string for the health stabilization window (e.g., "3m") */
+      health_stabilization_window?: string;
+      kubernetes_context?: string;
       /** @description Kustomize configuration (mutually exclusive with Manifest) */
       kustomize?: components["schemas"]["service.KustomizeConfigRequest"];
       /** @description Inline manifest (mutually exclusive with Kustomize) */
@@ -6587,13 +8265,39 @@ export interface components {
       public_git_vcs_config?: components["schemas"]["service.PublicGitVCSConfigRequest"];
       references?: string[];
       skip_noops?: boolean;
+      toggleable?: boolean;
+    };
+    "service.CreateNotebookRequest": {
+      description?: string;
+      name?: string;
+    };
+    "service.CreateOIDCTrustPolicyRequest": {
+      /** @description expected `aud` claim value */
+      audience: string;
+      /**
+       * @description map of claim name -> pattern; all must match. A `sub` condition is
+       * required. Patterns are exact strings or globs where `*` cannot cross
+       * `:` segments.
+       */
+      claim_conditions: {
+        [key: string]: string;
+      };
+      /** @description exact `iss` claim value; also used for OIDC discovery + JWKS fetching */
+      issuer_url: string;
+      /** @description human-friendly name to identify the policy */
+      name: string;
+      /**
+       * @description org role granted to exchanged tokens. must be assignable to trust
+       * policies; see GET /v1/roles?context=oidc_trust_policy. defaults to
+       * org_read_only.
+       */
+      role?: string;
+      /** @description lifetime of exchanged tokens in seconds. defaults to 3600, max 86400. */
+      token_duration_seconds?: number;
     };
     "service.CreateOrgInviteRequest": {
       email: string;
       role_type?: components["schemas"]["app.RoleType"];
-    };
-    "service.CreateOrgLinkRequest": {
-      team_id: string;
     };
     "service.CreateOrgRequest": {
       name: string;
@@ -6612,12 +8316,14 @@ export interface components {
         [key: string]: string;
       };
       connected_github_vcs_config?: components["schemas"]["service.ConnectedGithubVCSConfigRequest"];
+      default_enabled?: boolean;
       dependencies?: string[];
       deploy_timeout?: string;
       drift_schedule?: string;
       env_vars: {
         [key: string]: string;
       };
+      kubernetes_context?: string;
       max_auto_retries?: number;
       operation_roles?: {
         [key: string]: string;
@@ -6626,12 +8332,23 @@ export interface components {
       references?: string[];
       runtime: string;
       skip_noops?: boolean;
+      toggleable?: boolean;
       version?: string;
     };
     "service.CreateRunbookConfigRequest": {
       app_config_id?: string;
+      inputs?: components["schemas"]["service.CreateRunbookInputRequest"][];
       readme?: string;
       steps: components["schemas"]["service.CreateRunbookStepConfigRequest"][];
+    };
+    "service.CreateRunbookInputRequest": {
+      default?: string;
+      description?: string;
+      display_name?: string;
+      name: string;
+      required?: boolean;
+      sensitive?: boolean;
+      type?: string;
     };
     "service.CreateRunbookRequest": {
       description?: string;
@@ -6640,24 +8357,79 @@ export interface components {
       };
       name: string;
     };
+    "service.CreateRunbookRunRequest": {
+      inputs?: {
+        [key: string]: string;
+      };
+      role?: string;
+      steps?: components["schemas"]["service.CreateRunbookRunStepSelection"][];
+    };
+    "service.CreateRunbookRunStepSelection": {
+      enabled?: boolean;
+      step_id: string;
+    };
     "service.CreateRunbookStepConfigRequest": {
       action_name?: string;
       command?: string;
       component_name?: string;
-      deploy_dependencies?: boolean;
+      deploy_dependents?: boolean;
       env_vars?: {
         [key: string]: string;
       };
+      event_types?: string[];
+      filters?: components["schemas"]["app.TriggerFilter"][];
       idx?: number;
       inline_contents?: string;
       name: string;
+      plan_only?: boolean;
       role?: string;
+      skip_component_deploys?: boolean;
+      tear_down_dependents?: boolean;
       timeout?: number;
+      trigger?: string;
       type: string;
     };
     "service.CreateRunnerBootstrapTokenResponse": {
       expires_at?: string;
       token?: string;
+    };
+    "service.CreateServiceAccountRequest": {
+      /** @description Name is a human-friendly label for the service account. */
+      name: string;
+      /** @description Role must be one of the service account roles returned by GET /v1/roles. */
+      role: string;
+    };
+    "service.CreateServiceAccountTokenRequest": {
+      /**
+       * @description Duration defaults to one year.
+       * @default 8760h
+       */
+      duration?: string;
+      invalidate?: boolean;
+    };
+    "service.CreateServiceAccountTokenResponse": {
+      token?: string;
+    };
+    "service.CreateStaticTokenRequest": {
+      /**
+       * @description defaults to one year
+       * @default 8760h
+       */
+      duration?: string;
+      /** @description human-friendly name to identify the token later */
+      name: string;
+      /**
+       * @description org role granted to the token. must be assignable to API tokens; see
+       * GET /v1/roles?context=api_token. defaults to org_read_only. must be
+       * empty for personal tokens.
+       */
+      role?: string;
+      /**
+       * @description "service_account" (default) creates a dedicated service account with
+       * the given role; "personal" issues the token against your own account
+       * and its existing roles, across all your orgs.
+       */
+      token_identity?: string;
     };
     "service.CreateTerraformModuleComponentConfigRequest": {
       app_config_id?: string;
@@ -6666,6 +8438,7 @@ export interface components {
       build_timeout?: string;
       checksum?: string;
       connected_github_vcs_config?: components["schemas"]["service.ConnectedGithubVCSConfigRequest"];
+      default_enabled?: boolean;
       dependencies?: string[];
       /** @description Duration string for deploy operations (e.g., "30m", "1h") */
       deploy_timeout?: string;
@@ -6673,6 +8446,7 @@ export interface components {
       env_vars: {
         [key: string]: string;
       };
+      kubernetes_context?: string;
       max_auto_retries?: number;
       operation_roles?: {
         [key: string]: string;
@@ -6680,6 +8454,7 @@ export interface components {
       public_git_vcs_config?: components["schemas"]["service.PublicGitVCSConfigRequest"];
       references?: string[];
       skip_noops?: boolean;
+      toggleable?: boolean;
       variables: {
         [key: string]: string;
       };
@@ -6740,6 +8515,18 @@ export interface components {
       slug?: string;
       tags?: string[];
     };
+    "service.ExchangeOIDCTokenRequest": {
+      org_id: string;
+      token: string;
+    };
+    "service.ExchangeOIDCTokenResponse": {
+      authenticated?: boolean;
+      expires_at?: string;
+      org_id?: string;
+      role?: string;
+      token?: string;
+      trust_policy_id?: string;
+    };
     "service.ForceShutdownRequest": Record<string, never>;
     "service.ForgetInstallComponentRequest": Record<string, never>;
     "service.ForgetInstallRequest": Record<string, never>;
@@ -6747,6 +8534,24 @@ export interface components {
       url?: string;
     };
     "service.GracefulShutdownRequest": Record<string, never>;
+    "service.HealthProbeRequest": {
+      command?: string[];
+      interval?: string;
+      name?: string;
+      type?: string;
+      url?: string;
+    };
+    "service.HealthTransitionResponse": {
+      correlated_deploy_id?: string;
+      diagnosis?: string;
+      from_health?: string;
+      message?: string;
+      observed_at?: string;
+      root_resource_kind?: string;
+      root_resource_name?: string;
+      root_resource_namespace?: string;
+      to_health?: string;
+    };
     "service.HelmRepoConfigRequest": {
       chart: string;
       repo_url: string;
@@ -6759,13 +8564,64 @@ export interface components {
       maintenance_role?: components["schemas"]["service.InstallPermissionsRoleStatus"];
       provision_role?: components["schemas"]["service.InstallPermissionsRoleStatus"];
     };
+    "service.InstallComponentHealthSummary": {
+      /**
+       * @description ComponentID is what dashboard component routes are keyed by — a link
+       * built from the install-component id instead dead-ends on an empty page.
+       */
+      component_id?: string;
+      component_name?: string;
+      current_health?: string;
+      install_component_id?: string;
+      /**
+       * @description ObservedSeconds distinguishes "no data" from "0% up" — without it a
+       * component that was never observed renders as total downtime.
+       */
+      observed_seconds?: number;
+      uptime_percent?: number;
+    };
+    "service.InstallComponentHealthTimelineResponse": {
+      current_health?: string;
+      daily?: components["schemas"]["service.dailyHealthBucket"][];
+      days?: number;
+      install_component_id?: string;
+      observed_seconds?: number;
+      transitions?: components["schemas"]["service.HealthTransitionResponse"][];
+      uptime_percent?: number;
+    };
     "service.InstallGroupRequest": {
       install_ids?: string[];
-      max_parallel?: number;
+      /**
+       * @description LabelSelector dynamically resolves installs at deploy time.
+       * Mutually exclusive with InstallIDs.
+       */
+      label_selector?: components["schemas"]["github_com_nuonco_nuon_pkg_labels.Selector"];
       name: string;
       order?: number;
-      requires_approval?: boolean;
-      rollback_on_failure?: boolean;
+      use_for_previews?: boolean;
+    };
+    "service.InstallHealthSummary": {
+      app_id?: string;
+      degraded_components?: number;
+      health?: string;
+      health_description?: string;
+      install_id?: string;
+      install_name?: string;
+      unhealthy_components?: number;
+    };
+    "service.InstallHealthTimelineResponse": {
+      /**
+       * @description ClusterAccessError is why health cannot currently inspect the install's
+       * cluster, empty when it can. Surfaced once here rather than per component.
+       */
+      cluster_access_error?: string;
+      components?: components["schemas"]["service.InstallComponentHealthSummary"][];
+      current_health?: string;
+      daily?: components["schemas"]["service.dailyHealthBucket"][];
+      days?: number;
+      install_id?: string;
+      observed_seconds?: number;
+      uptime_percent?: number;
     };
     "service.InstallPermissionsRoleStatus": {
       app_config_id?: string;
@@ -6791,6 +8647,21 @@ export interface components {
     };
     "service.InstallPhoneHomeRequest": {
       [key: string]: unknown;
+    };
+    "service.InstallsHealthResponse": {
+      all_healthy?: boolean;
+      degraded?: number;
+      healthy?: number;
+      installs?: components["schemas"]["service.InstallHealthSummary"][];
+      total?: number;
+      unhealthy?: number;
+      unknown?: number;
+      unset?: number;
+    };
+    "service.KubernetesSyncTarget": {
+      key: string;
+      name: string;
+      namespaces: string[];
     };
     "service.KustomizeConfigRequest": {
       enable_helm?: boolean;
@@ -6833,6 +8704,11 @@ export interface components {
       status_message?: string;
       trace_id?: string;
     };
+    "service.LogStreamTailLogsResponse": {
+      has_more?: boolean;
+      logs?: components["schemas"]["app.OtelLogRecord"][];
+      next?: string;
+    };
     "service.MngRestartRequest": Record<string, never>;
     "service.MngShutDownRequest": Record<string, never>;
     "service.MngUpdateRequest": Record<string, never>;
@@ -6841,6 +8717,18 @@ export interface components {
       operation: components["schemas"]["app.OperationType"];
       principal: string;
       role: string;
+    };
+    "service.OrgComponentBuildHistoryItem": {
+      app_id?: string;
+      build?: components["schemas"]["app.ComponentBuild"];
+      build_runner_job_id?: string;
+      component_id?: string;
+      component_name?: string;
+    };
+    "service.OrgComponentBuildHistoryResponse": {
+      items?: components["schemas"]["service.OrgComponentBuildHistoryItem"][];
+      next_cursor?: string;
+      previous_cursor?: string;
     };
     "service.PatchInstallConfigParams": {
       approval_option?: components["schemas"]["app.InstallApprovalOption"];
@@ -6881,10 +8769,35 @@ export interface components {
       directory: string;
       repo: string;
     };
+    "service.PutInstallComponentHealthCheckRequest": {
+      details?: Record<string, never>;
+      message?: string;
+      /**
+       * @description StaleAfter is how long this report stays trustworthy, e.g. "30m"; past
+       * it the check reads as unknown. Defaults to 5m — set higher for slower pushers.
+       */
+      stale_after?: string;
+      status: string;
+    };
     "service.Readme": {
       original?: string;
       readme?: string;
       warnings?: string[];
+    };
+    "service.RecoverInstallComponentHelmReleaseRequest": {
+      role?: string;
+    };
+    "service.RefreshInstallHealthClusterAccessRequest": {
+      /**
+       * @description RoleName is the identity health should read the cluster through. Empty
+       * means the maintenance role, the same default drift and action runs use.
+       */
+      role_name?: string;
+    };
+    "service.RefreshInstallHealthClusterAccessResponse": {
+      cluster_found?: boolean;
+      cluster_id?: string;
+      role_name?: string;
     };
     "service.RemoveActionLabelsRequest": {
       keys: string[];
@@ -6898,6 +8811,9 @@ export interface components {
     "service.RemoveOrgUserRequest": {
       user_id?: string;
     };
+    "service.ReorderCellsRequest": {
+      cell_ids: string[];
+    };
     "service.ReprovisionInstallRequest": {
       plan_only?: boolean;
       role?: string;
@@ -6906,6 +8822,18 @@ export interface components {
       plan_only?: boolean;
       role?: string;
       skip_components?: boolean;
+    };
+    "service.ReprovisionInstallStackRequest": {
+      plan_only?: boolean;
+      role?: string;
+      skip_components?: boolean;
+    };
+    "service.ResetInstallHealthBaselineResponse": {
+      baseline_at?: string;
+    };
+    "service.RespondInstallCreationApprovalRequest": {
+      /** @enum {string} */
+      response_type: "approve" | "deny";
     };
     "service.RetryWorkflowRequest": {
       /** @description Retry indicates whether to retry the current step or not */
@@ -6920,6 +8848,13 @@ export interface components {
     "service.RetryWorkflowStepResponse": {
       retryable?: boolean;
       workflow_id?: string;
+    };
+    "service.RunCellRequest": {
+      /**
+       * @description IdempotencyKey deduplicates retried run requests. Optional; a server-side
+       * key is generated when empty.
+       */
+      idempotency_key?: string;
     };
     "service.RunnerCardDetailsResponse": {
       latest_heart_beat?: components["schemas"]["app.RunnerHeartBeat"];
@@ -6964,11 +8899,31 @@ export interface components {
       time?: string;
       warns?: number;
     };
+    "service.ToggleInstallComponentRequest": {
+      enabled: boolean;
+      plan_only?: boolean;
+    };
     "service.TriggerAppBranchRunRequest": {
+      /** @description optional - use pre-existing app config (skips VCS fetch + config parse) */
+      app_config_id?: string;
+      base_branch?: string;
       /** @description optional - use latest if not provided */
       config_id?: string;
       /** @description force run even if no changes detected */
       force?: boolean;
+      head_sha?: string;
+      /** @description plan-only preview mode (no apply) */
+      plan_only?: boolean;
+      /**
+       * @description PR context, for previews triggered from CI rather than a GitHub webhook.
+       * Supplying PRNumber is what lets the run report back onto the pull request.
+       */
+      pr_number?: number;
+      /** @description skip builds step (e.g. rollback to existing config with existing builds) */
+      skip_builds?: boolean;
+    };
+    "service.TriggerInstallConfigSyncRequest": {
+      install_name?: string;
     };
     "service.UpdateActionWorkflowRequest": {
       labels?: {
@@ -6994,8 +8949,22 @@ export interface components {
       config_repo?: string;
       description?: string;
       display_name?: string;
+      label_colors?: {
+        [key: string]: string;
+      };
       name?: string;
       slack_webhook_url?: string;
+    };
+    "service.UpdateCellRequest": {
+      command?: string;
+      enable_kube_config?: boolean | null;
+      env_vars?: {
+        [key: string]: string;
+      };
+      inline_contents?: string;
+      name?: string;
+      role?: string;
+      timeout?: number;
     };
     "service.UpdateChannelSubscriptionRequest": {
       channel_id?: string;
@@ -7026,10 +8995,15 @@ export interface components {
       vpc_nested_template_url?: string;
     };
     "service.UpdateInstallInputsRequest": {
-      deploy_dependents?: boolean;
+      deploy_dependents?: boolean | null;
       inputs: {
         [key: string]: string;
       };
+      /**
+       * @description InputsOnly saves the new input values without deploying components,
+       * reprovisioning the sandbox, or running update-input lifecycle actions.
+       */
+      inputs_only?: boolean;
       role?: string;
     };
     "service.UpdateInstallRequest": {
@@ -7039,6 +9013,26 @@ export interface components {
     };
     "service.UpdateInstallRoleRequest": {
       enabled: boolean;
+    };
+    "service.UpdateNotebookRequest": {
+      description?: string;
+      name?: string;
+      /** @enum {string} */
+      status?: "active" | "archived";
+    };
+    "service.UpdateOIDCTrustPolicyRequest": {
+      audience?: string;
+      claim_conditions?: {
+        [key: string]: string;
+      };
+      enabled?: boolean | null;
+      issuer_url?: string;
+      name?: string;
+      role?: string;
+      token_duration_seconds?: number;
+    };
+    "service.UpdateOrgAccountRoleRequest": {
+      role_type: components["schemas"]["app.RoleType"];
     };
     "service.UpdateOrgFeaturesRequest": {
       features: {
@@ -7075,6 +9069,13 @@ export interface components {
       org_k8s_service_account_name?: string;
       runner_api_url?: string;
       vm_max_uptime?: number;
+    };
+    "service.UpdateServiceAccountRequest": {
+      /** @description Name is a human-friendly label for the service account. */
+      name: string;
+    };
+    "service.UpdateServiceAccountRoleRequest": {
+      role: string;
     };
     "service.UpdateUserJourneyStepRequest": {
       complete?: boolean;
@@ -7147,6 +9148,14 @@ export interface components {
       registry_url?: string;
       tenant_id?: string;
     };
+    "service.dailyHealthBucket": {
+      date?: string;
+      degraded_seconds?: number;
+      health?: string;
+      observed_seconds?: number;
+      unhealthy_seconds?: number;
+      unknown_seconds?: number;
+    };
     "service.gcpGARImageConfigRequest": {
       gcp_project_id?: string;
       gcp_region?: string;
@@ -7169,6 +9178,8 @@ export interface components {
       id?: string;
       namespace?: string;
       run_id?: string;
+      /** @description empty means workflows.APITaskQueue (back-compat for pre-isolation rows) */
+      task_queue?: string;
     };
     "sql.NullBool": {
       bool?: boolean;
@@ -7252,6 +9263,8 @@ export interface components {
       populated?: boolean;
       status?: string;
     };
+    /** @enum {string} */
+    "state.PartialName": "org" | "app" | "domain" | "runner" | "cloud" | "actions" | "inputs" | "components" | "sandbox" | "stack" | "secrets";
     "state.RunnerState": {
       id?: string;
       populated?: boolean;
@@ -7426,6 +9439,58 @@ export interface operations {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
+      };
+    };
+  };
+  /**
+   * create a static API token for your org
+   * @description Creates a long-lived static API token. By default (token_identity "service_account") each token gets its own dedicated service account and only grants access to the current org; the role param controls the token's permissions (any role assignable to API tokens; see GET /v1/roles?context=api_token) and defaults to org_read_only. With token_identity "personal" the token is issued against your own account instead: it uses your account's existing roles, is not limited to the current org, and the role param must be empty.
+   */
+  CreateStaticToken: {
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateStaticTokenRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["github_com_nuonco_nuon_services_ctl-api_internal_app_accounts_service.StaticTokenResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * list your org's static API tokens
+   * @description Lists the static API tokens for your current org. Token secrets are never returned.
+   */
+  ListStaticTokens: {
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Token"][];
+        };
+      };
+    };
+  };
+  /**
+   * delete a static API token
+   * @description Deletes a static API token belonging to your current org. For service account tokens, the dedicated service account is deleted as well; for personal tokens, only the token is deleted and your account is untouched. Once deleted, the token can no longer be used to access the API.
+   */
+  DeleteStaticToken: {
+    parameters: {
+      path: {
+        /** @description token ID */
+        token_id: string;
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        content: never;
       };
     };
   };
@@ -8350,6 +10415,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description filter by action workflow trigger type */
+        trigger_types?: string;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -8528,6 +10595,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description filter by action workflow trigger type */
+        trigger_types?: string;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -9345,6 +11414,58 @@ export interface operations {
     };
   };
   /**
+   * delete an app branch
+   * @description Deletes an app branch and all associated configs, runs, and install group runs.
+   */
+  DeleteAppBranch: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.EmptyResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * update app branch metadata
    * @description Updates app branch metadata (name only). To update configuration, create a new AppBranchConfig via POST /branches/:id/configs
    */
@@ -9591,6 +11712,8 @@ export interface operations {
         limit?: number;
         /** @description page number of results to return */
         page?: number;
+        /** @description exclude preview (plan only) runs when set to false */
+        planonly?: boolean;
       };
       path: {
         /** @description app ID */
@@ -9662,6 +11785,284 @@ export interface operations {
       201: {
         content: {
           "application/json": components["schemas"]["app.AppBranchRun"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get builds for an app branch run
+   * @description Returns component builds triggered by a specific app branch run
+   */
+  GetAppBranchRunBuilds: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+        /** @description app branch run ID */
+        run_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.ComponentBuild"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * list install group runs for an app branch run
+   * @description Returns all install group runs for a specific app branch run
+   */
+  GetInstallGroupRuns: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+        /** @description app branch run ID */
+        run_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallGroupRun"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get a specific install group run
+   * @description Returns a single install group run with full details
+   */
+  GetInstallGroupRun: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+        /** @description app branch run ID */
+        run_id: string;
+        /** @description install group run ID */
+        install_group_run_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallGroupRun"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get install group deployments for an app branch run
+   * @description Returns install config updates triggered by a specific app branch run, grouped by install group
+   */
+  GetAppBranchRunInstallGroups: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+        /** @description app branch run ID */
+        run_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallAppConfigVersion"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * trigger install config sync from git
+   * @description Triggers a sync of install configs from the installs.toml VCS repo configured in the app config. Optionally specify install_name to sync a single install.
+   */
+  TriggerInstallConfigSync: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app branch ID */
+        app_branch_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.TriggerInstallConfigSyncRequest"];
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": {
+            [key: string]: string;
+          };
         };
       };
       /** @description Bad Request */
@@ -10406,6 +12807,60 @@ export interface operations {
     };
   };
   /**
+   * cancel component build
+   * @description Cancel a component build by cancelling its queue signal. If the build has an in-flight runner job, it will also be cancelled.
+   */
+  CancelAppComponentBuild: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description component ID */
+        component_id: string;
+        /** @description build ID */
+        build_id: string;
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": components["schemas"]["app.ComponentBuild"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get all configs for a component
    * @description Returns all configurations for the provided component.
    */
@@ -10467,7 +12922,8 @@ export interface operations {
   };
   /**
    * create a docker build component config
-   * @description Create a Docker build component config.
+   * @deprecated
+   * @description Deprecated: docker_build components are no longer supported. This endpoint always returns an error. Use a container_image component to reference a pre-built image instead.
    */
   CreateAppDockerBuildComponentConfig: {
     parameters: {
@@ -11815,6 +14271,62 @@ export interface operations {
     };
   };
   /**
+   * diff two app configs
+   * @description Compares a new app config against an old one and returns a hierarchical diff.
+   */
+  GetAppConfigDiff: {
+    parameters: {
+      query?: {
+        /** @description previous config ID to compare against */
+        old_config_id?: string;
+      };
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description new config ID */
+        config_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.AppConfigDiffResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get an app config graph
    * @description Return raw graphviz data as a string that can be used to visualize a graph for an app.
    *
@@ -11857,6 +14369,74 @@ export interface operations {
       };
       /** @description Not Found */
       404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * @description Sync an app config that was created with an intermediate config.
+   *
+   * The config is applied asynchronously: this returns `202` immediately and the
+   * config moves through `syncing` to `active` or `error`. Poll
+   * `GET /v1/apps/{app_id}/configs/{config_id}` for the outcome — `status`,
+   * `status_description`, and the resolved `component_ids` / `action_ids` /
+   * `runbook_ids`. Scheduled component builds and resources orphaned by this sync are
+   * reported under `state.result`.
+   *
+   * Component builds are scheduled as part of the sync. A component whose config is
+   * unchanged since the previous sync, and whose last build did not fail, keeps its
+   * existing config connection and is not rebuilt.
+   */
+  SyncAppConfig: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description app config ID */
+        config_id: string;
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": components["schemas"]["app.AppConfig"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -12147,6 +14727,220 @@ export interface operations {
     };
   };
   /**
+   * list app install config syncs
+   * @description Returns a list of app install config sync records for the given app.
+   */
+  GetAppInstallSyncs: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.AppInstallConfigSync"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * trigger app-level install config sync
+   * @description Triggers a sync of all install configs for the app from the configured git source.
+   */
+  TriggerAppInstallSync: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": components["schemas"]["app.AppInstallConfigSync"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get a single app install config sync
+   * @description Returns a single app install config sync record with child install config syncs.
+   */
+  GetAppInstallSync: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description sync ID */
+        sync_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.AppInstallConfigSync"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * respond to an install creation approval
+   * @description Approves or denies an install creation approval. On approve, creates the missing installs and re-triggers the sync. On deny, marks the approval as denied.
+   */
+  RespondInstallCreationApproval: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description sync ID */
+        sync_id: string;
+        /** @description approval ID */
+        approval_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.RespondInstallCreationApprovalRequest"];
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": {
+            [key: string]: string;
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get all installs for an app
    * @description Returns all installs for the provided app.
    */
@@ -12157,6 +14951,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description filter installs connected to an app branch */
+        app_branch_id?: string;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -12259,6 +15055,272 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get latest installs config for an app
+   * @description Returns the latest installs config (git source for install config files).
+   */
+  GetAppInstallsConfig: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.AppInstallsConfig"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * create a new installs config for an app
+   * @description Creates a new installs config record (source=ui). The latest record is always used.
+   */
+  CreateAppInstallsConfig: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateAppInstallsConfigRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.AppInstallsConfig"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * soft-delete an installs config
+   * @description Soft-deletes an installs config record. The next latest record becomes active.
+   */
+  DeleteAppInstallsConfig: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+        /** @description config ID */
+        config_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: string;
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * create a kubernetes contexts config
+   * @description Create the named kubernetes_context bindings for an app config version. Each context names a peer terraform_module or pulumi component that emits cluster connection details as outputs.
+   */
+  CreateAppKubernetesContextsConfig: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateAppKubernetesContextsConfigRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.AppKubernetesContextsConfig"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get all labels used across an app
+   * @description Returns all distinct label keys with values, usage counts, and assigned colors across components, actions, runbooks, and installs for an app.
+   */
+  GetAppLabels: {
+    parameters: {
+      path: {
+        /** @description app ID */
+        app_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.AppLabelsResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -13162,6 +16224,36 @@ export interface operations {
           "application/json": components["schemas"]["app.Runbook"][];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** create a runbook for an app */
@@ -13234,6 +16326,36 @@ export interface operations {
           "application/json": components["schemas"]["app.Runbook"];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** delete a runbook */
@@ -13251,6 +16373,42 @@ export interface operations {
       200: {
         content: {
           "application/json": boolean;
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
         };
       };
     };
@@ -13333,6 +16491,36 @@ export interface operations {
           "application/json": components["schemas"]["app.RunbookConfig"][];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** create a runbook config */
@@ -13356,6 +16544,36 @@ export interface operations {
       201: {
         content: {
           "application/json": components["schemas"]["app.RunbookConfig"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
         };
       };
     };
@@ -14580,6 +17798,37 @@ export interface operations {
       };
     };
   };
+  /** list component build history for the current organization */
+  ListOrgComponentBuilds: {
+    parameters: {
+      query?: {
+        /** @description limit of builds to return */
+        limit?: number;
+        /** @description opaque component build history cursor */
+        cursor?: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.OrgComponentBuildHistoryResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
   /**
    * get all components for an org
    * @description Returns all components for the provided organization.
@@ -15075,7 +18324,7 @@ export interface operations {
   /**
    * create a docker build component config
    * @deprecated
-   * @description Create a Docker build component config.
+   * @description Deprecated: docker_build components are no longer supported. This endpoint always returns an error. Use a container_image component to reference a pre-built image instead.
    */
   CreateDockerBuildComponentConfig: {
     parameters: {
@@ -15812,12 +19061,12 @@ export interface operations {
     };
   };
   /**
-   * Get jsonschema for config file
+   * Get jsonschema for config file (deprecated query form)
    * @description Return jsonschemas for Nuon configs. These can be used in frontmatter in most editors that have a TOML LSP (such as
    * [Taplo](https://taplo.tamasfe.dev/) configured.
    *
    * ```toml
-   * #:schema https://api.nuon.co/v1/general/config-schema?source=inputs
+   * #:schema https://api.nuon.co/v1/general/config-schema/inputs
    *
    * description = "description"
    * ```
@@ -15833,6 +19082,7 @@ export interface operations {
    * - container_image
    * - helm
    * - terraform
+   * - runbook
    * - job
    */
   GetConfigSchema: {
@@ -15840,6 +19090,79 @@ export interface operations {
       query?: {
         /** @description return a schema for a source file */
         type?: string;
+        /** @description deprecated alias for type; responses include a Deprecation header when used */
+        source?: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": unknown;
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Get jsonschema for a config file type
+   * @description Return jsonschemas for Nuon configs. These can be used in frontmatter in most editors that have a TOML LSP (such as
+   * [Taplo](https://taplo.tamasfe.dev/) configured.
+   *
+   * ```toml
+   * #:schema https://api.nuon.co/v1/general/config-schema/inputs
+   *
+   * description = "description"
+   * ```
+   *
+   * You can pass in a valid source argument to render within a specific config file:
+   *
+   * - input
+   * - input-group
+   * - installer
+   * - sandbox
+   * - runner
+   * - docker_build
+   * - container_image
+   * - helm
+   * - terraform
+   * - runbook
+   * - job
+   */
+  GetConfigSchemaByType: {
+    parameters: {
+      path: {
+        /** @description config file type, e.g. sandbox, terraform, action */
+        type: string;
       };
     };
     responses: {
@@ -16111,6 +19434,14 @@ export interface operations {
    */
   GetInstallWorkflowSteps: {
     parameters: {
+      query?: {
+        /** @description offset of results to return */
+        offset?: number;
+        /** @description limit of results to return */
+        limit?: number;
+        /** @description page number of results to return */
+        page?: number;
+      };
       path: {
         /** @description install workflow ID */
         install_workflow_id: string;
@@ -16367,6 +19698,58 @@ export interface operations {
       };
       /** @description Conflict */
       409: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * fleet health summary
+   * @description Returns the health rollup for every install the caller can see, optionally narrowed by app and by an install label selector. This is the primitive a canary or bake-period rollout polls to decide whether to continue: all_healthy is only true when every counted install is healthy, and installs whose health has never been evaluated are counted separately in unset rather than treated as a pass. Requires the component-health feature.
+   */
+  GetInstallsHealth: {
+    parameters: {
+      query?: {
+        /** @description filter by app ID */
+        app_id?: string;
+        /** @description label filter (key:value,key:value) */
+        labels?: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.InstallsHealthResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -16664,6 +20047,8 @@ export interface operations {
   GetInstallActionWorkflows: {
     parameters: {
       query?: {
+        /** @description return actions in the install's current app config; set false to return only actions no longer in it */
+        synced?: boolean;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -16735,6 +20120,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description return actions in the install's current app config; set false to return only actions no longer in it */
+        synced?: boolean;
       };
       path: {
         /** @description install ID */
@@ -17131,6 +20518,8 @@ export interface operations {
   GetInstallActions: {
     parameters: {
       query?: {
+        /** @description return actions in the install's current app config; set false to return only actions no longer in it */
+        synced?: boolean;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -17314,6 +20703,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description return actions in the install's current app config; set false to return only actions no longer in it */
+        synced?: boolean;
       };
       path: {
         /** @description install ID */
@@ -17755,6 +21146,164 @@ export interface operations {
       };
     };
   };
+  /**
+   * trigger an app config update for an install
+   * @description Creates a workflow to diff and deploy a new app config to an install.
+   */
+  CreateInstallAppConfigUpdate: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateInstallAppConfigUpdateRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.InstallAppConfigVersion"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get app config versions for an install
+   * @description Returns the app config version history for an install, ordered by most recent first.
+   */
+  GetInstallAppConfigVersions: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallAppConfigVersion"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get the diff for an install app config version
+   * @description Returns the component diff for a specific app config version transition.
+   */
+  GetInstallAppConfigVersionDiff: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description app config version ID */
+        version_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallConfigDiff"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
   /** get app permissions config for an install with provisioning status */
   GetInstallAppPermissionsConfig: {
     parameters: {
@@ -17937,6 +21486,8 @@ export interface operations {
         q?: string;
         /** @description label filter (key:value,key:value) */
         labels?: string;
+        /** @description return components in the install's current app config; set false to return only components no longer in it */
+        synced?: boolean;
         /** @description offset of results to return */
         offset?: number;
         /** @description limit of results to return */
@@ -18538,6 +22089,226 @@ export interface operations {
     };
   };
   /**
+   * list custom component health checks
+   * @description Returns the latest reported state of every custom health check for the component (provider "custom"), keyed by check name. Requires the component-health feature.
+   */
+  GetInstallComponentHealthChecks: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallComponentResourceState"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * report a custom component health check
+   * @description Lets an external system (a vendor's CI, a Datadog monitor webhook, a custom action) report a named health signal for a component. The report is written as a resource observation with provider "custom", so it flows through the same live explorer, evaluator, alerting, and timeline as runner-reported resources. Requires the component-health feature.
+   */
+  PutInstallComponentHealthCheck: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+        /** @description check name */
+        check_name: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.PutInstallComponentHealthCheckRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallComponentResourceState"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * component health incident bundle
+   * @description Returns the most recent degraded/unhealthy transition for the component (whether or not it has since recovered) along with its diagnosis, correlated deploy, and the component's currently non-healthy resources. Returns a null body when there's no incident in the retained history. Requires the component-health feature.
+   */
+  GetInstallComponentHealthIncident: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.ComponentHealthIncidentBundle"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * component health timeline
+   * @description Returns a component's health history over a window: recorded verdict transitions (newest first), daily worst-verdict buckets covering every day in the window, and an uptime percentage that excludes unknown time from both the numerator and denominator. Requires the component-health feature.
+   */
+  GetInstallComponentHealthTimeline: {
+    parameters: {
+      query?: {
+        /** @description size of the window in days, clamped to 1-90 */
+        days?: number;
+      };
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.InstallComponentHealthTimelineResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get an install component outputs
    * @description Return the latest outputs for a component.
    *
@@ -18594,6 +22365,91 @@ export interface operations {
     };
   };
   /**
+   * recover a stuck helm release for an install component
+   * @description Recover a Helm release that was left part-way through an operation.
+   *
+   * Helm records a `pending-install`, `pending-upgrade` or `pending-rollback` status before it
+   * starts changing the cluster and clears it once the operation finishes. A release left in one
+   * of those statuses is a rollout whose runner went away — a crash, a cancelled workflow, or a
+   * job that timed out. Helm then refuses every further operation on that release, and retrying
+   * the deploy cannot clear it.
+   *
+   * This endpoint starts a workflow that returns the release to a usable state:
+   *
+   * - when an earlier revision finished a rollout, the release is rolled back to it
+   * - when no revision ever rolled out, the stuck release is removed
+   *
+   * It deploys nothing and changes no desired state. Deploy the component afterwards to roll out
+   * the version you want.
+   *
+   * The recovery refuses to act on a release that is not pending, so it is safe to run when you
+   * are unsure and it is a no-op on a second run.
+   *
+   * Returns `409` when a job is already running for the component (recovering while Helm is
+   * genuinely mid-operation can corrupt the release) or when the component has never been
+   * deployed on this install. Returns `400` when the component is not a Helm chart.
+   */
+  RecoverInstallComponentHelmRelease: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["service.RecoverInstallComponentHelmReleaseRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.WorkflowResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * teardown an install component
    * @description Teardown and remove an install component's resources.
    */
@@ -18617,6 +22473,224 @@ export interface operations {
       201: {
         content: {
           "application/json": components["schemas"]["app.WorkflowResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * toggle an install component on or off
+   * @description Enable or disable a toggleable component on an install. Enabling triggers a deploy workflow, disabling triggers a teardown workflow.
+   */
+  ToggleInstallComponent: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description component ID */
+        component_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.ToggleInstallComponentRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.WorkflowResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Conflict */
+      409: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get config sync history for an install
+   * @description Returns the install config sync history, ordered by most recent first.
+   */
+  GetInstallConfigSyncs: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallConfigSync"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get config versions for an install
+   * @description Returns the install config version history, ordered by most recent first.
+   */
+  GetInstallConfigVersions: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallConfigVersion"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get the diff for an install config version
+   * @description Returns the config diff for a specific install config version.
+   */
+  GetInstallConfigVersionDiff: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description config version ID */
+        version_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": {
+            [key: string]: unknown;
+          };
         };
       };
       /** @description Bad Request */
@@ -19109,6 +23183,56 @@ export interface operations {
     };
   };
   /**
+   * Check whether an install's public DNS delegation is live.
+   * @description Resolves the install's public domain nameservers from the public internet and compares them to the nameservers Nuon provisioned, confirming whether the customer's registrar delegation has taken effect.
+   */
+  CheckInstallDNSDelegation: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.CheckInstallDNSDelegationResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get drifted objects for an install
    * @description Returns all drifted objects for an install.
    */
@@ -19417,6 +23541,166 @@ export interface operations {
     };
   };
   /**
+   * reset the install's health window
+   * @description Sets the install's health baseline to now: uptime and the health timeline start counting from this moment. Past observations stay recorded but no longer count toward uptime. Requires the component-health feature.
+   */
+  ResetInstallHealthBaseline: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.ResetInstallHealthBaselineResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * refresh the cluster access component health reads through
+   * @description Derives the install's cluster access from its current stack outputs and the chosen role, then stores it for the runner's health engine. Use when health reports unknown because the install has not been deployed since component health was enabled, or after the cluster's endpoint or role changed. The runner picks the refreshed access up within a minute. Requires the component-health feature.
+   */
+  RefreshInstallHealthClusterAccess: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["service.RefreshInstallHealthClusterAccessRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.RefreshInstallHealthClusterAccessResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * install health timeline
+   * @description Returns the install's health history aggregated across its components: uptime_percent and observed_seconds are the worst component's, daily[].health is the worst verdict across components for that day, and components lists each component's own current health and uptime. Requires the component-health feature.
+   */
+  GetInstallHealthTimeline: {
+    parameters: {
+      query?: {
+        /** @description size of the window in days, clamped to 1-90 */
+        days?: number;
+      };
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.InstallHealthTimelineResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * get an installs inputs
    * @description Returns input values for an install.
    */
@@ -19539,6 +23823,10 @@ export interface operations {
   /**
    * Updates install input config for app
    * @description Update input values for an install.
+   *
+   * This endpoint accepts a partial subset of inputs and merges them with the install's existing
+   * inputs, so callers only need to send the inputs they want to change. Inputs sourced from the
+   * `install_stack` (customer source) are managed by the install stack and are rejected if supplied.
    */
   UpdateInstallInputs: {
     parameters: {
@@ -19644,7 +23932,7 @@ export interface operations {
   };
   /**
    * add labels to an install
-   * @description Merge the provided labels into the install's existing labels. Existing keys are overwritten.
+   * @description Merge the provided labels into the install's existing labels. Existing keys are overwritten. A value using the .nuon interpolation syntax becomes a dynamic label: the template is stored and its rendered value is re-materialized whenever install state changes. Keys managed by the app config's default_labels cannot be changed here.
    */
   AddInstallLabels: {
     parameters: {
@@ -19700,7 +23988,7 @@ export interface operations {
   };
   /**
    * remove labels from an install
-   * @description Remove the specified label keys from the install.
+   * @description Remove the specified label keys from the install. Removing a dynamic label's key also removes its template. Keys managed by the app config's default_labels cannot be removed here.
    */
   RemoveInstallLabels: {
     parameters: {
@@ -19750,6 +24038,292 @@ export interface operations {
       500: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /** list notebooks for an install */
+  GetNotebooks: {
+    parameters: {
+      query?: {
+        /** @description offset */
+        offset?: number;
+        /** @description limit */
+        limit?: number;
+        /** @description search by name or ID */
+        q?: string;
+      };
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Notebook"][];
+        };
+      };
+    };
+  };
+  /** create a notebook for an install */
+  CreateNotebook: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateNotebookRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.Notebook"];
+        };
+      };
+    };
+  };
+  /** get a notebook with its ordered cells and each cell's latest run */
+  GetNotebook: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Notebook"];
+        };
+      };
+    };
+  };
+  /** delete a notebook */
+  DeleteNotebook: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        content: never;
+      };
+    };
+  };
+  /** update a notebook */
+  UpdateNotebook: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateNotebookRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Notebook"];
+        };
+      };
+    };
+  };
+  /** add a cell to a notebook */
+  CreateNotebookCell: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateCellRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.NotebookCell"];
+        };
+      };
+    };
+  };
+  /**
+   * reorder a notebook's cells
+   * @description accepts the full ordered list of cell IDs and assigns positions
+   */
+  ReorderNotebookCells: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.ReorderCellsRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Notebook"];
+        };
+      };
+    };
+  };
+  /** delete a cell */
+  DeleteNotebookCell: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+        /** @description cell ID */
+        cell_id: string;
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        content: never;
+      };
+    };
+  };
+  /** edit a cell (bumps its revision) */
+  UpdateNotebookCell: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+        /** @description cell ID */
+        cell_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateCellRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.NotebookCell"];
+        };
+      };
+    };
+  };
+  /** list a cell's run history (newest first) */
+  GetNotebookCellRuns: {
+    parameters: {
+      query?: {
+        /** @description offset */
+        offset?: number;
+        /** @description limit */
+        limit?: number;
+      };
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+        /** @description cell ID */
+        cell_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.NotebookCellRun"][];
+        };
+      };
+    };
+  };
+  /**
+   * run a notebook cell on the install's runner
+   * @description dispatches the cell to the notebook's warm Temporal workflow and records a NotebookCellRun linking to the underlying execution + log stream. Returns once the run is queued, not when it finishes.
+   */
+  RunNotebookCell: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+        /** @description cell ID */
+        cell_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["service.RunCellRequest"];
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": components["schemas"]["app.NotebookCellRun"];
+        };
+      };
+    };
+  };
+  /** get a single cell run (includes log_stream_id for tailing) */
+  GetNotebookCellRun: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+        /** @description notebook ID */
+        notebook_id: string;
+        /** @description run ID */
+        run_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.NotebookCellRun"];
         };
       };
     };
@@ -19982,6 +24556,124 @@ export interface operations {
     };
   };
   /**
+   * reprovision an install stack
+   * @description Reprovision an install stack, recreating the runner and its infrastructure. Set `skip_components` to avoid redeploying components on top of the new stack.
+   */
+  ReprovisionInstallStack: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.ReprovisionInstallStackRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.WorkflowResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * live resource explorer for an install
+   * @description Returns the latest observed state of every resource the install's components manage, filterable by component, kind, namespace, health, and provider. Requires the component-health feature.
+   */
+  GetInstallResources: {
+    parameters: {
+      query?: {
+        /** @description filter by install component ID */
+        install_component_id?: string;
+        /** @description filter by resource kind (e.g. Deployment) */
+        kind?: string;
+        /** @description filter by namespace */
+        namespace?: string;
+        /** @description filter by health (healthy|progressing|degraded|unhealthy|unknown) */
+        health?: string;
+        /** @description filter by provider (kubernetes|aws|gcp|azure) */
+        provider?: string;
+      };
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.InstallComponentResourceState"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * rerun the workflow steps starting from input step id, can be used to retry a failed step
    * @deprecated
    * @description Retry a failed workflow execution.
@@ -20167,6 +24859,12 @@ export interface operations {
       query: {
         /** @description unrendered role name template */
         role_name: string;
+        /** @description offset of results to return */
+        offset?: number;
+        /** @description limit of results to return */
+        limit?: number;
+        /** @description page number of results to return */
+        page?: number;
       };
       path: {
         /** @description install ID */
@@ -20274,6 +24972,8 @@ export interface operations {
   GetInstallRunbookRuns: {
     parameters: {
       query?: {
+        /** @description filter by runbook ID or name */
+        runbook_id?: string;
         /** @description offset */
         offset?: number;
         /** @description limit */
@@ -20289,6 +24989,36 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["app.InstallRunbookRun"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
         };
       };
     };
@@ -20310,6 +25040,36 @@ export interface operations {
           "application/json": components["schemas"]["app.InstallRunbookRun"];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** get runbooks for an install */
@@ -20320,6 +25080,10 @@ export interface operations {
         offset?: number;
         /** @description limit */
         limit?: number;
+        /** @description search by runbook name or ID */
+        q?: string;
+        /** @description return runbooks in the install's current app config; set false to return only runbooks no longer in it */
+        synced?: boolean;
       };
       path: {
         /** @description install ID */
@@ -20333,6 +25097,36 @@ export interface operations {
           "application/json": components["schemas"]["app.InstallRunbook"][];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** get an install runbook */
@@ -20341,7 +25135,7 @@ export interface operations {
       path: {
         /** @description install ID */
         install_id: string;
-        /** @description runbook ID */
+        /** @description runbook ID or name */
         runbook_id: string;
       };
     };
@@ -20352,6 +25146,36 @@ export interface operations {
           "application/json": components["schemas"]["app.InstallRunbook"];
         };
       };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
     };
   };
   /** run a runbook on an install */
@@ -20360,8 +25184,14 @@ export interface operations {
       path: {
         /** @description install ID */
         install_id: string;
-        /** @description runbook ID */
+        /** @description runbook ID or name */
         runbook_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody?: {
+      content: {
+        "application/json": components["schemas"]["service.CreateRunbookRunRequest"];
       };
     };
     responses: {
@@ -20369,6 +25199,36 @@ export interface operations {
       201: {
         content: {
           "application/json": components["schemas"]["app.InstallRunbookRun"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
         };
       };
     };
@@ -20795,6 +25655,58 @@ export interface operations {
     };
   };
   /**
+   * trigger install config sync for a single install
+   * @description Triggers a sync of this install's config from git.
+   */
+  SyncInstallConfig: {
+    parameters: {
+      path: {
+        /** @description install ID */
+        install_id: string;
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: {
+          "application/json": {
+            [key: string]: string;
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * sync secrets install
    * @description Execute the sync secrets workflow.
    */
@@ -21057,6 +25969,62 @@ export interface operations {
     };
   };
   /**
+   * long-poll tail a log stream
+   * @description Returns rows after the supplied composite cursor, long-polling up to ~30s for new rows on an idle stream. Behind the `log-tail-long-poll` org feature flag.
+   */
+  LogStreamTailLogs: {
+    parameters: {
+      query?: {
+        /** @description composite cursor in the form `<unix_nano>:<id>`; empty starts from the oldest row */
+        since?: string;
+        /** @description max wait for new rows (Go duration, capped server-side at 30s) */
+        wait?: string;
+      };
+      path: {
+        /** @description log stream ID */
+        log_stream_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.LogStreamTailLogsResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * read a log stream's trace spans
    * @description Read OTEL trace spans for a log stream.
    *
@@ -21104,6 +26072,202 @@ export interface operations {
       };
       /** @description Internal Server Error */
       500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * exchange an OIDC token for a Nuon API token
+   * @description Exchanges an OIDC ID token (e.g. from GitHub Actions) for a short-lived Nuon API token. The token must match an enabled OIDC trust policy in the target org: its signature is verified against the policy issuer's JWKS, and its issuer, audience, and claims must satisfy the policy. No Nuon credentials are required to call this endpoint.
+   */
+  ExchangeOIDCToken: {
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.ExchangeOIDCTokenRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["service.ExchangeOIDCTokenResponse"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * list your org's OIDC trust policies
+   * @description Lists the OIDC workload identity trust policies for your current org.
+   */
+  ListOIDCTrustPolicies: {
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.OIDCTrustPolicy"][];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * create an OIDC trust policy
+   * @description Creates an OIDC workload identity trust policy for your current org. OIDC tokens matching the policy's issuer, audience, and claim conditions can be exchanged for short-lived Nuon API tokens. Each policy gets a dedicated service account with the configured role.
+   */
+  CreateOIDCTrustPolicy: {
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateOIDCTrustPolicyRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.OIDCTrustPolicy"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * get an OIDC trust policy
+   * @description Returns an OIDC workload identity trust policy belonging to your current org.
+   */
+  GetOIDCTrustPolicy: {
+    parameters: {
+      path: {
+        /** @description policy ID */
+        policy_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.OIDCTrustPolicy"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * delete an OIDC trust policy
+   * @description Deletes an OIDC workload identity trust policy belonging to your current org, along with its dedicated service account. Tokens already issued under the policy stop working immediately.
+   */
+  DeleteOIDCTrustPolicy: {
+    parameters: {
+      path: {
+        /** @description policy ID */
+        policy_id: string;
+      };
+    };
+    responses: {
+      /** @description No Content */
+      204: {
+        content: never;
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * update an OIDC trust policy
+   * @description Updates an OIDC workload identity trust policy belonging to your current org. Changing the role also updates the policy's service account role, which affects tokens already issued under the policy.
+   */
+  UpdateOIDCTrustPolicy: {
+    parameters: {
+      path: {
+        /** @description policy ID */
+        policy_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateOIDCTrustPolicyRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.OIDCTrustPolicy"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -21714,6 +26878,50 @@ export interface operations {
       };
       /** @description Internal Server Error */
       500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Change an org member's role
+   * @description Changes the role of an existing member of the current org. Requires org admin. You cannot change your own role, and you cannot demote the last remaining admin.
+   */
+  UpdateOrgAccountRole: {
+    parameters: {
+      path: {
+        /** @description account ID */
+        account_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateOrgAccountRoleRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Account"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -22771,62 +27979,6 @@ export interface operations {
     };
   };
   /**
-   * Bind a Slack workspace to the current org
-   * @description Creates a verified SlackOrgLink between the supplied TeamID and the calling org. Used by the Phase 4 confirmation flow when a user finishes the Slack OAuth round-trip and selects the Nuon org to attach the workspace to.
-   */
-  CreateSlackOrgLink: {
-    parameters: {
-      path: {
-        /** @description Org ID */
-        org_id: string;
-      };
-    };
-    /** @description Input */
-    requestBody: {
-      content: {
-        "application/json": components["schemas"]["service.CreateOrgLinkRequest"];
-      };
-    };
-    responses: {
-      /** @description Created */
-      201: {
-        content: {
-          "application/json": components["schemas"]["app.SlackOrgLink"];
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        content: {
-          "application/json": components["schemas"]["stderr.ErrResponse"];
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        content: {
-          "application/json": components["schemas"]["stderr.ErrResponse"];
-        };
-      };
-      /** @description Not Found */
-      404: {
-        content: {
-          "application/json": components["schemas"]["stderr.ErrResponse"];
-        };
-      };
-      /** @description Conflict */
-      409: {
-        content: {
-          "application/json": components["schemas"]["stderr.ErrResponse"];
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        content: {
-          "application/json": components["schemas"]["stderr.ErrResponse"];
-        };
-      };
-    };
-  };
-  /**
    * Revoke a Slack workspace ↔ org binding
    * @description Soft-deletes the SlackOrgLink. Channel subscriptions cascade off via the FK. Idempotent if the link is already revoked.
    */
@@ -23262,6 +28414,101 @@ export interface operations {
       };
       /** @description Not Found */
       404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * List your org's roles
+   * @description List your org's roles. Each role carries its display metadata (`title`,
+   * `description`) and the assignment surfaces it may be offered on via the
+   * `applies_to` field (`team`, `service_account`, `api_token`,
+   * `oidc_trust_policy`). A role with no `applies_to` entries exists and may be
+   * displayed, but cannot be newly assigned. Pass `?context=<surface>` to filter
+   * to the roles assignable on a single surface.
+   */
+  ListRoles: {
+    parameters: {
+      query?: {
+        /** @description filter to roles assignable on a surface (team, service_account, api_token, oidc_trust_policy) */
+        context?: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Role"][];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * list org runner jobs
+   * @description list runner jobs for the current org that ran on the control plane. Used by orgs that build on the control plane and therefore have no org runner.
+   */
+  ListRunnerJobs: {
+    parameters: {
+      query: {
+        /** @description job group */
+        group?: string;
+        /** @description job groups */
+        groups?: string;
+        /** @description job status */
+        status?: string;
+        /** @description job statuses */
+        statuses?: string;
+        /** @description job executor (must be control-plane) */
+        executor: string;
+        /** @description offset of jobs to return */
+        offset?: number;
+        /** @description limit of jobs to return */
+        limit?: number;
+        /** @description page number of results to return */
+        page?: number;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.RunnerJob"][];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
         content: {
           "application/json": components["schemas"]["stderr.ErrResponse"];
         };
@@ -23913,6 +29160,7 @@ export interface operations {
   };
   /**
    * force shut down a runner
+   * @deprecated
    * @description Force shutdown a runner.
    *
    * This will result in jobs being lost/cancelled if they are in-flight.
@@ -24092,6 +29340,8 @@ export interface operations {
         status?: string;
         /** @description job statuses */
         statuses?: string;
+        /** @description job executor */
+        executor?: string;
         /** @description offset of jobs to return */
         offset?: number;
         /** @description limit of jobs to return */
@@ -24247,7 +29497,10 @@ export interface operations {
       };
     };
   };
-  /** shut down an install runner's mng process. does not shut down the install runner process. */
+  /**
+   * shut down an install runner's mng process. does not shut down the install runner process.
+   * @deprecated
+   */
   ShutDownRunnerMng: {
     parameters: {
       path: {
@@ -24300,7 +29553,10 @@ export interface operations {
       };
     };
   };
-  /** shut down an install runner VM */
+  /**
+   * shut down an install runner VM
+   * @deprecated
+   */
   MngVMShutDown: {
     parameters: {
       path: {
@@ -24857,6 +30113,327 @@ export interface operations {
       200: {
         content: {
           "application/json": components["schemas"]["app.RunnerJobExecution"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * List service accounts for the current org
+   * @description List the service accounts that belong to the current organization, along with
+   * their roles. Supports offset-based pagination.
+   */
+  ListServiceAccounts: {
+    parameters: {
+      query?: {
+        /** @description offset of results to return */
+        offset?: number;
+        /** @description limit of results to return */
+        limit?: number;
+        /** @description page number of results to return */
+        page?: number;
+        /** @description include service accounts with the runner role (excluded by default) */
+        include_runners?: boolean;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Account"][];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Create a service account for the current org
+   * @description Create a service account for the current org. Service accounts can be used to
+   * generate API tokens for automation and CI/CD workflows.
+   *
+   * Defaults to the `org_admin` role if `role` is not specified. Allowed roles
+   * are `org_admin`, `installer`, and `runner`.
+   */
+  CreateServiceAccount: {
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateServiceAccountRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["app.Account"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Delete a service account for the current org
+   * @description Delete a service account from the current org.
+   *
+   * This removes the service account's roles in this org and invalidates all of
+   * its existing API tokens.
+   */
+  DeleteServiceAccount: {
+    parameters: {
+      path: {
+        /** @description service account ID */
+        account_id: string;
+      };
+    };
+    responses: {
+      /** @description Accepted */
+      202: {
+        content: never;
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Update a service account for the current org
+   * @description Update a service account's human-friendly name. The account's email and ID are
+   * immutable; only the display name changes.
+   */
+  UpdateServiceAccount: {
+    parameters: {
+      path: {
+        /** @description service account ID */
+        account_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateServiceAccountRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Account"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Update the role of a service account for the current org
+   * @description Update the role assigned to a service account in the current org.
+   *
+   * The service account's existing roles in this org are removed and replaced
+   * with the requested role. Allowed roles are `org_admin`, `installer`, and
+   * `runner`.
+   */
+  UpdateServiceAccountRole: {
+    parameters: {
+      path: {
+        /** @description service account ID */
+        account_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.UpdateServiceAccountRoleRequest"];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.Account"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Create a token for a service account in the current org
+   * @description Create an API token for a service account in the current org.
+   *
+   * Defaults to a duration of one year (`8760h`) if `duration` is not
+   * specified. If `invalidate` is set, all existing tokens for the service
+   * account are invalidated before the new token is created.
+   */
+  CreateServiceAccountToken: {
+    parameters: {
+      path: {
+        /** @description service account ID */
+        account_id: string;
+      };
+    };
+    /** @description Input */
+    requestBody: {
+      content: {
+        "application/json": components["schemas"]["service.CreateServiceAccountTokenRequest"];
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: {
+          "application/json": components["schemas"]["service.CreateServiceAccountTokenResponse"];
         };
       };
       /** @description Bad Request */
@@ -26128,8 +31705,150 @@ export interface operations {
     };
   };
   /**
+   * returns the webhook subscription for a vcs connection
+   * @description Returns the webhook subscription associated with a VCS connection.
+   */
+  GetVCSConnectionWebhookSubscription: {
+    parameters: {
+      path: {
+        /** @description connection ID */
+        connection_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.VCSWebhookSubscription"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * creates a webhook subscription for a vcs connection
+   * @description Creates a webhook subscription for a VCS connection. This enqueues a signal that will register a GitHub webhook for receiving push and pull request events.
+   */
+  CreateVCSConnectionWebhookSubscription: {
+    parameters: {
+      path: {
+        /** @description connection ID */
+        connection_id: string;
+      };
+    };
+    responses: {
+      /** @description Created */
+      201: {
+        content: never;
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
+   * Write a VCS webhook event (shared per subscription)
+   * @description Receives webhook events for a webhook subscription and creates a GithubEvent for processing
+   */
+  WriteWebhookEvent: {
+    parameters: {
+      path: {
+        /** @description Webhook Subscription ID */
+        subscription_id: string;
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        content: {
+          "application/json": components["schemas"]["app.GithubEvent"];
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Not Found */
+      404: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        content: {
+          "application/json": components["schemas"]["stderr.ErrResponse"];
+        };
+      };
+    };
+  };
+  /**
    * Write a VCS webhook event
-   * @description Writes incoming webhook events for a VCS connection
+   * @description Writes incoming webhook events for a VCS connection (legacy endpoint)
    */
   WriteVCSEvent: {
     parameters: {
@@ -26142,7 +31861,7 @@ export interface operations {
       /** @description OK */
       200: {
         content: {
-          "application/json": components["schemas"]["app.VCSEvent"];
+          "application/json": components["schemas"]["app.GithubEvent"];
         };
       };
       /** @description Bad Request */
@@ -26623,6 +32342,14 @@ export interface operations {
    */
   GetWorkflowSteps: {
     parameters: {
+      query?: {
+        /** @description offset of results to return */
+        offset?: number;
+        /** @description limit of results to return */
+        limit?: number;
+        /** @description page number of results to return */
+        page?: number;
+      };
       path: {
         /** @description workflow ID */
         workflow_id: string;

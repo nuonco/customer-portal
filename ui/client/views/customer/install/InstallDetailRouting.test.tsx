@@ -201,14 +201,14 @@ beforeEach(() => {
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    if (url.includes("/bff/portal-api/state")) {
+    if (url.includes("/portal-api/state")) {
       return new Response(JSON.stringify(portalState), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (url.includes("/bff/portal-api/installs/ins-1/detail")) {
+    if (url.includes("/portal-api/installs/ins-1/detail")) {
       return new Response(JSON.stringify(installDetail), {
         status: 200,
         headers: { "Content-Type": "application/json" },

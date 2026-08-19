@@ -16,7 +16,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
 	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
@@ -30,6 +29,18 @@ const DefaultPrimaryColor = "#2563EB"
 
 func isHTMXRequest(c *gin.Context) bool {
 	return c.GetHeader("HX-Request") == "true"
+}
+
+// wantsJSON reports whether the caller asked for JSON rather than a page. The
+// React client sets Accept: application/json on every fetch, while browser
+// navigations and hx-boost ask for text/html, so this cleanly separates the two.
+//
+// internal/spa has an equivalent check for its NoRoute fallback; keep the two in
+// step if the rule changes.
+func wantsJSON(c *gin.Context) bool {
+	accept := c.GetHeader("Accept")
+	return strings.Contains(accept, "application/json") &&
+		!strings.Contains(accept, "text/html")
 }
 
 // isHTMXPartialRequest returns true for HTMX requests that expect a partial response
@@ -360,29 +371,6 @@ func (h *Handler) RenderErrorPage(c *gin.Context, status int, errorMsg string) {
 }
 
 // RenderCustomerErrorPage renders an error page for customer-facing pages with override support
-
-func (h *Handler) RenderCustomerErrorPage(c *gin.Context, status int, title, errorMsg string, user *models.User) {
-	orgID := h.getOrgIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-
-	// Try template override first
-	pageData := overrides.ErrorPageData{
-		Title:   title,
-		Message: errorMsg,
-		Code:    status,
-	}
-	ctx := h.buildTemplateContext(orgID, title, user, theme, pageData)
-	if h.tryRenderOverride(c, orgID, "error", ctx) {
-		return
-	}
-
-	// Fall back to default Templ template
-	props := customerpages.ErrorPageProps{
-		LayoutProps: h.buildCustomerLayoutProps(title, user, theme, nil, nil, nil),
-		Error:       errorMsg,
-	}
-	h.RenderTempl(c, status, customerpages.ErrorPage(props))
-}
 
 // getOrgIDForTheme safely gets org ID for theme operations
 // For vendor pages with org context, uses that. For customer pages with subdomain, looks up org.

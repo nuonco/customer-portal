@@ -36,28 +36,45 @@ The customer-dashboard service provides a white-label portal for Nuon vendors an
 
 Run the service locally for development using `nuonctl dev --dev=customer-dashboard`. The service listens on port :8080 in all modes (local dev, container, stage, prod).
 
-### React Client (Parallel Dev)
+### React Client
 
-A minimal Bun + React + Ladle frontend scaffold now lives in [ui](ui).
+The React frontend lives in [ui](ui) and is served by the Go server — there is
+no separate client port in either development or production.
 
-`nuonctl` runs the React client for you — no separate `bun` step. `scripts/dev.sh`
+`bun run dev` runs `vite build --watch`, writing the bundle to `ui/dist`. The Go
+server serves `ui/dist` (see `internal/spa`), falling back to `index.html` for
+client-side routes so deep links survive a hard refresh. Because dev and
+production use the same topology, there is only ever one origin and no proxy.
+
+`nuonctl` runs all of this for you — no separate `bun` step. `scripts/dev.sh`
 (the service's single `local_cmds` entry, mirroring dashboard-ui's `dev.sh`)
-launches the Go server (`./tmp/main`) and the client (`bun run dev:all`: Vite on
-:51273, CSS watch, and Ladle on :61001) together under one process group:
+launches the Go server (`./tmp/main`) and the client build (`bun run dev:all`:
+Vite watch build, CSS watch, and Ladle on :61001) together under one process
+group:
 
 ```bash
 ./run-nuonctl.sh services dev --dev customer-dashboard
 ```
 
-- Existing Templ + HTMX app (Go): http://localhost:8080
-- New React client (Vite): http://localhost:51273
+- App (React + remaining Templ pages, served by Go): http://localhost:8080
 - Ladle component explorer: http://localhost:61001
 
-To run just the client standalone (e.g. against a server on another host):
+The server serves the bundle from `DIST_DIR` (default `./ui/dist` locally,
+`./dist` in the container). Environment-specific values are **not** baked into
+the bundle: the server injects them into `index.html` as
+`window.__PORTAL_CONFIG__`, which the client reads via
+`ui/client/lib/runtime-config.ts`. This is what allows one image to run in every
+environment.
+
+To run only the client watch build (e.g. to rebuild the bundle without starting
+the Go server):
 
 ```bash
 ./scripts/run-client-dev.sh   # or: cd ui && bun run dev:all
 ```
+
+Note that the bundle is only reachable through the Go server, so this on its own
+is useful for type/build feedback and Ladle, not for loading the app.
 
 React UI linting (Oxlint):
 
@@ -81,14 +98,14 @@ React UI theming convention:
 
 URLs during dev:
 
-- Existing frontend (Templ + HTMX): http://127.0.0.1:8080
-- New React client (Vite): http://localhost:51273
+- App (React + remaining Templ pages): http://localhost:8080
+- Ladle component explorer: http://localhost:61001
 
 Current React routing/auth scaffold:
 
 - React vendor login now lives at `/admin/login/`
-- React vendor login bootstraps from the existing backend HTML at `/bff/admin/login/` and reuses the backend auth flow unchanged
-- Vendor login should be tested from `localhost:51273`, not `127.0.0.1:51273`, so the host-scoped auth cookies are shared with `localhost:8080`
+- React vendor login bootstraps from `GET /admin/login/config` and reuses the backend auth flow unchanged
+- Vendor login should be tested from `localhost:8080`, not `127.0.0.1:8080`, so the host-scoped auth cookies match
 - Successful vendor login now returns the React app to the requested `redirect` path (when provided), otherwise `/admin/orgs`
 - `/admin/orgs` is now React-owned and handles both behaviors from the legacy page:
   - auto-redirects to the selected org's `/accounts` route when orgs exist
@@ -124,11 +141,17 @@ Current React routing/auth scaffold:
 - React includes a backend-parity subdomain utility (`ui/client/utils/subdomain-utils.ts`) for normalization/validation/candidate generation, used by the org connect modal for subdomain previews
 - Remaining vendor routes not yet migrated to React still redirect to `/admin/orgs` and require a valid admin session for vendor views
 
-The client dev server proxies requests from `/bff/*` to the Go app on :8080.
-
 The React Vite app uses an isolated optimize-deps cache directory (`ui/node_modules/.vite-customer-dashboard`) so running other local Vite tools (like Ladle) does not invalidate its dependency metadata and cause `Outdated Optimize Dep` 504 errors.
 
-**Hot reload**: In dev mode (`LIVE_RELOAD=true`), the app exposes a `GET /dev/version` endpoint that returns the server's start timestamp. A client-side script (`static/js/dev-reload.js`) polls this endpoint every 1.5 seconds. When the version changes (i.e. the Go app was rebuilt and restarted), the script fetches the current page and uses Idiomorph to morph the DOM in-place — preserving form state, scroll position, and open/closed UI elements. If the server is unreachable during a build, the script checks nuonctl's webview API (`localhost:7777`) for build status — showing a "Rebuilding..." spinner or a red "Build failed" overlay with the compiler error text.
+**Hot reload (React)**: In dev mode (`LIVE_RELOAD=true`), the server injects a
+script that polls `GET /dev/dist-version` — a hash of the files in `DIST_DIR` —
+and reloads the page when `vite build --watch` produces a new bundle (see
+`internal/spa/devreload.go`). It is deliberately same-origin; dashboard-ui runs
+an equivalent reload proxy on a second port, but a second origin here would
+reintroduce the subdomain and cookie problems the customer auth flow is built to
+avoid. Asset caching is also disabled in this mode.
+
+**Hot reload (Templ)**: In dev mode (`LIVE_RELOAD=true`), the app exposes a `GET /dev/version` endpoint that returns the server's start timestamp. A client-side script (`static/js/dev-reload.js`) polls this endpoint every 1.5 seconds. When the version changes (i.e. the Go app was rebuilt and restarted), the script fetches the current page and uses Idiomorph to morph the DOM in-place — preserving form state, scroll position, and open/closed UI elements. If the server is unreachable during a build, the script checks nuonctl's webview API (`localhost:7777`) for build status — showing a "Rebuilding..." spinner or a red "Build failed" overlay with the compiler error text.
 
 When making changes, there are a few patterns and conventions to follow on both the frontend and the backend.
 
@@ -397,6 +420,9 @@ This flow solves the problem of cookies being scoped to subdomains. By authentic
 | `AUTH_CLIENT_ID`        | -                                      | Auth provider client ID                                                                          |
 | `AUTH_REDIRECT_URI`     | `http://localhost:8080/admin/callback` | Auth callback URL the provider will use                                                          |
 | `DATABASE_URL`          | -                                      | PostgreSQL connection string                                                                     |
+| `DIST_DIR`              | `./ui/dist`                            | Directory the React bundle is served from (`./dist` in the container)                             |
+| `CUSTOMER_SUBDOMAIN`    | -                                      | Development-only fallback org subdomain when browsing a host with no subdomain                    |
+| `LIVE_RELOAD`           | -                                      | When `true`, injects the dev reload script and disables asset caching                             |
 
 ### OIDC Configuration (environment fallback)
 

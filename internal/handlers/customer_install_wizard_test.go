@@ -6,25 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestWizardStepToGroupType(t *testing.T) {
-	tests := []struct {
-		step     string
-		expected string
-	}{
-		{"stack", "stack"},
-		{"sandbox", "sandbox"},
-		{"components", "component"},
-		{"inputs", "other"},
-		{"", "other"},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.step, func(t *testing.T) {
-			assert.Equal(t, tt.expected, wizardStepToGroupType(tt.step))
-		})
-	}
-}
-
 func TestNextWizardStep(t *testing.T) {
 	tests := []struct {
 		current  string

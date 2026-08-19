@@ -318,6 +318,25 @@ function InputsTable({
   );
 }
 
+/**
+ * Reads the server's alert message out of a JSON response.
+ *
+ * These endpoints reply { status, message } — the message carries the real cause
+ * (e.g. what the Nuon API said), so surfacing only the HTTP status would throw it
+ * away and report "(500)" instead.
+ */
+async function alertMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  try {
+    const body = (await response.json()) as { message?: string };
+    return body.message || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export const CustomerInstallOverviewView = () => {
   const { appName, install, installDetail, legacyBasePath } =
     useSelectedInstall();
@@ -461,11 +480,18 @@ export const CustomerInstallOverviewView = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to reprovision install (${response.status})`);
+        throw new Error(
+          await alertMessage(response, "Failed to reprovision install."),
+        );
       }
 
       setIsReprovisionOpen(false);
-      setActionSuccess("Install reprovisioning initiated successfully.");
+      setActionSuccess(
+        await alertMessage(
+          response,
+          "Install reprovisioning initiated successfully.",
+        ),
+      );
     } catch (error) {
       setActionError(
         error instanceof Error
@@ -490,11 +516,18 @@ export const CustomerInstallOverviewView = () => {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to deprovision install (${response.status})`);
+        throw new Error(
+          await alertMessage(response, "Failed to deprovision install."),
+        );
       }
 
       setIsDeprovisionOpen(false);
-      setActionSuccess("Install deprovisioning initiated successfully.");
+      setActionSuccess(
+        await alertMessage(
+          response,
+          "Install deprovisioning initiated successfully.",
+        ),
+      );
     } catch (error) {
       setActionError(
         error instanceof Error

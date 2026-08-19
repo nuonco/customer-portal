@@ -16,8 +16,8 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
-	nuonpkg "github.com/nuonco/nuon-go"
-	"github.com/nuonco/nuon-go/models"
+	nuonpkg "github.com/nuonco/nuon/sdks/nuon-go"
+	"github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 )
 
@@ -326,19 +326,22 @@ func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName
 
 	// Add AWS configuration if region is provided
 	if region != "" {
-		request.AwsAccount = &models.ServiceCreateInstallRequestAwsAccount{
+		request.AwsAccount = &models.HelpersCreateInstallAWSAccountParams{
 			Region: region,
 		}
 	}
 
 	// Add Azure configuration if location is provided
 	if location != "" {
-		request.AzureAccount = &models.ServiceCreateInstallRequestAzureAccount{
+		request.AzureAccount = &models.HelpersCreateInstallAzureAccountParams{
 			Location: location,
 		}
 	}
 
-	// For GCP, the published SDK lacks GcpAccount so we make a raw HTTP call
+	// For GCP we make a raw HTTP call.
+	// NOTE: the SDK now has HelpersCreateInstallGCPAccountParams, so this
+	// workaround can be replaced with request.GcpAccount — left as-is here to
+	// keep the SDK migration free of behaviour changes.
 	if platform == "gcp" && request.AwsAccount == nil && request.AzureAccount == nil {
 		return c.createInstallRaw(ctx, appID, installName, inputs, map[string]interface{}{
 			"gcp_account": map[string]interface{}{},
@@ -346,7 +349,7 @@ func (c *Client) CreateInstallWithCustomName(ctx context.Context, appID, appName
 	}
 
 	// Create install with platform-specific configuration
-	install, _, err := c.client.CreateInstall(ctx, appID, request)
+	install, err := c.client.CreateInstall(ctx, appID, request)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create install '%s' for app %s: %w", installName, appID, err)
 	}
@@ -414,9 +417,18 @@ func (c *Client) GetInstall(ctx context.Context, installID string) (*models.AppI
 	return install, nil
 }
 
-// DeprovisionInstall deprovisions an install (tears down infrastructure without deleting the install record)
+// DeprovisionInstall deprovisions an install (tears down infrastructure without
+// deleting the install record).
+//
+// This calls DeprovisionInstall, not DeprovisionInstallSandbox: they are separate
+// API operations that create different workflows
+// (WorkflowTypeDeprovision vs WorkflowTypeDeprovisionSandbox) and hit different
+// paths (/deprovision vs /deprovision-sandbox). This wrapper previously called
+// the sandbox variant, so the customer portal's "Deprovision" — which warns that
+// it "will destroy all data associated with this installation" — only tore down
+// the sandbox and left the stack and components running.
 func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error {
-	err := c.client.DeprovisionInstallSandbox(ctx, installID)
+	_, err := c.client.DeprovisionInstall(ctx, installID)
 	if err != nil {
 		return fmt.Errorf("failed to deprovision install: %w", err)
 	}
@@ -426,7 +438,7 @@ func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error
 
 // ReprovisionInstall reprovisions an install
 func (c *Client) ReprovisionInstall(ctx context.Context, installID string) error {
-	if err := c.client.ReprovisionInstall(ctx, installID); err != nil {
+	if _, err := c.client.ReprovisionInstall(ctx, installID); err != nil {
 		return fmt.Errorf("failed to reprovision install: %w", err)
 	}
 
@@ -824,7 +836,7 @@ func (c *Client) GetAppActionWorkflows(ctx context.Context, appID string) ([]*mo
 // RunInstallAction triggers an action workflow run on an install
 func (c *Client) RunInstallAction(ctx context.Context, installID, actionWorkflowConfigID string) error {
 	err := c.client.CreateInstallActionWorkflowRun(ctx, installID, &models.ServiceCreateInstallActionWorkflowRunRequest{
-		ActionWorkflowConfigID: actionWorkflowConfigID,
+		ActionWorkflowConfigID: &actionWorkflowConfigID,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to run action on install: %w", err)
@@ -859,11 +871,14 @@ func (c *Client) UpdateInstallInputs(ctx context.Context, installID string, inpu
 	req := &models.ServiceUpdateInstallInputsRequest{
 		Inputs: inputs,
 	}
-	_, workflowID, err := c.client.UpdateInstallInputs(ctx, installID, req)
+	updated, err := c.client.UpdateInstallInputs(ctx, installID, req)
 	if err != nil {
 		return "", fmt.Errorf("failed to update install inputs: %w", err)
 	}
-	return workflowID, nil
+	if updated == nil {
+		return "", nil
+	}
+	return updated.WorkflowID, nil
 }
 
 // StackRun represents a single stack run from the Nuon API.

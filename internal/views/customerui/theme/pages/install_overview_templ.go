@@ -15,7 +15,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 
 // InstallOverviewPageProps contains all data for the overview page.

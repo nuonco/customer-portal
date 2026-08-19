@@ -8,7 +8,6 @@ import (
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 )
 
 // getCustomerAccountsFromContext returns the active account and all other accounts the user
@@ -86,11 +85,6 @@ func (h *Handler) getCustomerAccountFromContext(c *gin.Context) *models.Customer
 		return nil
 	}
 	return &member.Account
-}
-
-// AccountSetupPage redirects to /installs since accounts are now auto-created during auth.
-func (h *Handler) AccountSetupPage(c *gin.Context) {
-	c.Redirect(http.StatusFound, "/installs")
 }
 
 // createAccountForUser creates a CustomerAccount and makes the given user the owner.
@@ -216,11 +210,6 @@ func (h *Handler) SwitchAccount(c *gin.Context) {
 	c.Redirect(302, "/installs")
 }
 
-// AccountMembersRedirect redirects /account/members to /account.
-func (h *Handler) AccountMembersRedirect(c *gin.Context) {
-	c.Redirect(http.StatusFound, "/account")
-}
-
 // UpdateAccount allows the account owner to rename the account.
 func (h *Handler) UpdateAccount(c *gin.Context) {
 	user := middleware.GetCurrentUser(c)
@@ -272,49 +261,6 @@ func (h *Handler) UpdateAccount(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Account updated", "account": account})
-}
-
-// AccountPage renders the account settings page with members and invite functionality.
-func (h *Handler) AccountPage(c *gin.Context) {
-	user := middleware.GetCurrentUser(c)
-	account := h.getCustomerAccountFromContext(c)
-	if account == nil {
-		c.Redirect(302, "/installs")
-		return
-	}
-
-	// Get members
-	var members []models.CustomerAccountMember
-	h.db.Preload("User").Where("account_id = ? AND deleted_at IS NULL", account.ID).Order("joined_at ASC").Find(&members)
-
-	// Get pending invites
-	var invites []models.CustomerAccountInvite
-	h.db.Preload("CreatedBy").Where("account_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", account.ID).Order("created_at DESC").Find(&invites)
-
-	orgID := h.getOrgIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
-	layoutProps := h.buildCustomerLayoutProps("My Group", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
-	layoutProps.ActiveNav = "account"
-	layoutProps.HasPublishedApps = h.orgHasPublishedApps(orgID)
-
-	// Determine if current user is owner
-	currentMember := middleware.GetCustomerAccountMember(c)
-	if currentMember == nil && user != nil && account != nil {
-		var m models.CustomerAccountMember
-		if err := h.db.Where("user_id = ? AND account_id = ? AND deleted_at IS NULL", user.ID, account.ID).First(&m).Error; err == nil {
-			currentMember = &m
-		}
-	}
-	isOwner := currentMember != nil && currentMember.Role == models.CustomerAccountRoleOwner
-
-	h.RenderTempl(c, http.StatusOK, customerpages.AccountPage(customerpages.AccountPageProps{
-		LayoutProps: layoutProps,
-		Account:     *account,
-		Members:     members,
-		Invites:     invites,
-		IsOwner:     isOwner,
-	}))
 }
 
 // CreateAccountInvite invites a user by email. If the email matches an existing user,

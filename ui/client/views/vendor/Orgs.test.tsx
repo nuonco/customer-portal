@@ -26,7 +26,7 @@ test('redirects to the first org accounts page when orgs are available', async (
 
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === 'string' ? input : input.toString()
-    if (url === '/bff/admin/profile/orgs') {
+    if (url === '/admin/profile/orgs') {
       return new Response(
         JSON.stringify({
           orgs: [
@@ -75,14 +75,14 @@ test('shows empty state and connects first org', async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    if (url === '/bff/admin/profile/orgs') {
+    if (url === '/admin/profile/orgs') {
       return new Response(
         JSON.stringify({ orgs: [] }),
         { status: 200, headers: { 'Content-Type': 'application/json' } },
       )
     }
 
-    if (url === '/bff/admin/org/create' && init?.method === 'POST') {
+    if (url === '/admin/org/create' && init?.method === 'POST') {
       createOrgRequestBody = JSON.parse(String(init.body ?? '{}')) as Record<string, unknown>
       return new Response(
         JSON.stringify({

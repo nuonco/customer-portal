@@ -31,7 +31,7 @@ export async function getAppCatalog(
   if (params?.page) search.set("page", String(params.page));
 
   const response = await fetch(
-    `/bff/admin/orgs/${orgId}/apps-api/catalog${search.toString() ? `?${search.toString()}` : ""}`,
+    `/admin/orgs/${orgId}/apps-api/catalog${search.toString() ? `?${search.toString()}` : ""}`,
     {
       credentials: "include",
       headers: { Accept: "application/json" },
@@ -46,7 +46,7 @@ export async function updateAppCatalog(
   orgId: string,
   payload: { app_ids: string[]; app_statuses: Record<string, TAppCatalogStatus> },
 ): Promise<void> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/apps/order`, {
+  const response = await fetch(`/admin/orgs/${orgId}/apps/order`, {
     method: "PUT",
     credentials: "include",
     headers: {
@@ -63,7 +63,7 @@ export async function updateAppCatalog(
 }
 
 export async function forgetDeletedApp(orgId: string, appId: string): Promise<void> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/apps/${appId}/forget`, {
+  const response = await fetch(`/admin/orgs/${orgId}/apps/${appId}/forget`, {
     method: "DELETE",
     credentials: "include",
     headers: { Accept: "application/json" },

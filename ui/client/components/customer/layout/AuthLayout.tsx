@@ -83,7 +83,7 @@ export const CustomerAuthLayout = () => {
 
           <div className="relative hidden flex-1 overflow-hidden lg:flex">
             <img
-              src="/bff/static/images/oss-hero.png"
+              src="/static/images/oss-hero.png"
               alt=""
               className="absolute inset-0 h-full w-full object-cover"
             />

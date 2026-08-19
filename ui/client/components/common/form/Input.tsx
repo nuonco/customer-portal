@@ -1,10 +1,11 @@
 import {
+  type FocusEvent,
+  type FormEvent,
   type InputHTMLAttributes,
   type ReactNode,
   forwardRef,
+  useCallback,
   useState,
-  useRef,
-  useEffect,
 } from "react";
 import { Label, type ILabel } from "@/components/common/form/Label";
 import { Text, type IText } from "@/components/common/Text";
@@ -39,70 +40,65 @@ export const Input = forwardRef<HTMLInputElement, IInput>(
       size = "md",
       disabled,
       required,
+      onBlur,
+      onInvalid,
       ...props
     },
     ref,
   ) => {
-    const [isInvalid, setIsInvalid] = useState(false);
-    const [hasBlurred, setHasBlurred] = useState(false);
-    const [showValidationMessage, setShowValidationMessage] = useState(false);
-    const inputRef = useRef<HTMLInputElement>(null);
+    // Whether the user has blurred the field or tried to submit the form. Until
+    // then we stay quiet, so a pristine form is not covered in errors.
+    const [hasInteracted, setHasInteracted] = useState(false);
 
-    // Monitor validation state
-    useEffect(() => {
-      if (required && inputRef.current) {
-        const input = inputRef.current;
+    // Validity is DERIVED during render from the controlled value rather than
+    // mirrored into state and re-synced from native DOM events. The previous
+    // implementation only recovered when a native `input` event fired, so any
+    // value change that did not produce one — a React-driven update, autofill,
+    // a programmatic set — left "Please fill out this field" stranded over a
+    // filled field.
+    //
+    // Every call site is controlled; the DOM read is a fallback for uncontrolled
+    // use, where there is no prop to derive from.
+    const isEmpty =
+      props.value !== undefined
+        ? props.value === "" || props.value === null
+        : false;
+    const failsRequired = Boolean(required) && isEmpty;
+    const showRequiredMessage = hasInteracted && failsRequired;
 
-        const checkValidity = () => {
-          // Only show invalid state after user blur or form submission attempt
-          if (hasBlurred) {
-            setIsInvalid(!input.checkValidity());
-          }
-        };
+    // `error` is parent-driven; other native constraints (pattern, type, etc.)
+    // are handled by the `user-invalid:` classes below, which are native CSS and
+    // therefore cannot go stale.
+    const isInvalid = Boolean(error) || showRequiredMessage;
 
-        // Check validity on value changes (only if already blurred)
-        if (hasBlurred) {
-          checkValidity();
+    const handleBlur = useCallback(
+      (e: FocusEvent<HTMLInputElement>) => {
+        setHasInteracted(true);
+        onBlur?.(e);
+      },
+      [onBlur],
+    );
+
+    const handleInvalid = useCallback(
+      (e: FormEvent<HTMLInputElement>) => {
+        // Suppress the native validation bubble; we render the message inline.
+        e.preventDefault();
+        setHasInteracted(true);
+        onInvalid?.(e);
+      },
+      [onInvalid],
+    );
+
+    const setRefs = useCallback(
+      (node: HTMLInputElement | null) => {
+        if (typeof ref === "function") {
+          ref(node);
+        } else if (ref) {
+          ref.current = node;
         }
-
-        // Listen for validation events (form submission attempts)
-        const handleInvalid = (e: Event) => {
-          e.preventDefault(); // Prevent default browser validation message
-          setHasBlurred(true);
-          setIsInvalid(true);
-          setShowValidationMessage(true);
-        };
-
-        const handleInput = () => {
-          if (hasBlurred) {
-            checkValidity();
-            // Hide validation message when user enters valid input
-            if (input.checkValidity()) {
-              setShowValidationMessage(false);
-            }
-          }
-        };
-
-        const handleBlur = () => {
-          setHasBlurred(true);
-          // Check validity after blur
-          if (!input.checkValidity()) {
-            setIsInvalid(true);
-            setShowValidationMessage(true);
-          }
-        };
-
-        input.addEventListener("invalid", handleInvalid);
-        input.addEventListener("input", handleInput);
-        input.addEventListener("blur", handleBlur);
-
-        return () => {
-          input.removeEventListener("invalid", handleInvalid);
-          input.removeEventListener("input", handleInput);
-          input.removeEventListener("blur", handleBlur);
-        };
-      }
-    }, [required, hasBlurred]);
+      },
+      [ref],
+    );
 
     const sizeClasses = {
       sm: "px-2 py-1 text-sm h-8",
@@ -145,23 +141,18 @@ export const Input = forwardRef<HTMLInputElement, IInput>(
 
     const input = (
       <input
-        ref={(node) => {
-          inputRef.current = node;
-          if (typeof ref === "function") {
-            ref(node);
-          } else if (ref) {
-            ref.current = node;
-          }
-        }}
+        ref={setRefs}
         className={baseClasses}
         disabled={disabled}
         required={required}
-        aria-invalid={error || isInvalid}
+        aria-invalid={isInvalid}
         aria-describedby={
-          helperText || errorMessage || showValidationMessage
+          helperText || errorMessage || showRequiredMessage
             ? `${props.id}-description`
             : undefined
         }
+        onBlur={handleBlur}
+        onInvalid={handleInvalid}
         {...props}
       />
     );
@@ -179,7 +170,7 @@ export const Input = forwardRef<HTMLInputElement, IInput>(
         );
       }
 
-      if (required && showValidationMessage && isInvalid) {
+      if (showRequiredMessage) {
         return (
           <Text
             id={`${props.id}-description`}

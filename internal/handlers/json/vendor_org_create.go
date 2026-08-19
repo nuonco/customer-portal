@@ -9,6 +9,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
@@ -38,7 +39,15 @@ func (h *VendorHandler) CreateOrg(c *gin.Context) {
 	}
 
 	if err := nuonClient.ValidateOrgAccess(c.Request.Context()); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid API token or organization access"})
+		// Log the wrapped cause: "invalid API token" is indistinguishable from
+		// "nothing listening on api_url" without it.
+		zap.L().Warn("org connect validation failed",
+			zap.String("api_url", apiURL),
+			zap.String("org_id", req.OrgID),
+			zap.Error(err))
+
+		status, msg := nuon.DescribeConnectError(err, apiURL)
+		c.JSON(status, gin.H{"error": msg})
 		return
 	}
 

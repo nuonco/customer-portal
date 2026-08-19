@@ -19,7 +19,6 @@ type TCustomerLoginURLResponse = {
 type TCustomerLoginURLOptions = {
   redirect?: string;
   subdomain?: string;
-  uiPort?: string;
 };
 
 export class CustomerAuthUnavailableError extends Error {
@@ -30,7 +29,7 @@ export class CustomerAuthUnavailableError extends Error {
 }
 
 export async function getCustomerSessionStatus(): Promise<TCustomerSessionStatus> {
-  const response = await fetch("/bff/auth-api/session", {
+  const response = await fetch("/auth-api/session", {
     credentials: "include",
     headers: { Accept: "application/json" },
   });
@@ -54,10 +53,7 @@ export async function getCustomerLoginURL(options: TCustomerLoginURLOptions = {}
   if (options.subdomain) {
     query.set("subdomain", options.subdomain);
   }
-  if (options.uiPort) {
-    query.set("ui_port", options.uiPort);
-  }
-  const response = await fetch(`/bff/auth-api/login-url?${query.toString()}`, {
+  const response = await fetch(`/auth-api/login-url?${query.toString()}`, {
     credentials: "include",
     headers: { Accept: "application/json" },
   });
@@ -77,7 +73,7 @@ export async function getCustomerLoginURL(options: TCustomerLoginURLOptions = {}
 }
 
 export async function logoutCustomer(): Promise<void> {
-  const response = await fetch("/bff/auth-api/logout", {
+  const response = await fetch("/auth-api/logout", {
     method: "POST",
     credentials: "include",
     headers: { Accept: "application/json" },

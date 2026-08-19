@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 	"testing"
 
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 
 func stepWithStatus(name string, status string, idx int64) *nuonmodels.AppWorkflowStep {

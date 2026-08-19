@@ -5,7 +5,7 @@ export type TVendorOrgTokenStatus = {
 }
 
 export async function getVendorOrgTokenStatus(orgId: string): Promise<TVendorOrgTokenStatus> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/token-status`, {
+  const response = await fetch(`/admin/orgs/${orgId}/token-status`, {
     credentials: 'include',
   })
 

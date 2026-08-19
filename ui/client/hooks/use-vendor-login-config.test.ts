@@ -1,20 +1,5 @@
-import { beforeEach, expect, test } from "bun:test";
-import {
-  buildVendorLoginStateRedirect,
-  normalizeVendorRedirectPath,
-} from "./use-vendor-login-config";
-
-beforeEach(() => {
-  Object.defineProperty(globalThis, "window", {
-    configurable: true,
-    value: {
-      location: {
-        hostname: "localhost",
-        port: "51273",
-      },
-    },
-  });
-});
+import { expect, test } from "bun:test";
+import { normalizeVendorRedirectPath } from "./use-vendor-login-config";
 
 test("normalizeVendorRedirectPath defaults to /admin/orgs when redirect is missing", () => {
   expect(normalizeVendorRedirectPath(null)).toBe("/admin/orgs");
@@ -35,24 +20,4 @@ test("normalizeVendorRedirectPath rejects non-relative redirect values", () => {
   expect(normalizeVendorRedirectPath("//evil.example/path")).toBe(
     "/admin/orgs",
   );
-});
-
-test("buildVendorLoginStateRedirect wraps localhost redirects for ui_port bridge", () => {
-  expect(buildVendorLoginStateRedirect("/admin/orgs/org-1/installs")).toBe(
-    "/auth-api/post-login?ui_port=51273&next=%2Fadmin%2Forgs%2Forg-1%2Finstalls",
-  );
-});
-
-test("buildVendorLoginStateRedirect returns direct path on backend port", () => {
-  Object.defineProperty(globalThis, "window", {
-    configurable: true,
-    value: {
-      location: {
-        hostname: "localhost",
-        port: "8080",
-      },
-    },
-  });
-
-  expect(buildVendorLoginStateRedirect("/admin/orgs")).toBe("/admin/orgs");
 });

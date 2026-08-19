@@ -19,6 +19,7 @@ import (
 	jsonhandlers "github.com/nuonco/mono/services/customer-dashboard/internal/handlers/json"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/mono/services/customer-dashboard/internal/spa"
 )
 
 func main() {
@@ -183,6 +184,22 @@ func main() {
 	// Set up customer routes at root level (no prefix)
 	setupCustomerRoutes(router.Group(""), db, customerAuth, customerAuthFactory, customerBaseURL, nuonAPIURL, subdomainBaseDomain, logger)
 
+	// Serve the React SPA. This MUST come after every other route registration
+	// because it installs a NoRoute catch-all for client-side routing.
+	spaHandler := spa.NewHandler(spa.Config{
+		DistDir:             os.Getenv("DIST_DIR"),
+		SubdomainBaseDomain: subdomainBaseDomain,
+		CustomerSubdomain:   os.Getenv("CUSTOMER_SUBDOMAIN"),
+		NuonAPIURL:          nuonAPIURL,
+		Version:             os.Getenv("VERSION"),
+		GitRef:              os.Getenv("GIT_REF"),
+		NoCacheAssets:       os.Getenv("LIVE_RELOAD") == "true",
+		DevReload:           os.Getenv("LIVE_RELOAD") == "true",
+	}, logger)
+	if err := spaHandler.RegisterRoutes(router); err != nil {
+		logger.Fatal("failed to register SPA routes", zap.Error(err))
+	}
+
 	// Start the single server
 	logger.Info("server starting",
 		zap.String("port", port),
@@ -200,13 +217,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	h := handlers.NewHandler(db, jwtAuth, authProvider, customerBaseURL, nuonAPIURL, dashboardURL, "/admin", subdomainBaseDomain, superuserEmailDomain, logger)
 	vendorJSON := jsonhandlers.NewVendorHandler(db, nuonAPIURL, customerBaseURL, subdomainBaseDomain)
 
-	// Root redirect to login
-	rg.GET("/", func(c *gin.Context) {
-		c.Redirect(302, "/admin/login")
-	})
-
 	// Public routes - vendor login
-	rg.GET("/login/", h.VendorLoginPageTempl)
 	rg.GET("/login/config", h.VendorLoginConfigJSON)
 	rg.GET("/logout", h.VendorLogout) // Logout handler
 
@@ -214,7 +225,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	if authProvider != nil && authProvider.Name() == "local" {
 		// Local password auth routes
 		rg.POST("/login/", h.LocalLogin)
-		rg.GET("/register", h.VendorRegisterPageTempl)
 		rg.POST("/register", h.LocalRegister)
 	} else {
 		// IdP callback routes (OIDC/SAML)
@@ -240,7 +250,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	{
 		profile.GET("/me", vendorJSON.Me)
 		profile.GET("/orgs", vendorJSON.MeOrgs)
-		profile.GET("/panel", h.ProfilePanelContent)
 		profile.PUT("", vendorJSON.UpdateProfile)
 		profile.PUT("/", vendorJSON.UpdateProfile)
 	}
@@ -253,7 +262,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 	{
 		// Org-level routes (no specific org selected, no RequireOrgContext)
 		// This allows users with no orgs to reach this route without redirect loop
-		orgs.GET("/", h.OrgsPage)
 
 		// Restore archived org (outside orgRoutes because archived orgs fail RequireOrgAccessByParam)
 		orgs.POST("/:org_id/restore", h.RestoreOrg)
@@ -262,9 +270,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		orgRoutes := orgs.Group("/:org_id")
 		orgRoutes.Use(middleware.RequireOrgAccessByParam(db))
 		{
-			orgRoutes.GET("/", h.OrgRedirect)
-			orgRoutes.GET("/install-links", h.OrgDetailPage)
-			orgRoutes.GET("/connection", h.OrgSettingsPage)
 			orgRoutes.PUT("/", h.UpdateOrg)
 			orgRoutes.DELETE("/", h.DeleteOrg)
 
@@ -289,12 +294,7 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.POST("/settings/github/bulk-toggle", h.BulkToggleOverrides)
 
 			// Apps - configuration pages
-			orgRoutes.GET("/apps", h.AppsPage)                                     // Apps list page (HTML)
-			orgRoutes.GET("/apps/:app_id", h.AppDetailRedirect)                    // Redirect to inputs
-			orgRoutes.GET("/apps/:app_id/inputs", h.AppInputsPage)                 // Inputs config page
-			orgRoutes.GET("/apps/:app_id/logo", h.AppLogoPage)                     // Logo upload page
 			orgRoutes.PUT("/apps/:app_id/logo", h.UpdateAppLogo)                   // Save app logos
-			orgRoutes.GET("/apps/:app_id/overview", h.AppOverviewPage)             // Overview editor page
 			orgRoutes.PUT("/apps/:app_id/overview", h.UpdateAppOverview)           // Save app overview
 			orgRoutes.POST("/apps/:app_id/overview/preview", h.PreviewAppOverview) // Preview rendered markdown
 
@@ -319,8 +319,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.DELETE("/install-links-api/:link_id", vendorJSON.DeleteInstallLink)
 			orgRoutes.GET("/token-status", vendorJSON.OrgTokenStatus)
 			orgRoutes.POST("/install-links", h.CreateInstallLink)
-			orgRoutes.GET("/install-links/:link_id", h.InstallLinkDetail)
-			orgRoutes.GET("/install-links/:link_id/status", h.InstallLinkStatus) // HTMX polling endpoint
 			orgRoutes.DELETE("/install-links/:link_id", h.DeleteInstallLink)
 
 			// Customer Installs - admin view of all portal installs
@@ -328,43 +326,19 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 			orgRoutes.GET("/installs-api/search-nuon", vendorJSON.SearchNuonInstalls)
 			orgRoutes.POST("/installs-api/import", vendorJSON.ImportInstall)
 			orgRoutes.POST("/installs-api/:install_id/forget", vendorJSON.AdminForgetInstall)
-			orgRoutes.GET("/installs", h.CustomerInstallsPage)
 			orgRoutes.GET("/installs/search-nuon", h.SearchNuonInstalls)
 			orgRoutes.POST("/installs/import", h.ImportInstall)
 			orgRoutes.POST("/installs/:install_id/forget", h.AdminForgetInstall)
 
 			// Customers - view all customers and their installs
-			orgRoutes.GET("/customers", h.CustomersPage)
 
 			// Customer Accounts - view customer company accounts
 			orgRoutes.GET("/accounts-api", vendorJSON.Accounts)
-			orgRoutes.GET("/accounts", h.AccountsPage)
-			orgRoutes.GET("/accounts/:account_id", h.AccountDetailRedirect)
-			orgRoutes.GET("/accounts/:account_id/members", h.AccountMembersPage)
-			orgRoutes.GET("/accounts/:account_id/installs", h.AccountInstallsPage)
 			orgRoutes.GET("/accounts/:account_id/installs/search", h.SearchOrgInstalls)
 			orgRoutes.POST("/accounts/:account_id/installs/assign", h.AssignInstallToAccount)
 			orgRoutes.POST("/accounts/:account_id/invite", h.VendorInviteAccountMember)
 			orgRoutes.DELETE("/accounts/:account_id/invite/:invite_id", h.VendorDeleteAccountInvite)
 
-			// Team pages (org-scoped)
-			orgRoutes.GET("/team", func(c *gin.Context) {
-				c.Redirect(http.StatusFound, c.Request.URL.Path+"/members")
-			})
-			orgRoutes.GET("/team/members", h.TeamPage)
-			orgRoutes.GET("/team/invites", func(c *gin.Context) {
-				orgID := c.Param("org_id")
-				c.Redirect(http.StatusFound, "/admin/orgs/"+orgID+"/team/members")
-			})
-
-			// Customer Portal pages (org-scoped)
-			orgPortal := orgRoutes.Group("/portal")
-			{
-				orgPortal.GET("/branding", h.BrandingSettingsPage)
-				orgPortal.GET("/custom-theme", h.CustomThemeSettingsPage)
-				orgPortal.GET("/login", h.LoginSettingsPage)
-				orgPortal.GET("/dns", h.DNSSettingsPage)
-			}
 		}
 	}
 
@@ -375,7 +349,6 @@ func setupVendorRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMidd
 		superuser.Use(middleware.RequireRole(models.RoleVendor))
 		superuser.Use(middleware.RequireSuperuser(superuserEmailDomain))
 		{
-			superuser.GET("/panel", h.SuperuserPanelContent)
 			superuser.GET("/orgs/search", h.SuperuserSearchOrgs)
 			superuser.GET("/orgs/:org_id", h.SuperuserOrgDetail)
 			superuser.POST("/orgs/:org_id/join", h.SuperuserJoinOrg)
@@ -422,7 +395,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 
 	// Root redirect to customer login (with subdomain) or admin login (without subdomain)
 	// The RedirectBaseDomainCustomerRoutes middleware handles the base domain case
-	rg.GET("/", h.CustomerRootRedirect)
 
 	// Base domain auth routes (for OIDC flow without subdomain cookie issues)
 	// These handle the actual OIDC authentication on the base domain to avoid
@@ -440,7 +412,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	authAPI := rg.Group("/auth-api")
 	{
 		authAPI.GET("/login-url", customerJSON.LoginURL)
-		authAPI.GET("/post-login", customerJSON.PostLoginRedirect)
 		authAPI.POST("/logout", customerJSON.Logout)
 
 		authSession := authAPI.Group("")
@@ -472,12 +443,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	rg.GET("/auth/complete", h.CompleteSubdomainAuth)
 
 	// Public routes - customer login and logout (OIDC only)
-	rg.GET("/login", h.CustomerLoginPageTempl)
-	rg.GET("/login/", h.CustomerLoginPageTempl) // Handle both with and without trailing slash
 	rg.GET("/logout", h.CustomerLogout)
 
 	// Registration disabled - redirect to login
-	rg.GET("/register", h.CustomerRegisterPage)
 
 	// Install link acceptance (customer signup flow)
 	installLinks := rg.Group("/install-link")
@@ -498,19 +466,14 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	rg.GET("/apps/:app_id/config", h.GetPublishedAppConfig)
 
 	// Install form fields partial (returns HTML for HTMX, unauthenticated)
-	rg.GET("/install-form-fields", h.GetInstallFormFields)
 
 	// Public customer routes for published apps (auth handled in handlers)
 	customerApps := rg.Group("/apps")
 	{
-		customerApps.GET("/", h.CustomerAppsPage)
-		customerApps.GET("/:app_id", h.CustomerAppDetailPage)
-		customerApps.GET("/:app_id/install", h.CustomerAppInstallPage)
 		customerApps.POST("/:app_id/install", h.CreateInstallFromApp)
 	}
 
 	// Public install list routes (auth is optional — unauthenticated visitors see login CTA)
-	rg.GET("/installs", h.InstallsPage)
 	// Note: /installs/:install_id is handled by installOwnership.GET("/") below
 
 	// Customer account routes (require auth but exempt from account middleware)
@@ -518,12 +481,9 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 	account.Use(jwtAuth.MiddlewareFunc())
 	account.Use(middleware.RequireRole(models.RoleCustomer))
 	{
-		account.GET("/", h.AccountPage)
 		account.PUT("/", h.UpdateAccount)
-		account.GET("/setup", h.AccountSetupPage)
 		account.POST("/create", h.CreateAccount)
 		account.POST("/switch", h.SwitchAccount)
-		account.GET("/members", h.AccountMembersRedirect)
 		account.POST("/invite", h.CreateAccountInvite)
 		account.DELETE("/invite/:invite_id", h.DeleteAccountInvite)
 		account.DELETE("/members/:member_id", h.DeleteAccountMember)
@@ -541,16 +501,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 		installOwnership.Use(middleware.RequireInstallOwnership(db))
 		{
 			// Install detail pages (each tab is a separate route)
-			installOwnership.GET("/", h.InstallDetailPage) // Redirects to /overview
-			installOwnership.GET("/overview", h.InstallOverviewPage)
-			installOwnership.GET("/overview/workflows/:workflow_id", h.InstallOverviewWorkflowPage)
-			installOwnership.GET("/stack", h.InstallStackPage)
-			installOwnership.GET("/sandbox", h.InstallSandboxPage)
-			installOwnership.GET("/components", h.InstallComponentsPage)
-			installOwnership.GET("/roles", h.InstallRolesPage)
-			installOwnership.GET("/policies", h.InstallPoliciesPage)
-			installOwnership.GET("/readme", h.InstallAppInfoPage)
-			installOwnership.GET("/audit", h.InstallAuditPage)
 
 			// Debug pages (vendor-only, access checked in handler)
 			installOwnership.GET("/debug", h.DebugRedirect)
@@ -562,20 +512,6 @@ func setupCustomerRoutes(rg *gin.RouterGroup, db *gorm.DB, jwtAuth *jwt.GinJWTMi
 			installOwnership.POST("/debug/workflows/:workflow_id/retry", h.DebugRetryStep)
 
 			// Panel endpoints (HTMX fragments loaded by the tab pages)
-			installOwnership.GET("/panel", h.InstallDetailPanel) // Overview tab content
-			installOwnership.GET("/panel/readme", h.AppInfoPanel)
-			installOwnership.GET("/panel/audit", h.AuditPanel)                               // Panel audit tab
-			installOwnership.GET("/panel/access", h.AccessPanel)                             // Panel access tab (Roles)
-			installOwnership.GET("/panel/role/:role_index", h.RoleDetailPanel)               // Role detail sliding panel
-			installOwnership.GET("/panel/audit/role/:role_index", h.AuditRoleDetailPanel)    // Audit role detail sliding panel
-			installOwnership.GET("/panel/policies", h.PoliciesPanel)                         // Panel policies tab
-			installOwnership.GET("/panel/policies/detail/:policy_name", h.PolicyDetailPanel) // Policy detail sliding panel
-			installOwnership.GET("/panel/policies/report/:report_id", h.PolicyReportPanel)   // Policy report detail panel
-			installOwnership.GET("/panel/component/:component_id", h.ComponentDetailPanel)   // Component detail sliding panel
-			installOwnership.GET("/panel/sandbox-run/:run_id", h.SandboxRunDetailPanel)      // Sandbox run detail sliding panel
-			installOwnership.GET("/panel/stack-run/:run_id", h.StackRunDetailPanel)          // Stack run detail sliding panel
-			installOwnership.GET("/panel/job/:job_type/:job_id", h.JobDetailPanel)           // Job detail sliding panel
-			installOwnership.GET("/panel/workflow/:workflow_id", h.WorkflowDetailPanel)      // Workflow overview (step group selection)
 
 			installOwnership.PUT("/", h.UpdateInstall)                  // Customer can update their install
 			installOwnership.DELETE("/", h.DeleteInstall)               // Customer can delete (deprovision) their install

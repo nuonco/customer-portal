@@ -5,7 +5,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
-      location: new URL("http://localhost:51273/"),
+      location: new URL("http://localhost:8080/"),
     },
   });
 
@@ -15,7 +15,7 @@ beforeEach(() => {
 test("createCustomerAccount posts to portal API", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
-    expect(url).toBe("/bff/portal-api/accounts?subdomain=acme");
+    expect(url).toBe("/portal-api/accounts?subdomain=acme");
     expect(init?.method).toBe("POST");
     expect((init?.headers as Record<string, string>).Accept).toBe("application/json");
     expect(init?.body).toBe(JSON.stringify({ name: "Platform Team" }));
@@ -36,7 +36,7 @@ test("createCustomerAccount posts to portal API", async () => {
 test("switchCustomerAccount posts to portal API", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
-    expect(url).toBe("/bff/portal-api/accounts/switch?subdomain=acme");
+    expect(url).toBe("/portal-api/accounts/switch?subdomain=acme");
     expect(init?.method).toBe("POST");
     expect(init?.body).toBe(JSON.stringify({ account_id: "acct_2" }));
     return new Response(JSON.stringify({ ok: true }), {

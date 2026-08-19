@@ -6,6 +6,7 @@ import { ModalBase } from "@/components/surfaces/Modal";
 import { createOrg } from "@/lib/api/vendor/create-org";
 import { setOrgSession } from "@/lib/cookies";
 import { buildVendorOrgUrl } from "@/utils/vendor-url-utils";
+import { getRuntimeConfig } from "@/lib/runtime-config";
 
 interface IConnectOrgModalProps {
   isOpen: boolean;
@@ -13,6 +14,9 @@ interface IConnectOrgModalProps {
 }
 
 export const ConnectOrgModal = ({ isOpen, onClose }: IConnectOrgModalProps) => {
+  // Blank means the server falls back to its own NUON_API_URL, so show that
+  // rather than a hardcoded default the server may not actually be using.
+  const defaultApiUrl = getRuntimeConfig().nuonApiUrl || "https://api.nuon.co";
   const [connectError, setConnectError] = useState<string | null>(null);
   const [isConnectingOrg, setIsConnectingOrg] = useState(false);
   const [newOrgId, setNewOrgId] = useState("");
@@ -98,10 +102,10 @@ export const ConnectOrgModal = ({ isOpen, onClose }: IConnectOrgModalProps) => {
           <Input
             id="connect-org-api-url"
             labelProps={{ labelText: "API URL" }}
-            placeholder="https://api.nuon.co"
+            placeholder={defaultApiUrl}
             value={newApiUrl}
             onChange={(e) => setNewApiUrl(e.target.value)}
-            helperText="Leave blank to use the default API URL."
+            helperText={`Leave blank to use ${defaultApiUrl}.`}
           />
 
           {connectError ? (

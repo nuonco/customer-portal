@@ -17,7 +17,7 @@ export async function getVendorLoginConfig(
     requestParams.set('error', error)
   }
 
-  const response = await fetch(`/bff/admin/login/config?${requestParams.toString()}`, {
+  const response = await fetch(`/admin/login/config?${requestParams.toString()}`, {
     credentials: 'include',
     signal,
   })

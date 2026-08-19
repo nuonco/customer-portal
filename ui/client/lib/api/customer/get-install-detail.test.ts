@@ -5,7 +5,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
-      location: new URL("http://localhost:51273/"),
+      location: new URL("http://localhost:8080/"),
     },
   });
 
@@ -21,7 +21,7 @@ test("getCustomerInstallDetail requests install detail JSON", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    expect(url).toBe("/bff/portal-api/installs/inst_1/detail?subdomain=test-org");
+    expect(url).toBe("/portal-api/installs/inst_1/detail?subdomain=test-org");
     expect(init?.credentials).toBe("include");
 
     return new Response(
@@ -58,7 +58,7 @@ test("getCustomerInstallDetail requests install detail JSON", async () => {
         policies: { totals: { pass: 0, warn: 0, deny: 0 }, items: [], reports: [] },
         audit: { workflows: [], action_workflows: [] },
         readme: { markdown: "# Payments" },
-        legacy_base_path: "/bff/installs/inst_1",
+        legacy_base_path: "/installs/inst_1",
       }),
       { status: 200, headers: { "Content-Type": "application/json" } },
     );

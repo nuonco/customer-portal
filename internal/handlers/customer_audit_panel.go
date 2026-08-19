@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"strconv"
 	"strings"
 
@@ -13,8 +12,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
-	"go.uber.org/zap"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 
 const stackSubTabDefault = "outputs"
@@ -22,223 +20,6 @@ const sandboxSubTabDefault = "outputs"
 const componentsSubTabDefault = "components"
 
 const auditPageSize = 10
-
-// AuditPanel renders the audit panel with stack runs, sandbox runs, and deploys sub-tabs.
-func (h *Handler) AuditPanel(c *gin.Context) {
-	installInterface, exists := c.Get("install")
-	if !exists {
-		c.String(http.StatusNotFound, "Install not found")
-		return
-	}
-
-	install := installInterface.(*models.Install)
-
-	if err := h.loadInstallWithOrg(install); err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load install details")
-		return
-	}
-
-	nuonOrg := install.GetNuonOrg()
-
-	activeTab := c.DefaultQuery("tab", "stack")
-
-	stackSubTab := c.DefaultQuery("stack_sub", stackSubTabDefault)
-
-	props := partials.AuditPanelProps{
-		Install:     install,
-		BasePath:    h.basePath,
-		ActiveTab:   activeTab,
-		StackSubTab: stackSubTab,
-	}
-
-	if nuonOrg != nil && nuonOrg.APIToken != "" {
-		apiClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
-		if err == nil {
-			ctx := c.Request.Context()
-			installID := install.NuonInstallID
-
-			switch activeTab {
-			case "stack":
-				// Always fetch stack info for the info sub-tab
-				props.StackInfo = h.buildStackInfo(ctx, apiClient, install)
-
-				// Fetch stack runs for the history sub-tab
-				offset := queryInt(c, "stack_offset", 0)
-				if runs, err := apiClient.GetInstallStackRuns(ctx, installID); err == nil {
-					// Build version ID → status lookup from the stack
-					if stack, err := apiClient.GetInstallStack(ctx, installID); err == nil && stack != nil {
-						versionStatus := make(map[string]string)
-						versionTemplateURL := make(map[string]string)
-						for _, v := range stack.Versions {
-							if v.CompositeStatus != nil {
-								versionStatus[v.ID] = string(v.CompositeStatus.Status)
-							}
-							if v.TemplateURL != "" {
-								versionTemplateURL[v.ID] = v.TemplateURL
-							}
-						}
-						for i := range runs {
-							vid := runs[i].InstallStackVersionID
-							if s, ok := versionStatus[vid]; ok {
-								runs[i].VersionStatus = s
-							}
-							if u, ok := versionTemplateURL[vid]; ok {
-								runs[i].TemplateURL = u
-							}
-						}
-					}
-					if len(runs) > 0 {
-						props.ActiveStackRun = &runs[0]
-					}
-					props.StackPagination = auditPagination(len(runs), offset)
-					props.StackRuns = paginateStackRuns(runs, offset)
-				} else {
-					zap.L().Warn("failed to fetch stack runs", zap.Error(err))
-				}
-			case "sandbox":
-				props.SandboxSubTab = c.DefaultQuery("sandbox_sub", sandboxSubTabDefault)
-
-				// Always fetch sandbox info for the info sub-tab
-				sandboxInfo, workspaceID := h.buildSandboxInfo(ctx, apiClient, install)
-				props.SandboxInfo = sandboxInfo
-
-				// Fetch sandbox runs for the history sub-tab
-				offset := queryInt(c, "sandbox_offset", 0)
-				if runs, err := apiClient.GetInstallSandboxRuns(ctx, installID); err == nil {
-					if len(runs) > 0 {
-						props.ActiveSandboxRun = runs[0]
-					}
-					props.SandboxPagination = auditPagination(len(runs), offset)
-					props.SandboxRuns = paginateSandboxRuns(runs, offset)
-				} else {
-					zap.L().Warn("failed to fetch sandbox runs", zap.Error(err))
-				}
-
-				// Fetch terraform state resources for the resources sub-tab
-				if workspaceID != "" {
-					if states, err := apiClient.GetTerraformWorkspaceStates(ctx, workspaceID); err == nil && len(states) > 0 {
-						if resources, err := apiClient.GetTerraformWorkspaceStateResources(ctx, workspaceID, states[0].ID); err == nil {
-							props.SandboxResources = resources
-						} else {
-							zap.L().Warn("failed to fetch sandbox state resources", zap.Error(err))
-						}
-					} else if err != nil {
-						zap.L().Warn("failed to fetch sandbox workspace states", zap.Error(err))
-					}
-				}
-
-				// Fetch policy reports for the policy reports sub-tab
-				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_sandbox_runs"); err == nil {
-					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
-					props.SandboxPolicyReports = reports
-				} else {
-					zap.L().Warn("failed to fetch sandbox policy reports", zap.Error(err))
-				}
-			case "components":
-				props.ComponentsSubTab = c.DefaultQuery("components_sub", componentsSubTabDefault)
-
-				// Fetch deploys for the history sub-tab pagination.
-				offset := queryInt(c, "components_offset", 0)
-				if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
-					props.DeploysPagination = auditPagination(len(deploys), offset)
-					props.Deploys = paginateDeploys(deploys, offset)
-				} else {
-					zap.L().Warn("failed to fetch deploys", zap.Error(err))
-				}
-
-				// Fetch install components for the info sub-tab and merge in
-				// per-component deploy status (shared with the overview page).
-				if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
-					props.Components = components
-					props.ComponentInfos = h.buildComponentInfos(ctx, apiClient, install, components)
-					h.mergeDeployStatuses(ctx, apiClient, installID, components, props.ComponentInfos)
-				} else {
-					zap.L().Warn("failed to fetch install components", zap.Error(err))
-				}
-
-				// Fetch policy reports for the policy reports sub-tab
-				if reports, err := apiClient.GetInstallPolicyReports(ctx, installID, "install_deploys"); err == nil {
-					resolvePolicyReportNames(ctx, apiClient, install.GetAppID(), reports)
-					props.ComponentsPolicyReports = reports
-				} else {
-					zap.L().Warn("failed to fetch component policy reports", zap.Error(err))
-				}
-			case "roles":
-				props.StackInfo = h.buildStackInfo(ctx, apiClient, install)
-			case "audit":
-				props.AuditSubTab = c.DefaultQuery("audit_sub", "workflows")
-				offset := queryInt(c, "audit_offset", 0)
-
-				switch props.AuditSubTab {
-				case "workflows":
-					if workflows, hasMore, err := apiClient.GetInstallWorkflows(ctx, installID, offset, auditPageSize); err == nil {
-						props.Workflows = workflows
-						props.WorkflowsPagination = partials.AuditTabPagination{
-							Total:      offset + len(workflows),
-							HasPrev:    offset > 0,
-							HasNext:    hasMore,
-							PrevOffset: max(0, offset-auditPageSize),
-							NextOffset: offset + auditPageSize,
-						}
-					} else {
-						zap.L().Warn("failed to fetch workflows", zap.Error(err))
-					}
-				case "stack":
-					if runs, err := apiClient.GetInstallStackRuns(ctx, installID); err == nil {
-						if stack, err := apiClient.GetInstallStack(ctx, installID); err == nil && stack != nil {
-							versionStatus := make(map[string]string)
-							for _, v := range stack.Versions {
-								if v.CompositeStatus != nil {
-									versionStatus[v.ID] = string(v.CompositeStatus.Status)
-								}
-							}
-							for i := range runs {
-								if s, ok := versionStatus[runs[i].InstallStackVersionID]; ok {
-									runs[i].VersionStatus = s
-								}
-							}
-						}
-						props.StackPagination = auditPagination(len(runs), offset)
-						props.StackRuns = paginateStackRuns(runs, offset)
-					} else {
-						zap.L().Warn("failed to fetch stack runs", zap.Error(err))
-					}
-				case "sandbox":
-					if runs, err := apiClient.GetInstallSandboxRuns(ctx, installID); err == nil {
-						props.SandboxPagination = auditPagination(len(runs), offset)
-						props.SandboxRuns = paginateSandboxRuns(runs, offset)
-					} else {
-						zap.L().Warn("failed to fetch sandbox runs", zap.Error(err))
-					}
-				case "components":
-					if components, err := apiClient.GetInstallComponents(ctx, installID); err == nil {
-						props.Components = components
-					}
-					if deploys, err := apiClient.GetInstallDeploys(ctx, installID); err == nil {
-						props.DeploysPagination = auditPagination(len(deploys), offset)
-						props.Deploys = paginateDeploys(deploys, offset)
-					} else {
-						zap.L().Warn("failed to fetch deploys", zap.Error(err))
-					}
-				case "actions":
-					if workflows, hasMore, err := apiClient.GetInstallWorkflowsByType(ctx, installID, offset, auditPageSize, "action_workflow_run"); err == nil {
-						props.ActionWorkflows = workflows
-						props.ActionsPagination = partials.AuditTabPagination{
-							Total:      offset + len(workflows),
-							HasPrev:    offset > 0,
-							HasNext:    hasMore,
-							PrevOffset: max(0, offset-auditPageSize),
-							NextOffset: offset + auditPageSize,
-						}
-					} else {
-						zap.L().Warn("failed to fetch action workflows", zap.Error(err))
-					}
-				}
-			}
-		}
-	}
-	h.RenderTempl(c, http.StatusOK, partials.AuditPanel(props))
-}
 
 // resolvePolicyReportNames populates PolicyName on each report by cross-referencing
 // PolicyIds with the app's policies config.
@@ -266,48 +47,6 @@ func resolvePolicyReportNames(ctx context.Context, apiClient *nuon.Client, appID
 			}
 		}
 	}
-}
-
-// AuditRoleDetailPanel renders a single role's detail content for the secondary sliding panel.
-func (h *Handler) AuditRoleDetailPanel(c *gin.Context) {
-	installInterface, exists := c.Get("install")
-	if !exists {
-		c.String(http.StatusNotFound, "Install not found")
-		return
-	}
-
-	install := installInterface.(*models.Install)
-
-	if err := h.loadInstallWithOrg(install); err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load install details")
-		return
-	}
-
-	roleIndex, err := strconv.Atoi(c.Param("role_index"))
-	if err != nil {
-		c.String(http.StatusBadRequest, "Invalid role index")
-		return
-	}
-
-	nuonOrg := install.GetNuonOrg()
-	if nuonOrg == nil || nuonOrg.APIToken == "" {
-		c.String(http.StatusNotFound, "Role not found")
-		return
-	}
-
-	apiClient, apiErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
-	if apiErr != nil {
-		c.String(http.StatusInternalServerError, "Failed to create API client")
-		return
-	}
-
-	info := h.buildStackInfo(c.Request.Context(), apiClient, install)
-	if info == nil || roleIndex < 0 || roleIndex >= len(info.Roles) {
-		c.String(http.StatusNotFound, "Role not found")
-		return
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.AuditRoleDetailContent(info.Roles[roleIndex]))
 }
 
 // buildStackInfo fetches install stack data from the Nuon API and maps it to a StackInfo for display.
@@ -342,7 +81,7 @@ func (h *Handler) buildStackInfo(ctx context.Context, apiClient *nuon.Client, in
 
 	// Prefer DataContents (interface{}) over Data (map[string]string) so nested
 	// values are JSON-encoded instead of Go-formatted "map[...]" strings.
-	if dc, ok := outputs.DataContents.(map[string]interface{}); ok && len(dc) > 0 {
+	if dc := outputs.DataContents; len(dc) > 0 {
 		info.Outputs = make(map[string]string, len(dc))
 		for k, v := range dc {
 			switch s := v.(type) {
@@ -502,7 +241,7 @@ func (h *Handler) buildSandboxInfo(ctx context.Context, apiClient *nuon.Client, 
 
 	// Fetch outputs from the latest sandbox run
 	if runs, err := apiClient.GetInstallSandboxRuns(ctx, install.NuonInstallID); err == nil && len(runs) > 0 {
-		if outputMap, ok := runs[0].Outputs.(map[string]interface{}); ok && len(outputMap) > 0 {
+		if outputMap := runs[0].Outputs; len(outputMap) > 0 {
 			info.Outputs = make(map[string]string, len(outputMap))
 			for k, v := range outputMap {
 				switch s := v.(type) {

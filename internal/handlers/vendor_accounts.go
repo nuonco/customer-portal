@@ -12,93 +12,8 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
 )
-
-// AccountsPage renders the vendor view of all customer accounts in an org.
-func (h *Handler) AccountsPage(c *gin.Context) {
-	user := h.GetFreshUser(c)
-	org := middleware.GetCurrentOrg(c)
-	if org == nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, "Organization context not found")
-		return
-	}
-
-	searchQuery := c.Query("q")
-
-	type AccountResult struct {
-		ID           string
-		Name         string
-		MemberCount  int64
-		InstallCount int64
-		CreatedAt    string
-	}
-
-	query := h.db.Table("customer_accounts").
-		Select(`customer_accounts.id, customer_accounts.name, customer_accounts.created_at,
-			(SELECT COUNT(*) FROM customer_account_members WHERE customer_account_members.account_id = customer_accounts.id AND customer_account_members.deleted_at IS NULL) as member_count,
-			(SELECT COUNT(*) FROM installs WHERE installs.customer_account_id = customer_accounts.id AND installs.deleted_at IS NULL) as install_count`).
-		Where("customer_accounts.org_id = ? AND customer_accounts.deleted_at IS NULL", org.ID).
-		Order("customer_accounts.created_at DESC")
-
-	if searchQuery != "" {
-		query = query.Where("customer_accounts.name ILIKE ?", "%"+searchQuery+"%")
-	}
-
-	var results []AccountResult
-	if err := query.Find(&results).Error; err != nil {
-		h.RenderErrorPage(c, http.StatusInternalServerError, fmt.Sprintf("Failed to fetch user groups: %v", err))
-		return
-	}
-
-	accounts := make([]vendorpages.AccountWithCounts, len(results))
-	for i, r := range results {
-		accounts[i] = vendorpages.AccountWithCounts{
-			ID:           r.ID,
-			Name:         r.Name,
-			MemberCount:  r.MemberCount,
-			InstallCount: r.InstallCount,
-			CreatedAt:    r.CreatedAt,
-		}
-	}
-
-	if isHTMXPartialRequest(c) {
-		h.RenderTempl(c, http.StatusOK, vendorpages.AccountsTableBody(accounts, org.ID, h.basePath, searchQuery))
-		return
-	}
-
-	allOrgs := h.GetUserOrgs(user.ID)
-
-	props := vendorpages.AccountsPageProps{
-		LayoutProps: vendorui.LayoutProps{
-			Title:            org.Name + " - User Groups",
-			ActivePage:       "accounts",
-			User:             user,
-			CurrentOrg:       org,
-			Orgs:             allOrgs,
-			Breadcrumbs:      []partials.Breadcrumb{{Text: "User Groups", Path: fmt.Sprintf("%s/orgs/%s/accounts", h.basePath, org.ID), Active: true}},
-			BasePath:         h.basePath,
-			PortalScheme:     h.schemeFromBaseURL(),
-			DashboardURL:     h.dashboardURL,
-			PortalBaseDomain: h.subdomainBaseDomain,
-			CSSPath:          assets.VendorCSSPath(),
-			IsSuperuser:      h.isSuperuser(user),
-		},
-		Org:         *org,
-		Accounts:    accounts,
-		SearchQuery: searchQuery,
-	}
-	h.enrichLayoutWithOrgStatus(c.Request.Context(), &props.LayoutProps)
-	h.RenderTempl(c, http.StatusOK, vendorpages.AccountsPage(props))
-}
-
-// AccountDetailRedirect redirects to the members sub-page.
-func (h *Handler) AccountDetailRedirect(c *gin.Context) {
-	orgID := c.Param("org_id")
-	accountID := c.Param("account_id")
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s/orgs/%s/accounts/%s/members", h.basePath, orgID, accountID))
-}
 
 func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.NuonOrg, *models.CustomerAccount, vendorui.LayoutProps, bool) {
 	user := h.GetFreshUser(c)
@@ -139,46 +54,6 @@ func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.Nuo
 	h.enrichLayoutWithOrgStatus(c.Request.Context(), &layout)
 
 	return user, org, &account, layout, true
-}
-
-// AccountMembersPage renders the members sub-page of a customer account.
-func (h *Handler) AccountMembersPage(c *gin.Context) {
-	_, org, account, layout, ok := h.accountDetailLayout(c)
-	if !ok {
-		return
-	}
-
-	var members []models.CustomerAccountMember
-	h.db.Preload("User").Where("account_id = ? AND deleted_at IS NULL", account.ID).Order("joined_at ASC").Find(&members)
-
-	var invites []models.CustomerAccountInvite
-	h.db.Preload("CreatedBy").Where("account_id = ? AND used_by_user_id IS NULL AND deleted_at IS NULL", account.ID).Order("created_at DESC").Find(&invites)
-
-	h.RenderTempl(c, http.StatusOK, vendorpages.AccountMembersPage(vendorpages.AccountMembersPageProps{
-		LayoutProps: layout,
-		Org:         *org,
-		Account:     *account,
-		Members:     members,
-		Invites:     invites,
-	}))
-}
-
-// AccountInstallsPage renders the installs sub-page of a customer account.
-func (h *Handler) AccountInstallsPage(c *gin.Context) {
-	_, org, account, layout, ok := h.accountDetailLayout(c)
-	if !ok {
-		return
-	}
-
-	var installs []models.Install
-	h.db.Where("customer_account_id = ? AND deleted_at IS NULL", account.ID).Order("created_at DESC").Find(&installs)
-
-	h.RenderTempl(c, http.StatusOK, vendorpages.AccountInstallsPage(vendorpages.AccountInstallsPageProps{
-		LayoutProps: layout,
-		Org:         *org,
-		Account:     *account,
-		Installs:    installs,
-	}))
 }
 
 // SearchOrgInstalls searches local DB installs in the org that can be assigned to an account.

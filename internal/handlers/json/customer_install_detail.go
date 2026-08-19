@@ -15,8 +15,8 @@ import (
 	localmodels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	wizardpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	"github.com/nuonco/nuon-go/client/operations"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/nuon/sdks/nuon-go/client/operations"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"gorm.io/gorm"
 )
 
@@ -227,7 +227,7 @@ func (h *CustomerInstallDetailHandler) Detail(c *gin.Context) {
 			Summary:     "",
 			Platform:    "aws",
 		},
-		LegacyBasePath: "/bff/installs/" + install.ID,
+		LegacyBasePath: "/installs/" + install.ID,
 	}
 
 	var publishedApp localmodels.PublishedApp
@@ -417,7 +417,7 @@ func (h *CustomerInstallDetailHandler) populateSandbox(
 	response.Sandbox.RecentRuns = limitRuns(sandboxRuns, 20)
 
 	if len(runs) > 0 && runs[0] != nil {
-		if outputMap, ok := runs[0].Outputs.(map[string]interface{}); ok {
+		if outputMap := runs[0].Outputs; outputMap != nil {
 			response.Sandbox.Outputs = prettyInterfaceOutputs(outputMap)
 		}
 	}

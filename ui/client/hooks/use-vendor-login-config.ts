@@ -26,34 +26,6 @@ export function normalizeVendorRedirectPath(rawRedirect: string | null): string 
   return rawRedirect
 }
 
-function sanitizeUIPort(port: string): string {
-  const trimmed = port.trim()
-  return /^\d{2,5}$/.test(trimmed) ? trimmed : ''
-}
-
-export function buildVendorLoginStateRedirect(redirectPath: string): string {
-  if (typeof window === 'undefined') {
-    return redirectPath
-  }
-
-  const hostname = window.location.hostname
-  if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-    return redirectPath
-  }
-
-  const uiPort = sanitizeUIPort(window.location.port)
-  if (!uiPort || uiPort === '8080') {
-    return redirectPath
-  }
-
-  const params = new URLSearchParams({
-    ui_port: uiPort,
-    next: redirectPath,
-  })
-
-  return `/auth-api/post-login?${params.toString()}`
-}
-
 export function useVendorLoginConfig() {
   const location = useLocation()
   const [attempt, setAttempt] = useState(0)
@@ -63,11 +35,6 @@ export function useVendorLoginConfig() {
     const params = new URLSearchParams(location.search)
     return normalizeVendorRedirectPath(params.get('redirect'))
   }, [location.search])
-
-  const stateRedirectPath = useMemo(
-    () => buildVendorLoginStateRedirect(redirectPath),
-    [redirectPath],
-  )
 
   const error = useMemo(() => {
     const params = new URLSearchParams(location.search)
@@ -84,7 +51,7 @@ export function useVendorLoginConfig() {
 
     setState(initialState)
 
-    getVendorLoginConfig(stateRedirectPath, error || undefined, controller.signal)
+    getVendorLoginConfig(redirectPath, error || undefined, controller.signal)
       .then((parsed) => {
         if (isUnmounted) {
           return
@@ -116,7 +83,7 @@ export function useVendorLoginConfig() {
       isUnmounted = true
       controller.abort()
     }
-  }, [attempt, error, redirectPath, stateRedirectPath])
+  }, [attempt, error, redirectPath])
 
   return {
     ...state,

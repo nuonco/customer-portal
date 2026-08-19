@@ -87,7 +87,7 @@ func TestCustomerInstallDetail_ReturnsInstallAndReadmeDataWithoutNuonToken(t *te
 		assert.Equal(t, "Payments", response.App.DisplayName)
 		assert.Equal(t, "data:image/png;base64,app-light", response.App.LogoLight)
 		assert.Equal(t, "# Payments\nDeploy the payments stack.", response.Readme.Markdown)
-		assert.Equal(t, "/bff/installs/"+install.ID, response.LegacyBasePath)
+		assert.Equal(t, "/installs/"+install.ID, response.LegacyBasePath)
 	})
 }
 

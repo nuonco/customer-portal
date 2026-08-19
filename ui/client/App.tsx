@@ -6,7 +6,7 @@ export function App() {
   const [health, setHealth] = useState<HealthState>("idle");
 
   useEffect(() => {
-    fetch("/bff/livez")
+    fetch("/livez")
       .then((res) => {
         if (!res.ok) throw new Error("BFF not healthy");
         setHealth("ok");

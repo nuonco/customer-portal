@@ -11,7 +11,7 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 )
 

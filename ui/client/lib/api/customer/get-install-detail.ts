@@ -1,5 +1,4 @@
-import { extractSubdomain } from "@/utils/subdomain-utils";
-
+import { inferCustomerSubdomain } from "@/lib/runtime-config";
 export type TCustomerInstallWorkflow = {
   id: string;
   name: string;
@@ -142,38 +141,6 @@ export type TCustomerInstallDetail = {
   legacy_base_path: string;
 };
 
-function inferCustomerSubdomain(): string {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  const configuredBaseDomain =
-    (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-  const fallbackSubdomain =
-    (import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined) ?? "";
-
-  const inferredBaseDomain = (() => {
-    if (configuredBaseDomain) {
-      return configuredBaseDomain;
-    }
-
-    const [hostname, port] = window.location.host.split(":");
-    if (!hostname) {
-      return window.location.host;
-    }
-
-    const labels = hostname.split(".");
-    if (labels.length <= 1) {
-      return window.location.host;
-    }
-
-    const host = labels.slice(1).join(".");
-    return port ? `${host}:${port}` : host;
-  })();
-
-  return extractSubdomain(window.location.host, inferredBaseDomain) || fallbackSubdomain;
-}
-
 export async function getCustomerInstallDetail(installId: string): Promise<TCustomerInstallDetail> {
   const query = new URLSearchParams();
   const subdomain = inferCustomerSubdomain();
@@ -182,7 +149,7 @@ export async function getCustomerInstallDetail(installId: string): Promise<TCust
   }
 
   const response = await fetch(
-    `/bff/portal-api/installs/${installId}/detail${query.toString() ? `?${query.toString()}` : ""}`,
+    `/portal-api/installs/${installId}/detail${query.toString() ? `?${query.toString()}` : ""}`,
     {
       credentials: "include",
       headers: { Accept: "application/json" },

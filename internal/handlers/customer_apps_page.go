@@ -4,123 +4,15 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
-	"net/http"
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/markdown"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	customerpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 )
-
-func (h *Handler) CustomerAppsPage(c *gin.Context) {
-	user := h.tryGetLoggedInUser(c)
-
-	org, err := h.getOrgForCustomerPage(c)
-	if err != nil {
-		c.Redirect(http.StatusFound, h.basePath+"/installs")
-		return
-	}
-
-	var publishedApps []models.PublishedApp
-	if err := h.db.Where("org_id = ? AND status IN ?", org.ID, []string{models.AppStatusPublished, models.AppStatusComingSoon}).Order("sort_order ASC, created_at ASC").Find(&publishedApps).Error; err != nil {
-		zap.L().Warn("failed to fetch published apps", zap.Error(err))
-	}
-
-	theme, _ := models.GetOrCreateAppTheme(h.db, org.ID)
-
-	nuonClient, nuonClientErr := nuon.NewClientWithURL(org.APIToken, org.NuonOrgID, h.nuonAPIURLForOrg(org))
-	// Verify API connectivity
-	if nuonClientErr == nil {
-		if _, err := nuonClient.GetOrg(c.Request.Context()); err != nil {
-			nuonClientErr = err
-		}
-	}
-	appDisplays := make([]customerpartials.PublishedAppDisplay, len(publishedApps))
-	if len(publishedApps) == 1 {
-		// Single app: full detail fetch so the full-width card has all tab data
-		pa := publishedApps[0]
-		display := h.buildAppDisplay(c, pa.AppID, org.ID, nuonClient, nuonClientErr)
-		display.LogoLightBase64 = pa.LogoLightBase64
-		display.LogoDarkBase64 = pa.LogoDarkBase64
-		if pa.OverviewMarkdown != "" {
-			if html, err := markdown.Render([]byte(pa.OverviewMarkdown)); err == nil {
-				display.ReadmeHTML = html
-			}
-		}
-		display.Status = pa.Status
-		if display.Status == "" {
-			display.Status = "published"
-		}
-		if display.Platform == "unknown" {
-			appDisplays = nil
-		} else {
-			appDisplays[0] = display
-		}
-	} else if len(publishedApps) > 1 {
-		// Fetch only app name/platform/description in parallel (no heavy detail calls)
-		var wg sync.WaitGroup
-		for i, pa := range publishedApps {
-			wg.Add(1)
-			go func(i int, pa models.PublishedApp) {
-				defer wg.Done()
-				status := pa.Status
-				if status == "" {
-					status = "published"
-				}
-				display := customerpartials.PublishedAppDisplay{
-					AppID:           pa.AppID,
-					AppName:         pa.AppID,
-					Platform:        "unknown",
-					Status:          status,
-					LogoLightBase64: pa.LogoLightBase64,
-					LogoDarkBase64:  pa.LogoDarkBase64,
-				}
-				if nuonClientErr == nil {
-					if app, err := nuonClient.GetApp(c.Request.Context(), pa.AppID); err == nil && app != nil {
-						if dn := appDisplayName(app); dn != "" {
-							display.AppName = dn
-						}
-						if app.RunnerConfig != nil {
-							display.Platform = string(app.RunnerConfig.AppRunnerType)
-						}
-						display.Description = app.Description
-					}
-				}
-				appDisplays[i] = display
-			}(i, pa)
-		}
-		wg.Wait()
-
-		// Filter out deleted apps (API returned no data, Platform remains "unknown")
-		filtered := appDisplays[:0]
-		for _, d := range appDisplays {
-			if d.Platform != "unknown" {
-				filtered = append(filtered, d)
-			}
-		}
-		appDisplays = filtered
-	}
-
-	acctActive, acctOthers := h.getCustomerAccountsFromContext(c)
-	layoutProps := h.buildCustomerLayoutProps("App Catalog", user, theme, h.getOrgForLayout(c), acctActive, acctOthers)
-	layoutProps.HasPublishedApps = len(appDisplays) > 0
-	layoutProps.ActiveNav = "apps"
-	layoutProps.SidebarMinimized = true
-	if nuonClientErr != nil {
-		layoutProps.NuonAPIError = "The app is experiencing network issues, and is not able to access app or install data. Please contact support for assistance."
-	}
-
-	props := customerpages.CustomerAppsPageProps{
-		LayoutProps: layoutProps,
-		Apps:        appDisplays,
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.CustomerAppsPage(props))
-}
 
 // buildAppDisplay builds a PublishedAppDisplay for a single app, fetching details from the Nuon API.
 func (h *Handler) buildAppDisplay(c *gin.Context, appID string, orgID string, nuonClient *nuon.Client, nuonClientErr error) customerpartials.PublishedAppDisplay {

@@ -83,7 +83,7 @@ export async function getInstallLinks(
   if (params?.page) search.set('page', String(params.page))
 
   const response = await fetch(
-    `/bff/admin/orgs/${orgId}/install-links-api${search.toString() ? `?${search.toString()}` : ''}`,
+    `/admin/orgs/${orgId}/install-links-api${search.toString() ? `?${search.toString()}` : ''}`,
     {
       credentials: 'include',
       headers: { Accept: 'application/json' },
@@ -98,7 +98,7 @@ export async function getInstallLinkDetail(
   orgId: string,
   linkId: string
 ): Promise<TInstallLinkDetailResponse> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/install-links-api/${linkId}`, {
+  const response = await fetch(`/admin/orgs/${orgId}/install-links-api/${linkId}`, {
     credentials: 'include',
     headers: { Accept: 'application/json' },
   })
@@ -108,7 +108,7 @@ export async function getInstallLinkDetail(
 }
 
 export async function deleteInstallLink(orgId: string, linkId: string): Promise<void> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/install-links-api/${linkId}`, {
+  const response = await fetch(`/admin/orgs/${orgId}/install-links-api/${linkId}`, {
     method: 'DELETE',
     credentials: 'include',
     headers: { Accept: 'application/json' },
@@ -118,7 +118,7 @@ export async function deleteInstallLink(orgId: string, linkId: string): Promise<
 }
 
 export async function getOrgApps(orgId: string): Promise<TOrgApp[]> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/apps-api`, {
+  const response = await fetch(`/admin/orgs/${orgId}/apps-api`, {
     credentials: 'include',
   })
 
@@ -128,7 +128,7 @@ export async function getOrgApps(orgId: string): Promise<TOrgApp[]> {
 
 export async function getVendorAppInputConfig(orgId: string, appId: string) {
   const response = await fetch(
-    `/bff/admin/orgs/${orgId}/apps-api/${appId}/input-config?filter=vendor`,
+    `/admin/orgs/${orgId}/apps-api/${appId}/input-config?filter=vendor`,
     {
       credentials: 'include',
     }
@@ -147,7 +147,7 @@ export async function createInstallLink(
     inputs: Record<string, string>
   }
 ): Promise<{ link: TInstallLink }> {
-  const response = await fetch(`/bff/admin/orgs/${orgId}/install-links-api`, {
+  const response = await fetch(`/admin/orgs/${orgId}/install-links-api`, {
     method: 'POST',
     credentials: 'include',
     headers: {

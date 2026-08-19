@@ -8,7 +8,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
-      location: new URL("http://localhost:51273/"),
+      location: new URL("http://localhost:8080/"),
     },
   });
 
@@ -25,7 +25,7 @@ test("getCustomerInstallWizardState requests wizard JSON", async () => {
     const url = typeof input === "string" ? input : input.toString();
 
     expect(url).toBe(
-      "/bff/portal-api/apps/app-payments/install-wizard?subdomain=test-org&step=stack&install_id=inst_1&workflow_id=wf_1",
+      "/portal-api/apps/app-payments/install-wizard?subdomain=test-org&step=stack&install_id=inst_1&workflow_id=wf_1",
     );
     expect(init?.credentials).toBe("include");
 
@@ -57,7 +57,7 @@ test("getCustomerInstallWizardState requests wizard JSON", async () => {
 test("createCustomerInstallWizardInstall posts wizard install payload", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
-    expect(url).toBe("/bff/portal-api/apps/app-payments/install-wizard?subdomain=test-org");
+    expect(url).toBe("/portal-api/apps/app-payments/install-wizard?subdomain=test-org");
     expect(init?.method).toBe("POST");
     expect(init?.body).toBe(
       JSON.stringify({ name: "payments-prod", region: "us-east-1", inputs: { env: "prod" } }),

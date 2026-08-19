@@ -2,18 +2,17 @@
 
 ## Scripts
 
-### `build-css.js`
-Processes `client/styles.css` through PostCSS + Tailwind CSS and outputs to `dist/assets/styles.css`. Supports `--watch` mode for development.
-
 ### `generate-api-types.js`
 Generates TypeScript types from the Nuon OpenAPI spec into `client/types/nuon-oapi-v3.d.ts` using `openapi-typescript`.
 
 ## Package scripts using these files
 
-- `bun run dev:css` runs `build-css.js --watch`
-- `bun run build:css` runs `build-css.js`
 - `bun run generate-api-types` runs `generate-api-types.js`
-- `bun run dev:all` runs `dev` and `dev:css` in parallel
+
+CSS is not built by a script here: `client/main.tsx` imports `client/styles.css`,
+so Vite processes it through `postcss.config.js` (Tailwind + autoprefixer) as part
+of `bun run dev` / `bun run build`. Ladle does the same via
+`.ladle/components.tsx`.
 
 ## Usage
 

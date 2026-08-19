@@ -1,3 +1,4 @@
+import { withSubdomain } from "@/lib/runtime-config";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createContext,
@@ -17,7 +18,7 @@ import {
   type TCustomerWizardState,
   type TCustomerWizardStep,
 } from "@/lib/api/customer/install-wizard";
-import { extractSubdomain } from "@/utils/subdomain-utils";
+
 import {
   aggregateGroupStatus,
   type TInstallWizardFormValues,
@@ -218,44 +219,8 @@ function isStepTerminalSuccess(
   return stepState?.status === "completed" || stepState?.status === "success";
 }
 
-function buildPortalActionURL(pathname: string) {
-  const search = new URLSearchParams();
-  const configuredBaseDomain =
-    (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-  const fallbackSubdomain =
-    (import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined) ?? "";
-
-  const inferredBaseDomain = (() => {
-    if (configuredBaseDomain) {
-      return configuredBaseDomain;
-    }
-
-    const [hostname, port] = window.location.host.split(":");
-    if (!hostname) {
-      return window.location.host;
-    }
-
-    const labels = hostname.split(".");
-    if (labels.length <= 1) {
-      return window.location.host;
-    }
-
-    const host = labels.slice(1).join(".");
-    return port ? `${host}:${port}` : host;
-  })();
-
-  const subdomain =
-    extractSubdomain(window.location.host, inferredBaseDomain) ||
-    fallbackSubdomain;
-  if (subdomain) {
-    search.set("subdomain", subdomain);
-  }
-
-  return `${pathname}${search.toString() ? `?${search.toString()}` : ""}`;
-}
-
 async function performAction(url: string, body?: URLSearchParams) {
-  const response = await fetch(`/bff${url}`, {
+  const response = await fetch(url, {
     method: "POST",
     credentials: "include",
     headers: body
@@ -381,7 +346,7 @@ export function InstallWizardProvider({
           approval_id: group.approval.approval_id,
         });
         await performAction(
-          buildPortalActionURL(
+          withSubdomain(
             `/portal-api/installs/${installId}/workflows/${activeWorkflowId}/approve`,
           ),
           form,
@@ -391,7 +356,7 @@ export function InstallWizardProvider({
 
       if (type === "approve-all") {
         await performAction(
-          buildPortalActionURL(
+          withSubdomain(
             `/portal-api/installs/${installId}/workflows/${activeWorkflowId}/approve-all`,
           ),
         );

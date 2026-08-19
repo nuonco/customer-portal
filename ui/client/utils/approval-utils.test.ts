@@ -62,6 +62,22 @@ describe('approval-utils', () => {
     })
   })
 
+  describe('approval types the portal has no copy for', () => {
+    // The API adds approval types independently of this portal (app_branch_plan
+    // and install_creation arrived that way). Those must degrade to something
+    // readable rather than rendering "undefined".
+    test('falls back to a humanised form of the raw type', () => {
+      expect(getApprovalType('app_branch_plan' as never)).toBe('app branch plan')
+      expect(getApprovalType('install_creation' as never)).toBe(
+        'install creation'
+      )
+    })
+
+    test('never returns undefined', () => {
+      expect(typeof getApprovalType('something_new' as never)).toBe('string')
+    })
+  })
+
   describe('type mappings validation', () => {
     test('approval types should map to expected values', () => {
       const expectedMappings = {

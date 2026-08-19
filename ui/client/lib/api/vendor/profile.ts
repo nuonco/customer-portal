@@ -1,5 +1,5 @@
 export async function updateVendorProfile(name: string): Promise<void> {
-  const response = await fetch('/bff/admin/profile', {
+  const response = await fetch('/admin/profile', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',

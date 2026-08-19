@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -17,71 +17,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
-
-// WorkflowDetailPanel renders a workflow's ProvisionAccordion for the secondary panel.
-func (h *Handler) WorkflowDetailPanel(c *gin.Context) {
-	installInterface, exists := c.Get("install")
-	if !exists {
-		c.String(http.StatusNotFound, "Install not found")
-		return
-	}
-	install := installInterface.(*localModels.Install)
-	workflowID := c.Param("workflow_id")
-
-	if err := h.loadInstallWithOrg(install); err != nil {
-		c.String(http.StatusInternalServerError, "Failed to load install details")
-		return
-	}
-
-	nuonOrg := install.GetNuonOrg()
-	if nuonOrg == nil || nuonOrg.APIToken == "" {
-		c.String(http.StatusInternalServerError, "No API credentials")
-		return
-	}
-
-	nuonClient, err := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg))
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to create API client")
-		return
-	}
-
-	ctx := c.Request.Context()
-	workflow, err := nuonClient.GetWorkflowV2(ctx, workflowID)
-	if err != nil {
-		c.String(http.StatusInternalServerError, "Failed to fetch workflow")
-		return
-	}
-
-	stepGroups := workflows.StepGroupsFromAPI(workflow.StepGroups)
-
-	selectedGroup := -1
-	if groupParam := c.Query("group"); groupParam != "" {
-		fmt.Sscanf(groupParam, "%d", &selectedGroup)
-	}
-	if selectedGroup < 0 || selectedGroup >= len(stepGroups) {
-		selectedGroup = autoSelectGroup(stepGroups)
-	}
-
-	platform := h.detectPlatform(ctx, nuonClient, install)
-	var stackSetup workflows.StackSetupData
-	if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == "install-stack" {
-		stackSetup = h.getStackSetupDataFromSteps(ctx, nuonClient, install, workflow.Steps)
-	}
-
-	props := workflows.WorkflowOverviewProps{
-		StepGroups:       stepGroups,
-		SelectedGroup:    selectedGroup,
-		InstallID:        install.ID,
-		BasePath:         h.basePath,
-		WorkflowID:       workflowID,
-		WorkflowFinished: workflow.Finished,
-		ShowApproveAll:   workflow.ApprovalOption == "prompt" && !workflow.Finished,
-		Platform:         platform,
-		StackSetup:       stackSetup,
-	}
-
-	h.RenderTempl(c, http.StatusOK, workflows.WorkflowOverview(props))
-}
 
 func autoSelectGroup(groups []workflows.StepGroup) int {
 	for i, g := range groups {
@@ -435,9 +370,7 @@ func BuildWorkflowDataPanel(workflow *models.AppWorkflow) workflows.WorkflowData
 				panel.CurrentStepType = stepStatus
 				panel.CurrentStepNumber += i
 				if step.Status != nil {
-					if m, ok := step.Status.Metadata.(map[string]interface{}); ok {
-						currentStepMetadata = m
-					}
+					currentStepMetadata = step.Status.Metadata
 				}
 				break
 			}
@@ -468,9 +401,7 @@ func BuildWorkflowDataPanel(workflow *models.AppWorkflow) workflows.WorkflowData
 				panel.FailedStepName = formatStepName(step.Name)
 				panel.FailedStepRetryable = step.Retryable
 				if currentStepMetadata == nil {
-					if m, ok := step.Status.Metadata.(map[string]interface{}); ok {
-						currentStepMetadata = m
-					}
+					currentStepMetadata = step.Status.Metadata
 				}
 				break
 			}

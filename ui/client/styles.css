@@ -165,7 +165,6 @@
   --text-gradient: var(--text-gradient-light);
   --bg-gradient: var(--bg-gradient-light);
   --bg-code: var(--color-cool-grey-100);
-  --landing-graphic: url('../../public/login-graphics/landing-graphic-light.svg');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -182,7 +181,6 @@
     --text-gradient: var(--text-gradient-dark);
     --bg-gradient: var(--bg-gradient-dark);
     --bg-code: var(--color-dark-grey-800);
-    --landing-graphic: url('../../public/login-graphics/landing-graphic.svg');
   }
 }
 
@@ -216,36 +214,6 @@ button:not([disabled]) {
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-}
-
-@media (min-width: 1020px) {
-  .landing-gradient {
-    background-image: url('../../public/login-graphics/dashboard-bg.svg');
-    background-repeat: no-repeat;
-    background-position: top;
-    background-attachment: local;
-  }
-
-  .landing-graphic {
-    background-image: var(--landing-graphic);
-    background-repeat: no-repeat;
-    background-position: top -2rem right;
-    background-attachment: local;
-  }
-
-  .landing-toml {
-    background-image: url('../../public/login-graphics/landing-actions-toml.svg');
-    background-repeat: no-repeat;
-    background-position: top right;
-  }
-}
-
-@media (min-width: 1200px) {
-  .landing-graphic {
-    background-repeat: no-repeat;
-    background-position: top -2rem right 8rem;
-    background-attachment: local;
-  }
 }
 
 .bg-gradient {

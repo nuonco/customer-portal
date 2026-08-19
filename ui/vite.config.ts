@@ -2,8 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import path from "node:path";
 
-const devProxyTarget = process.env.VITE_DEV_PROXY_TARGET ?? "http://127.0.0.1:8080";
-
 export default defineConfig({
   plugins: [react()],
   optimizeDeps: {
@@ -16,21 +14,10 @@ export default defineConfig({
       "@": path.resolve(__dirname, "client"),
     },
   },
-  server: {
-    host: "localhost",
-    port: 51273,
-    strictPort: true,
-    proxy: {
-      "/bff": {
-        target: devProxyTarget,
-        changeOrigin: true,
-        rewrite: (path) => {
-          const rewrittenPath = path.replace(/^\/bff(?=\/|$)/, "");
-          return rewrittenPath || "/";
-        },
-      },
-    },
-  },
+  // No dev server and no proxy: `bun run dev` runs `vite build --watch` into
+  // dist/, which the Go server serves on :8080 exactly as it does in production.
+  // A dev-only proxy would have to duplicate the server's API-vs-client-route
+  // classification (see internal/spa.isAPIPath) and would drift from it.
   // Keep app cache isolated in case another local Vite instance is running (e.g. Ladle).
   cacheDir: "node_modules/.vite-customer-dashboard",
 });

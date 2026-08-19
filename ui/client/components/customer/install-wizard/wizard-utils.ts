@@ -104,18 +104,47 @@ export function isTerminalSuccessStatus(status: string) {
   }
 }
 
+/**
+ * Whether a step is executing *right now*.
+ *
+ * The API's step vocabulary is "finished" | "pending" | "in-progress" |
+ * "timed-out" | "error", where `pending` means the step has not started yet —
+ * typically because it is blocked behind an approval. This used to include
+ * `pending`/`queued`/`not_started`, which made not-yet-started steps render as a
+ * "Running" spinner (e.g. "provision sandbox apply plan" showing Running while
+ * its plan was still awaiting approval).
+ *
+ * Use isUnfinishedStatus when the question is "is there still work to do".
+ */
 export function isActiveStatus(status: string) {
   switch (normalizeStatus(status)) {
     case "in-progress":
     case "active":
+    case "running":
+      return true;
+    default:
+      return false;
+  }
+}
+
+/** Whether a step is waiting its turn and has not started executing. */
+export function isPendingStatus(status: string) {
+  switch (normalizeStatus(status)) {
     case "pending":
     case "queued":
-    case "running":
     case "not_started":
       return true;
     default:
       return false;
   }
+}
+
+/**
+ * Whether a step still has work outstanding — running or merely queued. This is
+ * what aggregate/progress logic wants; isActiveStatus is only for "is it moving".
+ */
+export function isUnfinishedStatus(status: string) {
+  return isActiveStatus(status) || isPendingStatus(status);
 }
 
 export function statusText(status: string) {
@@ -128,10 +157,12 @@ export function statusText(status: string) {
       return "Completed";
     case "in-progress":
     case "active":
-    case "pending":
-    case "queued":
     case "running":
       return "In progress";
+    case "pending":
+    case "queued":
+    case "not_started":
+      return "Waiting";
     case "approval-awaiting":
       return "Awaiting approval";
     case "error":
@@ -179,7 +210,9 @@ export function groupDerivedStatus(group: TCustomerWizardGroup) {
     if (status === "approval-awaiting") {
       return "approval-awaiting";
     }
-    if (isActiveStatus(status)) {
+    // Deliberately the union: a group with only queued steps is still in
+    // progress overall, and polling keys off this value.
+    if (isUnfinishedStatus(status)) {
       hasActive = true;
     }
     if (!isTerminalSuccessStatus(status)) {

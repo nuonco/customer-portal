@@ -64,7 +64,9 @@ func (h *Handler) SearchNuonInstalls(c *gin.Context) {
 				break
 			}
 			installName := install.Name
-			status := install.Status
+			// `status` was removed from app.Install; this badge was therefore
+			// always blank. Show the component rollup instead.
+			status := install.CompositeComponentStatus
 			region := ""
 			if install.AwsAccount != nil && install.AwsAccount.Region != "" {
 				region = install.AwsAccount.Region

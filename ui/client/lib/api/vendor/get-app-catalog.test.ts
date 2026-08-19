@@ -17,7 +17,7 @@ test("getAppCatalog requests JSON payload from catalog endpoint", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    expect(url).toBe("/bff/admin/orgs/org-1/apps-api/catalog?page=2");
+    expect(url).toBe("/admin/orgs/org-1/apps-api/catalog?page=2");
     expect(init?.credentials).toBe("include");
     expect((init?.headers as Record<string, string>).Accept).toBe("application/json");
 
@@ -49,7 +49,7 @@ test("updateAppCatalog sends expected payload to save endpoint", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    expect(url).toBe("/bff/admin/orgs/org-1/apps/order");
+    expect(url).toBe("/admin/orgs/org-1/apps/order");
     expect(init?.method).toBe("PUT");
     expect((init?.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
 
@@ -86,7 +86,7 @@ test("forgetDeletedApp sends delete request to forget endpoint", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    expect(url).toBe("/bff/admin/orgs/org-1/apps/app-1/forget");
+    expect(url).toBe("/admin/orgs/org-1/apps/app-1/forget");
     expect(init?.method).toBe("DELETE");
     expect(init?.credentials).toBe("include");
 

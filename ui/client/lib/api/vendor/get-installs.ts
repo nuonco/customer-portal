@@ -46,7 +46,7 @@ export async function getInstalls(
   if (filters?.platform) params.set('platform', filters.platform)
 
   const qs = params.toString()
-  const url = `/bff/admin/orgs/${orgId}/installs-api${qs ? `?${qs}` : ''}`
+  const url = `/admin/orgs/${orgId}/installs-api${qs ? `?${qs}` : ''}`
 
   const response = await fetch(url, {
     credentials: 'include',
@@ -63,7 +63,7 @@ export async function searchNuonInstalls(
   q: string
 ): Promise<TSearchResult[]> {
   const response = await fetch(
-    `/bff/admin/orgs/${orgId}/installs-api/search-nuon?q=${encodeURIComponent(q)}`,
+    `/admin/orgs/${orgId}/installs-api/search-nuon?q=${encodeURIComponent(q)}`,
     {
       credentials: 'include',
       headers: { Accept: 'application/json' },
@@ -81,7 +81,7 @@ export async function importInstall(
   payload: { nuon_install_id: string; app_id: string; customer_email: string }
 ): Promise<void> {
   const body = new URLSearchParams(payload)
-  const response = await fetch(`/bff/admin/orgs/${orgId}/installs-api/import`, {
+  const response = await fetch(`/admin/orgs/${orgId}/installs-api/import`, {
     method: 'POST',
     credentials: 'include',
     headers: {
@@ -102,7 +102,7 @@ export async function forgetInstall(
   installId: string
 ): Promise<void> {
   const response = await fetch(
-    `/bff/admin/orgs/${orgId}/installs-api/${installId}/forget`,
+    `/admin/orgs/${orgId}/installs-api/${installId}/forget`,
     {
       method: 'POST',
       credentials: 'include',

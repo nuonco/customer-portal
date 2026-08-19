@@ -42,7 +42,7 @@ export function CustomerUserMenu({
   }, [menuOpen]);
 
   const handleLogout = async () => {
-    await fetch("/bff/auth-api/logout", {
+    await fetch("/auth-api/logout", {
       method: "POST",
       credentials: "include",
       headers: { Accept: "application/json" },

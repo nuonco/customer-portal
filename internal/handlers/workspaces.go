@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 
 	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
@@ -47,9 +48,13 @@ func (h *Handler) CreateOrg(c *gin.Context) {
 	}
 
 	if err := nuonClient.ValidateOrgAccess(c.Request.Context()); err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{
-			"error": "Invalid API token or organization access",
-		})
+		h.logger.Warn("org connect validation failed",
+			zap.String("api_url", apiURL),
+			zap.String("org_id", req.OrgID),
+			zap.Error(err))
+
+		status, msg := nuon.DescribeConnectError(err, apiURL)
+		c.JSON(status, gin.H{"error": msg})
 		return
 	}
 
@@ -443,28 +448,3 @@ func (h *Handler) RemoveOrgMember(c *gin.Context) {
 
 // Deprecated aliases for backwards compatibility during migration
 // These will be removed after all routes are updated
-
-// CreateWorkspace is deprecated - use CreateOrg instead
-func (h *Handler) CreateWorkspace(c *gin.Context) {
-	h.CreateOrg(c)
-}
-
-// UpdateWorkspace is deprecated - use UpdateOrg instead
-func (h *Handler) UpdateWorkspace(c *gin.Context) {
-	h.UpdateOrg(c)
-}
-
-// GenerateInvitation is deprecated - use GenerateOrgInvitation instead
-func (h *Handler) GenerateInvitation(c *gin.Context) {
-	h.GenerateOrgInvitation(c)
-}
-
-// DeleteInvitation is deprecated - use DeleteOrgInvitation instead
-func (h *Handler) DeleteInvitation(c *gin.Context) {
-	h.DeleteOrgInvitation(c)
-}
-
-// RemoveMember is deprecated - use RemoveOrgMember instead
-func (h *Handler) RemoveMember(c *gin.Context) {
-	h.RemoveOrgMember(c)
-}

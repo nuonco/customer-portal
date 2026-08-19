@@ -66,15 +66,13 @@ func (h *Handler) ImportInstall(c *gin.Context) {
 	} else if nuonInstall.AzureAccount != nil && nuonInstall.AzureAccount.Location != "" {
 		region = nuonInstall.AzureAccount.Location
 	}
+	// app.Install no longer carries a top-level `status` — ctl-api dropped the
+	// field, so the old SDK was deserializing it as "" and this switch always fell
+	// through to StatusActive. Removing it changes nothing at runtime; the
+	// available rollups (composite_component_status, sandbox_status) do not map
+	// onto these local values, and this column is not refreshed from the API
+	// afterwards, so do not guess.
 	installStatus := models.StatusActive
-	switch nuonInstall.Status {
-	case "provisioning":
-		installStatus = models.StatusProvisioning
-	case "failed":
-		installStatus = models.StatusFailed
-	case "deprovisioning":
-		installStatus = models.StatusDeprovisioning
-	}
 
 	// Find or create customer user
 	var customerUser models.User

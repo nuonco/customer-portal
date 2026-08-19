@@ -19,7 +19,7 @@ import (
 	wizardpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
 	workflowpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"gorm.io/gorm"
 )
 

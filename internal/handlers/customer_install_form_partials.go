@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"net/http"
 	"sort"
 
 	"github.com/gin-gonic/gin"
@@ -10,60 +9,6 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
 )
-
-// GetInstallFormFields returns HTML partials for the install form region selector and input fields.
-// Detects install-link vs published-app mode from query params (sha or app_id).
-func (h *Handler) GetInstallFormFields(c *gin.Context) {
-	sha := c.Query("sha")
-	appID := c.Query("app_id")
-
-	if sha == "" && appID == "" {
-		h.RenderTempl(c, http.StatusBadRequest, partials.InstallFormError("Missing sha or app_id parameter"))
-		return
-	}
-
-	var config *installFormData
-	var err error
-
-	if sha != "" {
-		config, err = h.getInstallLinkFormData(c, sha)
-	} else {
-		config, err = h.getPublishedAppFormData(c, appID)
-	}
-
-	if err != nil {
-		h.RenderTempl(c, http.StatusOK, partials.InstallFormError(err.Error()))
-		return
-	}
-
-	templConfig := config.toTemplConfig()
-
-	// If install_id is provided, overlay current input values from the existing install
-	if installID := c.Query("install_id"); installID != "" {
-		var install models.Install
-		if err := h.db.Where("id = ?", installID).First(&install).Error; err == nil {
-			if err := h.loadInstallWithOrg(&install); err == nil {
-				nuonOrg := install.GetNuonOrg()
-				if nuonOrg != nil && nuonOrg.APIToken != "" {
-					if client, cErr := nuon.NewClientWithURL(nuonOrg.APIToken, nuonOrg.NuonOrgID, h.nuonAPIURLForOrg(nuonOrg)); cErr == nil {
-						if currentInputs, iErr := client.GetInstallCurrentInputs(c.Request.Context(), install.NuonInstallID); iErr == nil && currentInputs != nil {
-							for gi := range templConfig.InputGroups {
-								for ii := range templConfig.InputGroups[gi].AppInputs {
-									name := templConfig.InputGroups[gi].AppInputs[ii].Name
-									if val, ok := currentInputs.Values[name]; ok {
-										templConfig.InputGroups[gi].AppInputs[ii].Default = val
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-
-	h.RenderTempl(c, http.StatusOK, partials.InstallFormFields(templConfig))
-}
 
 // installFormData holds the raw config data fetched from the Nuon API
 type installFormData struct {

@@ -18,7 +18,7 @@ test('getInstallLinks requests JSON payload from backend route', async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    expect(url).toBe('/bff/admin/orgs/org-1/install-links-api?tab=available&page=2')
+    expect(url).toBe('/admin/orgs/org-1/install-links-api?tab=available&page=2')
     expect(init?.credentials).toBe('include')
     expect((init?.headers as Record<string, string>).Accept).toBe('application/json')
 
@@ -58,7 +58,7 @@ test('createInstallLink sends expected payload and returns link id', async () =>
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    expect(url).toBe('/bff/admin/orgs/org-1/install-links-api')
+    expect(url).toBe('/admin/orgs/org-1/install-links-api')
     expect(init?.method).toBe('POST')
     expect((init?.headers as Record<string, string>)['Content-Type']).toBe('application/json')
 
@@ -107,7 +107,7 @@ test('getInstallLinkDetail requests JSON payload from detail endpoint', async ()
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    expect(url).toBe('/bff/admin/orgs/org-1/install-links-api/link-1')
+    expect(url).toBe('/admin/orgs/org-1/install-links-api/link-1')
     expect(init?.credentials).toBe('include')
     expect((init?.headers as Record<string, string>).Accept).toBe('application/json')
 
@@ -145,7 +145,7 @@ test('deleteInstallLink sends delete request to detail endpoint', async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === 'string' ? input : input.toString()
 
-    expect(url).toBe('/bff/admin/orgs/org-1/install-links-api/link-1')
+    expect(url).toBe('/admin/orgs/org-1/install-links-api/link-1')
     expect(init?.method).toBe('DELETE')
     expect(init?.credentials).toBe('include')
 

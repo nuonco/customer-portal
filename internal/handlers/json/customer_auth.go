@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -19,8 +18,6 @@ type CustomerAuthHandler struct {
 func NewCustomerAuthHandler(customerBaseURL string) *CustomerAuthHandler {
 	return &CustomerAuthHandler{customerBaseURL: customerBaseURL}
 }
-
-var uiPortPattern = regexp.MustCompile(`^\d{2,5}$`)
 
 // LoginURL returns the base-domain OIDC login URL for the current subdomain.
 func (h *CustomerAuthHandler) LoginURL(c *gin.Context) {
@@ -49,41 +46,12 @@ func (h *CustomerAuthHandler) LoginURL(c *gin.Context) {
 		redirect = "/"
 	}
 
-	uiPort := sanitizeUIPort(c.Query("ui_port"))
-	if uiPort != "" {
-		redirect = fmt.Sprintf("/auth-api/post-login?ui_port=%s&next=%s",
-			url.QueryEscape(uiPort),
-			url.QueryEscape(redirect),
-		)
-	}
-
 	q := url.Values{}
 	q.Set("return_to", subdomain)
 	q.Set("redirect", redirect)
 
 	authURL := fmt.Sprintf("%s/auth/login?%s", h.customerBaseURL, q.Encode())
 	c.JSON(http.StatusOK, gin.H{"auth_url": authURL})
-}
-
-// PostLoginRedirect forwards users from the backend subdomain origin to the UI dev-server port.
-// It is used after /auth/complete when React is served from a different port than the backend.
-func (h *CustomerAuthHandler) PostLoginRedirect(c *gin.Context) {
-	next := c.DefaultQuery("next", "/")
-	if !isSafeRelativeRedirect(next) {
-		next = "/"
-	}
-
-	host := c.Request.Host
-	if idx := strings.Index(host, ":"); idx != -1 {
-		host = host[:idx]
-	}
-
-	uiPort := sanitizeUIPort(c.Query("ui_port"))
-	if uiPort != "" {
-		host = fmt.Sprintf("%s:%s", host, uiPort)
-	}
-
-	c.Redirect(http.StatusFound, fmt.Sprintf("%s://%s%s", requestScheme(c), host, next))
 }
 
 // Session returns the current authenticated customer session.
@@ -105,14 +73,6 @@ func (h *CustomerAuthHandler) Logout(c *gin.Context) {
 	c.SetCookie("jwt", "", -1, "/", "", false, true)
 	c.SetCookie("auth_session", "", -1, "/", "", false, true)
 	c.JSON(http.StatusOK, gin.H{"success": true})
-}
-
-func sanitizeUIPort(port string) string {
-	port = strings.TrimSpace(port)
-	if uiPortPattern.MatchString(port) {
-		return port
-	}
-	return ""
 }
 
 func isSafeRelativeRedirect(path string) bool {

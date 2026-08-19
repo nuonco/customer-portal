@@ -37,7 +37,7 @@ afterEach(() => {
 test("loads install link detail and renders pending status", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL) => {
     const url = typeof input === "string" ? input : input.toString();
-    expect(url).toBe("/bff/admin/orgs/org-1/install-links-api/link-1");
+    expect(url).toBe("/admin/orgs/org-1/install-links-api/link-1");
 
     return new Response(
       JSON.stringify({
@@ -81,7 +81,7 @@ test("deletes install link when delete is confirmed", async () => {
     const url = typeof input === "string" ? input : input.toString();
 
     if (init?.method === "DELETE") {
-      expect(url).toBe("/bff/admin/orgs/org-1/install-links-api/link-1");
+      expect(url).toBe("/admin/orgs/org-1/install-links-api/link-1");
       return new Response(JSON.stringify({ message: "ok" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },

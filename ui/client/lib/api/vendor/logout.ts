@@ -1,3 +1,3 @@
 export function logoutVendor() {
-  window.location.assign('/bff/admin/logout')
+  window.location.assign('/admin/logout')
 }

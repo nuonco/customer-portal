@@ -17,7 +17,7 @@ describe("updateVendorProfile", () => {
 
     await expect(updateVendorProfile("Ada Lovelace")).resolves.toBeUndefined();
 
-    expect(globalThis.fetch).toHaveBeenCalledWith("/bff/admin/profile", {
+    expect(globalThis.fetch).toHaveBeenCalledWith("/admin/profile", {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",

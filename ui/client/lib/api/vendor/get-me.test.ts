@@ -9,7 +9,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
-      location: new URL("http://localhost:51273/admin/orgs"),
+      location: new URL("http://localhost:8080/admin/orgs"),
     },
   });
 });
@@ -58,7 +58,7 @@ test("throws auth failure when request is redirected to vendor login", async () 
 
     return Object.assign(response, {
       redirected: true,
-      url: "http://localhost:51273/admin/login",
+      url: "http://localhost:8080/admin/login",
     });
   });
 
@@ -77,7 +77,7 @@ test("throws auth failure when login HTML is returned without redirect metadata"
         status: 200,
         headers: { "Content-Type": "text/html" },
       }),
-      { url: "http://localhost:51273/login" },
+      { url: "http://localhost:8080/login" },
     ),
   );
 

@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"go.uber.org/zap"
 )
 
 func (h *Handler) DeleteInstall(c *gin.Context) {
@@ -37,7 +38,11 @@ func (h *Handler) DeleteInstall(c *gin.Context) {
 
 	// Deprovision the install via Nuon API
 	if err := nuonClient.DeprovisionInstall(c.Request.Context(), install.NuonInstallID); err != nil {
-		h.redirectOverviewWithAlert(c, install.ID, "error", "Failed to deprovision install")
+		h.logger.Warn("deprovision failed",
+			zap.String("install_id", install.ID),
+			zap.String("nuon_install_id", install.NuonInstallID),
+			zap.Error(err))
+		h.redirectOverviewWithAlert(c, install.ID, "error", deprovisionErrorMessage(err))
 		return
 	}
 
@@ -52,3 +57,15 @@ func (h *Handler) DeleteInstall(c *gin.Context) {
 }
 
 // ForgetInstall handles customer install forgetting (local database removal only)
+
+// deprovisionErrorMessage surfaces what the Nuon API said rather than a flat
+// message that hides the cause.
+func deprovisionErrorMessage(err error) string {
+	if nuon.IsUnreachable(err) {
+		return "Could not reach the Nuon API. Please try again."
+	}
+	if apiErr := nuon.ParseAPIError(err); apiErr.Description != "" {
+		return "Failed to deprovision install: " + apiErr.Description
+	}
+	return "Failed to deprovision install"
+}

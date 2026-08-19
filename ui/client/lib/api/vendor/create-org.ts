@@ -11,7 +11,7 @@ export type TCreateOrgResult = {
 }
 
 export async function createOrg(input: TCreateOrgInput): Promise<TCreateOrgResult> {
-  const response = await fetch('/bff/admin/org/create', {
+  const response = await fetch('/admin/org/create', {
     method: 'POST',
     credentials: 'include',
     headers: {

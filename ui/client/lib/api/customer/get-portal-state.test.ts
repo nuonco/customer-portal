@@ -5,7 +5,7 @@ beforeEach(() => {
   Object.defineProperty(globalThis, "window", {
     configurable: true,
     value: {
-      location: new URL("http://localhost:51273/"),
+      location: new URL("http://localhost:8080/"),
     },
   });
 
@@ -22,7 +22,7 @@ test("getCustomerPortalState requests portal state JSON", async () => {
   const fetchMock = mock(async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = typeof input === "string" ? input : input.toString();
 
-    expect(url).toBe("/bff/portal-api/state?subdomain=test-org");
+    expect(url).toBe("/portal-api/state?subdomain=test-org");
     expect(init?.credentials).toBe("include");
     expect((init?.headers as Record<string, string>).Accept).toBe("application/json");
 

@@ -1,3 +1,4 @@
+import { inferCustomerSubdomain } from "@/lib/runtime-config";
 import { createContext, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -38,37 +39,11 @@ export function CustomerAuthProvider({ children }: { children: ReactNode }) {
   const isAuthFailure = !isLoading && !isError && data === "unauthenticated";
 
   const startLogin = async () => {
-    const configuredBaseDomain =
-      (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-    const fallbackSubdomain =
-      (import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined) ?? "";
-
-    const inferredBaseDomain = (() => {
-      if (configuredBaseDomain) {
-        return configuredBaseDomain;
-      }
-
-      const [hostname, port] = window.location.host.split(":");
-      if (!hostname) {
-        return window.location.host;
-      }
-
-      const labels = hostname.split(".");
-      if (labels.length <= 1) {
-        return window.location.host;
-      }
-
-      const host = labels.slice(1).join(".");
-      return port ? `${host}:${port}` : host;
-    })();
-
-    const currentSubdomain =
-      extractSubdomain(window.location.host, inferredBaseDomain) || fallbackSubdomain;
+    const currentSubdomain = inferCustomerSubdomain();
 
     const authURL = await getCustomerLoginURL({
       redirect: "/",
       subdomain: currentSubdomain || undefined,
-      uiPort: window.location.port || undefined,
     });
     window.location.assign(authURL);
   };

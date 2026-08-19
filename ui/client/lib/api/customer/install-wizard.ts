@@ -1,5 +1,4 @@
-import { extractSubdomain } from "@/utils/subdomain-utils";
-
+import { inferCustomerSubdomain } from "@/lib/runtime-config";
 export type TCustomerWizardStep = "inputs" | "stack" | "sandbox" | "components";
 
 export type TCustomerWizardApp = {
@@ -140,38 +139,6 @@ type TCustomerWizardStateOptions = {
   workflowId?: string;
 };
 
-function inferCustomerSubdomain(): string {
-  if (typeof window === "undefined") {
-    return "";
-  }
-
-  const configuredBaseDomain =
-    (import.meta.env.VITE_SUBDOMAIN_BASE_DOMAIN as string | undefined) ?? "";
-  const fallbackSubdomain =
-    (import.meta.env.VITE_CUSTOMER_SUBDOMAIN as string | undefined) ?? "";
-
-  const inferredBaseDomain = (() => {
-    if (configuredBaseDomain) {
-      return configuredBaseDomain;
-    }
-
-    const [hostname, port] = window.location.host.split(":");
-    if (!hostname) {
-      return window.location.host;
-    }
-
-    const labels = hostname.split(".");
-    if (labels.length <= 1) {
-      return window.location.host;
-    }
-
-    const host = labels.slice(1).join(".");
-    return port ? `${host}:${port}` : host;
-  })();
-
-  return extractSubdomain(window.location.host, inferredBaseDomain) || fallbackSubdomain;
-}
-
 function buildWizardURL(pathname: string, params: Record<string, string | undefined>) {
   const search = new URLSearchParams();
   const subdomain = inferCustomerSubdomain();
@@ -193,7 +160,7 @@ export async function getCustomerInstallWizardState({
   workflowId,
 }: TCustomerWizardStateOptions): Promise<TCustomerWizardState> {
   const response = await fetch(
-    buildWizardURL(`/bff/portal-api/apps/${appId}/install-wizard`, {
+    buildWizardURL(`/portal-api/apps/${appId}/install-wizard`, {
       step,
       install_id: installId,
       workflow_id: workflowId,
@@ -217,7 +184,7 @@ export async function createCustomerInstallWizardInstall(
   payload: TCustomerWizardCreatePayload,
 ): Promise<TCustomerWizardCreateResponse> {
   const response = await fetch(
-    buildWizardURL(`/bff/portal-api/apps/${appId}/install-wizard`, {}),
+    buildWizardURL(`/portal-api/apps/${appId}/install-wizard`, {}),
     {
       method: "POST",
       credentials: "include",

@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/http"
 	"sync"
 
@@ -11,10 +10,9 @@ import (
 	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
 	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
 	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
 	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
-	"github.com/nuonco/nuon-go/client/operations"
-	nuonmodels "github.com/nuonco/nuon-go/models"
+	"github.com/nuonco/nuon/sdks/nuon-go/client/operations"
+	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 )
 
@@ -132,58 +130,6 @@ func (h *Handler) buildInstallPageProps(c *gin.Context, activeTab string) (*cust
 		PageTitle:       tabTitles[activeTab],
 		PageIcon:        tabIcons[activeTab],
 	}, nil
-}
-
-// InstallDetailPage redirects to the overview tab.
-func (h *Handler) InstallDetailPage(c *gin.Context) {
-	installInterface, exists := c.Get("install")
-	if !exists {
-		c.String(http.StatusNotFound, "Install not found")
-		return
-	}
-	install := installInterface.(*models.Install)
-	dest := h.basePath + "/installs/" + install.ID + "/overview"
-	if qs := c.Request.URL.RawQuery; qs != "" {
-		dest += "?" + qs
-	}
-	c.Redirect(http.StatusFound, dest)
-}
-
-func (h *Handler) InstallOverviewPage(c *gin.Context) {
-	partial := c.Query("partial")
-	isHTMX := c.GetHeader("HX-Request") != ""
-
-	// Fast path: HTMX shimmer shell. Skip all API calls — build props from DB only.
-	if partial == "" && isHTMX {
-		h.renderOverviewShimmer(c)
-		return
-	}
-
-	// All other paths need full page props (includes API calls for install check + app name).
-	pageProps, err := h.buildInstallPageProps(c, "overview")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	install := pageProps.Install
-	nuonOrg := install.GetNuonOrg()
-
-	switch partial {
-	case "content":
-		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
-		overviewProps.HasData = true
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewContent(overviewProps))
-	case "panel":
-		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
-		overviewProps.HasData = true
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
-	default:
-		// No-JS fallback: full data fetch
-		overviewProps := h.buildOverviewData(c, pageProps, install, nuonOrg)
-		overviewProps.HasData = true
-		h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
-	}
 }
 
 // renderOverviewShimmer serves the overview page shell with shimmer placeholders.
@@ -339,171 +285,6 @@ func (h *Handler) buildOverviewData(c *gin.Context, pageProps *customerpages.Ins
 	overviewProps.InputFields = inputFields
 
 	return overviewProps
-}
-
-func (h *Handler) InstallOverviewWorkflowPage(c *gin.Context) {
-	pageProps, err := h.buildInstallPageProps(c, "overview")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
-	install := pageProps.Install
-	nuonOrg := install.GetNuonOrg()
-
-	partial := c.Query("partial")
-
-	// For partial=panel requests (clicking a workflow row), we only need workflow data, not overview data.
-	// For partial=content, we need overview data but not workflow data.
-	// For full page loads, we need both (or shimmer for HTMX).
-
-	var overviewProps customerpages.InstallOverviewPageProps
-
-	needsOverviewData := partial == "content" || partial == "" && c.GetHeader("HX-Request") == ""
-	if needsOverviewData {
-		overviewProps = h.buildOverviewData(c, pageProps, install, nuonOrg)
-		overviewProps.HasData = true
-	} else {
-		overviewProps = customerpages.InstallOverviewPageProps{
-			LayoutProps:     pageProps.LayoutProps,
-			Install:         install,
-			AppName:         pageProps.AppName,
-			APIDeletedError: pageProps.APIDeletedError,
-			AlertType:       c.Query("alert_type"),
-			AlertMsg:        c.Query("alert_msg"),
-		}
-	}
-	overviewProps.Expanded = c.Query("expanded") == "true"
-
-	// Fetch workflow detail data (needed for panel and full page, but not shimmer or content)
-	workflowID := c.Param("workflow_id")
-	if nuonOrg != nil && nuonOrg.APIToken != "" && workflowID != "" && partial != "content" && partial != "panel-shimmer" {
-		apiClient, apiErr := nuon.NewClientWithURL(
-			nuonOrg.APIToken,
-			nuonOrg.NuonOrgID,
-			h.nuonAPIURLForOrg(nuonOrg),
-		)
-		if apiErr == nil {
-			ctx := c.Request.Context()
-			workflow, wfErr := apiClient.GetWorkflow(ctx, workflowID)
-			if wfErr == nil && workflow != nil {
-				panel := BuildWorkflowDataPanel(workflow)
-				panel.CurrentStepRole = resolveCurrentStepRole(ctx, apiClient, install.NuonInstallID, workflow)
-				overviewProps.SelectedWorkflow = &panel
-
-				// Fetch step groups from API with labels
-				apiStepGroups, sgErr := apiClient.GetWorkflowStepGroups(ctx, workflowID)
-				var stepGroups []workflows.StepGroup
-				if sgErr == nil {
-					stepGroups = workflows.StepGroupsFromAPI(apiStepGroups)
-				}
-				selectedGroup := -1
-				if groupParam := c.Query("group"); groupParam != "" {
-					fmt.Sscanf(groupParam, "%d", &selectedGroup)
-				}
-				if selectedGroup < 0 || selectedGroup >= len(stepGroups) {
-					selectedGroup = autoSelectGroup(stepGroups)
-				}
-				platform := h.detectPlatform(ctx, apiClient, install)
-
-				var stackSetup workflows.StackSetupData
-				if selectedGroup >= 0 && selectedGroup < len(stepGroups) && stepGroups[selectedGroup].Type == "install-stack" {
-					stackSetup = h.getStackSetupData(ctx, apiClient, install, workflow)
-				}
-
-				overviewProps.WorkflowOverview = &workflows.WorkflowOverviewProps{
-					StepGroups:       stepGroups,
-					SelectedGroup:    selectedGroup,
-					InstallID:        install.ID,
-					BasePath:         h.basePath,
-					WorkflowID:       workflowID,
-					WorkflowFinished: workflow.Finished,
-					ShowApproveAll:   string(workflow.ApprovalOption) == "prompt" && !workflow.Finished,
-					Platform:         platform,
-					StackSetup:       stackSetup,
-					Expanded:         overviewProps.Expanded,
-				}
-			}
-		}
-	}
-
-	// Fetch theme for primary color
-	orgID := h.getOrgIDForTheme(c)
-	theme, _ := models.GetOrCreateAppTheme(h.db, orgID)
-	primaryColor, _ := GetPrimaryColors(theme.PrimaryColor)
-	overviewProps.PrimaryColor = primaryColor
-
-	switch partial {
-	case "panel":
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewWorkflowPanel(overviewProps))
-	case "content":
-		h.RenderTempl(c, http.StatusOK, customerpages.OverviewContent(overviewProps))
-	default:
-		h.RenderTempl(c, http.StatusOK, customerpages.InstallOverviewPage(overviewProps))
-	}
-}
-
-func (h *Handler) InstallStackPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "stack")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallStackPage(*props))
-}
-
-func (h *Handler) InstallSandboxPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "sandbox")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallSandboxPage(*props))
-}
-
-func (h *Handler) InstallComponentsPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "components")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallComponentsPage(*props))
-}
-
-func (h *Handler) InstallRolesPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "roles")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallRolesPage(*props))
-}
-
-func (h *Handler) InstallPoliciesPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "policies")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallPoliciesPage(*props))
-}
-
-func (h *Handler) InstallAppInfoPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "readme")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallAppInfoPage(*props))
-}
-
-func (h *Handler) InstallAuditPage(c *gin.Context) {
-	props, err := h.buildInstallPageProps(c, "audit")
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-	h.RenderTempl(c, http.StatusOK, customerpages.InstallAuditPage(*props))
 }
 
 // buildInputFields constructs input field rows from current values and raw config metadata.
