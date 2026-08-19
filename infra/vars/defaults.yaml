@@ -5,7 +5,11 @@ region: us-west-2
 pool: nuon
 rds:
   engine: postgres
-  engine_version: "15.12"
+  # Both stage and prod instances are on 15.17: auto_minor_version_upgrade is
+  # enabled in the module, so AWS upgraded them during a maintenance window while
+  # this stayed pinned at 15.12. Terraform then tried to downgrade on every apply
+  # and RDS rejected it ("Cannot find upgrade path from 15.17 to 15.12").
+  engine_version: "15.17"
   family: "postgres15"
   parameters:
     - name: max_connections
