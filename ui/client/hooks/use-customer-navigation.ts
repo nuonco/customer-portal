@@ -145,7 +145,7 @@ export function useNavigation({
         pageTitle: pathname.startsWith("/account")
           ? "My Group"
           : pathname.startsWith("/apps")
-            ? "App Catalog"
+            ? "Apps"
             : "Installs",
         pageSubtitle: "",
         isAllInstallsActive: pathname === "/installs",
@@ -175,7 +175,7 @@ export function useNavigation({
         : pathname.startsWith("/account")
           ? "My Group"
           : pathname.startsWith("/apps")
-            ? "App Catalog"
+            ? "Apps"
             : "Installs";
 
     return {

@@ -29,7 +29,7 @@ export const CustomerAppsView = () => {
     return (
       <Card className="bg-surface">
         <Text as="h2" role="heading" level={2} variant="h3" weight="stronger">
-          App Catalog
+          Apps
         </Text>
         <Text variant="body" theme="neutral">
           No published apps are available yet.

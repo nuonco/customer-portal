@@ -195,6 +195,7 @@ export const Sidebar = ({
           collapsed={isCollapsed}
           currentInstall={currentInstall}
           installs={portalState.installs}
+          apps={portalState.apps}
           onRequestExpandNavigation={() => {
             if (navigation.isSidebarMinimized) {
               navigation.toggleSidebarMinimized();
@@ -239,7 +240,7 @@ export const Sidebar = ({
             collapsed={isCollapsed}
             icon="SquaresFourIcon"
             isActive={navigation.isAppCatalogActive}
-            label="App Catalog"
+            label="Apps"
             to="/apps"
           />
         </div>

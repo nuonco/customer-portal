@@ -228,7 +228,7 @@ test("shows install switcher in customer sidebar and filters install list", asyn
   });
 
   expect(screen.queryByRole("link", { name: /install one/i })).not.toBeInTheDocument();
-  expect(screen.getByRole("link", { name: /create install/i })).toHaveAttribute("href", "/apps");
+  expect(screen.getByRole("link", { name: /create install/i })).toHaveAttribute("href", "/apps/app-1/install");
 
   fireEvent.click(screen.getByRole("link", { name: /no install selected/i }));
 
@@ -253,7 +253,7 @@ test("shows empty install switcher state when no installs exist", async () => {
     expect(screen.getByText("No installs found")).toBeInTheDocument();
     expect(screen.queryByPlaceholderText("Search installs...")).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: /no install selected/i })).toHaveAttribute("href", "/installs");
-    expect(screen.getByRole("link", { name: /create install/i })).toHaveAttribute("href", "/apps");
+    expect(screen.getByRole("link", { name: /create install/i })).toHaveAttribute("href", "/apps/app-1/install");
   } finally {
     portalState.installs = originalInstalls;
   }

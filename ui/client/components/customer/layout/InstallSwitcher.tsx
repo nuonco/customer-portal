@@ -3,13 +3,17 @@ import { NavLink } from "react-router";
 import { Icon } from "@/components/common/Icon";
 import { Text } from "@/components/common/Text";
 import { Input } from "@/components/common/form/Input";
-import { type TCustomerPortalInstall } from "@/lib/api/customer/get-portal-state";
+import {
+  type TCustomerPortalApp,
+  type TCustomerPortalInstall,
+} from "@/lib/api/customer/get-portal-state";
 import { cn } from "@/utils/classnames";
 
 interface IInstallSwitcherProps {
   collapsed: boolean;
   currentInstall: TCustomerPortalInstall | null;
   installs: TCustomerPortalInstall[];
+  apps?: TCustomerPortalApp[];
   onRequestExpandNavigation?: () => void;
 }
 
@@ -52,6 +56,7 @@ export const InstallSwitcher = ({
   collapsed,
   currentInstall,
   installs,
+  apps = [],
   onRequestExpandNavigation,
 }: IInstallSwitcherProps) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -63,6 +68,13 @@ export const InstallSwitcher = ({
   const switcherRef = useRef<HTMLDivElement | null>(null);
   const labelMeasureRef = useRef<HTMLDivElement | null>(null);
   const [labelWidth, setLabelWidth] = useState(0);
+
+  const singleApp = useMemo(
+    () => (apps.length === 1 ? apps[0] : null),
+    [apps],
+  );
+  const createInstallHref = singleApp ? `/apps/${singleApp.app_id}/install` : "/apps";
+  const createInstallLabel = singleApp ? "Create install" : "Browse apps";
 
   const visibleInstalls = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -369,14 +381,14 @@ export const InstallSwitcher = ({
 
           <div className="border-t border-border-subtle p-1">
             <NavLink
-              to="/apps"
+              to={createInstallHref}
               className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-text-primary transition-colors hover:bg-black/5 dark:hover:bg-white/8"
               onClick={() => setIsOpen(false)}
             >
               <span className="flex h-7 w-7 items-center justify-center rounded-md bg-surface-muted text-text-muted">
                 <Icon variant="PlusIcon" size={14} weight="bold" />
               </span>
-              <span>Create Install</span>
+              <span>{createInstallLabel}</span>
             </NavLink>
           </div>
         </div>
