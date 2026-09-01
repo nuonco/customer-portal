@@ -54,6 +54,8 @@ app:
   alb:
     public_domain: $TFO_PUBLIC_DOMAIN
     public_domain_certificate: $TFO_CERTIFICATE_ARN
+    group_name: ""
+    group_tags: ""
 
   autoscaling:
     minReplicas: 2

@@ -18,7 +18,13 @@ metadata:
     alb.ingress.kubernetes.io/unhealthy-threshold-count: '2'
     alb.ingress.kubernetes.io/healthy-threshold-count: '2'
     alb.ingress.kubernetes.io/load-balancer-attributes: idle_timeout.timeout_seconds=300
+    {{ if .Values.app.alb.group_name }}
+    alb.ingress.kubernetes.io/group.name: {{ .Values.app.alb.group_name }}
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS13-1-0-2021-06
+    alb.ingress.kubernetes.io/tags: {{ .Values.app.alb.group_tags | quote }}
+    {{ else }}
     alb.ingress.kubernetes.io/tags: 'service=customer-dashboard,service_type=app,env={{ .Values.env.ENV }}'
+    {{ end }}
     external-dns.alpha.kubernetes.io/hostname: {{ .Values.app.alb.public_domain }},*.{{ .Values.app.alb.public_domain }}
 spec:
   ingressClassName: alb
