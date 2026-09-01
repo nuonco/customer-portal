@@ -15,6 +15,9 @@ app:
   alb:
     public_domain: $TFO_PUBLIC_DOMAIN
     public_domain_certificate: $TFO_CERTIFICATE_ARN
+  autoscaling:
+    minReplicas: 1
+    maxReplicas: 1
 
 serviceAccount:
   annotations:
