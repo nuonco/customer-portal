@@ -31,6 +31,7 @@ spec:
           value: "public"
           effect: "NoSchedule"
       topologySpreadConstraints:
+        {{- if ne .Values.environment "prod" }}
         - maxSkew: 1
           topologyKey: "kubernetes.io/hostname"
           whenUnsatisfiable: DoNotSchedule
@@ -38,7 +39,8 @@ spec:
           labelSelector:
             matchLabels:
               {{- include "common.selectorLabels" . | nindent 14 }}
-        - maxSkew: 2
+        {{- end }}
+        - maxSkew: 1
           topologyKey: "topology.kubernetes.io/zone"
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
