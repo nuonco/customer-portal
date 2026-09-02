@@ -6,5 +6,5 @@ root_domain: nuon.us-west-2.prod.internal.nuon.co
 wildcard_domain: "*.customers.nuon.co"
 rds:
   instance_class: "db.t4g.small"
-  multi_az: true
+  multi_az: false
   deletion_protection: true
