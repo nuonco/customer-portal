@@ -7,6 +7,12 @@ metadata:
   labels:
     {{- include "common.labels" . | nindent 4 }}
 spec:
+  {{- if ne .Values.environment "prod" }}
+  strategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  {{- end }}
   selector:
     matchLabels:
       {{- include "common.selectorLabels" . | nindent 6 }}
@@ -99,6 +105,7 @@ spec:
               value: app
             - name: SERVICE_DEPLOYMENT
               value: customer-dashboard
+{{- if eq .Values.environment "prod" }}
 ---
 apiVersion: policy/v1
 kind: PodDisruptionBudget
@@ -110,3 +117,4 @@ spec:
   selector:
     matchLabels:
       {{- include "common.selectorLabels" . | nindent 6 }}
+{{- end }}
