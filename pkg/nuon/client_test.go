@@ -150,9 +150,10 @@ func TestClient_GetInstallWorkflows_RequestFormat(t *testing.T) {
 	// Create a minimal client that bypasses nuon-go SDK
 	// This tests our direct HTTP request logic
 	client := &Client{
-		apiURL:   mock.url(),
-		apiToken: "test-token",
-		orgID:    "test-org",
+		apiURL:     mock.url(),
+		apiToken:   "test-token",
+		orgID:      "test-org",
+		httpClient: http.DefaultClient,
 	}
 
 	workflows, hasMore, err := client.GetInstallWorkflows(context.Background(), installID, 0, 10)
@@ -181,9 +182,10 @@ func TestClient_GetInstallWorkflows_WithTypeFilter(t *testing.T) {
 	})
 
 	client := &Client{
-		apiURL:   mock.url(),
-		apiToken: "test-token",
-		orgID:    "test-org",
+		apiURL:     mock.url(),
+		apiToken:   "test-token",
+		orgID:      "test-org",
+		httpClient: http.DefaultClient,
 	}
 
 	_, _, err := client.GetInstallWorkflowsByType(context.Background(), installID, 0, 10, "deploy")
@@ -244,9 +246,10 @@ func TestClient_GetInstallWorkflows_Pagination(t *testing.T) {
 			})
 
 			client := &Client{
-				apiURL:   mock.url(),
-				apiToken: "test-token",
-				orgID:    "test-org",
+				apiURL:     mock.url(),
+				apiToken:   "test-token",
+				orgID:      "test-org",
+				httpClient: http.DefaultClient,
 			}
 
 			_, hasMore, err := client.GetInstallWorkflows(context.Background(), installID, 0, tt.limit)
@@ -274,9 +277,10 @@ func TestClient_GetInstallWorkflows_ErrorHandling(t *testing.T) {
 	})
 
 	client := &Client{
-		apiURL:   mock.url(),
-		apiToken: "test-token",
-		orgID:    "test-org",
+		apiURL:     mock.url(),
+		apiToken:   "test-token",
+		orgID:      "test-org",
+		httpClient: http.DefaultClient,
 	}
 
 	_, _, err := client.GetInstallWorkflows(context.Background(), installID, 0, 10)

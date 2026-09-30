@@ -428,7 +428,7 @@ func (c *Client) GetInstall(ctx context.Context, installID string) (*models.AppI
 // it "will destroy all data associated with this installation" — only tore down
 // the sandbox and left the stack and components running.
 func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error {
-	_, err := c.client.DeprovisionInstall(ctx, installID)
+	_, err := c.client.DeprovisionInstall(ctx, installID, "")
 	if err != nil {
 		return fmt.Errorf("failed to deprovision install: %w", err)
 	}
@@ -438,7 +438,7 @@ func (c *Client) DeprovisionInstall(ctx context.Context, installID string) error
 
 // ReprovisionInstall reprovisions an install
 func (c *Client) ReprovisionInstall(ctx context.Context, installID string) error {
-	if _, err := c.client.ReprovisionInstall(ctx, installID); err != nil {
+	if _, err := c.client.ReprovisionInstall(ctx, installID, ""); err != nil {
 		return fmt.Errorf("failed to reprovision install: %w", err)
 	}
 
