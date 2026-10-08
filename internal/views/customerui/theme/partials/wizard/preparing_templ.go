@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"sort"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 )
 
 // PreparingStepProps holds data for the wizard's Preparing step. The Preparing

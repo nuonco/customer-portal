@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // UserOptions allows customization of test user creation.

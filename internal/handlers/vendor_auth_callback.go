@@ -5,7 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
+	"github.com/nuonco/customer-portal/internal/auth"
 )
 
 func (h *Handler) AuthCallback(c *gin.Context) {

@@ -13,8 +13,8 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/testutil"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/testutil"
 )
 
 const testJWTSecret = "test-secret-key-for-unit-tests"

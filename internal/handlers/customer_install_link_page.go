@@ -5,10 +5,10 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/overrides"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui/overrides"
+	customerpages "github.com/nuonco/customer-portal/internal/views/customerui/theme/pages"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/wizard"
 )
 
 func (h *Handler) InstallLinkPage(c *gin.Context) {

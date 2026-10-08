@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"strings"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // orgDashboardURL derives the dashboard-ui URL for an org from its API URL

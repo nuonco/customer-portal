@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/testutil"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/testutil"
 )
 
 // TestInstallsPage_MemberFallback_RespectsOrgAndCookie validates that the

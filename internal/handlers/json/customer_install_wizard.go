@@ -13,12 +13,12 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	localmodels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
-	wizardpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
-	workflowpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	localmodels "github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/shortid"
+	wizardpartials "github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/wizard"
+	workflowpartials "github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"gorm.io/gorm"
 )

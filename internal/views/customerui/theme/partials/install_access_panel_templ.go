@@ -11,7 +11,7 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 )
 
 // AccessRolePolicy holds display info for a single IAM policy within a role.

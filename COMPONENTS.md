@@ -460,22 +460,22 @@ Apply to containers:
 
 ```go
 // Old
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/pages"
+import "github.com/nuonco/customer-portal/internal/views/customerui/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/pages"
 
 // New
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/pages"
 ```
 
 **Templates:**
 
 ```go
 // Old (in .templ files)
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/components"
 
 // New
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 ```
 
 ## Performance Considerations

@@ -8,7 +8,7 @@ package components
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/highlight"
+import "github.com/nuonco/customer-portal/internal/highlight"
 
 func CodeBlock(copyContent string, lang string) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {

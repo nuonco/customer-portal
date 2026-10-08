@@ -4,7 +4,7 @@ import (
 	"html/template"
 	"strings"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // Static HTML/script constants - matches output from layout.templ

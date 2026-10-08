@@ -14,9 +14,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/testutil"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/testutil"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 type testStatusCoderError struct {

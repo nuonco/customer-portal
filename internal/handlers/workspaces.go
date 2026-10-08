@@ -9,10 +9,10 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/shortid"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // CreateOrg creates a new organization with a connected Nuon platform org.

@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	vendorpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/pages"
+	vendorpages "github.com/nuonco/customer-portal/internal/views/vendorui/pages"
 	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 

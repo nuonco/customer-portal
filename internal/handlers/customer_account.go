@@ -6,8 +6,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // getCustomerAccountsFromContext returns the active account and all other accounts the user

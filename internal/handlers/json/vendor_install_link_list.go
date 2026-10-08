@@ -5,8 +5,8 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 func (h *VendorHandler) InstallLinks(c *gin.Context) {

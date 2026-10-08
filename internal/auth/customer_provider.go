@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 	"gorm.io/gorm"
 )
 

@@ -4,7 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // requireVendorRole checks that the logged-in user is a vendor and aborts with 403 if not.

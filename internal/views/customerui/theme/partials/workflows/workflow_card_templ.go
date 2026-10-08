@@ -8,7 +8,7 @@ package workflows
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 
 // WorkflowCardProps defines properties for the WorkflowCard component
 type WorkflowCardProps struct {

@@ -13,13 +13,13 @@ import (
 	"go.uber.org/zap"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/handlers"
-	jsonhandlers "github.com/nuonco/mono/services/customer-dashboard/internal/handlers/json"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/spa"
+	"github.com/nuonco/customer-portal/internal/assets"
+	"github.com/nuonco/customer-portal/internal/auth"
+	"github.com/nuonco/customer-portal/internal/handlers"
+	jsonhandlers "github.com/nuonco/customer-portal/internal/handlers/json"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/spa"
 )
 
 func main() {

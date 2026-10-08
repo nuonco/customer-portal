@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/shortid"
+	"github.com/nuonco/customer-portal/internal/shortid"
 	"gorm.io/gorm"
 )
 

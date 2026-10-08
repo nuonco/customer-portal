@@ -9,9 +9,9 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/utils"
 )
 
 // RegisterPageProps for the customer registration page

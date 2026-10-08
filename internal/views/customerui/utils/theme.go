@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // BuildThemeCSS generates CSS custom properties for theme variables.

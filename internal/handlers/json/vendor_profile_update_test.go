@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/testutil"
+	"github.com/nuonco/customer-portal/internal/testutil"
 )
 
 func TestVendorUpdateProfile_Success(t *testing.T) {

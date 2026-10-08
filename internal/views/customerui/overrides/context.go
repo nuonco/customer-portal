@@ -1,7 +1,7 @@
 package overrides
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // TemplateContext contains all data passed to override templates.

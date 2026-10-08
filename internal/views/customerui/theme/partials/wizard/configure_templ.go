@@ -9,11 +9,11 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/scripts"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/scripts"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // ConfigureStepProps holds data for the wizard's Configure (inputs) step,

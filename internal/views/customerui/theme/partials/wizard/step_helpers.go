@@ -3,7 +3,7 @@ package wizard
 import (
 	"strings"
 
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // MatchesWizardStep returns true if the given workflow step group belongs to

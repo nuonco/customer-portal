@@ -7,9 +7,9 @@ import (
 	"net/url"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	customerpages "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/models"
+	customerpages "github.com/nuonco/customer-portal/internal/views/customerui/theme/pages"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 	"go.uber.org/zap"
 )
 

@@ -7,9 +7,9 @@ import (
 	"sync"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	customerpartials "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/models"
+	customerpartials "github.com/nuonco/customer-portal/internal/views/customerui/theme/partials"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 )

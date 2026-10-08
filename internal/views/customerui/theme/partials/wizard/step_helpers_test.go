@@ -3,7 +3,7 @@ package wizard
 import (
 	"testing"
 
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 func TestGroupStatus_UsesLatestStepStatusesOverStaleGroupStatus(t *testing.T) {

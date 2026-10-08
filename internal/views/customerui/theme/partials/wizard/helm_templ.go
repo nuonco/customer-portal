@@ -11,8 +11,8 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/workflows"
 )
 
 // TerraformPlanBadges renders colored count badges for terraform plan changes.

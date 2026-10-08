@@ -12,10 +12,10 @@ import (
 	"github.com/nuonco/nuon/sdks/nuon-go/models"
 	"go.uber.org/zap"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	localModels "github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	localModels "github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 func autoSelectGroup(groups []workflows.StepGroup) int {

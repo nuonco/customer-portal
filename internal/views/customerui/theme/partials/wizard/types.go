@@ -1,8 +1,8 @@
 package wizard
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // ComponentWizardData holds type-specific plan/apply data for a single component group.

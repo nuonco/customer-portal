@@ -8,11 +8,11 @@ import (
 
 	"github.com/gin-gonic/gin"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/assets"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/middleware"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/customer-portal/internal/assets"
+	"github.com/nuonco/customer-portal/internal/middleware"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/vendorui"
+	"github.com/nuonco/customer-portal/internal/views/vendorui/partials"
 )
 
 func (h *Handler) accountDetailLayout(c *gin.Context) (*models.User, *models.NuonOrg, *models.CustomerAccount, vendorui.LayoutProps, bool) {

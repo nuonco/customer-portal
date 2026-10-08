@@ -5,8 +5,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/utils"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/views/customerui/utils"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // WorkflowDataPanel represents workflow data for the panel (avoids import cycle)

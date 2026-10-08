@@ -3,7 +3,7 @@ package wizard
 import (
 	"strings"
 
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // stackStepNames are the step names that identify the install-stack group.

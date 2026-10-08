@@ -1,6 +1,6 @@
 package pages
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/models"
+import "github.com/nuonco/customer-portal/internal/models"
 
 // getLoginPreviewRightSideStyle returns the CSS style for the login preview right panel.
 // Priority: custom image > custom gradient > primary color fallback.

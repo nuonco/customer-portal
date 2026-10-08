@@ -8,7 +8,7 @@ package wizard
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 
 // WaitingState shows a shimmer placeholder while a wizard step is waiting
 // for its workflow data to load.

@@ -12,9 +12,9 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials"
 )
 
 // ConfirmStepProps holds data for the wizard's Confirm step. The Confirm step

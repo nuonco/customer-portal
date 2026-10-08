@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/wizard"
 )
 
 // CreateInstallPage renders the unified install form (full page with layout).

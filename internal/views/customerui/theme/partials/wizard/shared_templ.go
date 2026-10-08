@@ -9,8 +9,8 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // GroupActionButtonsProps holds data needed to render approve/retry buttons for a step group.

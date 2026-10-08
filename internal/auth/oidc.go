@@ -10,7 +10,7 @@ import (
 	"golang.org/x/oauth2"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // OIDCProvider implements AuthProvider for OIDC/OAuth 2.0 identity providers

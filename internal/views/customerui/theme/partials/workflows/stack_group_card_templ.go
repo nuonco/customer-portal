@@ -8,7 +8,7 @@ package workflows
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 
 // StackGroupCard renders the detail card for a stack step group.
 // Shows platform-specific setup content (AWS CloudFormation, GCP Terraform, Azure ARM).

@@ -8,7 +8,7 @@ package partials
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 
 // ConfirmModal renders a confirmation dialog modal.
 // Usage from JavaScript:

@@ -49,7 +49,7 @@ FROM ${BUILD_IMAGE} AS code
 
 # Service specific arguments
 ARG SERVICE=customer-dashboard
-ARG PKG_ROOT=github.com/nuonco/mono/services/customer-dashboard
+ARG PKG_ROOT=github.com/nuonco/customer-portal
 
 # Copy service-specific files
 WORKDIR /src/services/${SERVICE}

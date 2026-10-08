@@ -5,9 +5,9 @@ import (
 	"sort"
 
 	"github.com/gin-gonic/gin"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // installFormData holds the raw config data fetched from the Nuon API

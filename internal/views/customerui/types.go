@@ -1,7 +1,7 @@
 package customerui
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // Partial Component Props (for theme/partials/ components)

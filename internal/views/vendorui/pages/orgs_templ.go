@@ -10,9 +10,9 @@ import (
 
 	"github.com/a-h/templ"
 	templruntime "github.com/a-h/templ/runtime"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/vendorui"
+	"github.com/nuonco/customer-portal/internal/views/vendorui/components"
 )
 
 // OrgsPageProps for the orgs list page

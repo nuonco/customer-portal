@@ -11,9 +11,9 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials"
 )
 
 // CustomerAppsPageProps for the customer apps catalog page

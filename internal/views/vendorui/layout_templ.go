@@ -11,9 +11,9 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"os"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/partials"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/vendorui/components"
+	"github.com/nuonco/customer-portal/internal/views/vendorui/partials"
 )
 
 func isLiveReload() bool {

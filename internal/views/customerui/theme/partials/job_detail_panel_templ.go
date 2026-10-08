@@ -12,8 +12,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 	nuonmodels "github.com/nuonco/nuon/sdks/nuon-go/models"
 )
 

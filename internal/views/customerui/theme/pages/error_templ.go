@@ -9,7 +9,7 @@ import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
 )
 
 // ErrorPageProps contains data needed for the customer error page

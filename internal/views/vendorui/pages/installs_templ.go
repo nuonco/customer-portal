@@ -11,9 +11,9 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/vendorui/components"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/vendorui"
+	"github.com/nuonco/customer-portal/internal/views/vendorui/components"
 )
 
 // AdminInstall represents an install entry in the admin installs view.

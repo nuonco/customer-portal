@@ -8,7 +8,7 @@ package workflows
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import "github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/components"
+import "github.com/nuonco/customer-portal/internal/views/customerui/theme/components"
 
 // WorkflowOverview renders the two-column workflow step group list and detail card.
 func WorkflowOverview(props WorkflowOverviewProps) templ.Component {

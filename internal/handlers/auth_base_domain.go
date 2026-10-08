@@ -11,9 +11,9 @@ import (
 
 	"github.com/gin-gonic/gin"
 	gojwt "github.com/golang-jwt/jwt/v4"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/auth"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/pages"
+	"github.com/nuonco/customer-portal/internal/auth"
+	"github.com/nuonco/customer-portal/internal/models"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/pages"
 	"gorm.io/gorm"
 )
 

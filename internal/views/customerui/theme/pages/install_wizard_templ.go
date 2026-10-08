@@ -11,10 +11,10 @@ import templruntime "github.com/a-h/templ/runtime"
 import (
 	"fmt"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/wizard"
-	"github.com/nuonco/mono/services/customer-dashboard/internal/views/customerui/theme/partials/workflows"
-	"github.com/nuonco/mono/services/customer-dashboard/pkg/nuon"
+	"github.com/nuonco/customer-portal/internal/views/customerui"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/wizard"
+	"github.com/nuonco/customer-portal/internal/views/customerui/theme/partials/workflows"
+	"github.com/nuonco/customer-portal/pkg/nuon"
 )
 
 // InstallWizardProps holds all data for the install wizard page.

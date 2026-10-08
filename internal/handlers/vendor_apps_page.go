@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // PublishApp publishes an app so customers can discover and install it without a link

@@ -3,7 +3,7 @@ package auth
 import (
 	"context"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // AuthResult contains the normalized user info from any IdP

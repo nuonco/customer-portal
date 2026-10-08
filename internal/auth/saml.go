@@ -15,7 +15,7 @@ import (
 	"github.com/crewjam/saml/samlsp"
 	"gorm.io/gorm"
 
-	"github.com/nuonco/mono/services/customer-dashboard/internal/models"
+	"github.com/nuonco/customer-portal/internal/models"
 )
 
 // SAMLProvider implements AuthProvider for SAML 2.0 identity providers
